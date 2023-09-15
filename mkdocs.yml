@@ -1,0 +1,18 @@
+site_name: Giga Data Ingestion Portal
+
+nav:
+  - Introduction: 'README.md'
+  - 'Technical Documentation':
+      - Architecture: architecture.md
+      - Data Flow: dataflow.md
+      - Development: development.md
+      - Deployment: deployment.md
+      - Troubleshooting: troubleshooting.md
+  - 'Architecture Decision Records':
+      - 'Record Architecture Decisions': './adr/0001-record-architecture-decisions.md'
+  - 'Product / Milestone Documentation':
+      - 'Feature A': './features/example.md'
+      - 'Feature B': './features/example.md'
+
+plugins:
+  - techdocs-core

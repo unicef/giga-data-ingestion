@@ -1,0 +1,25 @@
+services:
+  api:
+    build: ./api
+    image: unicef/giga-data-ingestion/api
+    init: true
+    env_file: ./api/.env
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app
+
+  ui:
+    image: node:18-alpine
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./ui:/app
+    init: true
+    command:
+      - /bin/sh
+      - "-c"
+      - "npm install && npm run dev"
