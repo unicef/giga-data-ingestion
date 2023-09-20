@@ -1,0 +1,33 @@
+trigger:
+  - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  kubernetesServiceConnection: $(KUBERNETES_SERVICE_CONNECTION)
+  kubernetesNamespace: $(KUBERNETES_NAMESPACE)
+  ingestionPortalImageRepository: $(INGESTION_PORTAL_IMAGE_REPOSITORY)
+  system.debug: true
+
+steps:
+  - task: Bash@3
+    displayName: Get short commit hash
+    inputs:
+      targetType: inline
+      script: "export SHORT_SHA=$(git rev-parse --short HEAD)"
+
+  - task: HelmDeploy@0
+    displayName: Helm deploy Dagster core
+    inputs:
+      connectionType: Kubernetes Service Connection
+      kubernetesServiceEndpoint: $(kubernetesServiceConnection)
+      command: upgrade
+      chartType: FilePath
+      chartPath: infra/helm/data-ingestion
+      releaseName: ingestion-portal
+      namespace: $(kubernetesNamespace)
+      arguments: |
+        --values infra/helm/values.yaml \
+        --set image.repository=$(ingestionPortalImageRepository) \
+        --set image.tag=$SHORT_SHA
