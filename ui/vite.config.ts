@@ -1,3 +1,4 @@
+import generouted from "@generouted/react-router/plugin";
 import react from "@vitejs/plugin-react-swc";
 import * as path from "path";
 import { defineConfig } from "vite";
@@ -19,9 +20,13 @@ export default defineConfig({
         secure: false,
       },
     },
+    headers: {
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache",
+    },
   },
   build: {
     outDir: "build",
   },
-  plugins: [react()],
+  plugins: [react(), generouted()],
 });
