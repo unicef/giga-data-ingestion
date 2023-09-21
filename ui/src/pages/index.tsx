@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import {
   ApiOutlined,
   UploadOutlined,
@@ -20,13 +22,15 @@ function App() {
             </p>
           </div>
           <div className="flex gap-8">
-            <Button
-              className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
-              ghost
-            >
-              <UploadOutlined className="text-4xl" />
-              Upload File
-            </Button>
+            <Link to="/upload">
+              <Button
+                className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
+                ghost
+              >
+                <UploadOutlined className="text-4xl" />
+                Upload File
+              </Button>
+            </Link>
             <Button
               className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
               ghost
