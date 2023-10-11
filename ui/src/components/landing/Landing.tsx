@@ -33,13 +33,15 @@ export default function Landing() {
                 Upload File
               </Button>
             </Link>
-            <Button
-              className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
-              ghost
-            >
-              <ApiOutlined className="text-4xl" />
-              Ingest API
-            </Button>
+            <Link to="/datasources">
+              <Button
+                className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
+                ghost
+              >
+                <ApiOutlined className="text-4xl" />
+                Ingest API
+              </Button>
+            </Link>
             <Button
               className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
               ghost
