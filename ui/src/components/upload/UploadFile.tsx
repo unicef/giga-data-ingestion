@@ -4,10 +4,12 @@ import Dropzone from "react-dropzone";
 import { FileTextOutlined, UploadOutlined } from "@ant-design/icons";
 import { notification } from "antd";
 
-import { cn, convertMBToBytes } from "@/lib/utils.ts";
+import { cn, convertMegabytesToBytes } from "@/lib/utils.ts";
 
 const FILE_UPLOAD_SIZE_LIMIT_MB = 10;
-const FILE_UPLOAD_SIZE_LIMIT = convertMBToBytes(FILE_UPLOAD_SIZE_LIMIT_MB);
+const FILE_UPLOAD_SIZE_LIMIT = convertMegabytesToBytes(
+  FILE_UPLOAD_SIZE_LIMIT_MB,
+);
 
 export default function UploadFile() {
   const [file, setFile] = useState<File | null>(null);

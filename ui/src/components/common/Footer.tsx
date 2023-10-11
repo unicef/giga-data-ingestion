@@ -1,6 +1,8 @@
+const { VITE_DATAHUB_URL: DATAHUB_URL } = import.meta.env;
+
 export default function Footer() {
   return (
-    <footer className="bg-gray-1 grid h-[128px] flex-none grid-cols-2 items-center px-20 py-4 text-white">
+    <footer className="grid h-[128px] flex-none grid-cols-2 items-center bg-gray-1 px-20 py-4 text-white">
       <div className="flex gap-24">
         <div>
           <h6>Giga Links</h6>
@@ -25,7 +27,16 @@ export default function Footer() {
                 Giga Map
               </a>
             </li>
-            <li>DataHub</li>
+            <li>
+              <a
+                href={DATAHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white"
+              >
+                DataHub
+              </a>
+            </li>
           </ul>
         </div>
 

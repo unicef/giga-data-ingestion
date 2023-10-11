@@ -1,9 +1,13 @@
 import { Outlet } from "react-router-dom";
 
+import { AuthenticatedTemplate } from "@azure/msal-react";
+
 export default function Upload() {
   return (
-    <div className="container py-6">
-      <Outlet />
-    </div>
+    <AuthenticatedTemplate>
+      <div className="container py-6">
+        <Outlet />
+      </div>
+    </AuthenticatedTemplate>
   );
 }

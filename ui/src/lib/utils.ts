@@ -13,6 +13,6 @@ export function truncateString(string: string, toWords: number) {
     : string;
 }
 
-export function convertMBToBytes(mb: number) {
+export function convertMegabytesToBytes(mb: number) {
   return mb * 2 ** 20;
 }
