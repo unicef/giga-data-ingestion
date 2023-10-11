@@ -42,13 +42,15 @@ export default function Landing() {
                 Ingest API
               </Button>
             </Link>
-            <Button
-              className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
-              ghost
-            >
-              <UserSwitchOutlined className="text-4xl" />
-              User Management
-            </Button>
+            <Link to="/users">
+              <Button
+                className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
+                ghost
+              >
+                <UserSwitchOutlined className="text-4xl" />
+                User Management
+              </Button>
+            </Link>
           </div>
         </div>
 

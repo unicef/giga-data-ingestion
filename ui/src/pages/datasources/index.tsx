@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 import { ApiOutlined } from "@ant-design/icons";
-import { AuthenticatedTemplate } from "@azure/msal-react";
 
 import AddSourceDialog from "@/components/datasources/AddSourceDialog.tsx";
 
@@ -15,7 +14,7 @@ export default function DataSources() {
   }
 
   return (
-    <AuthenticatedTemplate>
+    <>
       <div className="container flex flex-col gap-4 py-6">
         <h2 className="text-[23px]">Add data sources</h2>
 
@@ -38,6 +37,6 @@ export default function DataSources() {
         open={isModalOpen}
         onClose={handleOk}
       />
-    </AuthenticatedTemplate>
+    </>
   );
 }
