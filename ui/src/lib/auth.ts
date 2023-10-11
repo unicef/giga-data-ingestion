@@ -1,4 +1,4 @@
-import { Configuration, PopupRequest } from "@azure/msal-browser";
+import { Configuration, LogLevel, PopupRequest } from "@azure/msal-browser";
 
 const { VITE_AZURE_CLIENT_ID: AZURE_CLIENT_ID } = import.meta.env;
 
@@ -14,6 +14,29 @@ export const msalConfig: Configuration = {
   },
   system: {
     allowNativeBroker: false,
+    loggerOptions: {
+      loggerCallback: (level, message, containsPii) => {
+        if (containsPii) return;
+
+        if (import.meta.env.PROD) {
+          if (level === LogLevel.Error) return console.error(message);
+          else return;
+        } else {
+          switch (level) {
+            case LogLevel.Error:
+              return console.error(message);
+            case LogLevel.Info:
+              return console.info(message);
+            case LogLevel.Verbose:
+              return console.debug(message);
+            case LogLevel.Warning:
+              return console.warn(message);
+            default:
+              return;
+          }
+        }
+      },
+    },
   },
 };
 
