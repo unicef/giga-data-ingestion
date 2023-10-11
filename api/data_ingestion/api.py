@@ -2,11 +2,10 @@ from datetime import timedelta
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import FileResponse
 from starlette.middleware.sessions import SessionMiddleware
 
+from data_ingestion.lib.auth import azure_scheme
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
 from data_ingestion.settings import settings
 
@@ -14,11 +13,12 @@ app = FastAPI(
     title="Giga Data Ingestion Portal",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
-)
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=settings.ALLOWED_HOSTS,
-    www_redirect=False,
+    redirect_slashes=False,
+    swagger_ui_oauth2_redirect_url="/api/auth/oauth2-redirect",
+    swagger_ui_init_oauth={
+        "usePkceWithAuthorizationCodeGrant": True,
+        "clientId": settings.AZURE_CLIENT_ID,
+    },
 )
 app.add_middleware(
     CORSMiddleware,
@@ -34,10 +34,11 @@ app.add_middleware(
     max_age=int(timedelta(days=7).total_seconds()),
     same_site="lax",
 )
-app.add_middleware(
-    GZipMiddleware,
-    minimum_size=1000,
-)
+
+
+@app.on_event("startup")
+async def load_config():
+    await azure_scheme.openid_config.load_config()
 
 
 @app.get("/api")

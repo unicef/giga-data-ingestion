@@ -1,0 +1,31 @@
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
+from fastapi_azure_auth.user import User
+
+from data_ingestion.constants import constants
+from data_ingestion.lib.auth import azure_scheme
+from data_ingestion.lib.storage import storage_client
+
+router = APIRouter(prefix="/api/upload")
+
+
+@router.post("")
+async def upload_file(
+    response: Response, file: UploadFile, user: User = Depends(azure_scheme)
+):
+    if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds 10 MB limit",
+        )
+    uid = str(uuid4())
+    metadata = {
+        "id": uid,
+        "uploader": user.email or user.preferred_username,
+        "original_filename": file.filename,
+    }
+    filename = f"{user.sub}/{uid[:8]}-{file.filename}"
+    client = storage_client.get_blob_client(filename)
+    client.upload_blob(await file.read(), metadata=metadata)
+    response.status_code = status.HTTP_201_CREATED
