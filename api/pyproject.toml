@@ -18,6 +18,7 @@ fastapi-azure-auth = "^4.2.1"
 python-multipart = "^0.0.6"
 msal = "^1.24.1"
 azure-storage-blob = "^12.18.3"
+msgraph-sdk = "^1.0.0a16"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.9.1"

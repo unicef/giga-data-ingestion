@@ -1,5 +1,6 @@
+from azure.identity.aio import ClientSecretCredential
 from fastapi_azure_auth import MultiTenantAzureAuthorizationCodeBearer
-from msal import ConfidentialClientApplication
+from msgraph import GraphServiceClient
 
 from data_ingestion.settings import settings
 
@@ -11,14 +12,12 @@ azure_scheme = MultiTenantAzureAuthorizationCodeBearer(
     validate_iss=False,
 )
 
-app_client = ConfidentialClientApplication(
+credential = ClientSecretCredential(
+    tenant_id=settings.AZURE_TENANT_ID,
     client_id=settings.AZURE_CLIENT_ID,
-    client_credential=settings.AZURE_CLIENT_SECRET,
-    authority=settings.AUTHORITY_URL,
+    client_secret=settings.AZURE_CLIENT_SECRET,
 )
 
-app_token = app_client.acquire_token_for_client(
-    scopes=["https://graph.microsoft.com/.default"]
-)
+scopes = ["https://graph.microsoft.com/.default"]
 
-graph_base_url = "https://graph.microsoft.com/v1.0"
+graph_client = GraphServiceClient(credentials=credential, scopes=scopes)
