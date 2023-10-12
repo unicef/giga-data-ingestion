@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     AZURE_CLIENT_SECRET: str
     AZURE_REDIRECT_URI: str
     WEB_APP_REDIRECT_URI: str
+    AZURITE_ACCOUNT_NAME: str
+    AZURITE_ACCOUNT_KEY: str
+    STORAGE_CONTAINER_NAME: str
 
     class Config:
         env_file = ".env"
@@ -28,6 +31,10 @@ class Settings(BaseSettings):
     @property
     def STATICFILES_DIR(self) -> Path:
         return self.BASE_DIR / "static"
+
+    @property
+    def AUTHORITY_URL(self) -> str:
+        return f"https://login.microsoftonline.com/{self.AZURE_TENANT_ID}"
 
 
 @lru_cache

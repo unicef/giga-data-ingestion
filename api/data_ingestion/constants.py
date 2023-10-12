@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic_settings import BaseSettings
 
-from data_ingestion.lib.utils import megabytes_to_bytes
+from data_ingestion.internal.utils import megabytes_to_bytes
 
 
 class Constants(BaseSettings):

@@ -5,8 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette.middleware.sessions import SessionMiddleware
 
-from data_ingestion.lib.auth import azure_scheme
+from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
+from data_ingestion.routers import upload, users
 from data_ingestion.settings import settings
 
 app = FastAPI(
@@ -34,6 +35,9 @@ app.add_middleware(
     max_age=int(timedelta(days=7).total_seconds()),
     same_site="lax",
 )
+
+app.include_router(upload.router)
+app.include_router(users.router)
 
 
 @app.on_event("startup")
