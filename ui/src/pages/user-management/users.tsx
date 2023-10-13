@@ -9,8 +9,17 @@ import { api } from "@/api";
 import { GraphUser } from "@/types/user.ts";
 
 export default function Users() {
-  const { isLoading, data: response } = useQuery(["users"], api.users.list);
-  const data = response?.data ?? [];
+  const { isLoading: areUsersLoading, data: usersResponse } = useQuery(
+    ["users"],
+    api.users.list,
+  );
+  const { isLoading: areRolesLoading, data: rolesResponse } = useQuery(
+    ["roles"],
+    api.roles.list,
+  );
+
+  const usersData = usersResponse?.data ?? [];
+  const rolesData = rolesResponse?.data ?? [];
 
   function handleChangeRoles() {}
 
@@ -36,11 +45,6 @@ export default function Users() {
   const columns = useMemo<ColumnsType<GraphUser>>(
     () => [
       {
-        key: "key",
-        title: "ID",
-        dataIndex: "id",
-      },
-      {
         key: "name",
         title: "Name",
         dataIndex: "display_name",
@@ -56,6 +60,20 @@ export default function Users() {
         dataIndex: "user_principal_name",
       },
       {
+        key: "roles",
+        title: "Roles",
+        dataIndex: "app_role_assignments",
+        render: (value: GraphUser["app_role_assignments"]) =>
+          value
+            .map(
+              val =>
+                rolesData.find(role => role.id === val.app_role_id)
+                  ?.display_name ?? "",
+            )
+            .filter(Boolean)
+            .join(", "),
+      },
+      {
         key: "actions",
         title: "Actions",
         dataIndex: "id",
@@ -67,11 +85,11 @@ export default function Users() {
         ),
       },
     ],
-    [actionMenuItems],
+    [actionMenuItems, rolesData],
   );
 
   return (
-    <div className="container flex flex-col gap-4 py-6">
+    <>
       <div className="flex justify-between">
         <h2 className="text-[23px]">User Management</h2>
         <Button type="primary" className="bg-primary">
@@ -80,13 +98,14 @@ export default function Users() {
       </div>
 
       <Table
-        dataSource={data}
+        rowKey={row => row.id}
+        dataSource={usersData}
         columns={columns}
-        loading={isLoading}
+        loading={areUsersLoading || areRolesLoading}
         pagination={{
           position: ["bottomRight"],
         }}
       />
-    </div>
+    </>
   );
 }

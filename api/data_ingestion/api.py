@@ -7,7 +7,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
-from data_ingestion.routers import upload, users
+from data_ingestion.routers import roles, upload, users
 from data_ingestion.settings import settings
 
 app = FastAPI(
@@ -38,6 +38,7 @@ app.add_middleware(
 
 app.include_router(upload.router)
 app.include_router(users.router)
+app.include_router(roles.router)
 
 
 @app.on_event("startup")

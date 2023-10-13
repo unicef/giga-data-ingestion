@@ -1,6 +1,7 @@
 services:
   api:
     build: ./api
+    pull_policy: missing
     image: unicef/giga-data-ingestion/api
     init: true
     env_file: ./api/.env

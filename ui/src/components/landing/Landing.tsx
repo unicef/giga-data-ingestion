@@ -42,7 +42,7 @@ export default function Landing() {
                 Ingest API
               </Button>
             </Link>
-            <Link to="/users">
+            <Link to="/user-management/users">
               <Button
                 className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
                 ghost
