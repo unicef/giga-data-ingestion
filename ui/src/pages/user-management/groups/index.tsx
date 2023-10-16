@@ -1,19 +1,18 @@
+import { Link } from "react-router-dom";
+
 import { useQuery } from "@tanstack/react-query";
 import { Table } from "antd";
 import { ColumnsType } from "antd/es/table";
 
-import { api } from "@/api";
-import { GraphRole } from "@/types/role.ts";
+import { useApi } from "@/api";
+import { GraphGroup } from "@/types/group.ts";
 
-const columns: ColumnsType<GraphRole> = [
+const columns: ColumnsType<GraphGroup> = [
   {
     key: "displayName",
     title: "Name",
     dataIndex: "display_name",
-    sorter: (a, b, sortOrder) =>
-      sortOrder === "descend"
-        ? b.display_name.localeCompare(a.display_name)
-        : a.display_name.localeCompare(b.display_name),
+    render: (value, record) => <Link to={`${record.id}`}>{value}</Link>,
   },
   {
     key: "description",
@@ -22,13 +21,14 @@ const columns: ColumnsType<GraphRole> = [
   },
 ];
 
-export default function Roles() {
-  const { isLoading, data: response } = useQuery(["roles"], api.roles.list);
+export default function Groups() {
+  const api = useApi();
+  const { isLoading, data: response } = useQuery(["groups"], api.groups.list);
   const data = response?.data ?? [];
 
   return (
     <>
-      <h2 className="text-[23px]">Roles</h2>
+      <h2 className="text-[23px]">Groups</h2>
 
       <Table
         rowKey={row => row.id}

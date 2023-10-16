@@ -5,10 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Button, Dropdown, MenuProps, Table } from "antd";
 import { ColumnsType } from "antd/es/table";
 
-import { api } from "@/api";
-import { GraphUserWithRoles } from "@/types/user.ts";
+import { useApi } from "@/api";
+import { GraphUser } from "@/types/user.ts";
 
 export default function Users() {
+  const api = useApi();
   const { isLoading, data: response } = useQuery(["users"], api.users.list);
 
   const usersData = response?.data ?? [];
@@ -34,7 +35,7 @@ export default function Users() {
     [],
   );
 
-  const columns = useMemo<ColumnsType<GraphUserWithRoles>>(
+  const columns = useMemo<ColumnsType<GraphUser>>(
     () => [
       {
         key: "name",
@@ -46,13 +47,6 @@ export default function Users() {
         title: "Email",
         dataIndex: "mail",
         render: (_, record) => record.mail ?? record.user_principal_name,
-      },
-      {
-        key: "roles",
-        title: "Roles",
-        dataIndex: "app_role_assignments",
-        render: (value: GraphUserWithRoles["app_role_assignments"]) =>
-          value.map(val => val.display_name).join(", "),
       },
       {
         key: "actions",

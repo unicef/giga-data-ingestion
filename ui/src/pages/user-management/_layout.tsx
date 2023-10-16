@@ -14,8 +14,8 @@ export default function Layout() {
           <Menu.Item key="users">
             <Link to="users">Users</Link>
           </Menu.Item>
-          <Menu.Item key="roles">
-            <Link to="roles">Roles</Link>
+          <Menu.Item key="groups">
+            <Link to="groups">Groups</Link>
           </Menu.Item>
         </Menu>
 

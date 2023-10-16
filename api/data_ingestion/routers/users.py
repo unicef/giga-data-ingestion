@@ -1,11 +1,9 @@
-from typing import Annotated
-
-from fastapi import APIRouter, Body, Security, status
+from fastapi import APIRouter, Security, status
 from pydantic import UUID4
 
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.users import UsersApi
-from data_ingestion.schemas.user import GraphUser, GraphUserWithRoles
+from data_ingestion.schemas.user import GraphUser
 
 router = APIRouter(
     prefix="/api/users",
@@ -14,10 +12,9 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[GraphUserWithRoles])
+@router.get("", response_model=list[GraphUser])
 async def list_users():
-    users = await UsersApi.list_users()
-    return await UsersApi.inject_user_roles(users)
+    return await UsersApi.list_users()
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
@@ -27,15 +24,14 @@ async def create_user():
 
 @router.get("/{id}", response_model=GraphUser)
 async def get_user(id: UUID4):
-    user = await UsersApi.get_user(id)
-    return await UsersApi.inject_user_roles(user)
+    return await UsersApi.get_user(id)
 
 
 @router.patch("/{id}/roles")
-async def add_roles(id: UUID4, roles: Annotated[list[UUID4], Body()]):
-    return await UsersApi.add_role_assignments(id, roles)
+async def add_roles():
+    pass
 
 
 @router.delete("/{id}/roles", status_code=status.HTTP_204_NO_CONTENT)
-async def remove_roles(id: UUID4, roles: Annotated[list[UUID4], Body()]):
-    await UsersApi.remove_role_assignments(id, roles)
+async def remove_roles():
+    pass

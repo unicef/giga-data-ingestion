@@ -12,9 +12,11 @@ class Settings(BaseSettings):
     CORS_ALLOWED_ORIGINS: list[str] = ["*"]
     SECRET_KEY: str
     AZURE_APPLICATION_ID: str
+    AZURE_TENANT_NAME: str
     AZURE_TENANT_ID: str
     AZURE_CLIENT_ID: str
     AZURE_CLIENT_SECRET: str
+    AZURE_AUTH_POLICY_NAME: str
     AZURE_REDIRECT_URI: str
     WEB_APP_REDIRECT_URI: str
     AZURITE_ACCOUNT_NAME: str

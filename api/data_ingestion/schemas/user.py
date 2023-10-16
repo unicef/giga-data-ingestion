@@ -1,6 +1,3 @@
-from abc import ABC
-from typing import Optional
-
 from pydantic import UUID4, BaseModel, EmailStr
 
 
@@ -10,36 +7,16 @@ class User(BaseModel):
     roles: list[str]
 
 
-class GraphRoleAssignment(BaseModel):
-    id: str
-    app_role_id: str | UUID4
-
-
-class GraphRole(BaseModel):
+class GraphGroup(BaseModel):
     id: UUID4
     description: str
     display_name: str
-    value: str
+    mail: EmailStr | None
 
 
-class GraphApplication(BaseModel):
-    id: UUID4
-    app_id: UUID4
-    app_roles: list[GraphRole]
-
-
-class BaseGraphUser(BaseModel, ABC):
+class GraphUser(BaseModel):
     id: UUID4
     account_enabled: bool
-    mail: Optional[EmailStr]
-    display_name: Optional[str]
+    mail: EmailStr | None
+    display_name: str | None
     user_principal_name: EmailStr
-    app_role_assignments: list
-
-
-class GraphUser(BaseGraphUser):
-    app_role_assignments: list[GraphRoleAssignment]
-
-
-class GraphUserWithRoles(BaseGraphUser):
-    app_role_assignments: list[GraphRole]

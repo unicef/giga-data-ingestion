@@ -1,13 +1,18 @@
 from azure.identity.aio import ClientSecretCredential
-from fastapi_azure_auth import MultiTenantAzureAuthorizationCodeBearer
+from fastapi_azure_auth import B2CMultiTenantAuthorizationCodeBearer
 from msgraph import GraphServiceClient
 
 from data_ingestion.settings import settings
 
-azure_scheme = MultiTenantAzureAuthorizationCodeBearer(
+openid_base_url = f"https://{settings.AZURE_TENANT_NAME}.b2clogin.com/{settings.AZURE_TENANT_NAME}.onmicrosoft.com/{settings.AZURE_AUTH_POLICY_NAME}"
+
+azure_scheme = B2CMultiTenantAuthorizationCodeBearer(
     app_client_id=settings.AZURE_CLIENT_ID,
+    openid_config_url=f"{openid_base_url}/v2.0/.well-known/openid-configuration",
+    openapi_authorization_url=f"{openid_base_url}/oauth2/v2.0/authorize",
+    openapi_token_url=f"{openid_base_url}/oauth2/v2.0/token",
     scopes={
-        f"api://{settings.AZURE_CLIENT_ID}/user_impersonation": "Allow this application to make requests as you",
+        f"https://{settings.AZURE_TENANT_NAME}.onmicrosoft.com/{settings.AZURE_CLIENT_ID}/User.Impersonate": "Allow this application to make requests as you",
     },
     validate_iss=False,
 )
