@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Security
+from typing import Annotated
+
+from fastapi import APIRouter, Body, Security, status
 from pydantic import UUID4
 
 from data_ingestion.internal.auth import azure_scheme
@@ -18,7 +20,7 @@ async def list_users():
     return await UsersApi.inject_user_roles(users)
 
 
-@router.post("")
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_user():
     pass
 
@@ -29,16 +31,11 @@ async def get_user(id: UUID4):
     return await UsersApi.inject_user_roles(user)
 
 
-@router.put("/{id}")
-async def edit_user():
-    pass
+@router.patch("/{id}/roles")
+async def add_roles(id: UUID4, roles: Annotated[list[UUID4], Body()]):
+    return await UsersApi.add_role_assignments(id, roles)
 
 
-@router.patch("/{id}")
-async def partial_edit_user():
-    pass
-
-
-@router.delete("/{id}")
-async def revoke_user_access():
-    pass
+@router.delete("/{id}/roles", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_roles(id: UUID4, roles: Annotated[list[UUID4], Body()]):
+    await UsersApi.remove_role_assignments(id, roles)

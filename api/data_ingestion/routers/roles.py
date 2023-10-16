@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Security
+from fastapi import APIRouter, Security, status
 
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.roles import RolesApi
@@ -16,7 +16,7 @@ async def list_roles():
     return await RolesApi.list_roles()
 
 
-@router.post("")
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_role():
     pass
 
@@ -28,9 +28,4 @@ async def get_role():
 
 @router.put("/{id}")
 async def edit_role():
-    pass
-
-
-@router.delete("/{id}")
-async def delete_role():
     pass

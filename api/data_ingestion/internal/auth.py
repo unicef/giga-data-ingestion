@@ -7,7 +7,7 @@ from data_ingestion.settings import settings
 azure_scheme = MultiTenantAzureAuthorizationCodeBearer(
     app_client_id=settings.AZURE_CLIENT_ID,
     scopes={
-        f"api://{settings.AZURE_CLIENT_ID}/user_impersonation": "User impersonation",
+        f"api://{settings.AZURE_CLIENT_ID}/user_impersonation": "Allow this application to make requests as you",
     },
     validate_iss=False,
 )

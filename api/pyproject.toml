@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "data-ingestion-backend"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = ["Thinking Machines <hello@thinkingmachin.es>"]
 readme = "README.md"
@@ -8,8 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 fastapi = "^0.103.1"
-uvicorn = {extras = ["standard"], version = "^0.23.2"}
-pydantic = {extras = ["email"], version = "^2.3.0"}
+uvicorn = { extras = ["standard"], version = "^0.23.2" }
+pydantic = { extras = ["email"], version = "^2.3.0" }
 gunicorn = "^21.2.0"
 pydantic-settings = "^2.0.3"
 itsdangerous = "^2.1.2"

@@ -1,13 +1,20 @@
+import asyncio
 from typing import overload
 
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
+from msgraph.generated.models.app_role_assignment import AppRoleAssignment
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4
 
-from data_ingestion.schemas.user import GraphUser, GraphUserWithRoles
+from data_ingestion.schemas.user import (
+    GraphRoleAssignment,
+    GraphUser,
+    GraphUserWithRoles,
+)
 
+from ..settings import settings
 from .auth import graph_client
 from .roles import RolesApi
 
@@ -86,3 +93,32 @@ class UsersApi:
         if is_many:
             return users_with_roles
         return users_with_roles[0]
+
+    @classmethod
+    async def add_role_assignments(
+        cls, id: UUID4, role_ids: list[UUID4]
+    ) -> list[GraphRoleAssignment]:
+        bodies = [
+            AppRoleAssignment(
+                principal_id=id,
+                resource_id=settings.AZURE_APPLICATION_ID,
+                app_role_id=role_id,
+            )
+            for role_id in role_ids
+        ]
+        requests = [
+            graph_client.users.by_user_id(str(id)).app_role_assignments.post(body=body)
+            for body in bodies
+        ]
+        results: tuple[AppRoleAssignment] = await asyncio.gather(*requests)
+        return [GraphRoleAssignment(**jsonable_encoder(result)) for result in results]
+
+    @classmethod
+    async def remove_role_assignments(cls, id: UUID4, role_ids: list[UUID4]) -> None:
+        requests = [
+            graph_client.users.by_user_id(str(id))
+            .app_role_assignments.by_app_role_assignment_id(str(role_id))
+            .delete()
+            for role_id in role_ids
+        ]
+        await asyncio.gather(*requests)

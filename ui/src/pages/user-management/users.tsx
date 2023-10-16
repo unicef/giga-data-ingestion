@@ -45,11 +45,7 @@ export default function Users() {
         key: "email",
         title: "Email",
         dataIndex: "mail",
-      },
-      {
-        key: "principalName",
-        title: "Principal Name",
-        dataIndex: "user_principal_name",
+        render: (_, record) => record.mail ?? record.user_principal_name,
       },
       {
         key: "roles",

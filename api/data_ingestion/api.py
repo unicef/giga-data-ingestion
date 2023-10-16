@@ -1,3 +1,4 @@
+import tomllib
 from datetime import timedelta
 
 from fastapi import FastAPI
@@ -10,8 +11,12 @@ from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
 from data_ingestion.routers import roles, upload, users
 from data_ingestion.settings import settings
 
+with open(settings.BASE_DIR / "pyproject.toml", "rb") as f:
+    __version__ = tomllib.load(f)["tool"]["poetry"]["version"]
+
 app = FastAPI(
     title="Giga Data Ingestion Portal",
+    version=__version__,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     redirect_slashes=False,
@@ -47,7 +52,7 @@ async def load_config():
 
 
 @app.get("/api")
-async def health():
+async def health_check():
     return {"status": "ok"}
 
 
