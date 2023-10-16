@@ -1,3 +1,4 @@
+from abc import ABC
 from typing import Optional
 
 from pydantic import UUID4, BaseModel, EmailStr
@@ -27,10 +28,18 @@ class GraphApplication(BaseModel):
     app_roles: list[GraphRole]
 
 
-class GraphUser(BaseModel):
+class BaseGraphUser(BaseModel, ABC):
     id: UUID4
     account_enabled: bool
     mail: Optional[EmailStr]
     display_name: Optional[str]
     user_principal_name: EmailStr
+    app_role_assignments: list
+
+
+class GraphUser(BaseGraphUser):
     app_role_assignments: list[GraphRoleAssignment]
+
+
+class GraphUserWithRoles(BaseGraphUser):
+    app_role_assignments: list[GraphRole]

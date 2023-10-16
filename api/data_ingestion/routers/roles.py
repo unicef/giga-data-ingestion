@@ -1,11 +1,8 @@
 from fastapi import APIRouter, Security
-from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
-from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 
-from data_ingestion.internal.auth import azure_scheme, graph_client
-from data_ingestion.schemas.user import GraphApplication, GraphRole
-from data_ingestion.settings import settings
+from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.roles import RolesApi
+from data_ingestion.schemas.user import GraphRole
 
 router = APIRouter(
     prefix="/api/roles",
@@ -16,16 +13,7 @@ router = APIRouter(
 
 @router.get("", response_model=list[GraphRole])
 async def list_roles():
-    try:
-        apps = await graph_client.applications.by_application_id(
-            settings.AZURE_APPLICATION_ID
-        ).get()
-        apps = GraphApplication(**jsonable_encoder(apps))
-        return sorted(apps.app_roles, key=lambda r: r.display_name)
-    except ODataError as err:
-        return JSONResponse(
-            {"message": err.error.message}, status_code=err.response_status_code
-        )
+    return await RolesApi.list_roles()
 
 
 @router.post("")

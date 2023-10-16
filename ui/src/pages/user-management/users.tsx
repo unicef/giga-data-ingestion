@@ -6,20 +6,12 @@ import { Button, Dropdown, MenuProps, Table } from "antd";
 import { ColumnsType } from "antd/es/table";
 
 import { api } from "@/api";
-import { GraphUser } from "@/types/user.ts";
+import { GraphUserWithRoles } from "@/types/user.ts";
 
 export default function Users() {
-  const { isLoading: areUsersLoading, data: usersResponse } = useQuery(
-    ["users"],
-    api.users.list,
-  );
-  const { isLoading: areRolesLoading, data: rolesResponse } = useQuery(
-    ["roles"],
-    api.roles.list,
-  );
+  const { isLoading, data: response } = useQuery(["users"], api.users.list);
 
-  const usersData = usersResponse?.data ?? [];
-  const rolesData = rolesResponse?.data ?? [];
+  const usersData = response?.data ?? [];
 
   function handleChangeRoles() {}
 
@@ -42,7 +34,7 @@ export default function Users() {
     [],
   );
 
-  const columns = useMemo<ColumnsType<GraphUser>>(
+  const columns = useMemo<ColumnsType<GraphUserWithRoles>>(
     () => [
       {
         key: "name",
@@ -63,15 +55,8 @@ export default function Users() {
         key: "roles",
         title: "Roles",
         dataIndex: "app_role_assignments",
-        render: (value: GraphUser["app_role_assignments"]) =>
-          value
-            .map(
-              val =>
-                rolesData.find(role => role.id === val.app_role_id)
-                  ?.display_name ?? "",
-            )
-            .filter(Boolean)
-            .join(", "),
+        render: (value: GraphUserWithRoles["app_role_assignments"]) =>
+          value.map(val => val.display_name).join(", "),
       },
       {
         key: "actions",
@@ -85,7 +70,7 @@ export default function Users() {
         ),
       },
     ],
-    [actionMenuItems, rolesData],
+    [actionMenuItems],
   );
 
   return (
@@ -101,7 +86,7 @@ export default function Users() {
         rowKey={row => row.id}
         dataSource={usersData}
         columns={columns}
-        loading={areUsersLoading || areRolesLoading}
+        loading={isLoading}
         pagination={{
           position: ["bottomRight"],
         }}
