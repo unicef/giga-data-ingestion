@@ -12,6 +12,7 @@ export interface GraphUser {
   mail: string | null;
   display_name: string | null;
   user_principal_name: string;
+  external_user_state: "Accepted" | "PendingAcceptance" | null;
   member_of: GraphGroup[];
 }
 
@@ -21,5 +22,6 @@ export const SentinelUser: GraphUser = {
   mail: null,
   display_name: null,
   user_principal_name: "",
+  external_user_state: null,
   member_of: [],
 };

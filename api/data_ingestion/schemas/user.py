@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import UUID4, BaseModel, EmailStr, model_validator
 
 from .group import GraphGroup
@@ -15,7 +17,8 @@ class GraphUser(BaseModel):
     mail: EmailStr | None
     display_name: str | None
     user_principal_name: EmailStr
-    member_of: list[GraphGroup]
+    external_user_state: Literal["Accepted", "PendingAcceptance"] | None
+    member_of: list[GraphGroup] | None
 
 
 class GraphUserUpdate(BaseModel):

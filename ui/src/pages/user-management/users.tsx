@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import { DownOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Dropdown, MenuProps, Table } from "antd";
+import { Button, Dropdown, MenuProps, Table, Tag } from "antd";
 import { ColumnsType } from "antd/es/table";
 
 import { useApi } from "@/api";
@@ -46,7 +46,16 @@ export default function Users() {
         key: "email",
         title: "Email",
         dataIndex: "mail",
-        render: (_, record) => record.mail ?? record.user_principal_name,
+        render: (value: GraphUser["mail"], record) => (
+          <>
+            {value ?? record.user_principal_name}
+            {record.external_user_state === "PendingAcceptance" && (
+              <Tag className="mx-2 uppercase" color="warning">
+                pending
+              </Tag>
+            )}
+          </>
+        ),
       },
       {
         key: "groups",

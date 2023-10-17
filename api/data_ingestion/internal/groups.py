@@ -25,7 +25,14 @@ class GroupsApi:
     )
     get_user_query_parameters = (
         UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
-            select=["id", "mail", "displayName", "userPrincipalName", "accountEnabled"],
+            select=[
+                "id",
+                "mail",
+                "displayName",
+                "userPrincipalName",
+                "accountEnabled",
+                "externalUserState",
+            ],
             orderby=["displayName", "mail", "userPrincipalName"],
             count=True,
         )
