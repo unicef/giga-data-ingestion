@@ -29,7 +29,7 @@ export default function Landing() {
           </div>
           <div className="flex gap-8">
             {featureFlags.uploadFilePage && (
-              <Link to="/upload">
+              <Link to="/upload" unstable_viewTransition>
                 <Button
                   className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
                   ghost
@@ -40,7 +40,7 @@ export default function Landing() {
               </Link>
             )}
             {featureFlags.ingestApiPage && (
-              <Link to="/datasources">
+              <Link to="/datasources" unstable_viewTransition>
                 <Button
                   className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
                   ghost
@@ -51,7 +51,7 @@ export default function Landing() {
               </Link>
             )}
             {featureFlags.userManagementPage && (
-              <Link to="/user-management/users">
+              <Link to="/user-management/users" unstable_viewTransition>
                 <Button
                   className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
                   ghost

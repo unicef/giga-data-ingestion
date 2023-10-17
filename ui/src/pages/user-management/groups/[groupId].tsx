@@ -43,7 +43,9 @@ export default function GroupMembers() {
       <div className="flex justify-between">
         <Breadcrumb className="text-[23px]">
           <Breadcrumb.Item>
-            <Link to="/user-management/groups">Groups</Link>
+            <Link to="/user-management/groups" unstable_viewTransition>
+              Groups
+            </Link>
           </Breadcrumb.Item>
           <Breadcrumb.Item>
             {isGroupLoading ? (

@@ -58,10 +58,10 @@ export default function Index() {
           </ul>
         </div>
         <div className="flex gap-2">
-          <Link to="/upload">
+          <Link to="/upload" unstable_viewTransition>
             <Button className="border-primary text-primary">Cancel</Button>
           </Link>
-          <Link to="metadata">
+          <Link to="metadata" unstable_viewTransition>
             <Button type="primary" className="bg-primary">
               Proceed
             </Button>

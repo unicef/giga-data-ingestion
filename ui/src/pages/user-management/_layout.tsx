@@ -9,13 +9,20 @@ export default function Layout() {
 
   return (
     <AuthenticatedTemplate>
-      <div className="flex gap-4 py-6">
+      <div
+        className="flex gap-4 py-6"
+        style={{ viewTransitionName: "user-management-sidebar" }}
+      >
         <Menu mode="inline" className="w-72 flex-auto" selectedKeys={[page]}>
           <Menu.Item key="users">
-            <Link to="users">Users</Link>
+            <Link to="users" unstable_viewTransition>
+              Users
+            </Link>
           </Menu.Item>
           <Menu.Item key="groups">
-            <Link to="groups">Groups</Link>
+            <Link to="groups" unstable_viewTransition>
+              Groups
+            </Link>
           </Menu.Item>
         </Menu>
 

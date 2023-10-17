@@ -38,7 +38,9 @@ export const uploadFileGroups: CollapseProps["items"] = groups.map(group => ({
 
     return (
       <li key={typeSlug}>
-        <Link to={`${groupSlug}/${typeSlug}`}>{type}</Link>
+        <Link to={`${groupSlug}/${typeSlug}`} unstable_viewTransition>
+          {type}
+        </Link>
       </li>
     );
   }),

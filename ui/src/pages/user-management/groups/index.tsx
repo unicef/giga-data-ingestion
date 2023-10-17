@@ -12,7 +12,11 @@ const columns: ColumnsType<GraphGroup> = [
     key: "displayName",
     title: "Name",
     dataIndex: "display_name",
-    render: (value, record) => <Link to={`${record.id}`}>{value}</Link>,
+    render: (value, record) => (
+      <Link to={`${record.id}`} unstable_viewTransition>
+        {value}
+      </Link>
+    ),
   },
   {
     key: "description",
