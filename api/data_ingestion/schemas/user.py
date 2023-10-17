@@ -7,13 +7,6 @@ class User(BaseModel):
     roles: list[str]
 
 
-class GraphGroup(BaseModel):
-    id: UUID4
-    description: str
-    display_name: str
-    mail: EmailStr | None
-
-
 class GraphUser(BaseModel):
     id: UUID4
     account_enabled: bool

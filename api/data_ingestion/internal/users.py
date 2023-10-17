@@ -30,7 +30,16 @@ class UsersApi:
                 request_configuration=cls.user_request_config
             )
             if users and users.value:
-                return [GraphUser(**jsonable_encoder(val)) for val in users.value]
+                users_out = []
+                for val in users.value:
+                    u = GraphUser(**jsonable_encoder(val))
+                    if not u.mail and "#EXT#" in u.user_principal_name:
+                        u.mail = u.user_principal_name.split("#EXT")[0].replace(
+                            "_", "@"
+                        )
+                    users_out.append(u)
+                return users_out
+
             return []
         except ODataError as err:
             raise HTTPException(

@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 
 import { useQuery } from "@tanstack/react-query";
-import { Breadcrumb, Table } from "antd";
+import { Breadcrumb, Skeleton, Table } from "antd";
 import { ColumnsType } from "antd/es/table";
 
 import { useApi } from "@/api";
@@ -45,9 +45,17 @@ export default function GroupMembers() {
           <Breadcrumb.Item>
             <Link to="/user-management/groups">Groups</Link>
           </Breadcrumb.Item>
-          <Breadcrumb.Item>{group.display_name}</Breadcrumb.Item>
+          <Breadcrumb.Item>
+            {isGroupLoading ? (
+              <Skeleton.Button active className="w-12" size="small" />
+            ) : (
+              group.display_name
+            )}
+          </Breadcrumb.Item>
         </Breadcrumb>
       </div>
+
+      {group.description}
 
       <Table
         rowKey={row => row.id}

@@ -1,8 +1,9 @@
 import tomllib
 from datetime import timedelta
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.models import Response
 from fastapi.responses import FileResponse
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -41,19 +42,28 @@ app.add_middleware(
     same_site="lax",
 )
 
-app.include_router(upload.router)
-app.include_router(users.router)
-app.include_router(groups.router)
-
 
 @app.on_event("startup")
 async def load_config():
     await azure_scheme.openid_config.load_config()
 
 
-@app.get("/api")
+@app.get(
+    "/api",
+    tags=["core"],
+    responses={
+        status.HTTP_500_INTERNAL_SERVER_ERROR: Response(
+            description=status.HTTP_500_INTERNAL_SERVER_ERROR.__class__.__name__
+        ).model_dump(),
+    },
+)
 async def health_check():
     return {"status": "ok"}
+
+
+app.include_router(upload.router)
+app.include_router(users.router)
+app.include_router(groups.router)
 
 
 if settings.IN_PRODUCTION:

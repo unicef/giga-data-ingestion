@@ -66,7 +66,7 @@ export default function Users() {
   return (
     <>
       <div className="flex justify-between">
-        <h2 className="text-[23px]">User Management</h2>
+        <h2 className="text-[23px]">Users</h2>
         <Button type="primary" className="bg-primary">
           Add User
         </Button>
