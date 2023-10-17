@@ -7,9 +7,13 @@ import {
 } from "@ant-design/icons";
 import { Button } from "antd";
 
+import { useStore } from "@/store.ts";
+
 const { VITE_DATAHUB_URL: DATAHUB_URL } = import.meta.env;
 
 export default function Landing() {
+  const { featureFlags } = useStore();
+
   return (
     <div className="h-full bg-[url(/home-bg.jpg)] bg-cover text-white">
       <div className="flex h-full w-full flex-col items-center justify-center backdrop-brightness-50">
@@ -24,33 +28,39 @@ export default function Landing() {
             </p>
           </div>
           <div className="flex gap-8">
-            <Link to="/upload">
-              <Button
-                className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
-                ghost
-              >
-                <UploadOutlined className="text-4xl" />
-                Upload File
-              </Button>
-            </Link>
-            <Link to="/datasources">
-              <Button
-                className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
-                ghost
-              >
-                <ApiOutlined className="text-4xl" />
-                Ingest API
-              </Button>
-            </Link>
-            <Link to="/user-management/users">
-              <Button
-                className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
-                ghost
-              >
-                <UserSwitchOutlined className="text-4xl" />
-                User Management
-              </Button>
-            </Link>
+            {featureFlags.uploadFilePage && (
+              <Link to="/upload">
+                <Button
+                  className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
+                  ghost
+                >
+                  <UploadOutlined className="text-4xl" />
+                  Upload File
+                </Button>
+              </Link>
+            )}
+            {featureFlags.ingestApiPage && (
+              <Link to="/datasources">
+                <Button
+                  className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
+                  ghost
+                >
+                  <ApiOutlined className="text-4xl" />
+                  Ingest API
+                </Button>
+              </Link>
+            )}
+            {featureFlags.userManagementPage && (
+              <Link to="/user-management/users">
+                <Button
+                  className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
+                  ghost
+                >
+                  <UserSwitchOutlined className="text-4xl" />
+                  User Management
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
