@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
+from msgraph.generated.models.group import Group
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.models.reference_create import ReferenceCreate
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
@@ -92,6 +93,23 @@ class GroupsApi:
             await graph_client.groups.by_group_id(str(group_id)).members.ref.post(
                 body=body
             )
+        except ODataError as err:
+            raise HTTPException(
+                detail=err.error.message, status_code=err.response_status_code
+            )
+
+    @classmethod
+    async def add_group_members(cls, group_id: UUID4, user_ids: list[UUID4]) -> None:
+        try:
+            body = Group(
+                additional_data={
+                    "members@odata.bind": [
+                        f"https://graph.microsoft.com/v1.0/directoryObjects/{user_id}"
+                        for user_id in user_ids
+                    ]
+                }
+            )
+            await graph_client.groups.by_group_id(str(group_id)).patch(body=body)
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code

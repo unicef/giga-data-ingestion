@@ -9,3 +9,7 @@ class GraphGroup(BaseModel):
 
 class AddGroupMemberRequest(BaseModel):
     user_id: UUID4
+
+
+class AddGroupMembersRequest(BaseModel):
+    user_ids: list[UUID4]

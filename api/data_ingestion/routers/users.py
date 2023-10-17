@@ -34,13 +34,3 @@ async def get_user(id: UUID4):
 @router.patch("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def edit_user(id: UUID4, body: GraphUserUpdate):
     await UsersApi.edit_user(id, body)
-
-
-@router.post("/{id}/groups")
-async def add_user_to_group():
-    pass
-
-
-@router.delete("/{id}/groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def remove_user_from_group():
-    pass
