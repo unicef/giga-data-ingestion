@@ -1,10 +1,11 @@
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+from msgraph.generated.models.user import User
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4
 
-from data_ingestion.schemas.user import GraphUser
+from data_ingestion.schemas.user import GraphUser, GraphUserUpdate
 
 from .auth import graph_client
 
@@ -14,6 +15,7 @@ class UsersApi:
         UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
             select=["id", "mail", "displayName", "userPrincipalName", "accountEnabled"],
             orderby=["displayName", "mail", "userPrincipalName"],
+            expand=["memberOf($select=id,description,displayName)"],
         )
     )
     user_request_config = (
@@ -52,6 +54,16 @@ class UsersApi:
             return await graph_client.users.by_user_id(str(id)).get(
                 request_configuration=cls.user_request_config
             )
+        except ODataError as err:
+            raise HTTPException(
+                detail=err.error.message, status_code=err.response_status_code
+            )
+
+    @classmethod
+    async def edit_user(cls, id: UUID4, request_body: GraphUserUpdate):
+        try:
+            body = User(**request_body.model_dump())
+            return await graph_client.users.by_user_id(str(id)).patch(body=body)
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code

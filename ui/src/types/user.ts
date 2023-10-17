@@ -1,3 +1,5 @@
+import { GraphGroup } from "@/types/group.ts";
+
 export interface User {
   name: string;
   email: string;
@@ -10,6 +12,7 @@ export interface GraphUser {
   mail: string | null;
   display_name: string | null;
   user_principal_name: string;
+  member_of: GraphGroup[];
 }
 
 export const SentinelUser: GraphUser = {
@@ -18,4 +21,5 @@ export const SentinelUser: GraphUser = {
   mail: null,
   display_name: null,
   user_principal_name: "",
+  member_of: [],
 };

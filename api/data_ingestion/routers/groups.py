@@ -27,7 +27,7 @@ async def get_group(id: UUID4):
     return await GroupsApi.get_group(id)
 
 
-@router.put("/{id}")
+@router.patch("/{id}")
 async def edit_group():
     pass
 

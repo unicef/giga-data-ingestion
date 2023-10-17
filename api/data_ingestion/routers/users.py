@@ -3,7 +3,7 @@ from pydantic import UUID4
 
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.users import UsersApi
-from data_ingestion.schemas.user import GraphUser
+from data_ingestion.schemas.user import GraphUser, GraphUserUpdate
 
 router = APIRouter(
     prefix="/api/users",
@@ -27,11 +27,16 @@ async def get_user(id: UUID4):
     return await UsersApi.get_user(id)
 
 
-@router.patch("/{id}/roles")
-async def add_roles():
+@router.patch("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def edit_user(id: UUID4, body: GraphUserUpdate):
+    await UsersApi.edit_user(id, body)
+
+
+@router.post("/{id}/groups")
+async def add_user_to_group():
     pass
 
 
-@router.delete("/{id}/roles", status_code=status.HTTP_204_NO_CONTENT)
-async def remove_roles():
+@router.delete("/{id}/groups/{group_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_user_from_group():
     pass

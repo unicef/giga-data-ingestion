@@ -49,6 +49,13 @@ export default function Users() {
         render: (_, record) => record.mail ?? record.user_principal_name,
       },
       {
+        key: "groups",
+        title: "Groups",
+        dataIndex: "member_of",
+        render: (value: GraphUser["member_of"]) =>
+          value.map(val => val.display_name).join(", "),
+      },
+      {
         key: "actions",
         title: "Actions",
         dataIndex: "id",

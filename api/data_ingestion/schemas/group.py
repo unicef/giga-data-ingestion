@@ -1,11 +1,10 @@
-from pydantic import UUID4, BaseModel, EmailStr
+from pydantic import UUID4, BaseModel
 
 
 class GraphGroup(BaseModel):
     id: UUID4
     description: str | None
     display_name: str
-    mail: EmailStr | None
 
 
 class AddGroupMemberRequest(BaseModel):
