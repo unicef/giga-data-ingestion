@@ -6,10 +6,10 @@ from msgraph.generated.models.user import User
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4
 
-from data_ingestion.schemas.user import GraphUser, GraphUserUpdate
+from data_ingestion.schemas.invitation import GraphInvitationCreateRequest
+from data_ingestion.schemas.user import GraphUser, GraphUserUpdateRequest
+from data_ingestion.settings import settings
 
-from ..schemas.invitation import GraphInvitationCreateRequest
-from ..settings import settings
 from .auth import graph_client
 
 
@@ -70,7 +70,7 @@ class UsersApi:
             )
 
     @classmethod
-    async def edit_user(cls, id: UUID4, request_body: GraphUserUpdate) -> None:
+    async def edit_user(cls, id: UUID4, request_body: GraphUserUpdateRequest) -> None:
         try:
             body = User(**request_body.model_dump())
             await graph_client.users.by_user_id(str(id)).patch(body=body)

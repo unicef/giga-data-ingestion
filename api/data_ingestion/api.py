@@ -1,4 +1,3 @@
-import tomllib
 from datetime import timedelta
 
 from fastapi import FastAPI, status
@@ -7,13 +6,11 @@ from fastapi.openapi.models import Response
 from fastapi.responses import FileResponse
 from starlette.middleware.sessions import SessionMiddleware
 
+from data_ingestion.constants import __version__
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
 from data_ingestion.routers import groups, upload, users
 from data_ingestion.settings import settings
-
-with open(settings.BASE_DIR / "pyproject.toml", "rb") as f:
-    __version__ = tomllib.load(f)["tool"]["poetry"]["version"]
 
 app = FastAPI(
     title="Giga Data Ingestion Portal",

@@ -7,7 +7,7 @@ from data_ingestion.schemas.invitation import (
     GraphInvitation,
     GraphInvitationCreateRequest,
 )
-from data_ingestion.schemas.user import GraphUser, GraphUserUpdate
+from data_ingestion.schemas.user import GraphUser, GraphUserUpdateRequest
 
 router = APIRouter(
     prefix="/api/users",
@@ -32,5 +32,5 @@ async def get_user(id: UUID4):
 
 
 @router.patch("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def edit_user(id: UUID4, body: GraphUserUpdate):
+async def edit_user(id: UUID4, body: GraphUserUpdateRequest):
     await UsersApi.edit_user(id, body)

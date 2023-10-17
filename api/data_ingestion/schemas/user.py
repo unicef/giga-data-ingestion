@@ -21,7 +21,7 @@ class GraphUser(BaseModel):
     member_of: list[GraphGroup] | None
 
 
-class GraphUserUpdate(BaseModel):
+class GraphUserUpdateRequest(BaseModel):
     account_enabled: bool | None = None
     display_name: str | None = None
 

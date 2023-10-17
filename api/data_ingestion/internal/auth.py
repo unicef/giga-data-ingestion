@@ -4,8 +4,6 @@ from msgraph import GraphServiceClient
 
 from data_ingestion.settings import settings
 
-openid_base_url = f"https://{settings.AZURE_TENANT_NAME}.b2clogin.com/{settings.AZURE_TENANT_NAME}.onmicrosoft.com/{settings.AZURE_AUTH_POLICY_NAME}"
-
 azure_scheme = MultiTenantAzureAuthorizationCodeBearer(
     app_client_id=settings.AZURE_CLIENT_ID,
     scopes={

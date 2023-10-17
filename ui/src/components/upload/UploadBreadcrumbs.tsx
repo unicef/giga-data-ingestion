@@ -25,7 +25,7 @@ export default function UploadBreadcrumbs() {
               uploadType.split("-").length > 2
                 ? `${uploadType.split("-").slice(0, 2).join(" ")}...`
                 : uploadType.split("-").join(" "),
-            path: `/upload/${uploadType}`,
+            path: `/upload/${uploadGroup}/${uploadType}`,
           },
         ],
       );

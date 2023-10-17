@@ -7,9 +7,10 @@ from msgraph.generated.models.reference_create import ReferenceCreate
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4
 
-from data_ingestion.internal.auth import graph_client
 from data_ingestion.schemas.group import GraphGroup
 from data_ingestion.schemas.user import GraphUser
+
+from .auth import graph_client
 
 
 class GroupsApi:
