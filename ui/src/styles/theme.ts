@@ -8,6 +8,11 @@ const theme: ThemeConfig = {
       fontSize: 16,
       fontFamily: ['"Open Sans"', "sans-serif"].join(", "),
     },
+    Breadcrumb: {
+      linkColor: "#277AFF",
+      lastItemColor: "#000000",
+      linkHoverColor: "#277AFF",
+    },
   },
 };
 
