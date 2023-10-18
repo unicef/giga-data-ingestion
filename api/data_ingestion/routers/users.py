@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Security, status
+from fastapi import APIRouter, Depends, Security, status
+from fastapi_azure_auth.user import User
 from pydantic import UUID4
 
 from data_ingestion.internal.auth import azure_scheme
@@ -24,6 +25,11 @@ async def list_users():
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=GraphInvitation)
 async def invite_user(body: GraphInvitationCreateRequest):
     return await UsersApi.send_user_invite(body)
+
+
+@router.get("/me", response_model=User)
+async def get_current_user(user: User = Depends(azure_scheme)):
+    return user
 
 
 @router.get("/{id}", response_model=GraphUser)

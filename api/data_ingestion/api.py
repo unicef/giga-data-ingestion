@@ -3,7 +3,7 @@ from datetime import timedelta
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.models import Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, ORJSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from data_ingestion.constants import __version__
@@ -18,6 +18,7 @@ app = FastAPI(
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     redirect_slashes=False,
+    default_response_class=ORJSONResponse,
     swagger_ui_oauth2_redirect_url="/api/auth/oauth2-redirect",
     swagger_ui_init_oauth={
         "usePkceWithAuthorizationCodeGrant": True,
