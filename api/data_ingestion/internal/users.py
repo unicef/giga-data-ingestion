@@ -72,7 +72,9 @@ class UsersApi:
     @classmethod
     async def edit_user(cls, id: UUID4, request_body: GraphUserUpdateRequest) -> None:
         try:
-            body = User(**request_body.model_dump())
+            body = User(
+                **{k: v for k, v in request_body.model_dump().items() if v is not None}
+            )
             await graph_client.users.by_user_id(str(id)).patch(body=body)
         except ODataError as err:
             raise HTTPException(

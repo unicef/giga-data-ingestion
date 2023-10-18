@@ -7,7 +7,11 @@ from msgraph.generated.models.reference_create import ReferenceCreate
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4
 
-from data_ingestion.schemas.group import GraphGroup
+from data_ingestion.schemas.group import (
+    CreateGroupRequest,
+    GraphGroup,
+    UpdateGroupRequest,
+)
 from data_ingestion.schemas.user import GraphUser
 
 from .auth import graph_client
@@ -124,6 +128,43 @@ class GroupsApi:
                 .members.by_directory_object_id(str(user_id))
                 .ref.delete()
             )
+        except ODataError as err:
+            raise HTTPException(
+                detail=err.error.message, status_code=err.response_status_code
+            )
+
+    @classmethod
+    async def update_group(cls, id: UUID4, request_body: UpdateGroupRequest) -> None:
+        try:
+            body = Group(
+                **{k: v for k, v in request_body.model_dump().items() if v is not None}
+            )
+            await graph_client.groups.by_group_id(str(id)).patch(body=body)
+        except ODataError as err:
+            raise HTTPException(
+                detail=err.error.message, status_code=err.response_status_code
+            )
+
+    @classmethod
+    async def create_group(cls, request_body: CreateGroupRequest) -> GraphGroup:
+        try:
+            body = Group(
+                **request_body.model_dump(),
+                security_enabled=True,
+                mail_enabled=False,
+                mail_nickname="".join(request_body.display_name.lower().split(" ")),
+                group_types=[],
+            )
+            return await graph_client.groups.post(body=body)
+        except ODataError as err:
+            raise HTTPException(
+                detail=err.error.message, status_code=err.response_status_code
+            )
+
+    @classmethod
+    async def delete_group(cls, id: UUID4) -> None:
+        try:
+            await graph_client.groups.by_group_id(str(id)).delete()
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
