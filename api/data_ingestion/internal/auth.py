@@ -1,4 +1,4 @@
-from azure.identity.aio import ClientSecretCredential
+from azure.identity import ClientSecretCredential
 from fastapi_azure_auth import MultiTenantAzureAuthorizationCodeBearer
 from msgraph import GraphServiceClient
 

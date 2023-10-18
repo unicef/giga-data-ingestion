@@ -31,18 +31,14 @@ export default function Groups() {
   const data = response?.data ?? [];
 
   return (
-    <>
-      <h2 className="text-[23px]">Groups</h2>
-
-      <Table
-        rowKey={row => row.id}
-        dataSource={data}
-        columns={columns}
-        loading={isLoading}
-        pagination={{
-          position: ["bottomRight"],
-        }}
-      />
-    </>
+    <Table
+      rowKey={row => row.id}
+      dataSource={data}
+      columns={columns}
+      loading={isLoading}
+      pagination={{
+        position: ["bottomRight"],
+      }}
+    />
   );
 }
