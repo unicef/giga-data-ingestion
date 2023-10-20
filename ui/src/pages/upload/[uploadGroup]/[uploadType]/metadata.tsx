@@ -132,7 +132,7 @@ export default function UploadMetadata() {
         </fieldset>
 
         <div className="flex justify-end gap-2">
-          <Link to="..">
+          <Link to=".." unstable_viewTransition>
             <Button className="border-primary text-primary">Cancel</Button>
           </Link>
           <Button type="primary" htmlType="submit" className="bg-primary">

@@ -47,6 +47,12 @@ tasks:
     cmds:
       - docker compose --project-name {{.PROJECT_NAME}} down --volumes --remove-orphans {{.CLI_ARGS}}
 
+  test:
+    desc: Run unit tests
+    dir: api
+    cmds:
+      - poetry run pytest
+
   helm-up:
     desc: Install/upgrade Helm chart
     dir: infra/helm

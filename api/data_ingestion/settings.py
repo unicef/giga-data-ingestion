@@ -11,11 +11,17 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: list[str] = ["*"]
     CORS_ALLOWED_ORIGINS: list[str] = ["*"]
     SECRET_KEY: str
+    AZURE_APPLICATION_ID: str
+    AZURE_TENANT_NAME: str
     AZURE_TENANT_ID: str
     AZURE_CLIENT_ID: str
     AZURE_CLIENT_SECRET: str
+    AZURE_AUTH_POLICY_NAME: str
     AZURE_REDIRECT_URI: str
     WEB_APP_REDIRECT_URI: str
+    AZURITE_ACCOUNT_NAME: str
+    AZURITE_ACCOUNT_KEY: str
+    STORAGE_CONTAINER_NAME: str
 
     class Config:
         env_file = ".env"
@@ -28,6 +34,10 @@ class Settings(BaseSettings):
     @property
     def STATICFILES_DIR(self) -> Path:
         return self.BASE_DIR / "static"
+
+    @property
+    def AUTHORITY_URL(self) -> str:
+        return f"https://login.microsoftonline.com/{self.AZURE_TENANT_ID}"
 
 
 @lru_cache

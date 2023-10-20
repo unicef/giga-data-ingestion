@@ -19,7 +19,7 @@ export default function UploadStatus() {
       </p>
 
       <div>
-        <Link to="/">
+        <Link to="/" unstable_viewTransition>
           <Button type="primary" ghost>
             Back to Home
           </Button>

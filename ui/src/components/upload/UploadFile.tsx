@@ -43,7 +43,7 @@ export default function UploadFile() {
           <div
             {...getRootProps()}
             className={cn(
-              "w-1/4 rounded border-4 border-dashed transition-colors",
+              "mx-auto w-full rounded border-4 border-dashed transition-colors",
               "cursor-pointer hover:bg-gray-5 active:bg-gray-6",
               {
                 "border border-solid border-primary hover:bg-primary/10 active:bg-primary/20":
@@ -54,7 +54,7 @@ export default function UploadFile() {
             <input {...getInputProps()} />
             <div
               className={cn(
-                "flex flex-col items-center justify-center gap-2 p-4 text-center text-gray-3",
+                "flex flex-col items-center justify-center gap-2 p-12 text-center text-gray-3",
                 {
                   "text-primary": hasUploadedFile,
                 },

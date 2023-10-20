@@ -22,7 +22,11 @@ export default function Navbar() {
   return (
     <header className="flex-none">
       <nav className="flex h-[80px] items-center justify-between bg-primary p-4 text-white">
-        <Link to="/" className="flex items-center gap-2">
+        <Link
+          to="/"
+          className="flex items-center gap-2"
+          unstable_viewTransition
+        >
           <img src="/GIGA_logo.png" alt="Giga" />
           <h1 className="text-2xl text-white">
             <b>giga ingest</b>
