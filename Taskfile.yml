@@ -2,6 +2,7 @@ version: '3'
 
 dotenv:
   - api/.env
+  - ui/.env
 
 vars:
   PROJECT_NAME: giga-dataops-platform_ingestion-portal
@@ -53,13 +54,33 @@ tasks:
     cmds:
       - poetry run pytest
 
+  build-and-push:
+    desc: Build and push Docker image
+    cmds:
+      - task: build-cr
+      - task: push-cr
+
+  build-cr:
+    internal: true
+    desc: Build Docker image
+    cmds:
+      - docker build --tag {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.SHORT_SHA}} --no-cache -f Dockerfile.prod .
+
+  push-cr:
+    internal: true
+    desc: Push Docker image
+    cmds:
+      - docker push {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.SHORT_SHA}}
+
   helm-up:
     desc: Install/upgrade Helm chart
-    dir: infra/helm
+    dir: infra
     cmds:
-      - |
-        helm upgrade --install ingestion-portal ./data-ingestion \
-        --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}} \
+      - kubectl apply -f k8s/configmap.yaml
+      - kubectl apply -f k8s/secrets.yaml
+      - >
+        helm upgrade --install ingestion-portal ./helm/data-ingestion
+        --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}}
         --set image.tag={{.SHORT_SHA}}
 
   helm-down:
@@ -67,3 +88,5 @@ tasks:
     dir: infra/helm
     cmds:
       - helm uninstall ingestion-portal
+      - kubectl delete all --all
+      - kubectl delete pvc --all
