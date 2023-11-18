@@ -15,7 +15,7 @@ export default function Login() {
   }
 
   return (
-    <div className="h-full bg-[url(/home-bg.jpg)] bg-cover text-white">
+    <div className="h-full bg-[url(/login-bg.jpeg)] bg-cover text-white">
       <div className="flex h-full w-full flex-col items-center justify-center backdrop-brightness-50">
         <div className="flex flex-col items-center gap-4">
           <Button
