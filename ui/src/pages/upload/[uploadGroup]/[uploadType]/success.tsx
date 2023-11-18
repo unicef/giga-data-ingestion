@@ -12,7 +12,7 @@ export default function UploadStatus() {
       <div className="flex gap-2 text-[33px] text-primary">
         <CheckCircleOutlined /> Success!
       </div>
-      <p>Thank you for uploading your data!</p>
+      <p>Your data upload was successful. Thank you for uploading your data!</p>
       <p>
         You will be notified when the upload is approved or if other issues
         persist.

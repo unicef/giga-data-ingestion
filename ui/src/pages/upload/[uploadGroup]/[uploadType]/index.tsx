@@ -10,7 +10,7 @@ export default function Index() {
       <h3 className="text-[23px]">Step 1: Upload</h3>
       <UploadFile />
 
-      <div className="ml-auto flex gap-2">
+      <div className="flex gap-2">
         <Link to="/upload" unstable_viewTransition>
           <Button className="border-primary text-primary">Cancel</Button>
         </Link>

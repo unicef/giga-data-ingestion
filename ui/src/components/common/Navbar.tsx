@@ -1,23 +1,11 @@
 import { Link } from "react-router-dom";
 
-import { AuthenticatedTemplate, useMsal } from "@azure/msal-react";
-import { Button } from "antd";
+import { AuthenticatedTemplate } from "@azure/msal-react";
 
-import { axi } from "@/api";
+import { useStore } from "@/store.ts";
 
 export default function Navbar() {
-  const { instance, accounts } = useMsal();
-  const account = accounts.at(0);
-
-  async function handleLogout() {
-    if (account) {
-      await instance.logoutPopup({
-        mainWindowRedirectUri: "/",
-        logoutHint: account.idTokenClaims?.login_hint,
-      });
-      delete axi.defaults.headers.common["Authorization"];
-    }
-  }
+  const { featureFlags } = useStore();
 
   return (
     <header className="flex-none">
@@ -34,14 +22,15 @@ export default function Navbar() {
         </Link>
 
         <AuthenticatedTemplate>
-          <div className="flex items-center gap-4">
-            <span className="text-neutral-300">
-              Logged in as {account?.username ?? ""}
-            </span>
-            <Button ghost onClick={handleLogout}>
-              Logout
-            </Button>
-          </div>
+          {featureFlags.userManagementPage && (
+            <Link
+              to="/user-management"
+              unstable_viewTransition
+              className="text-white"
+            >
+              Admin Panel
+            </Link>
+          )}
         </AuthenticatedTemplate>
       </nav>
     </header>

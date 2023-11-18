@@ -1,10 +1,6 @@
 import { Link } from "react-router-dom";
 
-import {
-  ApiOutlined,
-  UploadOutlined,
-  UserSwitchOutlined,
-} from "@ant-design/icons";
+import { ApiOutlined, UploadOutlined } from "@ant-design/icons";
 import { Button } from "antd";
 
 import { useStore } from "@/store.ts";
@@ -47,17 +43,6 @@ export default function Landing() {
                 >
                   <ApiOutlined className="text-4xl" />
                   Ingest API
-                </Button>
-              </Link>
-            )}
-            {featureFlags.userManagementPage && (
-              <Link to="/user-management/users" unstable_viewTransition>
-                <Button
-                  className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
-                  ghost
-                >
-                  <UserSwitchOutlined className="text-4xl" />
-                  User Management
                 </Button>
               </Link>
             )}
