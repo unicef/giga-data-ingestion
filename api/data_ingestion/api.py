@@ -83,11 +83,6 @@ async def api_health_check():
     return {"status": "ok"}
 
 
-@app.get("/api/error", tags=["core"], response_class=PlainTextResponse)
-async def test_error():
-    return str(1 / 0)
-
-
 app.include_router(upload.router)
 app.include_router(users.router)
 app.include_router(groups.router)
