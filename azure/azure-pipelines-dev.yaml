@@ -11,7 +11,7 @@ pool:
 variables:
   containerRegistryName: $(ACR_NAME)
   containerRegistryServiceConnection: $(ACR_SERVICE_CONNECTION)
-  kubernetesServiceConnection: $(KUBERNETES_SERVICE_CONNECTION)
+  kubernetesEnvironment: $(KUBERNETES_ENVIRONMENT)
   kubernetesNamespace: $(KUBERNETES_NAMESPACE)
   ingestionPortalImageRepository: $(INGESTION_PORTAL_IMAGE_REPOSITORY)
   azureSasToken: $(AZURE_SAS_TOKEN)
@@ -25,91 +25,75 @@ variables:
   azureAdTenantName: $(AZURE_TENANT_NAME)
   azureAdPolicyName: $(AZURE_AUTH_POLICY_NAME)
   azureAdRedirectUri: $(AZURE_REDIRECT_URI)
-  azureAdLogoutRedirectUri: $(AZURE_LOGOUT_REDIRECT_URI)
-  webAppHost: $(WEB_APP_HOST)
+  applicationSecretKey: $(APPLICATION_SECRET_KEY)
   system.debug: true
 
-steps:
-  - task: Docker@2
-    displayName: Login to container Registry
-    inputs:
-      command: login
-      containerRegistry: $(containerRegistryServiceConnection)
+stages:
+  - stage: Deploy
+    displayName: Deploy Data Ingestion
+    jobs:
+      - deployment: Deploy
+        displayName: Data Ingestion Portal Deployment
+        environment: $(kubernetesEnvironment)
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: Docker@2
+                  displayName: Login to container Registry
+                  inputs:
+                    command: login
+                    containerRegistry: $(containerRegistryServiceConnection)
 
-  - task: Docker@2
-    displayName: Build and push image to container registry
-    inputs:
-      command: buildAndPush
-      repository: giga-ingestion-portal
-      dockerfile: $(Build.SourcesDirectory)/Dockerfile.prod
-      containerRegistry: $(containerRegistryServiceConnection)
-      tags: |
-        $(Build.SourceVersion)
+                - task: Docker@2
+                  displayName: Build and push image to container registry
+                  inputs:
+                    command: buildAndPush
+                    repository: giga-ingestion-portal
+                    dockerfile: $(Build.SourcesDirectory)/Dockerfile.prod
+                    containerRegistry: $(containerRegistryServiceConnection)
+                    tags: |
+                      $(Build.SourceVersion)
 
-  - task: Kubernetes@1
-    displayName: Create configmap
-    inputs:
-      connectionType: Kubernetes Service Connection
-      kubernetesServiceEndpoint: $(kubernetesServiceConnection)
-      namespace: $(kubernetesNamespace)
-      configurationType: configuration
-      command: apply
-      useConfigurationFile: true
-      configuration: $(Build.SourcesDirectory)/infra/k8s/configmap.yaml
+                - task: Kubernetes@1
+                  displayName: Create secret
+                  inputs:
+                    namespace: $(kubernetesNamespace)
+                    configurationType: inline
+                    command: apply
+                    useConfigurationFile: true
+                    inline: |
+                      apiVersion: v1
+                      kind: Secret
+                      metadata:
+                        name: giga-ingestion-portal
+                        labels:
+                          app: giga-ingestion-portal
+                      stringData:
+                        AZURE_BLOB_SAS_TOKEN: "$(azureSasToken)"
+                        AZURE_BLOB_SAS_HOST: "$(azureSasUrl)"
+                        STORAGE_CONTAINER_NAME: "$(azureBlobContainerName)"
+                        AZURE_STORAGE_ACCOUNT_NAME: "$(azureStorageAccountName)"
+                        SECRET_KEY: "$(applicationSecretKey)"
+                        AZURE_APPLICATION_ID: "$(azureAdApplicationId)"
+                        AZURE_TENANT_ID: "$(azureAdTenantId)"
+                        AZURE_CLIENT_ID: "$(azureAdClientId)"
+                        AZURE_CLIENT_SECRET: "$(azureAdClientSecret)"
+                        AZURE_TENANT_NAME: "$(azureAdTenantName)"
+                        AZURE_AUTH_POLICY_NAME: "$(azureAdPolicyName)"
+                        AZURE_REDIRECT_URI: "$(azureAdRedirectUri)"
+                        WEB_APP_REDIRECT_URI: "$(webAppHost)"
 
-  - task: Kubernetes@1
-    displayName: Create secret
-    inputs:
-      connectionType: Kubernetes Service Connection
-      kubernetesServiceEndpoint: $(kubernetesServiceConnection)
-      namespace: $(kubernetesNamespace)
-      configurationType: inline
-      command: apply
-      useConfigurationFile: true
-      inline: |
-        apiVersion: v1
-        kind: Secret
-        metadata:
-          name: giga-ingestion-portal
-          labels:
-            app: giga-ingestion-portal
-        stringData:
-          AZURE_BLOB_SAS_TOKEN: "$(azureSasToken)"
-          AZURE_BLOB_SAS_HOST: "$(azureSasUrl)"
-          AZURE_BLOB_CONTAINER_NAME: "$(azureBlobContainerName)"
-          AZURE_STORAGE_ACCOUNT_NAME: "$(azureStorageAccountName)"
-          SECRET_KEY: "$(secretKey)"
-          AZURE_APPLICATION_ID: "$(azureAdApplicationId)"
-          AZURE_TENANT_ID: "$(azureAdTenantId)"
-          AZURE_CLIENT_ID: "$(azureAdClientId)"
-          AZURE_CLIENT_SECRET: "$(azureAdClientSecret)"
-          AZURE_TENANT_NAME: "$(azureAdTenantName)"
-          AZURE_AUTH_POLICY_NAME: "$(azureAdPolicyName)"
-          AZURE_REDIRECT_URI: "$(azureAdRedirectUri)"
-          WEB_APP_REDIRECT_URI: "$(webAppHost)"
-
-  - task: HelmDeploy@0
-    displayName: Helm deploy Dagster core
-    inputs:
-      connectionType: Kubernetes Service Connection
-      kubernetesServiceEndpoint: $(kubernetesServiceConnection)
-      command: upgrade
-      chartType: FilePath
-      chartPath: infra/helm/data-ingestion
-      releaseName: ingestion-portal
-      namespace: $(kubernetesNamespace)
-      arguments: >
-        --values infra/helm/values.yaml
-        --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
-        --set image.tag="$(Build.SourceVersion)"
-
-  - task: Kubernetes@1
-    displayName: Create ingress
-    inputs:
-      connectionType: Kubernetes Service Connection
-      kubernetesServiceEndpoint: $(kubernetesServiceConnection)
-      namespace: $(kubernetesNamespace)
-      configurationType: configuration
-      command: apply
-      useConfigurationFile: true
-      configuration: $(Build.SourcesDirectory)/infra/k8s/ingress.yaml
+                - task: HelmDeploy@0
+                  displayName: Helm deploy Ingestion Portal
+                  inputs:
+                    command: upgrade
+                    chartType: FilePath
+                    chartPath: infra/helm/data-ingestion
+                    releaseName: ingestion-portal
+                    namespace: $(kubernetesNamespace)
+                    arguments: >
+                      --values infra/helm/values.yaml
+                      --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
+                      --set image.tag="$(Build.SourceVersion)"
+                      --set ingress.enabled=true

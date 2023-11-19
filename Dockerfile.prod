@@ -6,10 +6,12 @@ WORKDIR /tmp
 
 RUN npm install && npm run build
 
-FROM python:3.11 AS deps
+FROM python:3.11-slim as base
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
+
+FROM base AS deps
 
 ARG POETRY_VERSION=1.6.1
 
@@ -21,7 +23,7 @@ COPY api/pyproject.toml api/poetry.lock ./
 
 RUN poetry export -f requirements.txt --without-hashes --without dev > requirements.txt
 
-FROM python:3.11 AS prod
+FROM base AS prod
 
 WORKDIR /tmp
 
@@ -34,4 +36,6 @@ WORKDIR /app
 COPY ./api/ ./
 COPY --from=build /tmp/build ./static/
 
-CMD [ "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3000" ]
+ENV PORT 3000
+
+CMD [ "/bin/sh", "-c", "exec gunicorn main:app --bind 0.0.0.0:$PORT --config gunicorn.conf.py" ]

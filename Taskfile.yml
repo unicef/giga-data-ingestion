@@ -64,7 +64,7 @@ tasks:
     internal: true
     desc: Build Docker image
     cmds:
-      - docker build --tag {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.SHORT_SHA}} --no-cache -f Dockerfile.prod .
+      - docker build --tag {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.SHORT_SHA}} -f Dockerfile.prod .
 
   push-cr:
     internal: true
@@ -76,12 +76,12 @@ tasks:
     desc: Install/upgrade Helm chart
     dir: infra
     cmds:
-      - kubectl apply -f k8s/configmap.yaml
       - kubectl apply -f k8s/secrets.yaml
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
         --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}}
         --set image.tag={{.SHORT_SHA}}
+        --set service.type=LoadBalancer
 
   helm-down:
     desc: Uninstall Helm chart

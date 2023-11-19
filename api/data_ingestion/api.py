@@ -3,7 +3,7 @@ from datetime import timedelta
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.models import Response
-from fastapi.responses import FileResponse, ORJSONResponse
+from fastapi.responses import FileResponse, ORJSONResponse, PlainTextResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from data_ingestion.constants import __version__
@@ -55,8 +55,22 @@ async def load_config():
         ).model_dump(),
     },
 )
-async def health_check():
+async def api_health_check():
     return {"status": "ok"}
+
+
+@app.get(
+    "/",
+    tags=["core"],
+    responses={
+        status.HTTP_500_INTERNAL_SERVER_ERROR: Response(
+            description=status.HTTP_500_INTERNAL_SERVER_ERROR.__class__.__name__
+        ).model_dump(),
+    },
+    response_class=PlainTextResponse,
+)
+async def health_check():
+    return "ok"
 
 
 app.include_router(upload.router)
