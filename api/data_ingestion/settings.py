@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     AZURITE_ACCOUNT_NAME: str
     AZURITE_ACCOUNT_KEY: str
     STORAGE_CONTAINER_NAME: str
+    SENTRY_DSN: str = ""
 
     class Config:
         env_file = ".env"
