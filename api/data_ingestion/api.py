@@ -1,4 +1,5 @@
 from datetime import timedelta
+from http import HTTPStatus
 
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,30 +48,30 @@ async def load_config():
 
 
 @app.get(
-    "/api",
-    tags=["core"],
-    responses={
-        status.HTTP_500_INTERNAL_SERVER_ERROR: Response(
-            description=status.HTTP_500_INTERNAL_SERVER_ERROR.__class__.__name__
-        ).model_dump(),
-    },
-)
-async def api_health_check():
-    return {"status": "ok"}
-
-
-@app.get(
     "/",
     tags=["core"],
     responses={
         status.HTTP_500_INTERNAL_SERVER_ERROR: Response(
-            description=status.HTTP_500_INTERNAL_SERVER_ERROR.__class__.__name__
+            description=HTTPStatus.INTERNAL_SERVER_ERROR.phrase
         ).model_dump(),
     },
     response_class=PlainTextResponse,
 )
 async def health_check():
     return "ok"
+
+
+@app.get(
+    "/api",
+    tags=["core"],
+    responses={
+        status.HTTP_500_INTERNAL_SERVER_ERROR: Response(
+            description=HTTPStatus.INTERNAL_SERVER_ERROR.phrase
+        ).model_dump(),
+    },
+)
+async def api_health_check():
+    return {"status": "ok"}
 
 
 app.include_router(upload.router)
