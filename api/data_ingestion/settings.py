@@ -19,9 +19,6 @@ class Settings(BaseSettings):
     AZURE_AUTH_POLICY_NAME: str
     AZURE_REDIRECT_URI: str
     WEB_APP_REDIRECT_URI: str
-    AZURITE_ACCOUNT_NAME: str
-    AZURITE_ACCOUNT_KEY: str
-    STORAGE_CONTAINER_NAME: str
     SENTRY_DSN: str = ""
 
     class Config:
