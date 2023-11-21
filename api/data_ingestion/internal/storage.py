@@ -14,7 +14,7 @@ def get_storage_client():
         }
         storage_account_url = f"http://azurite:10000/{settings.AZURITE_ACCOUNT_NAME}"
     else:
-        default_credential = settings.STORAGE_ACCOUNT_KEY
+        default_credential = settings.AZURE_SAS_TOKEN
         storage_account_url = (
             f"https://{settings.STORAGE_ACCOUNT_NAME}.blob.core.windows.net"
         )
