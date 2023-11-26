@@ -14,8 +14,8 @@ variables:
   kubernetesEnvironment: $(KUBERNETES_ENVIRONMENT)
   kubernetesNamespace: $(KUBERNETES_NAMESPACE)
   azureSasToken: $(AZURE_SAS_TOKEN)
-  storageContainerName: $(STORAGE_CONTAINER_NAME)
-  storageAccountName: $(STORAGE_ACCOUNT_NAME)
+  storageContainerName: $(AZURE_BLOB_CONTAINER_NAME)
+  storageAccountName: $(AZURE_STORAGE_ACCOUNT_NAME)
   azureAdApplicationId: $(AZURE_APPLICATION_ID)
   azureAdTenantId: $(AZURE_TENANT_ID)
   azureAdClientId: $(AZURE_CLIENT_ID)
@@ -72,8 +72,8 @@ stages:
                           app: giga-ingestion-portal
                       stringData:
                         AZURE_SAS_TOKEN: "$(azureSasToken)"
-                        STORAGE_CONTAINER_NAME: "$(storageContainerName)"
-                        STORAGE_ACCOUNT_NAME: "$(storageAccountName)"
+                        AZURE_BLOB_CONTAINER_NAME: "$(storageContainerName)"
+                        AZURE_STORAGE_ACCOUNT_NAME: "$(storageAccountName)"
                         SECRET_KEY: "$(applicationSecretKey)"
                         AZURE_APPLICATION_ID: "$(azureAdApplicationId)"
                         AZURE_TENANT_ID: "$(azureAdTenantId)"
