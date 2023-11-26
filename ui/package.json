@@ -1,7 +1,7 @@
 {
-  "name": "data-ingestion-frontend",
+  "name": "@unicef/giga-data-ingestion-ui",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,7 +15,7 @@
     "@azure/msal-react": "^2.0.4",
     "@fontsource/open-sans": "^5.0.12",
     "@sentry/react": "^7.80.1",
-    "@tanstack/react-query": "^4.36.1",
+    "@tanstack/react-query": "^5.8.7",
     "antd": "^5.11.2",
     "axios": "^1.6.2",
     "immer": "^10.0.3",
