@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     AZURE_AUTH_POLICY_NAME: str
     AZURE_REDIRECT_URI: str
     AZURE_SAS_TOKEN: str
-    STORAGE_CONTAINER_NAME: str
-    STORAGE_ACCOUNT_NAME: str
+    AZURE_BLOB_CONTAINER_NAME: str
+    AZURE_STORAGE_ACCOUNT_NAME: str
     WEB_APP_REDIRECT_URI: str
     SENTRY_DSN: str = ""
 

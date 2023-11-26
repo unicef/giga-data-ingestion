@@ -10,11 +10,11 @@ import { SentinelGroup } from "@/types/group.ts";
 export default function GroupBreadcrumbs() {
   const api = useApi();
   const { groupId = "" } = useParams();
-  const { isLoading, data: response } = useQuery(
-    ["groups", groupId],
-    () => api.groups.get(groupId),
-    { enabled: !!groupId },
-  );
+  const { isLoading, data: response } = useQuery({
+    queryKey: ["groups", groupId],
+    queryFn: () => api.groups.get(groupId),
+    enabled: !!groupId,
+  });
   const group = response?.data ?? SentinelGroup;
 
   const getBreadcrumbs = useCallback(() => {

@@ -9,7 +9,10 @@ import { GraphUser } from "@/types/user.ts";
 
 export default function Users() {
   const api = useApi();
-  const { isLoading, data: response } = useQuery(["users"], api.users.list);
+  const { isLoading, data: response } = useQuery({
+    queryKey: ["users"],
+    queryFn: api.users.list,
+  });
 
   const usersData = response?.data ?? [];
 
