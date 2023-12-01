@@ -1,23 +1,13 @@
-import {
-  AuthenticatedTemplate,
-  UnauthenticatedTemplate,
-} from "@azure/msal-react";
+import { useAuth } from "oidc-react";
 
 import Landing from "@/components/landing/Landing.tsx";
 import Login from "@/components/landing/Login.tsx";
 
 function App() {
-  return (
-    <>
-      <AuthenticatedTemplate>
-        <Landing />
-      </AuthenticatedTemplate>
+  const auth = useAuth();
+  console.debug("hello", auth);
 
-      <UnauthenticatedTemplate>
-        <Login />
-      </UnauthenticatedTemplate>
-    </>
-  );
+  return auth && auth.userData ? <Landing /> : <Login />;
 }
 
 export default App;

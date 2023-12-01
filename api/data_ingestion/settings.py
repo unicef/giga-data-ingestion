@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     AZURE_BLOB_CONTAINER_NAME: str
     AZURE_STORAGE_ACCOUNT_NAME: str
     WEB_APP_REDIRECT_URI: str
+    ZITADEL_CLIENT_ID: str
+    ZITADEL_CLIENT_KEY: str
     SENTRY_DSN: str = ""
 
     class Config:

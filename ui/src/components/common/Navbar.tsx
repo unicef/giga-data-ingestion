@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
 
-import { AuthenticatedTemplate } from "@azure/msal-react";
+import { useAuth } from "oidc-react";
 
 import { useStore } from "@/store.ts";
 
 export default function Navbar() {
   const { featureFlags } = useStore();
+  const auth = useAuth();
 
   return (
     <header className="flex-none">
@@ -21,17 +22,15 @@ export default function Navbar() {
           </h1>
         </Link>
 
-        <AuthenticatedTemplate>
-          {featureFlags.userManagementPage && (
-            <Link
-              to="/user-management"
-              unstable_viewTransition
-              className="text-white"
-            >
-              Admin Panel
-            </Link>
-          )}
-        </AuthenticatedTemplate>
+        {auth && auth.userData && featureFlags.userManagementPage && (
+          <Link
+            to="/user-management"
+            unstable_viewTransition
+            className="text-white"
+          >
+            Admin Panel
+          </Link>
+        )}
       </nav>
     </header>
   );

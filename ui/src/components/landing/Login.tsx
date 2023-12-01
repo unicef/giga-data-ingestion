@@ -1,18 +1,7 @@
-import { useMsal } from "@azure/msal-react";
 import { Button } from "antd";
 
-import { loginRequest } from "@/lib/auth.ts";
-
 export default function Login() {
-  const { instance } = useMsal();
-
-  async function handleLogin() {
-    try {
-      await instance.loginPopup(loginRequest);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  function handleLogin() {}
 
   return (
     <div className="h-full bg-[url(/login-bg.jpeg)] bg-cover text-white">

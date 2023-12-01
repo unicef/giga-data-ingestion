@@ -1,4 +1,5 @@
 import { Configuration, LogLevel, PopupRequest } from "@azure/msal-browser";
+import { AuthProviderProps } from "oidc-react";
 
 const { VITE_AZURE_CLIENT_ID: AZURE_CLIENT_ID } = import.meta.env;
 
@@ -43,3 +44,15 @@ export const msalConfig: Configuration = {
 export const loginRequest: PopupRequest = {
   scopes: [`api://${AZURE_CLIENT_ID}/user_impersonation`],
 };
+
+export const oidcConfig = {
+  onSignIn: async () => {
+    window.location.hash = "";
+  },
+  authority: "http://localhost:8080",
+  clientId: import.meta.env.VITE_ZITADEL_CLIENT_ID,
+  responseType: "code",
+  redirectUri: "http://localhost:3000",
+  postLogoutRedirectUri: "http://localhost:3000",
+  scope: "openid profile email",
+} satisfies AuthProviderProps;
