@@ -9,7 +9,6 @@ from fastapi.responses import FileResponse, ORJSONResponse, PlainTextResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from data_ingestion.constants import __version__
-from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
 from data_ingestion.routers import groups, upload, users
 from data_ingestion.settings import settings
@@ -32,7 +31,8 @@ app = FastAPI(
     swagger_ui_oauth2_redirect_url="/api/auth/oauth2-redirect",
     swagger_ui_init_oauth={
         "usePkceWithAuthorizationCodeGrant": True,
-        "clientId": settings.AZURE_CLIENT_ID,
+        "clientId": settings.ZITADEL_CLIENT_ID,
+        "scopes": "openid profile email",
     },
 )
 app.add_middleware(
@@ -49,11 +49,6 @@ app.add_middleware(
     max_age=int(timedelta(days=7).total_seconds()),
     same_site="lax",
 )
-
-
-@app.on_event("startup")
-async def load_config():
-    await azure_scheme.openid_config.load_config()
 
 
 @app.get(
@@ -91,7 +86,7 @@ app.include_router(groups.router)
 if settings.IN_PRODUCTION:
 
     @app.exception_handler(404)
-    async def send_to_frontend(*_, **__):
+    async def send_to_frontend(*_args, **_kwargs):
         return FileResponse(settings.STATICFILES_DIR / "index.html")
 
     app.mount(

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Security, status
 from pydantic import UUID4
 
-from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.auth import oidc_scheme
 from data_ingestion.internal.groups import GroupsApi
 from data_ingestion.schemas.group import (
     AddGroupMemberRequest,
@@ -14,7 +14,7 @@ from data_ingestion.schemas.user import GraphUser
 router = APIRouter(
     prefix="/api/groups",
     tags=["groups"],
-    dependencies=[Security(azure_scheme)],
+    dependencies=[Security(oidc_scheme)],
 )
 
 

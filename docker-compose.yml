@@ -15,6 +15,7 @@ services:
     image: node:18-alpine
     restart: unless-stopped
     working_dir: /app
+    env_file: ./ui/.env
     ports:
       - "3000:3000"
     volumes:

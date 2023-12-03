@@ -23,7 +23,8 @@ class Settings(BaseSettings):
     AZURE_STORAGE_ACCOUNT_NAME: str
     WEB_APP_REDIRECT_URI: str
     ZITADEL_CLIENT_ID: str
-    ZITADEL_CLIENT_KEY: str
+    ZITADEL_CLIENT_SECRET: str
+    ZITADEL_AUTHORITY: str
     SENTRY_DSN: str = ""
 
     class Config:

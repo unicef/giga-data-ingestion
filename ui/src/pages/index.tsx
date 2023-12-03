@@ -5,7 +5,6 @@ import Login from "@/components/landing/Login.tsx";
 
 function App() {
   const auth = useAuth();
-  console.debug("hello", auth);
 
   return auth && auth.userData ? <Landing /> : <Login />;
 }
