@@ -17,6 +17,7 @@ import "@fontsource/open-sans/700.css";
 import { Routes } from "@generouted/react-router/lazy";
 import * as Sentry from "@sentry/react";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { App as AntDApp, ConfigProvider as AntDConfigProvider } from "antd";
 
 import { queryClient } from "@/api";
@@ -63,6 +64,7 @@ auth
                 </HelmetProvider>
               </AntDApp>
             </AntDConfigProvider>
+            <ReactQueryDevtools initialIsOpen={false} />
           </QueryClientProvider>
         </MsalProvider>
       </React.StrictMode>,
