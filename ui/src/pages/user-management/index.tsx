@@ -5,6 +5,7 @@ import { Button, Table, Tag } from "antd";
 import { ColumnsType } from "antd/es/table";
 
 import { useApi } from "@/api";
+import AddUserModal from "@/components/user-management/AddUserModal";
 import { GraphUser } from "@/types/user.ts";
 
 export default function Users() {
@@ -80,9 +81,7 @@ export default function Users() {
           reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
           pariatur.
         </p>
-        <Button type="primary" ghost className="ml-auto bg-primary">
-          Add User
-        </Button>
+        <AddUserModal />
       </div>
 
       <Table
