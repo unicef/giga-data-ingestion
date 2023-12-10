@@ -1,6 +1,10 @@
 import { useState } from "react";
 
+import { CloseCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Form, Input, Modal, Select } from "antd";
+
+import countries from "@/constants/countries";
+import { formatCountries } from "@/utils/string";
 
 type FieldType = {
   email?: string;
@@ -19,15 +23,53 @@ const onFinishFailed = (errorInfo: any) => {
 export default function AddUserModal() {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const [form] = Form.useForm();
 
   const inputEmail = Form.useWatch("email", form);
+
+  const countryOptions = countries.map(country => ({
+    value: country.name,
+    label: country.name,
+  }));
+
+  const formattedCountries = formatCountries(selectedCountries);
 
   const showModal = () => {
     setIsModalOpen(true);
   };
 
-  const handleCancel = () => {
+  const handleCancelConfirm = () => {
+    setIsConfirmationModalOpen(false);
+    setIsModalOpen(true);
+  };
+
+  const handleOkConfirm = () => {
+    form.resetFields();
+    setIsConfirmationModalOpen(false);
+  };
+
+  const handleChange = (value: string[]) => {
+    setSelectedCountries(value);
+  };
+
+  // new handles
+  const handleOkForm = () => {
+    form
+      .validateFields()
+      .then(values => {
+        console.log("recieved values of form: ", values);
+        setIsModalOpen(false);
+        setIsConfirmationModalOpen(true);
+      })
+      .catch(info => {
+        console.log("Validation failed:", info);
+      });
+  };
+
+  const handleCancelForm = () => {
+    form.resetFields();
     setIsModalOpen(false);
   };
 
@@ -40,37 +82,26 @@ export default function AddUserModal() {
   return (
     <>
       <Button
-        type="primary"
+        className="ml-auto rounded-none bg-primary"
         ghost
-        className="ml-auto bg-primary"
+        icon={<PlusOutlined />}
         onClick={showModal}
+        type="primary"
       >
         Add User
       </Button>
       <Modal
         centered={true}
-        title="Basic Modal"
+        title="Add new user"
         okText="Confirm"
         cancelText="Cancel"
+        okButtonProps={{ className: "rounded-none bg-primary" }}
+        cancelButtonProps={{ className: "rounded-none" }}
         open={isModalOpen}
-        onOk={() => {
-          form
-            .validateFields()
-            .then(values => {
-              console.log("recieved values of form: ", values);
-              setIsModalOpen(false);
-              setIsConfirmationModalOpen(true);
-            })
-            .catch(info => {
-              console.log("Validation failed:", info);
-            });
-        }}
-        onCancel={handleCancel}
+        onOk={handleOkForm}
+        onCancel={handleCancelForm}
         width={"60%"}
-        okButtonProps={{ className: "bg-primary" }}
       >
-        <div className="ant-modal-header">Extra</div>
-
         <Form
           {...layout}
           form={form}
@@ -94,7 +125,13 @@ export default function AddUserModal() {
             name="country"
             rules={[{ required: true, message: "Please input a country" }]}
           >
-            <Select mode="multiple" options={[]} />
+            <Select
+              allowClear
+              mode="multiple"
+              placeholder="Select relevant countries"
+              onChange={handleChange}
+              options={countryOptions}
+            />
           </Form.Item>
 
           <Form.Item<FieldType>
@@ -115,26 +152,22 @@ export default function AddUserModal() {
       </Modal>
       <Modal
         centered={true}
-        okButtonProps={{ className: "bg-primary" }}
+        classNames={{ header: "border-b pb-1" }}
+        closeIcon={<CloseCircleOutlined />}
+        confirmLoading={confirmLoading}
+        cancelButtonProps={{ className: "rounded-none" }}
+        okButtonProps={{ className: "rounded-none bg-primary" }}
         okText="Confirm"
         open={isConfirmationModalOpen}
-        onOk={() => {
-          // rest of success logic here
-          form.resetFields();
-          setIsConfirmationModalOpen(false);
-        }}
-        onCancel={() => {
-          console.log("Donners");
-          setIsConfirmationModalOpen(false);
-          setIsModalOpen(true);
-        }}
+        onOk={handleOkConfirm}
+        onCancel={handleCancelConfirm}
+        title="Add new user"
       >
         <p>
           This will give the user with email <strong>{inputEmail}</strong>{" "}
-          access toasfdasdfsdfasdfaccess toasfdasdfsdfasdfaccess
-          toasfdasdfsdfasdfaccess toasfdasdfsdfasdfaccess
-          toasfdasdfsdfasdfaccess toasfdasdfsdfasdfaccess
-          toasfdasdfsdfasdfaccess toasfdasdfsdfasdf
+          access to <strong>{selectedCountries.length}</strong>{" "}
+          {selectedCountries.length > 1 ? "countries, " : "country, "}
+          <strong>{formattedCountries}</strong>
         </p>
         <p>&nbsp;</p>
         <p>Is this correct?</p>
