@@ -1,8 +1,6 @@
 import { useState } from "react";
 
-import { useQuery } from "@tanstack/react-query";
 import { Button, Form, Input, Modal, Select } from "antd";
-import axios from "axios";
 
 type FieldType = {
   email?: string;
@@ -23,42 +21,10 @@ export default function AddUserModal() {
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [form] = Form.useForm();
 
-  const fetchData = async () => {
-    const url = "http://localhost:5000/roles"; // Replace with your route
-    const authToken = "YOURAUTHTOKENHERE";
-
-    console.log("trying");
-
-    try {
-      const response = await axios.get(url, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-
-      return { data: response.data };
-    } catch (error) {
-      // Handle errors here
-      console.error("Error fetching data:", error);
-      return { data: "nothing" };
-    }
-  };
-
-  const { data: countries } = useQuery({
-    queryKey: ["countries"],
-    queryFn: () => fetchData(),
-  });
-
   const inputEmail = Form.useWatch("email", form);
-  const inputCountry = Form.useWatch("country", form);
-  const inputRole = Form.useWatch("role", form);
 
   const showModal = () => {
     setIsModalOpen(true);
-  };
-
-  const handleOk = () => {
-    //validateHere
   };
 
   const handleCancel = () => {
