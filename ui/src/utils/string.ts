@@ -11,10 +11,3 @@ export function formatCountries(countries: string[]) {
     return formattedCountries;
   }
 }
-
-const countryArray = ["CountryA", "CountryB", "CountryC", "CountryD"];
-
-const formattedList = formatCountries(countryArray);
-console.log(formattedList); // Output: CountryA, CountryB, CountryC, and CountryD
-
-export default formatCountries;
