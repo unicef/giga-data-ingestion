@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { CloseSquareOutlined, ToolOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Table, Tag } from "antd";
 import { ColumnsType } from "antd/es/table";
@@ -55,11 +56,23 @@ export default function Users() {
         title: "Actions",
         dataIndex: "id",
         render: () => (
-          <div className="flex gap-1">
-            <Button ghost type="primary" size="small">
+          <div className="flex gap-2">
+            <Button
+              className="!rounded-none"
+              ghost
+              icon={<ToolOutlined />}
+              type="primary"
+              size="small"
+            >
               Edit
             </Button>
-            <Button ghost type="primary" size="small">
+            <Button
+              ghost
+              className="!rounded-none"
+              icon={<CloseSquareOutlined />}
+              type="primary"
+              size="small"
+            >
               Revoke
             </Button>
           </div>
