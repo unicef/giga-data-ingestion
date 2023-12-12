@@ -43,13 +43,29 @@ export default function Users() {
       {
         key: "countries",
         title: "Countries",
+        dataIndex: "member_of",
+        render: (userGroups: GraphUser["member_of"]) =>
+          userGroups
+            .filter(group =>
+              countries.some(country => country["name"] === group.display_name),
+            )
+            .map(val => val.display_name)
+            .join(", "),
       },
       {
         key: "groups",
         title: "Roles",
         dataIndex: "member_of",
-        render: (value: GraphUser["member_of"]) =>
-          value.map(val => val.display_name).join(", "),
+        render: (userGroups: GraphUser["member_of"]) =>
+          userGroups
+            .filter(
+              group =>
+                !countries.some(
+                  country => country["name"] === group.display_name,
+                ),
+            )
+            .map(val => val.display_name)
+            .join(", "),
       },
       {
         key: "actions",
