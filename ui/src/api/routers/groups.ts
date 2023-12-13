@@ -16,5 +16,28 @@ export default function routes(axi: AxiosInstance) {
     get: (id: string): Promise<AxiosResponse<GraphGroup>> => {
       return axi.get(`/groups/${id}`);
     },
+    create: ({
+      description = "",
+      display_name,
+    }: {
+      description?: string;
+      display_name: string;
+    }): Promise<AxiosResponse<GraphGroup>> => {
+      return axi.post(`/groups`, {
+        description: description,
+        display_names: display_name,
+      });
+    },
+    add_user_to_group: ({
+      id,
+      user_id,
+    }: {
+      id: string;
+      user_id: string;
+    }): Promise<AxiosResponse<null>> => {
+      return axi.post(`/groups/${id}/users`, {
+        user_id: user_id,
+      });
+    },
   };
 }
