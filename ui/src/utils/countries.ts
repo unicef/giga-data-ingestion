@@ -1,4 +1,4 @@
-import countries from "@/constants/countries";
+import { countries } from "@/constants/countries";
 
 export function filterCountries(groups: string[]): string[] {
   return groups.filter(group => {
