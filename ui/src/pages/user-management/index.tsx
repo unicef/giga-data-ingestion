@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { CloseSquareOutlined, ToolOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
@@ -7,14 +7,32 @@ import { ColumnsType } from "antd/es/table";
 
 import { useApi } from "@/api";
 import AddUserModal from "@/components/user-management/AddUserModal";
+import EditUserModal from "@/components/user-management/EditUserModal";
+import countries from "@/constants/countries";
 import { GraphUser } from "@/types/user.ts";
 
 export default function Users() {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<GraphUser>({
+    id: "",
+    account_enabled: false,
+    display_name: "",
+    mail: "",
+    member_of: [],
+    user_principal_name: "",
+    external_user_state: null,
+  });
+
   const api = useApi();
   const { isLoading, data: response } = useQuery({
     queryKey: ["users"],
     queryFn: api.users.list,
   });
+
+  const handleEdit = (user: GraphUser) => {
+    setSelectedUser(user);
+    setIsEditModalOpen(true);
+  };
 
   const usersData = response?.data ?? [];
 
@@ -71,12 +89,13 @@ export default function Users() {
         key: "actions",
         title: "Actions",
         dataIndex: "id",
-        render: () => (
+        render: (_, record) => (
           <div className="flex gap-2">
             <Button
               className="!rounded-none"
               ghost
               icon={<ToolOutlined />}
+              onClick={() => handleEdit(record)}
               type="primary"
               size="small"
             >
@@ -122,6 +141,13 @@ export default function Users() {
           position: ["bottomRight"],
         }}
       />
+      {isEditModalOpen && (
+        <EditUserModal
+          initialValues={selectedUser}
+          isEditModalOpen={isEditModalOpen}
+          setIsEditModalOpen={setIsEditModalOpen}
+        />
+      )}
     </>
   );
 }
