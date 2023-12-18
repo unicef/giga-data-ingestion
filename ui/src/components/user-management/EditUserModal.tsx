@@ -53,6 +53,11 @@ export default function EditUserModal({
     queryFn: api.groups.list,
   });
 
+
+  const removeUserFromGroup = useMutation({
+    mutationFn: api.groups.remove_user_from_group,
+  });
+
   const groups = groupsData?.data?.map(group => group.display_name) ?? [];
 
   const countries = filterCountries(groups);

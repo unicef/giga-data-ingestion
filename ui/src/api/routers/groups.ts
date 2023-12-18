@@ -39,5 +39,14 @@ export default function routes(axi: AxiosInstance) {
         user_id: user_id,
       });
     },
+    remove_user_from_group: ({
+      group_id,
+      user_id,
+    }: {
+      group_id: string;
+      user_id: string;
+    }): Promise<AxiosResponse<null>> => {
+      return axi.delete(`/groups/${group_id}/users/${user_id}`);
+    },
   };
 }
