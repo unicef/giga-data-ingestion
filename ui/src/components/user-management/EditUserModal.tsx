@@ -42,7 +42,7 @@ export default function EditUserModal({
   const [selectedCountries, setSelectedCountries] = useState(initialCountries);
   const [selectedRoles, setSelectedRoles] = useState(initialRoles);
 
-  const { isLoading: groupsIsLoading, data: groupsData } = useQuery({
+  const { data: groupsData } = useQuery({
     queryKey: ["groups"],
     queryFn: api.groups.list,
   });
@@ -58,6 +58,7 @@ export default function EditUserModal({
   const groups = groupsData?.data?.map(group => group.display_name) ?? [];
   const countries = filterCountries(groups);
   const roles = filterRoles(groups);
+
   const countryOptions = countries.map(country => ({
     value: country,
     label: country,
@@ -79,11 +80,9 @@ export default function EditUserModal({
   const countriesToAdd = selectedCountries.filter(
     (country: string) => !initialCountries.includes(country),
   );
-
   const countriesToRemove = initialCountries.filter(
     (country: string) => !selectedCountries.includes(country),
   );
-
   const rolesToAdd = selectedRoles.filter(
     (role: string) => !initialRoles.includes(role),
   );
