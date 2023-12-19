@@ -146,104 +146,91 @@ export default function EditUserModal({
 
   return (
     <>
-      {groupsIsLoading ? (
-        <div>Loading...</div>
-      ) : (
-        <div>
-          <Modal
-            centered={true}
-            title="Modify User"
-            okText="Confirm"
-            cancelText="Cancel"
-            okButtonProps={{
-              disabled:
-                countriesToAdd.length === 0 && countriesToRemove.length === 0,
-              className: "rounded-none bg-primary",
-            }}
-            cancelButtonProps={{ className: "rounded-none" }}
-            open={isEditModalOpen && !swapModal}
-            onOk={handleSubmit(onSubmit)}
-            onCancel={handleCancelForm}
-            width={"40%"}
-          >
-            {selectedCountries.map(country => (
-              <div>{country}</div>
-            ))}
-            <b>initialCountries</b>
-            {initialCountries.map(country => (
-              <div>{country}</div>
-            ))}
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <Controller
-                disabled
-                name="user"
-                control={control}
-                render={({ field }) => <Input {...field} />}
-              />
-              <Controller
-                disabled
-                name="email"
-                control={control}
-                render={({ field }) => <Input {...field} />}
-              />
-              <Controller
-                name="countries"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    mode="multiple"
-                    onSelect={value =>
-                      setSelectedCountries(prev => [...prev, value])
-                    }
-                    onDeselect={value => {
-                      setSelectedCountries(prev =>
-                        prev.filter(country => country !== value),
-                      );
-                    }}
-                    options={countryOptions}
-                    {...field}
-                  />
-                )}
-              />
-              <Controller
-                name="roles"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    mode="multiple"
-                    onSelect={value =>
-                      setSelectedRoles(prev => [...prev, value])
-                    }
-                    onDeselect={value =>
-                      setSelectedRoles(prev =>
-                        prev.filter(role => role !== value),
-                      )
-                    }
-                    options={roleOptions}
-                    {...field}
-                  />
-                )}
-              />
-            </form>
-          </Modal>
-          <Modal
-            centered={true}
-            classNames={{ header: "border-b pb-1" }}
-            closeIcon={<CloseCircleOutlined />}
-            confirmLoading={addUserToGroup.isPending}
-            cancelButtonProps={{ className: "rounded-none" }}
-            okButtonProps={{ className: "rounded-none bg-primary" }}
-            okText="Confirm"
-            open={swapModal}
-            onOk={handleConfirm}
-            onCancel={() => setSwapModal(false)}
-            title="Add new user"
-          >
-            <p>&nbsp;</p>
-            <p>Is this correct?</p>
-          </Modal>
-        </div>
-      )}
+      <div>
+        <Modal
+          centered={true}
+          title="Modify User"
+          okText="Confirm"
+          cancelText="Cancel"
+          okButtonProps={{
+            disabled:
+              countriesToAdd.length === 0 && countriesToRemove.length === 0,
+            className: "rounded-none bg-primary",
+          }}
+          cancelButtonProps={{ className: "rounded-none" }}
+          open={isEditModalOpen && !swapModal}
+          onOk={handleSubmit(onSubmit)}
+          onCancel={handleCancelForm}
+          width={"40%"}
+        >
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <Controller
+              disabled
+              name="user"
+              control={control}
+              render={({ field }) => <Input {...field} />}
+            />
+            <Controller
+              disabled
+              name="email"
+              control={control}
+              render={({ field }) => <Input {...field} />}
+            />
+            <Controller
+              name="countries"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  mode="multiple"
+                  onSelect={value =>
+                    setSelectedCountries(prev => [...prev, value])
+                  }
+                  onDeselect={value => {
+                    setSelectedCountries(prev =>
+                      prev.filter(country => country !== value),
+                    );
+                  }}
+                  options={countryOptions}
+                  {...field}
+                />
+              )}
+            />
+            <Controller
+              name="roles"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  mode="multiple"
+                  onSelect={value => setSelectedRoles(prev => [...prev, value])}
+                  onDeselect={value =>
+                    setSelectedRoles(prev =>
+                      prev.filter(role => role !== value),
+                    )
+                  }
+                  options={roleOptions}
+                  {...field}
+                />
+              )}
+            />
+          </form>
+        </Modal>
+        <Modal
+          centered={true}
+          classNames={{ header: "border-b pb-1" }}
+          closeIcon={<CloseCircleOutlined />}
+          confirmLoading={addUserToGroup.isPending}
+          cancelButtonProps={{ className: "rounded-none" }}
+          okButtonProps={{ className: "rounded-none bg-primary" }}
+          okText="Confirm"
+          open={swapModal}
+          onOk={handleConfirm}
+          onCancel={() => setSwapModal(false)}
+          title="Add new user"
+        >
+          <p>&nbsp;</p>
+          <p>Is this correct?</p>
+        </Modal>
+      </div>
     </>
   );
 }

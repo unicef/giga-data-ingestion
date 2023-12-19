@@ -29,6 +29,11 @@ export default function Users() {
     queryFn: api.users.list,
   });
 
+  const { isFetching: groupsIsFetching } = useQuery({
+    queryKey: ["groups"],
+    queryFn: api.groups.list,
+  });
+
   const handleEdit = (user: GraphUser) => {
     setSelectedUser(user);
     setIsEditModalOpen(true);
@@ -94,6 +99,7 @@ export default function Users() {
             <Button
               className="!rounded-none"
               ghost
+              disabled={groupsIsFetching}
               icon={<ToolOutlined />}
               onClick={() => handleEdit(record)}
               type="primary"
@@ -103,6 +109,7 @@ export default function Users() {
             </Button>
             <Button
               ghost
+              disabled={groupsIsFetching}
               className="!rounded-none"
               icon={<CloseSquareOutlined />}
               type="primary"
@@ -114,7 +121,7 @@ export default function Users() {
         ),
       },
     ],
-    [],
+    [groupsIsFetching],
   );
 
   return (
