@@ -28,17 +28,46 @@ export default function EditUserModal({
   isEditModalOpen,
   setIsEditModalOpen,
 }: EditUserModalProps) {
+  const api = useApi();
   const user = initialValues.display_name;
   const email = initialValues.mail;
-  const initialCountries = filterCountries(
-    initialValues.member_of.map(group => group.display_name),
-  );
-  const initialRoles = filterRoles(
-    initialValues.member_of.map(group => group.display_name),
+  const initialGroups = initialValues.member_of.map(
+    group => group.display_name,
   );
 
-  const api = useApi();
-  const { handleSubmit, control, setValue } = useForm<IFormInputs>({
+  const initialCountries = filterCountries(initialGroups);
+  const initialRoles = filterRoles(initialGroups);
+
+  const [swapModal, setSwapModal] = useState<boolean>(false);
+  const [selectedCountries, setSelectedCountries] = useState(initialCountries);
+  const [selectedRoles, setSelectedRoles] = useState(initialRoles);
+
+  const { isLoading: groupsIsLoading, data: groupsData } = useQuery({
+    queryKey: ["groups"],
+    queryFn: api.groups.list,
+  });
+
+  const addUserToGroup = useMutation({
+    mutationFn: api.groups.add_user_to_group,
+  });
+
+  const removeUserFromGroup = useMutation({
+    mutationFn: api.groups.remove_user_from_group,
+  });
+
+  const groups = groupsData?.data?.map(group => group.display_name) ?? [];
+  const countries = filterCountries(groups);
+  const roles = filterRoles(groups);
+  const countryOptions = countries.map(country => ({
+    value: country,
+    label: country,
+  }));
+  const roleOptions = roles.map(role => ({
+    value: role,
+    label: role,
+  }));
+
+  const { handleSubmit, control } = useForm<IFormInputs>({
     defaultValues: {
       user: user ?? "",
       email: email ?? "",
@@ -46,12 +75,6 @@ export default function EditUserModal({
       roles: initialRoles,
     },
   });
-
-  const [swapModal, setSwapModal] = useState<boolean>(false);
-
-  const [selectedCountries, setSelectedCountries] =
-    useState<string[]>(initialCountries);
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(initialRoles);
 
   const countriesToAdd = selectedCountries.filter(
     (country: string) => !initialCountries.includes(country),
@@ -68,41 +91,14 @@ export default function EditUserModal({
     (role: string) => !selectedRoles.includes(role),
   );
 
-  const { isLoading: groupsIsLoading, data: groupsData } = useQuery({
-    queryKey: ["groups"],
-    queryFn: api.groups.list,
-  });
-
-  const groups = groupsData?.data?.map(group => group.display_name) ?? [];
-
-  const countries = filterCountries(groups);
-  const roles = filterRoles(groups);
-
-  const countryOptions = countries.map(country => ({
-    value: country,
-    label: country,
-  }));
-  const roleOptions = roles.map(role => ({
-    value: role,
-    label: role,
-  }));
-
-  const addUserToGroup = useMutation({
-    mutationFn: api.groups.add_user_to_group,
-  });
-
-  const removeUserFromGroup = useMutation({
-    mutationFn: api.groups.remove_user_from_group,
-  });
-
   const onSubmit = async (data: IFormInputs) => {
-    const { countries, roles, user } = data;
+    const { countries, roles } = data;
 
     setSwapModal(true);
-    // setSelectedUser(user);
     setSelectedCountries(countries);
     setSelectedRoles(roles);
   };
+
   const handleCancelForm = () => setIsEditModalOpen(false);
 
   const handleConfirm = async () => {
