@@ -61,6 +61,13 @@ export default function EditUserModal({
     (country: string) => !selectedCountries.includes(country),
   );
 
+  const rolesToAdd = selectedRoles.filter(
+    (role: string) => !initialRoles.includes(role),
+  );
+  const rolesToRemove = initialRoles.filter(
+    (role: string) => !selectedRoles.includes(role),
+  );
+
   const { isLoading: groupsIsLoading, data: groupsData } = useQuery({
     queryKey: ["groups"],
     queryFn: api.groups.list,
@@ -99,17 +106,30 @@ export default function EditUserModal({
   const handleCancelForm = () => setIsEditModalOpen(false);
 
   const handleConfirm = async () => {
-    const groupIdsToAdd = groupsData?.data
+    const countryGroupIdsToAdd = groupsData?.data
       .filter(group => countriesToAdd.includes(group.display_name))
       .map(group => group.id);
 
-    const groupIdsToRemove = groupsData?.data
+    const countryGroupIdsToRemove = groupsData?.data
       .filter(group => countriesToRemove.includes(group.display_name))
       .map(group => group.id);
 
-    console.log(initialValues.id);
-    console.log(groupIdsToAdd);
-    console.log(groupIdsToRemove);
+    const roleGroupIdsToAdd = groupsData?.data
+      .filter(group => rolesToAdd.includes(group.display_name))
+      .map(group => group.id);
+
+    const roleGroupIdsToRemove = groupsData?.data
+      .filter(group => rolesToRemove.includes(group.display_name))
+      .map(group => group.id);
+
+    const groupIdsToAdd = [
+      ...(countryGroupIdsToAdd ?? []),
+      ...(roleGroupIdsToAdd ?? []),
+    ];
+    const groupIdsToRemove = [
+      ...(countryGroupIdsToRemove ?? []),
+      ...(roleGroupIdsToRemove ?? []),
+    ];
 
     groupIdsToAdd?.map(groupId =>
       addUserToGroup.mutate({
@@ -194,8 +214,15 @@ export default function EditUserModal({
                 control={control}
                 render={({ field }) => (
                   <Select
-                    allowClear
                     mode="multiple"
+                    onSelect={value =>
+                      setSelectedRoles(prev => [...prev, value])
+                    }
+                    onDeselect={value =>
+                      setSelectedRoles(prev =>
+                        prev.filter(role => role !== value),
+                      )
+                    }
                     options={roleOptions}
                     {...field}
                   />
