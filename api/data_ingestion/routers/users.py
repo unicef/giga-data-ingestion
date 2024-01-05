@@ -19,7 +19,9 @@ router = APIRouter(
 
 @router.get("", response_model=list[GraphUser])
 async def list_users():
-    return await UsersApi.list_users()
+    val = await UsersApi.list_users()
+    print("after val")
+    return val
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=GraphInvitation)
