@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
-import { CloseCircleOutlined } from "@ant-design/icons";
+import { CloseCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import { useMutation } from "@tanstack/react-query";
 import { useQuery } from "@tanstack/react-query";
-import { Input, Modal, Select } from "antd";
+import { Button, Form, Input, Modal, Select } from "antd";
 
 import { useApi } from "@/api";
 import { GraphUser } from "@/types/user";
@@ -77,6 +77,7 @@ export default function EditUserModal({
     },
   });
 
+  const [form] = Form.useForm();
   const countriesToAdd = selectedCountries.filter(
     (country: string) => !initialCountries.includes(country),
   );
@@ -143,93 +144,180 @@ export default function EditUserModal({
     setIsEditModalOpen(false);
   };
 
+  // TODO make fetching more aggressive?
+  // optimistic updates
   return (
     <>
-      <div>
-        <Modal
-          centered={true}
-          title="Modify User"
-          okText="Confirm"
-          cancelText="Cancel"
-          okButtonProps={{
-            disabled:
-              countriesToAdd.length === 0 && countriesToRemove.length === 0,
-            className: "rounded-none bg-primary",
-          }}
-          cancelButtonProps={{ className: "rounded-none" }}
-          open={isEditModalOpen && !swapModal}
-          onOk={handleSubmit(onSubmit)}
-          onCancel={handleCancelForm}
-          width={"40%"}
-        >
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <Controller
-              disabled
-              name="user"
-              control={control}
-              render={({ field }) => <Input {...field} />}
-            />
-            <Controller
-              disabled
-              name="email"
-              control={control}
-              render={({ field }) => <Input {...field} />}
-            />
-            <Controller
+      <Modal
+        centered={true}
+        title="Modify User Access"
+        okText="Confirm"
+        cancelText="Cancel"
+        okButtonProps={{
+          // disabled:
+          //   countriesToAdd.length === 0 && countriesToRemove.length === 0,
+          className: "rounded-none bg-primary",
+        }}
+        cancelButtonProps={{ className: "rounded-none" }}
+        open={isEditModalOpen && !swapModal}
+        // onOk={handleSubmit(onSubmit)}
+        onOk={values => console.log(values)}
+        onCancel={handleCancelForm}
+        width={"75%"}
+      >
+        {/* <form onSubmit={handleSubmit(onSubmit)}>
+          <Controller
+            disabled
+            name="user"
+            control={control}
+            render={({ field }) => <Input {...field} />}
+          />
+          <Controller
+            disabled
+            name="email"
+            control={control}
+            render={({ field }) => <Input {...field} />}
+          />
+          <Controller
+            name="countries"
+            control={control}
+            render={({ field }) => (
+              <Select
+                mode="multiple"
+                onSelect={value =>
+                  setSelectedCountries(prev => [...prev, value])
+                }
+                onDeselect={value => {
+                  setSelectedCountries(prev =>
+                    prev.filter(country => country !== value),
+                  );
+                }}
+                options={countryOptions}
+                {...field}
+              />
+            )}
+          />
+          <Controller
+            name="roles"
+            control={control}
+            render={({ field }) => (
+              <Select
+                mode="multiple"
+                onSelect={value => setSelectedRoles(prev => [...prev, value])}
+                onDeselect={value =>
+                  setSelectedRoles(prev => prev.filter(role => role !== value))
+                }
+                options={roleOptions}
+                {...field}
+              />
+            )}
+          />
+        </form> */}
+        <>
+          <Form
+            form={form}
+            labelCol={{ span: 4 }}
+            wrapperCol={{ span: 16 }}
+            name="editUserForm"
+            initialValues={{
+              user: user ?? "",
+              email: email ?? "",
+              countries: initialCountries,
+              roles: initialRoles,
+            }}
+          >
+            <Form.Item name="user" label="User" rules={[{ required: true }]}>
+              <Input disabled />
+            </Form.Item>
+            <Form.Item name="email" label="Email" rules={[{ required: true }]}>
+              <Input />
+            </Form.Item>
+            <Form.Item
               name="countries"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  mode="multiple"
-                  onSelect={value =>
-                    setSelectedCountries(prev => [...prev, value])
-                  }
-                  onDeselect={value => {
-                    setSelectedCountries(prev =>
-                      prev.filter(country => country !== value),
-                    );
-                  }}
-                  options={countryOptions}
-                  {...field}
-                />
+              label="Countries"
+              rules={[{ required: true }]}
+            >
+              <Select
+                mode="multiple"
+                options={countryOptions}
+                placeholder="What level of access does this user have for Giga?"
+              ></Select>
+            </Form.Item>
+            <Form.List name="countryDataset">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(({ key, name, ...restField }, index) => (
+                    <div key={key}>
+                      <Form.Item
+                        // {...restField}
+                        label={index ? `Country ${index}` : `Country`}
+                        name={[name, "first"]}
+                        rules={[
+                          { required: true, message: "Missing first name" },
+                        ]}
+                        style={{ marginBottom: 0 }}
+                      >
+                        <Input placeholder="First Name" />
+                      </Form.Item>
+                      <Form.Item
+                        style={{ marginBottom: 0 }}
+                        wrapperCol={{ span: 16, offset: 4 }}
+                      >
+                        <Button
+                          className="p-0"
+                          type="link"
+                          onClick={() => remove(name)}
+                        >
+                          <span className="m-0 underline">Remove pair</span>
+                        </Button>
+                      </Form.Item>
+
+                      <Form.Item
+                        {...restField}
+                        label="Dataset"
+                        name={[name, "last"]}
+                        rules={[
+                          { required: true, message: "Missing last name" },
+                        ]}
+                      >
+                        <Input placeholder="Last Name" />
+                      </Form.Item>
+                    </div>
+                  ))}
+                  <Form.Item>
+                    <Button
+                      className="ml-auto rounded-none border-none bg-primary"
+                      ghost
+                      icon={<PlusOutlined />}
+                      onClick={() => add()}
+                      type="primary"
+                    >
+                      Add Country
+                    </Button>
+                  </Form.Item>
+                </>
               )}
-            />
-            <Controller
-              name="roles"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  mode="multiple"
-                  onSelect={value => setSelectedRoles(prev => [...prev, value])}
-                  onDeselect={value =>
-                    setSelectedRoles(prev =>
-                      prev.filter(role => role !== value),
-                    )
-                  }
-                  options={roleOptions}
-                  {...field}
-                />
-              )}
-            />
-          </form>
-        </Modal>
-        <Modal
-          centered={true}
-          classNames={{ header: "border-b pb-1" }}
-          closeIcon={<CloseCircleOutlined />}
-          confirmLoading={addUserToGroup.isPending}
-          cancelButtonProps={{ className: "rounded-none" }}
-          okButtonProps={{ className: "rounded-none bg-primary" }}
-          okText="Confirm"
-          open={swapModal}
-          onOk={handleConfirm}
-          onCancel={() => setSwapModal(false)}
-          title="Add new user"
-        >
-          <p>&nbsp;</p>
-          <p>Is this correct?</p>
-        </Modal>
-      </div>
+            </Form.List>
+          </Form>
+        </>
+      </Modal>
+      <Modal
+        centered={true}
+        classNames={{ header: "border-b pb-1" }}
+        closeIcon={<CloseCircleOutlined />}
+        confirmLoading={addUserToGroup.isPending}
+        cancelButtonProps={{ className: "rounded-none" }}
+        okButtonProps={{ className: "rounded-none bg-primary" }}
+        okText="Confirm"
+        open={swapModal}
+        // onOk={handleConfirm}
+        onOk={values => console.log("Received values of form:", values)}
+        onCancel={() => setSwapModal(false)}
+        title="Add new user"
+      >
+        form
+        <p>Is this correct?</p>
+      </Modal>
     </>
   );
 }
