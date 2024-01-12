@@ -62,7 +62,7 @@ class GroupsApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err
 
     @classmethod
     async def list_group_members(cls, group_id: UUID4) -> list[GraphUser]:
@@ -76,7 +76,7 @@ class GroupsApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err
 
     @classmethod
     async def get_group(cls, id: UUID4) -> GraphGroup:
@@ -87,7 +87,7 @@ class GroupsApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err
 
     @classmethod
     async def add_group_member(cls, group_id: UUID4, user_id: UUID4) -> None:
@@ -101,7 +101,7 @@ class GroupsApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err
 
     @classmethod
     async def add_group_members(cls, group_id: UUID4, user_ids: list[UUID4]) -> None:
@@ -118,7 +118,7 @@ class GroupsApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err
 
     @classmethod
     async def remove_group_member(cls, group_id: UUID4, user_id: UUID4) -> None:
@@ -131,7 +131,7 @@ class GroupsApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err
 
     @classmethod
     async def update_group(cls, id: UUID4, request_body: UpdateGroupRequest) -> None:
@@ -143,7 +143,7 @@ class GroupsApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err
 
     @classmethod
     async def create_group(cls, request_body: CreateGroupRequest) -> GraphGroup:
@@ -159,7 +159,7 @@ class GroupsApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err
 
     @classmethod
     async def delete_group(cls, id: UUID4) -> None:
@@ -168,4 +168,4 @@ class GroupsApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err

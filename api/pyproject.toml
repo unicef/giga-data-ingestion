@@ -44,3 +44,6 @@ ignore = ["E203", "E266", "E501", "E402", "C901"]
 
 [tool.ruff.mccabe]
 max-complexity = 10
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]

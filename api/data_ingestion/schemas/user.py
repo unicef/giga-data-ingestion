@@ -27,5 +27,5 @@ class GraphUserUpdateRequest(BaseModel):
 
     @model_validator(mode="after")
     def provide_at_least_one_field(self):
-        if not any(map(lambda v: v is not None, self.model_dump().values())):
+        if not any(v is not None for v in self.model_dump().values()):
             raise ValueError("At least one field must be provided")

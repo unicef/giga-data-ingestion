@@ -1,7 +1,7 @@
-from azure.identity import ClientSecretCredential
 from fastapi_azure_auth import MultiTenantAzureAuthorizationCodeBearer
 from msgraph import GraphServiceClient
 
+from azure.identity import ClientSecretCredential
 from data_ingestion.settings import settings
 
 azure_scheme = MultiTenantAzureAuthorizationCodeBearer(
