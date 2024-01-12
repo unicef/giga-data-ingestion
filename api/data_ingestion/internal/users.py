@@ -57,7 +57,7 @@ class UsersApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err
 
     @classmethod
     async def get_user(cls, id: UUID4) -> GraphUser:
@@ -69,7 +69,7 @@ class UsersApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err
 
     @classmethod
     async def edit_user(
@@ -87,7 +87,7 @@ class UsersApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err
 
     @classmethod
     async def send_user_invite(
@@ -103,4 +103,4 @@ class UsersApi:
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
-            )
+            ) from err

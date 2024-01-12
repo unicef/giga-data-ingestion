@@ -1,7 +1,6 @@
+from data_ingestion.api import app
 from fastapi import status
 from fastapi.testclient import TestClient
-
-from data_ingestion.api import app
 
 client = TestClient(app)
 

@@ -20,6 +20,7 @@ tasks:
     cmds:
       - task: setup-pre-commit
       - task: setup-python
+      - task: setup-node
 
   setup-pre-commit:
     internal: true
@@ -30,10 +31,18 @@ tasks:
 
   setup-python:
     internal: true
+    dir: api
     desc: Install Python dependencies
     cmds:
       - poetry env use 3.11
       - poetry install
+
+  setup-node:
+    internal: true
+    dir: ui
+    desc: Install Node dependencies
+    cmds:
+      - npm install -D
 
   logs:
     desc: Attach to Docker logs
