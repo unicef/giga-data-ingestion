@@ -1,6 +1,3 @@
-from fastapi import APIRouter, Security, status
-from pydantic import UUID4
-
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
 from data_ingestion.schemas.group import (
@@ -10,6 +7,8 @@ from data_ingestion.schemas.group import (
     UpdateGroupRequest,
 )
 from data_ingestion.schemas.user import GraphUser
+from fastapi import APIRouter, Security, status
+from pydantic import UUID4
 
 router = APIRouter(
     prefix="/api/groups",
@@ -23,7 +22,9 @@ async def list_groups():
     return await GroupsApi.list_groups()
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, response_model=GraphGroup)
+@router.post(
+    "", status_code=status.HTTP_201_CREATED, response_model=GraphGroup
+)
 async def create_group(body: CreateGroupRequest):
     return await GroupsApi.create_group(body)
 
