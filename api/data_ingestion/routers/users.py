@@ -1,7 +1,3 @@
-from fastapi import APIRouter, Depends, Security, status
-from fastapi_azure_auth.user import User
-from pydantic import UUID4
-
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.users import UsersApi
 from data_ingestion.schemas.invitation import (
@@ -9,6 +5,9 @@ from data_ingestion.schemas.invitation import (
     GraphInvitationCreateRequest,
 )
 from data_ingestion.schemas.user import GraphUser, GraphUserUpdateRequest
+from fastapi import APIRouter, Depends, Security, status
+from fastapi_azure_auth.user import User
+from pydantic import UUID4
 
 router = APIRouter(
     prefix="/api/users",
@@ -22,7 +21,9 @@ async def list_users():
     return await UsersApi.list_users()
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, response_model=GraphInvitation)
+@router.post(
+    "", status_code=status.HTTP_201_CREATED, response_model=GraphInvitation
+)
 async def invite_user(body: GraphInvitationCreateRequest):
     return await UsersApi.send_user_invite(body)
 
