@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import UUID4, BaseModel, model_validator
 
 
@@ -28,3 +30,22 @@ class UpdateGroupRequest(BaseModel):
 class CreateGroupRequest(BaseModel):
     description: str
     display_name: str
+
+
+class AddMemberToGroupsRequest(BaseModel):
+    group_id: List[UUID4]
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "group_id": [
+                        "90d96fc1-445c-4092-b175-40153bae7a45",  # 1 AAD DC
+                        "153aca72-f3e0-4367-b084-9f1961e9743b",  # 2 ADMIN,
+                        "f86894ca-ab17-4918-8ad9-cec92a57d986",
+                        "b7b07b18-80d8-42f4-8c94-b186163a13b6",
+                    ]
+                }
+            ]
+        }
+    }
