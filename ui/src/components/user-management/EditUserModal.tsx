@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { PlusOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
@@ -34,6 +34,11 @@ type CountryDataset = {
   country: string;
   dataset: string[];
 };
+
+interface Dataset {
+  name: string;
+  id: string;
+}
 
 const getInitialCountryDataset = (
   initialCountries: string[],
@@ -79,14 +84,26 @@ export default function EditUserModal({
   const initialCountries = filterCountries(initialGroups);
   const initialRoles = filterRoles(initialGroups);
   const initialCountryDataset = getInitialCountryDataset(initialCountries);
+  const [form] = Form.useForm();
 
   const [swapModal, setSwapModal] = useState<boolean>(false);
-
+  const [submittable, setSubmittable] = useState(false);
   const { data: groupsData } = useQuery({
     queryKey: ["groups"],
     queryFn: api.groups.list,
   });
 
+  const values = Form.useWatch([], form);
+  useEffect(() => {
+    form.validateFields({ validateOnly: true }).then(
+      () => {
+        setSubmittable(true);
+      },
+      () => {
+        setSubmittable(false);
+      },
+    );
+  }, [form, values]);
   // const addUserToGroup = useMutation({
   //   mutationFn: api.groups.add_user_to_group,
   // });
@@ -106,13 +123,15 @@ export default function EditUserModal({
     label: country.name,
   }));
 
-  // todo fix the options,
   const roleOptions = roles.map(role => ({
     value: role,
     label: role,
   }));
 
-  // datasetoptions should be built from what the current country has datasets available for
+  const onOk = () => {
+    form.submit();
+  };
+
   const dataSetOptions = [
     "School Coverage",
     "School Geolocation",
@@ -122,9 +141,11 @@ export default function EditUserModal({
     label: dataset,
   }));
 
-  const [form] = Form.useForm();
-
-  const handleCancelForm = () => setIsEditModalOpen(false);
+  const handleModalCancel = (modalName: string) => {
+    console.log("Cancelled form name " + modalName);
+    if (modalName == "EditModal") setIsEditModalOpen(false);
+    setSwapModal(false);
+  };
 
   // TODO make fetching more aggressive?
   // optimistic updates
@@ -133,7 +154,8 @@ export default function EditUserModal({
   return (
     <Form.Provider
       onFormFinish={(name, { values, forms }) => {
-        if (name === "editUserForm") {
+        console.log(name);
+        if (name === "editForm") {
           const conutryDatasetValues: CountryDataset[] = values.countryDataset;
           const roleValues: string[] = values.role;
           const emailValue: string = values.email;
@@ -179,16 +201,6 @@ export default function EditUserModal({
             element => !roleValues.includes(element),
           );
 
-          const newEmail = emailValue !== initialEmail ? emailValue : "";
-
-          console.log(addedDatasets);
-          console.log(removedDatasets);
-
-          console.log(addedRoles);
-          console.log(removedRoles);
-
-          console.log(newEmail);
-
           const addedDatasetsWithIds = matchNamesWithIds(addedDatasets, groups);
           const removedDatasetsWithIds = matchNamesWithIds(
             removedDatasets,
@@ -198,12 +210,18 @@ export default function EditUserModal({
           const addedRolesWithIds = matchNamesWithIds(addedRoles, groups);
           const removedRolesWithIds = matchNamesWithIds(removedRoles, groups);
 
-          console.log(addedDatasetsWithIds);
-          console.log(removedDatasetsWithIds);
-          console.log(addedRolesWithIds);
-          console.log(removedRolesWithIds);
+          const { confirmForm } = forms;
 
-          console.log(newEmail);
+          confirmForm.setFieldValue("email", emailValue);
+          confirmForm.setFieldValue("addedRoles", addedRolesWithIds);
+          confirmForm.setFieldValue("removedRoles", removedRolesWithIds);
+          confirmForm.setFieldValue("addedDatasets", addedDatasetsWithIds);
+          confirmForm.setFieldValue("removedDatasets", removedDatasetsWithIds);
+        }
+
+        if (name === "confirmForm") {
+          console.log("Do things withvalue");
+          console.log(values);
         }
       }}
     >
@@ -212,17 +230,17 @@ export default function EditUserModal({
         cancelText="Cancel"
         centered={true}
         okButtonProps={{
-          // disabled:
-          //   countriesToAdd.length === 0 && countriesToRemove.length === 0,
+          disabled: !submittable,
           className: "rounded-none bg-primary",
         }}
         okText="Confirm"
         open={isEditModalOpen && !swapModal}
         title="Modify User Access"
         width={"75%"}
-        onCancel={handleCancelForm}
+        onCancel={() => handleModalCancel("EditModal")}
         onOk={() => {
           form.submit();
+          setSwapModal(true);
         }}
       >
         <Form
@@ -234,7 +252,7 @@ export default function EditUserModal({
             countryDataset: initialCountryDataset,
           }}
           labelCol={{ span: 4 }}
-          name="editUserForm"
+          name="editForm"
           wrapperCol={{ span: 16 }}
         >
           <Form.Item label="User" name="user" rules={[{ required: true }]}>
@@ -322,6 +340,103 @@ export default function EditUserModal({
               </>
             )}
           </Form.List>
+        </Form>
+      </Modal>
+      <Modal
+        centered={true}
+        footer={null}
+        open={isEditModalOpen && swapModal}
+        title="Confirm user acess modification"
+        onCancel={() => handleModalCancel("ConfirmModal")}
+        onOk={onOk}
+      >
+        <Form name="confirmForm">
+          <Form.Item
+            shouldUpdate={(prevValues, curValues) =>
+              prevValues.email !== curValues.email
+            }
+          >
+            {({ getFieldValue }) => {
+              const email = getFieldValue("email") || [];
+              const emailDisplay = email.length === 0 ? initialEmail : email;
+              // how many countries appearead
+              // how many times a string appear over an ar
+              const addedDatasets: Dataset[] =
+                getFieldValue("addedDatasets") || [];
+
+              const uniqueCountries = new Set<string>();
+              const datasetTypes = new Set();
+
+              addedDatasets.forEach(item => {
+                const country = item.name.split("-")[0];
+                uniqueCountries.add(country);
+
+                if (item.name.includes("School Geolocation")) {
+                  datasetTypes.add("School Geolocation");
+                }
+                if (item.name.includes("School Coverage")) {
+                  datasetTypes.add("School Coverage");
+                }
+                if (item.name.includes("School QoS")) {
+                  datasetTypes.add("School QoS");
+                }
+              });
+
+              const result: { countries: string[]; uniqueDatasets: number } = {
+                countries: Array.from(uniqueCountries),
+                uniqueDatasets: datasetTypes.size,
+              };
+
+              return (
+                <div>
+                  {`This will give the user with email `}
+                  <b>{emailDisplay}</b>
+                  {` access to Giga data for `}
+                  <b>
+                    {result.uniqueDatasets}{" "}
+                    {result.uniqueDatasets === 1 ? "dataset" : "datasets"}
+                  </b>
+                  {` across ${result.countries.length} countries, `}
+                  <b>
+                    {result.countries.slice(0, -1).join(", ") +
+                      (result.countries.length > 1 ? ", and " : "") +
+                      result.countries.slice(-1)}
+                  </b>
+                  .
+                  <br />
+                  <br />
+                </div>
+              );
+            }}
+          </Form.Item>
+          <Form.Item name="email" hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item name="addedRoles" hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item name="removedRoles" hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item name="addedDatasets" hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item name="removedDatasets" hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item className="mb-0 ">
+            <div className="flex justify-end gap-2">
+              <Button
+                className="rounded-none "
+                onClick={() => handleModalCancel("ConfirmModal")}
+              >
+                Cancel
+              </Button>
+              <Button className="rounded-none bg-primary" htmlType="submit">
+                Confirm
+              </Button>
+            </div>
+          </Form.Item>
         </Form>
       </Modal>
     </Form.Provider>
