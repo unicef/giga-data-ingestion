@@ -1,0 +1,22 @@
+jobs:
+  - deployment: Deploy
+    displayName: Data Ingestion Portal Deployment
+    environment: $(kubernetesEnvironment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+
+            - task: HelmDeploy@0
+              displayName: Helm deploy Ingestion Portal
+              inputs:
+                command: upgrade
+                chartType: FilePath
+                chartPath: "$(Build.SourcesDirectory)/infra/helm/data-ingestion"
+                releaseName: ingestion-portal
+                namespace: $(kubernetesNamespace)
+                arguments: >
+                  --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
+                  --set image.tag="$(Build.SourceVersion)"
+                  --set ingress.enabled=true

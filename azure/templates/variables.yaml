@@ -1,0 +1,18 @@
+variables:
+  containerRegistryName: $(ACR_NAME)
+  containerRegistryServiceConnection: $(ACR_SERVICE_CONNECTION)
+  kubernetesEnvironment: $(KUBERNETES_ENVIRONMENT)
+  kubernetesNamespace: $(KUBERNETES_NAMESPACE)
+  azureSasToken: $(AZURE_SAS_TOKEN)
+  storageContainerName: $(AZURE_BLOB_CONTAINER_NAME)
+  storageAccountName: $(AZURE_STORAGE_ACCOUNT_NAME)
+  azureAdApplicationId: $(AZURE_APPLICATION_ID)
+  azureAdTenantId: $(AZURE_TENANT_ID)
+  azureAdClientId: $(AZURE_CLIENT_ID)
+  azureAdClientSecret: $(AZURE_CLIENT_SECRET)
+  azureAdTenantName: $(AZURE_TENANT_NAME)
+  azureAdPolicyName: $(AZURE_AUTH_POLICY_NAME)
+  azureAdRedirectUri: $(AZURE_REDIRECT_URI)
+  applicationSecretKey: $(APPLICATION_SECRET_KEY)
+  webAppHost: $(WEB_APP_HOST)
+  system.debug: true
