@@ -22,6 +22,11 @@ from pydantic import UUID4
 from .auth import credential, graph_client
 
 
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i : i + n]  # noqa: E203
+
+
 class GroupsApi:
     get_group_query_parameters = (
         GroupsRequestBuilder.GroupsRequestBuilderGetQueryParameters(
@@ -198,58 +203,71 @@ class GroupsApi:
             )
 
     @classmethod
-    async def add_user_to_groups(
+    async def modify_user_access(
         cls, user_id: UUID4, body: AddMemberToGroupsRequest
     ) -> None:
+        ## batch
+        #  requests
+        ## batch repsonses
+
         access_token = credential.get_token(
             "https://graph.microsoft.com/.default"
         )
         graph_api_endpoint = "https://graph.microsoft.com/v1.0"
 
-        group_ids = body.model_dump()["group_id"]
+        email = body.model_dump()["email"]
+        groups_to_add = body.model_dump()["groups_to_add"]
+        groups_to_remove = body.model_dump()["groups_to_remove"]
 
-        try:
-            headers = {
-                "Authorization": "Bearer " + access_token[0],
-                "Content-Type": "application/json",
-            }
+        print(email)
+        print(user_id)
+        print(groups_to_add[0])
+        print(groups_to_remove)
 
-            add_payload = {
-                "requests": [
-                    {
-                        "id": str(i + 1),
-                        "method": "POST",
-                        "url": f"/groups/{group_id}/members/$ref",
-                        "headers": {"Content-Type": "application/json"},
-                        "body": {
-                            "@odata.id": f"https://graph.microsoft.com/v1.0/directoryObjects/{user_id}"
-                        },
-                    }
-                    for i, group_id in enumerate(group_ids)
-                ]
-            }
+        headers = {
+            "Authorization": "Bearer " + access_token[0],
+            "Content-Type": "application/json",
+        }
 
-            remove_payload = {
-                "requests": [
-                    {
-                        "id": str(i + 1),
-                        "method": "DELETE",
-                        "url": f"/groups/{group_id}/members/{user_id}/$ref",
-                    }
-                    for i, group_id in enumerate(group_ids)
-                ]
-            }
+        # try:
+        #     add_payload = {
+        #         "requests": [
+        #             {
+        #                 "id": str(i + 1),
+        #                 "method": "POST",
+        #                 "url": f"/groups/{group_id}/members/$ref",
+        #                 "headers": {"Content-Type": "application/json"},
+        #                 "body": {
+        #                     "@odata.id": f"https://graph.microsoft.com/v1.0/directoryObjects/{user_id}"
+        #                 },
+        #             }
+        #             for i, group_id in enumerate(group_ids)
+        #         ]
+        #     }
 
-            response = requests.post(
-                url=f"{graph_api_endpoint}/$batch",
-                headers=headers,
-                data=json.dumps(add_payload),
-            )
+        #     remove_payload = {
+        #         "requests": [
+        #             {
+        #                 "id": str(i + 1),
+        #                 "method": "DELETE",
+        #                 "url": f"/groups/{group_id}/members/{user_id}/$ref",
+        #             }
+        #             for i, group_id in enumerate(group_ids)
+        #         ]
+        #     }
 
-            response_data = response.json()
-            return response_data
+        #     response = requests.post(
+        #         url=f"{graph_api_endpoint}/$batch",
+        #         headers=headers,
+        #         data=json.dumps(add_payload),
+        #     )
 
-        except ODataError as err:
-            raise HTTPException(
-                detail=err.error.message, status_code=err.response_status_code
-            )
+        #     response_data = response.json()
+        #     return response_data
+
+        return "data"
+
+        # except ODataError as err:
+        #     raise HTTPException(
+        #         detail=err.error.message, status_code=err.response_status_code
+        #     )

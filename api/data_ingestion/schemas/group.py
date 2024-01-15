@@ -33,7 +33,9 @@ class CreateGroupRequest(BaseModel):
 
 
 class AddMemberToGroupsRequest(BaseModel):
-    group_id: List[UUID4]
+    email: str
+    groups_to_add: List[UUID4]
+    groups_to_remove: List[UUID4]
 
     model_config = {
         "json_schema_extra": {
