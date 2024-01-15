@@ -1,8 +1,3 @@
-import json
-
-import requests
-from azure.identity import ClientSecretCredential
-from data_ingestion.schemas.group import AddMemberToGroupsRequest
 from data_ingestion.schemas.invitation import GraphInvitationCreateRequest
 from data_ingestion.schemas.user import GraphUser, GraphUserUpdateRequest
 from data_ingestion.settings import settings
@@ -14,7 +9,7 @@ from msgraph.generated.models.user import User
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4
 
-from .auth import credential, graph_client
+from .auth import graph_client
 
 
 class UsersApi:
@@ -103,63 +98,6 @@ class UsersApi:
                 send_invitation_message=True,
             )
             return await graph_client.invitations.post(body=body)
-        except ODataError as err:
-            raise HTTPException(
-                detail=err.error.message, status_code=err.response_status_code
-            )
-
-    @classmethod
-    async def add_user_to_groups(
-        cls, user_id: UUID4, body: AddMemberToGroupsRequest
-    ) -> None:
-        access_token = credential.get_token(
-            "https://graph.microsoft.com/.default"
-        )
-        graph_api_endpoint = "https://graph.microsoft.com/v1.0"
-
-        group_ids = body.model_dump()["group_id"]
-
-        try:
-            headers = {
-                "Authorization": "Bearer " + access_token[0],
-                "Content-Type": "application/json",
-            }
-
-            add_payload = {
-                "requests": [
-                    {
-                        "id": str(i + 1),
-                        "method": "POST",
-                        "url": f"/groups/{group_id}/members/$ref",
-                        "headers": {"Content-Type": "application/json"},
-                        "body": {
-                            "@odata.id": f"https://graph.microsoft.com/v1.0/directoryObjects/{user_id}"
-                        },
-                    }
-                    for i, group_id in enumerate(group_ids)
-                ]
-            }
-
-            remove_payload = {
-                "requests": [
-                    {
-                        "id": str(i + 1),
-                        "method": "DELETE",
-                        "url": f"/groups/{group_id}/members/{user_id}/$ref",
-                    }
-                    for i, group_id in enumerate(group_ids)
-                ]
-            }
-
-            response = requests.post(
-                url=f"{graph_api_endpoint}/$batch",
-                headers=headers,
-                data=json.dumps(add_payload),
-            )
-
-            response_data = response.json()
-            return response_data
-
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code

@@ -1,6 +1,5 @@
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.users import UsersApi
-from data_ingestion.schemas.group import AddMemberToGroupsRequest
 from data_ingestion.schemas.invitation import (
     GraphInvitation,
     GraphInvitationCreateRequest,
@@ -42,8 +41,3 @@ async def get_user(id: UUID4):
 @router.patch("/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def edit_user(id: UUID4, body: GraphUserUpdateRequest):
     await UsersApi.edit_user(id, body)
-
-
-@router.post("/{user_id}/members/$ref", status_code=status.HTTP_200_OK)
-async def add_user_to_groups(user_id: str, body: AddMemberToGroupsRequest):
-    return await UsersApi.add_user_to_groups(user_id=user_id, body=body)
