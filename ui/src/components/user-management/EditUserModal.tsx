@@ -2,7 +2,17 @@ import { useEffect, useState } from "react";
 
 import { PlusOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Button, Col, Divider, Form, Input, Modal, Row, Select } from "antd";
+import {
+  Alert,
+  Button,
+  Col,
+  Divider,
+  Form,
+  Input,
+  Modal,
+  Row,
+  Select,
+} from "antd";
 
 import { useApi } from "@/api";
 import countries from "@/constants/countries";
@@ -86,6 +96,8 @@ export default function EditUserModal({
   const initialCountryDataset = getInitialCountryDataset(initialCountries);
   const [form] = Form.useForm();
 
+  const [confirmLoading, setConfirmLoading] = useState<boolean>(false);
+  const [error, setError] = useState<boolean>(false);
   const [swapModal, setSwapModal] = useState<boolean>(false);
   const [submittable, setSubmittable] = useState(false);
   const { data: groupsData } = useQuery({
@@ -107,7 +119,6 @@ export default function EditUserModal({
 
   const modifyUserAccess = useMutation({
     mutationFn: api.groups.modify_user_access,
-    onSettled: () => console.log("settled!"),
   });
 
   const groups =
@@ -140,7 +151,6 @@ export default function EditUserModal({
   }));
 
   const handleModalCancel = (modalName: string) => {
-    console.log("Cancelled form name " + modalName);
     if (modalName == "EditModal") setIsEditModalOpen(false);
     setSwapModal(false);
   };
@@ -152,7 +162,6 @@ export default function EditUserModal({
   return (
     <Form.Provider
       onFormFinish={async (name, { values, forms }) => {
-        console.log(name);
         if (name === "editForm") {
           const conutryDatasetValues: CountryDataset[] = values.countryDataset;
           const roleValues: string[] = values.role;
@@ -218,9 +227,6 @@ export default function EditUserModal({
         }
 
         if (name === "confirmForm") {
-          console.log("Do things withvalue");
-          console.log(values);
-
           const addGroupsPayload = {
             email: values.email,
             groups_to_add: [...values.addedDatasets, ...values.addedRoles].map(
@@ -232,7 +238,16 @@ export default function EditUserModal({
             ].map(dataset => dataset.id),
             user_id: initialValues.id,
           };
-          await modifyUserAccess.mutateAsync(addGroupsPayload);
+          setConfirmLoading(true);
+
+          try {
+            await modifyUserAccess.mutateAsync(addGroupsPayload);
+            setSwapModal(false);
+            setIsEditModalOpen(false);
+          } catch (err) {
+            setError(true);
+            setConfirmLoading(false);
+          }
         }
       }}
     >
@@ -434,6 +449,9 @@ export default function EditUserModal({
           <Form.Item name="removedDatasets" hidden>
             <Input />
           </Form.Item>
+          {error && (
+            <Alert message="Operation failed, please try again" type="error" />
+          )}
           <Form.Item className="mb-0 ">
             <div className="flex justify-end gap-2">
               <Button
@@ -442,7 +460,11 @@ export default function EditUserModal({
               >
                 Cancel
               </Button>
-              <Button className="rounded-none bg-primary" htmlType="submit">
+              <Button
+                className="rounded-none bg-primary"
+                htmlType="submit"
+                loading={confirmLoading}
+              >
                 Confirm
               </Button>
             </div>

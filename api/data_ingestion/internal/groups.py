@@ -1,10 +1,11 @@
 import json
 
 import requests
+from data_ingestion.internal.utils import chunks
 from data_ingestion.schemas.group import (
-    AddMemberToGroupsRequest,
     CreateGroupRequest,
     GraphGroup,
+    ModifyUserAccessRequest,
     UpdateGroupRequest,
 )
 from data_ingestion.schemas.user import GraphUser
@@ -20,11 +21,6 @@ from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4
 
 from .auth import credential, graph_client
-
-
-def chunks(lst, n):
-    for i in range(0, len(lst), n):
-        yield lst[i : i + n]  # noqa: E203
 
 
 class GroupsApi:
@@ -127,7 +123,7 @@ class GroupsApi:
             body = Group(
                 additional_data={
                     "members@odata.bind": [
-                        f"https://graph.microsoft.com/v1.0/directoryObjects/{user_id}"
+                        f"https://graph.microsoft.com/v1.0/directoryObjects/{user_id}"  # noqa: E501
                         for user_id in user_ids
                     ]
                 }
@@ -204,12 +200,8 @@ class GroupsApi:
 
     @classmethod
     async def modify_user_access(
-        cls, user_id: UUID4, body: AddMemberToGroupsRequest
+        cls, user_id: UUID4, body: ModifyUserAccessRequest
     ) -> None:
-        ## batch
-        #  requests
-        ## batch repsonses
-
         access_token = credential.get_token(
             "https://graph.microsoft.com/.default"
         )
@@ -219,55 +211,88 @@ class GroupsApi:
         groups_to_add = body.model_dump()["groups_to_add"]
         groups_to_remove = body.model_dump()["groups_to_remove"]
 
-        print(email)
-        print(user_id)
-        print(groups_to_add[0])
-        print(groups_to_remove)
-
         headers = {
             "Authorization": "Bearer " + access_token[0],
             "Content-Type": "application/json",
         }
 
-        # try:
-        #     add_payload = {
-        #         "requests": [
-        #             {
-        #                 "id": str(i + 1),
-        #                 "method": "POST",
-        #                 "url": f"/groups/{group_id}/members/$ref",
-        #                 "headers": {"Content-Type": "application/json"},
-        #                 "body": {
-        #                     "@odata.id": f"https://graph.microsoft.com/v1.0/directoryObjects/{user_id}"
-        #                 },
-        #             }
-        #             for i, group_id in enumerate(group_ids)
-        #         ]
-        #     }
+        total_response_data = []
 
-        #     remove_payload = {
-        #         "requests": [
-        #             {
-        #                 "id": str(i + 1),
-        #                 "method": "DELETE",
-        #                 "url": f"/groups/{group_id}/members/{user_id}/$ref",
-        #             }
-        #             for i, group_id in enumerate(group_ids)
-        #         ]
-        #     }
+        chunk_size = 3
 
-        #     response = requests.post(
-        #         url=f"{graph_api_endpoint}/$batch",
-        #         headers=headers,
-        #         data=json.dumps(add_payload),
-        #     )
+        for chunk in chunks(groups_to_add, chunk_size):
+            try:
+                add_payload = {
+                    "requests": [
+                        {
+                            "id": str(i + 1),
+                            "method": "POST",
+                            "url": f"/groups/{group_id}/members/$ref",
+                            "headers": {"Content-Type": "application/json"},
+                            "body": {
+                                "@odata.id": f"https://graph.microsoft.com/v1.0/directoryObjects/{user_id}"  # noqa: E501
+                            },
+                        }
+                        for i, group_id in enumerate(chunk)
+                    ]
+                }
 
-        #     response_data = response.json()
-        #     return response_data
+                remove_payload = {
+                    "requests": [
+                        {
+                            "id": str(i + 1),
+                            "method": "DELETE",
+                            "url": (
+                                f"/groups/{group_id}/members/{user_id}/$ref"
+                            ),
+                        }
+                        for i, group_id in enumerate(chunk)
+                    ]
+                }
 
-        return "data"
+                response = requests.post(
+                    url=f"{graph_api_endpoint}/$batch",
+                    headers=headers,
+                    data=json.dumps(add_payload),
+                )
 
-        # except ODataError as err:
-        #     raise HTTPException(
-        #         detail=err.error.message, status_code=err.response_status_code
-        #     )
+                response_data = response.json()
+                total_response_data += response_data["responses"]
+
+            except ODataError as err:
+                raise HTTPException(
+                    detail=err.error.message,
+                    status_code=err.response_status_code,
+                )
+
+        for chunk in chunks(groups_to_remove, chunk_size):
+            try:
+                remove_payload = {
+                    "requests": [
+                        {
+                            "id": str(i + 1),
+                            "method": "DELETE",
+                            "url": (
+                                f"/groups/{group_id}/members/{user_id}/$ref"
+                            ),
+                        }
+                        for i, group_id in enumerate(chunk)
+                    ]
+                }
+
+                response = requests.post(
+                    url=f"{graph_api_endpoint}/$batch",
+                    headers=headers,
+                    data=json.dumps(remove_payload),
+                )
+
+                response_data = response.json()
+                total_response_data += response_data["responses"]
+
+            except ODataError as err:
+                raise HTTPException(
+                    detail=err.error.message,
+                    status_code=err.response_status_code,
+                )
+
+        return total_response_data

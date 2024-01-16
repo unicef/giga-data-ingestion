@@ -1,10 +1,11 @@
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
+from data_ingestion.internal.users import GraphUserUpdateRequest, UsersApi
 from data_ingestion.schemas.group import (
     AddGroupMemberRequest,
-    AddMemberToGroupsRequest,
     CreateGroupRequest,
     GraphGroup,
+    ModifyUserAccessRequest,
     UpdateGroupRequest,
 )
 from data_ingestion.schemas.user import GraphUser
@@ -61,5 +62,13 @@ async def remove_user_from_group(id: UUID4, user_id: UUID4):
 
 
 @router.post("/{user_id}", status_code=status.HTTP_200_OK)
-async def modify_user_access(user_id: UUID4, body: AddMemberToGroupsRequest):
-    return await GroupsApi.modify_user_access(user_id=user_id, body=body)
+async def modify_user_access(user_id: UUID4, body: ModifyUserAccessRequest):
+    await GroupsApi.modify_user_access(user_id=user_id, body=body)
+
+    await UsersApi.edit_user(
+        user_id,
+        GraphUserUpdateRequest(
+            account_enabled=True,
+            display_name=body.email,
+        ),
+    )
