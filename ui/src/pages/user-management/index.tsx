@@ -8,11 +8,13 @@ import { ColumnsType } from "antd/es/table";
 import { useApi } from "@/api";
 import AddUserModal from "@/components/user-management/AddUserModal";
 import EditUserModal from "@/components/user-management/EditUserModal";
+import RevokeUserModal from "@/components/user-management/RevokeUserModal";
 import countries from "@/constants/countries";
 import { GraphUser } from "@/types/user.ts";
 
 export default function Users() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<GraphUser>({
     id: "",
     account_enabled: false,
@@ -27,6 +29,7 @@ export default function Users() {
   const { isLoading, data: response } = useQuery({
     queryKey: ["users"],
     queryFn: api.users.list,
+    refetchInterval: 3000, //set to 5 on prod
   });
 
   const { isFetching: groupsIsFetching } = useQuery({
@@ -40,6 +43,9 @@ export default function Users() {
   };
 
   const usersData = response?.data ?? [];
+  const filteredUsersData = usersData.filter(
+    user => user.account_enabled === true,
+  );
 
   const columns = useMemo<ColumnsType<GraphUser>>(
     () => [
@@ -68,12 +74,17 @@ export default function Users() {
         title: "Countries",
         dataIndex: "member_of",
         render: (userGroups: GraphUser["member_of"]) =>
-          userGroups
-            .filter(group =>
-              countries.some(country => country["name"] === group.display_name),
-            )
-            .map(val => val.display_name)
-            .join(", "),
+          [
+            ...new Set(
+              userGroups
+                .filter(group =>
+                  countries.some(country =>
+                    group.display_name.startsWith(country["name"] + "-"),
+                  ),
+                )
+                .map(val => val.display_name.split("-")[0]),
+            ),
+          ].join(", "),
       },
       {
         key: "groups",
@@ -83,8 +94,8 @@ export default function Users() {
           userGroups
             .filter(
               group =>
-                !countries.some(
-                  country => country["name"] === group.display_name,
+                !countries.some(country =>
+                  group.display_name.startsWith(country["name"] + "-"),
                 ),
             )
             .map(val => val.display_name)
@@ -98,22 +109,26 @@ export default function Users() {
           <div className="flex gap-2">
             <Button
               className="!rounded-none"
-              ghost
               disabled={groupsIsFetching}
+              ghost
               icon={<ToolOutlined />}
-              onClick={() => handleEdit(record)}
-              type="primary"
               size="small"
+              type="primary"
+              onClick={() => handleEdit(record)}
             >
               Edit
             </Button>
             <Button
-              ghost
-              disabled={groupsIsFetching}
               className="!rounded-none"
+              disabled={groupsIsFetching}
+              ghost
               icon={<CloseSquareOutlined />}
-              type="primary"
               size="small"
+              type="primary"
+              onClick={() => {
+                setSelectedUser(record);
+                setIsRevokeModalOpen(true);
+              }}
             >
               Revoke
             </Button>
@@ -141,7 +156,7 @@ export default function Users() {
 
       <Table
         rowKey={row => row.id}
-        dataSource={usersData}
+        dataSource={filteredUsersData}
         columns={columns}
         loading={isLoading}
         pagination={{
@@ -153,6 +168,13 @@ export default function Users() {
           initialValues={selectedUser}
           isEditModalOpen={isEditModalOpen}
           setIsEditModalOpen={setIsEditModalOpen}
+        />
+      )}
+      {isRevokeModalOpen && (
+        <RevokeUserModal
+          initialValues={selectedUser}
+          isRevokeModalOpen={isRevokeModalOpen}
+          setIsRevokeModalOpen={setIsRevokeModalOpen}
         />
       )}
     </>

@@ -29,3 +29,4 @@ class GraphUserUpdateRequest(BaseModel):
     def provide_at_least_one_field(self):
         if not any(map(lambda v: v is not None, self.model_dump().values())):
             raise ValueError("At least one field must be provided")
+        return self

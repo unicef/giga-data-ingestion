@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { PlusOutlined } from "@ant-design/icons";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Button, Col, Divider, Form, Input, Modal, Row, Select } from "antd";
 
 import { useApi } from "@/api";
@@ -104,13 +104,11 @@ export default function EditUserModal({
       },
     );
   }, [form, values]);
-  // const addUserToGroup = useMutation({
-  //   mutationFn: api.groups.add_user_to_group,
-  // });
 
-  // const removeUserFromGroup = useMutation({
-  //   mutationFn: api.groups.remove_user_from_group,
-  // });
+  const modifyUserAccess = useMutation({
+    mutationFn: api.groups.modify_user_access,
+    onSettled: () => console.log("settled!"),
+  });
 
   const groups =
     groupsData?.data.map(group => {
@@ -153,7 +151,7 @@ export default function EditUserModal({
   //validation, no duplicate country combinations allowed
   return (
     <Form.Provider
-      onFormFinish={(name, { values, forms }) => {
+      onFormFinish={async (name, { values, forms }) => {
         console.log(name);
         if (name === "editForm") {
           const conutryDatasetValues: CountryDataset[] = values.countryDataset;
@@ -222,6 +220,19 @@ export default function EditUserModal({
         if (name === "confirmForm") {
           console.log("Do things withvalue");
           console.log(values);
+
+          const addGroupsPayload = {
+            email: values.email,
+            groups_to_add: [...values.addedDatasets, ...values.addedRoles].map(
+              dataset => dataset.id,
+            ),
+            groups_to_remove: [
+              ...values.removedDatasets,
+              ...values.removedRoles,
+            ].map(dataset => dataset.id),
+            user_id: initialValues.id,
+          };
+          await modifyUserAccess.mutateAsync(addGroupsPayload);
         }
       }}
     >
@@ -243,6 +254,7 @@ export default function EditUserModal({
           setSwapModal(true);
         }}
       >
+        const variabA = getValue()
         <Form
           form={form}
           initialValues={{
@@ -359,8 +371,6 @@ export default function EditUserModal({
             {({ getFieldValue }) => {
               const email = getFieldValue("email") || [];
               const emailDisplay = email.length === 0 ? initialEmail : email;
-              // how many countries appearead
-              // how many times a string appear over an ar
               const addedDatasets: Dataset[] =
                 getFieldValue("addedDatasets") || [];
 
