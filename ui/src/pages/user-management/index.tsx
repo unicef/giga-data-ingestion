@@ -13,8 +13,9 @@ import countries from "@/constants/countries";
 import { GraphUser } from "@/types/user.ts";
 
 export default function Users() {
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isRevokeModalOpen, setIsRevokeModalOpen] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<GraphUser>({
     id: "",
     account_enabled: false,
@@ -151,7 +152,10 @@ export default function Users() {
           reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
           pariatur.
         </p>
-        <AddUserModal />
+        <AddUserModal
+          isAddModalOpen={isAddModalOpen}
+          setIsAddModalOpen={setIsAddModalOpen}
+        />
       </div>
 
       <Table
