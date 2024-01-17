@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import List, Literal
 
 from pydantic import UUID4, BaseModel, EmailStr, model_validator
 
@@ -30,3 +30,9 @@ class GraphUserUpdateRequest(BaseModel):
         if not any(map(lambda v: v is not None, self.model_dump().values())):
             raise ValueError("At least one field must be provided")
         return self
+
+
+class GraphUserInviteAndAddGroupsRequest(BaseModel):
+    groups_to_add: List[UUID4]
+    invited_user_display_name: str | None = None
+    invited_user_email_address: EmailStr

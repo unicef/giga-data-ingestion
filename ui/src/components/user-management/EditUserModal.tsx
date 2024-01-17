@@ -17,27 +17,13 @@ import {
 import { useApi } from "@/api";
 import countries from "@/constants/countries";
 import { GraphUser } from "@/types/user";
+import { filterCountries, filterRoles } from "@/utils/group";
+import { matchNamesWithIds } from "@/utils/group";
 
 interface EditUserModalProps {
   initialValues: GraphUser;
   isEditModalOpen: boolean;
   setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-function filterCountries(groups: string[]): string[] {
-  return groups.filter(group => {
-    return countries.some(country =>
-      group.split("-")[0].startsWith(country.name),
-    );
-  });
-}
-
-function filterRoles(groups: string[]): string[] {
-  return groups.filter(group => {
-    return !countries.some(country =>
-      group.split("-")[0].startsWith(country.name),
-    );
-  });
 }
 
 type CountryDataset = {
@@ -69,16 +55,6 @@ const getInitialCountryDataset = (
     }, []);
 };
 
-const matchNamesWithIds = (
-  names: string[],
-  data: { id: string; name: string }[],
-): { name: string; id: string | undefined }[] => {
-  return names.map(name => {
-    const matchingData = data.find(d => d.name === name);
-    return { name, id: matchingData?.id };
-  });
-};
-
 export default function EditUserModal({
   initialValues,
   isEditModalOpen,
@@ -100,6 +76,7 @@ export default function EditUserModal({
   const [error, setError] = useState<boolean>(false);
   const [swapModal, setSwapModal] = useState<boolean>(false);
   const [submittable, setSubmittable] = useState(false);
+
   const { data: groupsData } = useQuery({
     queryKey: ["groups"],
     queryFn: api.groups.list,
@@ -155,19 +132,15 @@ export default function EditUserModal({
     setSwapModal(false);
   };
 
-  // TODO make fetching more aggressive?
-  // optimistic updates
-
-  //validation, no duplicate country combinations allowed
   return (
     <Form.Provider
       onFormFinish={async (name, { values, forms }) => {
         if (name === "editForm") {
-          const conutryDatasetValues: CountryDataset[] = values.countryDataset;
+          const countryDatasetValues: CountryDataset[] = values.countryDataset;
           const roleValues: string[] = values.role;
           const emailValue: string = values.email;
 
-          const addedDatasets = conutryDatasetValues
+          const addedDatasets = countryDatasetValues
             .map(({ country, dataset }) => {
               const initialCountry = initialCountryDataset.find(
                 el => el.country === country,
@@ -186,7 +159,7 @@ export default function EditUserModal({
 
           const removedDatasets = initialCountryDataset
             .map(({ country, dataset }) => {
-              const finalCountry = conutryDatasetValues.find(
+              const finalCountry = countryDatasetValues.find(
                 el => el.country === country,
               );
               return {
@@ -244,6 +217,7 @@ export default function EditUserModal({
             await modifyUserAccess.mutateAsync(addGroupsPayload);
             setSwapModal(false);
             setIsEditModalOpen(false);
+            setConfirmLoading(false);
           } catch (err) {
             setError(true);
             setConfirmLoading(false);
@@ -269,7 +243,6 @@ export default function EditUserModal({
           setSwapModal(true);
         }}
       >
-        const variabA = getValue()
         <Form
           form={form}
           initialValues={{

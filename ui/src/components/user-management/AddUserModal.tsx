@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { PlusOutlined } from "@ant-design/icons";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Alert,
   Button,
@@ -48,6 +48,7 @@ export default function AddUserModal({
   const [submittable, setSubmittable] = useState(false);
 
   const values = Form.useWatch([], form);
+
   useEffect(() => {
     form.validateFields({ validateOnly: true }).then(
       () => {
@@ -79,6 +80,10 @@ export default function AddUserModal({
     label: role,
   }));
 
+  const inviteAndAddGroups = useMutation({
+    mutationFn: api.users.invite_and_add_groups,
+  });
+
   const dataSetOptions = [
     "School Coverage",
     "School Geolocation",
@@ -96,13 +101,14 @@ export default function AddUserModal({
   return (
     <Form.Provider
       onFormFinish={async (name, { values, forms }) => {
-        console.log(forms);
-        if (name === "addForm") {
-          const countryDatasetValues: CountryDataset[] =
-            values.countryDataset ?? [];
-          const roleValues: string[] = values.role;
-          const emailValue: string = values.email;
+        const givenName: string = values.givenName;
+        const surname: string = values.surname;
+        const countryDatasetValues: CountryDataset[] =
+          values.countryDataset ?? [];
+        const roles: string[] = values.role;
+        const email: string = values.email;
 
+        if (name === "addForm") {
           const addedDatasets = countryDatasetValues
             .map(({ country, dataset }) => {
               return {
@@ -116,20 +122,31 @@ export default function AddUserModal({
             );
 
           const addedDatasetsWithIds = matchNamesWithIds(addedDatasets, groups);
-          const addedRolesWithIds = matchNamesWithIds(roleValues, groups);
+          const addedRolesWithIds = matchNamesWithIds(roles, groups);
 
           const { confirmForm } = forms;
 
-          confirmForm.setFieldValue("email", emailValue);
+          confirmForm.setFieldValue("givenName", givenName);
+          confirmForm.setFieldValue("surname", surname);
+          confirmForm.setFieldValue("email", email);
           confirmForm.setFieldValue("addedRoles", addedRolesWithIds);
           confirmForm.setFieldValue("addedDatasets", addedDatasetsWithIds);
         }
 
         if (name === "confirmForm") {
-          console.log(values);
+          const addGroupsPayload = {
+            groups_to_add: [...values.addedDatasets, ...values.addedRoles].map(
+              dataset => dataset.id,
+            ),
+            invited_user_display_name: values.givenName + " " + values.surname,
+            invited_user_email_address: values.email,
+          };
 
           try {
-            // await modifyUserAccess.mutateAsync(addGroupsPayload);
+            setConfirmLoading(true);
+
+            await inviteAndAddGroups.mutateAsync(addGroupsPayload);
+            form.resetFields();
             setSwapModal(false);
             setIsAddModalOpen(false);
           } catch (err) {
@@ -166,7 +183,18 @@ export default function AddUserModal({
           name="addForm"
           wrapperCol={{ span: 16 }}
         >
-          <Form.Item label="User" name="user" rules={[{ required: true }]}>
+          <Form.Item
+            label="First Name"
+            name="givenName"
+            rules={[{ required: true }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="Last Name"
+            name="surname"
+            rules={[{ required: true }]}
+          >
             <Input />
           </Form.Item>
           <Form.Item label="Email" name="email" rules={[{ required: true }]}>
@@ -317,6 +345,12 @@ export default function AddUserModal({
               );
             }}
           </Form.Item>
+          <Form.Item name="givenName" hidden>
+            <Input />
+          </Form.Item>
+          <Form.Item name="surname" hidden>
+            <Input />
+          </Form.Item>
           <Form.Item name="email" hidden>
             <Input />
           </Form.Item>
@@ -361,6 +395,8 @@ export default function AddUserModal({
       <div>
         Swap Modal: {swapModal.toString()} <br />
         Is Add Modal Open: {isAddModalOpen.toString()}
+        <br />
+        Submittable {submittable.toString()}
       </div>
     </Form.Provider>
   );

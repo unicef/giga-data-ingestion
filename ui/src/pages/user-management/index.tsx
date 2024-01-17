@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { CloseSquareOutlined, ToolOutlined } from "@ant-design/icons";
+import { useMsal } from "@azure/msal-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Table, Tag } from "antd";
 import { ColumnsType } from "antd/es/table";
@@ -27,6 +28,8 @@ export default function Users() {
   });
 
   const api = useApi();
+  const msal = useMsal();
+
   const { isLoading, data: response } = useQuery({
     queryKey: ["users"],
     queryFn: api.users.list,
@@ -121,7 +124,9 @@ export default function Users() {
             </Button>
             <Button
               className="!rounded-none"
-              disabled={groupsIsFetching}
+              disabled={
+                groupsIsFetching || record.mail === msal.accounts[0].username
+              }
               ghost
               icon={<CloseSquareOutlined />}
               size="small"

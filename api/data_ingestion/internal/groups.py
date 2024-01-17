@@ -207,7 +207,6 @@ class GroupsApi:
         )
         graph_api_endpoint = "https://graph.microsoft.com/v1.0"
 
-        email = body.model_dump()["email"]
         groups_to_add = body.model_dump()["groups_to_add"]
         groups_to_remove = body.model_dump()["groups_to_remove"]
 
@@ -232,19 +231,6 @@ class GroupsApi:
                             "body": {
                                 "@odata.id": f"https://graph.microsoft.com/v1.0/directoryObjects/{user_id}"  # noqa: E501
                             },
-                        }
-                        for i, group_id in enumerate(chunk)
-                    ]
-                }
-
-                remove_payload = {
-                    "requests": [
-                        {
-                            "id": str(i + 1),
-                            "method": "DELETE",
-                            "url": (
-                                f"/groups/{group_id}/members/{user_id}/$ref"
-                            ),
                         }
                         for i, group_id in enumerate(chunk)
                     ]
