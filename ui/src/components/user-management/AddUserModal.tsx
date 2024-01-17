@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 import { PlusOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -146,10 +147,14 @@ export default function AddUserModal({
             setConfirmLoading(true);
 
             await inviteAndAddGroups.mutateAsync(addGroupsPayload);
+            toast.success(
+              "User successfully added. Please wait a moment or refresh the page for updates",
+            );
             form.resetFields();
             setSwapModal(false);
             setIsAddModalOpen(false);
           } catch (err) {
+            toast.error("Operation failed. Please try again");
             setError(true);
             setConfirmLoading(false);
           }
@@ -392,12 +397,6 @@ export default function AddUserModal({
       >
         Add User
       </Button>
-      <div>
-        Swap Modal: {swapModal.toString()} <br />
-        Is Add Modal Open: {isAddModalOpen.toString()}
-        <br />
-        Submittable {submittable.toString()}
-      </div>
     </Form.Provider>
   );
 }

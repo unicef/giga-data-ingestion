@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 import { PlusOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -215,10 +216,15 @@ export default function EditUserModal({
 
           try {
             await modifyUserAccess.mutateAsync(addGroupsPayload);
+            toast.success(
+              "User successfully edited. Please wait a moment or refresh the page for updates",
+            );
             setSwapModal(false);
             setIsEditModalOpen(false);
             setConfirmLoading(false);
           } catch (err) {
+            toast.error("Operation failed. Please try again");
+
             setError(true);
             setConfirmLoading(false);
           }
@@ -259,7 +265,7 @@ export default function EditUserModal({
             <Input disabled />
           </Form.Item>
           <Form.Item label="Email" name="email" rules={[{ required: true }]}>
-            <Input />
+            <Input disabled />
           </Form.Item>
           <Form.Item label="Role" name="role" rules={[{ required: true }]}>
             <Select

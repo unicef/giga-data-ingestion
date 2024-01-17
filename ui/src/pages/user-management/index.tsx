@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Toaster } from "react-hot-toast";
 
 import {
   CheckCircleOutlined,
@@ -224,6 +225,15 @@ export default function Users() {
           setIsEnableUserModalOpen={setIsEnableModalOpen}
         />
       )}
+      <Toaster
+        containerStyle={{
+          right: 40,
+          bottom: 40,
+        }}
+        position="bottom-right"
+        toastOptions={{ duration: 3000 }}
+        reverseOrder={true}
+      />
     </>
   );
 }

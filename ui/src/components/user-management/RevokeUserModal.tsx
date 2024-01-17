@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import toast from "react-hot-toast";
 
 import { useMutation } from "@tanstack/react-query";
 import { Alert, Modal } from "antd";
@@ -32,8 +33,13 @@ export default function RevokeUserModal({
         account_enabled: false,
         id: initialValues.id,
       });
+
+      toast.success(
+        "User successfully revoked. Please wait a moment or refresh the page for updates",
+      );
       setIsRevokeModalOpen(false);
     } catch (err) {
+      toast.error("Operation failed, please try again");
       setError(true);
     } finally {
       setConfirmLoading(false);

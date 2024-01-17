@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import toast from "react-hot-toast";
 
 import { useMutation } from "@tanstack/react-query";
 import { Alert, Modal } from "antd";
@@ -32,8 +33,15 @@ export default function EnableUserModal({
         account_enabled: true,
         id: initialValues.id,
       });
+
+      toast.success(
+        "User successfully enabled. Please wait a moment or refresh the page for updates",
+      );
+
       setIsEnableUserModalOpen(false);
     } catch (err) {
+      toast.error("Operation failed, please try again");
+
       setError(true);
     } finally {
       setConfirmLoading(false);
