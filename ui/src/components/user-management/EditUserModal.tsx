@@ -36,25 +36,6 @@ interface Dataset {
   id: string;
 }
 
-const getInitialCountryDataset = (
-  initialCountries: string[],
-): CountryDataset[] => {
-  return initialCountries
-    .map(item => {
-      const [country, dataset] = item.split("-");
-      return { country, dataset };
-    })
-    .reduce((acc: CountryDataset[], { country, dataset }) => {
-      const existingCountry = acc.find(item => item.country === country);
-      if (existingCountry) {
-        existingCountry.dataset.push(dataset);
-      } else {
-        acc.push({ country, dataset: [dataset] });
-      }
-      return acc;
-    }, []);
-};
-
 export default function EditUserModal({
   initialValues,
   isEditModalOpen,
@@ -66,6 +47,25 @@ export default function EditUserModal({
   const initialGroups = initialValues.member_of.map(
     group => group.display_name,
   );
+
+  const getInitialCountryDataset = (
+    initialCountries: string[],
+  ): CountryDataset[] => {
+    return initialCountries
+      .map(item => {
+        const [country, dataset] = item.split("-");
+        return { country, dataset };
+      })
+      .reduce((acc: CountryDataset[], { country, dataset }) => {
+        const existingCountry = acc.find(item => item.country === country);
+        if (existingCountry) {
+          existingCountry.dataset.push(dataset);
+        } else {
+          acc.push({ country, dataset: [dataset] });
+        }
+        return acc;
+      }, []);
+  };
 
   const initialCountries = filterCountries(initialGroups);
   const initialRoles = filterRoles(initialGroups);
@@ -81,18 +81,6 @@ export default function EditUserModal({
     queryKey: ["groups"],
     queryFn: api.groups.list,
   });
-
-  const values = Form.useWatch([], form);
-  useEffect(() => {
-    form.validateFields({ validateOnly: true }).then(
-      () => {
-        setSubmittable(true);
-      },
-      () => {
-        setSubmittable(false);
-      },
-    );
-  }, [form, values]);
 
   const modifyUserAccess = useMutation({
     mutationFn: api.groups.modify_user_access,
@@ -131,6 +119,18 @@ export default function EditUserModal({
     if (modalName == "EditModal") setIsEditModalOpen(false);
     setSwapModal(false);
   };
+
+  const values = Form.useWatch([], form);
+  useEffect(() => {
+    form.validateFields({ validateOnly: true }).then(
+      () => {
+        setSubmittable(true);
+      },
+      () => {
+        setSubmittable(false);
+      },
+    );
+  }, [form, values]);
 
   return (
     <Form.Provider

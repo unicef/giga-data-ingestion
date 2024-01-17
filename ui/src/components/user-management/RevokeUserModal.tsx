@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { useMutation } from "@tanstack/react-query";
 import { Alert, Modal } from "antd";
@@ -25,6 +25,21 @@ export default function RevokeUserModal({
     mutationFn: api.users.edit_user,
   });
 
+  const handleOk = useCallback(async () => {
+    setConfirmLoading(true);
+    try {
+      await revokeUser.mutateAsync({
+        account_enabled: false,
+        id: initialValues.id,
+      });
+      setIsRevokeModalOpen(false);
+    } catch (err) {
+      setError(true);
+    } finally {
+      setConfirmLoading(false);
+    }
+  }, [revokeUser, setIsRevokeModalOpen, initialValues.id]);
+
   return (
     <Modal
       centered={true}
@@ -36,20 +51,7 @@ export default function RevokeUserModal({
       onCancel={() => {
         setIsRevokeModalOpen(false);
       }}
-      onOk={async () => {
-        setConfirmLoading(true);
-        try {
-          await revokeUser.mutateAsync({
-            account_enabled: false,
-            id: initialValues.id,
-          });
-          setConfirmLoading(false);
-          setIsRevokeModalOpen(false);
-        } catch (err) {
-          setError(true);
-          setConfirmLoading(false);
-        }
-      }}
+      onOk={handleOk}
     >
       <div>
         <p>
