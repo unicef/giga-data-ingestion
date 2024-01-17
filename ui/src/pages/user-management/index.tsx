@@ -1,6 +1,10 @@
 import { useMemo, useState } from "react";
 
-import { CloseSquareOutlined, ToolOutlined } from "@ant-design/icons";
+import {
+  CheckCircleOutlined,
+  CloseSquareOutlined,
+  ToolOutlined,
+} from "@ant-design/icons";
 import { useMsal } from "@azure/msal-react";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Table, Tag } from "antd";
@@ -9,6 +13,7 @@ import { ColumnsType } from "antd/es/table";
 import { useApi } from "@/api";
 import AddUserModal from "@/components/user-management/AddUserModal";
 import EditUserModal from "@/components/user-management/EditUserModal";
+import EnableUserModal from "@/components/user-management/EnableUserModal";
 import RevokeUserModal from "@/components/user-management/RevokeUserModal";
 import countries from "@/constants/countries";
 import { GraphUser } from "@/types/user.ts";
@@ -16,7 +21,9 @@ import { GraphUser } from "@/types/user.ts";
 export default function Users() {
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [isEnableModalOpen, setIsEnableModalOpen] = useState<boolean>(false);
   const [isRevokeModalOpen, setIsRevokeModalOpen] = useState<boolean>(false);
+
   const [selectedUser, setSelectedUser] = useState<GraphUser>({
     id: "",
     account_enabled: false,
@@ -47,9 +54,7 @@ export default function Users() {
   };
 
   const usersData = response?.data ?? [];
-  const filteredUsersData = usersData.filter(
-    user => user.account_enabled === true,
-  );
+  const filteredUsersData = usersData;
 
   const columns = useMemo<ColumnsType<GraphUser>>(
     () => [
@@ -70,6 +75,12 @@ export default function Users() {
                 pending
               </Tag>
             )}
+            {!record.account_enabled &&
+              record.external_user_state === "Accepted" && (
+                <Tag className="mx-2 uppercase" color="error">
+                  Disabled
+                </Tag>
+              )}
           </>
         ),
       },
@@ -122,22 +133,42 @@ export default function Users() {
             >
               Edit
             </Button>
-            <Button
-              className="!rounded-none"
-              disabled={
-                groupsIsFetching || record.mail === msal.accounts[0].username
-              }
-              ghost
-              icon={<CloseSquareOutlined />}
-              size="small"
-              type="primary"
-              onClick={() => {
-                setSelectedUser(record);
-                setIsRevokeModalOpen(true);
-              }}
-            >
-              Revoke
-            </Button>
+
+            {record.account_enabled ? (
+              <Button
+                className="!rounded-none"
+                disabled={
+                  groupsIsFetching || record.mail === msal.accounts[0].username
+                }
+                ghost
+                icon={<CloseSquareOutlined />}
+                size="small"
+                type="primary"
+                onClick={() => {
+                  setSelectedUser(record);
+                  setIsRevokeModalOpen(true);
+                }}
+              >
+                Revoke
+              </Button>
+            ) : (
+              <Button
+                className="!rounded-none"
+                disabled={
+                  groupsIsFetching || record.mail === msal.accounts[0].username
+                }
+                ghost
+                icon={<CheckCircleOutlined />}
+                size="small"
+                type="primary"
+                onClick={() => {
+                  setSelectedUser(record);
+                  setIsEnableModalOpen(true);
+                }}
+              >
+                Enable
+              </Button>
+            )}
           </div>
         ),
       },
@@ -184,6 +215,13 @@ export default function Users() {
           initialValues={selectedUser}
           isRevokeModalOpen={isRevokeModalOpen}
           setIsRevokeModalOpen={setIsRevokeModalOpen}
+        />
+      )}
+      {isEnableModalOpen && (
+        <EnableUserModal
+          initialValues={selectedUser}
+          isEnableUserModalOpen={isEnableModalOpen}
+          setIsEnableUserModalOpen={setIsEnableModalOpen}
         />
       )}
     </>
