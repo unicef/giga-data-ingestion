@@ -17,6 +17,7 @@ import {
 
 import { useApi } from "@/api";
 import countries from "@/constants/countries";
+import { modalWidth } from "@/constants/theme";
 import { filterRoles } from "@/utils/group";
 import { matchNamesWithIds } from "@/utils/group";
 
@@ -172,7 +173,7 @@ export default function AddUserModal({
         okText="Confirm"
         open={isAddModalOpen && !swapModal}
         title="Add New User"
-        width={"75%"}
+        width={modalWidth}
         onCancel={() => handleModalCancel("AddModal")}
         onOk={() => {
           form.submit();
@@ -290,7 +291,8 @@ export default function AddUserModal({
         centered={true}
         footer={null}
         open={isAddModalOpen && swapModal}
-        title="Confirm new User"
+        title="Confirm new Usser"
+        width={modalWidth}
         onCancel={() => handleModalCancel("ConfirmModal")}
         onOk={() => form.submit()}
       >

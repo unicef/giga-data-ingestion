@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Alert, Modal } from "antd";
 
 import { useApi } from "@/api";
+import { modalWidth } from "@/constants/theme";
 import { GraphUser } from "@/types/user";
 
 interface RevokeUserModalProps {
@@ -53,7 +54,7 @@ export default function RevokeUserModal({
       okButtonProps={{ className: "rounded-none bg-primary" }}
       open={isRevokeModalOpen}
       title="Confirm user acess modification"
-      width="60%"
+      width={modalWidth}
       onCancel={() => {
         setIsRevokeModalOpen(false);
       }}

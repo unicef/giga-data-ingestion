@@ -17,6 +17,7 @@ import {
 
 import { useApi } from "@/api";
 import countries from "@/constants/countries";
+import { modalWidth } from "@/constants/theme";
 import { GraphUser } from "@/types/user";
 import { filterCountries, filterRoles } from "@/utils/group";
 import { matchNamesWithIds } from "@/utils/group";
@@ -242,7 +243,7 @@ export default function EditUserModal({
         okText="Confirm"
         open={isEditModalOpen && !swapModal}
         title="Modify User Access"
-        width={"75%"}
+        width={modalWidth}
         onCancel={() => handleModalCancel("EditModal")}
         onOk={() => {
           form.submit();
@@ -353,6 +354,7 @@ export default function EditUserModal({
         footer={null}
         open={isEditModalOpen && swapModal}
         title="Confirm user acess modification"
+        width={modalWidth}
         onCancel={() => handleModalCancel("ConfirmModal")}
         onOk={onOk}
       >
