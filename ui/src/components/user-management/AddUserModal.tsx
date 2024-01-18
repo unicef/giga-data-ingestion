@@ -182,9 +182,6 @@ export default function AddUserModal({
       >
         <Form
           form={form}
-          initialValues={{
-            user: "adas",
-          }}
           labelCol={{ span: 4 }}
           name="addForm"
           wrapperCol={{ span: 16 }}
