@@ -54,7 +54,7 @@ export default function EnableUserModal({
       confirmLoading={confirmLoading}
       okButtonProps={{ className: "rounded-none bg-primary" }}
       open={isEnableUserModalOpen}
-      title="Confirm user acess modification"
+      title="Confirm user access modification"
       width="60%"
       onCancel={() => {
         setIsEnableUserModalOpen(false);

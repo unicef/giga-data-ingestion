@@ -53,7 +53,7 @@ export default function RevokeUserModal({
       confirmLoading={confirmLoading}
       okButtonProps={{ className: "rounded-none bg-primary" }}
       open={isRevokeModalOpen}
-      title="Confirm user acess modification"
+      title="Confirm user access modification"
       width={modalWidth}
       onCancel={() => {
         setIsRevokeModalOpen(false);

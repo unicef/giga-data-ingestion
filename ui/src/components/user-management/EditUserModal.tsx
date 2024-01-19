@@ -353,7 +353,7 @@ export default function EditUserModal({
         centered={true}
         footer={null}
         open={isEditModalOpen && swapModal}
-        title="Confirm user acess modification"
+        title="Confirm user access modification"
         width={modalWidth}
         onCancel={() => handleModalCancel("ConfirmModal")}
         onOk={onOk}

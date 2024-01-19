@@ -288,7 +288,7 @@ export default function AddUserModal({
         centered={true}
         footer={null}
         open={isAddModalOpen && swapModal}
-        title="Confirm new Usser"
+        title="Confirm new User"
         width={modalWidth}
         onCancel={() => handleModalCancel("ConfirmModal")}
         onOk={() => form.submit()}
