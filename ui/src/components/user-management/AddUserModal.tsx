@@ -348,7 +348,7 @@ export default function AddUserModal({
                 Cancel
               </Button>
               <Button
-                className="rounded-none bg-primary"
+                className="rounded-none bg-primary text-white"
                 htmlType="submit"
                 loading={confirmLoading}
               >
