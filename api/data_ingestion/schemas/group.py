@@ -1,5 +1,3 @@
-from typing import List
-
 from pydantic import UUID4, BaseModel, model_validator
 
 
@@ -34,5 +32,5 @@ class CreateGroupRequest(BaseModel):
 
 class ModifyUserAccessRequest(BaseModel):
     email: str
-    groups_to_add: List[UUID4]
-    groups_to_remove: List[UUID4]
+    groups_to_add: list[UUID4]
+    groups_to_remove: list[UUID4]

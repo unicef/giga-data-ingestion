@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import Literal
 
 from pydantic import UUID4, BaseModel, EmailStr, model_validator
 
@@ -33,6 +33,6 @@ class GraphUserUpdateRequest(BaseModel):
 
 
 class GraphUserInviteAndAddGroupsRequest(BaseModel):
-    groups_to_add: List[UUID4]
+    groups_to_add: list[UUID4]
     invited_user_display_name: str | None = None
     invited_user_email_address: EmailStr
