@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { AuthenticatedTemplate } from "@azure/msal-react";
 
@@ -6,6 +6,15 @@ import { useStore } from "@/store.ts";
 
 export default function Navbar() {
   const { featureFlags } = useStore();
+  const location = useLocation();
+
+  const linkName =
+    location.pathname === "/user-management"
+      ? "Ingestion Portal"
+      : "Admin Panel";
+
+  const redirectLink =
+    location.pathname === "/user-management" ? "/" : "/user-management";
 
   return (
     <header className="flex-none">
@@ -24,11 +33,11 @@ export default function Navbar() {
         <AuthenticatedTemplate>
           {featureFlags.userManagementPage && (
             <Link
-              to="/user-management"
+              to={redirectLink}
               unstable_viewTransition
               className="text-white"
             >
-              Admin Panel
+              {linkName}
             </Link>
           )}
         </AuthenticatedTemplate>
