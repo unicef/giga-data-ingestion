@@ -11,3 +11,8 @@ export const SentinelGroup: GraphGroup = {
   display_name: "",
   mail: null,
 };
+
+export interface Dataset {
+  name: string;
+  id: string;
+}

@@ -16,5 +16,56 @@ export default function routes(axi: AxiosInstance) {
     get: (id: string): Promise<AxiosResponse<GraphGroup>> => {
       return axi.get(`/groups/${id}`);
     },
+    create: ({
+      description = "",
+      display_name,
+    }: {
+      description?: string;
+      display_name: string;
+    }): Promise<AxiosResponse<GraphGroup>> => {
+      return axi.post(`/groups`, {
+        description: description,
+        display_names: display_name,
+      });
+    },
+
+    add_user_to_group: ({
+      id,
+      user_id,
+    }: {
+      id: string;
+      user_id: string;
+    }): Promise<AxiosResponse<null>> => {
+      return axi.post(`/groups/${id}/users`, {
+        user_id: user_id,
+      });
+    },
+    remove_user_from_group: ({
+      group_id,
+      user_id,
+    }: {
+      group_id: string;
+      user_id: string;
+    }): Promise<AxiosResponse<null>> => {
+      return axi.delete(`/groups/${group_id}/users/${user_id}`);
+    },
+
+    modify_user_access: ({
+      email,
+      groups_to_add,
+      groups_to_remove,
+      user_id,
+    }: {
+      email: string;
+      user_id: string;
+      groups_to_add: string[];
+      groups_to_remove: string[];
+    }): Promise<AxiosResponse<null>> => {
+      return axi.post(`/groups/${user_id}`, {
+        email,
+        groups_to_add,
+        groups_to_remove,
+      });
+    },
   };
 }

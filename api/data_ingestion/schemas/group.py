@@ -28,3 +28,9 @@ class UpdateGroupRequest(BaseModel):
 class CreateGroupRequest(BaseModel):
     description: str
     display_name: str
+
+
+class ModifyUserAccessRequest(BaseModel):
+    email: str
+    groups_to_add: list[UUID4]
+    groups_to_remove: list[UUID4]
