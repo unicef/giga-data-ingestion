@@ -60,9 +60,16 @@ export default function Users() {
   const columns = useMemo<ColumnsType<GraphUser>>(
     () => [
       {
-        key: "name",
-        title: "Name",
-        dataIndex: "display_name",
+        key: "surname",
+        title: "Surname",
+        dataIndex: "surname",
+        width: "12%",
+      },
+      {
+        key: "firstName",
+        title: "First Name",
+        dataIndex: "given_name",
+        width: "12%",
       },
       {
         key: "email",
