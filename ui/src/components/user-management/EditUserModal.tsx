@@ -21,6 +21,11 @@ import { modalWidth } from "@/constants/theme";
 import { GraphUser } from "@/types/user";
 import { filterCountries, filterRoles } from "@/utils/group";
 import { matchNamesWithIds } from "@/utils/group";
+import {
+  getUniqueDatasets,
+  pluralizeCountries,
+  pluralizeDatasets,
+} from "@/utils/string";
 
 interface EditUserModalProps {
   initialValues: GraphUser;
@@ -32,11 +37,6 @@ type CountryDataset = {
   country: string;
   dataset: string[];
 };
-
-interface Dataset {
-  name: string;
-  id: string;
-}
 
 export default function EditUserModal({
   initialValues,
@@ -365,49 +365,19 @@ export default function EditUserModal({
             }
           >
             {({ getFieldValue }) => {
-              const email = getFieldValue("email") || [];
-              const emailDisplay = email.length === 0 ? initialEmail : email;
-              const addedDatasets: Dataset[] =
-                getFieldValue("addedDatasets") || [];
-
-              const uniqueCountries = new Set<string>();
-              const datasetTypes = new Set();
-
-              addedDatasets.forEach(item => {
-                const country = item.name.split("-")[0];
-                uniqueCountries.add(country);
-
-                if (item.name.includes("School Geolocation")) {
-                  datasetTypes.add("School Geolocation");
-                }
-                if (item.name.includes("School Coverage")) {
-                  datasetTypes.add("School Coverage");
-                }
-                if (item.name.includes("School QoS")) {
-                  datasetTypes.add("School QoS");
-                }
-              });
-
-              const result: { countries: string[]; uniqueDatasets: number } = {
-                countries: Array.from(uniqueCountries),
-                uniqueDatasets: datasetTypes.size,
-              };
+              const { countries, email, uniqueDatasets } =
+                getUniqueDatasets(getFieldValue);
 
               return (
                 <div>
                   {`This will give the user with email `}
-                  <b>{emailDisplay}</b>
+                  <b>{email}</b>
                   {` access to Giga data for `}
-                  <b>
-                    {result.uniqueDatasets}{" "}
-                    {result.uniqueDatasets === 1 ? "dataset" : "datasets"}
-                  </b>
-                  {` across ${result.countries.length} countries, `}
-                  <b>
-                    {result.countries.slice(0, -1).join(", ") +
-                      (result.countries.length > 1 ? ", and " : "") +
-                      result.countries.slice(-1)}
-                  </b>
+                  <b>{pluralizeDatasets(uniqueDatasets)}</b>
+                  {` across ${countries.length} ${
+                    countries.length === 1 ? "country" : "countries"
+                  } `}
+                  <b>{pluralizeCountries(countries)}</b>
                   .
                   <br />
                   <br />
