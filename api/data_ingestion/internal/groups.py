@@ -207,8 +207,8 @@ class GroupsApi:
         )
         graph_api_endpoint = "https://graph.microsoft.com/v1.0"
 
-        groups_to_add = body.model_dump()["groups_to_add"]
-        groups_to_remove = body.model_dump()["groups_to_remove"]
+        groups_to_add = body.groups_to_add
+        groups_to_remove = body.groups_to_remove
 
         headers = {
             "Authorization": "Bearer " + access_token[0],
