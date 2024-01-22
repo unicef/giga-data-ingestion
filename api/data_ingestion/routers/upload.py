@@ -41,7 +41,9 @@ async def upload_file(
     client = storage_client.get_blob_client(filename)
 
     try:
-        client.upload_blob(await file.read(), metadata=metadata)
+        client.upload_blob(
+            await file.read(), metadata=metadata, overwrite=True
+        )
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
         raise HTTPException(
