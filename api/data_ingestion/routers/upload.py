@@ -37,7 +37,7 @@ async def upload_file(
         "uploader": user.email or user.preferred_username,
         "original_filename": file.filename,
     }
-    filename = f"{user.sub}/{uid[:8]}-{file.filename}"
+    filename = f"raw/uploads/{file.filename}"
     client = storage_client.get_blob_client(filename)
 
     try:
