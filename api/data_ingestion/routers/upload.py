@@ -1,5 +1,9 @@
 from uuid import uuid4
 
+from azure.core.exceptions import HttpResponseError
+from data_ingestion.constants import constants
+from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.storage import storage_client
 from fastapi import (
     APIRouter,
     Depends,
@@ -10,10 +14,6 @@ from fastapi import (
     status,
 )
 from fastapi_azure_auth.user import User
-
-from data_ingestion.constants import constants
-from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.internal.storage import storage_client
 
 router = APIRouter(
     prefix="/api/upload",
@@ -39,5 +39,11 @@ async def upload_file(
     }
     filename = f"{user.sub}/{uid[:8]}-{file.filename}"
     client = storage_client.get_blob_client(filename)
-    client.upload_blob(await file.read(), metadata=metadata)
-    response.status_code = status.HTTP_201_CREATED
+
+    try:
+        client.upload_blob(await file.read(), metadata=metadata)
+        response.status_code = status.HTTP_201_CREATED
+    except HttpResponseError as err:
+        raise HTTPException(
+            detail=err.message, status_code=err.response.status_code
+        )
