@@ -1,6 +1,6 @@
 import { ThemeConfig, theme as defaultTheme } from "antd";
 
-const theme: ThemeConfig = {
+const antdTheme: ThemeConfig = {
   ...defaultTheme,
   algorithm: defaultTheme.defaultAlgorithm,
   components: {
@@ -16,4 +16,4 @@ const theme: ThemeConfig = {
   },
 };
 
-export default theme;
+export default antdTheme;

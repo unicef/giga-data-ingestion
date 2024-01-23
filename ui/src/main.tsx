@@ -22,8 +22,8 @@ import { App as AntDApp, ConfigProvider as AntDConfigProvider } from "antd";
 
 import { queryClient } from "@/api";
 import { msalConfig } from "@/lib/auth.ts";
-import "@/styles/index.css";
-import theme from "@/styles/theme.ts";
+import "@/styles/index.scss";
+import antdTheme from "@/styles/theme.ts";
 
 if (import.meta.env.PROD && import.meta.env.SENTRY_DSN) {
   Sentry.init({
@@ -57,7 +57,7 @@ auth
       <React.StrictMode>
         <MsalProvider instance={auth}>
           <QueryClientProvider client={queryClient}>
-            <AntDConfigProvider theme={theme}>
+            <AntDConfigProvider theme={antdTheme}>
               <AntDApp>
                 <HelmetProvider>
                   <Routes />
