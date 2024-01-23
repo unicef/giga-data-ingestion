@@ -47,4 +47,7 @@ export default {
     },
   },
   plugins: [animate],
+  corePlugins: {
+    preflight: false,
+  },
 };

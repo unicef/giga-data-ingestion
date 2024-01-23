@@ -11,14 +11,13 @@ services:
       - ./api:/app
 
   ui:
-    image: node:20-alpine
+    image: node:18-alpine
     restart: unless-stopped
     working_dir: /app
     ports:
       - "3000:3000"
     volumes:
       - ./ui:/app
-    init: true
     command:
       - /bin/sh
       - "-c"
