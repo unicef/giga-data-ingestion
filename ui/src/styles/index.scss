@@ -1,4 +1,16 @@
-@use '@carbon/react';
+@use "@carbon/react/scss/theme" with (
+  $theme: (
+    background: #ffffff,
+    text-primary: #277aff,
+    text-secondary: #d6e4fd,
+    text-disabled: #9e9e9e,
+    text-error: #f94b4b,
+    text-helper: #07706d,
+    support-warning: #ff9f40,
+    support-info: #07706d,
+    support-error: #f94b4b,
+  )
+);
 
 @tailwind base;
 @tailwind components;
@@ -10,7 +22,7 @@
   line-height: 1.5;
 
   color-scheme: normal;
-  color: rgba(255, 255, 255, 0.87);
+  color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;

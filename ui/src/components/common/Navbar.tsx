@@ -13,7 +13,7 @@ export default function Navbar() {
 
   const navClass = clsx("flex h-[80px] items-center justify-between", {
     "border-b-4 border-primary bg-white p-4 ": isUserManagementPage,
-    " bg-primary p-4 text-white": !isUserManagementPage,
+    "bg-primary p-4 text-white": !isUserManagementPage,
   });
 
   const linkClass = clsx("flex items-center gap-2", {

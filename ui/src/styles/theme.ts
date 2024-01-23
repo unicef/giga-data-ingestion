@@ -10,7 +10,7 @@ const antdTheme: ThemeConfig = {
     },
     Breadcrumb: {
       linkColor: "#277AFF",
-      lastItemColor: "#000000",
+      lastItemColor: "#222222",
       linkHoverColor: "#277AFF",
     },
   },
