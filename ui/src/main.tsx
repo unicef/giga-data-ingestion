@@ -18,12 +18,10 @@ import { Routes } from "@generouted/react-router/lazy";
 import * as Sentry from "@sentry/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { App as AntDApp, ConfigProvider as AntDConfigProvider } from "antd";
 
 import { queryClient } from "@/api";
 import { msalConfig } from "@/lib/auth.ts";
 import "@/styles/index.scss";
-import antdTheme from "@/styles/theme.ts";
 
 if (import.meta.env.PROD && import.meta.env.SENTRY_DSN) {
   Sentry.init({
@@ -57,13 +55,9 @@ auth
       <React.StrictMode>
         <MsalProvider instance={auth}>
           <QueryClientProvider client={queryClient}>
-            <AntDConfigProvider theme={antdTheme}>
-              <AntDApp>
-                <HelmetProvider>
-                  <Routes />
-                </HelmetProvider>
-              </AntDApp>
-            </AntDConfigProvider>
+            <HelmetProvider>
+              <Routes />
+            </HelmetProvider>
             <ReactQueryDevtools initialIsOpen={false} />
           </QueryClientProvider>
         </MsalProvider>

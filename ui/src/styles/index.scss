@@ -1,17 +1,50 @@
-@use "@carbon/react" with (
+@use "sass:string";
+@use "types";
+@use "colors";
+
+@use "@carbon/react/scss/config" with (
+  $css--font-face: false,
+  $css--default-type: true,
+  $css--reset: false
+);
+@use "@carbon/react/scss/type" with (
+  $font-families: types.$font-families
+);
+@use "@carbon/react/scss/themes";
+@use "@carbon/react/scss/theme" with (
   $theme: (
-    background: #ffffff,
-    text-primary: #277aff,
-    text-secondary: #d6e4fd,
-    text-disabled: #9e9e9e,
-    text-error: #f94b4b,
-    support-error: #f94b4b,
-    text-warning: #ff9f40,
-    support-warning: #ff9f40,
-    text-helper: #07706d,
-    support-info: #07706d,
+    background: colors.$giga-white,
+    text-primary: colors.$giga-blue,
   )
 );
+@use "@carbon/react/scss/components/button/tokens" as button-tokens with (
+  $button-primary: colors.$giga-blue
+);
+@use "@carbon/react";
+
+//$theme: (
+//  background: #ffffff,
+//  text-primary: #277aff,
+//  text-secondary: #d6e4fd,
+//  text-disabled: #9e9e9e,
+//  text-error: #f94b4b,
+//  text-warning: #ff9f40,
+//  text-helper: #07706d,
+//  support-success: #46c66d,
+//  support-error: #f94b4b,
+//  support-warning: #ff9f40,
+//  support-info: #07706d,
+//  border-interactive: #277aff,
+//  link-primary: #277aff,
+//  link-visited: #277aff,
+//  icon-interactive: #277aff,
+//  button-primary: #277aff,
+//  button-tertiary: #277aff,
+//  button-danger-primary: #f94b4b,
+//  button-danger-secondary: #f94b4b,
+//  focus: #277aff,
+//  interactive: #277aff,
+//)
 
 @tailwind base;
 @tailwind components;
@@ -23,7 +56,6 @@
   line-height: 1.5;
 
   color-scheme: normal;
-  color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -39,6 +71,7 @@ body {
 
 a {
   color: theme("colors.primary");
+  text-decoration: none;
 }
 
 h1 {
@@ -63,4 +96,20 @@ h5 {
 
 h6 {
   font-size: theme("fontSize.xl");
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  padding: 0;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }

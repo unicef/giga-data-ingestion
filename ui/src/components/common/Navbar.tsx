@@ -37,7 +37,9 @@ export default function Navbar() {
             }
             alt="Giga"
           />
-          <h1 className={headerClass}>giga ingest</h1>
+          <h1 className={headerClass}>
+            <b>giga</b>ingest
+          </h1>
         </Link>
 
         <AuthenticatedTemplate>
@@ -46,7 +48,7 @@ export default function Navbar() {
               as={Link}
               to={isUserManagementPage ? "/" : "/user-management"}
               unstable_viewTransition
-              kind={isUserManagementPage ? "ghost" : "secondary"}
+              kind={isUserManagementPage ? "ghost" : "primary"}
             >
               {isUserManagementPage ? "Ingestion Portal" : "Admin Panel"}
             </Button>
