@@ -60,9 +60,16 @@ export default function Users() {
   const columns = useMemo<ColumnsType<GraphUser>>(
     () => [
       {
-        key: "name",
-        title: "Name",
-        dataIndex: "display_name",
+        key: "surname",
+        title: "Surname",
+        dataIndex: "surname",
+        width: "12%",
+      },
+      {
+        key: "firstName",
+        title: "First Name",
+        dataIndex: "given_name",
+        width: "12%",
       },
       {
         key: "email",
@@ -182,51 +189,54 @@ export default function Users() {
       <div className="flex flex-col items-start justify-between gap-4">
         <h2 className="text-[23px]">Giga User Management</h2>
 
-        <AddUserModal
-          isAddModalOpen={isAddModalOpen}
-          setIsAddModalOpen={setIsAddModalOpen}
+        <div className="ml-auto px-28">
+          <AddUserModal
+            isAddModalOpen={isAddModalOpen}
+            setIsAddModalOpen={setIsAddModalOpen}
+          />
+        </div>
+      </div>
+      <div className="px-28">
+        <Table
+          rowKey={row => row.id}
+          dataSource={filteredUsersData}
+          columns={columns}
+          loading={isLoading}
+          pagination={{
+            position: ["bottomRight"],
+          }}
+        />
+        {isEditModalOpen && (
+          <EditUserModal
+            initialValues={selectedUser}
+            isEditModalOpen={isEditModalOpen}
+            setIsEditModalOpen={setIsEditModalOpen}
+          />
+        )}
+        {isRevokeModalOpen && (
+          <RevokeUserModal
+            initialValues={selectedUser}
+            isRevokeModalOpen={isRevokeModalOpen}
+            setIsRevokeModalOpen={setIsRevokeModalOpen}
+          />
+        )}
+        {isEnableModalOpen && (
+          <EnableUserModal
+            initialValues={selectedUser}
+            isEnableUserModalOpen={isEnableModalOpen}
+            setIsEnableUserModalOpen={setIsEnableModalOpen}
+          />
+        )}
+        <Toaster
+          containerStyle={{
+            right: 40,
+            bottom: 40,
+          }}
+          position="bottom-right"
+          toastOptions={{ duration: 3000 }}
+          reverseOrder={true}
         />
       </div>
-
-      <Table
-        rowKey={row => row.id}
-        dataSource={filteredUsersData}
-        columns={columns}
-        loading={isLoading}
-        pagination={{
-          position: ["bottomRight"],
-        }}
-      />
-      {isEditModalOpen && (
-        <EditUserModal
-          initialValues={selectedUser}
-          isEditModalOpen={isEditModalOpen}
-          setIsEditModalOpen={setIsEditModalOpen}
-        />
-      )}
-      {isRevokeModalOpen && (
-        <RevokeUserModal
-          initialValues={selectedUser}
-          isRevokeModalOpen={isRevokeModalOpen}
-          setIsRevokeModalOpen={setIsRevokeModalOpen}
-        />
-      )}
-      {isEnableModalOpen && (
-        <EnableUserModal
-          initialValues={selectedUser}
-          isEnableUserModalOpen={isEnableModalOpen}
-          setIsEnableUserModalOpen={setIsEnableModalOpen}
-        />
-      )}
-      <Toaster
-        containerStyle={{
-          right: 40,
-          bottom: 40,
-        }}
-        position="bottom-right"
-        toastOptions={{ duration: 3000 }}
-        reverseOrder={true}
-      />
     </>
   );
 }

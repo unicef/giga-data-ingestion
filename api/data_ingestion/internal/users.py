@@ -22,6 +22,8 @@ class UsersApi:
                 "userPrincipalName",
                 "accountEnabled",
                 "externalUserState",
+                "givenName",
+                "surname",
             ],
             orderby=["displayName", "mail", "userPrincipalName"],
             expand=["memberOf($select=id,description,displayName)"],
