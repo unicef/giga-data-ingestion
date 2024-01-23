@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
-import { ApiOutlined, UploadOutlined } from "@ant-design/icons";
-import { Button } from "antd";
+import { Upload, WifiBridgeAlt } from "@carbon/icons-react";
+import { Button, Column, FlexGrid, Heading } from "@carbon/react";
 
 import { useStore } from "@/store.ts";
 
@@ -15,66 +15,70 @@ export default function Landing() {
       <div className="flex h-full w-full flex-col items-center justify-center backdrop-brightness-50">
         <div className="flex flex-col items-center gap-4">
           <div className="flex flex-col">
-            <h1 className="text-[40px]">
-              <b>Upload</b>
-            </h1>
-            <p className="text-[20px]">
+            <Heading>Upload</Heading>
+            <p>
               Easily upload quality datasets to help connect every school to the
               internet.
             </p>
           </div>
           <div className="flex gap-8">
             {featureFlags.uploadFilePage && (
-              <Link to="/upload" unstable_viewTransition>
-                <Button
-                  className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
-                  ghost
-                >
-                  <UploadOutlined className="text-4xl" />
-                  Upload File
-                </Button>
-              </Link>
+              <Button
+                as={Link}
+                to="/upload"
+                className="gap-4"
+                renderIcon={Upload}
+                unstable_viewTransition
+              >
+                Upload File
+              </Button>
             )}
             {featureFlags.ingestApiPage && (
-              <Link to="/datasources" unstable_viewTransition>
-                <Button
-                  className="flex h-auto flex-col items-center justify-center gap-4 px-8 py-2"
-                  ghost
-                >
-                  <ApiOutlined className="text-4xl" />
-                  Ingest API
-                </Button>
-              </Link>
+              <Button
+                as={Link}
+                to="/datasources"
+                className="gap-4"
+                renderIcon={WifiBridgeAlt}
+                unstable_viewTransition
+              >
+                Ingest API
+              </Button>
             )}
           </div>
         </div>
 
-        <div className="absolute bottom-0 flex flex-auto items-end justify-center gap-24 py-8">
-          <a
-            href="https://giga.global"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white"
-          >
-            <u>Giga Homepage</u>
-          </a>
-          <a
-            href="https://projectconnect.unicef.org/map"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white"
-          >
-            <u>Giga Map</u>
-          </a>
-          <a
-            href={DATAHUB_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-white"
-          >
-            <u>DataHub</u>
-          </a>
-        </div>
+        <FlexGrid className="absolute bottom-0 flex flex-row gap-24 py-8">
+          <Column>
+            <Button
+              as="a"
+              href="https://giga.global"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Giga Homepage
+            </Button>
+          </Column>
+          <Column>
+            <Button
+              as="a"
+              href="https://projectconnect.unicef.org/map"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Giga Maps
+            </Button>
+          </Column>
+          <Column>
+            <Button
+              as="a"
+              href={DATAHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              DataHub
+            </Button>
+          </Column>
+        </FlexGrid>
       </div>
     </div>
   );

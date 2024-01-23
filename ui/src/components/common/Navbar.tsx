@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 
 import { AuthenticatedTemplate } from "@azure/msal-react";
+import { Button } from "@carbon/react";
 import clsx from "clsx";
 
 import { useStore } from "@/store.ts";
@@ -10,11 +11,6 @@ export default function Navbar() {
   const location = useLocation();
 
   const isUserManagementPage = location.pathname === "/user-management";
-
-  const navClass = clsx("flex h-[80px] items-center justify-between", {
-    "border-b-4 border-primary bg-white p-4 ": isUserManagementPage,
-    "bg-primary p-4 text-white": !isUserManagementPage,
-  });
 
   const linkClass = clsx("flex items-center gap-2", {
     "text-primary": isUserManagementPage,
@@ -28,7 +24,12 @@ export default function Navbar() {
 
   return (
     <header className="flex-none">
-      <nav className={navClass}>
+      <nav
+        className={clsx("flex h-[80px] items-center justify-between p-4", {
+          "border-b-4 border-solid border-primary": isUserManagementPage,
+          "bg-primary": !isUserManagementPage,
+        })}
+      >
         <Link to="/" className={linkClass} unstable_viewTransition>
           <img
             src={
@@ -36,20 +37,19 @@ export default function Navbar() {
             }
             alt="Giga"
           />
-          <h1 className={headerClass}>
-            <b>giga ingest</b>
-          </h1>
+          <h1 className={headerClass}>giga ingest</h1>
         </Link>
 
         <AuthenticatedTemplate>
           {featureFlags.userManagementPage && (
-            <Link
+            <Button
+              as={Link}
               to={isUserManagementPage ? "/" : "/user-management"}
               unstable_viewTransition
-              className={linkClass}
+              kind={isUserManagementPage ? "ghost" : "secondary"}
             >
               {isUserManagementPage ? "Ingestion Portal" : "Admin Panel"}
-            </Link>
+            </Button>
           )}
         </AuthenticatedTemplate>
       </nav>

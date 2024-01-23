@@ -11,7 +11,7 @@ services:
       - ./api:/app
 
   ui:
-    image: node:18-alpine
+    image: node:20-alpine
     restart: unless-stopped
     working_dir: /app
     ports:
