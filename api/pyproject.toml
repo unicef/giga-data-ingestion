@@ -21,6 +21,7 @@ azure-storage-blob = "^12.18.3"
 msgraph-sdk = "^1.0.0a16"
 orjson = "^3.9.9"
 sentry-sdk = { extras = ["fastapi"], version = "^1.35.0" }
+country-converter = "^1.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.9.1"
