@@ -1,60 +1,37 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { AuthenticatedTemplate } from "@azure/msal-react";
-import { Button } from "@carbon/react";
-import clsx from "clsx";
+import {
+  Header,
+  HeaderMenuItem,
+  HeaderName,
+  HeaderNavigation,
+} from "@carbon/react";
 
 import { useStore } from "@/store.ts";
 
 export default function Navbar() {
   const { featureFlags } = useStore();
-  const location = useLocation();
-
-  const isUserManagementPage = location.pathname === "/user-management";
-
-  const linkClass = clsx("flex items-center gap-2", {
-    "text-primary": isUserManagementPage,
-    "text-white": !isUserManagementPage,
-  });
-
-  const headerClass = clsx("text-2xl", {
-    "text-primary": isUserManagementPage,
-    "text-white": !isUserManagementPage,
-  });
 
   return (
-    <header className="flex-none">
-      <nav
-        className={clsx("flex h-[80px] items-center justify-between p-4", {
-          "border-b-4 border-solid border-primary": isUserManagementPage,
-          "bg-primary": !isUserManagementPage,
-        })}
-      >
-        <Link to="/" className={linkClass} unstable_viewTransition>
-          <img
-            src={
-              isUserManagementPage ? "/GIGA_logo_blue.png" : "/GIGA_logo.png"
-            }
-            alt="Giga"
-          />
-          <h1 className={headerClass}>
-            <b>giga</b>ingest
-          </h1>
-        </Link>
-
-        <AuthenticatedTemplate>
-          {featureFlags.userManagementPage && (
-            <Button
+    <Header className="relative">
+      <HeaderName href="/" prefix="">
+        <img src="/GIGA_logo_blue.png" className="h-5/6" alt="Giga" />
+        <b>giga</b>ingest
+      </HeaderName>
+      <AuthenticatedTemplate>
+        {featureFlags.userManagementPage && (
+          <HeaderNavigation>
+            <HeaderMenuItem
               as={Link}
-              to={isUserManagementPage ? "/" : "/user-management"}
+              to="/user-management"
               unstable_viewTransition
-              kind={isUserManagementPage ? "ghost" : "primary"}
             >
-              {isUserManagementPage ? "Ingestion Portal" : "Admin Panel"}
-            </Button>
-          )}
-        </AuthenticatedTemplate>
-      </nav>
-    </header>
+              Admin Panel
+            </HeaderMenuItem>
+          </HeaderNavigation>
+        )}
+      </AuthenticatedTemplate>
+    </Header>
   );
 }

@@ -8,7 +8,7 @@ import {
 } from "@ant-design/icons";
 import { useMsal } from "@azure/msal-react";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Table, Tag } from "antd";
+import { Button, Row, Table, Tag } from "antd";
 import { ColumnsType } from "antd/es/table";
 
 import { useApi } from "@/api";
@@ -185,18 +185,18 @@ export default function Users() {
   );
 
   return (
-    <>
-      <div className="flex flex-col items-start justify-between gap-4">
+    <div className="container py-6">
+      <Row className="flex flex-col items-start justify-between gap-4">
         <h2 className="text-[23px]">Giga User Management</h2>
 
-        <div className="ml-auto px-28">
+        <div className="ml-auto">
           <AddUserModal
             isAddModalOpen={isAddModalOpen}
             setIsAddModalOpen={setIsAddModalOpen}
           />
         </div>
-      </div>
-      <div className="px-28">
+      </Row>
+      <Row>
         <Table
           rowKey={row => row.id}
           dataSource={filteredUsersData}
@@ -236,7 +236,7 @@ export default function Users() {
           toastOptions={{ duration: 3000 }}
           reverseOrder={true}
         />
-      </div>
-    </>
+      </Row>
+    </div>
   );
 }
