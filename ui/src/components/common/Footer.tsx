@@ -24,7 +24,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 className="text-white"
               >
-                Giga Map
+                Giga Maps
               </a>
             </li>
             <li>
