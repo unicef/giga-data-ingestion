@@ -1,9 +1,8 @@
+from datetime import datetime
 from uuid import uuid4
 
+import country_converter as coco
 from azure.core.exceptions import HttpResponseError
-from data_ingestion.constants import constants
-from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.internal.storage import storage_client
 from fastapi import (
     APIRouter,
     Depends,
@@ -13,7 +12,11 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi_azure_auth.user import User
+
+from data_ingestion.constants import constants
+from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.storage import storage_client
+from data_ingestion.schemas.upload import UploadFileMetadata
 
 router = APIRouter(
     prefix="/api/upload",
@@ -24,7 +27,10 @@ router = APIRouter(
 
 @router.post("")
 async def upload_file(
-    response: Response, file: UploadFile, user: User = Depends(azure_scheme)
+    response: Response,
+    file: UploadFile,
+    dataset: str,
+    metadata: UploadFileMetadata = Depends(),
 ):
     if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
         raise HTTPException(
@@ -32,20 +38,20 @@ async def upload_file(
             detail="File size exceeds 10 MB limit",
         )
     uid = str(uuid4())
-    metadata = {
-        "id": uid,
-        "uploader": user.email or user.preferred_username,
-        "original_filename": file.filename,
-    }
-    filename = f"raw/uploads/{file.filename}"
+
+    country_code = coco.convert(metadata.country, to="ISO3")
+    timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+
+    filename = (
+        f"raw/uploads/{uid}_{country_code}_"
+        f"{dataset}_{metadata.source}-{timestamp}"
+    )
     client = storage_client.get_blob_client(filename)
 
     try:
-        client.upload_blob(
-            await file.read(), metadata=metadata, overwrite=True
-        )
+        client.upload_blob(await file.read(), metadata=metadata.dict())
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
-        )
+        ) from err
