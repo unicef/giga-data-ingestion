@@ -1,25 +1,14 @@
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { PlusOutlined } from "@ant-design/icons";
+import { Add } from "@carbon/icons-react";
+import { Button, Modal } from "@carbon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  Alert,
-  Button,
-  Col,
-  Divider,
-  Form,
-  Input,
-  Modal,
-  Row,
-  Select,
-} from "antd";
+import { Alert, Col, Divider, Form, Input, Row, Select } from "antd";
 
 import { useApi } from "@/api";
 import countries from "@/constants/countries";
-import { modalWidth } from "@/constants/theme";
-import { filterRoles } from "@/utils/group";
-import { matchNamesWithIds } from "@/utils/group";
+import { filterRoles, matchNamesWithIds } from "@/utils/group";
 import {
   getUniqueDatasets,
   pluralizeCountries,
@@ -33,7 +22,7 @@ type CountryDataset = {
 
 interface AddUserModalProps {
   isAddModalOpen: boolean;
-  setIsAddModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsAddModalOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function AddUserModal({
@@ -163,19 +152,13 @@ export default function AddUserModal({
       }}
     >
       <Modal
-        cancelButtonProps={{ className: "rounded-none" }}
-        cancelText="Cancel"
-        centered={true}
-        okButtonProps={{
-          disabled: !submittable,
-          className: "rounded-none bg-primary",
-        }}
-        okText="Confirm"
+        primaryButtonText="Confirm"
+        secondaryButtonText="Cancel"
+        primaryButtonDisabled={!submittable}
         open={isAddModalOpen && !swapModal}
-        title="Add New User"
-        width={modalWidth}
-        onCancel={() => handleModalCancel("AddModal")}
-        onOk={() => {
+        modalHeading="Add New User"
+        onRequestClose={() => handleModalCancel("AddModal")}
+        onRequestSubmit={() => {
           form.submit();
           setSwapModal(true);
         }}
@@ -240,8 +223,8 @@ export default function AddUserModal({
                       wrapperCol={{ offset: 4, span: 16 }}
                     >
                       <Button
-                        className="p-0"
-                        type="link"
+                        kind="ghost"
+                        size="sm"
                         onClick={() => remove(name)}
                       >
                         <span className="m-0 underline">Remove pair</span>
@@ -268,11 +251,10 @@ export default function AddUserModal({
                     <Col span={4}></Col>
                     <Col span={16}>
                       <Button
-                        className="ml-auto mt-5 rounded-none border-none bg-primary"
-                        ghost
-                        icon={<PlusOutlined />}
-                        type="primary"
+                        kind="ghost"
+                        renderIcon={Add}
                         onClick={() => add()}
+                        size="sm"
                       >
                         Add Country
                       </Button>
@@ -285,13 +267,10 @@ export default function AddUserModal({
         </Form>
       </Modal>
       <Modal
-        centered={true}
-        footer={null}
         open={isAddModalOpen && swapModal}
-        title="Confirm new User"
-        width={modalWidth}
-        onCancel={() => handleModalCancel("ConfirmModal")}
-        onOk={() => form.submit()}
+        modalHeading="Confirm new User"
+        onAbort={() => handleModalCancel("ConfirmModal")}
+        onSubmit={() => form.submit()}
       >
         <Form name="confirmForm">
           <Form.Item
@@ -359,11 +338,9 @@ export default function AddUserModal({
         </Form>
       </Modal>
       <Button
-        className="ml-auto rounded-none bg-primary"
-        ghost
-        icon={<PlusOutlined />}
+        kind="tertiary"
+        renderIcon={Add}
         onClick={() => setIsAddModalOpen(true)}
-        type="primary"
       >
         Add User
       </Button>
