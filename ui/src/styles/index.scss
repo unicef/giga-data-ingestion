@@ -1,5 +1,5 @@
 @use "sass:string";
-@use "types";
+@use "typography";
 @use "colors";
 
 @use "@carbon/react/scss/config" with (
@@ -8,7 +8,7 @@
   $css--reset: false
 );
 @use "@carbon/react/scss/type" with (
-  $font-families: types.$font-families
+  $font-families: typography.$font-families
 );
 @use "@carbon/react/scss/themes";
 @use "@carbon/react/scss/theme" with (
