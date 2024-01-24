@@ -1,13 +1,47 @@
 import { Link } from "react-router-dom";
 
-const datasets = ["School Geolocation", "School Coverage", "School QoS"];
+import { CollapseProps } from "antd";
 
-export const uploadFileGroups = datasets.map(dataset => {
-  const datasetSlug = dataset.toLowerCase().replace(/\s+/g, "-");
+const groups = [
+  {
+    name: "School Data",
+    types: [
+      "School Geolocation and Key Indicators",
+      "School Demographics",
+      "School Contact Information",
+    ],
+  },
+  {
+    name: "School Internet",
+    types: ["Test"],
+  },
+  {
+    name: "Geospatial Data",
+    types: ["Test"],
+  },
+  {
+    name: "Infrastructure Data",
+    types: ["Test"],
+  },
+  {
+    name: "Others",
+    types: ["Test"],
+  },
+];
 
-  return (
-    <Link to={`${datasetSlug}`} unstable_viewTransition>
-      {dataset}
-    </Link>
-  );
-});
+export const uploadFileGroups: CollapseProps["items"] = groups.map(group => ({
+  key: group.name,
+  label: group.name,
+  children: group.types.map(type => {
+    const groupSlug = group.name.toLowerCase().replace(/\s+/g, "-");
+    const typeSlug = type.toLowerCase().replace(/\s+/g, "-");
+
+    return (
+      <li key={typeSlug}>
+        <Link to={`${groupSlug}/${typeSlug}`} unstable_viewTransition>
+          {type}
+        </Link>
+      </li>
+    );
+  }),
+}));
