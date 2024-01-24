@@ -52,22 +52,31 @@ export default function Navbar() {
         onHeaderPanelFocus={() => setIsSwitcherExpanded(expanded => !expanded)}
       >
         <Switcher aria-label="switcher container" expanded={isSwitcherExpanded}>
-          <SwitcherItem aria-label="upload file">
-            <Link to="/upload" unstable_viewTransition>
-              Upload File
-            </Link>
+          <SwitcherItem
+            aria-label="upload file"
+            as={Link}
+            to="/upload"
+            unstable_viewTransition
+          >
+            Upload File
           </SwitcherItem>
-          <SwitcherItem aria-label="upload file">
-            <Link to="/datasources" unstable_viewTransition>
-              Ingest API
-            </Link>
+          <SwitcherItem
+            aria-label="upload file"
+            as={Link}
+            to="/datasources"
+            unstable_viewTransition
+          >
+            Ingest API
           </SwitcherItem>
           {featureFlags.userManagementPage && (
             <AuthenticatedTemplate>
-              <SwitcherItem aria-label="upload file">
-                <Link to="/user-management" unstable_viewTransition>
-                  Admin Panel
-                </Link>
+              <SwitcherItem
+                aria-label="upload file"
+                as={Link}
+                to="user-management"
+                unstable_viewTransition
+              >
+                Admin Panel
               </SwitcherItem>
             </AuthenticatedTemplate>
           )}
