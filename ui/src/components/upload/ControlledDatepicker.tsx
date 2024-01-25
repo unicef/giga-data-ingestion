@@ -1,16 +1,18 @@
-import { Control, useController } from "react-hook-form";
+import { Control, FieldPath, useController } from "react-hook-form";
 
 import { DatePicker, DatePickerInput } from "@carbon/react";
 
+import { MetadataFormValues } from "@/pages/upload/[uploadGroup]/[uploadType]/metadata";
+
 type DatePickerProps = Omit<
   React.ComponentProps<typeof DatePicker>,
-  "children"
+  "children" | "name"
 >;
 type DatePickerInputProps = React.ComponentProps<typeof DatePickerInput>;
 
 interface ControlledDatepickerProps {
-  control: Control;
-  name: string;
+  control: Control<MetadataFormValues>;
+  name: FieldPath<MetadataFormValues>;
   datePickerProps: DatePickerProps;
   datePickerInputProps: DatePickerInputProps;
 }

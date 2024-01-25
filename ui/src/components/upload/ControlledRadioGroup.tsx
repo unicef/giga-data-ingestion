@@ -1,12 +1,18 @@
-import { Control, useController } from "react-hook-form";
+import { Control, FieldPath, useController } from "react-hook-form";
 
 import { RadioButtonGroup } from "@carbon/react";
-import { RadioButtonGroupProps } from "carbon-components-react";
+
+import { MetadataFormValues } from "@/pages/upload/[uploadGroup]/[uploadType]/metadata";
+
+type RadioButtonGroupProps = Omit<
+  React.ComponentProps<typeof RadioButtonGroup>,
+  "name"
+>;
 
 interface ControlledRadioGroupProps extends RadioButtonGroupProps {
   children: JSX.Element | JSX.Element[];
-  control: Control;
-  name: string;
+  control: Control<MetadataFormValues>;
+  name: FieldPath<MetadataFormValues>;
 }
 
 const ControlledRadioGroup = ({
@@ -23,6 +29,7 @@ const ControlledRadioGroup = ({
 
   return (
     <RadioButtonGroup
+      name={name}
       invalid={fieldState.invalid}
       invalidText="Select at least one option"
       onChange={field.onChange}
