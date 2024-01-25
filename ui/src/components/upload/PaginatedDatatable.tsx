@@ -48,12 +48,21 @@ const headers = [
   },
 ];
 const PaginatedDatatable = () => {
+  const [currentPage, setCurrentPage] = useState<number>(0);
+
+  const ROWS_PER_PAGE = 6;
+
+  const maxPages = Math.ceil(rows.length / ROWS_PER_PAGE);
+  const startIndex = currentPage * ROWS_PER_PAGE;
+  const endIndex = startIndex + ROWS_PER_PAGE;
+  const rowSlice = rows.slice(startIndex, endIndex);
+
   return (
     <>
-      <DataTable rows={rows} headers={headers} isSortable>
+      <DataTable rows={rowSlice} headers={headers} isSortable>
         {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
-          <TableContainer title="DataTable" description="With sorting">
-            <Table {...getTableProps()} aria-label="sample table">
+          <TableContainer>
+            <Table {...getTableProps()}>
               <TableHead>
                 <TableRow>
                   {headers.map(header => (
@@ -86,9 +95,10 @@ const PaginatedDatatable = () => {
         )}
       </DataTable>
       <PaginationNav
+        className="pagination-nav-right"
         itemsShown={5}
-        totalItems={25}
-        onChange={(index: number) => console.log(index)}
+        totalItems={maxPages}
+        onChange={(index: number) => setCurrentPage(index)}
       />
     </>
   );
