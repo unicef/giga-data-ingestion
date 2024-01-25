@@ -74,3 +74,7 @@ ul {
   padding-right: 0;
   margin-left: 0 !important;
 }
+
+.pagination-nav-right > .cds--pagination-nav__list {
+  justify-content: flex-end;
+}
