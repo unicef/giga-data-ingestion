@@ -1,22 +1,21 @@
 import { Control, useController } from "react-hook-form";
 
 import { RadioButtonGroup } from "@carbon/react";
+import { RadioButtonGroupProps } from "carbon-components-react";
 
-interface ControlledRadioGroupProps {
+interface ControlledRadioGroupProps extends RadioButtonGroupProps {
   children: JSX.Element | JSX.Element[];
-
   control: Control;
-  label: string;
   name: string;
 }
 
 const ControlledRadioGroup = ({
   children,
   control,
-  label,
   name,
+  ...rest
 }: ControlledRadioGroupProps) => {
-  const { field } = useController({
+  const { field, fieldState } = useController({
     name,
     control,
     rules: { required: true },
@@ -24,10 +23,10 @@ const ControlledRadioGroup = ({
 
   return (
     <RadioButtonGroup
-      legendText={label}
-      name={field.name}
+      invalid={fieldState.invalid}
+      invalidText="Select at least one option"
       onChange={field.onChange}
-      defaultSelected="radio-1"
+      {...rest}
     >
       {children}
     </RadioButtonGroup>

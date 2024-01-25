@@ -48,6 +48,7 @@
     "@tanstack/eslint-plugin-query": "^5.8.4",
     "@trivago/prettier-plugin-sort-imports": "^4.2.0",
     "@types/carbon__themes": "^0.0.3",
+    "@types/carbon-components-react": "^7.55.10",
     "@types/node": "18.15.3",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
