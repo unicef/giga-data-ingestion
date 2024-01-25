@@ -1,144 +1,260 @@
-import { FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 
-import { Button, Input, Select } from "antd";
-
-import rawCountries from "@/mocks/countries.json";
 import {
-  dataSensitivityOptions as rawDataSensitivityOptions,
-  licenseOptions as rawLicenseOptions,
-} from "@/mocks/uploadMetadata.tsx";
+  Button,
+  RadioButton,
+  Select,
+  SelectItem,
+  Stack,
+  TextArea,
+} from "@carbon/react";
 
-const countries = rawCountries.map(c => ({ value: c.name, label: c.name }));
+import ControlledDatepicker from "@/components/upload/ControlledDatepicker";
+import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
+import countries from "@/constants/countries";
+import {
+  dataCollectionModalityOptions,
+  dataOwnerOptions,
+  domainOptions,
+  geolocationDataSourceOptions,
+  piiOptions,
+  schoolIdTypeOptions,
+  sensitivityOptions,
+  sourceOptions,
+} from "@/mocks/metadataFormValues";
 
-const dataSensitivityOptions = rawDataSensitivityOptions.map(s => ({
-  value: s,
-  label: s,
-}));
+export type MetadataFormValues = {
+  collectionDate: Date;
+  country: string;
+  dataCollectionModality: string;
+  dataOwner: string;
+  dateModified: Date;
+  description: string;
+  domain: string;
+  geolocationDataSource: string;
+  piiClassification: string;
+  schoolIdType: string;
+  sensitivityLevel: string;
+  source: string;
+};
 
-const licenseOptions = rawLicenseOptions.map(l => ({ value: l, label: l }));
+// TODO wwhy does the radio button disappear??????
 
 export default function UploadMetadata() {
   const navigate = useNavigate();
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    navigate("../success");
-  }
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<MetadataFormValues>();
+
+  const onSubmit: SubmitHandler<MetadataFormValues> = data => {
+    if (Object.keys(errors).length > 0) {
+      console.log("Form has errors, not submitting");
+      return;
+    }
+
+    console.log(data);
+    // navigate("../success");
+    // mutation to actually upload file
+  };
+
+  const SensitivityRadio = () => (
+    <ControlledRadioGroup
+      control={control}
+      legendText="Sensitivity Level"
+      name="sensitivityLevel"
+    >
+      {sensitivityOptions.map(option => (
+        <RadioButton
+          id={option.value}
+          key={option.value}
+          labelText={option.label}
+          value={option.value}
+        />
+      ))}
+    </ControlledRadioGroup>
+  );
+
+  const PIIRadio = () => (
+    <ControlledRadioGroup
+      control={control}
+      legendText="PII Classification"
+      name="piiClassification"
+    >
+      {piiOptions.map(option => (
+        <RadioButton
+          id={option.value}
+          key={option.value}
+          labelText={option.label}
+          value={option.value}
+        />
+      ))}
+    </ControlledRadioGroup>
+  );
+
+  const GeolocationDataSourceSelect = () => (
+    <Select
+      id="geolocatinDataSource"
+      labelText="Geolocation Data Source"
+      {...register("geolocationDataSource")}
+    >
+      {geolocationDataSourceOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
+
+  const DataCollectionModalitySelect = () => (
+    <Select
+      id="dataCollectionModality"
+      labelText="Data Collection Modality"
+      {...register("dataCollectionModality")}
+    >
+      {dataCollectionModalityOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
+
+  const DomainSelect = () => (
+    <Select id="domain" labelText="Domain" {...register("domain")}>
+      {domainOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
+
+  const SourceSelect = () => (
+    <Select id="source" labelText="Source" {...register("source")}>
+      {sourceOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
+
+  const DataOwnerSelect = () => (
+    <Select id="dataowner" labelText="Data Owner" {...register("dataOwner")}>
+      {dataOwnerOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
+
+  const CountrySelect = () => (
+    <Select id="country" labelText="Country" {...register("country")}>
+      {countries.map(country => (
+        <SelectItem
+          key={country.name}
+          text={country.name}
+          value={country.name}
+        />
+      ))}
+    </Select>
+  );
+
+  const SchoolIdTypeSelect = () => (
+    <Select
+      id="schoolIdType"
+      labelText="School ID type"
+      {...register("schoolIdType")}
+    >
+      {schoolIdTypeOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
 
   return (
     <>
-      <h4 className="text-base text-gray-3">Step 1: Upload</h4>
-      <h3 className="text-[23px]">Step 2: Metadata</h3>
-      <p>Please provide more information about your upload and yourself.</p>
+      <h4 className="text-base text-giga-gray">Step 1: Upload</h4>
+      <h2 className="text-[23px]">Step 2: Metadata</h2>
+      <p>
+        Please check if any information about the dataset is meant to be
+        updated.
+      </p>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-6">
-        <fieldset className="flex items-center gap-4">
-          <label
-            htmlFor="dataOwner"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> Data Owner:
-          </label>
-          <Input
-            id="dataOwner"
-            name="dataOwner"
-            placeholder="The main person or organization responsible for this dataset"
-            required
-            size="large"
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Stack gap={5}>
+          <SensitivityRadio />
+          <PIIRadio />
+          <GeolocationDataSourceSelect />
+          <DataCollectionModalitySelect />
+          <ControlledDatepicker
+            control={control}
+            datePickerProps={{
+              datePickerType: "single",
+            }}
+            name="collectionDate"
+            datePickerInputProps={{
+              invalidText: "Select a date",
+              id: "collectionDate",
+              labelText: "Date Collection Date",
+
+              placeholder: "yyyy-mm-dd",
+            }}
           />
-        </fieldset>
-
-        <fieldset className="flex items-center gap-4">
-          <label
-            htmlFor="country"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> Country:
-          </label>
-          <Select
-            id="country"
-            placeholder="What country is covered by this dataset?"
-            size="large"
-            className="w-full"
-            options={countries}
+          <DomainSelect />
+          <ControlledDatepicker
+            control={control}
+            datePickerProps={{
+              datePickerType: "single",
+            }}
+            name="dateModified"
+            datePickerInputProps={{
+              invalidText: "Select a date",
+              id: "dateModified",
+              labelText: "Date Modified",
+              placeholder: "yyyy-mm-dd",
+            }}
           />
-        </fieldset>
-
-        <fieldset className="flex items-center gap-4">
-          <label
-            htmlFor="dataSensitivity"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> Data Sensitivity:
-          </label>
-          <Select
-            id="dataSensitivity"
-            placeholder="Who should be able to access this dataset?"
-            size="large"
-            className="w-full"
-            options={dataSensitivityOptions}
+          <SourceSelect />
+          <DataOwnerSelect />
+          <CountrySelect />
+          <SchoolIdTypeSelect />
+          <TextArea
+            invalid={Boolean(errors.description)}
+            invalidText={String(errors.description?.message)}
+            labelText="Description"
+            rows={4}
+            id="description"
+            {...register("description", {
+              required: "Please enter a description",
+            })}
           />
-        </fieldset>
 
-        <fieldset className="flex items-center gap-4">
-          <label
-            htmlFor="license"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> License:
-          </label>
-          <Select
-            id="license"
-            placeholder="Are there any licenses that the team should be aware of?"
-            size="large"
-            className="w-full"
-            options={licenseOptions}
-          />
-        </fieldset>
-
-        <fieldset className="flex items-center gap-4">
-          <label
-            htmlFor="email"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> Email Address:
-          </label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="Are there any licenses that the team should be aware of?"
-            required
-            size="large"
-          />
-        </fieldset>
-
-        <fieldset className="flex items-start gap-4">
-          <label
-            htmlFor="comments"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> Comments:
-          </label>
-          <Input.TextArea
-            id="comments"
-            name="comments"
-            placeholder="Are there any other details you’d like to mention or clarify?"
-            required
-            size="large"
-            rows={6}
-          />
-        </fieldset>
-
-        <div className="flex justify-end gap-2">
-          <Link to=".." unstable_viewTransition>
-            <Button className="border-primary text-primary">Cancel</Button>
-          </Link>
-          <Button type="primary" htmlType="submit" className="bg-primary">
-            Proceed
-          </Button>
-        </div>
+          <div className="flex gap-4">
+            <Button type="submit">Submit</Button>
+            <Button kind="tertiary">Cancel</Button>
+          </div>
+        </Stack>
       </form>
     </>
   );
