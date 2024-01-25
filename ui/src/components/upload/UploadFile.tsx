@@ -14,14 +14,15 @@ const FILE_UPLOAD_SIZE_LIMIT = convertMegabytesToBytes(
 
 interface UploadFileProps {
   file: File | null;
-
   setFile: React.Dispatch<React.SetStateAction<File | null>>;
   setTimestamp: React.Dispatch<React.SetStateAction<Date | null>>;
+  onUpload: (File: File) => void;
 }
 const UploadFile: React.FC<UploadFileProps> = ({
   file,
   setFile,
   setTimestamp,
+  onUpload,
 }) => {
   const hasUploadedFile = file != null;
 
@@ -50,6 +51,7 @@ const UploadFile: React.FC<UploadFileProps> = ({
 
     setTimestamp(new Date());
     setFile(file);
+    onUpload(file);
   }
 
   return (
@@ -92,10 +94,6 @@ const UploadFile: React.FC<UploadFileProps> = ({
         )}
       </Dropzone>
       <Toaster
-        // containerStyle={{
-        //   right: 40,
-        //   bottom: 40,
-        // }}
         position="top-center"
         toastOptions={{ duration: 3000 }}
         reverseOrder={true}
