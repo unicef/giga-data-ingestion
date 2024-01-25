@@ -9,48 +9,26 @@ import {
   TableRow,
 } from "@carbon/react";
 
-const rows = ["a", "b", "c"].map(key => ({
-  id: key,
-  columnName: `ColumName-${key}`,
-  expectedDataType: `expectedDataType-${key}`,
-  inDataset: `inDataset-${key}`,
-  isCorrectLocation: `isCorrectLocation-${key}`,
-  nullValues: `nullValues-${key}`,
-  uniqueValues: `uniqueValues-${key}`,
-}));
+interface Header {
+  key: string;
+  header: string;
+}
 
-const headers = [
-  {
-    key: "columnName",
-    header: "Column name",
-  },
-  {
-    key: "expectedDataType",
-    header: "Expected Data Type",
-  },
-  {
-    key: "inDataset",
-    header: "Is the column in the dataset?",
-  },
-  {
-    key: "isCorrectLocation",
-    header: "Is the column in the right data type?",
-  },
-  {
-    key: "nullValues",
-    header: "How many null values per column?",
-  },
-  {
-    key: "uniqueValues",
-    header: "How many unique values per column?",
-  },
-];
-const Datatable = () => {
+interface Row {
+  id: string;
+  [key: string]: string | JSX.Element;
+}
+interface DatatableProps {
+  headers: Header[];
+  rows: Row[];
+}
+
+const Datatable = ({ headers, rows }: DatatableProps) => {
   return (
     <>
       <CarbonDatatable rows={rows} headers={headers} isSortable>
         {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
-          <TableContainer title="DataTable" description="With sorting">
+          <TableContainer>
             <Table {...getTableProps()} aria-label="sample table">
               <TableHead>
                 <TableRow>

@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import {
   DataTable, // @ts-expect-error paginationNav has no typescript declaration yet
   PaginationNav,
@@ -10,44 +12,21 @@ import {
   TableRow,
 } from "@carbon/react";
 
+interface Header {
+  key: string;
+  header: string;
+}
 
-const rows = ["a", "b", "c"].map(key => ({
-  id: key,
-  columnName: `ColumName-${key}`,
-  expectedDataType: `expectedDataType-${key}`,
-  inDataset: `inDataset-${key}`,
-  isCorrectLocation: `isCorrectLocation-${key}`,
-  nullValues: `nullValues-${key}`,
-  uniqueValues: `uniqueValues-${key}`,
-}));
+interface Row {
+  id: string;
+  [key: string]: string | JSX.Element;
+}
+interface DatatableProps {
+  headers: Header[];
+  rows: Row[];
+}
 
-const headers = [
-  {
-    key: "columnName",
-    header: "Column name",
-  },
-  {
-    key: "expectedDataType",
-    header: "Expected Data Type",
-  },
-  {
-    key: "inDataset",
-    header: "Is the column in the dataset?",
-  },
-  {
-    key: "isCorrectLocation",
-    header: "Is the column in the right data type?",
-  },
-  {
-    key: "nullValues",
-    header: "How many null values per column?",
-  },
-  {
-    key: "uniqueValues",
-    header: "How many unique values per column?",
-  },
-];
-const PaginatedDatatable = () => {
+const PaginatedDatatable = ({ headers, rows }: DatatableProps) => {
   const [currentPage, setCurrentPage] = useState<number>(0);
 
   const ROWS_PER_PAGE = 6;
