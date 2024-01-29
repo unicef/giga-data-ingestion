@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { Api, Information } from "@carbon/icons-react";
+import { Information } from "@carbon/icons-react";
 import "@carbon/react";
 import {
   Accordion,
   AccordionItem,
   Button,
-  Loading,
   Section,
   Tooltip,
 } from "@carbon/react";
@@ -22,10 +21,6 @@ export default function Index() {
   const api = useApi();
   const [file, setFile] = useState<File | null>(null);
   const [timestamp, setTimestamp] = useState<Date | null>(null);
-  // const hasUploadedFile = file != null;
-
-  // dummy useeffect that will parse for data
-  const hasData = true;
 
   const { data: checksData, isLoading } = useQuery({
     queryKey: ["column_checks"],
@@ -82,13 +77,11 @@ export default function Index() {
 
   return (
     <div className="flex flex-col gap-8">
+      <div onClick={() => console.log(file ?? "NO FILE FOUND")}>get file</div>
       <h3 className="text-[23px]">Step 1: Upload</h3>
-      <UploadFile
-        file={file}
-        setFile={setFile}
-        setTimestamp={setTimestamp}
-        onUpload={() => console.log("run query")}
-      />
+      <div className="w-1/4">
+        <UploadFile file={file} setFile={setFile} setTimestamp={setTimestamp} />
+      </div>
 
       <div className="flex gap-2">
         <Link to="/upload" unstable_viewTransition>

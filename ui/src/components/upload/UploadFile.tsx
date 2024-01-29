@@ -1,5 +1,5 @@
-import React from "react";
 import Dropzone from "react-dropzone";
+import { FileRejection } from "react-dropzone";
 import toast, { Toaster } from "react-hot-toast";
 
 import { Document, Upload } from "@carbon/icons-react";
@@ -16,13 +16,11 @@ interface UploadFileProps {
   file: File | null;
   setFile: React.Dispatch<React.SetStateAction<File | null>>;
   setTimestamp: React.Dispatch<React.SetStateAction<Date | null>>;
-  onUpload: (File: File) => void;
 }
 const UploadFile: React.FC<UploadFileProps> = ({
   file,
   setFile,
   setTimestamp,
-  onUpload,
 }) => {
   const hasUploadedFile = file != null;
 
@@ -31,37 +29,47 @@ const UploadFile: React.FC<UploadFileProps> = ({
 
     const file = files[0];
 
-    if (file.size > FILE_UPLOAD_SIZE_LIMIT) {
-      toast.custom(t => (
-        <div className={`${t.visible ? "animate-enter" : "animate-leave"} `}>
-          <ToastNotification
-            aria-label="closes notification"
-            kind="error"
-            onClose={() => toast.dismiss(t.id)}
-            onCloseButtonClick={() => toast.dismiss(t.id)}
-            role="status"
-            statusIconDescription="notification"
-            subtitle="Files must not exceed 10mb"
-            title="File too large"
-          />
-        </div>
-      ));
-      return;
-    }
-
     setTimestamp(new Date());
     setFile(file);
-    onUpload(file);
   }
 
+  const handleOnDroprejected = (error: FileRejection[]) => {
+    const title = error.length > 1 ? "Too many files" : "Invalid file";
+    const subtitle =
+      error.length > 1 ? "Upload only one file" : "Upload a valid file";
+
+    toast.custom(t => (
+      <div className={`${t.visible ? "animate-enter" : "animate-leave"} `}>
+        <ToastNotification
+          aria-label="closes notification"
+          kind="error"
+          onClose={() => toast.dismiss(t.id)}
+          onCloseButtonClick={() => toast.dismiss(t.id)}
+          role="status"
+          statusIconDescription="notification"
+          subtitle={subtitle}
+          title={title}
+        />
+      </div>
+    ));
+  };
   return (
     <>
-      <Dropzone onDrop={onDrop}>
+      <Dropzone
+        maxFiles={1}
+        onDropAccepted={onDrop}
+        onDropRejected={handleOnDroprejected}
+        accept={{
+          "text/plain": [".json", ".txt"],
+          "application/octer-stream": [".parquet"],
+        }}
+        maxSize={FILE_UPLOAD_SIZE_LIMIT}
+      >
         {({ getRootProps, getInputProps }) => (
           <div
             {...getRootProps()}
             className={cn(
-              "w-1/4 rounded border-2 border-dashed transition-colors",
+              "rounded border-2 border-dashed transition-colors",
               "cursor-pointer hover:bg-giga-light-gray active:bg-giga-gray",
               {
                 "border border-solid border-primary hover:bg-primary/10 active:bg-primary/20":
@@ -90,6 +98,9 @@ const UploadFile: React.FC<UploadFileProps> = ({
                 </>
               )}
             </div>
+            <p className="text-gray-4 px-6 text-center text-xs opacity-25">
+              (.txt, .json, .parquet only, up to 10MB)
+            </p>
           </div>
         )}
       </Dropzone>
