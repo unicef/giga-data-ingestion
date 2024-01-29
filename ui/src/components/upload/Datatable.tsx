@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@carbon/react";
+import clsx from "clsx";
 
 interface Header {
   key: string;
@@ -26,7 +27,7 @@ interface DatatableProps {
 const Datatable = ({ headers, rows }: DatatableProps) => {
   return (
     <>
-      <CarbonDatatable rows={rows} headers={headers} isSortable>
+      <CarbonDatatable rows={rows} headers={headers}>
         {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
           <TableContainer>
             <Table {...getTableProps()} aria-label="sample table">
@@ -39,6 +40,7 @@ const Datatable = ({ headers, rows }: DatatableProps) => {
                         header,
                       })}
                     >
+                      <div className="p-4">{header.header}</div>
                       {header.header}
                     </TableHeader>
                   ))}

@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@carbon/react";
+import clsx from "clsx";
 
 interface Header {
   key: string;
@@ -38,7 +39,7 @@ const PaginatedDatatable = ({ headers, rows }: DatatableProps) => {
 
   return (
     <>
-      <DataTable rows={rowSlice} headers={headers} isSortable>
+      <DataTable rows={rowSlice} headers={headers}>
         {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
           <TableContainer>
             <Table {...getTableProps()}>
@@ -51,7 +52,13 @@ const PaginatedDatatable = ({ headers, rows }: DatatableProps) => {
                         header,
                       })}
                     >
-                      {header.header}
+                      <div
+                        className={clsx("p-4", {
+                          "w-60": header.key == "columnName",
+                        })}
+                      >
+                        {header.header}
+                      </div>
                     </TableHeader>
                   ))}
                 </TableRow>
