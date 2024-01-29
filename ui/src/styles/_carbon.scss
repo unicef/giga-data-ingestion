@@ -1,0 +1,40 @@
+@use "sass:string";
+@use "typography";
+@use "colors";
+
+@use "@carbon/react/scss/config" with (
+  $css--font-face: false,
+  $css--default-type: true,
+  $css--reset: false
+);
+@use "@carbon/react/scss/type" with (
+  $font-families: typography.$font-families
+);
+@use "@carbon/react/scss/themes";
+@use "@carbon/react/scss/theme" with (
+  $theme: (
+    background: colors.$giga-white,
+    text-primary: colors.$giga-black,
+    text-secondary: colors.$giga-dark-gray,
+    text-placeholder: colors.$giga-gray,
+    text-helper: colors.$giga-gray,
+    text-error: colors.$giga-red,
+    text-disabled: colors.$giga-gray,
+    support-success: colors.$giga-green,
+    support-info: colors.$giga-pine,
+    support-warning: colors.$giga-yellow,
+    support-error: colors.$giga-red,
+    link-primary: colors.$giga-blue,
+    link-visited: colors.$giga-blue,
+    icon-interactive: colors.$giga-blue,
+    focus: colors.$giga-blue,
+    interactive: colors.$giga-blue,
+  )
+);
+@use "@carbon/react/scss/components/button/tokens" as button-tokens with (
+  $button-primary: colors.$giga-blue,
+  $button-danger-primary: colors.$giga-red,
+  $button-secondary: colors.$giga-dark-gray,
+  $button-tertiary: colors.$giga-blue
+);
+@use "@carbon/react";

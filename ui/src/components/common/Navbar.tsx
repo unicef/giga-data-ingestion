@@ -25,7 +25,8 @@ export default function Navbar() {
     <Header className="relative">
       <HeaderName as={Link} to="/" unstable_viewTransition prefix="">
         <img src="/GIGA_logo_blue.png" className="h-5/6" alt="Giga" />
-        <b>giga</b>ingest
+        <span className="ml-1 text-xl font-light">giga</span>
+        <b className="ml-0.5 text-xl">sync</b>
       </HeaderName>
       <AuthenticatedTemplate>
         {featureFlags.userManagementPage && (
