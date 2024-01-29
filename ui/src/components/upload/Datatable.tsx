@@ -8,7 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from "@carbon/react";
-import clsx from "clsx";
 
 interface Header {
   key: string;
