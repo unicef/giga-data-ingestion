@@ -30,6 +30,7 @@ const ControlledRadioGroup = ({
   return (
     <RadioButtonGroup
       name={name}
+      valueSelected={field.value as string}
       invalid={fieldState.invalid}
       invalidText="Select at least one option"
       onChange={field.onChange}
