@@ -39,7 +39,7 @@ const PaginatedDatatable = ({ headers, rows }: DatatableProps) => {
 
   return (
     <>
-      <DataTable rows={rowSlice} headers={headers}>
+      <DataTable rows={rowSlice} headers={headers} useStaticWidth={true}>
         {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
           <TableContainer>
             <Table {...getTableProps()}>

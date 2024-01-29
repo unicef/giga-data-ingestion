@@ -26,7 +26,7 @@ interface DatatableProps {
 const Datatable = ({ headers, rows }: DatatableProps) => {
   return (
     <>
-      <CarbonDatatable rows={rows} headers={headers}>
+      <CarbonDatatable rows={rows} headers={headers} useStaticWidth={true}>
         {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
           <TableContainer>
             <Table {...getTableProps()} aria-label="sample table">
@@ -40,7 +40,6 @@ const Datatable = ({ headers, rows }: DatatableProps) => {
                       })}
                     >
                       <div className="p-4">{header.header}</div>
-                      {header.header}
                     </TableHeader>
                   ))}
                 </TableRow>
