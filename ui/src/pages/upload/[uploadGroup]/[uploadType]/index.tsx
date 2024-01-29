@@ -1,128 +1,56 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { Information } from "@carbon/icons-react";
+import { Api, Information } from "@carbon/icons-react";
 import "@carbon/react";
 import {
   Accordion,
   AccordionItem,
   Button,
-  DataTableSkeleton,
+  Loading,
   Section,
   Tooltip,
 } from "@carbon/react";
+import { useQuery } from "@tanstack/react-query";
 
+import { useApi } from "@/api";
 import Datatable from "@/components/upload/Datatable";
 import PaginatedDatatable from "@/components/upload/PaginatedDatatable";
 import UploadFile from "@/components/upload/UploadFile.tsx";
 
-const rows = [
-  "a",
-  "b",
-  "c",
-  "d",
-  "e",
-  "f",
-  "g",
-  "h",
-  "i",
-  "j",
-  "k",
-  "l",
-  "m",
-  "n",
-  "o",
-].map(key => ({
-  id: key,
-  columnName: (
-    <Tooltip
-      align="right"
-      enterDelayMs={150}
-      label={`some description for cell -${key}`}
-      leaveDelayMs={0}
-    >
-      <div className="flex">
-        some flavor text here
-        <div className="flex items-center">
-          <Information />
-        </div>
-      </div>
-    </Tooltip>
-  ),
-  expectedDataType: `expectedDataType-${key}`,
-  inDataset: `inDataset-${key}`,
-  isCorrectLocation: `isCorrectLocation-${key}`,
-  nullValues: `nullValues-${key}`,
-  uniqueValues: `uniqueValues-${key}`,
-}));
-
-const headers = [
-  {
-    key: "columnName",
-    header: "Column name",
-  },
-  {
-    key: "expectedDataType",
-    header: "Expected Data Type",
-  },
-  {
-    key: "inDataset",
-    header: "Is the column in the dataset?",
-  },
-  {
-    key: "isCorrectLocation",
-    header: "Is the column in the right data type?",
-  },
-  {
-    key: "nullValues",
-    header: "How many null values per column?",
-  },
-  {
-    key: "uniqueValues",
-    header: "How many unique values per column?",
-  },
-];
-
-const check3rows = [
-  {
-    id: "dupx",
-    check:
-      "Suspected duplicate rows with everything same except school code (dupx)",
-    count: "Not run",
-  },
-  {
-    id: "dup0",
-    check:
-      "Suspected duplicate rows with same school id, education level, school name, lat-lon (dup0)",
-    count: "Not run",
-  },
-  {
-    id: "dup1",
-    check:
-      "Suspected duplicate rows with same school name, education level, lat-lon (dup1)",
-    count: "Not run",
-  },
-];
-
-const check4headers = [
-  {
-    key: "check",
-    header: "Check",
-  },
-  {
-    key: "count",
-    header: "Count",
-  },
-];
-
 export default function Index() {
+  const api = useApi();
   const [file, setFile] = useState<File | null>(null);
   const [timestamp, setTimestamp] = useState<Date | null>(null);
-  const [isCheckingHeaders, setIsCheckingHeaders] = useState<boolean>(true);
   // const hasUploadedFile = file != null;
 
   // dummy useeffect that will parse for data
-  const hasData = false;
+  const hasData = true;
+
+  const { data: checksData, isLoading } = useQuery({
+    queryKey: ["column_checks"],
+    queryFn: api.uploads.list_column_checks,
+  });
+
+  const rowsWithToolTip =
+    checksData?.data.column_checks.rows.map(item => ({
+      ...item,
+      columnName: (
+        <Tooltip
+          align="right"
+          enterDelayMs={150}
+          label={`some description for cell -${item.columnName}`}
+          leaveDelayMs={0}
+        >
+          <div className="flex gap-1">
+            {item.columnName}
+            <div className="flex items-center opacity-25">
+              <Information />
+            </div>
+          </div>
+        </Tooltip>
+      ),
+    })) ?? [];
 
   useEffect(() => {
     console.log("file");
@@ -177,48 +105,61 @@ export default function Index() {
       </Section>
       <div className="m-0 w-full">
         <div className="px=28 ">
-          <Accordion align="start">
-            <AccordionItem disabled={!isCheckingHeaders} title="Summary">
-              <div>
-                FileName: <b>{file?.name}</b>
-              </div>
-              <div>Rows:</div>
-              <div>Columns:</div>
-              <div>
-                <p className="italic">File uploaded at: {timestampStr}</p>
-              </div>
-            </AccordionItem>
-            <AccordionItem
-              disabled={!isCheckingHeaders}
-              title="Checks per column"
-            >
-              {hasData ? (
-                <PaginatedDatatable headers={headers} rows={rows} />
-              ) : (
-                <DataTableSkeleton showHeader={false} showToolbar={false} />
-              )}
-            </AccordionItem>
-            <AccordionItem
-              disabled={!isCheckingHeaders}
-              title="Checks for duplicate rows"
-            >
-              <div className="py-4">
-                These checks will count rows that appear to be duplicates based
-                on combinations of columns.
-              </div>
-              <Datatable headers={check4headers} rows={check3rows} />
-            </AccordionItem>
-            <AccordionItem
-              disabled={!isCheckingHeaders}
-              title="Checks based on geospatial data points"
-            >
-              <div className="py-4">
-                These checks will check the data quality of each row based on
-                its coordinate data.
-              </div>
-              <Datatable headers={check4headers} rows={check3rows} />
-            </AccordionItem>
-          </Accordion>
+          {isLoading ? (
+            <Accordion align="start">
+              <AccordionItem disabled title="Summary" />
+              <AccordionItem disabled title="Checks per column" />
+              <AccordionItem disabled title="Checks for duplicate rows" />
+              <AccordionItem
+                disabled
+                title="Checks based on geospatial data points"
+              />
+            </Accordion>
+          ) : (
+            <Accordion align="start">
+              <AccordionItem title="Summary">
+                <div>
+                  FileName: <b>{file?.name}</b>
+                </div>
+                <div>Rows:</div>
+                <div>Columns:</div>
+                <div>
+                  <p className="italic">File uploaded at: {timestampStr}</p>
+                </div>
+              </AccordionItem>
+              <AccordionItem title="Checks per column">
+                <div className="py-4">
+                  These checks will be run on each column in the uploaded file
+                </div>
+                <PaginatedDatatable
+                  headers={checksData?.data.column_checks.headers ?? []}
+                  rows={rowsWithToolTip ?? []}
+                />
+              </AccordionItem>
+              <AccordionItem title="Checks for duplicate rows">
+                <div className="py-4">
+                  These checks will count rows that appear to be duplicates
+                  based on combinations of columns.
+                </div>
+                <Datatable
+                  headers={checksData?.data.duplicate_rows.headers ?? []}
+                  rows={checksData?.data.duplicate_rows.rows ?? []}
+                />
+              </AccordionItem>
+              <AccordionItem title="Checks based on geospatial data points">
+                <div className="py-4">
+                  These checks will check the data quality of each row based on
+                  its coordinate data.
+                </div>
+                <Datatable
+                  headers={
+                    checksData?.data.geospatial_data_points.headers ?? []
+                  }
+                  rows={checksData?.data.geospatial_data_points.rows ?? []}
+                />
+              </AccordionItem>
+            </Accordion>
+          )}
         </div>
       </div>
     </div>
