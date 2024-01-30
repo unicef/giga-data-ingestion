@@ -1,15 +1,19 @@
+import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   Button,
+  Loading,
   RadioButton,
   Select,
   SelectItem,
   Stack,
   TextArea,
 } from "@carbon/react";
+import { useMutation } from "@tanstack/react-query";
 
+import { useApi } from "@/api";
 import ControlledDatepicker from "@/components/upload/ControlledDatepicker";
 import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
 import countries from "@/constants/countries";
@@ -25,7 +29,7 @@ import {
 } from "@/mocks/metadataFormValues";
 
 export type MetadataFormValues = {
-  collectionDate: Date;
+  dataCollectionDate: Date;
   country: string;
   dataCollectionModality: string;
   dataOwner: string;
@@ -39,10 +43,13 @@ export type MetadataFormValues = {
   source: string;
 };
 
-// TODO wwhy does the radio button disappear??????
-
 export default function UploadMetadata() {
+  const api = useApi();
+  const location = useLocation();
   const navigate = useNavigate();
+
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isUploadError, setIsUploadError] = useState<boolean>(false);
 
   const {
     register,
@@ -51,15 +58,53 @@ export default function UploadMetadata() {
     formState: { errors },
   } = useForm<MetadataFormValues>();
 
-  const onSubmit: SubmitHandler<MetadataFormValues> = data => {
+  const uploadFile = useMutation({
+    mutationFn: api.uploads.upload_file,
+  });
+
+  const onSubmit: SubmitHandler<MetadataFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
       console.log("Form has errors, not submitting");
       return;
     }
 
-    console.log(data);
-    // navigate("../success");
-    // mutation to actually upload file
+    setIsUploading(true);
+    setIsUploadError(false);
+
+    try {
+      console.log(data.dateModified);
+      console.log(data.dataCollectionDate);
+
+      const uploadId = await uploadFile.mutateAsync({
+        dataset: "someDataset",
+        file: location.state.file,
+        sensitivity_level: data.sensitivityLevel,
+        pii_classification: data.piiClassification,
+        geolocation_data_source: data.geolocationDataSource,
+        data_collection_modality: data.dataCollectionModality,
+        data_collection_date: new Date(data.dataCollectionDate).toISOString(),
+        domain: data.domain,
+        date_modified: new Date(data.dateModified).toISOString(),
+        source: data.source,
+        data_owner: data.dataOwner,
+        country: data.country,
+        school_id_type: data.schoolIdType,
+        description: data.description,
+      });
+
+      setIsUploading(false);
+      console.log(uploadId.data);
+
+      navigate("../success", {
+        state: {
+          uploadDate: location.state.timestamp,
+          uploadId: uploadId.data,
+        },
+      });
+    } catch {
+      setIsUploadError(true);
+      setIsUploading(false);
+    }
   };
 
   const SensitivityRadio = () => (
@@ -212,7 +257,7 @@ export default function UploadMetadata() {
             datePickerProps={{
               datePickerType: "single",
             }}
-            name="collectionDate"
+            name="dataCollectionDate"
             datePickerInputProps={{
               invalidText: "Select a date",
               id: "collectionDate",
@@ -249,11 +294,27 @@ export default function UploadMetadata() {
               required: "Please enter a description",
             })}
           />
-
           <div className="flex gap-4">
-            <Button type="submit">Submit</Button>
+            <Button
+              {...(isUploading
+                ? {
+                    disabled: true,
+                    renderIcon: props => (
+                      <Loading small={true} withOverlay={false} {...props} />
+                    ),
+                  }
+                : {})}
+              type="submit"
+            >
+              Submit
+            </Button>
             <Button kind="tertiary">Cancel</Button>
           </div>
+          {isUploadError && (
+            <div className="text-giga-dark-red">
+              Error occured during file upload. Please try again
+            </div>
+          )}
         </Stack>
       </form>
     </>

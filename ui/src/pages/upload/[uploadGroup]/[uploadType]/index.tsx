@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Information } from "@carbon/icons-react";
@@ -47,10 +47,6 @@ export default function Index() {
       ),
     })) ?? [];
 
-  useEffect(() => {
-    console.log("file");
-  }, [file]);
-
   const dateOptions: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "2-digit",
@@ -87,7 +83,11 @@ export default function Index() {
         <Link to="/upload" unstable_viewTransition>
           <Button kind="tertiary">Cancel</Button>
         </Link>
-        <Link to="metadata" unstable_viewTransition>
+        <Link
+          to="metadata"
+          state={{ file: file, timestamp: timestampStr }}
+          unstable_viewTransition
+        >
           <Button disabled={!hasUploadedFile}>Proceed</Button>
         </Link>
       </div>
@@ -114,8 +114,12 @@ export default function Index() {
                 <div>
                   FileName: <b>{file?.name}</b>
                 </div>
-                <div>Rows:</div>
-                <div>Columns:</div>
+                <div>
+                  Rows: <b>{checksData?.data.summary_checks.rows ?? ""}</b>
+                </div>
+                <div>
+                  Columns:<b>{checksData?.data.summary_checks.columns ?? ""}</b>
+                </div>
                 <div>
                   <p className="italic">File uploaded at: {timestampStr}</p>
                 </div>

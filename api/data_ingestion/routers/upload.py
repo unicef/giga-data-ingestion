@@ -35,13 +35,14 @@ async def upload_file(
     pii_classification: Annotated[str, Form()],
     geolocation_data_source: Annotated[str, Form()],
     data_collection_modality: Annotated[str, Form()],
+    data_collection_date: Annotated[str, Form()],
     domain: Annotated[str, Form()],
     date_modified: Annotated[str, Form()],
     source: Annotated[str, Form()],
     data_owner: Annotated[str, Form()],
     country: Annotated[str, Form()],
     school_id_type: Annotated[str, Form()],
-    description_file_update: Annotated[str, Form()],
+    description: Annotated[str, Form()],
 ):
     if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
         raise HTTPException(
@@ -61,6 +62,7 @@ async def upload_file(
             "sensitivity_level": sensitivity_level,
             "pii_classification": pii_classification,
             "geolocation_data_source": geolocation_data_source,
+            "data_collection_date": data_collection_date,
             "data_collection_modality": data_collection_modality,
             "domain": domain,
             "date_modified": date_modified,
@@ -68,7 +70,7 @@ async def upload_file(
             "data_owner": data_owner,
             "country": country,
             "school_id_type": school_id_type,
-            "description_file_update": description_file_update,
+            "description_file_update": description,
         }
 
         client.upload_blob(await file.read(), metadata=metadata)
@@ -77,6 +79,8 @@ async def upload_file(
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
+
+    return uid
 
 
 @router.get(
@@ -136,11 +140,11 @@ async def list_column_checks():
         }
         for key in [
             "Suspected duplicate rows with everything same except school code (dupx)",
-            "Suspected duplicate rows with same school id, education level, school name, lat-lon (dup0)",
-            "Suspected duplicate rows with same school name, education level, lat-lon (dup1)",
-            "Suspected duplicate rows with same education level,lat-lon (dup2)",
-            "Suspected duplicate rows with same school name and education level within 110m radius (dup3)",
-            "Suspected duplicate rows with similar school name and same education level within 110m radius (dup4)",
+            "Suspected duplicate rows with same school id, education level, school name, lat-lon (dup0)",  # noqa: E501 line too long
+            "Suspected duplicate rows with same school name, education level, lat-lon (dup1)",  # noqa: E501
+            "Suspected duplicate rows with same education level,lat-lon (dup2)",  # noqa: E501
+            "Suspected duplicate rows with same school name and education level within 110m radius (dup3)",  # noqa: E501
+            "Suspected duplicate rows with similar school name and same education level within 110m radius (dup4)",  # noqa: E501
         ]
     ]
 
@@ -161,12 +165,16 @@ async def list_column_checks():
         }
         for key in [
             "Schools outside country boundary",
-            "Schools that have more than 5 schools within 70 square metre area (school_density_outlier_flag)",
-            "Rows with latitude values with less than satisfactory precision (5 digits): 10",
+            "Schools that have more than 5 schools within 70 square metre area (school_density_outlier_flag)",  # noqa: E501
+            "Rows with latitude values with less than satisfactory precision (5 digits): 10",  # noqa: E501
         ]
     ]
 
     upload_checks = {
+        "summary_checks": {
+            "rows": 24601,
+            "columns": 404,
+        },
         "column_checks": {
             "headers": column_checks_headers,
             "rows": column_checks_rows,
