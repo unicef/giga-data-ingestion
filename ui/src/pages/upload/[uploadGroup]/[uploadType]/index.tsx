@@ -73,7 +73,6 @@ export default function Index() {
 
   return (
     <div className="flex flex-col gap-8">
-      <div onClick={() => console.log(file ?? "NO FILE FOUND")}>get file</div>
       <h3 className="text-[23px]">Step 1: Upload</h3>
       <div className="w-1/4">
         <UploadFile file={file} setFile={setFile} setTimestamp={setTimestamp} />

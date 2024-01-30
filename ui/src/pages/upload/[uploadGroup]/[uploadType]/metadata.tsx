@@ -71,12 +71,11 @@ export default function UploadMetadata() {
     setIsUploading(true);
     setIsUploadError(false);
 
-    try {
-      console.log(data.dateModified);
-      console.log(data.dataCollectionDate);
+    const dataset = location.pathname.split("/")[3];
 
+    try {
       const uploadId = await uploadFile.mutateAsync({
-        dataset: "someDataset",
+        dataset: dataset,
         file: location.state.file,
         sensitivity_level: data.sensitivityLevel,
         pii_classification: data.piiClassification,
@@ -93,7 +92,6 @@ export default function UploadMetadata() {
       });
 
       setIsUploading(false);
-      console.log(uploadId.data);
 
       navigate("../success", {
         state: {
