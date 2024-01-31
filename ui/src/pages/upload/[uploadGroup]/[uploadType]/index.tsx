@@ -111,16 +111,10 @@ export default function Index() {
             <Accordion align="start">
               <AccordionItem title="Summary">
                 <div>
-                  FileName: <b>{file?.name}</b>
-                </div>
-                <div>
                   Rows: <b>{checksData?.data.summary_checks.rows ?? ""}</b>
                 </div>
                 <div>
                   Columns:<b>{checksData?.data.summary_checks.columns ?? ""}</b>
-                </div>
-                <div>
-                  <p className="italic">File uploaded at: {timestampStr}</p>
                 </div>
               </AccordionItem>
               <AccordionItem title="Checks per column">
