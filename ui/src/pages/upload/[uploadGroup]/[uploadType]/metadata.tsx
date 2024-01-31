@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
   Button,
@@ -11,12 +11,11 @@ import {
   Stack,
   TextArea,
 } from "@carbon/react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { useApi } from "@/api";
 import ControlledDatepicker from "@/components/upload/ControlledDatepicker";
 import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
-import countries from "@/constants/countries";
 import {
   dataCollectionModalityOptions,
   dataOwnerOptions,
@@ -27,6 +26,10 @@ import {
   sensitivityOptions,
   sourceOptions,
 } from "@/mocks/metadataFormValues";
+import { filterCountryDatasetFromGraphGroup } from "@/utils/group";
+import { capitalizeFirstLetterOfEachWord } from "@/utils/string";
+
+const DEBUG_CURRENT_USER = "5684c8d5-118c-4de5-bca8-3041550352a7";
 
 export type MetadataFormValues = {
   dataCollectionDate: Date;
@@ -47,6 +50,7 @@ export default function UploadMetadata() {
   const api = useApi();
   const location = useLocation();
   const navigate = useNavigate();
+  const { uploadType = "" } = useParams();
 
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isUploadError, setIsUploadError] = useState<boolean>(false);
@@ -61,6 +65,25 @@ export default function UploadMetadata() {
   const uploadFile = useMutation({
     mutationFn: api.uploads.upload_file,
   });
+
+  const { data: userData, isLoading } = useQuery({
+    queryKey: ["user", DEBUG_CURRENT_USER],
+    queryFn: () => api.users.get(DEBUG_CURRENT_USER),
+  });
+
+  const dataset = `-School ${capitalizeFirstLetterOfEachWord(
+    uploadType.replace(/-/g, " "),
+  )}`;
+
+  const userCountryDatasets = filterCountryDatasetFromGraphGroup(
+    userData?.data.member_of ?? [],
+    dataset,
+  );
+
+  const userCountries = userCountryDatasets
+    .map(countryDataset => countryDataset.display_name.split("-")[0])
+    .sort((a, b) => b.localeCompare(a))
+    .reverse();
 
   const onSubmit: SubmitHandler<MetadataFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
@@ -206,18 +229,29 @@ export default function UploadMetadata() {
       ))}
     </Select>
   );
+  const CountrySelect = ({
+    countryOptions,
+    isLoading,
+  }: {
+    countryOptions: string[];
+    isLoading: boolean;
+  }) => {
+    if (isLoading) {
+      return (
+        <Select disabled id="country" labelText="Loading...">
+          <SelectItem text="Loading..." />
+        </Select>
+      );
+    }
 
-  const CountrySelect = () => (
-    <Select id="country" labelText="Country" {...register("country")}>
-      {countries.map(country => (
-        <SelectItem
-          key={country.name}
-          text={country.name}
-          value={country.name}
-        />
-      ))}
-    </Select>
-  );
+    return (
+      <Select id="country" labelText="Country" {...register("country")}>
+        {countryOptions.map(country => (
+          <SelectItem key={country} text={country} value={country} />
+        ))}
+      </Select>
+    );
+  };
 
   const SchoolIdTypeSelect = () => (
     <Select
@@ -280,7 +314,7 @@ export default function UploadMetadata() {
           />
           <SourceSelect />
           <DataOwnerSelect />
-          <CountrySelect />
+          <CountrySelect countryOptions={userCountries} isLoading={isLoading} />
           <SchoolIdTypeSelect />
           <TextArea
             invalid={Boolean(errors.description)}
