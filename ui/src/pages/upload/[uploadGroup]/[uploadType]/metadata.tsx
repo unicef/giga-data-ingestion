@@ -310,7 +310,7 @@ export default function UploadMetadata() {
               placeholder: "yyyy-mm-dd",
             }}
           />
-          <SourceSelect />
+          {uploadType === "coverage" && <SourceSelect />}
           <DataOwnerSelect />
           <CountrySelect countryOptions={userCountries} isLoading={isLoading} />
           <SchoolIdTypeSelect />

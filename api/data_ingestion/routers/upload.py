@@ -66,12 +66,14 @@ async def upload_file(
             "data_collection_modality": data_collection_modality,
             "domain": domain,
             "date_modified": date_modified,
-            "source": source,
             "data_owner": data_owner,
             "country": country,
             "school_id_type": school_id_type,
             "description_file_update": description,
         }
+
+        if source != "undefined":
+            metadata["source"] = source
 
         client.upload_blob(await file.read(), metadata=metadata)
         response.status_code = status.HTTP_201_CREATED
