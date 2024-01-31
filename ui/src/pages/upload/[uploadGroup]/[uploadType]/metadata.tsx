@@ -163,9 +163,11 @@ export default function UploadMetadata() {
   const GeolocationDataSourceSelect = () => (
     <Select
       id="geolocatinDataSource"
+      invalid={errors.geolocationDataSource ? true : false}
       labelText="Geolocation Data Source"
-      {...register("geolocationDataSource")}
+      {...register("geolocationDataSource", { required: true })}
     >
+      <SelectItem value="" text="" />
       {geolocationDataSourceOptions.map(option => (
         <SelectItem
           key={option.value}
@@ -179,9 +181,12 @@ export default function UploadMetadata() {
   const DataCollectionModalitySelect = () => (
     <Select
       id="dataCollectionModality"
+      invalid={errors.dataCollectionModality ? true : false}
       labelText="Data Collection Modality"
-      {...register("dataCollectionModality")}
+      {...register("dataCollectionModality", { required: true })}
     >
+      <SelectItem value="" text="" />
+
       {dataCollectionModalityOptions.map(option => (
         <SelectItem
           key={option.value}
@@ -193,7 +198,14 @@ export default function UploadMetadata() {
   );
 
   const DomainSelect = () => (
-    <Select id="domain" labelText="Domain" {...register("domain")}>
+    <Select
+      id="domain"
+      invalid={errors.domain ? true : false}
+      labelText="Domain"
+      {...register("domain", { required: true })}
+    >
+      <SelectItem value="" text="" />
+
       {domainOptions.map(option => (
         <SelectItem
           key={option.value}
@@ -205,7 +217,13 @@ export default function UploadMetadata() {
   );
 
   const SourceSelect = () => (
-    <Select id="source" labelText="Source" {...register("source")}>
+    <Select
+      id="source"
+      invalid={errors.source ? true : false}
+      labelText="Source"
+      {...register("source", { required: true })}
+    >
+      <SelectItem value="" text="" />
       {sourceOptions.map(option => (
         <SelectItem
           key={option.value}
@@ -217,7 +235,13 @@ export default function UploadMetadata() {
   );
 
   const DataOwnerSelect = () => (
-    <Select id="dataowner" labelText="Data Owner" {...register("dataOwner")}>
+    <Select
+      id="dataowner"
+      invalid={errors.dataOwner ? true : false}
+      labelText="Data Owner"
+      {...register("dataOwner", { required: true })}
+    >
+      <SelectItem value="" text="" />
       {dataOwnerOptions.map(option => (
         <SelectItem
           key={option.value}
@@ -243,7 +267,13 @@ export default function UploadMetadata() {
     }
 
     return (
-      <Select id="country" labelText="Country" {...register("country")}>
+      <Select
+        id="country"
+        invalid={errors.country ? true : false}
+        labelText="Country"
+        {...register("country", { required: true })}
+      >
+        <SelectItem value="" text="" />
         {countryOptions.map(country => (
           <SelectItem key={country} text={country} value={country} />
         ))}
@@ -254,9 +284,11 @@ export default function UploadMetadata() {
   const SchoolIdTypeSelect = () => (
     <Select
       id="schoolIdType"
+      invalid={errors.schoolIdType ? true : false}
       labelText="School ID type"
-      {...register("schoolIdType")}
+      {...register("schoolIdType", { required: true })}
     >
+      <SelectItem value="" text="" />
       {schoolIdTypeOptions.map(option => (
         <SelectItem
           key={option.value}
