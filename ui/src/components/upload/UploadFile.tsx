@@ -60,8 +60,8 @@ const UploadFile: React.FC<UploadFileProps> = ({
         onDropAccepted={onDrop}
         onDropRejected={handleOnDroprejected}
         accept={{
-          "text/plain": [".json", ".txt"],
-          "application/octer-stream": [".parquet"],
+          "text/plain": [".csv", ".json"],
+          "application/octer-stream": [".parquet", ".xls", ".xlsx"],
         }}
         maxSize={FILE_UPLOAD_SIZE_LIMIT}
       >
@@ -99,7 +99,7 @@ const UploadFile: React.FC<UploadFileProps> = ({
               )}
             </div>
             <p className="text-gray-4 px-6 text-center text-xs opacity-25">
-              (.txt, .json, .parquet only, up to 10MB)
+              (.xlsx, .xls, .csv, .json, .parquet only, up to 10MB)
             </p>
           </div>
         )}
