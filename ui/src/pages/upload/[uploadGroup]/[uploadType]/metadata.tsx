@@ -29,8 +29,6 @@ import {
 import { filterCountryDatasetFromGraphGroup } from "@/utils/group";
 import { capitalizeFirstLetterOfEachWord } from "@/utils/string";
 
-const DEBUG_CURRENT_USER = "5684c8d5-118c-4de5-bca8-3041550352a7";
-
 export type MetadataFormValues = {
   dataCollectionDate: Date;
   country: string;
@@ -67,8 +65,8 @@ export default function UploadMetadata() {
   });
 
   const { data: userData, isLoading } = useQuery({
-    queryKey: ["user", DEBUG_CURRENT_USER],
-    queryFn: () => api.users.get(DEBUG_CURRENT_USER),
+    queryKey: ["user"],
+    queryFn: api.users.get_groups_from_email,
   });
 
   const dataset = `-School ${capitalizeFirstLetterOfEachWord(

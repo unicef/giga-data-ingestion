@@ -68,6 +68,15 @@ async def get_current_user(user: User = Depends(azure_scheme)):
     return user
 
 
+@router.get("/email", response_model=GraphUser)
+async def get_groups_from_email(azure_user: User = Depends(azure_scheme)):
+    all_users = await UsersApi.list_users()
+    groups = [user for user in all_users if user.mail == azure_user.preferred_username][
+        0
+    ]
+    return groups
+
+
 @router.get("/{id}", response_model=GraphUser)
 async def get_user(id: UUID4):
     return await UsersApi.get_user(id)
