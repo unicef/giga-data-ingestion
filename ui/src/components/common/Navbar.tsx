@@ -22,7 +22,11 @@ export default function Navbar() {
   const [isSwitcherExpanded, setIsSwitcherExpanded] = useState(false);
 
   return (
-    <Header className="relative">
+    <Header
+      aria-label="Main Header"
+      aria-labelledby="main-header-label"
+      className="relative"
+    >
       <HeaderName as={Link} to="/" unstable_viewTransition prefix="">
         <img src="/GIGA_logo_blue.png" className="h-5/6" alt="Giga" />
         <span className="ml-1 text-xl font-light">giga</span>
@@ -30,7 +34,10 @@ export default function Navbar() {
       </HeaderName>
       <AuthenticatedTemplate>
         {featureFlags.userManagementPage && (
-          <HeaderNavigation>
+          <HeaderNavigation
+            aria-label="Main Navigation"
+            aria-labelledby="main-nav-label"
+          >
             <HeaderMenuItem
               as={Link}
               to="/user-management"
@@ -43,7 +50,11 @@ export default function Navbar() {
       </AuthenticatedTemplate>
       <HeaderGlobalBar>
         <HeaderGlobalAction
-          onClick={() => setIsSwitcherExpanded(expanded => !expanded)}
+          aria-label="Switcher"
+          aria-labelledby="switcher-label"
+          onClick={() => {
+            setIsSwitcherExpanded(expanded => !expanded);
+          }}
         >
           <SwitcherIcon />
         </HeaderGlobalAction>
