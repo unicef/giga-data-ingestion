@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     AZURE_SAS_TOKEN: str
     AZURE_BLOB_CONTAINER_NAME: str
     AZURE_STORAGE_ACCOUNT_NAME: str
+    AZURE_EMAIL_CONNECTION_STRING: str
+    AZURE_EMAIL_SENDER: str
     WEB_APP_REDIRECT_URI: str
     SENTRY_DSN: str = ""
 
