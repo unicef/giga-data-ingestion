@@ -18,7 +18,36 @@ services:
       - "3000:3000"
     volumes:
       - ./ui:/app
-    command:
+    entrypoint:
       - /bin/sh
       - "-c"
       - "npm install && exec npm run dev"
+
+  email-api:
+    image: node:20-alpine
+    restart: unless-stopped
+    init: true
+    working_dir: /app
+    env_file: ./email/.env
+    command:
+      - /bin/sh
+      - -c
+      - "npm install && exec npm run dev"
+    volumes:
+      - ./email:/app
+    ports:
+      - "3020:3020"
+
+  email-ui:
+    image: node:20-alpine
+    restart: unless-stopped
+    init: true
+    working_dir: /app
+    command:
+      - /bin/sh
+      - -c
+      - "npm install && exec npm run dev:email"
+    volumes:
+      - ./email:/app
+    ports:
+      - "3030:3030"

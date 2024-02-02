@@ -1,0 +1,23 @@
+{
+  "name": "@unicef/giga-data-ingestion-email-service",
+  "version": "0.1.0",
+  "author": "Thinking Machines <hello@thinkingmachin.es>",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build:email": "email build",
+    "dev:email": "email dev --port 3030",
+    "export:email": "email export"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.7.0",
+    "@hono/zod-validator": "^0.1.11",
+    "@react-email/components": "0.0.14",
+    "@react-email/render": "0.0.12",
+    "hono": "^3.12.8",
+    "react-email": "2.0.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "tsx": "^3.12.2"
+  }
+}
