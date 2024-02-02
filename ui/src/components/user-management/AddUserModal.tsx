@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
@@ -29,7 +29,7 @@ import {
 
 type CountryDataset = {
   country: string;
-  dataset: { selectedItems: string[] };
+  dataset: { selectedItems: { label: string; value: string }[] };
 };
 
 interface AddUserModalProps {
@@ -41,7 +41,15 @@ interface AddUserInputs {
   givenName: string;
   surname: string;
   email: string;
-  roles: { selectedItems: string[] };
+  roles: { selectedItems: { label: string; value: string }[] };
+  countryDatasets: CountryDataset[];
+}
+
+interface AddUserInputs {
+  givenName: string;
+  surname: string;
+  email: string;
+  roles: { selectedItems: { label: string; value: string }[] };
   countryDatasets: CountryDataset[];
 }
 
@@ -76,6 +84,7 @@ export default function AddUserModal({
       countryDatasets: [initialCountryDataset],
     },
   });
+  const formRef = useRef(null!);
 
   const watchedCountryDatasets = watch("countryDatasets");
   const watchedRoles = watch("roles");
@@ -143,10 +152,17 @@ export default function AddUserModal({
         };
       })
       .filter(({ dataset }) => dataset.length > 0)
-      .flatMap(({ country, dataset }) => dataset.map(ds => `${country}-${ds}`));
+      .flatMap(({ country, dataset }) =>
+        dataset.map(ds => {
+          return `${country}-${ds.value}`;
+        }),
+      );
 
     const addedDatasetsWithIds = matchNamesWithIds(addedDatasets, groups);
-    const addedRolesWithIds = matchNamesWithIds(roles, groups);
+    const addedRolesWithIds = matchNamesWithIds(
+      roles.map(role => role.value),
+      groups,
+    );
 
     return { addedDatasets, addedDatasetsWithIds, addedRolesWithIds };
   };
@@ -154,13 +170,17 @@ export default function AddUserModal({
   const onSubmit: SubmitHandler<AddUserInputs> = async data => {
     const { givenName, surname, email } = data;
 
-    const { addedDatasets, addedRolesWithIds } = deriveAddedValues();
-
+    const { addedDatasetsWithIds, addedRolesWithIds } = deriveAddedValues();
     const addGroupsPayload = {
-      groups_to_add: [...addedDatasets, ...addedRolesWithIds].map(
-        dataset => dataset.id,
-      ),
+      groups_to_add: [
+        ...addedDatasetsWithIds.map(
+          addedDatasetWithId => addedDatasetWithId.id ?? "",
+        ),
+        ...addedRolesWithIds.map(addedRoleWithId => addedRoleWithId.id ?? ""),
+      ],
       invited_user_display_name: `${givenName} ${surname}`,
+      invited_user_given_name: givenName,
+      invited_user_surname: surname,
       invited_user_email_address: email,
     };
 
@@ -178,165 +198,173 @@ export default function AddUserModal({
 
   return (
     <>
-      {createPortal(
-        <Modal
-          primaryButtonText="Confirm"
-          secondaryButtonText="Cancel"
-          primaryButtonDisabled={!formState.isValid}
-          open={isAddModalOpen && !swapModal}
-          modalHeading="Add New User"
-          onRequestClose={() => handleModalCancel("AddModal")}
-          onRequestSubmit={() => setSwapModal(true)}
-          hasScrollingContent
-          aria-label="add user modal"
-        >
-          <Form aria-label="add user form" className="">
-            <Stack gap={4}>
-              <TextInput
-                id="givenName"
-                labelText="First Name"
-                {...register("givenName", { required: true })}
-              />
-              <TextInput
-                id="surname"
-                labelText="Last Name"
-                {...register("surname", { required: true })}
-              />
-              <TextInput
-                id="email"
-                labelText="Email"
-                type="email"
-                {...register("email", { required: true })}
-              />
-              <FormGroup legendId="role" legendText="Role">
-                <Controller
-                  name="roles"
-                  control={control}
-                  rules={{ required: true, minLength: 1 }}
-                  render={({ field }) => (
-                    <MultiSelect
-                      id="roles"
-                      items={roleOptions}
-                      itemToString={item => item.label}
-                      label="What level of access does this user have for Giga?"
-                      {...field}
-                    />
-                  )}
+      {isAddModalOpen &&
+        createPortal(
+          <Modal
+            aria-label="add user modal"
+            hasScrollingContent
+            modalHeading="Add New User"
+            open={isAddModalOpen && !swapModal}
+            preventCloseOnClickOutside
+            primaryButtonDisabled={!formState.isValid}
+            primaryButtonText="Confirm"
+            secondaryButtonText="Cancel"
+            onRequestClose={() => handleModalCancel("AddModal")}
+            onRequestSubmit={() => setSwapModal(true)}
+          >
+            <form aria-label="add user form" className="" ref={formRef}>
+              <Stack gap={4}>
+                <TextInput
+                  id="givenName"
+                  labelText="First Name"
+                  {...register("givenName", { required: true })}
                 />
-              </FormGroup>
-
-              {watchedCountryDatasets.map((_, i) => (
-                <FormGroup key={i} legendText="">
-                  <Select
-                    id={`country.${i}`}
-                    labelText={`Country ${i + 1}`}
-                    {...register(`countryDatasets.${i}.country`, {
-                      required: true,
-                    })}
-                  >
-                    <SelectItem text="Select a country" value="" />
-                    {countryOptions.map(country => (
-                      <SelectItem
-                        key={country.value}
-                        text={country.label}
-                        value={country.value}
+                <TextInput
+                  id="surname"
+                  labelText="Last Name"
+                  {...register("surname", { required: true })}
+                />
+                <TextInput
+                  id="email"
+                  labelText="Email"
+                  type="email"
+                  {...register("email", { required: true })}
+                />
+                {watchedRoles.selectedItems.map(role => role.label)}
+                <FormGroup legendId="role" legendText="Role">
+                  {/* <ControlledMultiselect name="roles" control={control} /> */}
+                  <Controller
+                    name="roles"
+                    control={control}
+                    render={({ field }) => (
+                      <MultiSelect
+                        id="roles"
+                        items={roleOptions}
+                        itemToString={item => item.label}
+                        label="What level of access does this user have for Giga?"
+                        {...field}
                       />
-                    ))}
-                  </Select>
-                  {watchedCountryDatasets.length > 1 && (
-                    <Button
-                      kind="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveCountryDataset(i)}
-                    >
-                      Remove pair
-                    </Button>
-                  )}
-                  <FormGroup legendText="Dataset">
-                    <Controller
-                      name={`countryDatasets.${i}.dataset`}
-                      control={control}
-                      rules={{ required: true, minLength: 1 }}
-                      render={({ field }) => (
-                        <MultiSelect
-                          id={`dataset.${i}`}
-                          items={dataSetOptions}
-                          label="Select datasets"
-                          itemToString={item => item.label}
-                          {...field}
-                        />
-                      )}
-                    />
-                  </FormGroup>
-                  {i + 1 < watchedCountryDatasets.length && (
-                    <hr className="mt-8" />
-                  )}
+                    )}
+                    rules={{ required: true, minLength: 1 }}
+                  />
                 </FormGroup>
-              ))}
 
-              <Button
-                kind="ghost"
-                renderIcon={Add}
-                onClick={handleAddCountryDataset}
-              >
-                Add country
-              </Button>
-            </Stack>
-          </Form>
-        </Modal>,
-        document.body,
-      )}
+                {watchedCountryDatasets.map((_, i) => (
+                  <FormGroup key={i} legendText="">
+                    <Select
+                      id={`country.${i}`}
+                      labelText={`Country ${i + 1}`}
+                      {...register(`countryDatasets.${i}.country`, {
+                        required: true,
+                      })}
+                    >
+                      <SelectItem text="Select a country" value="" />
+                      {countryOptions.map(country => (
+                        <SelectItem
+                          key={country.value}
+                          text={country.label}
+                          value={country.value}
+                        />
+                      ))}
+                    </Select>
+                    {watchedCountryDatasets.length > 1 && (
+                      <Button
+                        kind="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveCountryDataset(i)}
+                      >
+                        Remove pair
+                      </Button>
+                    )}
+                    <FormGroup legendText="Dataset">
+                      <Controller
+                        name={`countryDatasets.${i}.dataset`}
+                        control={control}
+                        render={({ field }) => (
+                          <MultiSelect
+                            id={`dataset.${i}`}
+                            items={dataSetOptions}
+                            label="Select datasets"
+                            itemToString={item => item.label}
+                            {...field}
+                          />
+                        )}
+                        rules={{ required: true, minLength: 1 }}
+                      />
+                    </FormGroup>
+                    {i + 1 < watchedCountryDatasets.length && (
+                      <hr className="mt-8" />
+                    )}
+                  </FormGroup>
+                ))}
 
-      {createPortal(
-        <Modal
-          open={isAddModalOpen && swapModal}
-          modalHeading="Confirm New User"
-          primaryButtonText="Confirm"
-          secondaryButtonText="Cancel"
-          loadingStatus={
-            inviteAndAddGroupsMutation.isPending ? "active" : "inactive"
-          }
-          onRequestClose={() => handleModalCancel("ConfirmModal")}
-          onRequestSubmit={() => handleSubmit(onSubmit)}
-          aria-label="confirm new user modal"
-        >
-          <Form aria-label="confirm new user form" className="">
-            {(() => {
-              const countries = getUniqueDatasetsNew(
-                getValues("email"),
-                deriveAddedValues().addedDatasetsWithIds,
-              ).countries;
-              const datasets = pluralizeDatasets(
-                getUniqueDatasetsNew(
+                <Button
+                  kind="ghost"
+                  renderIcon={Add}
+                  onClick={handleAddCountryDataset}
+                >
+                  Add country
+                </Button>
+              </Stack>
+            </form>
+          </Modal>,
+          document.body,
+        )}
+
+      {isAddModalOpen &&
+        swapModal &&
+        createPortal(
+          <Modal
+            aria-label="confirm new user modal"
+            loadingStatus={
+              inviteAndAddGroupsMutation.isPending ? "active" : "inactive"
+            }
+            modalHeading="Confirm New User"
+            open={isAddModalOpen && swapModal}
+            primaryButtonText="Confirm"
+            secondaryButtonText="Cancel"
+            onRequestClose={() => handleModalCancel("ConfirmModal")}
+            onRequestSubmit={() => {
+              handleSubmit(onSubmit)();
+            }}
+          >
+            <Form aria-label="confirm new user form" className="">
+              {(() => {
+                const countries = getUniqueDatasetsNew(
                   getValues("email"),
                   deriveAddedValues().addedDatasetsWithIds,
-                ).uniqueDatasets,
-              );
+                ).countries;
+                const datasets = pluralizeDatasets(
+                  getUniqueDatasetsNew(
+                    getValues("email"),
+                    deriveAddedValues().addedDatasetsWithIds,
+                  ).uniqueDatasets,
+                );
 
-              return (
-                <p>
-                  This will give the user with email <b>{getValues("email")}</b>{" "}
-                  access to Giga data for <b>{datasets}</b> across{" "}
-                  {countries.length}{" "}
-                  {countries.length === 1 ? "country" : "countries"}:{" "}
-                  <b>{pluralizeCountries(countries)}</b>.
-                </p>
-              );
-            })()}
+                return (
+                  <p>
+                    This will give the user with email{" "}
+                    <b>{getValues("email")}</b> access to Giga data for{" "}
+                    <b>{datasets}</b> across {countries.length}{" "}
+                    {countries.length === 1 ? "country" : "countries"}:{" "}
+                    <b>{pluralizeCountries(countries)}</b>.
+                  </p>
+                );
+              })()}
 
-            {inviteAndAddGroupsMutation.isError && (
-              <InlineNotification
-                aria-label="create user error notification"
-                kind="error"
-                statusIconDescription="notification"
-                title="Error"
-                subtitle="Operation failed. Please try again."
-              />
-            )}
-          </Form>
-        </Modal>,
-        document.body,
-      )}
+              {inviteAndAddGroupsMutation.isError && (
+                <InlineNotification
+                  aria-label="create user error notification"
+                  kind="error"
+                  statusIconDescription="notification"
+                  subtitle="Operation failed. Please try again."
+                  title="Error"
+                />
+              )}
+            </Form>
+          </Modal>,
+          document.body,
+        )}
 
       <Button renderIcon={Add} onClick={() => setIsAddModalOpen(true)}>
         Add User
