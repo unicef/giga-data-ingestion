@@ -1,6 +1,7 @@
-from data_ingestion.internal.template import env
+import requests
 from data_ingestion.settings import settings
 from loguru import logger
+from requests import HTTPError, JSONDecodeError
 
 from azure.communication.email import EmailClient
 
@@ -8,7 +9,23 @@ from azure.communication.email import EmailClient
 def main():
     client = EmailClient.from_connection_string(settings.AZURE_EMAIL_CONNECTION_STRING)
 
-    template = env.get_template("email/data_quality/hello_world.html")
+    res = requests.post(
+        f"{settings.EMAIL_RENDERER_SERVICE_URL}email/dq-report",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
+        },
+        json={
+            "name": "John Doe",
+        },
+    )
+    if not res.ok:
+        try:
+            raise HTTPError(res.json())
+        except JSONDecodeError:
+            raise HTTPError(res.text) from None
+
+    html = res.json().get("response")
 
     message = {
         "senderAddress": settings.AZURE_EMAIL_SENDER,
@@ -19,10 +36,9 @@ def main():
         },
         "content": {
             "subject": "Giga Test Email",
-            "html": template.render(name="Kenneth"),
+            "html": html,
         },
     }
-
     poller = client.begin_send(message)
     result = poller.result()
     logger.info(result)
