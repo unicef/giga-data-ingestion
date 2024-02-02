@@ -1,27 +1,14 @@
-trigger:
-  branches:
-    include:
-      - staging
-
-pr: none
-
-pool:
-  vmImage: ubuntu-latest
-
-variables:
-  - template: templates/variables.yaml
-
 stages:
   - stage: BuildAndPush
     displayName: Build and push Ingestion Portal image
     jobs:
-      - template: templates/build-and-push.yaml
+      - template: build-and-push.yaml
 
   - stage: CreateConfig
     displayName: Create/update K8s configuration resources
     dependsOn: [ ]
     jobs:
-      - template: templates/create-config.yaml
+      - template: create-config.yaml
 
   - stage: Deploy
     displayName: Deploy Data Ingestion
@@ -29,4 +16,4 @@ stages:
       - BuildAndPush
       - CreateConfig
     jobs:
-      - template: templates/deploy.yaml
+      - template: deploy.yaml
