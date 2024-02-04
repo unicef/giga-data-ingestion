@@ -6,6 +6,7 @@ from msgraph.generated.models.user import User
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4
 
+from data_ingestion.schemas.group import GraphGroup
 from data_ingestion.schemas.invitation import GraphInvitationCreateRequest
 from data_ingestion.schemas.user import GraphUser, GraphUserUpdateRequest
 from data_ingestion.settings import settings
@@ -94,6 +95,18 @@ class UsersApi:
                 send_invitation_message=True,
             )
             return await graph_client.invitations.post(body=body)
+        except ODataError as err:
+            raise HTTPException(
+                detail=err.error.message, status_code=err.response_status_code
+            ) from err
+
+    @classmethod
+    async def get_group_memberships(cls, id: UUID4):
+        try:
+            groups = await graph_client.users.by_user_id(str(id)).member_of.get()
+            if groups and groups.value:
+                return [GraphGroup(**jsonable_encoder(g)) for g in groups.value]
+            return []
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
