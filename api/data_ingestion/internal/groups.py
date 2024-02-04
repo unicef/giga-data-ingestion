@@ -21,7 +21,7 @@ from data_ingestion.schemas.group import (
 )
 from data_ingestion.schemas.user import GraphUser
 
-from .auth import credential, graph_client
+from .auth import graph_client, graph_credentials
 
 
 class GroupsApi:
@@ -177,8 +177,12 @@ class GroupsApi:
             ) from err
 
     @classmethod
-    async def modify_user_access(cls, user_id: UUID4, body: ModifyUserAccessRequest):
-        access_token = credential.get_token("https://graph.microsoft.com/.default")
+    async def modify_user_access(
+        cls, user_id: UUID4, body: ModifyUserAccessRequest
+    ) -> None:
+        access_token = graph_credentials.get_token(
+            "https://graph.microsoft.com/.default"
+        )
         graph_api_endpoint = "https://graph.microsoft.com/v1.0"
 
         groups_to_add = body.groups_to_add

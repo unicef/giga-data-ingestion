@@ -26,6 +26,7 @@ app = FastAPI(
     swagger_ui_init_oauth={
         "usePkceWithAuthorizationCodeGrant": True,
         "clientId": settings.AZURE_CLIENT_ID,
+        "scopes": settings.AZURE_SCOPE_NAME,
     },
 )
 app.add_middleware(

@@ -5,7 +5,7 @@ from typing import Literal
 import sentry_sdk
 from loguru import logger
 from pydantic import AnyUrl, PostgresDsn, computed_field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -61,7 +61,36 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def AUTHORITY_URL(self) -> str:
-        return f"https://login.microsoftonline.com/{self.AZURE_TENANT_ID}"
+        return (
+            f"https://{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_CLIENT_ID}"
+        )
+
+    @computed_field
+    @property
+    def AZURE_SCOPE_NAME(self) -> str:
+        return f"{self.AUTHORITY_URL}/User.Impersonate"
+
+    @computed_field
+    @property
+    def OPENID_CONFIG_URL(self) -> str:
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_AUTH_POLICY_NAME}/v2.0/.well-known/openid-configuration"
+
+    @computed_field
+    @property
+    def OPENAPI_AUTHORIZATION_URL(self) -> str:
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_AUTH_POLICY_NAME}/oauth2/v2.0/authorize"
+
+    @computed_field
+    @property
+    def OPENAPI_TOKEN_URL(self) -> str:
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_AUTH_POLICY_NAME}/oauth2/v2.0/token"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
     @computed_field
     @property
