@@ -1,13 +1,19 @@
 import { Configuration, LogLevel, PopupRequest } from "@azure/msal-browser";
 
-const { VITE_AZURE_CLIENT_ID: AZURE_CLIENT_ID } = import.meta.env;
+const {
+  VITE_AZURE_CLIENT_ID: AZURE_CLIENT_ID,
+  VITE_AZURE_TENANT_NAME: AZURE_TENANT_NAME,
+  VITE_AZURE_AUTH_POLICY_NAME: AZURE_AUTH_POLICY_NAME,
+} = import.meta.env;
 
 export const msalConfig: Configuration = {
   auth: {
     clientId: AZURE_CLIENT_ID,
-    authority: "https://login.microsoftonline.com/common",
+    authority: `https://${AZURE_TENANT_NAME}.b2clogin.com/${AZURE_TENANT_NAME}.onmicrosoft.com/${AZURE_AUTH_POLICY_NAME}`,
+    knownAuthorities: [`${AZURE_TENANT_NAME}.b2clogin.com`],
     redirectUri: "/",
     postLogoutRedirectUri: "/",
+    navigateToLoginRequestUrl: false,
   },
   cache: {
     cacheLocation: "localStorage",
@@ -41,5 +47,7 @@ export const msalConfig: Configuration = {
 };
 
 export const loginRequest: PopupRequest = {
-  scopes: [`api://${AZURE_CLIENT_ID}/user_impersonation`],
+  scopes: [
+    `https://${AZURE_TENANT_NAME}.onmicrosoft.com/${AZURE_CLIENT_ID}/User.Impersonate`,
+  ],
 };
