@@ -13,11 +13,13 @@ interface UploadState {
 
 interface AppState {
   user: User;
+  fullPageLoading: boolean;
   upload: UploadState;
 }
 
 interface AppActions {
   setUser: (user: User) => void;
+  setFullPageLoading: (loading: boolean) => void;
   setUpload: (upload: UploadState) => void;
   resetUploadState: () => void;
 }
@@ -35,6 +37,7 @@ const initialState: AppState = {
     email: "",
     roles: [],
   },
+  fullPageLoading: true,
   upload: initialUploadState,
 };
 
@@ -47,6 +50,10 @@ export const useStore = create<AppState & AppActions>()(
           set(state => {
             state.user = user;
           }),
+        setFullPageLoading: (loading: boolean) =>
+          set(state => {
+            state.fullPageLoading = loading;
+          }),
         setUpload: (upload: UploadState) =>
           set(state => {
             state.upload = upload;
@@ -58,6 +65,8 @@ export const useStore = create<AppState & AppActions>()(
       }),
       {
         enabled: !import.meta.env.PROD,
+        name: "ingestionPortalState",
+        anonymousActionType: "zustand/action",
       },
     ),
   ),

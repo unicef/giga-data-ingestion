@@ -1,5 +1,6 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
+import { GraphGroup } from "@/types/group.ts";
 import { GraphUser } from "@/types/user.ts";
 
 export default function routes(axi: AxiosInstance) {
@@ -14,7 +15,7 @@ export default function routes(axi: AxiosInstance) {
       return axi.get("/users/email");
     },
 
-    invite_and_add_groups: ({
+    inviteAndAddGroups: ({
       groups_to_add,
       invited_user_display_name,
       invited_user_email_address,
@@ -36,7 +37,7 @@ export default function routes(axi: AxiosInstance) {
       });
     },
 
-    edit_user: ({
+    editUser: ({
       account_enabled,
       display_name,
       id,
@@ -49,6 +50,10 @@ export default function routes(axi: AxiosInstance) {
         account_enabled,
         display_name,
       });
+    },
+
+    getUserGroups: (): Promise<AxiosResponse<GraphGroup[]>> => {
+      return axi.get("/users/me/groups");
     },
   };
 }

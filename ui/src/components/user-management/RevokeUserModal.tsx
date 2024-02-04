@@ -22,7 +22,7 @@ export default function RevokeUserModal({
   const [error, setError] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const revokeUser = useMutation({
-    mutationFn: api.users.edit_user,
+    mutationFn: api.users.editUser,
   });
 
   const handleSubmit = useCallback(async () => {

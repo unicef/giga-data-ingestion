@@ -9,13 +9,14 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 
-import { axi } from "@/api";
+import { axi, useApi } from "@/api";
 import gigaLogo from "@/assets/GIGA_logo.png";
 import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
 import info from "@/info.json";
 import { loginRequest } from "@/lib/auth.ts";
 import { useStore } from "@/store.ts";
+import { User } from "@/types/user.ts";
 
 export const Route = createRootRoute({
   component: Layout,
@@ -40,27 +41,41 @@ function Base({ children }: PropsWithChildren) {
 }
 
 function Layout() {
+  const api = useApi();
   const { setUser } = useStore();
   const { accounts, instance } = useMsal();
 
   useEffect(() => {
     (async () => {
+      const roles: string[] = [];
+      const user: User = {
+        name: "",
+        email: "",
+        roles,
+      };
+
       if (accounts.length > 0) {
         const account = accounts[0];
-        console.log(account);
-        setUser({
-          name: account.name ?? "",
-          email: account.username,
-          roles: account.idTokenClaims?.roles ?? [],
-        });
+        console.debug(account);
+        user.name = account.name ?? "";
+        user.email = account.username;
 
         const result = await instance.acquireTokenSilent(loginRequest);
         axi.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${result.accessToken}`;
       }
+
+      try {
+        const { data: groups } = await api.users.getUserGroups();
+        roles.push(...groups.map(group => group.display_name));
+      } catch (err) {
+        console.error(err);
+      }
+
+      setUser({ ...user, roles });
     })();
-  }, [accounts, instance, setUser]);
+  }, [accounts, api.users, instance, setUser]);
 
   return (
     <Base>

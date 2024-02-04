@@ -15,6 +15,7 @@ import {
 } from "@carbon/react";
 import { Link, LinkComponent, useRouterState } from "@tanstack/react-router";
 
+import { useStore } from "@/store.ts";
 import gigaLogoBlue from "@/assets/GIGA_logo_blue.png";
 
 type SwitcherLinkItemProps = ComponentProps<typeof CarbonSwitcherItem> &
@@ -30,6 +31,10 @@ const SwitcherLinkItem = ({ children, ...props }: SwitcherLinkItemProps) => {
 export default function Navbar() {
   const { location } = useRouterState();
   const [isSwitcherExpanded, setIsSwitcherExpanded] = useState(false);
+  const {
+    user: { roles },
+  } = useStore();
+  const isPrivileged = roles.includes("Admin") || roles.includes("Super");
 
   const isUserManagementPage = location.pathname === "/user-management";
 
@@ -45,14 +50,14 @@ export default function Navbar() {
         <b className="ml-0.5 text-xl">sync</b>
       </HeaderName>
       <AuthenticatedTemplate>
-        <HeaderNavigation
+        {isPrivileged && <HeaderNavigation
           aria-label="Main Navigation"
           aria-labelledby="main-nav-label"
         >
           <HeaderMenuItem as={Link} to="/user-management">
             Admin Panel
           </HeaderMenuItem>
-        </HeaderNavigation>
+        </HeaderNavigation>}
       </AuthenticatedTemplate>
       <HeaderGlobalBar>
         <HeaderGlobalAction
@@ -77,13 +82,13 @@ export default function Navbar() {
             Ingest API
           </SwitcherLinkItem>
           <AuthenticatedTemplate>
-            <SwitcherLinkItem
+            {isPrivileged && <SwitcherLinkItem
               aria-label="user management"
               as={Link}
               to={isUserManagementPage ? "/" : "/user-management"}
             >
               {isUserManagementPage ? "Ingestion Portal" : "Admin Panel"}
-            </SwitcherLinkItem>
+            </SwitcherLinkItem>}
           </AuthenticatedTemplate>
         </Switcher>
       </HeaderPanel>

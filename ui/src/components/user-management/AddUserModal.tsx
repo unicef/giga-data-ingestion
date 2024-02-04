@@ -110,7 +110,7 @@ export default function AddUserModal({
   }));
 
   const inviteAndAddGroupsMutation = useMutation({
-    mutationFn: api.users.invite_and_add_groups,
+    mutationFn: api.users.inviteAndAddGroups,
   });
 
   const dataSetOptions = [
