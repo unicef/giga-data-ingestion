@@ -1,11 +1,9 @@
 import { useCallback, useState } from "react";
-import toast from "react-hot-toast";
 
+import { InlineNotification, Modal, ToastNotification } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
-import { Alert, Modal } from "antd";
 
 import { useApi } from "@/api";
-import { modalWidth } from "@/constants/theme";
 import { GraphUser } from "@/types/user";
 
 interface RevokeUserModalProps {
@@ -21,58 +19,73 @@ export default function RevokeUserModal({
 }: RevokeUserModalProps) {
   const api = useApi();
 
-  const [confirmLoading, setConfirmLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const revokeUser = useMutation({
     mutationFn: api.users.edit_user,
   });
 
-  const handleOk = useCallback(async () => {
-    setConfirmLoading(true);
+  const handleSubmit = useCallback(async () => {
     try {
       await revokeUser.mutateAsync({
         account_enabled: false,
         id: initialValues.id,
       });
 
-      toast.success(
-        "User successfully revoked. Please wait a moment or refresh the page for updates",
-      );
+      setShowSuccessNotification(true);
       setIsRevokeModalOpen(false);
     } catch (err) {
-      toast.error("Operation failed, please try again");
       setError(true);
-    } finally {
-      setConfirmLoading(false);
     }
   }, [revokeUser, setIsRevokeModalOpen, initialValues.id]);
 
   return (
-    <Modal
-      centered={true}
-      confirmLoading={confirmLoading}
-      okButtonProps={{ className: "rounded-none bg-primary" }}
-      open={isRevokeModalOpen}
-      title="Confirm user access modification"
-      width={modalWidth}
-      onCancel={() => {
-        setIsRevokeModalOpen(false);
-      }}
-      onOk={handleOk}
-    >
-      <div>
-        <p>
-          This will revoke acces of the user with email{" "}
-          <b>{initialValues.mail}</b> to the whole Giga platform, meaning they
-          won't be able to access any part of the Giga platform
-        </p>
-        <br />
+    <>
+      <Modal
+        aria-label="confirm revoke user modal"
+        loadingStatus={revokeUser.isPending ? "active" : "inactive"}
+        modalHeading="Confirm Revoke User"
+        open={isRevokeModalOpen}
+        primaryButtonText="Confirm"
+        secondaryButtonText="Cancel"
+        onRequestClose={() => setIsRevokeModalOpen(false)}
+        onRequestSubmit={handleSubmit}
+      >
+        <div>
+          <p>
+            This will revoke acces of the user with email{" "}
+            <b>{initialValues.mail}</b> to the whole Giga platform, meaning they
+            won't be able to access any part of the Giga platform
+          </p>
+          <br />
 
-        <p>Are you sure you want to do this?</p>
-        {error && (
-          <Alert message="Operation failed, please try again" type="error" />
-        )}
-      </div>
-    </Modal>
+          <p>Are you sure you want to do this?</p>
+          {error && (
+            <InlineNotification
+              aria-label="create user error notification"
+              hideCloseButton
+              kind="error"
+              statusIconDescription="notification"
+              subtitle="Operation failed. Please try again."
+              title="Error"
+            />
+          )}
+        </div>
+      </Modal>
+
+      {showSuccessNotification && (
+        <ToastNotification
+          aria-label="revoke user success notification"
+          kind="success"
+          caption="User successfully revoked. Please wait a moment or refresh the page for updates"
+          onClose={() => setShowSuccessNotification(false)}
+          onCloseButtonClick={() => setShowSuccessNotification(false)}
+          statusIconDescription="success"
+          timeout={5000}
+          title="Revoke user success"
+          className="absolute right-0 top-0 z-50 mx-6 my-16"
+        />
+      )}
+    </>
   );
 }

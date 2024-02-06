@@ -333,20 +333,17 @@ export default function Users() {
             title: "Modify user error",
           })}
 
-          {isRevokeModalOpen && (
             <RevokeUserModal
               initialValues={selectedUser}
               isRevokeModalOpen={isRevokeModalOpen}
               setIsRevokeModalOpen={setIsRevokeModalOpen}
             />
-          )}
-          {isEnableModalOpen && (
+
             <EnableUserModal
               initialValues={selectedUser}
               isEnableUserModalOpen={isEnableModalOpen}
               setIsEnableUserModalOpen={setIsEnableModalOpen}
             />
-          )}
         </Section>
       </Stack>
     </Section>
