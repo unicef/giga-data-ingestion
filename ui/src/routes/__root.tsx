@@ -2,7 +2,11 @@ import { PropsWithChildren, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { useMsal } from "@azure/msal-react";
-import { Outlet, createRootRoute } from "@tanstack/react-router";
+import {
+  Outlet,
+  ScrollRestoration,
+  createRootRoute,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 
 import { axi } from "@/api";
@@ -24,6 +28,7 @@ function Base({ children }: PropsWithChildren) {
         <title>{info.title}</title>
         <meta name="description" content={info.description} />
       </Helmet>
+      <ScrollRestoration />
       <Navbar />
       <main className="flex-auto">{children}</main>
       <Footer />

@@ -1,8 +1,6 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute(
-  "/upload/$uploadGroup/$uploadType/_layout",
-)({
+export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
   component: Layout,
 });
 

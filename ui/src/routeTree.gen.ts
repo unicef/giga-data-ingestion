@@ -13,12 +13,12 @@ import { createFileRoute } from '@tanstack/react-router'
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as UserManagementLayoutImport } from './routes/user-management/_layout'
-import { Route as UploadLayoutImport } from './routes/upload/_layout'
-import { Route as IngestApiLayoutImport } from './routes/ingest-api/_layout'
+import { Route as UserManagementImport } from './routes/user-management'
+import { Route as UploadImport } from './routes/upload'
+import { Route as IngestApiImport } from './routes/ingest-api'
+import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
 import { Route as UploadUploadGroupUploadTypeSuccessImport } from './routes/upload/$uploadGroup/$uploadType/success'
 import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upload/$uploadGroup/$uploadType/metadata'
-import { Route as UploadUploadGroupUploadTypeLayoutImport } from './routes/upload/$uploadGroup/$uploadType/_layout'
 
 // Create Virtual Routes
 
@@ -32,49 +32,55 @@ const UploadUploadGroupUploadTypeIndexLazyImport = createFileRoute(
 
 // Create/Update Routes
 
+const UserManagementRoute = UserManagementImport.update({
+  path: '/user-management',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const UploadRoute = UploadImport.update({
+  path: '/upload',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const IngestApiRoute = IngestApiImport.update({
+  path: '/ingest-api',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const IndexLazyRoute = IndexLazyImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
 
 const UserManagementIndexLazyRoute = UserManagementIndexLazyImport.update({
-  path: '/user-management/',
-  getParentRoute: () => rootRoute,
+  path: '/',
+  getParentRoute: () => UserManagementRoute,
 } as any).lazy(() =>
   import('./routes/user-management/index.lazy').then((d) => d.Route),
 )
 
 const UploadIndexLazyRoute = UploadIndexLazyImport.update({
-  path: '/upload/',
-  getParentRoute: () => rootRoute,
+  path: '/',
+  getParentRoute: () => UploadRoute,
 } as any).lazy(() => import('./routes/upload/index.lazy').then((d) => d.Route))
 
 const IngestApiIndexLazyRoute = IngestApiIndexLazyImport.update({
-  path: '/ingest-api/',
-  getParentRoute: () => rootRoute,
+  path: '/',
+  getParentRoute: () => IngestApiRoute,
 } as any).lazy(() =>
   import('./routes/ingest-api/index.lazy').then((d) => d.Route),
 )
 
-const UserManagementLayoutRoute = UserManagementLayoutImport.update({
-  path: '/user-management/layout',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const UploadLayoutRoute = UploadLayoutImport.update({
-  path: '/upload/layout',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const IngestApiLayoutRoute = IngestApiLayoutImport.update({
-  path: '/ingest-api/layout',
-  getParentRoute: () => rootRoute,
-} as any)
+const UploadUploadGroupUploadTypeRoute =
+  UploadUploadGroupUploadTypeImport.update({
+    path: '/$uploadGroup/$uploadType',
+    getParentRoute: () => UploadRoute,
+  } as any)
 
 const UploadUploadGroupUploadTypeIndexLazyRoute =
   UploadUploadGroupUploadTypeIndexLazyImport.update({
-    path: '/upload/$uploadGroup/$uploadType/',
-    getParentRoute: () => rootRoute,
+    path: '/',
+    getParentRoute: () => UploadUploadGroupUploadTypeRoute,
   } as any).lazy(() =>
     import('./routes/upload/$uploadGroup/$uploadType/index.lazy').then(
       (d) => d.Route,
@@ -83,20 +89,14 @@ const UploadUploadGroupUploadTypeIndexLazyRoute =
 
 const UploadUploadGroupUploadTypeSuccessRoute =
   UploadUploadGroupUploadTypeSuccessImport.update({
-    path: '/upload/$uploadGroup/$uploadType/success',
-    getParentRoute: () => rootRoute,
+    path: '/success',
+    getParentRoute: () => UploadUploadGroupUploadTypeRoute,
   } as any)
 
 const UploadUploadGroupUploadTypeMetadataRoute =
   UploadUploadGroupUploadTypeMetadataImport.update({
-    path: '/upload/$uploadGroup/$uploadType/metadata',
-    getParentRoute: () => rootRoute,
-  } as any)
-
-const UploadUploadGroupUploadTypeLayoutRoute =
-  UploadUploadGroupUploadTypeLayoutImport.update({
-    path: '/upload/$uploadGroup/$uploadType/layout',
-    getParentRoute: () => rootRoute,
+    path: '/metadata',
+    getParentRoute: () => UploadUploadGroupUploadTypeRoute,
   } as any)
 
 // Populate the FileRoutesByPath interface
@@ -107,45 +107,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexLazyImport
       parentRoute: typeof rootRoute
     }
-    '/ingest-api/_layout': {
-      preLoaderRoute: typeof IngestApiLayoutImport
+    '/ingest-api': {
+      preLoaderRoute: typeof IngestApiImport
       parentRoute: typeof rootRoute
     }
-    '/upload/_layout': {
-      preLoaderRoute: typeof UploadLayoutImport
+    '/upload': {
+      preLoaderRoute: typeof UploadImport
       parentRoute: typeof rootRoute
     }
-    '/user-management/_layout': {
-      preLoaderRoute: typeof UserManagementLayoutImport
+    '/user-management': {
+      preLoaderRoute: typeof UserManagementImport
       parentRoute: typeof rootRoute
     }
     '/ingest-api/': {
       preLoaderRoute: typeof IngestApiIndexLazyImport
-      parentRoute: typeof rootRoute
+      parentRoute: typeof IngestApiImport
     }
     '/upload/': {
       preLoaderRoute: typeof UploadIndexLazyImport
-      parentRoute: typeof rootRoute
+      parentRoute: typeof UploadImport
     }
     '/user-management/': {
       preLoaderRoute: typeof UserManagementIndexLazyImport
-      parentRoute: typeof rootRoute
+      parentRoute: typeof UserManagementImport
     }
-    '/upload/$uploadGroup/$uploadType/_layout': {
-      preLoaderRoute: typeof UploadUploadGroupUploadTypeLayoutImport
-      parentRoute: typeof rootRoute
+    '/upload/$uploadGroup/$uploadType': {
+      preLoaderRoute: typeof UploadUploadGroupUploadTypeImport
+      parentRoute: typeof UploadImport
     }
     '/upload/$uploadGroup/$uploadType/metadata': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeMetadataImport
-      parentRoute: typeof rootRoute
+      parentRoute: typeof UploadUploadGroupUploadTypeImport
     }
     '/upload/$uploadGroup/$uploadType/success': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeSuccessImport
-      parentRoute: typeof rootRoute
+      parentRoute: typeof UploadUploadGroupUploadTypeImport
     }
     '/upload/$uploadGroup/$uploadType/': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeIndexLazyImport
-      parentRoute: typeof rootRoute
+      parentRoute: typeof UploadUploadGroupUploadTypeImport
     }
   }
 }
@@ -154,14 +154,14 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexLazyRoute,
-  IngestApiLayoutRoute,
-  UploadLayoutRoute,
-  UserManagementLayoutRoute,
-  IngestApiIndexLazyRoute,
-  UploadIndexLazyRoute,
-  UserManagementIndexLazyRoute,
-  UploadUploadGroupUploadTypeLayoutRoute,
-  UploadUploadGroupUploadTypeMetadataRoute,
-  UploadUploadGroupUploadTypeSuccessRoute,
-  UploadUploadGroupUploadTypeIndexLazyRoute,
+  IngestApiRoute.addChildren([IngestApiIndexLazyRoute]),
+  UploadRoute.addChildren([
+    UploadIndexLazyRoute,
+    UploadUploadGroupUploadTypeRoute.addChildren([
+      UploadUploadGroupUploadTypeMetadataRoute,
+      UploadUploadGroupUploadTypeSuccessRoute,
+      UploadUploadGroupUploadTypeIndexLazyRoute,
+    ]),
+  ]),
+  UserManagementRoute.addChildren([UserManagementIndexLazyRoute]),
 ])
