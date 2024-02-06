@@ -22,7 +22,7 @@ import { useApi } from "@/api";
 import countries from "@/constants/countries";
 import { filterRoles, matchNamesWithIds } from "@/utils/group";
 import {
-  getUniqueDatasetsNew,
+  getUniqueDatasets,
   pluralizeCountries,
   pluralizeDatasets,
 } from "@/utils/string";
@@ -330,12 +330,12 @@ export default function AddUserModal({
           >
             <Form aria-label="confirm new user form" className="">
               {(() => {
-                const countries = getUniqueDatasetsNew(
+                const countries = getUniqueDatasets(
                   getValues("email"),
                   deriveAddedValues().addedDatasetsWithIds,
                 ).countries;
                 const datasets = pluralizeDatasets(
-                  getUniqueDatasetsNew(
+                  getUniqueDatasets(
                     getValues("email"),
                     deriveAddedValues().addedDatasetsWithIds,
                   ).uniqueDatasets,

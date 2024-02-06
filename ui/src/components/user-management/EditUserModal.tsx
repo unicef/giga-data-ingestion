@@ -22,7 +22,7 @@ import { GraphUser } from "@/types/user";
 import { filterCountries, filterRoles } from "@/utils/group";
 import { matchNamesWithIds } from "@/utils/group";
 import {
-  getUniqueDatasetsNew,
+  getUniqueDatasets,
   pluralizeCountries,
   pluralizeDatasets,
 } from "@/utils/string";
@@ -438,12 +438,12 @@ export default function EditUserModal({
           >
             <form aria-label="confirm edit user form">
               {(() => {
-                const countries = getUniqueDatasetsNew(
+                const countries = getUniqueDatasets(
                   getValues("email"),
                   deriveAddedValues().addedDatasetsWithIds,
                 ).countries;
                 const datasets = pluralizeDatasets(
-                  getUniqueDatasetsNew(
+                  getUniqueDatasets(
                     getValues("email"),
                     deriveAddedValues().addedDatasetsWithIds,
                   ).uniqueDatasets,
