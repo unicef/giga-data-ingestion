@@ -143,11 +143,12 @@ export default function Users() {
                 pending
               </Tag>
             )}
-            {!user.account_enabled && user.external_user_state === "Accepted" && (
-              <Tag className="uppercase" type="gray">
-                Disabled
-              </Tag>
-            )}
+            {!user.account_enabled &&
+              user.external_user_state === "Accepted" && (
+                <Tag className="uppercase" type="gray">
+                  Disabled
+                </Tag>
+              )}
           </>
         );
 
@@ -333,17 +334,17 @@ export default function Users() {
             title: "Modify user error",
           })}
 
-            <RevokeUserModal
-              initialValues={selectedUser}
-              isRevokeModalOpen={isRevokeModalOpen}
-              setIsRevokeModalOpen={setIsRevokeModalOpen}
-            />
+          <RevokeUserModal
+            initialValues={selectedUser}
+            isRevokeModalOpen={isRevokeModalOpen}
+            setIsRevokeModalOpen={setIsRevokeModalOpen}
+          />
 
-            <EnableUserModal
-              initialValues={selectedUser}
-              isEnableUserModalOpen={isEnableModalOpen}
-              setIsEnableUserModalOpen={setIsEnableModalOpen}
-            />
+          <EnableUserModal
+            initialValues={selectedUser}
+            isEnableUserModalOpen={isEnableModalOpen}
+            setIsEnableUserModalOpen={setIsEnableModalOpen}
+          />
         </Section>
       </Stack>
     </Section>

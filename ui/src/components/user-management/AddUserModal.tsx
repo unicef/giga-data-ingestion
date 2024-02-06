@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { createPortal } from "react-dom";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
@@ -84,7 +84,6 @@ export default function AddUserModal({
       countryDatasets: [initialCountryDataset],
     },
   });
-  const formRef = useRef(null!);
 
   const watchedCountryDatasets = watch("countryDatasets");
   const watchedRoles = watch("roles");
@@ -212,7 +211,7 @@ export default function AddUserModal({
             onRequestClose={() => handleModalCancel("AddModal")}
             onRequestSubmit={() => setSwapModal(true)}
           >
-            <form aria-label="add user form" className="" ref={formRef}>
+            <form aria-label="add user form">
               <Stack gap={4}>
                 <TextInput
                   id="givenName"
@@ -230,9 +229,7 @@ export default function AddUserModal({
                   type="email"
                   {...register("email", { required: true })}
                 />
-                {watchedRoles.selectedItems.map(role => role.label)}
                 <FormGroup legendId="role" legendText="Role">
-                  {/* <ControlledMultiselect name="roles" control={control} /> */}
                   <Controller
                     name="roles"
                     control={control}
@@ -293,7 +290,7 @@ export default function AddUserModal({
                       />
                     </FormGroup>
                     {i + 1 < watchedCountryDatasets.length && (
-                      <hr className="mt-8" />
+                      <hr className="mt-8 opacity-30" />
                     )}
                   </FormGroup>
                 ))}

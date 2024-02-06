@@ -120,13 +120,14 @@ export default function EditUserModal({
   const initialCountryDataset = getInitialCountryDataset(initialCountries);
 
   const {
-    register,
-    handleSubmit,
     control,
     formState,
-    watch,
     getValues,
+    handleSubmit,
+    register,
+    reset,
     setValue,
+    watch,
   } = useForm<EditUserInputs>({
     mode: "onChange",
     reValidateMode: "onChange",
@@ -401,7 +402,7 @@ export default function EditUserModal({
                         />
                       </FormGroup>
                       {i + 1 < watchedCountryDatasets.length && (
-                        <hr className="mt-8" />
+                        <hr className="mt-8 opacity-30" />
                       )}
                     </FormGroup>
                   ))}
