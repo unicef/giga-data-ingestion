@@ -15,4 +15,5 @@ variables:
   azureAdRedirectUri: $(AZURE_REDIRECT_URI)
   applicationSecretKey: $(APPLICATION_SECRET_KEY)
   webAppHost: $(WEB_APP_HOST)
+  deployEnv: $(DEPLOY_ENV)
   system.debug: true
