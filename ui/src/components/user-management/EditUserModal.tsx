@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
 import { Add } from "@carbon/icons-react";
 import {
   Button,
   FormGroup,
+  InlineNotification,
   Modal,
   Select,
   SelectItem,
@@ -21,7 +22,7 @@ import { GraphUser } from "@/types/user";
 import { filterCountries, filterRoles } from "@/utils/group";
 import { matchNamesWithIds } from "@/utils/group";
 import {
-  getUniqueDatasets,
+  getUniqueDatasetsNew,
   pluralizeCountries,
   pluralizeDatasets,
 } from "@/utils/string";
@@ -50,7 +51,7 @@ export default function EditUserModal({
   isEditModalOpen,
   setIsEditModalOpen,
 }: EditUserModalProps) {
-  const user = initialValues.display_name;
+  const initialId = initialValues.id;
   const givenName = initialValues.given_name;
   const surname = initialValues.surname;
   const initialEmail = initialValues.mail;
@@ -77,8 +78,6 @@ export default function EditUserModal({
       return { id: group.id, name: group.display_name };
     }) ?? [];
 
-  const roles = filterRoles(groups.map(group => group.name));
-  const initialRoles = filterRoles(initialGroups);
   const initialCountries = filterCountries(initialGroups);
 
   const modifyUserAccess = useMutation({
@@ -86,9 +85,9 @@ export default function EditUserModal({
   });
 
   const getInitialCountryDataset = (
-    initialCountries: string[],
+    countryDataset: string[],
   ): CountryDataset[] => {
-    return initialCountries
+    return countryDataset
       .map(item => {
         const [country, dataset] = item.split("-");
         return {
@@ -107,7 +106,15 @@ export default function EditUserModal({
       }, []);
   };
 
-  const cool = getInitialCountryDataset(initialCountries);
+  const roles = filterRoles(groups.map(group => group.name));
+
+  const initialRoles = {
+    selectedItems: filterRoles(initialGroups).map(role => ({
+      label: role,
+      value: role,
+    })),
+  };
+  const initialCountryDataset = getInitialCountryDataset(initialCountries);
 
   const {
     register,
@@ -117,66 +124,33 @@ export default function EditUserModal({
     watch,
     getValues,
     setValue,
-    reset,
   } = useForm<EditUserInputs>({
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
-      roles: {
-        selectedItems: initialRoles.map(role => ({
-          label: role,
-          value: role,
-        })),
-      },
-      countryDatasets: [...cool],
+      roles: initialRoles,
+      countryDatasets: [...initialCountryDataset],
     },
   });
-
-  //
-
-  const handleAddCountryDataset = () => {
-    setValue("countryDatasets", [
-      ...watchedCountryDatasets,
-      { ...initialCountryDataset },
-    ]);
-  };
 
   const watchedCountryDatasets = watch("countryDatasets");
   const watchedRoles = watch("roles");
 
-  // const initialCountries = filterCountries(initialGroups);
-  // const initialRoles = filterRoles(initialGroups);
+  const handleAddCountryDataset = () => {
+    const emptyCountryDataset: CountryDataset = {
+      country: "",
+      dataset: { selectedItems: [] },
+    };
 
-  // const initialCountryDataset = getInitialCountryDataset(initialCountries);
-
-  // const groups =
-  //   groupsData?.data.map(group => {
-  //     return { id: group.id, name: group.display_name };
-  //   }) ?? [];
-  // const roles = filterRoles(groups.map(group => group.name));
-
-  // const onOk = () => {
-  //   form.submit();
-  // };
-
-  // const values = Form.useWatch([], form);
-  // useEffect(() => {
-  //   form.validateFields({ validateOnly: true }).then(
-  //     () => {
-  //       setSubmittable(true);
-  //     },
-  //     () => {
-  //       setSubmittable(false);
-  //     },
-  //   );
-  // }, []);
-
-  // new stuff
+    setValue("countryDatasets", [
+      ...watchedCountryDatasets,
+      { ...emptyCountryDataset },
+    ]);
+  };
 
   const handleModalCancel = (modalName: string) => {
     if (modalName == "EditModal") setIsEditModalOpen(false);
     setSwapModal(false);
-    // reset()
   };
 
   const handleRemoveCountryDataset = (index: number) => {
@@ -204,9 +178,127 @@ export default function EditUserModal({
     label: role,
   }));
 
+  const deriveAddedValues = () => {
+    const roles = [...watchedRoles.selectedItems];
+
+    console.log(initialCountryDataset);
+
+    const addedDatasets = watchedCountryDatasets
+      .flatMap(({ country, dataset }) =>
+        dataset.selectedItems.map(item => ({
+          country,
+          dataset: item.value,
+        })),
+      )
+      .filter(
+        newDataset =>
+          !initialCountryDataset.some(
+            initialDataset =>
+              initialDataset.country === newDataset.country &&
+              initialDataset.dataset.selectedItems.some(
+                item => item.value === newDataset.dataset,
+              ),
+          ),
+      )
+      .map(({ country, dataset }) => `${country}-${dataset}`);
+
+    const addedDatasetsWithIds = matchNamesWithIds(addedDatasets, groups);
+
+    const removedDatasets = initialCountryDataset
+      .flatMap(({ country, dataset }) =>
+        dataset.selectedItems.map(item => ({
+          country,
+          dataset: item.value,
+        })),
+      )
+      .filter(
+        initialDataset =>
+          !watchedCountryDatasets.some(
+            newDataset =>
+              newDataset.country === initialDataset.country &&
+              newDataset.dataset.selectedItems.some(
+                item => item.value === initialDataset.dataset,
+              ),
+          ),
+      )
+      .map(({ country, dataset }) => `${country}-${dataset}`);
+
+    const removedDatasetsWithIds = matchNamesWithIds(removedDatasets, groups);
+
+    const addedRoles = roles.filter(
+      role =>
+        !initialRoles.selectedItems.some(
+          initialRole => role.value == initialRole.value,
+        ),
+    );
+    const addedRolesWithIds = matchNamesWithIds(
+      addedRoles.map(role => role.value),
+      groups,
+    );
+
+    const removedRoles = initialRoles.selectedItems.filter(
+      initialRole => !roles.some(role => role.value == initialRole.value),
+    );
+    const removedRolesWithIds = matchNamesWithIds(
+      removedRoles.map(role => role.value),
+      groups,
+    );
+
+    return {
+      addedDatasets,
+      addedDatasetsWithIds,
+      removedDatasets,
+      removedDatasetsWithIds,
+      addedRoles,
+      addedRolesWithIds,
+      removedRoles,
+      removedRolesWithIds,
+    };
+  };
+
+  const onSubmit: SubmitHandler<EditUserInputs> = async () => {
+    const {
+      addedDatasetsWithIds,
+      addedRolesWithIds,
+      removedDatasetsWithIds,
+      removedRolesWithIds,
+    } = deriveAddedValues();
+    const addGroupsPayload = {
+      groups_to_add: [
+        ...addedDatasetsWithIds.map(
+          addedDatasetWithId => addedDatasetWithId.id ?? "",
+        ),
+        ...addedRolesWithIds.map(addedRoleWithId => addedRoleWithId.id ?? ""),
+      ],
+      groups_to_remove: [
+        ...removedDatasetsWithIds.map(
+          removedDatasetWithId => removedDatasetWithId.id ?? "",
+        ),
+        ...removedRolesWithIds.map(
+          removedRoleWithId => removedRoleWithId.id ?? "",
+        ),
+      ],
+      user_id: initialId,
+      email: initialEmail,
+    };
+
+    console.log(addGroupsPayload);
+
+    // try {
+    //   await modifyUserAccess.mutateAsync(editGroupsPayload);
+    //   setShowSuccessNotification(true);
+    //   reset();
+    //   setSwapModal(false);
+    //   setIsAddModalOpen(false);
+    // } catch (err) {
+    //   console.error(err);
+    //   setShowErrorNotification(true);
+    // }
+  };
+
   return (
     <>
-      {true &&
+      {isEditModalOpen &&
         createPortal(
           <Modal
             aria-label="edit user modal"
@@ -214,13 +306,12 @@ export default function EditUserModal({
             modalHeading="Edit user"
             open={isEditModalOpen && !swapModal}
             preventCloseOnClickOutside
-            primaryButtonDisabled={true}
+            primaryButtonDisabled={!formState.isValid}
             primaryButtonText="Confirm"
             secondaryButtonText="Cancel"
             onRequestClose={() => handleModalCancel("EditModal")}
             onRequestSubmit={() => setSwapModal(true)}
           >
-            {watchedRoles.selectedItems.map(role => role.label)}
             {isEditModalOpen && (
               <form aria-label="edit user form">
                 <Stack gap={4}>
@@ -251,10 +342,7 @@ export default function EditUserModal({
                     render={({ field }) => (
                       <MultiSelect
                         id="roles"
-                        initialSelectedItems={initialRoles.map(role => ({
-                          label: role,
-                          value: role,
-                        }))}
+                        initialSelectedItems={watchedRoles.selectedItems}
                         items={roleOptions}
                         itemToString={item => item.label}
                         label="What level of access does this user have for Giga?"
@@ -331,299 +419,59 @@ export default function EditUserModal({
 
           document.body,
         )}
+
+      {isEditModalOpen &&
+        swapModal &&
+        createPortal(
+          <Modal
+            aria-label="confirm edit user modal"
+            loadingStatus={modifyUserAccess.isPending ? "active" : "inactive"}
+            modalHeading="Confirm New User"
+            open={isEditModalOpen && swapModal}
+            primaryButtonText="Confirm"
+            secondaryButtonText="Cancel"
+            onRequestClose={() => handleModalCancel("ConfirmModal")}
+            onRequestSubmit={() => {
+              handleSubmit(onSubmit)();
+            }}
+          >
+            <form aria-label="confirm edit user form">
+              {(() => {
+                const countries = getUniqueDatasetsNew(
+                  getValues("email"),
+                  deriveAddedValues().addedDatasetsWithIds,
+                ).countries;
+                const datasets = pluralizeDatasets(
+                  getUniqueDatasetsNew(
+                    getValues("email"),
+                    deriveAddedValues().addedDatasetsWithIds,
+                  ).uniqueDatasets,
+                );
+
+                return (
+                  <p>
+                    This will give the user with email{" "}
+                    <b>{getValues("email")}</b> access to Giga data for{" "}
+                    <b>{datasets}</b> across {countries.length}{" "}
+                    {countries.length === 1 ? "country" : "countries"}:{" "}
+                    <b>{pluralizeCountries(countries)}</b>.
+                  </p>
+                );
+              })()}
+
+              {modifyUserAccess.isError && (
+                <InlineNotification
+                  aria-label="create user error notification"
+                  kind="error"
+                  statusIconDescription="notification"
+                  subtitle="Operation failed. Please try again."
+                  title="Error"
+                />
+              )}
+            </form>
+          </Modal>,
+          document.body,
+        )}
     </>
   );
-}
-// <Form.Provider
-//   onFormFinish={async (name, { values, forms }) => {
-//     if (name === "editForm") {
-//       const countryDatasetValues: CountryDataset[] = values.countryDataset;
-//       const roleValues: string[] = values.role;
-//       const emailValue: string = values.email;
-
-//       const addedDatasets = countryDatasetValues
-//         .map(({ country, dataset }) => {
-//           const initialCountry = initialCountryDataset.find(
-//             el => el.country === country,
-//           );
-//           return {
-//             country,
-//             dataset: dataset.filter(
-//               el => !initialCountry?.dataset.includes(el),
-//             ),
-//           };
-//         })
-//         .filter(({ dataset }) => dataset.length > 0)
-//         .flatMap(({ country, dataset }) =>
-//           dataset.map(ds => `${country}-${ds}`),
-//         );
-
-//       const removedDatasets = initialCountryDataset
-//         .map(({ country, dataset }) => {
-//           const finalCountry = countryDatasetValues.find(
-//             el => el.country === country,
-//           );
-//           return {
-//             country,
-//             dataset: dataset.filter(
-//               el => !finalCountry?.dataset.includes(el),
-//             ),
-//           };
-//         })
-//         .filter(({ dataset }) => dataset.length > 0)
-//         .flatMap(({ country, dataset }) =>
-//           dataset.map(ds => `${country}-${ds}`),
-//         );
-
-//       const addedRoles = roleValues.filter(
-//         element => !initialRoles.includes(element),
-//       );
-//       const removedRoles = initialRoles.filter(
-//         element => !roleValues.includes(element),
-//       );
-
-//       const addedDatasetsWithIds = matchNamesWithIds(addedDatasets, groups);
-//       const removedDatasetsWithIds = matchNamesWithIds(
-//         removedDatasets,
-//         groups,
-//       );
-
-//       const addedRolesWithIds = matchNamesWithIds(addedRoles, groups);
-//       const removedRolesWithIds = matchNamesWithIds(removedRoles, groups);
-
-//       const { confirmForm } = forms;
-
-//       confirmForm.setFieldValue("email", emailValue);
-//       confirmForm.setFieldValue("addedRoles", addedRolesWithIds);
-//       confirmForm.setFieldValue("removedRoles", removedRolesWithIds);
-//       confirmForm.setFieldValue("addedDatasets", addedDatasetsWithIds);
-//       confirmForm.setFieldValue("removedDatasets", removedDatasetsWithIds);
-//     }
-
-//     if (name === "confirmForm") {
-//       const addGroupsPayload = {
-//         email: values.email,
-//         groups_to_add: [...values.addedDatasets, ...values.addedRoles].map(
-//           dataset => dataset.id,
-//         ),
-//         groups_to_remove: [
-//           ...values.removedDatasets,
-//           ...values.removedRoles,
-//         ].map(dataset => dataset.id),
-//         user_id: initialValues.id,
-//       };
-//       setConfirmLoading(true);
-
-//       try {
-//         await modifyUserAccess.mutateAsync(addGroupsPayload);
-//         toast.success(
-//           "User successfully edited. Please wait a moment or refresh the page for updates",
-//         );
-//         setSwapModal(false);
-//         setIsEditModalOpen(false);
-//         setConfirmLoading(false);
-//       } catch (err) {
-//         toast.error("Operation failed. Please try again");
-
-//         setError(true);
-//         setConfirmLoading(false);
-//       }
-//     }
-//   }}
-// >
-/* <Modal
-        cancelButtonProps={{ className: "rounded-none" }}
-        cancelText="Cancel"
-        centered={true}
-        okButtonProps={{
-          disabled: !submittable,
-          className: "rounded-none bg-primary",
-        }}
-        okText="Confirm"
-        open={isEditModalOpen && !swapModal}
-        title="Modify User Access"
-        width={modalWidth}
-        onCancel={() => handleModalCancel("EditModal")}
-        onOk={() => {
-          form.submit();
-          setSwapModal(true);
-        }}
-      >
-        <Form
-          form={form}
-          initialValues={{
-            user: user ?? "",
-            email: initialEmail ?? "",
-            role: initialRoles,
-            countryDataset: initialCountryDataset,
-          }}
-          labelCol={{ span: 4 }}
-          name="editForm"
-          wrapperCol={{ span: 16 }}
-        >
-          <Form.Item label="User" name="user" rules={[{ required: true }]}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item label="Email" name="email" rules={[{ required: true }]}>
-            <Input disabled />
-          </Form.Item>
-          <Form.Item label="Role" name="role" rules={[{ required: true }]}>
-            <Select
-              mode="multiple"
-              options={roleOptions}
-              placeholder="What level of access does this user have for Giga?"
-            ></Select>
-          </Form.Item>
-          <Form.List name="countryDataset">
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map(({ key, name, ...restField }, index) => (
-                  <div key={key}>
-                    {index !== 0 && (
-                      <Row>
-                        <Col span={4}></Col>
-                        <Col span={16}>
-                          <Divider dashed className="m-3" />
-                        </Col>
-                      </Row>
-                    )}
-                    <Form.Item
-                      label={index ? `Country ${index}` : `Country`}
-                      name={[name, "country"]}
-                      rules={[{ message: "Missing Country", required: true }]}
-                      style={{ marginBottom: 0 }}
-                      {...restField}
-                    >
-                      <Select
-                        options={countryOptions}
-                        placeholder="Select Country"
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      style={{ marginBottom: 0 }}
-                      wrapperCol={{ offset: 4, span: 16 }}
-                    >
-                      <Button
-                        className="p-0"
-                        type="link"
-                        onClick={() => remove(name)}
-                      >
-                        <span className="m-0 underline">Remove pair</span>
-                      </Button>
-                    </Form.Item>
-
-                    <Form.Item
-                      label="Dataset"
-                      name={[name, "dataset"]}
-                      rules={[{ message: "Missing Dataset", required: true }]}
-                      style={{ marginBottom: 0 }}
-                      {...restField}
-                    >
-                      <Select
-                        mode="multiple"
-                        placeholder="Select Dataset for Country"
-                        options={dataSetOptions} //
-                      />
-                    </Form.Item>
-                  </div>
-                ))}
-                <Form.Item>
-                  <Row>
-                    <Col span={4}></Col>
-                    <Col span={16}>
-                      <Button
-                        className="ml-auto mt-5 rounded-none border-none bg-primary"
-                        ghost
-                        icon={<PlusOutlined />}
-                        type="primary"
-                        onClick={() => add()}
-                      >
-                        Add Country
-                      </Button>
-                    </Col>
-                  </Row>
-                </Form.Item>
-              </>
-            )}
-          </Form.List>
-        </Form>
-      </Modal> */
-
-/* <Modal
-        centered={true}
-        footer={null}
-        open={isEditModalOpen && swapModal}
-        title="Confirm user access modification"
-        width={modalWidth}
-        onCancel={() => handleModalCancel("ConfirmModal")}
-        onOk={onOk}
-      >
-        <Form name="confirmForm">
-          <Form.Item
-            shouldUpdate={(prevValues, curValues) =>
-              prevValues.email !== curValues.email
-            }
-          >
-            {({ getFieldValue }) => {
-              const { countries, email, uniqueDatasets } =
-                getUniqueDatasets(getFieldValue);
-
-              return (
-                <div>
-                  {`This will give the user with email `}
-                  <b>{email}</b>
-                  {` access to Giga data for `}
-                  <b>{pluralizeDatasets(uniqueDatasets)}</b>
-                  {` across ${countries.length} ${
-                    countries.length === 1 ? "country" : "countries"
-                  } `}
-                  <b>{pluralizeCountries(countries)}</b>
-                  .
-                  <br />
-                  <br />
-                </div>
-              );
-            }}
-          </Form.Item>
-          <Form.Item name="email" hidden>
-            <Input />
-          </Form.Item>
-          <Form.Item name="addedRoles" hidden>
-            <Input />
-          </Form.Item>
-          <Form.Item name="removedRoles" hidden>
-            <Input />
-          </Form.Item>
-          <Form.Item name="addedDatasets" hidden>
-            <Input />
-          </Form.Item>
-          <Form.Item name="removedDatasets" hidden>
-            <Input />
-          </Form.Item>
-          {error && (
-            <Alert message="Operation failed, please try again" type="error" />
-          )}
-          <Form.Item className="mb-0 ">
-            <div className="flex justify-end gap-2">
-              <Button
-                className="rounded-none "
-                onClick={() => handleModalCancel("ConfirmModal")}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="rounded-none bg-primary text-white"
-                htmlType="submit"
-                loading={confirmLoading}
-              >
-                Confirm
-              </Button>
-            </div>
-          </Form.Item>
-        </Form>
-      </Modal> */
-
-{
-  /* </Form.Provider>
-  ); */
 }
