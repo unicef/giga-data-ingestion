@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { createPortal } from "react-dom";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
@@ -84,7 +84,6 @@ export default function AddUserModal({
       countryDatasets: [initialCountryDataset],
     },
   });
-  const formRef = useRef(null!);
 
   const watchedCountryDatasets = watch("countryDatasets");
   const watchedRoles = watch("roles");
