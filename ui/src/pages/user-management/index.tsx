@@ -1,5 +1,10 @@
-import { ReactElement, useMemo, useState } from "react";
-import { Toaster } from "react-hot-toast";
+import {
+  Dispatch,
+  ReactElement,
+  SetStateAction,
+  useMemo,
+  useState,
+} from "react";
 
 import { useMsal } from "@azure/msal-react";
 import { CheckmarkOutline, MisuseOutline, Tools } from "@carbon/icons-react";
@@ -20,6 +25,7 @@ import {
   TableToolbar,
   TableToolbarContent,
   Tag,
+  ToastNotification,
 } from "@carbon/react";
 // @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
 import PaginationNav from "@carbon/react/lib/components/PaginationNav/PaginationNav";
@@ -33,6 +39,14 @@ import RevokeUserModal from "@/components/user-management/RevokeUserModal";
 import countries from "@/constants/countries";
 import { GraphUser } from "@/types/user.ts";
 
+type ToastProps = {
+  show: boolean;
+  setShow: Dispatch<SetStateAction<boolean>>;
+  kind: string;
+  caption: string;
+  title: string;
+};
+
 interface TableGraphUser extends GraphUser {
   email_tag: ReactElement | null;
   countries: string;
@@ -45,6 +59,11 @@ export default function Users() {
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [isEnableModalOpen, setIsEnableModalOpen] = useState<boolean>(false);
   const [isRevokeModalOpen, setIsRevokeModalOpen] = useState<boolean>(false);
+  const [showEditUserSuccessNotification, setShowEditUserSuccessNotification] =
+    useState(false);
+  const [showEditUserErrorNotification, setShowEditUserErrorNotification] =
+    useState(false);
+
   const [, setCurrentPage] = useState(0);
 
   const ROWS_PER_PAGE = 10;
@@ -53,6 +72,8 @@ export default function Users() {
     id: "",
     account_enabled: false,
     display_name: "",
+    given_name: "",
+    surname: "",
     mail: "",
     member_of: [],
     user_principal_name: "",
@@ -204,6 +225,30 @@ export default function Users() {
     [groupsIsFetching, msal.accounts, usersData],
   );
 
+  function createToastNotification({
+    show,
+    setShow,
+    kind,
+    caption,
+    title,
+  }: ToastProps) {
+    return (
+      show && (
+        <ToastNotification
+          aria-label={`${title} notification`}
+          kind={kind}
+          caption={caption}
+          onClose={() => setShow(false)}
+          onCloseButtonClick={() => setShow(false)}
+          statusIconDescription={kind}
+          timeout={5000}
+          title={title}
+          className="absolute right-0 top-0 z-50 mx-6 my-16"
+        />
+      )
+    );
+  }
+
   return (
     <Section className="container py-6">
       <Stack gap={6}>
@@ -264,8 +309,30 @@ export default function Users() {
               initialValues={selectedUser}
               isEditModalOpen={isEditModalOpen}
               setIsEditModalOpen={setIsEditModalOpen}
+              setShowEditUserSuccessNotification={
+                setShowEditUserSuccessNotification
+              }
+              setShowEditUserErrorNotification={
+                setShowEditUserErrorNotification
+              }
             />
           )}
+          {createToastNotification({
+            show: showEditUserSuccessNotification,
+            setShow: setShowEditUserSuccessNotification,
+            kind: "success",
+            caption:
+              "User successfully modified. Please wait a moment or refresh the page for updates",
+            title: "Modify user success",
+          })}
+          {createToastNotification({
+            show: showEditUserErrorNotification,
+            setShow: setShowEditUserErrorNotification,
+            kind: "error",
+            caption: "Operation failed. Please try again",
+            title: "Modify user error",
+          })}
+
           {isRevokeModalOpen && (
             <RevokeUserModal
               initialValues={selectedUser}
@@ -280,15 +347,6 @@ export default function Users() {
               setIsEnableUserModalOpen={setIsEnableModalOpen}
             />
           )}
-          <Toaster
-            containerStyle={{
-              right: 40,
-              bottom: 40,
-            }}
-            position="bottom-right"
-            toastOptions={{ duration: 3000 }}
-            reverseOrder={true}
-          />
         </Section>
       </Stack>
     </Section>

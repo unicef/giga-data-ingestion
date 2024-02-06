@@ -31,6 +31,12 @@ interface EditUserModalProps {
   initialValues: GraphUser;
   isEditModalOpen: boolean;
   setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowEditUserSuccessNotification: React.Dispatch<
+    React.SetStateAction<boolean>
+  >;
+  setShowEditUserErrorNotification: React.Dispatch<
+    React.SetStateAction<boolean>
+  >;
 }
 
 type CountryDataset = {
@@ -50,6 +56,8 @@ export default function EditUserModal({
   initialValues,
   isEditModalOpen,
   setIsEditModalOpen,
+  setShowEditUserErrorNotification,
+  setShowEditUserSuccessNotification,
 }: EditUserModalProps) {
   const initialId = initialValues.id;
   const givenName = initialValues.given_name;
@@ -61,12 +69,7 @@ export default function EditUserModal({
 
   const api = useApi();
 
-  const [confirmLoading, setConfirmLoading] = useState<boolean>(false);
-  const [error, setError] = useState<boolean>(false);
   const [swapModal, setSwapModal] = useState<boolean>(false);
-  const [submittable, setSubmittable] = useState(false);
-
-  const [display, setIsDisplay] = useState(false);
 
   const { data: groupsData } = useQuery({
     queryKey: ["groups"],
@@ -263,7 +266,7 @@ export default function EditUserModal({
       removedDatasetsWithIds,
       removedRolesWithIds,
     } = deriveAddedValues();
-    const addGroupsPayload = {
+    const editGroupsPayload = {
       groups_to_add: [
         ...addedDatasetsWithIds.map(
           addedDatasetWithId => addedDatasetWithId.id ?? "",
@@ -282,18 +285,16 @@ export default function EditUserModal({
       email: initialEmail,
     };
 
-    console.log(addGroupsPayload);
-
-    // try {
-    //   await modifyUserAccess.mutateAsync(editGroupsPayload);
-    //   setShowSuccessNotification(true);
-    //   reset();
-    //   setSwapModal(false);
-    //   setIsAddModalOpen(false);
-    // } catch (err) {
-    //   console.error(err);
-    //   setShowErrorNotification(true);
-    // }
+    try {
+      await modifyUserAccess.mutateAsync(editGroupsPayload);
+      setShowEditUserSuccessNotification(true);
+      reset();
+      setSwapModal(false);
+      setIsEditModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      setShowEditUserErrorNotification(true);
+    }
   };
 
   return (
