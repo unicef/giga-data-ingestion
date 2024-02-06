@@ -1,7 +1,5 @@
-import { Outlet } from "react-router-dom";
-
 import { AuthenticatedTemplate } from "@azure/msal-react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import UploadBreadcrumbs from "@/components/upload/UploadBreadcrumbs.tsx";
 

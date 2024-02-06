@@ -1,4 +1,3 @@
-import generouted from "@generouted/react-router/plugin";
 import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 import react from "@vitejs/plugin-react-swc";
 import * as path from "path";
@@ -29,5 +28,5 @@ export default defineConfig({
   build: {
     outDir: "build",
   },
-  plugins: [react(), TanStackRouterVite(), generouted()],
+  plugins: [react(), TanStackRouterVite()],
 });

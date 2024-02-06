@@ -1,5 +1,4 @@
-import { Link } from "react-router-dom";
-
+import { Link } from "@tanstack/react-router";
 import { CollapseProps } from "antd";
 
 const groups = [
@@ -38,7 +37,10 @@ export const uploadFileGroups: CollapseProps["items"] = groups.map(group => ({
 
     return (
       <li key={typeSlug}>
-        <Link to={`${groupSlug}/${typeSlug}`} unstable_viewTransition>
+        <Link
+          to="/upload/$uploadGroup/$uploadType"
+          params={{ uploadGroup: groupSlug, uploadType: typeSlug }}
+        >
           {type}
         </Link>
       </li>

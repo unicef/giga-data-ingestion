@@ -3,6 +3,7 @@ import { Helmet } from "react-helmet-async";
 
 import { useMsal } from "@azure/msal-react";
 import { Outlet, createRootRoute } from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 
 import { axi } from "@/api";
 import Footer from "@/components/common/Footer.tsx";
@@ -26,6 +27,7 @@ function Base({ children }: PropsWithChildren) {
       <Navbar />
       <main className="flex-auto">{children}</main>
       <Footer />
+      <TanStackRouterDevtools initialIsOpen={false} />
     </div>
   );
 }

@@ -1,6 +1,4 @@
-import { Link } from "react-router-dom";
-
-import { createLazyFileRoute } from "@tanstack/react-router";
+import { Link, createLazyFileRoute } from "@tanstack/react-router";
 import { Button } from "antd";
 
 import UploadFile from "@/components/upload/UploadFile.tsx";
@@ -12,10 +10,10 @@ export const Route = createLazyFileRoute("/upload/$uploadGroup/$uploadType/")({
       <UploadFile />
 
       <div className="flex gap-2">
-        <Link to="/upload" unstable_viewTransition>
+        <Link to="/upload">
           <Button className="border-primary text-primary">Cancel</Button>
         </Link>
-        <Link to="metadata" unstable_viewTransition>
+        <Link to="./metadata">
           <Button type="primary" className="bg-primary">
             Proceed
           </Button>

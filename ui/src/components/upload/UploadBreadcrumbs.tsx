@@ -1,14 +1,23 @@
 import { useCallback } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
 
 import { Breadcrumb, BreadcrumbItem } from "@carbon/react";
+import { Link, useParams, useRouterState } from "@tanstack/react-router";
 
 export default function UploadBreadcrumbs() {
-  const { pathname } = useLocation();
-  const { uploadGroup, uploadType } = useParams();
+  const {
+    location: { pathname },
+  } = useRouterState();
+  const {
+    uploadGroup,
+    uploadType,
+  }: { uploadGroup: string; uploadType: string } = useParams({ strict: false });
 
   const getBreadcrumbItems = useCallback(() => {
-    const breadcrumbItems: { label: string; path?: string }[] = [
+    const breadcrumbItems: {
+      label: string;
+      path?: string;
+      params?: Record<string, string>;
+    }[] = [
       { label: "Home", path: "/" },
       { label: "Upload", path: "/upload" },
     ];
@@ -25,7 +34,8 @@ export default function UploadBreadcrumbs() {
               uploadType.split("-").length > 2
                 ? `${uploadType.split("-").slice(0, 2).join(" ")}...`
                 : uploadType.split("-").join(" "),
-            path: `/upload/${uploadGroup}/${uploadType}`,
+            path: "/upload/$uploadGroup/$uploadType",
+            params: { uploadGroup, uploadType },
           },
         ],
       );
@@ -34,7 +44,8 @@ export default function UploadBreadcrumbs() {
     if (pathname.includes("/metadata")) {
       breadcrumbItems.push({
         label: "Metadata",
-        path: `/upload/${uploadGroup}/${uploadType}/metadata`,
+        path: "/upload/$uploadGroup/$uploadType/metadata",
+        params: { uploadGroup, uploadType },
       });
     }
 
@@ -43,11 +54,13 @@ export default function UploadBreadcrumbs() {
         ...[
           {
             label: "Metadata",
-            path: `/upload/${uploadGroup}/${uploadType}/metadata`,
+            path: "/upload/$uploadGroup/$uploadType/metadata",
+            params: { uploadGroup, uploadType },
           },
           {
             label: "Success",
-            path: `/upload/${uploadGroup}/${uploadType}/success`,
+            path: `/upload/$uploadGroup/$uploadType/success`,
+            params: { uploadGroup, uploadType },
           },
         ],
       );
@@ -66,7 +79,7 @@ export default function UploadBreadcrumbs() {
       {breadcrumbItems.map((item, index) => (
         <BreadcrumbItem key={item.label} className="capitalize">
           {item.path && index + 1 < breadcrumbItems.length ? (
-            <Link to={item.path} unstable_viewTransition>
+            <Link to={item.path} params={item.params}>
               {item.label}
             </Link>
           ) : (
