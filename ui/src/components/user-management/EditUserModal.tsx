@@ -68,7 +68,6 @@ export default function EditUserModal({
   );
 
   const api = useApi();
-
   const [swapModal, setSwapModal] = useState<boolean>(false);
 
   const { data: groupsData } = useQuery({
@@ -81,13 +80,11 @@ export default function EditUserModal({
       return { id: group.id, name: group.display_name };
     }) ?? [];
 
-  const initialCountries = filterCountries(initialGroups);
-
   const modifyUserAccess = useMutation({
     mutationFn: api.groups.modify_user_access,
   });
 
-  const getInitialCountryDataset = (
+  const deriveInitialCountryDataset = (
     countryDataset: string[],
   ): CountryDataset[] => {
     return countryDataset
@@ -110,14 +107,15 @@ export default function EditUserModal({
   };
 
   const roles = filterRoles(groups.map(group => group.name));
-
   const initialRoles = {
     selectedItems: filterRoles(initialGroups).map(role => ({
       label: role,
       value: role,
     })),
   };
-  const initialCountryDataset = getInitialCountryDataset(initialCountries);
+
+  const initialCountries = filterCountries(initialGroups);
+  const initialCountryDataset = deriveInitialCountryDataset(initialCountries);
 
   const {
     control,
