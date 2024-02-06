@@ -125,7 +125,7 @@ export default function Users() {
         header: "Countries",
       },
       {
-        key: "groups",
+        key: "roles",
         header: "Roles",
       },
       {
