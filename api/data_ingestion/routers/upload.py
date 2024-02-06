@@ -39,11 +39,11 @@ async def upload_file(
     data_collection_date: Annotated[str, Form()],
     domain: Annotated[str, Form()],
     date_modified: Annotated[str, Form()],
-    source: Annotated[str, Form()],
     data_owner: Annotated[str, Form()],
     country: Annotated[str, Form()],
     school_id_type: Annotated[str, Form()],
     description: Annotated[str, Form()],
+    source: str | None = Form(None),
 ):
     if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
         raise HTTPException(
@@ -73,7 +73,7 @@ async def upload_file(
             "description_file_update": description,
         }
 
-        if source != "undefined":
+        if source is not None:
             metadata["source"] = source
 
         client.upload_blob(await file.read(), metadata=metadata)

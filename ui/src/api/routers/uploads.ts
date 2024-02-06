@@ -64,16 +64,18 @@ export default function routes(axi: AxiosInstance) {
       data_collection_date: string;
       domain: string;
       date_modified: string;
-      source: string;
+      source?: string | null;
       data_owner: string;
       country: string;
       school_id_type: string;
       description: string;
-      [key: string]: string | File;
+      [key: string]: string | File | null | undefined;
     }): Promise<AxiosResponse<string>> => {
       const formData = new FormData();
       Object.keys(params).forEach(key => {
-        formData.append(key, params[key]);
+        if (params[key] !== null && params[key] !== undefined) {
+          formData.append(key, params[key] as string | File);
+        }
       });
 
       return axi.post(`/upload`, formData, {
