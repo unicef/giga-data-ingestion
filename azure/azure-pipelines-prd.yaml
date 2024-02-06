@@ -1,7 +1,6 @@
 trigger:
   branches:
-    include:
-      - production
+    include: [ production ]
 
 pr: none
 
@@ -10,8 +9,6 @@ pool:
 
 variables:
   - template: templates/variables.yaml
-  - name: environment
-    value: prd
 
 stages:
   - template: templates/workflow.yaml

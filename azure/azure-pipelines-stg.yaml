@@ -1,7 +1,6 @@
 trigger:
   branches:
-    include:
-      - staging
+    include: [ staging ]
 
 pr: none
 
@@ -10,8 +9,6 @@ pool:
 
 variables:
   - template: templates/variables.yaml
-  - name: environment
-    value: stg
 
 stages:
   - template: templates/workflow.yaml
