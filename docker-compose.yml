@@ -26,10 +26,9 @@ services:
   email-api:
     image: node:20-alpine
     restart: unless-stopped
-    init: true
     working_dir: /app
     env_file: ./email/.env
-    command:
+    entrypoint:
       - /bin/sh
       - -c
       - "npm install && exec npm run dev"
@@ -41,9 +40,8 @@ services:
   email-ui:
     image: node:20-alpine
     restart: unless-stopped
-    init: true
     working_dir: /app
-    command:
+    entrypoint:
       - /bin/sh
       - -c
       - "npm install && exec npm run dev:email"

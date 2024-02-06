@@ -31,7 +31,7 @@ def main():
         "senderAddress": settings.AZURE_EMAIL_SENDER,
         "recipients": {
             "to": [
-                {"address": "kenneth@thinkingmachin.es"},
+                {"address": recipient} for recipient in settings.EMAIL_TEST_RECIPIENTS
             ]
         },
         "content": {

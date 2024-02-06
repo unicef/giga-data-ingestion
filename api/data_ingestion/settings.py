@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     SENTRY_DSN: str = ""
     EMAIL_RENDERER_BEARER_TOKEN: str
     EMAIL_RENDERER_SERVICE_URL: AnyUrl
+    EMAIL_TEST_RECIPIENTS: list[str]
 
     class Config:
         env_file = ".env"
