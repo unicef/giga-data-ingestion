@@ -225,23 +225,23 @@ export default function EditUserModal({
               <form aria-label="edit user form">
                 <Stack gap={4}>
                   <TextInput
-                    disabled
                     id="givenName"
                     labelText="First Name"
+                    readOnly
                     value={givenName}
                     {...register("givenName", { required: true })}
                   />
                   <TextInput
-                    disabled
                     id="surname"
                     labelText="Last Name"
+                    readOnly
                     value={surname}
                     {...register("surname", { required: true })}
                   />
                   <TextInput
-                    disabled
                     id="email"
                     labelText="Email"
+                    readOnly
                     value={initialEmail}
                     {...register("email", { required: true })}
                   />
