@@ -185,8 +185,6 @@ export default function EditUserModal({
   const deriveAddedValues = () => {
     const roles = [...watchedRoles.selectedItems];
 
-    console.log(initialCountryDataset);
-
     const addedDatasets = watchedCountryDatasets
       .flatMap(({ country, dataset }) =>
         dataset.selectedItems.map(item => ({
