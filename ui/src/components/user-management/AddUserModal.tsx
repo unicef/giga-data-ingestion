@@ -22,7 +22,7 @@ import { useApi } from "@/api";
 import countries from "@/constants/countries";
 import { filterRoles, matchNamesWithIds } from "@/utils/group";
 import {
-  getUniqueDatasetsNew,
+  getUniqueDatasets,
   pluralizeCountries,
   pluralizeDatasets,
 } from "@/utils/string";
