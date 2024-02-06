@@ -14,6 +14,7 @@ from fastapi import (
     UploadFile,
     status,
 )
+from pydantic import AwareDatetime
 
 from data_ingestion.constants import constants
 from data_ingestion.internal.auth import azure_scheme
@@ -36,9 +37,9 @@ async def upload_file(
     pii_classification: Annotated[str, Form()],
     geolocation_data_source: Annotated[str, Form()],
     data_collection_modality: Annotated[str, Form()],
-    data_collection_date: Annotated[str, Form()],
+    data_collection_date: Annotated[AwareDatetime, Form()],
     domain: Annotated[str, Form()],
-    date_modified: Annotated[str, Form()],
+    date_modified: Annotated[AwareDatetime, Form()],
     data_owner: Annotated[str, Form()],
     country: Annotated[str, Form()],
     school_id_type: Annotated[str, Form()],
@@ -63,10 +64,12 @@ async def upload_file(
             "sensitivity_level": sensitivity_level,
             "pii_classification": pii_classification,
             "geolocation_data_source": geolocation_data_source,
-            "data_collection_date": data_collection_date,
+            "data_collection_date": data_collection_date.strftime(
+                "%Y-%m-%d %H:%M:%S %Z%z"
+            ),
             "data_collection_modality": data_collection_modality,
             "domain": domain,
-            "date_modified": date_modified,
+            "date_modified": date_modified.strftime("%Y-%m-%d %H:%M:%S %Z%z"),
             "data_owner": data_owner,
             "country": country,
             "school_id_type": school_id_type,
