@@ -1,9 +1,8 @@
-import { useEffect } from "react";
+import { PropsWithChildren, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Outlet } from "react-router-dom";
 
 import { useMsal } from "@azure/msal-react";
-import { createRootRoute } from "@tanstack/react-router";
+import { Outlet, createRootRoute } from "@tanstack/react-router";
 
 import { axi } from "@/api";
 import Footer from "@/components/common/Footer.tsx";
@@ -14,7 +13,22 @@ import { useStore } from "@/store.ts";
 
 export const Route = createRootRoute({
   component: Layout,
+  notFoundComponent: NotFound,
 });
+
+function Base({ children }: PropsWithChildren) {
+  return (
+    <div className="flex h-screen min-h-screen flex-col">
+      <Helmet>
+        <title>{info.title}</title>
+        <meta name="description" content={info.description} />
+      </Helmet>
+      <Navbar />
+      <main className="flex-auto">{children}</main>
+      <Footer />
+    </div>
+  );
+}
 
 function Layout() {
   const { setUser } = useStore();
@@ -40,16 +54,19 @@ function Layout() {
   }, [accounts, instance, setUser]);
 
   return (
-    <div className="flex h-screen min-h-screen flex-col">
-      <Helmet>
-        <title>{info.title}</title>
-        <meta name="description" content={info.description} />
-      </Helmet>
-      <Navbar />
-      <main className="flex-auto">
-        <Outlet />
-      </main>
-      <Footer />
-    </div>
+    <Base>
+      <Outlet />
+    </Base>
+  );
+}
+
+function NotFound() {
+  return (
+    <Base>
+      <div className="flex h-full items-center justify-center gap-4">
+        <h2>404</h2>
+        <h2 className="border-l border-solid pl-4">Not Found</h2>
+      </div>
+    </Base>
   );
 }

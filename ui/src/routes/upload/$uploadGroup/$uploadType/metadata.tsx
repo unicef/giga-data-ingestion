@@ -1,6 +1,6 @@
 import { FormEvent } from "react";
 
-import { Link, createLazyFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Button, Input, Select } from "antd";
 
 import rawCountries from "@/mocks/countries.json";
@@ -9,7 +9,7 @@ import {
   licenseOptions as rawLicenseOptions,
 } from "@/mocks/uploadMetadata.tsx";
 
-export const Route = createLazyFileRoute(
+export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/metadata",
 )({
   component: Metadata,
@@ -25,9 +25,7 @@ const dataSensitivityOptions = rawDataSensitivityOptions.map(s => ({
 const licenseOptions = rawLicenseOptions.map(l => ({ value: l, label: l }));
 
 function Metadata() {
-  const navigate = useNavigate({
-    from: "/upload/$uploadGroup/$uploadType/metadata",
-  });
+  const navigate = useNavigate({ from: Route.fullPath });
 
   function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();

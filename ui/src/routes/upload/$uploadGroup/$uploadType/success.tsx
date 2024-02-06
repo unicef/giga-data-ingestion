@@ -1,10 +1,8 @@
-import { Link } from "react-router-dom";
-
 import { CheckCircleOutlined } from "@ant-design/icons";
-import { createLazyFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { Button } from "antd";
 
-export const Route = createLazyFileRoute(
+export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/success",
 )({
   component: () => (
@@ -22,7 +20,7 @@ export const Route = createLazyFileRoute(
       </p>
 
       <div>
-        <Link to="/" unstable_viewTransition>
+        <Link to="/">
           <Button type="primary" ghost>
             Back to Home
           </Button>

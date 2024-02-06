@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 
 import { AuthenticatedTemplate } from "@azure/msal-react";
+import { Link, useRouterState } from "@tanstack/react-router";
+import clsx from "clsx";
 import { Switcher as SwitcherIcon } from "@carbon/icons-react";
 import {
   Header,
@@ -19,7 +20,10 @@ import { useStore } from "@/store.ts";
 
 export default function Navbar() {
   const { featureFlags } = useStore();
+  const { location } = useRouterState();
   const [isSwitcherExpanded, setIsSwitcherExpanded] = useState(false);
+
+  const isUserManagementPage = location.pathname === "/user-management";
 
   return (
     <Header
@@ -27,7 +31,7 @@ export default function Navbar() {
       aria-labelledby="main-header-label"
       className="relative"
     >
-      <HeaderName as={Link} to="/" unstable_viewTransition prefix="">
+      <HeaderName as={Link} to="/" prefix="">
         <img src="/GIGA_logo_blue.png" className="h-5/6" alt="Giga" />
         <span className="ml-1 text-xl font-light">giga</span>
         <b className="ml-0.5 text-xl">sync</b>
@@ -41,7 +45,6 @@ export default function Navbar() {
             <HeaderMenuItem
               as={Link}
               to="/user-management"
-              unstable_viewTransition
             >
               Admin Panel
             </HeaderMenuItem>
@@ -68,27 +71,24 @@ export default function Navbar() {
             aria-label="upload file"
             as={Link}
             to="/upload"
-            unstable_viewTransition
           >
             Upload File
           </SwitcherItem>
           <SwitcherItem
             aria-label="upload file"
             as={Link}
-            to="/datasources"
-            unstable_viewTransition
+            to="/ingest-api"
           >
             Ingest API
           </SwitcherItem>
           {featureFlags.userManagementPage && (
             <AuthenticatedTemplate>
               <SwitcherItem
-                aria-label="upload file"
+                aria-label="user management"
                 as={Link}
-                to="user-management"
-                unstable_viewTransition
+                to={isUserManagementPage ? "/" : "/user-management"}
               >
-                Admin Panel
+                {isUserManagementPage ? "Ingestion Portal" : "Admin Panel"}
               </SwitcherItem>
             </AuthenticatedTemplate>
           )}
