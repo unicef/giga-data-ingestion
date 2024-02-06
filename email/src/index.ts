@@ -25,11 +25,10 @@ app.post(
   ctx => {
     const json = ctx.req.valid("json");
     const html = render(createElement(DataQualityReport, json, null));
-    return ctx.json({
-      message: "ok",
-      request: json,
-      response: html,
+    const text = render(createElement(DataQualityReport, json, null), {
+      plainText: true,
     });
+    return ctx.json({ html, text });
   },
 );
 

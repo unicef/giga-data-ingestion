@@ -25,7 +25,7 @@ def main():
         except JSONDecodeError:
             raise HTTPError(res.text) from None
 
-    html = res.json().get("response")
+    data = res.json()
 
     message = {
         "senderAddress": settings.AZURE_EMAIL_SENDER,
@@ -36,7 +36,8 @@ def main():
         },
         "content": {
             "subject": "Giga Test Email",
-            "html": html,
+            "html": data.get("html"),
+            "plainText": data.get("text"),
         },
     }
     poller = client.begin_send(message)
