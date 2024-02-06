@@ -42,7 +42,14 @@ import { GraphUser } from "@/types/user.ts";
 type ToastProps = {
   show: boolean;
   setShow: Dispatch<SetStateAction<boolean>>;
-  kind: string;
+  kind:
+    | "error"
+    | "info"
+    | "info-square"
+    | "success"
+    | "warning"
+    | "warning-alt"
+    | undefined;
   caption: string;
   title: string;
 };
@@ -129,7 +136,8 @@ export default function Users() {
     [],
   );
 
-  const usersData = response?.data ?? [];
+  const usersData = useMemo(() => response?.data ?? [], [response]);
+
   const filteredUsersData = useMemo(
     () =>
       usersData.map(originalUser => {
@@ -278,6 +286,7 @@ export default function Users() {
                   <TableHead>
                     <TableRow>
                       {headers.map(header => (
+                        // @ts-expect-error onclick bad type https://github.com/carbon-design-system/carbon/issues/14831
                         <TableHeader {...getHeaderProps({ header })}>
                           {header.header}
                         </TableHeader>
