@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     WEB_APP_REDIRECT_URI: str
     AZURE_EMAIL_CONNECTION_STRING: str
     AZURE_EMAIL_SENDER: str
+    AZURE_SCOPE_DESCRIPTION: Literal["User.Impersonate"] = "User.Impersonate"
+    WEB_APP_REDIRECT_URI: str
+    SENTRY_DSN: str = ""
     MAILJET_API_KEY: str
     MAILJET_API_URL: str
     EMAIL_RENDERER_BEARER_TOKEN: str
@@ -60,15 +63,13 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
-    def AUTHORITY_URL(self) -> str:
-        return (
-            f"https://{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_CLIENT_ID}"
-        )
+    def AZURE_SCOPE_NAME(self) -> str:
+        return f"https://{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_CLIENT_ID}/{self.AZURE_SCOPE_DESCRIPTION}"
 
     @computed_field
     @property
-    def AZURE_SCOPE_NAME(self) -> str:
-        return f"{self.AUTHORITY_URL}/User.Impersonate"
+    def AZURE_SCOPES(self) -> dict[str, str]:
+        return {self.AZURE_SCOPE_NAME: self.AZURE_SCOPE_DESCRIPTION}
 
     @computed_field
     @property

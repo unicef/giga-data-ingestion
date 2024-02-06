@@ -24,9 +24,6 @@ export const axi = axios.create({
 });
 
 const api = {
-  health: (): Promise<AxiosResponse<string>> => {
-    return axi.get("", { responseType: "text" });
-  },
   users: usersRouter(axi),
   groups: rolesRouter(axi),
   uploads: uploadsRouter(axi),

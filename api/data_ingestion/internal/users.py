@@ -20,15 +20,16 @@ class UsersApi:
             select=[
                 "id",
                 "mail",
+                "mailNickname",
                 "displayName",
                 "userPrincipalName",
                 "accountEnabled",
                 "externalUserState",
                 "givenName",
                 "surname",
+                "otherMails",
             ],
             orderby=["displayName", "mail", "userPrincipalName"],
-            expand=["memberOf($select=id,description,displayName)"],
         )
     )
     user_request_config = (
@@ -47,10 +48,13 @@ class UsersApi:
                 users_out = []
                 for val in users.value:
                     u = GraphUser(**jsonable_encoder(val))
-                    if not u.mail and "#EXT#" in u.user_principal_name:
-                        u.mail = u.user_principal_name.split("#EXT")[0].replace(
-                            "_", "@"
-                        )
+                    if not u.mail:
+                        if u.user_principal_name and "#EXT#" in u.user_principal_name:
+                            u.mail = u.user_principal_name.split("#EXT")[0].replace(
+                                "_", "@"
+                            )
+                        elif len(u.other_mails) > 0:
+                            u.mail = u.other_mails[0]
                     users_out.append(u)
                 return users_out
 
