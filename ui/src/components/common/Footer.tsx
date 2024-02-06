@@ -80,25 +80,25 @@ export default function Footer() {
           <h6>Follow us</h6>
           <div className="flex gap-2">
             <a
-              href="https://twitter.com/Gigaglobal"
+              href="https://x.com/Gigaglobal"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img src="/twitter.svg" alt="Twitter/X" />
+              <img src="/x.svg" alt="X (Twitter)" className="w-[24px]" />
             </a>
             <a
               href="https://www.linkedin.com/showcase/gigaglobal"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img src="/linkedin.svg" alt="LinkedIn" />
+              <img src="/linkedin.svg" alt="LinkedIn" className="w-[24px]" />
             </a>
             <a
               href="https://www.instagram.com/giga_global/"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img src="/instagram.svg" alt="Instagram" />
+              <img src="/instagram.svg" alt="Instagram" className="w-[24px]" />
             </a>
           </div>
         </div>
