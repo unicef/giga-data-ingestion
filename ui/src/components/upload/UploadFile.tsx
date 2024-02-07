@@ -30,8 +30,13 @@ const UploadFile = ({ file, setFile, setTimestamp }: UploadFileProps) => {
     <>
       <Dropzone
         accept={{
-          "text/plain": [".csv", ".json"],
-          "application/octer-stream": [".parquet", ".xls", ".xlsx"],
+          "application/json": [".json"],
+          "application/octet-stream": [".parquet"],
+          "application/vnd.ms-excel": [".xls"],
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+            ".xlsx  ",
+          ],
+          "text/csv": [".csv"],
         }}
         maxFiles={1}
         maxSize={FILE_UPLOAD_SIZE_LIMIT}
