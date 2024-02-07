@@ -1,9 +1,6 @@
 import Dropzone from "react-dropzone";
-import { FileRejection } from "react-dropzone";
-import toast, { Toaster } from "react-hot-toast";
 
 import { Document, Upload } from "@carbon/icons-react";
-import { ToastNotification } from "@carbon/react";
 
 import { cn, convertMegabytesToBytes } from "@/lib/utils.ts";
 
@@ -29,37 +26,17 @@ const UploadFile = ({ file, setFile, setTimestamp }: UploadFileProps) => {
     setFile(file);
   }
 
-  const handleOnDroprejected = (error: FileRejection[]) => {
-    const title = error.length > 1 ? "Too many files" : "Invalid file";
-    const subtitle =
-      error.length > 1 ? "Upload only one file" : "Upload a valid file";
-
-    toast.custom(t => (
-      <div className={`${t.visible ? "animate-enter" : "animate-leave"} `}>
-        <ToastNotification
-          aria-label="closes notification"
-          kind="error"
-          onClose={() => toast.dismiss(t.id)}
-          onCloseButtonClick={() => toast.dismiss(t.id)}
-          role="status"
-          statusIconDescription="notification"
-          subtitle={subtitle}
-          title={title}
-        />
-      </div>
-    ));
-  };
   return (
     <>
       <Dropzone
-        maxFiles={1}
-        onDropAccepted={onDrop}
-        onDropRejected={handleOnDroprejected}
         accept={{
           "text/plain": [".csv", ".json"],
           "application/octer-stream": [".parquet", ".xls", ".xlsx"],
         }}
+        maxFiles={1}
         maxSize={FILE_UPLOAD_SIZE_LIMIT}
+        multiple={false}
+        onDropAccepted={onDrop}
       >
         {({ getRootProps, getInputProps }) => (
           <div
@@ -100,11 +77,6 @@ const UploadFile = ({ file, setFile, setTimestamp }: UploadFileProps) => {
           </div>
         )}
       </Dropzone>
-      <Toaster
-        position="top-center"
-        toastOptions={{ duration: 3000 }}
-        reverseOrder={true}
-      />
     </>
   );
 };
