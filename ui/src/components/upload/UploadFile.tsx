@@ -17,11 +17,7 @@ interface UploadFileProps {
   setFile: React.Dispatch<React.SetStateAction<File | null>>;
   setTimestamp: React.Dispatch<React.SetStateAction<Date | null>>;
 }
-const UploadFile: React.FC<UploadFileProps> = ({
-  file,
-  setFile,
-  setTimestamp,
-}) => {
+const UploadFile = ({ file, setFile, setTimestamp }: UploadFileProps) => {
   const hasUploadedFile = file != null;
 
   function onDrop(files: File[]) {
