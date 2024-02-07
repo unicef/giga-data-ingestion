@@ -1,9 +1,11 @@
 import asyncio
+import os
 from datetime import datetime
 from typing import Annotated
 from uuid import uuid4
 
 import country_converter as coco
+import magic
 from azure.core.exceptions import HttpResponseError
 from fastapi import (
     APIRouter,
@@ -51,6 +53,31 @@ async def upload_file(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File size exceeds 10 MB limit",
         )
+
+    valid_types = {
+        "application/json": [".json"],
+        "application/octet-stream": [".parquet"],
+        "application/vnd.ms-excel": [".xls"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+        "text/csv": [".csv"],
+    }
+
+    file_content = await file.read()
+    file_type = magic.from_buffer(file_content, mime=True)
+    file_extension = os.path.splitext(file.filename)[1]
+
+    if file_type not in valid_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file type.",
+        )
+
+    if file_extension not in valid_types[file_type]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File extension does not match file type.",
+        )
+
     uid = str(uuid4())
 
     country_code = coco.convert(country, to="ISO3")
