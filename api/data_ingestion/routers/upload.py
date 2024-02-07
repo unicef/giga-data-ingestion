@@ -62,7 +62,7 @@ async def upload_file(
         "text/csv": [".csv"],
     }
 
-    file_content = await file.read()
+    file_content = await file.read(2048)
     file_type = magic.from_buffer(file_content, mime=True)
     file_extension = os.path.splitext(file.filename)[1]
 
