@@ -6,9 +6,7 @@ export default function UploadType() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-[23px] capitalize">
-        School {title} and Key Indicators
-      </h2>
+      <h2 className="text-[23px] capitalize">School {title}</h2>
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
         tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
