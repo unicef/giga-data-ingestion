@@ -55,13 +55,13 @@ export default function UploadMetadata() {
     queryFn: api.users.get_groups_from_email,
   });
 
-  const dataset = `-School ${capitalizeFirstLetterOfEachWord(
+  const datasetSuffix = `-School ${capitalizeFirstLetterOfEachWord(
     uploadType.replace(/-/g, " "),
   )}`;
 
   const userCountryDatasets = filterCountryDatasetFromGraphGroup(
     userData?.data.member_of ?? [],
-    dataset,
+    datasetSuffix,
   );
 
   const userCountries = userCountryDatasets
@@ -78,11 +78,9 @@ export default function UploadMetadata() {
     setIsUploading(true);
     setIsUploadError(false);
 
-    const dataset = location.pathname.split("/")[3];
-
     try {
       const uploadId = await uploadFile.mutateAsync({
-        dataset: dataset,
+        dataset: uploadType,
         file: location.state.file,
         sensitivity_level: data.sensitivityLevel,
         pii_classification: data.piiClassification,
