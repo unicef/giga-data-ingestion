@@ -47,28 +47,6 @@ export default function Index() {
       ),
     })) ?? [];
 
-  const dateOptions: Intl.DateTimeFormatOptions = {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  };
-
-  const timeOptions: Intl.DateTimeFormatOptions = {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Asia/Singapore",
-    hour12: false,
-  };
-
-  const dateFormatter = new Intl.DateTimeFormat("en-GB", dateOptions);
-  const timeFormatter = new Intl.DateTimeFormat("en-GB", timeOptions);
-
-  const timestampStr = timestamp
-    ? `${dateFormatter.format(timestamp)} ${timeFormatter.format(
-        timestamp,
-      )} GMT+8`
-    : "";
-
   const hasUploadedFile = file != null;
 
   return (
@@ -84,7 +62,7 @@ export default function Index() {
         </Link>
         <Link
           to="metadata"
-          state={{ file: file, timestamp: timestampStr }}
+          state={{ file: file, timestamp: timestamp?.toLocaleString() }}
           unstable_viewTransition
         >
           <Button disabled={!hasUploadedFile}>Proceed</Button>
