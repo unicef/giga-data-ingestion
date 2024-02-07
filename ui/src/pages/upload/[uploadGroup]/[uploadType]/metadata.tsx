@@ -28,7 +28,7 @@ import {
 } from "@/mocks/metadataFormValues";
 import { MetadataFormValues } from "@/types/metadata";
 import { filterCountryDatasetFromGraphGroup } from "@/utils/group";
-import { capitalizeFirstLetterOfEachWord } from "@/utils/string";
+import { capitalizeFirstLetter } from "@/utils/string";
 
 export default function UploadMetadata() {
   const api = useApi();
@@ -55,9 +55,7 @@ export default function UploadMetadata() {
     queryFn: api.users.get_groups_from_email,
   });
 
-  const datasetSuffix = `-School ${capitalizeFirstLetterOfEachWord(
-    uploadType.replace(/-/g, " "),
-  )}`;
+  const datasetSuffix = `-School ${capitalizeFirstLetter(uploadType)}`;
 
   const userCountryDatasets = filterCountryDatasetFromGraphGroup(
     userData?.data.member_of ?? [],
