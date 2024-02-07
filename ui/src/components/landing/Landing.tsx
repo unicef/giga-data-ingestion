@@ -32,6 +32,7 @@ export default function Landing() {
             >
               Upload File
             </Button>
+
             <Button
               as={Link}
               to="/ingest-api"

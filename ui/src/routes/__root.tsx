@@ -16,7 +16,6 @@ import Navbar from "@/components/common/Navbar.tsx";
 import info from "@/info.json";
 import { loginRequest } from "@/lib/auth.ts";
 import { useStore } from "@/store.ts";
-import { User } from "@/types/user.ts";
 
 export const Route = createRootRoute({
   component: Layout,
@@ -47,33 +46,20 @@ function Layout() {
 
   useEffect(() => {
     (async () => {
-      const roles: string[] = [];
-      const user: User = {
-        name: "",
-        email: "",
-        roles,
-      };
-
       if (accounts.length > 0) {
         const account = accounts[0];
         console.debug(account);
-        user.name = account.name ?? "";
-        user.email = account.username;
+        setUser({
+          name: account.name ?? "",
+          email: account.username,
+          roles: (account.idTokenClaims?.groups ?? []) as string[],
+        });
 
         const result = await instance.acquireTokenSilent(loginRequest);
         axi.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${result.accessToken}`;
       }
-
-      try {
-        const { data: groups } = await api.users.getUserGroups();
-        roles.push(...groups.map(group => group.display_name));
-      } catch (err) {
-        console.error(err);
-      }
-
-      setUser({ ...user, roles });
     })();
   }, [accounts, api.users, instance, setUser]);
 
