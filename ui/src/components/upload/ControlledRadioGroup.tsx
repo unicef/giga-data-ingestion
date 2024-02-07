@@ -2,7 +2,7 @@ import { Control, FieldPath, useController } from "react-hook-form";
 
 import { RadioButtonGroup } from "@carbon/react";
 
-import { MetadataFormValues } from "@/pages/upload/[uploadGroup]/[uploadType]/metadata";
+import { MetadataFormValues } from "@/types/metadata";
 
 type RadioButtonGroupProps = Omit<
   React.ComponentProps<typeof RadioButtonGroup>,

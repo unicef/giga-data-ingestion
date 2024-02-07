@@ -26,23 +26,9 @@ import {
   sensitivityOptions,
   sourceOptions,
 } from "@/mocks/metadataFormValues";
+import { MetadataFormValues } from "@/types/metadata";
 import { filterCountryDatasetFromGraphGroup } from "@/utils/group";
 import { capitalizeFirstLetterOfEachWord } from "@/utils/string";
-
-export type MetadataFormValues = {
-  dataCollectionDate: Date;
-  country: string;
-  dataCollectionModality: string;
-  dataOwner: string;
-  dateModified: Date;
-  description: string;
-  domain: string;
-  geolocationDataSource: string;
-  piiClassification: string;
-  schoolIdType: string;
-  sensitivityLevel: string;
-  source: string;
-};
 
 export default function UploadMetadata() {
   const api = useApi();
