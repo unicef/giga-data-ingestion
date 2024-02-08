@@ -54,7 +54,7 @@ export default function EnableUserModal({
       >
         <div>
           <p>
-            This will re-enable acces of the user with email{" "}
+            This will re-enable access of the user with email{" "}
             <b>{initialValues.mail}</b> to the whole Giga platform
           </p>
           <br />

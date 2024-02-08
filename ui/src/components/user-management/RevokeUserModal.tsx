@@ -53,7 +53,7 @@ export default function RevokeUserModal({
       >
         <div>
           <p>
-            This will revoke acces of the user with email{" "}
+            This will revoke access of the user with email{" "}
             <b>{initialValues.mail}</b> to the whole Giga platform, meaning they
             won't be able to access any part of the Giga platform
           </p>
