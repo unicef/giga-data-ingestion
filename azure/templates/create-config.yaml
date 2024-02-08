@@ -57,4 +57,5 @@ jobs:
                     COMMIT_SHA: "$(Build.SourceVersion)"
                     SENTRY_DSN: "$(sentryDsn)"
                     VITE_SENTRY_DSN: "$(viteSentryDsn)"
+                    NODE_SENTRY_DSN: "$(nodeSentryDsn)"
                     VITE_DATAHUB_URL: "https://io-datahub-$(deployEnv).unitst.org"
