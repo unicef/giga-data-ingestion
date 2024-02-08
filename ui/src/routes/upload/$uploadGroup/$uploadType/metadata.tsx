@@ -155,6 +155,7 @@ function Metadata() {
       id="geolocatinDataSource"
       invalid={!!errors.geolocationDataSource}
       labelText="Geolocation Data Source"
+      placeholder="Geolocation Data Source"
       {...register("geolocationDataSource", { required: true })}
     >
       <SelectItem value="" text="" />
@@ -173,6 +174,7 @@ function Metadata() {
       id="dataCollectionModality"
       invalid={!!errors.dataCollectionModality}
       labelText="Data Collection Modality"
+      placeholder="Data Collection Modality"
       {...register("dataCollectionModality", { required: true })}
     >
       <SelectItem value="" text="" />
@@ -192,6 +194,7 @@ function Metadata() {
       id="domain"
       invalid={!!errors.domain}
       labelText="Domain"
+      placeholder="Domain"
       {...register("domain", { required: true })}
     >
       <SelectItem value="" text="" />
@@ -211,6 +214,7 @@ function Metadata() {
       id="source"
       invalid={!!errors.source}
       labelText="Source"
+      placeholder="Source"
       {...register("source", { required: true })}
     >
       <SelectItem value="" text="" />
@@ -229,6 +233,7 @@ function Metadata() {
       id="dataowner"
       invalid={!!errors.dataOwner}
       labelText="Data Owner"
+      placeholder="Data Owner"
       {...register("dataOwner", { required: true })}
     >
       <SelectItem value="" text="" />
@@ -250,7 +255,12 @@ function Metadata() {
   }) => {
     if (isLoading) {
       return (
-        <Select disabled id="country" labelText="Loading...">
+        <Select
+          disabled
+          id="country"
+          labelText="Loading..."
+          placeholder="Loading..."
+        >
           <SelectItem text="Loading..." />
         </Select>
       );
@@ -261,6 +271,7 @@ function Metadata() {
         id="country"
         invalid={!!errors.country}
         labelText="Country"
+        placeholder="Country"
         {...register("country", { required: true })}
       >
         <SelectItem value="" text="" />
@@ -276,6 +287,7 @@ function Metadata() {
       id="schoolIdType"
       invalid={!!errors.schoolIdType}
       labelText="School ID type"
+      placeholder="School ID type"
       {...register("schoolIdType", { required: true })}
     >
       <SelectItem value="" text="" />
