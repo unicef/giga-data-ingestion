@@ -79,7 +79,7 @@ export default function UploadBreadcrumbs() {
       {breadcrumbItems.map((item, index) => (
         <BreadcrumbItem key={item.label} className="capitalize">
           {item.path && index + 1 < breadcrumbItems.length ? (
-            <Link to={item.path} params={item.params}>
+            <Link to={item.path} params={item.params ?? {}}>
               {item.label}
             </Link>
           ) : (
