@@ -11,7 +11,7 @@ import {
   TextArea,
 } from "@carbon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
 import ControlledDatepicker from "@/components/upload/ControlledDatepicker.tsx";
@@ -26,6 +26,7 @@ import {
   sensitivityOptions,
   sourceOptions,
 } from "@/mocks/metadataFormValues.tsx";
+import { useStore } from "@/store.ts";
 import { MetadataFormValues } from "@/types/metadata.ts";
 import { filterCountryDatasetFromGraphGroup } from "@/utils/group";
 import { capitalizeFirstLetter } from "@/utils/string.ts";
@@ -38,6 +39,7 @@ export const Route = createFileRoute(
 
 function Metadata() {
   const api = useApi();
+  const { upload, setUpload } = useStore();
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType = "" } = Route.useParams();
 
@@ -82,11 +84,9 @@ function Metadata() {
     setIsUploadError(false);
 
     try {
-      // @ts-expect-error @typescript-eslint/no-unused-vars - see TODO below
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const uploadId = await uploadFile.mutateAsync({
         dataset: uploadType,
-        // file: location.state.file,
+        file: upload.file!,
         sensitivity_level: data.sensitivityLevel,
         pii_classification: data.piiClassification,
         geolocation_data_source: data.geolocationDataSource,
@@ -103,14 +103,13 @@ function Metadata() {
 
       setIsUploading(false);
 
-      void navigate({
-        to: "../success",
-        // TODO: Convert to tanstack equivalent
-        // state: {
-        //   uploadDate: location.state.timestamp,
-        //   uploadId: uploadId.data,
-        // },
+      setUpload({
+        ...upload,
+        uploadDate: upload.timestamp?.toLocaleString() ?? "",
+        uploadId: uploadId.data,
       });
+
+      void navigate({ to: "../success" });
     } catch {
       setIsUploadError(true);
       setIsUploading(false);
@@ -361,7 +360,9 @@ function Metadata() {
             >
               Submit
             </Button>
-            <Button kind="tertiary">Cancel</Button>
+            <Button kind="tertiary" as={Link} to="..">
+              Cancel
+            </Button>
           </div>
           {isUploadError && (
             <div className="text-giga-dark-red">

@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { Information } from "@carbon/icons-react";
 import {
   Accordion,
@@ -15,6 +13,7 @@ import { useApi } from "@/api";
 import Datatable from "@/components/upload/Datatable";
 import PaginatedDatatable from "@/components/upload/PaginatedDatatable";
 import UploadFile from "@/components/upload/UploadFile.tsx";
+import { useStore } from "@/store.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
   component: Index,
@@ -22,8 +21,7 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
 
 export default function Index() {
   const api = useApi();
-  const [file, setFile] = useState<File | null>(null);
-  const [, setTimestamp] = useState<Date | null>(null);
+  const { upload, setUpload, resetUploadState } = useStore();
 
   const { data: checksData, isLoading } = useQuery({
     queryKey: ["column_checks"],
@@ -50,26 +48,31 @@ export default function Index() {
       ),
     })) ?? [];
 
-  const hasUploadedFile = file != null;
+  const hasUploadedFile = upload.file != null;
 
   return (
     <div className="flex flex-col gap-8">
       <h3 className="text-[23px]">Step 1: Upload</h3>
       <div className="w-1/4">
-        <UploadFile file={file} setFile={setFile} setTimestamp={setTimestamp} />
+        <UploadFile
+          file={upload.file}
+          setFile={file => setUpload({ ...upload, file })}
+          setTimestamp={timestamp => setUpload({ ...upload, timestamp })}
+        />
       </div>
 
       <div className="flex gap-2">
-        <Link to="/upload">
-          <Button kind="tertiary">Cancel</Button>
-        </Link>
-        <Link
-          to="metadata"
-          // TODO: Convert this to tanstack equivalent
-          // state={{ file: file, timestamp: timestamp?.toLocaleString() }}
+        <Button
+          kind="tertiary"
+          as={Link}
+          to="/upload"
+          onClick={resetUploadState}
         >
-          <Button disabled={!hasUploadedFile}>Proceed</Button>
-        </Link>
+          Cancel
+        </Button>
+        <Button disabled={!hasUploadedFile} as={Link} to="./metadata">
+          Proceed
+        </Button>
       </div>
 
       <Section>

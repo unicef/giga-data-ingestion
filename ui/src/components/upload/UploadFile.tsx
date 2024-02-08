@@ -1,4 +1,3 @@
-import { Dispatch, SetStateAction } from "react";
 import Dropzone from "react-dropzone";
 
 import { Document, Upload } from "@carbon/icons-react";
@@ -12,8 +11,8 @@ const FILE_UPLOAD_SIZE_LIMIT = convertMegabytesToBytes(
 
 interface UploadFileProps {
   file: File | null;
-  setFile: Dispatch<SetStateAction<File | null>>;
-  setTimestamp: Dispatch<SetStateAction<Date | null>>;
+  setFile: (file: File | null) => void;
+  setTimestamp: (timestamp: Date | null) => void;
 }
 const UploadFile = ({ file, setFile, setTimestamp }: UploadFileProps) => {
   const hasUploadedFile = file != null;
