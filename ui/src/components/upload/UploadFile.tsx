@@ -11,8 +11,8 @@ const FILE_UPLOAD_SIZE_LIMIT = convertMegabytesToBytes(
 
 interface UploadFileProps {
   file: File | null;
-  setFile: React.Dispatch<React.SetStateAction<File | null>>;
-  setTimestamp: React.Dispatch<React.SetStateAction<Date | null>>;
+  setFile: (file: File | null) => void;
+  setTimestamp: (timestamp: Date | null) => void;
 }
 const UploadFile = ({ file, setFile, setTimestamp }: UploadFileProps) => {
   const hasUploadedFile = file != null;
@@ -27,62 +27,60 @@ const UploadFile = ({ file, setFile, setTimestamp }: UploadFileProps) => {
   }
 
   return (
-    <>
-      <Dropzone
-        accept={{
-          "application/json": [".json"],
-          "application/octet-stream": [".parquet"],
-          "application/vnd.ms-excel": [".xls"],
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
-            ".xlsx  ",
-          ],
-          "text/csv": [".csv"],
-        }}
-        maxFiles={1}
-        maxSize={FILE_UPLOAD_SIZE_LIMIT}
-        multiple={false}
-        onDropAccepted={onDrop}
-      >
-        {({ getRootProps, getInputProps }) => (
+    <Dropzone
+      accept={{
+        "application/json": [".json"],
+        "application/octet-stream": [".parquet"],
+        "application/vnd.ms-excel": [".xls"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+          ".xlsx  ",
+        ],
+        "text/csv": [".csv"],
+      }}
+      maxFiles={1}
+      maxSize={FILE_UPLOAD_SIZE_LIMIT}
+      multiple={false}
+      onDropAccepted={onDrop}
+    >
+      {({ getRootProps, getInputProps }) => (
+        <div
+          {...getRootProps()}
+          className={cn(
+            "rounded border-2 border-dashed transition-colors",
+            "cursor-pointer hover:bg-giga-light-gray active:bg-giga-gray",
+            {
+              "border border-solid border-primary hover:bg-primary/10 active:bg-primary/20":
+                hasUploadedFile,
+            },
+          )}
+        >
+          <input {...getInputProps()} />
           <div
-            {...getRootProps()}
             className={cn(
-              "rounded border-2 border-dashed transition-colors",
-              "cursor-pointer hover:bg-giga-light-gray active:bg-giga-gray",
+              "text-gray-3 flex flex-col items-center justify-center gap-2 p-6 text-center",
               {
-                "border border-solid border-primary hover:bg-primary/10 active:bg-primary/20":
-                  hasUploadedFile,
+                "text-primary": hasUploadedFile,
               },
             )}
           >
-            <input {...getInputProps()} />
-            <div
-              className={cn(
-                "text-gray-3 flex flex-col items-center justify-center gap-2 p-6 text-center",
-                {
-                  "text-primary": hasUploadedFile,
-                },
-              )}
-            >
-              {hasUploadedFile ? (
-                <>
-                  <Document size={24} />
-                  {file.name}
-                </>
-              ) : (
-                <>
-                  <Upload size={24} />
-                  Click or drag a file to upload
-                </>
-              )}
-            </div>
-            <p className="text-gray-4 px-6 text-center text-xs opacity-25">
-              (.xlsx, .xls, .csv, .json, .parquet only, up to 10MB)
-            </p>
+            {hasUploadedFile ? (
+              <>
+                <Document size={24} />
+                {file.name}
+              </>
+            ) : (
+              <>
+                <Upload size={24} />
+                Click or drag a file to upload
+              </>
+            )}
           </div>
-        )}
-      </Dropzone>
-    </>
+          <p className="text-gray-4 px-6 text-center text-xs opacity-25">
+            (.xlsx, .xls, .csv, .json, .parquet only, up to 10MB)
+          </p>
+        </div>
+      )}
+    </Dropzone>
   );
 };
 

@@ -13,14 +13,31 @@ type FeatureFlagKeys =
 
 type FeatureFlags = Record<FeatureFlagKeys, boolean>;
 
+interface UploadState {
+  file: File | null;
+  timestamp: Date | null;
+  uploadId: string;
+  uploadDate: string;
+}
+
 interface AppState {
   user: User;
+  upload: UploadState;
   featureFlags: FeatureFlags;
 }
 
 interface AppActions {
   setUser: (user: User) => void;
+  setUpload: (upload: UploadState) => void;
+  resetUploadState: () => void;
 }
+
+const initialUploadState: UploadState = {
+  file: null,
+  timestamp: null,
+  uploadId: "",
+  uploadDate: "",
+};
 
 const initialState: AppState = {
   user: {
@@ -28,6 +45,7 @@ const initialState: AppState = {
     email: "",
     roles: [],
   },
+  upload: initialUploadState,
   featureFlags: {
     uploadFilePage: DEV,
     ingestApiPage: DEV,
@@ -43,6 +61,14 @@ export const useStore = create<AppState & AppActions>()(
         setUser: (user: User) =>
           set(state => {
             state.user = user;
+          }),
+        setUpload: (upload: UploadState) =>
+          set(state => {
+            state.upload = upload;
+          }),
+        resetUploadState: () =>
+          set(state => {
+            state.upload = initialUploadState;
           }),
       }),
       {

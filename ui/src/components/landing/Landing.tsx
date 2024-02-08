@@ -1,7 +1,6 @@
-import { Link } from "react-router-dom";
-
 import { Upload, WifiBridgeAlt } from "@carbon/icons-react";
 import { Button, Column, FlexGrid, Heading } from "@carbon/react";
+import { Link } from "@tanstack/react-router";
 
 import { useStore } from "@/store.ts";
 
@@ -28,7 +27,6 @@ export default function Landing() {
                 to="/upload"
                 className="gap-4"
                 renderIcon={Upload}
-                unstable_viewTransition
               >
                 Upload File
               </Button>
@@ -36,10 +34,9 @@ export default function Landing() {
             {featureFlags.ingestApiPage && (
               <Button
                 as={Link}
-                to="/datasources"
+                to="/ingest-api"
                 className="gap-4"
                 renderIcon={WifiBridgeAlt}
-                unstable_viewTransition
               >
                 Ingest API
               </Button>

@@ -30,6 +30,7 @@ import {
 // @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
 import PaginationNav from "@carbon/react/lib/components/PaginationNav/PaginationNav";
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
 import AddUserModal from "@/components/user-management/AddUserModal";
@@ -38,6 +39,10 @@ import EnableUserModal from "@/components/user-management/EnableUserModal";
 import RevokeUserModal from "@/components/user-management/RevokeUserModal";
 import countries from "@/constants/countries";
 import { GraphUser } from "@/types/user.ts";
+
+export const Route = createFileRoute("/user-management/")({
+  component: Users,
+});
 
 type ToastProps = {
   show: boolean;
@@ -151,12 +156,11 @@ export default function Users() {
                 pending
               </Tag>
             )}
-            {!user.account_enabled &&
-              user.external_user_state === "Accepted" && (
-                <Tag className="uppercase" type="gray">
-                  Disabled
-                </Tag>
-              )}
+            {!user.account_enabled && user.external_user_state === "Accepted" && (
+              <Tag className="uppercase" type="gray">
+                Disabled
+              </Tag>
+            )}
           </>
         );
 

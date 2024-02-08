@@ -1,5 +1,3 @@
-import { Link } from "react-router-dom";
-
 import {
   Accordion,
   AccordionItem,
@@ -7,9 +5,10 @@ import {
   Section,
   Stack,
 } from "@carbon/react";
+import { Link, createLazyFileRoute } from "@tanstack/react-router";
 
-export default function UploadDataSelect() {
-  return (
+export const Route = createLazyFileRoute("/upload/")({
+  component: () => (
     <Section>
       <Section>
         <Stack gap={6}>
@@ -20,10 +19,22 @@ export default function UploadDataSelect() {
             </AccordionItem>
             <AccordionItem title="An addition to an existing dataset">
               <Stack gap={2}>
-                <Link to="school-data/geolocation" unstable_viewTransition>
+                <Link
+                  to="/upload/$uploadGroup/$uploadType"
+                  params={{
+                    uploadGroup: "school-data",
+                    uploadType: "geolocation",
+                  }}
+                >
                   School Geolocation
                 </Link>
-                <Link to="school-data/coverage" unstable_viewTransition>
+                <Link
+                  to="/upload/$uploadGroup/$uploadType"
+                  params={{
+                    uploadGroup: "school-data",
+                    uploadType: "coverage",
+                  }}
+                >
                   School Coverage
                 </Link>
               </Stack>
@@ -32,5 +43,5 @@ export default function UploadDataSelect() {
         </Stack>
       </Section>
     </Section>
-  );
-}
+  ),
+});

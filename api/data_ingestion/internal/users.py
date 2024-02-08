@@ -1,6 +1,3 @@
-from data_ingestion.schemas.invitation import GraphInvitationCreateRequest
-from data_ingestion.schemas.user import GraphUser, GraphUserUpdateRequest
-from data_ingestion.settings import settings
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from msgraph.generated.models.invitation import Invitation
@@ -8,6 +5,10 @@ from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.models.user import User
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4
+
+from data_ingestion.schemas.invitation import GraphInvitationCreateRequest
+from data_ingestion.schemas.user import GraphUser, GraphUserUpdateRequest
+from data_ingestion.settings import settings
 
 from .auth import graph_client
 
@@ -47,9 +48,9 @@ class UsersApi:
                 for val in users.value:
                     u = GraphUser(**jsonable_encoder(val))
                     if not u.mail and "#EXT#" in u.user_principal_name:
-                        u.mail = u.user_principal_name.split("#EXT")[
-                            0
-                        ].replace("_", "@")
+                        u.mail = u.user_principal_name.split("#EXT")[0].replace(
+                            "_", "@"
+                        )
                     users_out.append(u)
                 return users_out
 
@@ -72,16 +73,10 @@ class UsersApi:
             ) from err
 
     @classmethod
-    async def edit_user(
-        cls, id: UUID4, request_body: GraphUserUpdateRequest
-    ) -> None:
+    async def edit_user(cls, id: UUID4, request_body: GraphUserUpdateRequest) -> None:
         try:
             body = User(
-                **{
-                    k: v
-                    for k, v in request_body.model_dump().items()
-                    if v is not None
-                }
+                **{k: v for k, v in request_body.model_dump().items() if v is not None}
             )
             await graph_client.users.by_user_id(str(id)).patch(body=body)
         except ODataError as err:
