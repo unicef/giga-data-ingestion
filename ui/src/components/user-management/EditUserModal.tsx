@@ -356,6 +356,7 @@ export default function EditUserModal({
                       <Select
                         id={`country.${i}`}
                         labelText={`Country ${i + 1}`}
+                        placeholder="Select a country"
                         {...register(`countryDatasets.${i}.country`, {
                           required: true,
                         })}
