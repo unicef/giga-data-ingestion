@@ -52,7 +52,7 @@ jobs:
                     AZURE_EMAIL_SENDER: "$(azureEmailSender)"
                     EMAIL_RENDERER_BEARER_TOKEN: "$(emailRendererBearerToken)"
                     EMAIL_RENDERER_SERVICE_URL: "$(emailRendererServiceUrl)"
-                    EMAIL_TEST_RECIPIENTS: "$(emailTestRecipients)"
+                    EMAIL_TEST_RECIPIENTS: '$(emailTestRecipients)'
                     DEPLOY_ENV: "$(deployEnv)"
                     COMMIT_SHA: "$(Build.SourceVersion)"
                     SENTRY_DSN: "$(sentryDsn)"
