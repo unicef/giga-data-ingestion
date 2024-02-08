@@ -26,6 +26,8 @@ class GraphUser(BaseModel):
 class GraphUserUpdateRequest(BaseModel):
     account_enabled: bool | None = None
     display_name: str | None = None
+    given_name: str | None = None
+    surname: str | None = None
 
     @model_validator(mode="after")
     def provide_at_least_one_field(self):
@@ -38,3 +40,5 @@ class GraphUserInviteAndAddGroupsRequest(BaseModel):
     groups_to_add: list[UUID4]
     invited_user_display_name: str | None = None
     invited_user_email_address: EmailStr
+    invited_user_given_name: str | None = None
+    invited_user_surname: str | None = None

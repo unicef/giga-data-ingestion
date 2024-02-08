@@ -1,6 +1,6 @@
 import { ThemeConfig, theme as defaultTheme } from "antd";
 
-const theme: ThemeConfig = {
+const antdTheme: ThemeConfig = {
   ...defaultTheme,
   algorithm: defaultTheme.defaultAlgorithm,
   components: {
@@ -10,10 +10,10 @@ const theme: ThemeConfig = {
     },
     Breadcrumb: {
       linkColor: "#277AFF",
-      lastItemColor: "#000000",
+      lastItemColor: "#222222",
       linkHoverColor: "#277AFF",
     },
   },
 };
 
-export default theme;
+export default antdTheme;

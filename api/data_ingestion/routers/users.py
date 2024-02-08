@@ -1,3 +1,7 @@
+from fastapi import APIRouter, Depends, Security, status
+from fastapi_azure_auth.user import User
+from pydantic import UUID4
+
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
 from data_ingestion.internal.users import UsersApi
@@ -11,9 +15,6 @@ from data_ingestion.schemas.user import (
     GraphUserInviteAndAddGroupsRequest,
     GraphUserUpdateRequest,
 )
-from fastapi import APIRouter, Depends, Security, status
-from fastapi_azure_auth.user import User
-from pydantic import UUID4
 
 router = APIRouter(
     prefix="/api/users",
@@ -53,10 +54,13 @@ async def invite_user_and_add_groups(body: GraphUserInviteAndAddGroupsRequest):
         groups_to_remove=[],
     )
 
-    result = await UsersApi.send_user_invite(send_user_invite_body)
-    await GroupsApi.modify_user_access(
-        result.invited_user.id, modify_user_access_body
+    edit_user_body = GraphUserUpdateRequest(
+        given_name=body.invited_user_given_name, surname=body.invited_user_surname
     )
+
+    result = await UsersApi.send_user_invite(send_user_invite_body)
+    await GroupsApi.modify_user_access(result.invited_user.id, modify_user_access_body)
+    await UsersApi.edit_user(result.invited_user.id, edit_user_body)
 
 
 @router.get("/me", response_model=User)

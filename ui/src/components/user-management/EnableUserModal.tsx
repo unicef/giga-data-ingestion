@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react";
-import toast from "react-hot-toast";
 
+import { InlineNotification, Modal, ToastNotification } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
-import { Alert, Modal } from "antd";
 
 import { useApi } from "@/api";
 import { GraphUser } from "@/types/user";
@@ -20,59 +19,73 @@ export default function EnableUserModal({
 }: EnableUserModalProps) {
   const api = useApi();
 
-  const [confirmLoading, setConfirmLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+
   const revokeUser = useMutation({
     mutationFn: api.users.edit_user,
   });
 
-  const handleOk = useCallback(async () => {
-    setConfirmLoading(true);
+  const handleSubmit = useCallback(async () => {
     try {
       await revokeUser.mutateAsync({
         account_enabled: true,
         id: initialValues.id,
       });
 
-      toast.success(
-        "User successfully enabled. Please wait a moment or refresh the page for updates",
-      );
-
+      setShowSuccessNotification(true);
       setIsEnableUserModalOpen(false);
     } catch (err) {
-      toast.error("Operation failed, please try again");
-
       setError(true);
-    } finally {
-      setConfirmLoading(false);
     }
   }, [revokeUser, setIsEnableUserModalOpen, initialValues.id]);
 
   return (
-    <Modal
-      centered={true}
-      confirmLoading={confirmLoading}
-      okButtonProps={{ className: "rounded-none bg-primary" }}
-      open={isEnableUserModalOpen}
-      title="Confirm user access modification"
-      width="60%"
-      onCancel={() => {
-        setIsEnableUserModalOpen(false);
-      }}
-      onOk={handleOk}
-    >
-      <div>
-        <p>
-          This will re-enable acces of the user with email{" "}
-          <b>{initialValues.mail}</b> to the whole Giga platform
-        </p>
-        <br />
+    <>
+      <Modal
+        aria-label="confirm enable user modal"
+        loadingStatus={revokeUser.isPending ? "active" : "inactive"}
+        modalHeading="Confirm Revoke User"
+        open={isEnableUserModalOpen}
+        primaryButtonText="Confirm"
+        secondaryButtonText="Cancel"
+        onRequestClose={() => setIsEnableUserModalOpen(false)}
+        onRequestSubmit={handleSubmit}
+      >
+        <div>
+          <p>
+            This will re-enable access of the user with email{" "}
+            <b>{initialValues.mail}</b> to the whole Giga platform
+          </p>
+          <br />
 
-        <p>Are you sure you want to do this?</p>
-        {error && (
-          <Alert message="Operation failed, please try again" type="error" />
-        )}
-      </div>
-    </Modal>
+          <p>Are you sure you want to do this?</p>
+          {error && (
+            <InlineNotification
+              aria-label="create user error notification"
+              hideCloseButton
+              kind="error"
+              statusIconDescription="notification"
+              subtitle="Operation failed. Please try again."
+              title="Error"
+            />
+          )}
+        </div>
+      </Modal>
+
+      {showSuccessNotification && (
+        <ToastNotification
+          aria-label="enable user success notification"
+          kind="success"
+          caption="User successfully enabled. Please wait a moment or refresh the page for updates"
+          onClose={() => setShowSuccessNotification(false)}
+          onCloseButtonClick={() => setShowSuccessNotification(false)}
+          statusIconDescription="success"
+          timeout={5000}
+          title="Enable user success"
+          className="absolute right-0 top-0 z-50 mx-6 my-16"
+        />
+      )}
+    </>
   );
 }
