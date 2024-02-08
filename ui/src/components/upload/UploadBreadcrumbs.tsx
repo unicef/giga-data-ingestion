@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 
-import { Breadcrumb } from "antd";
+import { Breadcrumb, BreadcrumbItem } from "@carbon/react";
 
 export default function UploadBreadcrumbs() {
   const { pathname } = useLocation();
@@ -60,11 +60,11 @@ export default function UploadBreadcrumbs() {
 
   return (
     <Breadcrumb
-      separator=">"
       style={{ viewTransitionName: "upload-breadcrumbs" }}
+      noTrailingSlash
     >
       {breadcrumbItems.map((item, index) => (
-        <Breadcrumb.Item key={item.label} className="capitalize">
+        <BreadcrumbItem key={item.label} className="capitalize">
           {item.path && index + 1 < breadcrumbItems.length ? (
             <Link to={item.path} unstable_viewTransition>
               {item.label}
@@ -72,7 +72,7 @@ export default function UploadBreadcrumbs() {
           ) : (
             item.label
           )}
-        </Breadcrumb.Item>
+        </BreadcrumbItem>
       ))}
     </Breadcrumb>
   );

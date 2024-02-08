@@ -1,35 +1,36 @@
-import { Collapse } from "antd";
+import { Link } from "react-router-dom";
 
-import { uploadFileGroups } from "@/mocks/uploadFileGroups.tsx";
+import {
+  Accordion,
+  AccordionItem,
+  Heading,
+  Section,
+  Stack,
+} from "@carbon/react";
 
 export default function UploadDataSelect() {
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-[23px]">What will you be uploading today?</h2>
-      <div className="flex flex-col">
-        <Collapse
-          bordered={false}
-          className="bg-transparent"
-          items={[
-            {
-              key: "new",
-              label: "A completely new dataset",
-              children: <li>Create a new dataset</li>,
-            },
-            {
-              key: "append",
-              label: "An addition to an existing dataset",
-              children: (
-                <Collapse
-                  items={uploadFileGroups}
-                  bordered={false}
-                  className="bg-transparent"
-                />
-              ),
-            },
-          ]}
-        />
-      </div>
-    </div>
+    <Section>
+      <Section>
+        <Stack gap={6}>
+          <Heading>What will you be uploading today?</Heading>
+          <Accordion>
+            <AccordionItem title="A completely new dataset">
+              Create a new dataset
+            </AccordionItem>
+            <AccordionItem title="An addition to an existing dataset">
+              <Stack gap={2}>
+                <Link to="school-data/geolocation" unstable_viewTransition>
+                  School Geolocation
+                </Link>
+                <Link to="school-data/geolocation" unstable_viewTransition>
+                  School Coverage
+                </Link>
+              </Stack>
+            </AccordionItem>
+          </Accordion>
+        </Stack>
+      </Section>
+    </Section>
   );
 }

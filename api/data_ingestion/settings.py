@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    PYTHON_ENV: Literal["development", "staging", "production"] = "production"
+    PYTHON_ENV: Literal["local", "development", "staging", "production"] = "production"
     BASE_DIR: Path = Path(__file__).parent.parent
     ALLOWED_HOSTS: list[str] = ["*"]
     CORS_ALLOWED_ORIGINS: list[str] = ["*"]

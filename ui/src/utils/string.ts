@@ -1,27 +1,18 @@
-import { NamePath } from "antd/es/form/interface";
-import { StoreValue } from "antd/es/form/interface";
-
-import { Dataset } from "@/types/group";
-
 export const pluralizeDatasets = (uniqueDatasets: number) =>
-  `access to Giga data for ${uniqueDatasets} ${
-    uniqueDatasets === 1 ? "dataset" : "datasets"
-  }`;
+  `${uniqueDatasets} ${uniqueDatasets === 1 ? "dataset" : "datasets"}`;
 
 export const pluralizeCountries = (countries: string[]) => {
-  const countriesText =
+  return (
     countries.slice(0, -1).join(", ") +
     (countries.length > 1 ? ", and " : "") +
-    countries.slice(-1);
-  return countriesText;
+    countries.slice(-1)
+  );
 };
 
 export const getUniqueDatasets = (
-  getFieldValue: (field: NamePath) => StoreValue,
+  email: string,
+  addedDatasets: Array<{ name: string; id?: string }>,
 ) => {
-  const email = getFieldValue("email") || "";
-  const addedDatasets: Dataset[] = getFieldValue("addedDatasets") || [];
-
   const uniqueCountries = new Set<string>();
   const datasetTypes = new Set();
 
