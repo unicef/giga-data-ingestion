@@ -100,7 +100,7 @@ export default function AddSourceDialog({
             </Button>
           </Form.Item>
         </div>
-        <div className="h-[65vh] overflow-auto rounded bg-slate-800 p-4 text-gray-4">
+        <div className="text-gray-4 h-[65vh] overflow-auto rounded bg-slate-800 p-4">
           <code>
             <pre>{JSON.stringify(endpointTest, null, 2)}</pre>
           </code>

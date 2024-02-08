@@ -3,7 +3,7 @@ import { useState } from "react";
 import { ApiOutlined } from "@ant-design/icons";
 import { createLazyFileRoute } from "@tanstack/react-router";
 
-import AddSourceDialog from "@/components/datasources/AddSourceDialog.tsx";
+import AddSourceDialog from "@/components/ingest-api/AddSourceDialog.tsx";
 
 export const Route = createLazyFileRoute("/ingest-api/")({
   component: IngestApi,

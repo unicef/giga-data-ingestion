@@ -178,9 +178,7 @@ class GroupsApi:
             ) from err
 
     @classmethod
-    async def modify_user_access(
-        cls, user_id: UUID4, body: ModifyUserAccessRequest
-    ) -> None:
+    async def modify_user_access(cls, user_id: UUID4, body: ModifyUserAccessRequest):
         access_token = credential.get_token("https://graph.microsoft.com/.default")
         graph_api_endpoint = "https://graph.microsoft.com/v1.0"
 
@@ -226,7 +224,7 @@ class GroupsApi:
                 raise HTTPException(
                     detail=err.error.message,
                     status_code=err.response_status_code,
-                )
+                ) from err
 
         for chunk in chunks(groups_to_remove, chunk_size):
             try:
@@ -254,6 +252,6 @@ class GroupsApi:
                 raise HTTPException(
                     detail=err.error.message,
                     status_code=err.response_status_code,
-                )
+                ) from err
 
         return total_response_data

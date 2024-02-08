@@ -1,13 +1,34 @@
-import { FormEvent } from "react";
+import { useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Button, Input, Select } from "antd";
-
-import rawCountries from "@/mocks/countries.json";
 import {
-  dataSensitivityOptions as rawDataSensitivityOptions,
-  licenseOptions as rawLicenseOptions,
-} from "@/mocks/uploadMetadata.tsx";
+  Button,
+  Loading,
+  RadioButton,
+  Select,
+  SelectItem,
+  Stack,
+  TextArea,
+} from "@carbon/react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+
+import { useApi } from "@/api";
+import ControlledDatepicker from "@/components/upload/ControlledDatepicker.tsx";
+import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
+import {
+  dataCollectionModalityOptions,
+  dataOwnerOptions,
+  domainOptions,
+  geolocationDataSourceOptions,
+  piiOptions,
+  schoolIdTypeOptions,
+  sensitivityOptions,
+  sourceOptions,
+} from "@/mocks/metadataFormValues.tsx";
+import { MetadataFormValues } from "@/types/metadata.ts";
+import { filterCountryDatasetFromGraphGroup } from "@/utils/group";
+import { capitalizeFirstLetter } from "@/utils/string.ts";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/metadata",
@@ -15,136 +36,339 @@ export const Route = createFileRoute(
   component: Metadata,
 });
 
-const countries = rawCountries.map(c => ({ value: c.name, label: c.name }));
-
-const dataSensitivityOptions = rawDataSensitivityOptions.map(s => ({
-  value: s,
-  label: s,
-}));
-
-const licenseOptions = rawLicenseOptions.map(l => ({ value: l, label: l }));
-
 function Metadata() {
+  const api = useApi();
   const navigate = useNavigate({ from: Route.fullPath });
+  const { uploadType = "" } = Route.useParams();
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    void navigate({ to: "../success" });
-  }
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isUploadError, setIsUploadError] = useState<boolean>(false);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<MetadataFormValues>();
+
+  const uploadFile = useMutation({
+    mutationFn: api.uploads.upload_file,
+  });
+
+  const { data: userData, isLoading } = useQuery({
+    queryKey: ["user"],
+    queryFn: api.users.get_groups_from_email,
+  });
+
+  const datasetSuffix = `-School ${capitalizeFirstLetter(uploadType)}`;
+
+  const userCountryDatasets = filterCountryDatasetFromGraphGroup(
+    userData?.data.member_of ?? [],
+    datasetSuffix,
+  );
+
+  const userCountries = userCountryDatasets
+    .map(countryDataset => countryDataset.display_name.split("-")[0])
+    .sort((a, b) => b.localeCompare(a))
+    .reverse();
+
+  const onSubmit: SubmitHandler<MetadataFormValues> = async data => {
+    if (Object.keys(errors).length > 0) {
+      console.log("Form has errors, not submitting");
+      return;
+    }
+
+    setIsUploading(true);
+    setIsUploadError(false);
+
+    try {
+      // @ts-expect-error @typescript-eslint/no-unused-vars - see TODO below
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const uploadId = await uploadFile.mutateAsync({
+        dataset: uploadType,
+        // file: location.state.file,
+        sensitivity_level: data.sensitivityLevel,
+        pii_classification: data.piiClassification,
+        geolocation_data_source: data.geolocationDataSource,
+        data_collection_modality: data.dataCollectionModality,
+        data_collection_date: new Date(data.dataCollectionDate).toISOString(),
+        domain: data.domain,
+        date_modified: new Date(data.dateModified).toISOString(),
+        source: data.source,
+        data_owner: data.dataOwner,
+        country: data.country,
+        school_id_type: data.schoolIdType,
+        description: data.description,
+      });
+
+      setIsUploading(false);
+
+      void navigate({
+        to: "../success",
+        // TODO: Convert to tanstack equivalent
+        // state: {
+        //   uploadDate: location.state.timestamp,
+        //   uploadId: uploadId.data,
+        // },
+      });
+    } catch {
+      setIsUploadError(true);
+      setIsUploading(false);
+    }
+  };
+
+  const SensitivityRadio = () => (
+    <ControlledRadioGroup
+      control={control}
+      legendText="Sensitivity Level"
+      name="sensitivityLevel"
+    >
+      {sensitivityOptions.map(option => (
+        <RadioButton
+          id={option.value}
+          key={option.value}
+          labelText={option.label}
+          value={option.value}
+        />
+      ))}
+    </ControlledRadioGroup>
+  );
+
+  const PIIRadio = () => (
+    <ControlledRadioGroup
+      control={control}
+      legendText="PII Classification"
+      name="piiClassification"
+    >
+      {piiOptions.map(option => (
+        <RadioButton
+          id={option.value}
+          key={option.value}
+          labelText={option.label}
+          value={option.value}
+        />
+      ))}
+    </ControlledRadioGroup>
+  );
+
+  const GeolocationDataSourceSelect = () => (
+    <Select
+      id="geolocatinDataSource"
+      invalid={!!errors.geolocationDataSource}
+      labelText="Geolocation Data Source"
+      {...register("geolocationDataSource", { required: true })}
+    >
+      <SelectItem value="" text="" />
+      {geolocationDataSourceOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
+
+  const DataCollectionModalitySelect = () => (
+    <Select
+      id="dataCollectionModality"
+      invalid={!!errors.dataCollectionModality}
+      labelText="Data Collection Modality"
+      {...register("dataCollectionModality", { required: true })}
+    >
+      <SelectItem value="" text="" />
+
+      {dataCollectionModalityOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
+
+  const DomainSelect = () => (
+    <Select
+      id="domain"
+      invalid={!!errors.domain}
+      labelText="Domain"
+      {...register("domain", { required: true })}
+    >
+      <SelectItem value="" text="" />
+
+      {domainOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
+
+  const SourceSelect = () => (
+    <Select
+      id="source"
+      invalid={!!errors.source}
+      labelText="Source"
+      {...register("source", { required: true })}
+    >
+      <SelectItem value="" text="" />
+      {sourceOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
+
+  const DataOwnerSelect = () => (
+    <Select
+      id="dataowner"
+      invalid={!!errors.dataOwner}
+      labelText="Data Owner"
+      {...register("dataOwner", { required: true })}
+    >
+      <SelectItem value="" text="" />
+      {dataOwnerOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
+  const CountrySelect = ({
+    countryOptions,
+    isLoading,
+  }: {
+    countryOptions: string[];
+    isLoading: boolean;
+  }) => {
+    if (isLoading) {
+      return (
+        <Select disabled id="country" labelText="Loading...">
+          <SelectItem text="Loading..." />
+        </Select>
+      );
+    }
+
+    return (
+      <Select
+        id="country"
+        invalid={!!errors.country}
+        labelText="Country"
+        {...register("country", { required: true })}
+      >
+        <SelectItem value="" text="" />
+        {countryOptions.map(country => (
+          <SelectItem key={country} text={country} value={country} />
+        ))}
+      </Select>
+    );
+  };
+
+  const SchoolIdTypeSelect = () => (
+    <Select
+      id="schoolIdType"
+      invalid={!!errors.schoolIdType}
+      labelText="School ID type"
+      {...register("schoolIdType", { required: true })}
+    >
+      <SelectItem value="" text="" />
+      {schoolIdTypeOptions.map(option => (
+        <SelectItem
+          key={option.value}
+          text={option.label}
+          value={option.value}
+        />
+      ))}
+    </Select>
+  );
 
   return (
     <>
-      <h4 className="text-base text-gray-3">Step 1: Upload</h4>
-      <h3 className="text-[23px]">Step 2: Metadata</h3>
-      <p>Please provide more information about your upload and yourself.</p>
+      <h4 className="text-base text-giga-gray">Step 1: Upload</h4>
+      <h2 className="text-[23px]">Step 2: Metadata</h2>
+      <p>
+        Please check if any information about the dataset is meant to be
+        updated.
+      </p>
 
-      <form onSubmit={onSubmit} className="flex flex-col gap-6">
-        <fieldset className="flex items-center gap-4">
-          <label
-            htmlFor="dataOwner"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> Data Owner:
-          </label>
-          <Input
-            id="dataOwner"
-            name="dataOwner"
-            placeholder="The main person or organization responsible for this dataset"
-            required
-            size="large"
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Stack gap={5}>
+          <SensitivityRadio />
+          <PIIRadio />
+          <GeolocationDataSourceSelect />
+          <DataCollectionModalitySelect />
+          <ControlledDatepicker
+            control={control}
+            datePickerProps={{
+              datePickerType: "single",
+            }}
+            name="dataCollectionDate"
+            datePickerInputProps={{
+              invalidText: "Select a date",
+              id: "collectionDate",
+              labelText: "Date Collection Date",
+
+              placeholder: "yyyy-mm-dd",
+            }}
           />
-        </fieldset>
-
-        <fieldset className="flex items-center gap-4">
-          <label
-            htmlFor="country"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> Country:
-          </label>
-          <Select
-            id="country"
-            placeholder="What country is covered by this dataset?"
-            size="large"
-            className="w-full"
-            options={countries}
+          <DomainSelect />
+          <ControlledDatepicker
+            control={control}
+            datePickerProps={{
+              datePickerType: "single",
+            }}
+            name="dateModified"
+            datePickerInputProps={{
+              invalidText: "Select a date",
+              id: "dateModified",
+              labelText: "Date Modified",
+              placeholder: "yyyy-mm-dd",
+            }}
           />
-        </fieldset>
-
-        <fieldset className="flex items-center gap-4">
-          <label
-            htmlFor="dataSensitivity"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> Data Sensitivity:
-          </label>
-          <Select
-            id="dataSensitivity"
-            placeholder="Who should be able to access this dataset?"
-            size="large"
-            className="w-full"
-            options={dataSensitivityOptions}
+          {uploadType === "coverage" && <SourceSelect />}
+          <DataOwnerSelect />
+          <CountrySelect countryOptions={userCountries} isLoading={isLoading} />
+          <SchoolIdTypeSelect />
+          <TextArea
+            invalid={Boolean(errors.description)}
+            invalidText={String(errors.description?.message)}
+            labelText="Description"
+            rows={4}
+            id="description"
+            {...register("description", {
+              required: "Please enter a description",
+            })}
           />
-        </fieldset>
-
-        <fieldset className="flex items-center gap-4">
-          <label
-            htmlFor="license"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> License:
-          </label>
-          <Select
-            id="license"
-            placeholder="Are there any licenses that the team should be aware of?"
-            size="large"
-            className="w-full"
-            options={licenseOptions}
-          />
-        </fieldset>
-
-        <fieldset className="flex items-center gap-4">
-          <label
-            htmlFor="email"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> Email Address:
-          </label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="Are there any licenses that the team should be aware of?"
-            required
-            size="large"
-          />
-        </fieldset>
-
-        <fieldset className="flex items-start gap-4">
-          <label
-            htmlFor="comments"
-            className="w-2/12 whitespace-nowrap text-right"
-          >
-            <span className="text-error">*</span> Comments:
-          </label>
-          <Input.TextArea
-            id="comments"
-            name="comments"
-            placeholder="Are there any other details you’d like to mention or clarify?"
-            required
-            size="large"
-            rows={6}
-          />
-        </fieldset>
-
-        <div className="flex justify-end gap-2">
-          <Link to="..">
-            <Button className="border-primary text-primary">Cancel</Button>
-          </Link>
-          <Button type="primary" htmlType="submit" className="bg-primary">
-            Proceed
-          </Button>
-        </div>
+          <div className="flex gap-4">
+            <Button
+              {...(isUploading
+                ? {
+                    disabled: true,
+                    renderIcon: props => (
+                      <Loading small={true} withOverlay={false} {...props} />
+                    ),
+                  }
+                : {})}
+              type="submit"
+            >
+              Submit
+            </Button>
+            <Button kind="tertiary">Cancel</Button>
+          </div>
+          {isUploadError && (
+            <div className="text-giga-dark-red">
+              Error occurred during file upload. Please try again
+            </div>
+          )}
+        </Stack>
       </form>
     </>
   );
