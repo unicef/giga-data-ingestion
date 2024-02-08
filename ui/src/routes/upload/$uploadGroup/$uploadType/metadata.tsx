@@ -5,7 +5,6 @@ import {
   Button,
   Loading,
   RadioButton,
-  Select,
   SelectItem,
   Stack,
   TextArea,
@@ -14,6 +13,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
+import { Select } from "@/components/forms/Select.tsx";
 import ControlledDatepicker from "@/components/upload/ControlledDatepicker.tsx";
 import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
 import {
