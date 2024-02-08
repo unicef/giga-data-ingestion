@@ -19,6 +19,9 @@ variables:
   emailRendererBearerToken: $(EMAIL_RENDERER_BEARER_TOKEN)
   emailRendererServiceUrl: $(EMAIL_RENDERER_SERVICE_URL)
   emailTestRecipients: $(EMAIL_TEST_RECIPIENTS)
+  sentryDsn: $(SENTRY_DSN)
+  viteSentryDsn: $(VITE_SENTRY_DSN)
+  nodeSentryDsn: $(NODE_SENTRY_DSN)
   webAppHost: $(WEB_APP_HOST)
   deployEnv: $(DEPLOY_ENV)
   system.debug: true
