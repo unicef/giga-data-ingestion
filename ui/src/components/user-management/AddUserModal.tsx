@@ -9,7 +9,6 @@ import {
   FormGroup,
   InlineNotification,
   Modal,
-  Select,
   SelectItem,
   Stack,
   TextInput,
@@ -19,6 +18,7 @@ import MultiSelect from "@carbon/react/lib/components/MultiSelect/MultiSelect";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { useApi } from "@/api";
+import { Select } from "@/components/forms/Select.tsx";
 import countries from "@/constants/countries";
 import { filterRoles, matchNamesWithIds } from "@/utils/group";
 import {
