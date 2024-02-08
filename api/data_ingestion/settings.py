@@ -2,12 +2,15 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
+import sentry_sdk
+from loguru import logger
 from pydantic import AnyUrl
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     PYTHON_ENV: Literal["local", "development", "staging", "production"] = "production"
+    DEPLOY_ENV: Literal["local", "dev", "stg", "prd"] = "local"
     BASE_DIR: Path = Path(__file__).parent.parent
     ALLOWED_HOSTS: list[str] = ["*"]
     CORS_ALLOWED_ORIGINS: list[str] = ["*"]
@@ -29,6 +32,7 @@ class Settings(BaseSettings):
     EMAIL_RENDERER_BEARER_TOKEN: str
     EMAIL_RENDERER_SERVICE_URL: AnyUrl
     EMAIL_TEST_RECIPIENTS: list[str]
+    COMMIT_SHA: str = ""
 
     class Config:
         env_file = ".env"
@@ -36,7 +40,7 @@ class Settings(BaseSettings):
 
     @property
     def IN_PRODUCTION(self) -> bool:
-        return self.PYTHON_ENV == "production"
+        return self.PYTHON_ENV != "local"
 
     @property
     def STATICFILES_DIR(self) -> Path:
@@ -53,3 +57,15 @@ def get_settings():
 
 
 settings = get_settings()
+
+
+def initialize_sentry():
+    if settings.SENTRY_DSN:
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            traces_sample_rate=1.0,
+            profiles_sample_rate=1.0,
+            environment=settings.DEPLOY_ENV,
+            release=settings.COMMIT_SHA,
+        )
+        logger.info("Initialized Sentry.")

@@ -50,3 +50,4 @@ jobs:
                     EMAIL_RENDERER_SERVICE_URL: "$(emailRendererServiceUrl)"
                     EMAIL_TEST_RECIPIENTS: "$(emailTestRecipients)"
                     DEPLOY_ENV: "$(deployEnv)"
+                    COMMIT_SHA: "$(Build.SourceVersion)"
