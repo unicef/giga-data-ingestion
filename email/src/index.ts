@@ -25,7 +25,10 @@ if (process.env.SENTRY_DSN) {
 const app = new Hono();
 
 app.use("*", secureHeaders());
-app.use("/email/*", bearerAuth({ token: process.env.BEARER_TOKEN ?? "" }));
+app.use(
+  "/email/*",
+  bearerAuth({ token: process.env.EMAIL_RENDERER_BEARER_TOKEN ?? "" }),
+);
 
 app.get("/", ctx => {
   return ctx.text("ok");
