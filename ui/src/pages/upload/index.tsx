@@ -23,7 +23,7 @@ export default function UploadDataSelect() {
                 <Link to="school-data/geolocation" unstable_viewTransition>
                   School Geolocation
                 </Link>
-                <Link to="school-data/geolocation" unstable_viewTransition>
+                <Link to="school-data/coverage" unstable_viewTransition>
                   School Coverage
                 </Link>
               </Stack>

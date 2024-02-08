@@ -8,6 +8,7 @@ import axios, { AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { loginRequest } from "@/lib/auth.ts";
 
 import rolesRouter from "./routers/groups.ts";
+import uploadsRouter from "./routers/uploads.ts";
 import usersRouter from "./routers/users.ts";
 
 const baseURL = "/api";
@@ -23,6 +24,7 @@ const api = {
   },
   users: usersRouter(axi),
   groups: rolesRouter(axi),
+  uploads: uploadsRouter(axi),
 };
 
 export function useApi() {

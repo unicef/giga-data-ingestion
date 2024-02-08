@@ -10,6 +10,9 @@ export default function routes(axi: AxiosInstance) {
     get: (id: string): Promise<AxiosResponse<GraphUser>> => {
       return axi.get(`/users/${id}`);
     },
+    get_groups_from_email: (): Promise<AxiosResponse<GraphUser>> => {
+      return axi.get("/users/email");
+    },
 
     invite_and_add_groups: ({
       groups_to_add,

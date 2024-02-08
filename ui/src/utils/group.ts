@@ -1,4 +1,5 @@
 import countries from "@/constants/countries";
+import { GraphGroup } from "@/types/group";
 
 export function filterCountries(groups: string[]): string[] {
   return groups.filter(group => {
@@ -6,6 +7,23 @@ export function filterCountries(groups: string[]): string[] {
       group.split("-")[0].startsWith(country.name),
     );
   });
+}
+
+export function filterCountryDatasetFromGraphGroup(
+  groups: GraphGroup[],
+  dataset: string,
+): GraphGroup[] {
+  const countryGroups = groups.filter(group => {
+    return countries.some(country => {
+      return group.display_name.split("-")[0].trim() === country.name;
+    });
+  });
+
+  const countryDatasets = countryGroups.filter(group => {
+    return group.display_name.endsWith(`${dataset}`);
+  });
+
+  return countryDatasets;
 }
 
 export function filterRoles(groups: string[]): string[] {
