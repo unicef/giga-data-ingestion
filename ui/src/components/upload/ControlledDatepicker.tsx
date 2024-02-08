@@ -3,7 +3,7 @@ import { Control, FieldPath, useController } from "react-hook-form";
 
 import { DatePicker, DatePickerInput } from "@carbon/react";
 
-import { MetadataFormValues } from "@/pages/upload/[uploadGroup]/[uploadType]/metadata";
+import { MetadataFormValues } from "@/types/metadata.ts";
 
 type DatePickerProps = Omit<ComponentProps<typeof DatePicker>, "children">;
 
