@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { ComponentProps, PropsWithChildren, ReactNode, useState } from "react";
 
 import { AuthenticatedTemplate } from "@azure/msal-react";
-import { Link, useRouterState } from "@tanstack/react-router";
-import clsx from "clsx";
 import { Switcher as SwitcherIcon } from "@carbon/icons-react";
 import {
+  SwitcherItem as CarbonSwitcherItem,
   Header,
   HeaderGlobalAction,
   HeaderGlobalBar,
@@ -13,10 +12,20 @@ import {
   HeaderNavigation,
   HeaderPanel,
   Switcher,
-  SwitcherItem,
 } from "@carbon/react";
+import { Link, LinkComponent, useRouterState } from "@tanstack/react-router";
 
 import { useStore } from "@/store.ts";
+
+type SwitcherLinkItemProps = ComponentProps<typeof CarbonSwitcherItem> &
+  PropsWithChildren & {
+    as: ReactNode | LinkComponent;
+    to: string;
+  };
+
+const SwitcherLinkItem = ({ children, ...props }: SwitcherLinkItemProps) => {
+  return <CarbonSwitcherItem {...props}>{children}</CarbonSwitcherItem>;
+};
 
 export default function Navbar() {
   const { featureFlags } = useStore();
@@ -42,10 +51,7 @@ export default function Navbar() {
             aria-label="Main Navigation"
             aria-labelledby="main-nav-label"
           >
-            <HeaderMenuItem
-              as={Link}
-              to="/user-management"
-            >
+            <HeaderMenuItem as={Link} to="/user-management">
               Admin Panel
             </HeaderMenuItem>
           </HeaderNavigation>
@@ -67,29 +73,21 @@ export default function Navbar() {
         onHeaderPanelFocus={() => setIsSwitcherExpanded(expanded => !expanded)}
       >
         <Switcher aria-label="switcher container" expanded={isSwitcherExpanded}>
-          <SwitcherItem
-            aria-label="upload file"
-            as={Link}
-            to="/upload"
-          >
+          <SwitcherLinkItem aria-label="upload file" as={Link} to="/upload">
             Upload File
-          </SwitcherItem>
-          <SwitcherItem
-            aria-label="upload file"
-            as={Link}
-            to="/ingest-api"
-          >
+          </SwitcherLinkItem>
+          <SwitcherLinkItem aria-label="upload file" as={Link} to="/ingest-api">
             Ingest API
-          </SwitcherItem>
+          </SwitcherLinkItem>
           {featureFlags.userManagementPage && (
             <AuthenticatedTemplate>
-              <SwitcherItem
+              <SwitcherLinkItem
                 aria-label="user management"
                 as={Link}
                 to={isUserManagementPage ? "/" : "/user-management"}
               >
                 {isUserManagementPage ? "Ingestion Portal" : "Admin Panel"}
-              </SwitcherItem>
+              </SwitcherLinkItem>
             </AuthenticatedTemplate>
           )}
         </Switcher>

@@ -34,7 +34,7 @@ export default function Landing() {
             {featureFlags.ingestApiPage && (
               <Button
                 as={Link}
-                to="/datasources"
+                to="/ingest-api"
                 className="gap-4"
                 renderIcon={WifiBridgeAlt}
               >
