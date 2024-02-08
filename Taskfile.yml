@@ -4,10 +4,12 @@ dotenv:
   - api/.env
   - ui/.env
 
+env:
+  COMMIT_SHA:
+    sh: git rev-parse --short HEAD
+
 vars:
   PROJECT_NAME: giga-dataops-platform_ingestion-portal
-  SHORT_SHA:
-    sh: git rev-parse --short HEAD
 
 tasks:
   default:
@@ -85,13 +87,13 @@ tasks:
     internal: true
     desc: Build Docker image
     cmds:
-      - docker build --tag {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.SHORT_SHA}} -f Dockerfile.prod .
+      - docker build --tag {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.COMMIT_SHA}} -f Dockerfile.prod .
 
   push-cr:
     internal: true
     desc: Push Docker image
     cmds:
-      - docker push {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.SHORT_SHA}}
+      - docker push {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.COMMIT_SHA}}
 
   helm-up:
     desc: Install/upgrade Helm chart
@@ -101,7 +103,7 @@ tasks:
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
         --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}}
-        --set image.tag={{.SHORT_SHA}}
+        --set image.tag={{.COMMIT_SHA}}
         --set service.type=LoadBalancer
 
   helm-down:

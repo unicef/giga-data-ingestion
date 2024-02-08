@@ -20,7 +20,7 @@ msal = "^1.24.1"
 azure-storage-blob = "^12.18.3"
 msgraph-sdk = "^1.0.0a16"
 orjson = "^3.9.9"
-sentry-sdk = { extras = ["fastapi"], version = "^1.35.0" }
+sentry-sdk = {extras = ["fastapi"], version = "^1.40.2"}
 country-converter = "^1.2"
 azure-communication-email = "^1.0.0"
 jinja2 = "^3.1.3"

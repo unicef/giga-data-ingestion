@@ -3,6 +3,8 @@ import { createElement } from "react";
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { render } from "@react-email/render";
+import * as Sentry from "@sentry/node";
+import { ProfilingIntegration } from "@sentry/profiling-node";
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { secureHeaders } from "hono/secure-headers";
@@ -10,10 +12,23 @@ import { secureHeaders } from "hono/secure-headers";
 import DataQualityReport from "../emails/dq-report";
 import { DataQualityReportEmailProps } from "../types/dq-report";
 
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.NODE_SENTRY_DSN,
+    environment: process.env.DEPLOY_ENV ?? "local",
+    integrations: [new ProfilingIntegration()],
+    tracesSampleRate: 1.0,
+    profilesSampleRate: 1.0,
+  });
+}
+
 const app = new Hono();
 
 app.use("*", secureHeaders());
-app.use("/email/*", bearerAuth({ token: process.env.BEARER_TOKEN ?? "" }));
+app.use(
+  "/email/*",
+  bearerAuth({ token: process.env.EMAIL_RENDERER_BEARER_TOKEN ?? "" }),
+);
 
 app.get("/", ctx => {
   return ctx.text("ok");
