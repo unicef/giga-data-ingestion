@@ -14,6 +14,11 @@ variables:
   azureAdPolicyName: $(AZURE_AUTH_POLICY_NAME)
   azureAdRedirectUri: $(AZURE_REDIRECT_URI)
   applicationSecretKey: $(APPLICATION_SECRET_KEY)
+  azureEmailConnectionString: $(AZURE_EMAIL_CONNECTION_STRING)
+  azureEmailSender: $(AZURE_EMAIL_SENDER)
+  emailRendererBearerToken: $(EMAIL_RENDERER_BEARER_TOKEN)
+  emailRendererServiceUrl: $(EMAIL_RENDERER_SERVICE_URL)
+  emailTestRecipients: $(EMAIL_TEST_RECIPIENTS)
   webAppHost: $(WEB_APP_HOST)
   deployEnv: $(DEPLOY_ENV)
   system.debug: true
