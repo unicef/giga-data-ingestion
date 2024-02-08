@@ -2,6 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
+from pydantic import AnyUrl
 from pydantic_settings import BaseSettings
 
 
@@ -21,8 +22,13 @@ class Settings(BaseSettings):
     AZURE_SAS_TOKEN: str
     AZURE_BLOB_CONTAINER_NAME: str
     AZURE_STORAGE_ACCOUNT_NAME: str
+    AZURE_EMAIL_CONNECTION_STRING: str
+    AZURE_EMAIL_SENDER: str
     WEB_APP_REDIRECT_URI: str
     SENTRY_DSN: str = ""
+    EMAIL_RENDERER_BEARER_TOKEN: str
+    EMAIL_RENDERER_SERVICE_URL: AnyUrl
+    EMAIL_TEST_RECIPIENTS: list[str]
 
     class Config:
         env_file = ".env"
