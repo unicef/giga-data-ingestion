@@ -19,3 +19,10 @@ export interface UploadCheck {
   acceptableValues: CheckStatus;
   remarks: CheckStatus;
 }
+
+export interface UploadRouterContext {
+  file: File | null;
+  timestamp: Date | null;
+  uploadDate: string;
+  uploadId: string;
+}

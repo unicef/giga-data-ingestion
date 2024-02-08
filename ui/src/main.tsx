@@ -14,12 +14,12 @@ import "@fontsource/open-sans/400.css";
 import "@fontsource/open-sans/500.css";
 import "@fontsource/open-sans/600.css";
 import "@fontsource/open-sans/700.css";
-import { Routes } from "@generouted/react-router/lazy";
 import * as Sentry from "@sentry/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import { queryClient } from "@/api";
+import App from "@/app.tsx";
 import { msalConfig } from "@/lib/auth.ts";
 import "@/styles/index.scss";
 
@@ -56,7 +56,7 @@ auth
         <MsalProvider instance={auth}>
           <QueryClientProvider client={queryClient}>
             <HelmetProvider>
-              <Routes />
+              <App />
             </HelmetProvider>
             <ReactQueryDevtools initialIsOpen={false} />
           </QueryClientProvider>

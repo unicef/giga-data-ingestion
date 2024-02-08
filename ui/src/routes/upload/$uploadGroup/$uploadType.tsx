@@ -1,12 +1,16 @@
-import { Outlet, useParams } from "react-router-dom";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 
-export default function UploadType() {
-  const { uploadType = "" } = useParams();
+export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
+  component: Layout,
+});
+
+function Layout() {
+  const { uploadType } = Route.useParams();
   const title = uploadType.replace(/-/g, " ");
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-[23px] capitalize">School {title}</h2>
+      <h2 className="text-[23px] capitalize">{title}</h2>
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
         tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim

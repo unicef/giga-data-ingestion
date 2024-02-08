@@ -1,10 +1,15 @@
 import { useState } from "react";
 
 import { ApiOutlined } from "@ant-design/icons";
+import { createLazyFileRoute } from "@tanstack/react-router";
 
-import AddSourceDialog from "@/components/datasources/AddSourceDialog.tsx";
+import AddSourceDialog from "@/components/ingest-api/AddSourceDialog.tsx";
 
-export default function DataSources() {
+export const Route = createLazyFileRoute("/ingest-api/")({
+  component: IngestApi,
+});
+
+function IngestApi() {
   const [selectedDataSource, setSelectedDataSource] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 

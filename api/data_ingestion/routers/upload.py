@@ -6,7 +6,6 @@ from uuid import uuid4
 
 import country_converter as coco
 import magic
-from azure.core.exceptions import HttpResponseError
 from fastapi import (
     APIRouter,
     Form,
@@ -18,6 +17,7 @@ from fastapi import (
 )
 from pydantic import AwareDatetime
 
+from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client

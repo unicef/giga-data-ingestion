@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { ComponentProps, PropsWithChildren, ReactNode, useState } from "react";
 
 import { AuthenticatedTemplate } from "@azure/msal-react";
 import { Switcher as SwitcherIcon } from "@carbon/icons-react";
 import {
+  SwitcherItem as CarbonSwitcherItem,
   Header,
   HeaderGlobalAction,
   HeaderGlobalBar,
@@ -12,14 +12,27 @@ import {
   HeaderNavigation,
   HeaderPanel,
   Switcher,
-  SwitcherItem,
 } from "@carbon/react";
+import { Link, LinkComponent, useRouterState } from "@tanstack/react-router";
 
 import { useStore } from "@/store.ts";
 
+type SwitcherLinkItemProps = ComponentProps<typeof CarbonSwitcherItem> &
+  PropsWithChildren & {
+    as: ReactNode | LinkComponent;
+    to: string;
+  };
+
+const SwitcherLinkItem = ({ children, ...props }: SwitcherLinkItemProps) => {
+  return <CarbonSwitcherItem {...props}>{children}</CarbonSwitcherItem>;
+};
+
 export default function Navbar() {
   const { featureFlags } = useStore();
+  const { location } = useRouterState();
   const [isSwitcherExpanded, setIsSwitcherExpanded] = useState(false);
+
+  const isUserManagementPage = location.pathname === "/user-management";
 
   return (
     <Header
@@ -27,7 +40,7 @@ export default function Navbar() {
       aria-labelledby="main-header-label"
       className="relative"
     >
-      <HeaderName as={Link} to="/" unstable_viewTransition prefix="">
+      <HeaderName as={Link} to="/" prefix="">
         <img src="/GIGA_logo_blue.png" className="h-5/6" alt="Giga" />
         <span className="ml-1 text-xl font-light">giga</span>
         <b className="ml-0.5 text-xl">sync</b>
@@ -38,11 +51,7 @@ export default function Navbar() {
             aria-label="Main Navigation"
             aria-labelledby="main-nav-label"
           >
-            <HeaderMenuItem
-              as={Link}
-              to="/user-management"
-              unstable_viewTransition
-            >
+            <HeaderMenuItem as={Link} to="/user-management">
               Admin Panel
             </HeaderMenuItem>
           </HeaderNavigation>
@@ -64,32 +73,21 @@ export default function Navbar() {
         onHeaderPanelFocus={() => setIsSwitcherExpanded(expanded => !expanded)}
       >
         <Switcher aria-label="switcher container" expanded={isSwitcherExpanded}>
-          <SwitcherItem
-            aria-label="upload file"
-            as={Link}
-            to="/upload"
-            unstable_viewTransition
-          >
+          <SwitcherLinkItem aria-label="upload file" as={Link} to="/upload">
             Upload File
-          </SwitcherItem>
-          <SwitcherItem
-            aria-label="upload file"
-            as={Link}
-            to="/datasources"
-            unstable_viewTransition
-          >
+          </SwitcherLinkItem>
+          <SwitcherLinkItem aria-label="upload file" as={Link} to="/ingest-api">
             Ingest API
-          </SwitcherItem>
+          </SwitcherLinkItem>
           {featureFlags.userManagementPage && (
             <AuthenticatedTemplate>
-              <SwitcherItem
-                aria-label="upload file"
+              <SwitcherLinkItem
+                aria-label="user management"
                 as={Link}
-                to="user-management"
-                unstable_viewTransition
+                to={isUserManagementPage ? "/" : "/user-management"}
               >
-                Admin Panel
-              </SwitcherItem>
+                {isUserManagementPage ? "Ingestion Portal" : "Admin Panel"}
+              </SwitcherLinkItem>
             </AuthenticatedTemplate>
           )}
         </Switcher>

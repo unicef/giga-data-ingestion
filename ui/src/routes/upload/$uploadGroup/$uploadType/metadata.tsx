@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
   Button,
@@ -12,9 +11,10 @@ import {
   TextArea,
 } from "@carbon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
-import ControlledDatepicker from "@/components/upload/ControlledDatepicker";
+import ControlledDatepicker from "@/components/upload/ControlledDatepicker.tsx";
 import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
 import {
   dataCollectionModalityOptions,
@@ -25,16 +25,23 @@ import {
   schoolIdTypeOptions,
   sensitivityOptions,
   sourceOptions,
-} from "@/mocks/metadataFormValues";
-import { MetadataFormValues } from "@/types/metadata";
+} from "@/mocks/metadataFormValues.tsx";
+import { useStore } from "@/store.ts";
+import { MetadataFormValues } from "@/types/metadata.ts";
 import { filterCountryDatasetFromGraphGroup } from "@/utils/group";
-import { capitalizeFirstLetter } from "@/utils/string";
+import { capitalizeFirstLetter } from "@/utils/string.ts";
 
-export default function UploadMetadata() {
+export const Route = createFileRoute(
+  "/upload/$uploadGroup/$uploadType/metadata",
+)({
+  component: Metadata,
+});
+
+function Metadata() {
   const api = useApi();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { uploadType = "" } = useParams();
+  const { upload, setUpload } = useStore();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { uploadType = "" } = Route.useParams();
 
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isUploadError, setIsUploadError] = useState<boolean>(false);
@@ -79,7 +86,7 @@ export default function UploadMetadata() {
     try {
       const uploadId = await uploadFile.mutateAsync({
         dataset: uploadType,
-        file: location.state.file,
+        file: upload.file!,
         sensitivity_level: data.sensitivityLevel,
         pii_classification: data.piiClassification,
         geolocation_data_source: data.geolocationDataSource,
@@ -96,12 +103,13 @@ export default function UploadMetadata() {
 
       setIsUploading(false);
 
-      navigate("../success", {
-        state: {
-          uploadDate: location.state.timestamp,
-          uploadId: uploadId.data,
-        },
+      setUpload({
+        ...upload,
+        uploadDate: upload.timestamp?.toLocaleString() ?? "",
+        uploadId: uploadId.data,
       });
+
+      void navigate({ to: "../success" });
     } catch {
       setIsUploadError(true);
       setIsUploading(false);
@@ -145,7 +153,7 @@ export default function UploadMetadata() {
   const GeolocationDataSourceSelect = () => (
     <Select
       id="geolocatinDataSource"
-      invalid={errors.geolocationDataSource ? true : false}
+      invalid={!!errors.geolocationDataSource}
       labelText="Geolocation Data Source"
       {...register("geolocationDataSource", { required: true })}
     >
@@ -163,7 +171,7 @@ export default function UploadMetadata() {
   const DataCollectionModalitySelect = () => (
     <Select
       id="dataCollectionModality"
-      invalid={errors.dataCollectionModality ? true : false}
+      invalid={!!errors.dataCollectionModality}
       labelText="Data Collection Modality"
       {...register("dataCollectionModality", { required: true })}
     >
@@ -182,7 +190,7 @@ export default function UploadMetadata() {
   const DomainSelect = () => (
     <Select
       id="domain"
-      invalid={errors.domain ? true : false}
+      invalid={!!errors.domain}
       labelText="Domain"
       {...register("domain", { required: true })}
     >
@@ -201,7 +209,7 @@ export default function UploadMetadata() {
   const SourceSelect = () => (
     <Select
       id="source"
-      invalid={errors.source ? true : false}
+      invalid={!!errors.source}
       labelText="Source"
       {...register("source", { required: true })}
     >
@@ -219,7 +227,7 @@ export default function UploadMetadata() {
   const DataOwnerSelect = () => (
     <Select
       id="dataowner"
-      invalid={errors.dataOwner ? true : false}
+      invalid={!!errors.dataOwner}
       labelText="Data Owner"
       {...register("dataOwner", { required: true })}
     >
@@ -251,7 +259,7 @@ export default function UploadMetadata() {
     return (
       <Select
         id="country"
-        invalid={errors.country ? true : false}
+        invalid={!!errors.country}
         labelText="Country"
         {...register("country", { required: true })}
       >
@@ -266,7 +274,7 @@ export default function UploadMetadata() {
   const SchoolIdTypeSelect = () => (
     <Select
       id="schoolIdType"
-      invalid={errors.schoolIdType ? true : false}
+      invalid={!!errors.schoolIdType}
       labelText="School ID type"
       {...register("schoolIdType", { required: true })}
     >
@@ -352,11 +360,13 @@ export default function UploadMetadata() {
             >
               Submit
             </Button>
-            <Button kind="tertiary">Cancel</Button>
+            <Button kind="tertiary" as={Link} to="..">
+              Cancel
+            </Button>
           </div>
           {isUploadError && (
             <div className="text-giga-dark-red">
-              Error occured during file upload. Please try again
+              Error occurred during file upload. Please try again
             </div>
           )}
         </Stack>
