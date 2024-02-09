@@ -9,7 +9,8 @@ const { DEV } = import.meta.env;
 type FeatureFlagKeys =
   | "uploadFilePage"
   | "ingestApiPage"
-  | "userManagementPage";
+  | "userManagementPage"
+  | "checkFileUploadsPage";
 
 type FeatureFlags = Record<FeatureFlagKeys, boolean>;
 
@@ -50,6 +51,7 @@ const initialState: AppState = {
     uploadFilePage: DEV,
     ingestApiPage: DEV,
     userManagementPage: true,
+    checkFileUploadsPage: DEV,
   },
 };
 

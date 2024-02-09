@@ -31,6 +31,16 @@ export default function Landing() {
                 Upload File
               </Button>
             )}
+            {featureFlags.checkFileUploadsPage && (
+              <Button
+                as={Link}
+                to="/check-file-uploads"
+                className="gap-4"
+                renderIcon={Upload}
+              >
+                Check File Uploads
+              </Button>
+            )}
             {featureFlags.ingestApiPage && (
               <Button
                 as={Link}
