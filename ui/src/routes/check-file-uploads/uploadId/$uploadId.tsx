@@ -1,12 +1,12 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/check-file-uploads/$uploadGroup/$uploadType")({
+export const Route = createFileRoute("/check-file-uploads/uploadId/$uploadId")({
   component: Layout,
 });
 
 function Layout() {
-  const { uploadType } = Route.useParams();
-  const title = uploadType.replace(/-/g, " ");
+  const { uploadId } = Route.useParams();
+  const title = uploadId.replace(/-/g, " ");
 
   return (
     <div className="flex flex-col gap-4">

@@ -15,7 +15,7 @@ import PaginatedDatatable from "@/components/upload/PaginatedDatatable";
 import UploadFile from "@/components/upload/UploadFile.tsx";
 import { useStore } from "@/store.ts";
 
-export const Route = createFileRoute("/check-file-uploads/$uploadGroup/$uploadType/")({
+export const Route = createFileRoute("/check-file-uploads/uploadId/")({
   component: Index,
 });
 

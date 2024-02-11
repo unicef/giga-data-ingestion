@@ -18,11 +18,9 @@ import { Route as UploadImport } from './routes/upload'
 import { Route as IngestApiImport } from './routes/ingest-api'
 import { Route as CheckFileUploadsImport } from './routes/check-file-uploads'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
-import { Route as CheckFileUploadsUploadGroupUploadTypeImport } from './routes/check-file-uploads/$uploadGroup/$uploadType'
+import { Route as CheckFileUploadsUploadIdUploadIdImport } from './routes/check-file-uploads/uploadId/$uploadId'
 import { Route as UploadUploadGroupUploadTypeSuccessImport } from './routes/upload/$uploadGroup/$uploadType/success'
 import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upload/$uploadGroup/$uploadType/metadata'
-import { Route as CheckFileUploadsUploadGroupUploadTypeSuccessImport } from './routes/check-file-uploads/$uploadGroup/$uploadType/success'
-import { Route as CheckFileUploadsUploadGroupUploadTypeMetadataImport } from './routes/check-file-uploads/$uploadGroup/$uploadType/metadata'
 
 // Create Virtual Routes
 
@@ -33,11 +31,11 @@ const IngestApiIndexLazyImport = createFileRoute('/ingest-api/')()
 const CheckFileUploadsIndexLazyImport = createFileRoute(
   '/check-file-uploads/',
 )()
+const CheckFileUploadsUploadIdIndexLazyImport = createFileRoute(
+  '/check-file-uploads/uploadId/',
+)()
 const UploadUploadGroupUploadTypeIndexLazyImport = createFileRoute(
   '/upload/$uploadGroup/$uploadType/',
-)()
-const CheckFileUploadsUploadGroupUploadTypeIndexLazyImport = createFileRoute(
-  '/check-file-uploads/$uploadGroup/$uploadType/',
 )()
 
 // Create/Update Routes
@@ -93,15 +91,25 @@ const CheckFileUploadsIndexLazyRoute = CheckFileUploadsIndexLazyImport.update({
   import('./routes/check-file-uploads/index.lazy').then((d) => d.Route),
 )
 
+const CheckFileUploadsUploadIdIndexLazyRoute =
+  CheckFileUploadsUploadIdIndexLazyImport.update({
+    path: '/uploadId/',
+    getParentRoute: () => CheckFileUploadsRoute,
+  } as any).lazy(() =>
+    import('./routes/check-file-uploads/uploadId/index.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+
 const UploadUploadGroupUploadTypeRoute =
   UploadUploadGroupUploadTypeImport.update({
     path: '/$uploadGroup/$uploadType',
     getParentRoute: () => UploadRoute,
   } as any)
 
-const CheckFileUploadsUploadGroupUploadTypeRoute =
-  CheckFileUploadsUploadGroupUploadTypeImport.update({
-    path: '/$uploadGroup/$uploadType',
+const CheckFileUploadsUploadIdUploadIdRoute =
+  CheckFileUploadsUploadIdUploadIdImport.update({
+    path: '/uploadId/$uploadId',
     getParentRoute: () => CheckFileUploadsRoute,
   } as any)
 
@@ -115,16 +123,6 @@ const UploadUploadGroupUploadTypeIndexLazyRoute =
     ),
   )
 
-const CheckFileUploadsUploadGroupUploadTypeIndexLazyRoute =
-  CheckFileUploadsUploadGroupUploadTypeIndexLazyImport.update({
-    path: '/',
-    getParentRoute: () => CheckFileUploadsUploadGroupUploadTypeRoute,
-  } as any).lazy(() =>
-    import(
-      './routes/check-file-uploads/$uploadGroup/$uploadType/index.lazy'
-    ).then((d) => d.Route),
-  )
-
 const UploadUploadGroupUploadTypeSuccessRoute =
   UploadUploadGroupUploadTypeSuccessImport.update({
     path: '/success',
@@ -135,18 +133,6 @@ const UploadUploadGroupUploadTypeMetadataRoute =
   UploadUploadGroupUploadTypeMetadataImport.update({
     path: '/metadata',
     getParentRoute: () => UploadUploadGroupUploadTypeRoute,
-  } as any)
-
-const CheckFileUploadsUploadGroupUploadTypeSuccessRoute =
-  CheckFileUploadsUploadGroupUploadTypeSuccessImport.update({
-    path: '/success',
-    getParentRoute: () => CheckFileUploadsUploadGroupUploadTypeRoute,
-  } as any)
-
-const CheckFileUploadsUploadGroupUploadTypeMetadataRoute =
-  CheckFileUploadsUploadGroupUploadTypeMetadataImport.update({
-    path: '/metadata',
-    getParentRoute: () => CheckFileUploadsUploadGroupUploadTypeRoute,
   } as any)
 
 // Populate the FileRoutesByPath interface
@@ -189,21 +175,17 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserManagementIndexLazyImport
       parentRoute: typeof UserManagementImport
     }
-    '/check-file-uploads/$uploadGroup/$uploadType': {
-      preLoaderRoute: typeof CheckFileUploadsUploadGroupUploadTypeImport
+    '/check-file-uploads/uploadId/$uploadId': {
+      preLoaderRoute: typeof CheckFileUploadsUploadIdUploadIdImport
       parentRoute: typeof CheckFileUploadsImport
     }
     '/upload/$uploadGroup/$uploadType': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeImport
       parentRoute: typeof UploadImport
     }
-    '/check-file-uploads/$uploadGroup/$uploadType/metadata': {
-      preLoaderRoute: typeof CheckFileUploadsUploadGroupUploadTypeMetadataImport
-      parentRoute: typeof CheckFileUploadsUploadGroupUploadTypeImport
-    }
-    '/check-file-uploads/$uploadGroup/$uploadType/success': {
-      preLoaderRoute: typeof CheckFileUploadsUploadGroupUploadTypeSuccessImport
-      parentRoute: typeof CheckFileUploadsUploadGroupUploadTypeImport
+    '/check-file-uploads/uploadId/': {
+      preLoaderRoute: typeof CheckFileUploadsUploadIdIndexLazyImport
+      parentRoute: typeof CheckFileUploadsImport
     }
     '/upload/$uploadGroup/$uploadType/metadata': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeMetadataImport
@@ -212,10 +194,6 @@ declare module '@tanstack/react-router' {
     '/upload/$uploadGroup/$uploadType/success': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeSuccessImport
       parentRoute: typeof UploadUploadGroupUploadTypeImport
-    }
-    '/check-file-uploads/$uploadGroup/$uploadType/': {
-      preLoaderRoute: typeof CheckFileUploadsUploadGroupUploadTypeIndexLazyImport
-      parentRoute: typeof CheckFileUploadsUploadGroupUploadTypeImport
     }
     '/upload/$uploadGroup/$uploadType/': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeIndexLazyImport
@@ -230,11 +208,8 @@ export const routeTree = rootRoute.addChildren([
   IndexLazyRoute,
   CheckFileUploadsRoute.addChildren([
     CheckFileUploadsIndexLazyRoute,
-    CheckFileUploadsUploadGroupUploadTypeRoute.addChildren([
-      CheckFileUploadsUploadGroupUploadTypeMetadataRoute,
-      CheckFileUploadsUploadGroupUploadTypeSuccessRoute,
-      CheckFileUploadsUploadGroupUploadTypeIndexLazyRoute,
-    ]),
+    CheckFileUploadsUploadIdUploadIdRoute,
+    CheckFileUploadsUploadIdIndexLazyRoute,
   ]),
   IngestApiRoute.addChildren([IngestApiIndexLazyRoute]),
   UploadRoute.addChildren([
