@@ -1,27 +1,20 @@
 import { Information } from "@carbon/icons-react";
-import {
-  Accordion,
-  AccordionItem,
-  Button,
-  Section,
-  Tooltip,
-} from "@carbon/react";
+import { Accordion, AccordionItem, Section, Tooltip } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
 import Datatable from "@/components/upload/Datatable";
 import PaginatedDatatable from "@/components/upload/PaginatedDatatable";
-import UploadFile from "@/components/upload/UploadFile.tsx";
-import { useStore } from "@/store.ts";
 
-export const Route = createFileRoute("/check-file-uploads/uploadId/")({
+export const Route = createFileRoute("/check-file-uploads/$uploadId/")({
   component: Index,
 });
 
 export default function Index() {
+  const { uploadId } = Route.useParams();
+
   const api = useApi();
-  const { upload, setUpload, resetUploadState } = useStore();
 
   const { data: checksData, isLoading } = useQuery({
     queryKey: ["column_checks"],
@@ -48,32 +41,9 @@ export default function Index() {
       ),
     })) ?? [];
 
-  const hasUploadedFile = upload.file != null;
-
   return (
     <div className="flex flex-col gap-8">
-      <h3 className="text-[23px]">Step 1: Upload</h3>
-      <div className="w-1/4">
-        <UploadFile
-          file={upload.file}
-          setFile={file => setUpload({ ...upload, file })}
-          setTimestamp={timestamp => setUpload({ ...upload, timestamp })}
-        />
-      </div>
-
-      <div className="flex gap-2">
-        <Button
-          kind="tertiary"
-          as={Link}
-          to="/upload"
-          onClick={resetUploadState}
-        >
-          Cancel
-        </Button>
-        <Button disabled={!hasUploadedFile} as={Link} to="./metadata">
-          Proceed
-        </Button>
-      </div>
+      <h1>{uploadId} GET THE TYPE OF FILE HERE AS WELL IF POSSIBLE</h1>
 
       <Section>
         After you upload your file and fill up the metadata in the next page,
