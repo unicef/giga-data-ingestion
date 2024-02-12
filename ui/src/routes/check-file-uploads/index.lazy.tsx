@@ -1,11 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Upload } from "@carbon/icons-react";
 import {
   Button,
   DataTable,
   DataTableHeader,
-  Heading,
+  Heading, // @ts-expect-error paginationNav has no typescript declaration yet
+  PaginationNav,
   Section,
   Stack,
   Table,
@@ -28,6 +29,8 @@ export const Route = createLazyFileRoute("/check-file-uploads/")({
 
 export default function FileUploads() {
   {
+    const [currentPage, setCurrentPage] = useState<number>(0);
+
     const columns = useMemo<DataTableHeader[]>(
       () => [
         {
@@ -58,6 +61,13 @@ export default function FileUploads() {
       [],
     );
 
+    const ROWS_PER_PAGE = 10;
+
+    const maxPages = Math.ceil(rows.length / ROWS_PER_PAGE);
+    const startIndex = currentPage * ROWS_PER_PAGE;
+    const endIndex = startIndex + ROWS_PER_PAGE;
+    const rowSlice = rows.slice(startIndex, endIndex);
+
     return (
       <Section className="container py-6">
         <Stack gap={6}>
@@ -65,7 +75,7 @@ export default function FileUploads() {
             <Heading>Check File Uploads</Heading>
           </Section>
           <Section>
-            <DataTable headers={columns} rows={rows}>
+            <DataTable headers={columns} rows={rowSlice}>
               {({
                 rows,
                 headers,
@@ -102,13 +112,12 @@ export default function FileUploads() {
                       ))}
                     </TableBody>
                   </Table>
-                  {/* <PaginationNav
+                  <PaginationNav
+                    className="pagination-nav-right"
                     itemsShown={5}
-                    totalItems={Math.ceil(
-                      filteredUsersData.length / ROWS_PER_PAGE,
-                    )}
+                    totalItems={maxPages}
                     onChange={(index: number) => setCurrentPage(index)}
-                  /> */}
+                  />
                 </TableContainer>
               )}
             </DataTable>
