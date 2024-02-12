@@ -49,10 +49,22 @@ type Checks = {
   geospatial_data_points: GeospatialDataPoints;
 };
 
+type Files = {
+  filename: string;
+  uid: string;
+  country: string;
+  dataset: string;
+  source: string;
+  timestamp: Date;
+}[];
+
 export default function routes(axi: AxiosInstance) {
   return {
     list_column_checks: (): Promise<AxiosResponse<Checks>> => {
       return axi.get("/upload");
+    },
+    list_files: (): Promise<AxiosResponse<Files>> => {
+      return axi.get("/upload/files");
     },
     upload_file: (params: {
       dataset: string;

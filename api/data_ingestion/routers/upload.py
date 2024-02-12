@@ -6,6 +6,7 @@ from uuid import uuid4
 
 import country_converter as coco
 import magic
+from azure.core.exceptions import HttpResponseError
 from fastapi import (
     APIRouter,
     Form,
@@ -17,7 +18,6 @@ from fastapi import (
 )
 from pydantic import AwareDatetime
 
-from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
@@ -126,3 +126,27 @@ async def list_column_checks():
     upload_checks = get_upload_checks()
 
     return upload_checks
+
+
+@router.get(
+    "/files",
+)
+async def list_files():
+    blob_list = storage_client.list_blobs(name_starts_with="raw/uploads/")
+    files = []
+    for blob in blob_list:
+        parts = blob.name.replace("raw/uploads/", "").split("_")
+
+        uid, country, dataset, source, _ = parts
+
+        files.append(
+            {
+                "filename": blob.name,
+                "uid": uid,
+                "country": country,
+                "dataset": dataset,
+                "source": source,
+                "timestamp": blob.creation_time.isoformat(),
+            }
+        )
+    return files
