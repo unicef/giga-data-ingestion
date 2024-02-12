@@ -19,9 +19,11 @@ import {
   TableToolbar,
   TableToolbarContent,
 } from "@carbon/react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, createLazyFileRoute } from "@tanstack/react-router";
 
-import { rows } from "@/mocks/uploadChecksTableNew";
+import { useApi } from "@/api";
+import StatusIndicator from "@/components/upload/StatusIndicator";
 
 export const Route = createLazyFileRoute("/check-file-uploads/")({
   component: FileUploads,
@@ -30,6 +32,41 @@ export const Route = createLazyFileRoute("/check-file-uploads/")({
 export default function FileUploads() {
   {
     const [currentPage, setCurrentPage] = useState<number>(0);
+
+    const api = useApi();
+
+    const { data: files } = useQuery({
+      queryKey: ["files"],
+      queryFn: api.uploads.list_files,
+    });
+
+    const rows =
+      files?.data.map(file => {
+        const { uid, country, dataset, timestamp } = file;
+        const dateUploadedLocal = new Date(timestamp).toLocaleString();
+        return {
+          id: uid,
+          dateUploaded: dateUploadedLocal,
+          dataset: dataset,
+          country: country,
+          status: (
+            <div className="flex">
+              <StatusIndicator className="mr-1" type="info" />
+              Uploaded
+            </div>
+          ),
+          actions: (
+            <Link
+              to="/check-file-uploads/$uploadId"
+              params={{
+                uploadId: uid,
+              }}
+            >
+              View
+            </Link>
+          ),
+        };
+      }) ?? [];
 
     const columns = useMemo<DataTableHeader[]>(
       () => [
