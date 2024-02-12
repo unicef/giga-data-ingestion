@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { Upload } from "@carbon/icons-react";
 import {
   DataTable,
   DataTableHeader,
@@ -17,6 +18,8 @@ import {
   TableToolbarContent,
 } from "@carbon/react";
 import { Link, createLazyFileRoute } from "@tanstack/react-router";
+
+import { rows } from "@/mocks/uploadChecksTableNew";
 
 export const Route = createLazyFileRoute("/check-file-uploads/")({
   component: FileUploads,
@@ -54,30 +57,6 @@ export default function FileUploads() {
       [],
     );
 
-    const id = "1231dASD@#";
-
-    const filteredUsersData = [
-      {
-        id: id,
-        dateUploaded: "testData",
-        dataset: "testdataset",
-        country: "ASDASDDAS",
-        status: "dasdasdasd",
-        actions: (
-          <div>
-            <Link
-              to="/check-file-uploads/$uploadId"
-              params={{
-                uploadId: id,
-              }}
-            >
-              view
-            </Link>
-          </div>
-        ),
-      },
-    ];
-
     return (
       <Section className="container py-6">
         <Stack gap={6}>
@@ -85,7 +64,7 @@ export default function FileUploads() {
             <Heading>Check File Uploads</Heading>
           </Section>
           <Section>
-            <DataTable headers={columns} rows={filteredUsersData}>
+            <DataTable headers={columns} rows={rows}>
               {({
                 rows,
                 headers,
