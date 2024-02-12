@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { AuthenticatedTemplate } from "@azure/msal-react";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
-import UploadBreadcrumbs from "@/components/upload/UploadBreadcrumbs.tsx";
+import CheckFileUploadsBreadCrumbs from "@/components/upload/CheckFileUploadsBreadCrumbs";
 import { useStore } from "@/store.ts";
 
 export const Route = createFileRoute("/check-file-uploads")({
@@ -22,7 +22,7 @@ function UploadLayout() {
   return (
     <AuthenticatedTemplate>
       <div className="container flex flex-col gap-4 py-6">
-        <UploadBreadcrumbs />
+        <CheckFileUploadsBreadCrumbs />
         <Outlet />
       </div>
     </AuthenticatedTemplate>
