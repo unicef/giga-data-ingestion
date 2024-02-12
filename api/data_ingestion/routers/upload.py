@@ -83,7 +83,7 @@ async def upload_file(
     country_code = coco.convert(country, to="ISO3")
     timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 
-    filename = f"raw/uploads/{uid}_{country_code}_" f"{dataset}_{source}-{timestamp}"
+    filename = f"raw/uploads/{uid}_{country_code}_" f"{dataset}_{source}_{timestamp}"
     client = storage_client.get_blob_client(filename)
 
     try:
