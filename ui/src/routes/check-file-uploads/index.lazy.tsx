@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import { Upload } from "@carbon/icons-react";
 import {
+  Button,
   DataTable,
   DataTableHeader,
   Heading,
@@ -75,7 +76,9 @@ export default function FileUploads() {
                 <TableContainer>
                   <TableToolbar>
                     <TableToolbarContent>
-                      <div>Add user modal should have been here</div>
+                      <Button as={Link} to="/upload" renderIcon={Upload}>
+                        Upload New File
+                      </Button>
                     </TableToolbarContent>
                   </TableToolbar>
                   <Table {...getTableProps()}>
