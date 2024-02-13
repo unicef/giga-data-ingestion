@@ -83,23 +83,25 @@ function Metadata() {
     setIsUploading(true);
     setIsUploadError(false);
 
+    const body = {
+      dataset: uploadType,
+      file: upload.file!,
+      sensitivity_level: data.sensitivityLevel,
+      pii_classification: data.piiClassification,
+      geolocation_data_source: data.geolocationDataSource,
+      data_collection_modality: data.dataCollectionModality,
+      data_collection_date: new Date(data.dataCollectionDate).toISOString(),
+      domain: data.domain,
+      date_modified: new Date(data.dateModified).toISOString(),
+      source: data.source,
+      data_owner: data.dataOwner,
+      country: data.country,
+      school_id_type: data.schoolIdType,
+      description: data.description,
+    };
+
     try {
-      const uploadId = await uploadFile.mutateAsync({
-        dataset: uploadType,
-        file: upload.file!,
-        sensitivity_level: data.sensitivityLevel,
-        pii_classification: data.piiClassification,
-        geolocation_data_source: data.geolocationDataSource,
-        data_collection_modality: data.dataCollectionModality,
-        data_collection_date: new Date(data.dataCollectionDate).toISOString(),
-        domain: data.domain,
-        date_modified: new Date(data.dateModified).toISOString(),
-        source: data.source,
-        data_owner: data.dataOwner,
-        country: data.country,
-        school_id_type: data.schoolIdType,
-        description: data.description,
-      });
+      const uploadId = await uploadFile.mutateAsync(body);
 
       setIsUploading(false);
 
@@ -111,6 +113,10 @@ function Metadata() {
 
       void navigate({ to: "../success" });
     } catch {
+      console.error(
+        "uploadFile.error.message",
+        uploadFile.error?.message ?? "",
+      );
       setIsUploadError(true);
       setIsUploading(false);
     }
@@ -261,7 +267,7 @@ function Metadata() {
           labelText="Loading..."
           placeholder="Loading..."
         >
-          <SelectItem text="Loading..." />
+          <SelectItem text="Loading..." value="" />
         </Select>
       );
     }
