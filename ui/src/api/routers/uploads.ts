@@ -58,6 +58,25 @@ type Files = {
   timestamp: Date;
 }[];
 
+type DataQualityCheckResult = {
+  summary: {
+    rows: number;
+    columns: number;
+  };
+  row_level_assertions: {
+    assertion: string;
+    count_failed: number;
+    count_passed: number;
+    count_overall: number;
+    percent_failed: number;
+    percent_passed: number;
+  }[];
+};
+
+type BlobProperties = {
+  creation_time: Date;
+};
+
 export default function routes(axi: AxiosInstance) {
   return {
     list_column_checks: (): Promise<AxiosResponse<Checks>> => {
@@ -65,6 +84,16 @@ export default function routes(axi: AxiosInstance) {
     },
     list_files: (): Promise<AxiosResponse<Files>> => {
       return axi.get("/upload/files");
+    },
+    get_file_properties: (
+      upload_id: string,
+    ): Promise<AxiosResponse<BlobProperties>> => {
+      return axi.get(`/upload/properties/${upload_id}`);
+    },
+    get_dq_check_result: (
+      name: string,
+    ): Promise<AxiosResponse<DataQualityCheckResult>> => {
+      return axi.get(`upload/dq_check/${name}`);
     },
     upload_file: (params: {
       dataset: string;

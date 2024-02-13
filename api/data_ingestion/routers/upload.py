@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 from datetime import datetime
 from typing import Annotated
@@ -150,3 +151,29 @@ async def list_files():
             }
         )
     return files
+
+
+@router.get(
+    "/dq_check/{name}",
+)
+async def get_dq_check(name: str):
+    blob = storage_client.get_blob_client(f"/raw/uploads_DEV/{name}")
+    data = blob.download_blob().readall()
+    obj = json.loads(data.decode("utf-8"))
+    return obj
+
+
+@router.get(
+    "/properties/{upload_id}",
+)
+async def get_file_properties(upload_id: str):
+    file_name_prefix = f"raw/uploads/{upload_id}"
+    blob_list = storage_client.list_blobs(name_starts_with=file_name_prefix)
+    first_blob = next(blob_list, None)
+
+    blob = storage_client.get_blob_client(first_blob.name)
+    data = blob.get_blob_properties()
+
+    res = {"creation_time": data.creation_time}
+
+    return res

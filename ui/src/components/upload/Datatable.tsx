@@ -16,7 +16,7 @@ interface Header {
 
 interface Row {
   id: string;
-  [key: string]: string | JSX.Element;
+  [key: string]: string | number | JSX.Element;
 }
 interface DatatableProps {
   headers: Header[];
