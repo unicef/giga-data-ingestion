@@ -1,13 +1,12 @@
 import asyncio
 import os
-from datetime import datetime
 from typing import Annotated
-from uuid import uuid4
 
 import country_converter as coco
 import magic
 from fastapi import (
     APIRouter,
+    Depends,
     Form,
     HTTPException,
     Response,
@@ -15,13 +14,17 @@ from fastapi import (
     UploadFile,
     status,
 )
+from fastapi_azure_auth.user import User
 from pydantic import AwareDatetime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
+from data_ingestion.db import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.mocks.upload_checks import get_upload_checks
+from data_ingestion.models import FileUpload
 
 router = APIRouter(
     prefix="/api/upload",
@@ -47,6 +50,8 @@ async def upload_file(
     school_id_type: Annotated[str, Form()],
     description: Annotated[str, Form()],
     source: str | None = Form(None),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(azure_scheme),
 ):
     if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
         raise HTTPException(
@@ -78,13 +83,20 @@ async def upload_file(
             detail="File extension does not match file type.",
         )
 
-    uid = str(uuid4())
-
     country_code = coco.convert(country, to="ISO3")
-    timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
 
-    filename = f"raw/uploads/{uid}_{country_code}_" f"{dataset}_{source}-{timestamp}"
-    client = storage_client.get_blob_client(filename)
+    file_upload = FileUpload(
+        uploader_id=user.sub,
+        uploader_email=user.email or user.upn,
+        country=country_code,
+        dataset=dataset,
+        source=source,
+        original_filename=file.filename,
+    )
+    db.add(file_upload)
+    await db.commit()
+
+    client = storage_client.get_blob_client(file_upload.upload_path)
 
     try:
         metadata = {
@@ -109,11 +121,12 @@ async def upload_file(
         client.upload_blob(await file.read(), metadata=metadata)
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
+        await db.delete(file_upload)
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
 
-    return uid
+    return file_upload.id
 
 
 @router.get(
