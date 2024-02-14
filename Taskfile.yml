@@ -100,7 +100,9 @@ tasks:
     desc: Install/upgrade Helm chart to a K8s cluster running on localhost
     dir: infra
     cmds:
+      - helm dependency update ./helm/data-ingestion
       - kubectl apply -f k8s/namespace.yaml
+      - kubectl apply -f k8s/configmap.yaml
       - kubectl apply -f k8s/secrets.yaml
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
@@ -113,7 +115,9 @@ tasks:
     desc: Install/upgrade Helm chart to a K8s cluster with configured HTTPS ingress
     dir: infra
     cmds:
+      - helm dependency update ./helm/data-ingestion
       - kubectl apply -f k8s/namespace.yaml
+      - kubectl apply -f k8s/configmap.yaml
       - kubectl apply -f k8s/secrets.yaml
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
