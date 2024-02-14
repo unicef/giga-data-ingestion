@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
-import { Information } from "@carbon/icons-react";
 import {
   Accordion,
   AccordionItem,
@@ -11,24 +10,19 @@ import {
   Modal,
   Section,
   SkeletonText,
-  Tooltip,
 } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link as TanstackLink, createFileRoute } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
+import ColumnChecks from "@/components/check-file-uploads/ColumnChecks";
 import Datatable from "@/components/upload/Datatable";
-import PaginatedDatatable from "@/components/upload/PaginatedDatatable";
-import StatusIndicator from "@/components/upload/StatusIndicator";
 import {
-  columnCheckModalHeaders,
-  columnChecksHeaders,
   duplicateCheckModalHeaders,
   duplicateChecksHeaders,
   geospatialChecksHeaders,
   geospatialChecksModalHeaders,
 } from "@/constants/check-file-uploads";
-import { ColumnCheck } from "@/types/upload";
 
 export const Route = createFileRoute("/check-file-uploads/$uploadId/")({
   component: Index,
@@ -42,12 +36,6 @@ type GeoSpatialRow = {
 type DuplicateCheckRow = {
   id: string;
   value: string;
-}[];
-
-type ColumnCheckRow = {
-  id: string;
-  value: string;
-  count: number;
 }[];
 
 export default function Index() {
@@ -75,22 +63,6 @@ export default function Index() {
   const [selectedDuplicateCheckRow, setSelectedDuplicateCheckRow] =
     useState<string>("");
 
-  const [isColumnChecksModalOpen, setIsColumnChecksModalOpen] =
-    useState<boolean>(false);
-  const [columnCheckModalRows, setColumnCheckModalRows] =
-    useState<ColumnCheckRow>([]);
-  const [selectedColumnCheck, setSelectedColumnCheck] = useState<ColumnCheck>({
-    assertion: "",
-    description: "",
-    data_type: "",
-    is_present: false,
-    is_correct_datatype: false,
-    null_values_count: 0,
-    unique_values_count: 0,
-    unique_values: [],
-    rows_failed: [],
-  });
-
   const api = useApi();
 
   const { data: dqResult, isLoading: dqResultLoading } = useQuery({
@@ -107,81 +79,6 @@ export default function Index() {
       const data = api.uploads.get_file_properties(uploadId);
       return data;
     },
-  });
-
-  const columnChecksRows = dqResult?.data.column_checks.map(check => {
-    return {
-      id: check.assertion,
-      columnName: (
-        <Tooltip
-          align="right"
-          enterDelayMs={150}
-          label={`${check.description}`}
-          leaveDelayMs={0}
-        >
-          <div className="flex gap-1">
-            {check.assertion}
-            <div className="flex items-center opacity-25">
-              <Information />
-            </div>
-          </div>
-        </Tooltip>
-      ),
-      expectedDataType: check.data_type,
-      isPresent: (
-        <div className="flex">
-          <StatusIndicator
-            className="mr-1"
-            type={check.is_present ? "success" : "error"}
-          />
-          Present
-        </div>
-      ),
-      isCorrectDatatype: (
-        <div className="flex">
-          <StatusIndicator
-            className="mr-1"
-            type={check.is_correct_datatype ? "success" : "error"}
-          />
-          {check.data_type}
-        </div>
-      ),
-      nullValuesCount: (
-        <div className="flex">
-          <StatusIndicator
-            className="mr-1"
-            type={check.null_values_count == 0 ? "success" : "error"}
-          />
-          {check.null_values_count} null values
-        </div>
-      ),
-      uniqueValuesCount: (
-        <div className="flex">
-          <StatusIndicator className="mr-1" type="info" />
-          {check.unique_values_count} unique values
-        </div>
-      ),
-      actions: (
-        <Link
-          onClick={() => {
-            setIsColumnChecksModalOpen(true);
-
-            const rows = check.unique_values.map(row => {
-              return {
-                id: row.name,
-                value: row.name,
-                count: row.count,
-              };
-            });
-
-            setSelectedColumnCheck(check);
-            setColumnCheckModalRows(rows);
-          }}
-        >
-          View Details
-        </Link>
-      ),
-    };
   });
 
   const duplicateChecksRows = dqResult?.data.duplicate_rows_checks.map(
@@ -255,26 +152,6 @@ export default function Index() {
     checksRunTime = new Date(dqResult.data.summary.timestamp).toLocaleString();
   }
 
-  const columnCheckPassedRows = dqResult?.data.column_checks.reduce(
-    (acc, curr) =>
-      curr.is_present === true &&
-      curr.is_correct_datatype === true &&
-      curr.null_values_count === 0
-        ? acc + 1
-        : acc,
-    0,
-  );
-
-  const columnCheckFailedRows = dqResult?.data.column_checks.reduce(
-    (acc, curr) =>
-      curr.is_present !== true ||
-      curr.is_correct_datatype !== true ||
-      curr.null_values_count !== 0
-        ? acc + 1
-        : acc,
-    0,
-  );
-
   const title = fileProperties?.data.name.split("_")[2];
 
   return (
@@ -315,15 +192,7 @@ export default function Index() {
                   <p>Checks performed at {checksRunTime}</p>
                 </AccordionItem>
                 <AccordionItem title="Checks per column">
-                  <div className="py-4">
-                    Out of {dqResult?.data.column_checks.length} columns,{" "}
-                    <b>{columnCheckPassedRows}</b> passed and had{" "}
-                    <b>{columnCheckFailedRows}</b> errors
-                  </div>
-                  <PaginatedDatatable
-                    headers={columnChecksHeaders}
-                    rows={columnChecksRows ?? []}
-                  />
+                  <ColumnChecks data={dqResult?.data} />
                 </AccordionItem>
                 <AccordionItem title="Checks for duplicate rows">
                   <div className="py-4">
@@ -359,27 +228,6 @@ export default function Index() {
           )}
         </div>
       </div>
-
-      {isColumnChecksModalOpen &&
-        createPortal(
-          <Modal
-            modalHeading="Unique Values Check"
-            open={isColumnChecksModalOpen}
-            passiveModal
-            onRequestClose={() => setIsColumnChecksModalOpen(false)}
-          >
-            <p>
-              {" "}
-              There are <b>{selectedColumnCheck.unique_values_count}</b> unique
-              values in <b>{selectedColumnCheck.assertion}</b>
-            </p>
-            <Datatable
-              headers={columnCheckModalHeaders ?? []}
-              rows={columnCheckModalRows ?? []}
-            />
-          </Modal>,
-          document.body,
-        )}
 
       {isInvalidDuplicateChecksModalOpen &&
         createPortal(
