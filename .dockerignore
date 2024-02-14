@@ -123,8 +123,8 @@ celerybeat.pid
 # Environments
 .env
 .env.*
-.venv
-.venv-*
+.venv/
+.venv-*/
 env/
 venv/
 ENV/
@@ -162,4 +162,5 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-.ruff_cache
+.ruff_cache/
+node_modules/
