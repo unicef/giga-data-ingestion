@@ -122,8 +122,9 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
-.venv-*
+.env.*
+.venv/
+.venv-*/
 env/
 venv/
 ENV/
@@ -162,3 +163,4 @@ cython_debug/
 #.idea/
 
 .ruff_cache/
+node_modules/

@@ -1,3 +1,8 @@
+networks:
+  default:
+    name: giga-dataops
+    external: true
+
 services:
   api:
     build: ./api

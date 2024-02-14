@@ -1,5 +1,6 @@
 import { ColumnsType } from "antd/es/table";
 
+import infoIcon from "@/assets/info-icon.svg";
 import CheckStatusIndicator from "@/components/common/CheckStatusIndicator.tsx";
 import { CheckStatusSeverity, UploadCheck } from "@/types/upload";
 
@@ -10,8 +11,7 @@ export const columns: ColumnsType<UploadCheck> = [
     key: "columnName",
     render: text => (
       <span className="flex gap-2">
-        {text}{" "}
-        <img src="/info-icon.svg" alt="Info" className="cursor-pointer" />
+        {text} <img src={infoIcon} alt="Info" className="cursor-pointer" />
       </span>
     ),
   },
