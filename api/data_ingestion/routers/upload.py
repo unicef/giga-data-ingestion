@@ -9,6 +9,7 @@ from fastapi import (
     Depends,
     Form,
     HTTPException,
+    Query,
     Response,
     Security,
     UploadFile,
@@ -16,6 +17,7 @@ from fastapi import (
 )
 from fastapi_azure_auth.user import User
 from pydantic import AwareDatetime
+from sqlalchemy import delete, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from azure.core.exceptions import HttpResponseError
@@ -25,6 +27,7 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.mocks.upload_checks import get_upload_checks
 from data_ingestion.models import FileUpload
+from data_ingestion.schemas.upload import FileUpload as FileUploadSchema
 
 router = APIRouter(
     prefix="/api/upload",
@@ -33,7 +36,7 @@ router = APIRouter(
 )
 
 
-@router.post("")
+@router.post("", response_model=FileUploadSchema)
 async def upload_file(
     response: Response,
     file: UploadFile,
@@ -86,8 +89,8 @@ async def upload_file(
     country_code = coco.convert(country, to="ISO3")
 
     file_upload = FileUpload(
-        uploader_id=user.sub,
-        uploader_email=user.email or user.upn,
+        uploader_id=user.oid,
+        uploader_email=user.email or user.preferred_username or user.upn,
         country=country_code,
         dataset=dataset,
         source=source,
@@ -103,12 +106,10 @@ async def upload_file(
             "sensitivity_level": sensitivity_level,
             "pii_classification": pii_classification,
             "geolocation_data_source": geolocation_data_source,
-            "data_collection_date": data_collection_date.strftime(
-                "%Y-%m-%d %H:%M:%S %Z%z"
-            ),
+            "data_collection_date": data_collection_date.isoformat(),
             "data_collection_modality": data_collection_modality,
             "domain": domain,
-            "date_modified": date_modified.strftime("%Y-%m-%d %H:%M:%S %Z%z"),
+            "date_modified": date_modified.isoformat(),
             "data_owner": data_owner,
             "country": country,
             "school_id_type": school_id_type,
@@ -121,17 +122,20 @@ async def upload_file(
         client.upload_blob(await file.read(), metadata=metadata)
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
-        await db.delete(file_upload)
+        await db.execute(delete(FileUpload).where(FileUpload.id == file_upload.id))
+        await db.commit()
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
+    except Exception as err:
+        await db.execute(delete(FileUpload).where(FileUpload.id == file_upload.id))
+        await db.commit()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from err
 
-    return file_upload.id
+    return file_upload
 
 
-@router.get(
-    "",
-)
+@router.get("/column-checks")
 async def list_column_checks():
     await asyncio.sleep(2)
 
@@ -139,3 +143,19 @@ async def list_column_checks():
     upload_checks = get_upload_checks()
 
     return upload_checks
+
+
+@router.get("", response_model=list[FileUploadSchema])
+async def list_uploads(
+    user: User = Depends(azure_scheme),
+    db: AsyncSession = Depends(get_db),
+    limit: Annotated[int, Query(ge=0, le=50)] = 10,
+    offset: Annotated[int, Query(ge=0)] = 0,
+):
+    # TODO: Proper filtering w/ RBAC
+    return await db.scalars(
+        select(FileUpload)
+        .order_by(desc(FileUpload.created))
+        .limit(limit)
+        .offset(offset)
+    )

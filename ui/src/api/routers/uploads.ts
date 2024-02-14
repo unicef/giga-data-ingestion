@@ -52,7 +52,7 @@ type Checks = {
 export default function routes(axi: AxiosInstance) {
   return {
     list_column_checks: (): Promise<AxiosResponse<Checks>> => {
-      return axi.get("/upload");
+      return axi.get("/upload/column-checks");
     },
     upload_file: (params: {
       dataset: string;
@@ -84,5 +84,6 @@ export default function routes(axi: AxiosInstance) {
         },
       });
     },
+    list_uploads: () => {},
   };
 }

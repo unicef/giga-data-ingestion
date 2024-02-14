@@ -36,4 +36,4 @@ class FileUpload(BaseModel):
 
         filename_elements.append(timestamp)
         filename = "_".join(filename_elements)
-        return f"{constants.UPLOAD_PATH_PREFIX}/{filename}.{ext}"
+        return f"{constants.UPLOAD_PATH_PREFIX}/{filename}{ext}"
