@@ -12,18 +12,47 @@ export const Route = createFileRoute("/check-file-uploads/$uploadId/")({
   component: Index,
 });
 
+type GeoSpatialRow = {
+  id: string;
+  value: string;
+}[];
+
+type DuplicateCheckRow = {
+  id: string;
+  value: string;
+}[];
+
 export default function Index() {
   const { uploadId } = Route.useParams();
 
-  const [isValuesModalOpen, setIsValuesModalOpen] = useState<boolean>(false);
-  const [modalValue, setModalValue] = useState<string>("");
+  const [
+    isInvalidGeospatialChecksModalOpen,
+    setIsInvalidGeospatialChecksModalOpen,
+  ] = useState<boolean>(false);
+  const [
+    invalidGeospatialChecksValuesRows,
+    setInvalidGeospatialChecksValuesRows,
+  ] = useState<GeoSpatialRow>([]);
+  const [selectedGeoSpatialCheckRow, setSelectedGeospatialCheckRow] =
+    useState<string>("");
+
+  const [
+    isInvalidDuplicateChecksModalOpen,
+    setIsInvalidDuplicateChecksModalOpen,
+  ] = useState<boolean>(false);
+  const [
+    invalidDuplicateChecksValuesRows,
+    setInvalidDuplicateChecksValuesRows,
+  ] = useState<DuplicateCheckRow>([]);
+  const [selectedDuplicateCheckRow, setSelectedDuplicateCheckRow] =
+    useState<string>("");
 
   const api = useApi();
 
   const { data: dqResult, isLoading } = useQuery({
     queryKey: ["dq_check", uploadId],
     queryFn: () => {
-      const data = api.uploads.get_dq_check_result("test.json"); //This should be the actual dq check file name
+      const data = api.uploads.get_dq_check_result(uploadId); //This should be the actual dq check file name
       return data;
     },
   });
@@ -36,7 +65,7 @@ export default function Index() {
     },
   });
 
-  const rowLevelAssertionColumns = [
+  const geospatialChecksHeaders = [
     {
       key: "check",
       header: "Check",
@@ -51,27 +80,105 @@ export default function Index() {
     },
   ];
 
-  const rowLevelAssertionsRows = dqResult?.data.row_level_assertions.map(
-    assertion => {
+  const geospatialChecksRows = dqResult?.data.geospatial_points_checks.map(
+    check => {
       return {
-        id: assertion.assertion,
-        check: assertion.assertion,
-        key: assertion.assertion,
-        count: assertion.count_overall,
+        id: check.assertion,
+        check: check.description,
+        count: check.count_failed,
         actions: (
           <Link
             onClick={() => {
-              setIsValuesModalOpen(true);
-              setModalValue("somevalue");
+              setIsInvalidGeospatialChecksModalOpen(true);
+
+              const rows = check.rows_failed.map(row => {
+                return {
+                  id: row,
+                  value: row,
+                };
+              });
+
+              setInvalidGeospatialChecksValuesRows(rows);
+              setSelectedGeospatialCheckRow(check.description);
             }}
           >
-            View Values
+            View Details
           </Link>
         ),
-        ...assertion,
       };
     },
   );
+
+  const invalidGeospatialChecksValuesHeaders = [
+    {
+      key: "value",
+      header: "Value",
+    },
+  ];
+
+  const duplicateChecksHeaders = [
+    {
+      key: "check",
+      header: "Check",
+    },
+    {
+      key: "count",
+      header: "Count",
+    },
+    {
+      key: "actions",
+      header: "Actions",
+    },
+  ];
+
+  const duplicateChecksRows = dqResult?.data.duplicate_rows_checks.map(
+    check => {
+      return {
+        id: check.assertion,
+        check: check.description,
+        count: check.count_failed,
+        actions: (
+          <Link
+            onClick={() => {
+              setIsInvalidDuplicateChecksModalOpen(true);
+
+              const rows = check.rows_failed.map(row => {
+                return {
+                  id: row,
+                  value: row,
+                };
+              });
+
+              setInvalidDuplicateChecksValuesRows(rows);
+              setSelectedDuplicateCheckRow(check.description);
+            }}
+          >
+            View Details
+          </Link>
+        ),
+      };
+    },
+  );
+
+  const invalidDuplicateChecksValuesHeaders = [
+    {
+      key: "value",
+      header: "Value",
+    },
+  ];
+
+  let creationTime = "";
+  let checksRunTime = "";
+
+  if (fileProperties) {
+    creationTime = new Date(
+      fileProperties?.data.creation_time,
+    ).toLocaleString();
+  }
+
+  if (dqResult) {
+    checksRunTime = new Date(dqResult.data.summary.timestamp).toLocaleString();
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -105,10 +212,8 @@ export default function Index() {
           ) : (
             <Accordion align="start">
               <AccordionItem title="Summary">
-                <em>
-                  File Uploaded at:{" "}
-                  {fileProperties?.data.creation_time.toLocaleString()}
-                </em>
+                <p>File Uploaded at: {creationTime}</p>
+                <p>Checks performed at {checksRunTime}</p>
                 <div>
                   Rows: <b>{dqResult?.data.summary.rows ?? ""}</b>
                 </div>
@@ -125,45 +230,72 @@ export default function Index() {
                   rows={checksPerColumnRows ?? []}
                 />
               </AccordionItem> */}
-              {/* <AccordionItem title="Checks for duplicate rows">
+              <AccordionItem title="Checks for duplicate rows">
                 <div className="py-4">
                   These checks will count rows that appear to be duplicates
                   based on combinations of columns.
                 </div>
                 <Datatable
-                  headers={checksData?.data.duplicate_rows.headers ?? []}
-                  rows={checksData?.data.duplicate_rows.rows ?? []}
+                  headers={duplicateChecksHeaders ?? []}
+                  rows={duplicateChecksRows ?? []}
                 />
-              </AccordionItem> */}
+              </AccordionItem>
               <AccordionItem title="Checks based on geospatial data points">
                 <div className="py-4">
-                  These checks will check the data quality of each row based on
-                  its coordinate data.
+                  Total Number of Rows with Warnings:{" "}
+                  <b>{geospatialChecksRows?.length} rows</b>
                 </div>
                 <Datatable
-                  headers={rowLevelAssertionColumns ?? []}
-                  rows={rowLevelAssertionsRows ?? []}
+                  headers={geospatialChecksHeaders ?? []}
+                  rows={geospatialChecksRows ?? []}
                 />
               </AccordionItem>
             </Accordion>
           )}
         </div>
       </div>
-      {isValuesModalOpen &&
+
+      {isInvalidDuplicateChecksModalOpen &&
         createPortal(
-          <Modal
-            modalHeading="Unique Values Check"
-            open={isValuesModalOpen}
-            passiveModal
-            onRequestClose={() => setIsValuesModalOpen(false)}
-          >
-            <div>HEY</div>
-            <div>HEY</div>
-            <div>HEY</div>
-            <div>HEY</div>
-            <div>HEY</div>
-            <div>{modalValue}</div>
-          </Modal>,
+          <div className="w-[200px]">
+            <Modal
+              modalHeading="Invalid Values Check"
+              open={isInvalidDuplicateChecksModalOpen}
+              passiveModal
+              onRequestClose={() => setIsInvalidDuplicateChecksModalOpen(false)}
+            >
+              There are <b>{invalidDuplicateChecksValuesRows.length}</b> invalid
+              values in <b>{selectedDuplicateCheckRow}</b>:
+              <Datatable
+                headers={invalidDuplicateChecksValuesHeaders ?? []}
+                rows={invalidDuplicateChecksValuesRows ?? []}
+              />
+            </Modal>
+          </div>,
+
+          document.body,
+        )}
+
+      {isInvalidGeospatialChecksModalOpen &&
+        createPortal(
+          <div className="w-[200px]">
+            <Modal
+              modalHeading="Invalid Values Check"
+              open={isInvalidGeospatialChecksModalOpen}
+              passiveModal
+              onRequestClose={() =>
+                setIsInvalidGeospatialChecksModalOpen(false)
+              }
+            >
+              There are <b>{invalidGeospatialChecksValuesRows.length}</b>{" "}
+              invalid values in <b>{selectedGeoSpatialCheckRow}</b>:
+              <Datatable
+                headers={invalidGeospatialChecksValuesHeaders ?? []}
+                rows={invalidGeospatialChecksValuesRows ?? []}
+              />
+            </Modal>
+          </div>,
+
           document.body,
         )}
     </div>

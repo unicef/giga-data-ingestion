@@ -1,5 +1,7 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
+import { DataQualityCheckResult } from "@/types/upload";
+
 type Header = {
   key: string;
   header: string;
