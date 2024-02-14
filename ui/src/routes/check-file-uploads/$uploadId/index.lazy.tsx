@@ -16,10 +16,9 @@ import { Link as TanstackLink, createFileRoute } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
 import ColumnChecks from "@/components/check-file-uploads/ColumnChecks";
+import DuplicateChecks from "@/components/check-file-uploads/DuplicateChecks";
 import Datatable from "@/components/upload/Datatable";
 import {
-  duplicateCheckModalHeaders,
-  duplicateChecksHeaders,
   geospatialChecksHeaders,
   geospatialChecksModalHeaders,
 } from "@/constants/check-file-uploads";
@@ -33,10 +32,7 @@ type GeoSpatialRow = {
   value: string;
 }[];
 
-type DuplicateCheckRow = {
-  id: string;
-  value: string;
-}[];
+
 
 export default function Index() {
   const { uploadId } = Route.useParams();
@@ -50,17 +46,6 @@ export default function Index() {
     setInvalidGeospatialChecksValuesRows,
   ] = useState<GeoSpatialRow>([]);
   const [selectedGeoSpatialCheckRow, setSelectedGeospatialCheckRow] =
-    useState<string>("");
-
-  const [
-    isInvalidDuplicateChecksModalOpen,
-    setIsInvalidDuplicateChecksModalOpen,
-  ] = useState<boolean>(false);
-  const [
-    invalidDuplicateChecksValuesRows,
-    setInvalidDuplicateChecksValuesRows,
-  ] = useState<DuplicateCheckRow>([]);
-  const [selectedDuplicateCheckRow, setSelectedDuplicateCheckRow] =
     useState<string>("");
 
   const api = useApi();
@@ -80,35 +65,6 @@ export default function Index() {
       return data;
     },
   });
-
-  const duplicateChecksRows = dqResult?.data.duplicate_rows_checks.map(
-    check => {
-      return {
-        id: check.assertion,
-        check: check.description,
-        count: check.count_failed,
-        actions: (
-          <Link
-            onClick={() => {
-              setIsInvalidDuplicateChecksModalOpen(true);
-
-              const rows = check.rows_failed.map(row => {
-                return {
-                  id: row,
-                  value: row,
-                };
-              });
-
-              setInvalidDuplicateChecksValuesRows(rows);
-              setSelectedDuplicateCheckRow(check.description);
-            }}
-          >
-            View Details
-          </Link>
-        ),
-      };
-    },
-  );
 
   const geospatialChecksRows = dqResult?.data.geospatial_points_checks.map(
     check => {
@@ -195,14 +151,7 @@ export default function Index() {
                   <ColumnChecks data={dqResult?.data} />
                 </AccordionItem>
                 <AccordionItem title="Checks for duplicate rows">
-                  <div className="py-4">
-                    Total suspected duplicate rows:{" "}
-                    <b>{duplicateChecksRows?.length} rows</b>
-                  </div>
-                  <Datatable
-                    headers={duplicateChecksHeaders ?? []}
-                    rows={duplicateChecksRows ?? []}
-                  />
+                  <DuplicateChecks data={dqResult?.data} />
                 </AccordionItem>
                 <AccordionItem title="Checks based on geospatial data points">
                   <div className="py-4">
@@ -228,24 +177,6 @@ export default function Index() {
           )}
         </div>
       </div>
-
-      {isInvalidDuplicateChecksModalOpen &&
-        createPortal(
-          <Modal
-            modalHeading="Invalid Values Check"
-            open={isInvalidDuplicateChecksModalOpen}
-            passiveModal
-            onRequestClose={() => setIsInvalidDuplicateChecksModalOpen(false)}
-          >
-            There are <b>{invalidDuplicateChecksValuesRows.length}</b> invalid
-            values in <b>{selectedDuplicateCheckRow}</b>:
-            <Datatable
-              headers={duplicateCheckModalHeaders ?? []}
-              rows={invalidDuplicateChecksValuesRows ?? []}
-            />
-          </Modal>,
-          document.body,
-        )}
 
       {isInvalidGeospatialChecksModalOpen &&
         createPortal(
