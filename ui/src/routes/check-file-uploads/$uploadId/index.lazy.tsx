@@ -18,6 +18,14 @@ import { useApi } from "@/api";
 import Datatable from "@/components/upload/Datatable";
 import PaginatedDatatable from "@/components/upload/PaginatedDatatable";
 import StatusIndicator from "@/components/upload/StatusIndicator";
+import {
+  columnCheckModalHeaders,
+  columnChecksHeaders,
+  duplicateCheckModalHeaders,
+  duplicateChecksHeaders,
+  geospatialChecksHeaders,
+  geospatialChecksModalHeaders,
+} from "@/constants/check-file-uploads";
 import { ColumnCheck } from "@/types/upload";
 
 export const Route = createFileRoute("/check-file-uploads/$uploadId/")({
@@ -39,6 +47,7 @@ type ColumnCheckRow = {
   value: string;
   count: number;
 }[];
+
 export default function Index() {
   const { uploadId } = Route.useParams();
 
@@ -97,37 +106,6 @@ export default function Index() {
       return data;
     },
   });
-
-  const columnChecksHeaders = [
-    {
-      key: "columnName",
-      header: "Column Name",
-    },
-    {
-      key: "expectedDataType",
-      header: "Expected Data Type",
-    },
-    {
-      key: "isPresent",
-      header: "Is column int he dataset?",
-    },
-    {
-      key: "isCorrectDatatype",
-      header: "Is the column in the right data type?",
-    },
-    {
-      key: "nullValuesCount",
-      header: "How many null values per column?",
-    },
-    {
-      key: "uniqueValuesCount",
-      header: "How many unique values per column?",
-    },
-    {
-      key: "actions",
-      header: "Actions",
-    },
-  ];
 
   const columnChecksRows = dqResult?.data.column_checks.map(check => {
     return {
@@ -190,32 +168,6 @@ export default function Index() {
     };
   });
 
-  const columnCheckModalHeaders = [
-    {
-      key: "value",
-      header: "Value",
-    },
-    {
-      key: "count",
-      header: "Count",
-    },
-  ];
-
-  const duplicateChecksHeaders = [
-    {
-      key: "check",
-      header: "Check",
-    },
-    {
-      key: "count",
-      header: "Count",
-    },
-    {
-      key: "actions",
-      header: "Actions",
-    },
-  ];
-
   const duplicateChecksRows = dqResult?.data.duplicate_rows_checks.map(
     check => {
       return {
@@ -245,28 +197,6 @@ export default function Index() {
     },
   );
 
-  const invalidDuplicateChecksValuesHeaders = [
-    {
-      key: "value",
-      header: "Value",
-    },
-  ];
-
-  const geospatialChecksHeaders = [
-    {
-      key: "check",
-      header: "Check",
-    },
-    {
-      key: "count",
-      header: "Count",
-    },
-    {
-      key: "actions",
-      header: "Actions",
-    },
-  ];
-
   const geospatialChecksRows = dqResult?.data.geospatial_points_checks.map(
     check => {
       return {
@@ -295,13 +225,6 @@ export default function Index() {
       };
     },
   );
-
-  const invalidGeospatialChecksValuesHeaders = [
-    {
-      key: "value",
-      header: "Value",
-    },
-  ];
 
   let creationTime = "";
   let checksRunTime = "";
@@ -453,7 +376,7 @@ export default function Index() {
             There are <b>{invalidDuplicateChecksValuesRows.length}</b> invalid
             values in <b>{selectedDuplicateCheckRow}</b>:
             <Datatable
-              headers={invalidDuplicateChecksValuesHeaders ?? []}
+              headers={duplicateCheckModalHeaders ?? []}
               rows={invalidDuplicateChecksValuesRows ?? []}
             />
           </Modal>,
@@ -471,7 +394,7 @@ export default function Index() {
             There are <b>{invalidGeospatialChecksValuesRows.length}</b> invalid
             values in <b>{selectedGeoSpatialCheckRow}</b>:
             <Datatable
-              headers={invalidGeospatialChecksValuesHeaders ?? []}
+              headers={geospatialChecksModalHeaders ?? []}
               rows={invalidGeospatialChecksValuesRows ?? []}
             />
           </Modal>,
