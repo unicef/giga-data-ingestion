@@ -154,10 +154,14 @@ async def list_files():
 
 
 @router.get(
-    "/dq_check/{name}",
+    "/dq_check/{upload_id}",
 )
-async def get_dq_check(name: str):
-    blob = storage_client.get_blob_client(f"/raw/uploads_DEV/{name}")
+async def get_dq_check(upload_id: str):
+    file_name_prefix = f"raw/uploads_DEV/{upload_id}"
+    blob_list = storage_client.list_blobs(name_starts_with=file_name_prefix)
+    first_blob = next(blob_list, None)
+    blob = storage_client.get_blob_client(first_blob.name)
+
     data = blob.download_blob().readall()
     obj = json.loads(data.decode("utf-8"))
     return obj
