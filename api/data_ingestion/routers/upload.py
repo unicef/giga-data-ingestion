@@ -17,7 +17,7 @@ from fastapi import (
 )
 from fastapi_azure_auth.user import User
 from pydantic import AwareDatetime
-from sqlalchemy import delete, desc, select
+from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from azure.core.exceptions import HttpResponseError
@@ -151,11 +151,14 @@ async def list_uploads(
     db: AsyncSession = Depends(get_db),
     limit: Annotated[int, Query(ge=0, le=50)] = 10,
     offset: Annotated[int, Query(ge=0)] = 0,
+    id_search: Annotated[
+        str,
+        Query(min_length=1, max_length=24, pattern=r"^\w+$"),
+    ] = None,
 ):
     # TODO: Proper filtering w/ RBAC
-    return await db.scalars(
-        select(FileUpload)
-        .order_by(desc(FileUpload.created))
-        .limit(limit)
-        .offset(offset)
-    )
+    base_query = select(FileUpload).order_by(desc(FileUpload.created))
+    if id_search:
+        base_query = base_query.where(func.starts_with(FileUpload.id, id_search))
+
+    return await db.scalars(base_query.limit(limit).offset(offset))
