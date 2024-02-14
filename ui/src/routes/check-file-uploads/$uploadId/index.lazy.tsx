@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
+import { Information } from "@carbon/icons-react";
 import {
   Accordion,
   AccordionItem,
@@ -10,6 +11,7 @@ import {
   Modal,
   Section,
   SkeletonText,
+  Tooltip,
 } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link as TanstackLink, createFileRoute } from "@tanstack/react-router";
@@ -110,7 +112,21 @@ export default function Index() {
   const columnChecksRows = dqResult?.data.column_checks.map(check => {
     return {
       id: check.assertion,
-      columnName: check.assertion,
+      columnName: (
+        <Tooltip
+          align="right"
+          enterDelayMs={150}
+          label={`${check.description}`}
+          leaveDelayMs={0}
+        >
+          <div className="flex gap-1">
+            {check.assertion}
+            <div className="flex items-center opacity-25">
+              <Information />
+            </div>
+          </div>
+        </Tooltip>
+      ),
       expectedDataType: check.data_type,
       isPresent: (
         <div className="flex">
