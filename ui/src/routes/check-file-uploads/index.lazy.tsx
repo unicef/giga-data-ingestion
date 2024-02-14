@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
 
-import { Upload } from "@carbon/icons-react";
 import {
-  Button,
   DataTable,
   DataTableHeader,
   Heading, // @ts-expect-error paginationNav has no typescript declaration yet
@@ -16,13 +14,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  TableToolbar,
-  TableToolbarContent,
 } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createLazyFileRoute } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
+import { UploadLink } from "@/components/common/UploadLink";
 import StatusIndicator from "@/components/upload/StatusIndicator";
 
 export const Route = createLazyFileRoute("/check-file-uploads/")({
@@ -109,8 +106,20 @@ export default function FileUploads() {
       <Section className="container py-6">
         <Stack gap={6}>
           <Section>
-            <Heading>Check File Uploads</Heading>
+            <Heading>What will you be uploading today?</Heading>
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+              enim ad minim veniam, quis nostrud exercitation ullamco laboris
+              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+              reprehenderit in voluptate velit esse cillum dolore eu fugiat
+              nulla pariatur.
+            </p>
           </Section>
+          <div className="flex gap-8">
+            <UploadLink uploadType="geolocation">Geolocation</UploadLink>
+            <UploadLink uploadType="coverage">Coverage</UploadLink>
+          </div>
           <Section>
             <DataTable headers={columns} rows={rowSlice}>
               {({
@@ -121,13 +130,6 @@ export default function FileUploads() {
                 getTableProps,
               }) => (
                 <TableContainer>
-                  <TableToolbar>
-                    <TableToolbarContent>
-                      <Button as={Link} to="/upload" renderIcon={Upload}>
-                        Upload New File
-                      </Button>
-                    </TableToolbarContent>
-                  </TableToolbar>
                   <Table {...getTableProps()}>
                     <TableHead>
                       <TableRow>
