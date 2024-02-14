@@ -15,6 +15,7 @@ tasks:
   default:
     desc: Build and start Docker containers
     cmds:
+      - docker compose --project-name giga-dataops-platform --file docker-compose-network.yaml up --detach --build --remove-orphans {{.CLI_ARGS}}
       - docker compose --project-name {{.PROJECT_NAME}} up --detach --build --remove-orphans {{.CLI_ARGS}}
 
   setup:
@@ -99,9 +100,11 @@ tasks:
     desc: Install/upgrade Helm chart
     dir: infra
     cmds:
+      - kubectl apply -f k8s/namespace.yaml
       - kubectl apply -f k8s/secrets.yaml
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
+        --namespace giga-data-ingestion
         --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}}
         --set image.tag={{.COMMIT_SHA}}
         --set service.type=LoadBalancer
@@ -110,6 +113,6 @@ tasks:
     desc: Uninstall Helm chart
     dir: infra/helm
     cmds:
-      - helm uninstall ingestion-portal
-      - kubectl delete all --all
-      - kubectl delete pvc --all
+      - helm uninstall ingestion-portal --namespace giga-data-ingestion
+      - kubectl delete all --all --namespace giga-data-ingestion
+      - kubectl delete pvc --all --namespace giga-data-ingestion

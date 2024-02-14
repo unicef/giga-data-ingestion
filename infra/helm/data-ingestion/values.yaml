@@ -82,4 +82,4 @@ affinity: { }
 #  - name: giga-ingestion-portal
 
 envSecrets:
-  - name: giga-ingestion-portal
+  - name: giga-ingestion-portal-secrets
