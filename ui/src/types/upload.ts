@@ -26,3 +26,38 @@ export interface UploadRouterContext {
   uploadDate: string;
   uploadId: string;
 }
+
+interface CheckResult {
+  assertion: string;
+  count_failed: number;
+  count_passed: number;
+  count_overall: number;
+  percent_failed: number;
+  percent_passed: number;
+}
+
+interface UniqueValue {
+  name: string;
+  count: number;
+}
+
+interface ColumnCheck {
+  assertion: string;
+  data_type: number;
+  is_present: number;
+  is_correct_datatype: number;
+  null_values_count: number;
+  unique_values_count: number;
+  unique_values: UniqueValue[];
+}
+
+export interface DataQualityCheckResult {
+  summary: {
+    rows: number;
+    columns: number;
+    timestamp: Date;
+  };
+  column_checks: ColumnCheck[];
+  duplicate_rows_checks: CheckResult[];
+  geospatial_points_checks: CheckResult[];
+}
