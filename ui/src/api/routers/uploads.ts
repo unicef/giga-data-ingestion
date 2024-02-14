@@ -62,7 +62,9 @@ type Files = {
 
 type BlobProperties = {
   creation_time: Date;
+  name: string;
 };
+
 
 export default function routes(axi: AxiosInstance) {
   return {

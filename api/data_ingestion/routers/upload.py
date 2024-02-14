@@ -178,6 +178,6 @@ async def get_file_properties(upload_id: str):
     blob = storage_client.get_blob_client(first_blob.name)
     data = blob.get_blob_properties()
 
-    res = {"creation_time": data.creation_time}
+    res = {"name": first_blob.name, "creation_time": data.creation_time}
 
     return res

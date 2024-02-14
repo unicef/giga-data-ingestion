@@ -1,12 +1,24 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
-import { Accordion, AccordionItem, Link, Modal } from "@carbon/react";
+import {
+  Accordion,
+  AccordionItem,
+  Button,
+  Heading,
+  Link,
+  Modal,
+  Section,
+  SkeletonText,
+} from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link as TanstackLink, createFileRoute } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
 import Datatable from "@/components/upload/Datatable";
+import PaginatedDatatable from "@/components/upload/PaginatedDatatable";
+import StatusIndicator from "@/components/upload/StatusIndicator";
+import { ColumnCheck } from "@/types/upload";
 
 export const Route = createFileRoute("/check-file-uploads/$uploadId/")({
   component: Index,
@@ -22,6 +34,11 @@ type DuplicateCheckRow = {
   value: string;
 }[];
 
+type ColumnCheckRow = {
+  id: string;
+  value: string;
+  count: number;
+}[];
 export default function Index() {
   const { uploadId } = Route.useParams();
 
@@ -47,17 +64,33 @@ export default function Index() {
   const [selectedDuplicateCheckRow, setSelectedDuplicateCheckRow] =
     useState<string>("");
 
+  const [isColumnChecksModalOpen, setIsColumnChecksModalOpen] =
+    useState<boolean>(false);
+  const [columnCheckModalRows, setColumnCheckModalRows] =
+    useState<ColumnCheckRow>([]);
+  const [selectedColumnCheck, setSelectedColumnCheck] = useState<ColumnCheck>({
+    assertion: "",
+    description: "",
+    data_type: "",
+    is_present: false,
+    is_correct_datatype: false,
+    null_values_count: 0,
+    unique_values_count: 0,
+    unique_values: [],
+    rows_failed: [],
+  });
+
   const api = useApi();
 
-  const { data: dqResult, isLoading } = useQuery({
+  const { data: dqResult, isLoading: dqResultLoading } = useQuery({
     queryKey: ["dq_check", uploadId],
     queryFn: () => {
-      const data = api.uploads.get_dq_check_result(uploadId); //This should be the actual dq check file name
+      const data = api.uploads.get_dq_check_result(uploadId);
       return data;
     },
   });
 
-  const { data: fileProperties } = useQuery({
+  const { data: fileProperties, isLoading: filePropertiesLoading } = useQuery({
     queryKey: ["file_property", uploadId],
     queryFn: () => {
       const data = api.uploads.get_file_properties(uploadId);
@@ -65,14 +98,30 @@ export default function Index() {
     },
   });
 
-  const geospatialChecksHeaders = [
+  const columnChecksHeaders = [
     {
-      key: "check",
-      header: "Check",
+      key: "columnName",
+      header: "Column Name",
     },
     {
-      key: "count",
-      header: "Count",
+      key: "expectedDataType",
+      header: "Expected Data Type",
+    },
+    {
+      key: "isPresent",
+      header: "Is column int he dataset?",
+    },
+    {
+      key: "isCorrectDatatype",
+      header: "Is the column in the right data type?",
+    },
+    {
+      key: "nullValuesCount",
+      header: "How many null values per column?",
+    },
+    {
+      key: "uniqueValuesCount",
+      header: "How many unique values per column?",
     },
     {
       key: "actions",
@@ -80,39 +129,75 @@ export default function Index() {
     },
   ];
 
-  const geospatialChecksRows = dqResult?.data.geospatial_points_checks.map(
-    check => {
-      return {
-        id: check.assertion,
-        check: check.description,
-        count: check.count_failed,
-        actions: (
-          <Link
-            onClick={() => {
-              setIsInvalidGeospatialChecksModalOpen(true);
+  const columnChecksRows = dqResult?.data.column_checks.map(check => {
+    return {
+      id: check.assertion,
+      columnName: check.assertion,
+      expectedDataType: check.data_type,
+      isPresent: (
+        <div className="flex">
+          <StatusIndicator
+            className="mr-1"
+            type={check.is_present ? "success" : "error"}
+          />
+          Present
+        </div>
+      ),
+      isCorrectDatatype: (
+        <div className="flex">
+          <StatusIndicator
+            className="mr-1"
+            type={check.is_correct_datatype ? "success" : "error"}
+          />
+          {check.data_type}
+        </div>
+      ),
+      nullValuesCount: (
+        <div className="flex">
+          <StatusIndicator
+            className="mr-1"
+            type={check.null_values_count == 0 ? "success" : "error"}
+          />
+          {check.null_values_count} null values
+        </div>
+      ),
+      uniqueValuesCount: (
+        <div className="flex">
+          <StatusIndicator className="mr-1" type="info" />
+          {check.unique_values_count} unique values
+        </div>
+      ),
+      actions: (
+        <Link
+          onClick={() => {
+            setIsColumnChecksModalOpen(true);
 
-              const rows = check.rows_failed.map(row => {
-                return {
-                  id: row,
-                  value: row,
-                };
-              });
+            const rows = check.unique_values.map(row => {
+              return {
+                id: row.name,
+                value: row.name,
+                count: row.count,
+              };
+            });
 
-              setInvalidGeospatialChecksValuesRows(rows);
-              setSelectedGeospatialCheckRow(check.description);
-            }}
-          >
-            View Details
-          </Link>
-        ),
-      };
-    },
-  );
+            setSelectedColumnCheck(check);
+            setColumnCheckModalRows(rows);
+          }}
+        >
+          View Details
+        </Link>
+      ),
+    };
+  });
 
-  const invalidGeospatialChecksValuesHeaders = [
+  const columnCheckModalHeaders = [
     {
       key: "value",
       header: "Value",
+    },
+    {
+      key: "count",
+      header: "Count",
     },
   ];
 
@@ -167,6 +252,57 @@ export default function Index() {
     },
   ];
 
+  const geospatialChecksHeaders = [
+    {
+      key: "check",
+      header: "Check",
+    },
+    {
+      key: "count",
+      header: "Count",
+    },
+    {
+      key: "actions",
+      header: "Actions",
+    },
+  ];
+
+  const geospatialChecksRows = dqResult?.data.geospatial_points_checks.map(
+    check => {
+      return {
+        id: check.assertion,
+        check: check.description,
+        count: check.count_failed,
+        actions: (
+          <Link
+            onClick={() => {
+              setIsInvalidGeospatialChecksModalOpen(true);
+
+              const rows = check.rows_failed.map(row => {
+                return {
+                  id: row,
+                  value: row,
+                };
+              });
+
+              setInvalidGeospatialChecksValuesRows(rows);
+              setSelectedGeospatialCheckRow(check.description);
+            }}
+          >
+            View Details
+          </Link>
+        ),
+      };
+    },
+  );
+
+  const invalidGeospatialChecksValuesHeaders = [
+    {
+      key: "value",
+      header: "Value",
+    },
+  ];
+
   let creationTime = "";
   let checksRunTime = "";
 
@@ -180,122 +316,165 @@ export default function Index() {
     checksRunTime = new Date(dqResult.data.summary.timestamp).toLocaleString();
   }
 
+  const columnCheckPassedRows = dqResult?.data.column_checks.reduce(
+    (acc, curr) =>
+      curr.is_present === true &&
+      curr.is_correct_datatype === true &&
+      curr.null_values_count === 0
+        ? acc + 1
+        : acc,
+    0,
+  );
+
+  const columnCheckFailedRows = dqResult?.data.column_checks.reduce(
+    (acc, curr) =>
+      curr.is_present !== true ||
+      curr.is_correct_datatype !== true ||
+      curr.null_values_count !== 0
+        ? acc + 1
+        : acc,
+    0,
+  );
+
+  const title = fileProperties?.data.name.split("_")[2];
+
   return (
     <div className="flex flex-col gap-8">
-      <div
-        onClick={() => {
-          console.log(dqResult);
-        }}
-      >
-        dq_result
-      </div>
-
-      <div
-        onClick={() => {
-          // console.log(summaryChecksHeaders);
-        }}
-      >
-        Loggers
-      </div>
       <div className="m-0 w-full">
         <div className="px=28 ">
-          {isLoading ? (
-            <Accordion align="start">
-              <AccordionItem disabled title="Summary" />
-              <AccordionItem disabled title="Checks per column" />
-              <AccordionItem disabled title="Checks for duplicate rows" />
-              <AccordionItem
-                disabled
-                title="Checks based on geospatial data points"
-              />
-            </Accordion>
+          {dqResultLoading && filePropertiesLoading ? (
+            <div>
+              <SkeletonText paragraph />
+              <Accordion align="start">
+                <AccordionItem disabled title="Summary" />
+                <AccordionItem disabled title="Checks per column" />
+                <AccordionItem disabled title="Checks for duplicate rows" />
+                <AccordionItem
+                  disabled
+                  title="Checks based on geospatial data points"
+                />
+              </Accordion>
+            </div>
           ) : (
-            <Accordion align="start">
-              <AccordionItem title="Summary">
-                <p>File Uploaded at: {creationTime}</p>
-                <p>Checks performed at {checksRunTime}</p>
-                <div>
-                  Rows: <b>{dqResult?.data.summary.rows ?? ""}</b>
-                </div>
-                <div>
-                  Columns:<b>{dqResult?.data.summary.columns ?? ""}</b>
-                </div>
-              </AccordionItem>
-              {/* <AccordionItem title="Checks per column">
-                <div className="py-4">
-                  These checks will be run on each column in the uploaded file
-                </div>
-                <PaginatedDatatable
-                  headers={summaryChecksHeaders}
-                  rows={checksPerColumnRows ?? []}
-                />
-              </AccordionItem> */}
-              <AccordionItem title="Checks for duplicate rows">
-                <div className="py-4">
-                  These checks will count rows that appear to be duplicates
-                  based on combinations of columns.
-                </div>
-                <Datatable
-                  headers={duplicateChecksHeaders ?? []}
-                  rows={duplicateChecksRows ?? []}
-                />
-              </AccordionItem>
-              <AccordionItem title="Checks based on geospatial data points">
-                <div className="py-4">
-                  Total Number of Rows with Warnings:{" "}
-                  <b>{geospatialChecksRows?.length} rows</b>
-                </div>
-                <Datatable
-                  headers={geospatialChecksHeaders ?? []}
-                  rows={geospatialChecksRows ?? []}
-                />
-              </AccordionItem>
-            </Accordion>
+            <div>
+              <Section>
+                <Section>
+                  <Heading className="capitalize">School {title}</Heading>
+                  <p>
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+                    do eiusmod tempor incididunt ut labore et dolore magna
+                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                    Duis aute irure dolor in reprehenderit in voluptate velit
+                    esse cillum dolore eu fugiat nulla pariatur.
+                  </p>
+                </Section>
+              </Section>
+              <Accordion align="start">
+                <AccordionItem title="Summary">
+                  <p>File Uploaded at: {creationTime}</p>
+                  <p>Checks performed at {checksRunTime}</p>
+                </AccordionItem>
+                <AccordionItem title="Checks per column">
+                  <div className="py-4">
+                    Out of {dqResult?.data.column_checks.length} columns,{" "}
+                    <b>{columnCheckPassedRows}</b> passed and had{" "}
+                    <b>{columnCheckFailedRows}</b> errors
+                  </div>
+                  <PaginatedDatatable
+                    headers={columnChecksHeaders}
+                    rows={columnChecksRows ?? []}
+                  />
+                </AccordionItem>
+                <AccordionItem title="Checks for duplicate rows">
+                  <div className="py-4">
+                    Total suspected duplicate rows:{" "}
+                    <b>{duplicateChecksRows?.length} rows</b>
+                  </div>
+                  <Datatable
+                    headers={duplicateChecksHeaders ?? []}
+                    rows={duplicateChecksRows ?? []}
+                  />
+                </AccordionItem>
+                <AccordionItem title="Checks based on geospatial data points">
+                  <div className="py-4">
+                    Total Number of Rows with Warnings:{" "}
+                    <b>{geospatialChecksRows?.length} rows</b>
+                  </div>
+                  <Datatable
+                    headers={geospatialChecksHeaders ?? []}
+                    rows={geospatialChecksRows ?? []}
+                  />
+                </AccordionItem>
+              </Accordion>
+              <div className="flex flex-col gap-4 pt-4">
+                <p>
+                  After addressing the above checks, you may try to reupload
+                  your file
+                </p>
+                <Button as={TanstackLink} to="/upload">
+                  Reupload
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       </div>
 
+      {isColumnChecksModalOpen &&
+        createPortal(
+          <Modal
+            modalHeading="Unique Values Check"
+            open={isColumnChecksModalOpen}
+            passiveModal
+            onRequestClose={() => setIsColumnChecksModalOpen(false)}
+          >
+            <p>
+              {" "}
+              There are <b>{selectedColumnCheck.unique_values_count}</b> unique
+              values in <b>{selectedColumnCheck.assertion}</b>
+            </p>
+            <Datatable
+              headers={columnCheckModalHeaders ?? []}
+              rows={columnCheckModalRows ?? []}
+            />
+          </Modal>,
+          document.body,
+        )}
+
       {isInvalidDuplicateChecksModalOpen &&
         createPortal(
-          <div className="w-[200px]">
-            <Modal
-              modalHeading="Invalid Values Check"
-              open={isInvalidDuplicateChecksModalOpen}
-              passiveModal
-              onRequestClose={() => setIsInvalidDuplicateChecksModalOpen(false)}
-            >
-              There are <b>{invalidDuplicateChecksValuesRows.length}</b> invalid
-              values in <b>{selectedDuplicateCheckRow}</b>:
-              <Datatable
-                headers={invalidDuplicateChecksValuesHeaders ?? []}
-                rows={invalidDuplicateChecksValuesRows ?? []}
-              />
-            </Modal>
-          </div>,
-
+          <Modal
+            modalHeading="Invalid Values Check"
+            open={isInvalidDuplicateChecksModalOpen}
+            passiveModal
+            onRequestClose={() => setIsInvalidDuplicateChecksModalOpen(false)}
+          >
+            There are <b>{invalidDuplicateChecksValuesRows.length}</b> invalid
+            values in <b>{selectedDuplicateCheckRow}</b>:
+            <Datatable
+              headers={invalidDuplicateChecksValuesHeaders ?? []}
+              rows={invalidDuplicateChecksValuesRows ?? []}
+            />
+          </Modal>,
           document.body,
         )}
 
       {isInvalidGeospatialChecksModalOpen &&
         createPortal(
-          <div className="w-[200px]">
-            <Modal
-              modalHeading="Invalid Values Check"
-              open={isInvalidGeospatialChecksModalOpen}
-              passiveModal
-              onRequestClose={() =>
-                setIsInvalidGeospatialChecksModalOpen(false)
-              }
-            >
-              There are <b>{invalidGeospatialChecksValuesRows.length}</b>{" "}
-              invalid values in <b>{selectedGeoSpatialCheckRow}</b>:
-              <Datatable
-                headers={invalidGeospatialChecksValuesHeaders ?? []}
-                rows={invalidGeospatialChecksValuesRows ?? []}
-              />
-            </Modal>
-          </div>,
-
+          <Modal
+            modalHeading="Invalid Values Check"
+            open={isInvalidGeospatialChecksModalOpen}
+            passiveModal
+            onRequestClose={() => setIsInvalidGeospatialChecksModalOpen(false)}
+          >
+            There are <b>{invalidGeospatialChecksValuesRows.length}</b> invalid
+            values in <b>{selectedGeoSpatialCheckRow}</b>:
+            <Datatable
+              headers={invalidGeospatialChecksValuesHeaders ?? []}
+              rows={invalidGeospatialChecksValuesRows ?? []}
+            />
+          </Modal>,
           document.body,
         )}
     </div>

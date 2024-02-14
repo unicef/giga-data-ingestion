@@ -43,12 +43,12 @@ interface UniqueValue {
   count: number;
 }
 
-interface ColumnCheck {
+export interface ColumnCheck {
   assertion: string;
   description: string;
-  data_type: number;
-  is_present: number;
-  is_correct_datatype: number;
+  data_type: string;
+  is_present: boolean;
+  is_correct_datatype: boolean;
   null_values_count: number;
   unique_values_count: number;
   unique_values: UniqueValue[];
