@@ -1,13 +1,8 @@
-import { useState } from "react";
-import { createPortal } from "react-dom";
-
 import {
   Accordion,
   AccordionItem,
   Button,
   Heading,
-  Link,
-  Modal,
   Section,
   SkeletonText,
 } from "@carbon/react";
@@ -17,36 +12,14 @@ import { Link as TanstackLink, createFileRoute } from "@tanstack/react-router";
 import { useApi } from "@/api";
 import ColumnChecks from "@/components/check-file-uploads/ColumnChecks";
 import DuplicateChecks from "@/components/check-file-uploads/DuplicateChecks";
-import Datatable from "@/components/upload/Datatable";
-import {
-  geospatialChecksHeaders,
-  geospatialChecksModalHeaders,
-} from "@/constants/check-file-uploads";
+import GeospatialChecks from "@/components/check-file-uploads/GeospatialChecks";
 
 export const Route = createFileRoute("/check-file-uploads/$uploadId/")({
   component: Index,
 });
 
-type GeoSpatialRow = {
-  id: string;
-  value: string;
-}[];
-
-
-
 export default function Index() {
   const { uploadId } = Route.useParams();
-
-  const [
-    isInvalidGeospatialChecksModalOpen,
-    setIsInvalidGeospatialChecksModalOpen,
-  ] = useState<boolean>(false);
-  const [
-    invalidGeospatialChecksValuesRows,
-    setInvalidGeospatialChecksValuesRows,
-  ] = useState<GeoSpatialRow>([]);
-  const [selectedGeoSpatialCheckRow, setSelectedGeospatialCheckRow] =
-    useState<string>("");
 
   const api = useApi();
 
@@ -65,35 +38,6 @@ export default function Index() {
       return data;
     },
   });
-
-  const geospatialChecksRows = dqResult?.data.geospatial_points_checks.map(
-    check => {
-      return {
-        id: check.assertion,
-        check: check.description,
-        count: check.count_failed,
-        actions: (
-          <Link
-            onClick={() => {
-              setIsInvalidGeospatialChecksModalOpen(true);
-
-              const rows = check.rows_failed.map(row => {
-                return {
-                  id: row,
-                  value: row,
-                };
-              });
-
-              setInvalidGeospatialChecksValuesRows(rows);
-              setSelectedGeospatialCheckRow(check.description);
-            }}
-          >
-            View Details
-          </Link>
-        ),
-      };
-    },
-  );
 
   let creationTime = "";
   let checksRunTime = "";
@@ -154,14 +98,7 @@ export default function Index() {
                   <DuplicateChecks data={dqResult?.data} />
                 </AccordionItem>
                 <AccordionItem title="Checks based on geospatial data points">
-                  <div className="py-4">
-                    Total Number of Rows with Warnings:{" "}
-                    <b>{geospatialChecksRows?.length} rows</b>
-                  </div>
-                  <Datatable
-                    headers={geospatialChecksHeaders ?? []}
-                    rows={geospatialChecksRows ?? []}
-                  />
+                  <GeospatialChecks data={dqResult?.data} />
                 </AccordionItem>
               </Accordion>
               <div className="flex flex-col gap-4 pt-4">
@@ -177,24 +114,6 @@ export default function Index() {
           )}
         </div>
       </div>
-
-      {isInvalidGeospatialChecksModalOpen &&
-        createPortal(
-          <Modal
-            modalHeading="Invalid Values Check"
-            open={isInvalidGeospatialChecksModalOpen}
-            passiveModal
-            onRequestClose={() => setIsInvalidGeospatialChecksModalOpen(false)}
-          >
-            There are <b>{invalidGeospatialChecksValuesRows.length}</b> invalid
-            values in <b>{selectedGeoSpatialCheckRow}</b>:
-            <Datatable
-              headers={geospatialChecksModalHeaders ?? []}
-              rows={invalidGeospatialChecksValuesRows ?? []}
-            />
-          </Modal>,
-          document.body,
-        )}
     </div>
   );
 }
