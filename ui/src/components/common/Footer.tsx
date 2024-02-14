@@ -1,3 +1,8 @@
+import gigaUnicefItu from "@/assets/giga-unicef-itu.svg";
+import instagram from "@/assets/instagram.svg";
+import linkedin from "@/assets/linkedin.svg";
+import x from "@/assets/x.svg";
+
 const { VITE_DATAHUB_URL: DATAHUB_URL } = import.meta.env;
 
 export default function Footer() {
@@ -84,28 +89,28 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img src="/x.svg" alt="X (Twitter)" className="w-[24px]" />
+              <img src={x} alt="X (Twitter)" className="w-[24px]" />
             </a>
             <a
               href="https://www.linkedin.com/showcase/gigaglobal"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img src="/linkedin.svg" alt="LinkedIn" className="w-[24px]" />
+              <img src={linkedin} alt="LinkedIn" className="w-[24px]" />
             </a>
             <a
               href="https://www.instagram.com/giga_global/"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img src="/instagram.svg" alt="Instagram" className="w-[24px]" />
+              <img src={instagram} alt="Instagram" className="w-[24px]" />
             </a>
           </div>
         </div>
       </div>
 
       <div className="flex justify-end">
-        <img src="/giga-unicef-itu.svg" alt="Giga | UNICEF | ITU" />
+        <img src={gigaUnicefItu} alt="Giga | UNICEF | ITU" />
       </div>
     </footer>
   );

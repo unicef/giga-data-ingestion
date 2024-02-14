@@ -5,7 +5,7 @@ import sentry_sdk
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.models import Response
-from fastapi.responses import FileResponse, ORJSONResponse, PlainTextResponse
+from fastapi.responses import FileResponse, ORJSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from data_ingestion.constants import __version__
@@ -54,20 +54,6 @@ app.add_middleware(
 @app.on_event("startup")
 async def load_config():
     await azure_scheme.openid_config.load_config()
-
-
-@app.get(
-    "/",
-    tags=["core"],
-    responses={
-        status.HTTP_500_INTERNAL_SERVER_ERROR: Response(
-            description=HTTPStatus.INTERNAL_SERVER_ERROR.phrase
-        ).model_dump(),
-    },
-    response_class=PlainTextResponse,
-)
-async def health_check():
-    return "ok"
 
 
 @app.get(
