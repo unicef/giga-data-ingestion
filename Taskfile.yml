@@ -133,3 +133,13 @@ tasks:
       - helm uninstall ingestion-portal --namespace giga-data-ingestion
       - kubectl delete all --all --namespace giga-data-ingestion
       - kubectl delete pvc --all --namespace giga-data-ingestion
+
+  makemigrations:
+    desc: Generate database migrations
+    cmds:
+      - task exec -- api alembic revision --autogenerate -m "{{.CLI_ARGS}}"
+
+  migrate:
+    desc: Run database migrations
+    cmds:
+      - task exec -- api alembic upgrade head

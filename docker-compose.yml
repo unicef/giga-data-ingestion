@@ -3,6 +3,9 @@ networks:
     name: giga-dataops
     external: true
 
+volumes:
+  db-data:
+
 services:
   api:
     build: ./api
@@ -27,6 +30,15 @@ services:
       - /bin/sh
       - "-c"
       - "npm install && exec npm run dev"
+
+  db:
+    image: bitnami/postgresql:16.2.0-debian-11-r10
+    restart: unless-stopped
+    env_file: ./api/.env
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/bitnami/postgresql
 
   email-api:
     image: node:20-alpine

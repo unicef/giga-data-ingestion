@@ -4,7 +4,7 @@ from typing import Literal
 
 import sentry_sdk
 from loguru import logger
-from pydantic import AnyUrl
+from pydantic import AnyUrl, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings
 
 
@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: list[str] = ["*"]
     CORS_ALLOWED_ORIGINS: list[str] = ["*"]
     SECRET_KEY: str
+    POSTGRESQL_USERNAME: str
+    POSTGRESQL_PASSWORD: str
+    POSTGRESQL_DATABASE: str
+    DB_HOST: str = "db"
+    DB_PORT: int = 5432
     AZURE_APPLICATION_ID: str
     AZURE_TENANT_NAME: str
     AZURE_TENANT_ID: str
@@ -38,17 +43,32 @@ class Settings(BaseSettings):
         env_file = ".env"
         extra = "ignore"
 
+    @computed_field
     @property
     def IN_PRODUCTION(self) -> bool:
         return self.PYTHON_ENV != "local"
 
+    @computed_field
     @property
     def STATICFILES_DIR(self) -> Path:
         return self.BASE_DIR / "static"
 
+    @computed_field
     @property
     def AUTHORITY_URL(self) -> str:
         return f"https://login.microsoftonline.com/{self.AZURE_TENANT_ID}"
+
+    @computed_field
+    @property
+    def DATABASE_URL(self) -> str:
+        return PostgresDsn.build(
+            scheme="postgresql+asyncpg",
+            username=self.POSTGRESQL_USERNAME,
+            password=self.POSTGRESQL_PASSWORD,
+            host=self.DB_HOST,
+            port=str(self.DB_PORT),
+            path=self.POSTGRESQL_DATABASE,
+        )
 
 
 @lru_cache
