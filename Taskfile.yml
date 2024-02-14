@@ -97,7 +97,7 @@ tasks:
       - docker push {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.COMMIT_SHA}}
 
   helm-up:
-    desc: Install/upgrade Helm chart
+    desc: Install/upgrade Helm chart to a K8s cluster running on localhost
     dir: infra
     cmds:
       - kubectl apply -f k8s/namespace.yaml
@@ -108,6 +108,23 @@ tasks:
         --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}}
         --set image.tag={{.COMMIT_SHA}}
         --set service.type=LoadBalancer
+
+  helm-upi:
+    desc: Install/upgrade Helm chart to a K8s cluster with configured HTTPS ingress
+    dir: infra
+    cmds:
+      - kubectl apply -f k8s/namespace.yaml
+      - kubectl apply -f k8s/secrets.yaml
+      - >
+        helm upgrade --install ingestion-portal ./helm/data-ingestion
+        --namespace giga-data-ingestion
+        --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}}
+        --set image.tag={{.COMMIT_SHA}}
+        --set ingress.enabled=true
+        --set ingress.annotations=null
+        --set ingress.hosts[0].host={{.INGESTION_PORTAL_INGRESS_HOST}}
+        --set ingress.hosts[0].paths[0].path=/
+        --set ingress.hosts[0].paths[0].pathType=Prefix
 
   helm-down:
     desc: Uninstall Helm chart

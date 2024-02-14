@@ -6,14 +6,12 @@ WORKDIR /tmp
 
 RUN npm install && npm run build
 
-FROM python:3.11-slim AS base
+FROM python:3.11-alpine3.19 AS base
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
-RUN apt update && \
-    apt install -y --no-install-recommends libmagic1 && \
-    apt clean
+RUN apk add libmagic && apk cache clean
 
 FROM base AS deps
 
