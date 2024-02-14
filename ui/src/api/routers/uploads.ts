@@ -58,21 +58,6 @@ type Files = {
   timestamp: Date;
 }[];
 
-type DataQualityCheckResult = {
-  summary: {
-    rows: number;
-    columns: number;
-  };
-  row_level_assertions: {
-    assertion: string;
-    count_failed: number;
-    count_passed: number;
-    count_overall: number;
-    percent_failed: number;
-    percent_passed: number;
-  }[];
-};
-
 type BlobProperties = {
   creation_time: Date;
 };
@@ -91,9 +76,9 @@ export default function routes(axi: AxiosInstance) {
       return axi.get(`/upload/properties/${upload_id}`);
     },
     get_dq_check_result: (
-      name: string,
+      upload_id: string,
     ): Promise<AxiosResponse<DataQualityCheckResult>> => {
-      return axi.get(`upload/dq_check/${name}`);
+      return axi.get(`upload/dq_check/${upload_id}`);
     },
     upload_file: (params: {
       dataset: string;
