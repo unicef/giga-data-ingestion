@@ -28,7 +28,7 @@ jobs:
                   apiVersion: v1
                   kind: Secret
                   metadata:
-                    name: giga-ingestion-portal
+                    name: giga-ingestion-portal-secrets
                     labels:
                       app: giga-ingestion-portal
                   stringData:
