@@ -26,3 +26,16 @@ export interface UploadRouterContext {
   uploadDate: string;
   uploadId: string;
 }
+
+export interface UploadResponse {
+  id: string;
+  created: string;
+  uploader_id: string;
+  uploader_email: string;
+  dq_report_path: string | null;
+  country: string;
+  dataset: string;
+  source: string | null;
+  original_filename: string;
+  upload_path: string;
+}

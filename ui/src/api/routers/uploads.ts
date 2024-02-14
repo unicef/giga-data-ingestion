@@ -1,5 +1,7 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
+import { UploadResponse } from "@/types/upload.ts";
+
 type Header = {
   key: string;
   header: string;
@@ -70,7 +72,7 @@ export default function routes(axi: AxiosInstance) {
       school_id_type: string;
       description: string;
       [key: string]: string | File | null | undefined;
-    }): Promise<AxiosResponse<string>> => {
+    }): Promise<AxiosResponse<UploadResponse>> => {
       const formData = new FormData();
       Object.keys(params).forEach(key => {
         if (params[key] !== null && params[key] !== undefined) {
