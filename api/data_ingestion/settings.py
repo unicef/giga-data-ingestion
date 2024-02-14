@@ -60,14 +60,33 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
+    def DATABASE_CONNECTION_DICT(self) -> dict:
+        return {
+            "username": self.POSTGRESQL_USERNAME,
+            "password": self.POSTGRESQL_PASSWORD,
+            "host": self.DB_HOST,
+            "port": self.DB_PORT,
+            "path": self.POSTGRESQL_DATABASE,
+        }
+
+    @computed_field
+    @property
     def DATABASE_URL(self) -> str:
-        return PostgresDsn.build(
-            scheme="postgresql+asyncpg",
-            username=self.POSTGRESQL_USERNAME,
-            password=self.POSTGRESQL_PASSWORD,
-            host=self.DB_HOST,
-            port=str(self.DB_PORT),
-            path=self.POSTGRESQL_DATABASE,
+        return str(
+            PostgresDsn.build(
+                scheme="postgresql+psycopg2",
+                **self.DATABASE_CONNECTION_DICT,
+            )
+        )
+
+    @computed_field
+    @property
+    def ASYNC_DATABASE_URL(self) -> str:
+        return str(
+            PostgresDsn.build(
+                scheme="postgresql+asyncpg",
+                **self.DATABASE_CONNECTION_DICT,
+            )
         )
 
 

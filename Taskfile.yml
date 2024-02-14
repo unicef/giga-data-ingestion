@@ -137,9 +137,14 @@ tasks:
   makemigrations:
     desc: Generate database migrations
     cmds:
-      - task exec -- api alembic revision --autogenerate -m "{{.CLI_ARGS}}"
+      - task exec -- api poetry run alembic revision --autogenerate -m "{{.CLI_ARGS}}"
 
   migrate:
     desc: Run database migrations
     cmds:
-      - task exec -- api alembic upgrade head
+      - task exec -- api poetry run alembic upgrade head
+
+  psql:
+    desc: Open a psql shell
+    cmds:
+      - task exec -- db psql -U {{.POSTGRESQL_USERNAME}} -d {{.POSTGRESQL_DATABASE}}

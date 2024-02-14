@@ -17,6 +17,7 @@ services:
       - "8000:8000"
     volumes:
       - ./api:/app
+      - ./.venv-docker:/app/.venv
 
   ui:
     image: node:20-alpine
