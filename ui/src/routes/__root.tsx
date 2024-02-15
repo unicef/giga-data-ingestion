@@ -38,7 +38,7 @@ function Base({ children }: PropsWithChildren) {
       <ScrollRestoration />
 
       <Navbar />
-      <main className="flex-auto">{children}</main>
+      <main className="flex-auto flex-row">{children}</main>
       <Footer />
 
       <Suspense>

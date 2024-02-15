@@ -10,7 +10,6 @@ import {
 } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
-import gigaLogoBlue from "@/assets/GIGA_logo_blue.png";
 import useLogout from "@/hooks/useLogout.ts";
 import useRoles from "@/hooks/useRoles.ts";
 
@@ -26,9 +25,8 @@ export default function Navbar() {
       className="relative"
     >
       <HeaderName as={Link} to="/" prefix="">
-        <img src={gigaLogoBlue} className="h-5/6" alt="Giga" />
-        <span className="ml-1 text-xl font-light">giga</span>
-        <b className="ml-0.5 text-xl">sync</b>
+        <span className="font-light">giga</span>
+        <b>sync</b>
       </HeaderName>
       <AuthenticatedTemplate>
         <HeaderNavigation
@@ -36,7 +34,7 @@ export default function Navbar() {
           aria-labelledby="main-nav-label"
         >
           <HeaderMenuItem as={Link} to="/upload" disabled={!hasRoles}>
-            Upload file
+            File uploads
           </HeaderMenuItem>
           <HeaderMenuItem as={Link} to="/ingest-api" disabled={!hasRoles}>
             Ingest API
