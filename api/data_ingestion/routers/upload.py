@@ -5,7 +5,6 @@ from typing import Annotated
 
 import country_converter as coco
 import magic
-from azure.core.exceptions import HttpResponseError
 from fastapi import (
     APIRouter,
     Depends,
@@ -22,6 +21,7 @@ from pydantic import AwareDatetime
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
 from data_ingestion.db import get_db
 from data_ingestion.internal.auth import azure_scheme
@@ -155,18 +155,24 @@ async def list_files():
     for blob in blob_list:
         parts = blob.name.replace("raw/uploads/", "").split("_")
 
-        uid, country, dataset, source, _ = parts
+        if len(parts) == 4:
+            uid, country, dataset, _ = parts
+        else:
+            uid, country, dataset, source, _ = parts
 
-        files.append(
-            {
-                "filename": blob.name,
-                "uid": uid,
-                "country": country,
-                "dataset": dataset,
-                "source": source,
-                "timestamp": blob.creation_time.isoformat(),
-            }
-        )
+        file = {
+            "filename": blob.name,
+            "uid": uid,
+            "country": country,
+            "dataset": dataset,
+            "timestamp": blob.creation_time.isoformat(),
+        }
+        try:
+            file["source"] = source
+        except NameError:
+            pass
+        files.append(file)
+
     return files
 
 
@@ -177,6 +183,12 @@ async def get_dq_check(upload_id: str):
     file_name_prefix = f"raw/uploads_DEV/{upload_id}"
     blob_list = storage_client.list_blobs(name_starts_with=file_name_prefix)
     first_blob = next(blob_list, None)
+    if first_blob is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found",
+        )
+
     blob = storage_client.get_blob_client(first_blob.name)
 
     data = blob.download_blob().readall()
