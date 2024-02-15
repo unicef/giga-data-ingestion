@@ -53,7 +53,6 @@ class GroupsApi:
     user_request_config = (
         UsersRequestBuilder.UsersRequestBuilderGetRequestConfiguration(
             query_parameters=get_user_query_parameters,
-            headers={"ConsistencyLevel": "eventual"},
         )
     )
 

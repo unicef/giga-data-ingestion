@@ -12,8 +12,10 @@ repos:
           - --fix
           - --config
           - ./api/pyproject.toml
+        exclude: migrations/.*$
       - id: ruff-format
         args: [ --config, ./api/pyproject.toml ]
+        exclude: migrations/.*$
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v8.45.0
     hooks:

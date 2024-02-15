@@ -30,32 +30,37 @@ jobs:
                   metadata:
                     name: giga-ingestion-portal-secrets
                     labels:
-                      app: giga-ingestion-portal
+                      app.kubernetes.io/name: giga-data-ingestion
+                      app.kubernetes.io/part-of: giga-dataops-platform
+                      app.kubernetes.io/component: data-ingestion
                   stringData:
-                    AZURE_SAS_TOKEN: "$(azureSasToken)"
-                    AZURE_BLOB_CONTAINER_NAME: "$(storageContainerName)"
-                    AZURE_STORAGE_ACCOUNT_NAME: "$(storageAccountName)"
+                    DEPLOY_ENV: "$(deployEnv)"
                     SECRET_KEY: "$(applicationSecretKey)"
-                    AZURE_APPLICATION_ID: "$(azureAdApplicationId)"
+                    SENTRY_DSN: "$(sentryDsn)"
                     AZURE_TENANT_ID: "$(azureAdTenantId)"
-                    VITE_AZURE_TENANT_ID: "$(azureAdTenantId)"
                     AZURE_CLIENT_ID: "$(azureAdClientId)"
-                    VITE_AZURE_CLIENT_ID: "$(azureAdClientId)"
                     AZURE_CLIENT_SECRET: "$(azureAdClientSecret)"
+                    AZURE_APPLICATION_ID: "$(azureAdApplicationId)"
                     AZURE_TENANT_NAME: "$(azureAdTenantName)"
-                    VITE_AZURE_TENANT_NAME: "$(azureAdTenantName)"
                     AZURE_AUTH_POLICY_NAME: "$(azureAdPolicyName)"
-                    VITE_AZURE_AUTH_POLICY_NAME: "$(azureAdPolicyName)"
                     AZURE_REDIRECT_URI: "$(azureAdRedirectUri)"
                     WEB_APP_REDIRECT_URI: "$(webAppHost)"
                     AZURE_EMAIL_CONNECTION_STRING: "$(azureEmailConnectionString)"
                     AZURE_EMAIL_SENDER: "$(azureEmailSender)"
+                    AZURE_SAS_TOKEN: "$(azureSasToken)"
+                    AZURE_STORAGE_ACCOUNT_NAME: "$(storageAccountName)"
+                    AZURE_BLOB_CONTAINER_NAME: "$(storageContainerName)"
                     EMAIL_RENDERER_BEARER_TOKEN: "$(emailRendererBearerToken)"
                     EMAIL_RENDERER_SERVICE_URL: "$(emailRendererServiceUrl)"
                     EMAIL_TEST_RECIPIENTS: '$(emailTestRecipients)'
-                    DEPLOY_ENV: "$(deployEnv)"
+                    POSTGRESQL_USERNAME: "$(postgresqlUsername)"
+                    POSTGRESQL_PASSWORD: "$(postgresqlPassword)"
+                    POSTGRESQL_DATABASE: "$(postgresqlDatabase)"
                     COMMIT_SHA: "$(Build.SourceVersion)"
-                    SENTRY_DSN: "$(sentryDsn)"
-                    VITE_SENTRY_DSN: "$(viteSentryDsn)"
                     NODE_SENTRY_DSN: "$(nodeSentryDsn)"
+                    VITE_SENTRY_DSN: "$(viteSentryDsn)"
+                    VITE_AZURE_TENANT_ID: "$(azureAdTenantId)"
+                    VITE_AZURE_CLIENT_ID: "$(azureAdClientId)"
+                    VITE_AZURE_TENANT_NAME: "$(azureAdTenantName)"
+                    VITE_AZURE_AUTH_POLICY_NAME: "$(azureAdPolicyName)"
                     VITE_DATAHUB_URL: "https://io-datahub-$(deployEnv).unitst.org"
