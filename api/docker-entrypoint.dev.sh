@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-set -euxo pipefail
+set -eu
 
 poetry install --no-root --with dev
 poetry run alembic upgrade head

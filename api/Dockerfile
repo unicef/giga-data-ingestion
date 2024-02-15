@@ -1,9 +1,11 @@
-FROM python:3.11
+FROM python:3.11-alpine3.19
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV POETRY_HOME /etc/poetry
 ENV PATH "$POETRY_HOME/bin:$PATH"
+
+RUN apk add curl libmagic && apk cache clean
 
 ARG POETRY_VERSION=1.6.1
 
