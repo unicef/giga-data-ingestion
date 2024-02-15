@@ -16,7 +16,6 @@ import {
 import { Link, LinkComponent, useRouterState } from "@tanstack/react-router";
 
 import gigaLogoBlue from "@/assets/GIGA_logo_blue.png";
-import { useStore } from "@/store.ts";
 
 type SwitcherLinkItemProps = ComponentProps<typeof CarbonSwitcherItem> &
   PropsWithChildren & {
@@ -29,7 +28,6 @@ const SwitcherLinkItem = ({ children, ...props }: SwitcherLinkItemProps) => {
 };
 
 export default function Navbar() {
-  const { featureFlags } = useStore();
   const { location } = useRouterState();
   const [isSwitcherExpanded, setIsSwitcherExpanded] = useState(false);
 
@@ -47,16 +45,14 @@ export default function Navbar() {
         <b className="ml-0.5 text-xl">sync</b>
       </HeaderName>
       <AuthenticatedTemplate>
-        {featureFlags.userManagementPage && (
-          <HeaderNavigation
-            aria-label="Main Navigation"
-            aria-labelledby="main-nav-label"
-          >
-            <HeaderMenuItem as={Link} to="/user-management">
-              Admin Panel
-            </HeaderMenuItem>
-          </HeaderNavigation>
-        )}
+        <HeaderNavigation
+          aria-label="Main Navigation"
+          aria-labelledby="main-nav-label"
+        >
+          <HeaderMenuItem as={Link} to="/user-management">
+            Admin Panel
+          </HeaderMenuItem>
+        </HeaderNavigation>
       </AuthenticatedTemplate>
       <HeaderGlobalBar>
         <HeaderGlobalAction
@@ -80,17 +76,15 @@ export default function Navbar() {
           <SwitcherLinkItem aria-label="upload file" as={Link} to="/ingest-api">
             Ingest API
           </SwitcherLinkItem>
-          {featureFlags.userManagementPage && (
-            <AuthenticatedTemplate>
-              <SwitcherLinkItem
-                aria-label="user management"
-                as={Link}
-                to={isUserManagementPage ? "/" : "/user-management"}
-              >
-                {isUserManagementPage ? "Ingestion Portal" : "Admin Panel"}
-              </SwitcherLinkItem>
-            </AuthenticatedTemplate>
-          )}
+          <AuthenticatedTemplate>
+            <SwitcherLinkItem
+              aria-label="user management"
+              as={Link}
+              to={isUserManagementPage ? "/" : "/user-management"}
+            >
+              {isUserManagementPage ? "Ingestion Portal" : "Admin Panel"}
+            </SwitcherLinkItem>
+          </AuthenticatedTemplate>
         </Switcher>
       </HeaderPanel>
     </Header>
