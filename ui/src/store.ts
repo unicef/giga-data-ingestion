@@ -4,15 +4,6 @@ import { immer } from "zustand/middleware/immer";
 
 import { User } from "@/types/user.ts";
 
-const { DEV } = import.meta.env;
-
-type FeatureFlagKeys =
-  | "uploadFilePage"
-  | "ingestApiPage"
-  | "userManagementPage";
-
-type FeatureFlags = Record<FeatureFlagKeys, boolean>;
-
 interface UploadState {
   file: File | null;
   timestamp: Date | null;
@@ -23,7 +14,6 @@ interface UploadState {
 interface AppState {
   user: User;
   upload: UploadState;
-  featureFlags: FeatureFlags;
 }
 
 interface AppActions {
@@ -46,11 +36,6 @@ const initialState: AppState = {
     roles: [],
   },
   upload: initialUploadState,
-  featureFlags: {
-    uploadFilePage: DEV,
-    ingestApiPage: DEV,
-    userManagementPage: true,
-  },
 };
 
 export const useStore = create<AppState & AppActions>()(
