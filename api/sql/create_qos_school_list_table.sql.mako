@@ -22,3 +22,4 @@ CREATE TABLE IF NOT EXISTS `${schema_name}`.`${table_name}` (
 
   page_offset_key STRING, # NOT NULL if paginated == LIMIT_OFFSET
 )
+# ONE TABLE FOR SCHOOL LIST, ONE TABLE FOR ACTUAL QOS DATA?
