@@ -21,12 +21,12 @@ jobs:
                 repository: giga-ingestion-portal
                 dockerfile: $(Build.SourcesDirectory)/Dockerfile.prod
                 args: >
-                  --build-arg VITE_SENTRY_DSN="$(viteSentryDsn)"
-                  --build-arg VITE_AZURE_CLIENT_ID="$(azureAdClientId)"
-                  --build-arg VITE_AZURE_TENANT_ID="$(azureAdTenantId)"
-                  --build-arg VITE_AZURE_TENANT_NAME="$(azureAdTenantName)"
-                  --build-arg VITE_AZURE_AUTH_POLICY_NAME="$(azureAdPolicyName)"
-                  --build-arg VITE_DATAHUB_URL="https://io-datahub-$(deployEnv).unitst.org"
+                  --build-arg "VITE_SENTRY_DSN=$(viteSentryDsn)"
+                  --build-arg "VITE_AZURE_CLIENT_ID=$(azureAdClientId)"
+                  --build-arg "VITE_AZURE_TENANT_ID=$(azureAdTenantId)"
+                  --build-arg "VITE_AZURE_TENANT_NAME=$(azureAdTenantName)"
+                  --build-arg "VITE_AZURE_AUTH_POLICY_NAME=$(azureAdPolicyName)"
+                  --build-arg "VITE_DATAHUB_URL=https://io-datahub-$(deployEnv).unitst.org"
                 tags: |
                   $(Build.SourceVersion)
 
