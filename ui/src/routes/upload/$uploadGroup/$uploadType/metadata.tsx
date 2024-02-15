@@ -101,14 +101,16 @@ function Metadata() {
     };
 
     try {
-      const uploadId = await uploadFile.mutateAsync(body);
+      const {
+        data: { id: uploadId },
+      } = await uploadFile.mutateAsync(body);
 
       setIsUploading(false);
 
       setUpload({
         ...upload,
         uploadDate: upload.timestamp?.toLocaleString() ?? "",
-        uploadId: uploadId.data,
+        uploadId,
       });
 
       void navigate({ to: "../success" });

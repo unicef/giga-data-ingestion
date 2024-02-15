@@ -78,8 +78,26 @@ tolerations: [ ]
 
 affinity: { }
 
-#envConfigMaps:
-#  - name: giga-ingestion-portal
+envConfigMaps:
+  - name: giga-ingestion-portal-configmap
 
 envSecrets:
-  - name: giga-ingestion-portal
+  - name: giga-ingestion-portal-secrets
+
+postgresql:
+  auth:
+    username: giga-data-ingestion
+    database: giga-data-ingestion
+    existingSecret: giga-ingestion-portal-secrets
+    secretKeys:
+      userPasswordKey: POSTGRESQL_PASSWORD
+      replicationPasswordKey: POSTGRESQL_PASSWORD
+      adminPasswordKey: POSTGRESQL_PASSWORD
+  architecture: standalone
+  primary:
+    persistence:
+      enabled: true
+    readinessProbe:
+      enabled: false
+  volumePermissions:
+    enabled: true

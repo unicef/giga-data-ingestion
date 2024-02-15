@@ -10,6 +10,7 @@ import {
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 
 import { axi } from "@/api";
+import gigaLogo from "@/assets/GIGA_logo.png";
 import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
 import info from "@/info.json";
@@ -27,6 +28,7 @@ function Base({ children }: PropsWithChildren) {
       <Helmet>
         <title>{info.title}</title>
         <meta name="description" content={info.description} />
+        <link rel="icon" type="image/png" href={gigaLogo} />
       </Helmet>
       <ScrollRestoration />
       <Navbar />

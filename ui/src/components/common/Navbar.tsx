@@ -15,6 +15,7 @@ import {
 } from "@carbon/react";
 import { Link, LinkComponent, useRouterState } from "@tanstack/react-router";
 
+import gigaLogoBlue from "@/assets/GIGA_logo_blue.png";
 import { useStore } from "@/store.ts";
 
 type SwitcherLinkItemProps = ComponentProps<typeof CarbonSwitcherItem> &
@@ -41,7 +42,7 @@ export default function Navbar() {
       className="relative"
     >
       <HeaderName as={Link} to="/" prefix="">
-        <img src="/GIGA_logo_blue.png" className="h-5/6" alt="Giga" />
+        <img src={gigaLogoBlue} className="h-5/6" alt="Giga" />
         <span className="ml-1 text-xl font-light">giga</span>
         <b className="ml-0.5 text-xl">sync</b>
       </HeaderName>

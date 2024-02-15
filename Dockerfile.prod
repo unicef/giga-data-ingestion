@@ -1,19 +1,24 @@
 FROM node:20-alpine AS build
 
+ENV VITE_AZURE_CLIENT_ID $VITE_AZURE_CLIENT_ID
+ENV VITE_AZURE_TENANT_ID $VITE_AZURE_TENANT_ID
+ENV VITE_AZURE_TENANT_NAME $VITE_AZURE_TENANT_NAME
+ENV VITE_AZURE_AUTH_POLICY_NAME $VITE_AZURE_AUTH_POLICY_NAME
+ENV VITE_DATAHUB_URL $VITE_DATAHUB_URL
+ENV VITE_SENTRY_DSN $VITE_SENTRY_DSN
+
 COPY ./ui/ /tmp/
 
 WORKDIR /tmp
 
 RUN npm install && npm run build
 
-FROM python:3.11-slim AS base
+FROM python:3.11-alpine3.19 AS base
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
-RUN apt update && \
-    apt install -y --no-install-recommends libmagic1 && \
-    apt clean
+RUN apk add libmagic && apk cache clean
 
 FROM base AS deps
 

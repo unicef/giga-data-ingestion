@@ -2,6 +2,7 @@ import { Upload, WifiBridgeAlt } from "@carbon/icons-react";
 import { Button, Column, FlexGrid, Heading } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
+import homeBg from "@/assets/home-bg.jpg";
 import { useStore } from "@/store.ts";
 
 const { VITE_DATAHUB_URL: DATAHUB_URL } = import.meta.env;
@@ -10,7 +11,12 @@ export default function Landing() {
   const { featureFlags } = useStore();
 
   return (
-    <div className="h-full bg-[url(/home-bg.jpg)] bg-cover text-white">
+    <div
+      className="h-full bg-cover text-white"
+      style={{
+        backgroundImage: `url('${homeBg}')`,
+      }}
+    >
       <div className="flex h-full w-full flex-col items-center justify-center backdrop-brightness-50">
         <div className="flex flex-col items-center gap-4">
           <div className="flex flex-col">

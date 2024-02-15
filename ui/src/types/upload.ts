@@ -65,3 +65,15 @@ export interface DataQualityCheckResult {
   duplicate_rows_checks: CheckResult[];
   geospatial_points_checks: CheckResult[];
 }
+export interface UploadResponse {
+  id: string;
+  created: string;
+  uploader_id: string;
+  uploader_email: string;
+  dq_report_path: string | null;
+  country: string;
+  dataset: string;
+  source: string | null;
+  original_filename: string;
+  upload_path: string;
+}

@@ -1,6 +1,7 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
 import { DataQualityCheckResult } from "@/types/upload";
+import { UploadResponse } from "@/types/upload.ts";
 
 type Header = {
   key: string;
@@ -69,7 +70,7 @@ type BlobProperties = {
 export default function routes(axi: AxiosInstance) {
   return {
     list_column_checks: (): Promise<AxiosResponse<Checks>> => {
-      return axi.get("/upload");
+      return axi.get("/upload/column-checks");
     },
     list_files: (): Promise<AxiosResponse<Files>> => {
       return axi.get("/upload/files");
@@ -100,7 +101,7 @@ export default function routes(axi: AxiosInstance) {
       school_id_type: string;
       description: string;
       [key: string]: string | File | null | undefined;
-    }): Promise<AxiosResponse<string>> => {
+    }): Promise<AxiosResponse<UploadResponse>> => {
       const formData = new FormData();
       Object.keys(params).forEach(key => {
         if (params[key] !== null && params[key] !== undefined) {
@@ -114,5 +115,6 @@ export default function routes(axi: AxiosInstance) {
         },
       });
     },
+    list_uploads: () => {},
   };
 }
