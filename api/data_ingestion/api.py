@@ -23,7 +23,7 @@ if settings.IN_PRODUCTION and settings.SENTRY_DSN:
     )
 
 app = FastAPI(
-    title="Giga Data Ingestion Portal",
+    title="GigaSync Data Ingestion Portal",
     version=__version__,
     docs_url="/api/docs",
     redoc_url="/api/redoc",

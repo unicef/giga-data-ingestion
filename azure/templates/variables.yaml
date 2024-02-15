@@ -24,4 +24,7 @@ variables:
   nodeSentryDsn: $(NODE_SENTRY_DSN)
   webAppHost: $(WEB_APP_HOST)
   deployEnv: $(DEPLOY_ENV)
+  postgresqlUsername: $(POSTGRESQL_USERNAME)
+  postgresqlPassword: $(POSTGRESQL_PASSWORD)
+  postgresqlDatabase: $(POSTGRESQL_DATABASE)
   system.debug: true

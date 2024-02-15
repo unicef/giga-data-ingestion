@@ -100,7 +100,9 @@ tasks:
     desc: Install/upgrade Helm chart to a K8s cluster running on localhost
     dir: infra
     cmds:
+      - helm dependency update ./helm/data-ingestion
       - kubectl apply -f k8s/namespace.yaml
+      - kubectl apply -f k8s/configmap.yaml
       - kubectl apply -f k8s/secrets.yaml
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
@@ -113,7 +115,9 @@ tasks:
     desc: Install/upgrade Helm chart to a K8s cluster with configured HTTPS ingress
     dir: infra
     cmds:
+      - helm dependency update ./helm/data-ingestion
       - kubectl apply -f k8s/namespace.yaml
+      - kubectl apply -f k8s/configmap.yaml
       - kubectl apply -f k8s/secrets.yaml
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
@@ -133,3 +137,18 @@ tasks:
       - helm uninstall ingestion-portal --namespace giga-data-ingestion
       - kubectl delete all --all --namespace giga-data-ingestion
       - kubectl delete pvc --all --namespace giga-data-ingestion
+
+  makemigrations:
+    desc: Generate database migrations
+    cmds:
+      - task exec -- api poetry run alembic revision --autogenerate -m "{{.CLI_ARGS}}"
+
+  migrate:
+    desc: Run database migrations
+    cmds:
+      - task exec -- api poetry run alembic upgrade head
+
+  psql:
+    desc: Open a psql shell
+    cmds:
+      - task exec -- db psql -U {{.POSTGRESQL_USERNAME}} -d {{.POSTGRESQL_DATABASE}}

@@ -56,6 +56,41 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      initContainers:
+        - name: init-wait-db
+          image: bitnami/postgresql:16.2.0-debian-11-r10
+          command:
+            - /bin/sh
+            - -c
+            - >
+              until pg_isready -h $DB_HOST -U $POSTGRESQL_USERNAME; do
+              echo "Waiting for the database to be ready...";
+              sleep 2;
+              done;
+          envFrom:
+            {{- range .Values.envSecrets }}
+            - secretRef:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
+            {{- range .Values.envConfigMaps }}
+            - configMapRef:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
+        - name: init-migrate-db
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          command:
+            - /bin/sh
+            - -c
+            - alembic upgrade head
+          envFrom:
+            {{- range .Values.envSecrets }}
+            - secretRef:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
+            {{- range .Values.envConfigMaps }}
+            - configMapRef:
+                {{- toYaml . | nindent 16 }}
+            {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
