@@ -65,6 +65,7 @@ export interface DataQualityCheckResult {
   duplicate_rows_checks: CheckResult[];
   geospatial_points_checks: CheckResult[];
 }
+
 export interface UploadResponse {
   id: string;
   created: string;
@@ -76,4 +77,11 @@ export interface UploadResponse {
   source: string | null;
   original_filename: string;
   upload_path: string;
+}
+export interface PagedUploadResponse {
+  data: UploadResponse[];
+  page_index: string;
+  per_page: string;
+  total_items: string;
+  total_pages: string;
 }

@@ -1,6 +1,6 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
-import { DataQualityCheckResult } from "@/types/upload";
+import { DataQualityCheckResult, PagedUploadResponse } from "@/types/upload";
 import { UploadResponse } from "@/types/upload.ts";
 
 type Header = {
@@ -115,14 +115,13 @@ export default function routes(axi: AxiosInstance) {
       });
     },
     list_uploads: (params: {
-      limit?: number;
-      offset?: number;
-      id?: string;
-    }): Promise<AxiosResponse<UploadResponse[]>> => {
+      per_page: number;
+      page_index: number;
+    }): Promise<AxiosResponse<PagedUploadResponse>> => {
       return axi.get("/upload", {
         params: {
-          limit: params.limit,
-          offset: params.offset,
+          per_page: params.per_page,
+          page_index: params.page_index,
         },
       });
     },

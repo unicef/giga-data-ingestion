@@ -33,13 +33,19 @@ export default function FileUploads() {
 
   const api = useApi();
 
+  const ITEMS_PER_PAGE = 5;
+
   const { data: files } = useQuery({
-    queryKey: ["files"],
-    queryFn: () => api.uploads.list_uploads({ limit: 0 }),
+    queryKey: ["files", ITEMS_PER_PAGE, currentPage],
+    queryFn: () =>
+      api.uploads.list_uploads({
+        per_page: ITEMS_PER_PAGE,
+        page_index: currentPage,
+      }),
   });
 
   const rows =
-    files?.data.map(file => {
+    files?.data.data.map(file => {
       const { id, country, dataset, created, dq_report_path } = file;
 
       const date = new Date(created);
@@ -142,13 +148,6 @@ export default function FileUploads() {
     [],
   );
 
-  const ROWS_PER_PAGE = 10;
-
-  const maxPages = Math.ceil(rows.length / ROWS_PER_PAGE);
-  const startIndex = currentPage * ROWS_PER_PAGE;
-  const endIndex = startIndex + ROWS_PER_PAGE;
-  const rowSlice = rows.slice(startIndex, endIndex);
-
   return (
     <Section className="container py-6">
       <Stack gap={6}>
@@ -191,7 +190,7 @@ export default function FileUploads() {
         </div>
 
         <Section>
-          <DataTable headers={columns} rows={rowSlice}>
+          <DataTable headers={columns} rows={rows}>
             {({
               rows,
               headers,
@@ -223,8 +222,8 @@ export default function FileUploads() {
                 </Table>
                 <PaginationNav
                   className="pagination-nav-right"
-                  itemsShown={5}
-                  totalItems={maxPages}
+                  itemsShown={ITEMS_PER_PAGE}
+                  totalItems={files?.data.total_pages}
                   onChange={(index: number) => setCurrentPage(index)}
                 />
               </TableContainer>

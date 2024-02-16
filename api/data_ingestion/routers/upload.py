@@ -1,5 +1,6 @@
 import asyncio
 import json
+import math
 import os
 from typing import Annotated
 
@@ -28,7 +29,10 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.mocks.upload_checks import get_upload_checks
 from data_ingestion.models import FileUpload
-from data_ingestion.schemas.upload import FileUpload as FileUploadSchema
+from data_ingestion.schemas.upload import (
+    FileUpload as FileUploadSchema,
+    PagedResponseSchema,
+)
 
 router = APIRouter(
     prefix="/api/upload",
@@ -212,12 +216,12 @@ async def get_file_properties(upload_id: str):
     return res
 
 
-@router.get("", response_model=list[FileUploadSchema])
+@router.get("", response_model=PagedResponseSchema)
 async def list_uploads(
     user: User = Depends(azure_scheme),
     db: AsyncSession = Depends(get_db),
-    limit: Annotated[int, Query(ge=0, le=50)] = 10,
-    offset: Annotated[int, Query(ge=0)] = 0,
+    per_page: Annotated[int, Query(ge=0, le=50)] = 10,
+    page_index: Annotated[int, Query(ge=0)] = 0,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -228,4 +232,17 @@ async def list_uploads(
     if id_search:
         base_query = base_query.where(func.starts_with(FileUpload.id, id_search))
 
-    return await db.scalars(base_query.limit(limit).offset(offset))
+    count_query = select(func.count()).select_from(base_query.subquery())
+    total = await db.scalar(count_query)
+
+    items = await db.scalars(base_query.offset(page_index * per_page).limit(per_page))
+
+    paged_response = PagedResponseSchema(
+        data=items,
+        page_index=page_index,
+        per_page=per_page,
+        total_items=total,
+        total_pages=math.ceil(total / per_page),
+    )
+
+    return paged_response

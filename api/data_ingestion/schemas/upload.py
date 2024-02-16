@@ -16,3 +16,11 @@ class FileUpload(BaseModel):
     upload_path: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PagedResponseSchema(BaseModel):
+    data: list[FileUpload]
+    page_index: int
+    per_page: int
+    total_items: int
+    total_pages: int
