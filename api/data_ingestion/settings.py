@@ -9,6 +9,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
+
     # Required envs
     SECRET_KEY: str
     POSTGRESQL_USERNAME: str
@@ -47,10 +54,6 @@ class Settings(BaseSettings):
     SENTRY_DSN: str = ""
     COMMIT_SHA: str = ""
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
-
     @computed_field
     @property
     def IN_PRODUCTION(self) -> bool:
@@ -85,13 +88,6 @@ class Settings(BaseSettings):
     @property
     def OPENAPI_TOKEN_URL(self) -> str:
         return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_AUTH_POLICY_NAME}/oauth2/v2.0/token"
-
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-        extra="ignore",
-    )
 
     @computed_field
     @property
