@@ -15,6 +15,7 @@ interface AppState {
   user: User;
   fullPageLoading: boolean;
   upload: UploadState;
+  isAppReady: boolean;
 }
 
 interface AppActions {
@@ -22,6 +23,7 @@ interface AppActions {
   setFullPageLoading: (loading: boolean) => void;
   setUpload: (upload: UploadState) => void;
   resetUploadState: () => void;
+  setIsAppReady: (ready: boolean) => void;
 }
 
 const initialUploadState: UploadState = {
@@ -39,6 +41,7 @@ const initialState: AppState = {
   },
   fullPageLoading: true,
   upload: initialUploadState,
+  isAppReady: false,
 };
 
 export const useStore = create<AppState & AppActions>()(
@@ -61,6 +64,10 @@ export const useStore = create<AppState & AppActions>()(
         resetUploadState: () =>
           set(state => {
             state.upload = initialUploadState;
+          }),
+        setIsAppReady: (ready: boolean) =>
+          set(state => {
+            state.isAppReady = ready;
           }),
       }),
       {

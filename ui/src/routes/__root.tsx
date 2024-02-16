@@ -33,9 +33,11 @@ function Base({ children }: PropsWithChildren) {
         <link rel="icon" type="image/png" href={gigaLogo} />
       </Helmet>
       <ScrollRestoration />
+
       <Navbar />
       <main className="flex-auto">{children}</main>
       <Footer />
+
       <Suspense>
         <TanStackRouterDevtools initialIsOpen={false} />
       </Suspense>

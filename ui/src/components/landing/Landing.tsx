@@ -3,10 +3,17 @@ import { Button, Column, FlexGrid, Heading } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
 import homeBg from "@/assets/home-bg.jpg";
+import { useStore } from "@/store.ts";
 
 const { VITE_DATAHUB_URL: DATAHUB_URL } = import.meta.env;
 
 export default function Landing() {
+  const {
+    user: { roles },
+  } = useStore();
+
+  const hasRoles = roles.length > 0;
+
   return (
     <div
       className="h-full bg-cover text-white"
@@ -29,6 +36,7 @@ export default function Landing() {
               to="/upload"
               className="gap-4"
               renderIcon={Upload}
+              disabled={!hasRoles}
             >
               Upload File
             </Button>
@@ -38,10 +46,18 @@ export default function Landing() {
               to="/ingest-api"
               className="gap-4"
               renderIcon={WifiBridgeAlt}
+              disabled={!hasRoles}
             >
               Ingest API
             </Button>
           </div>
+
+          {!hasRoles && (
+            <p className="text-giga-red">
+              You do not have permission to access this application. Please
+              contact the system administrator to request access.
+            </p>
+          )}
         </div>
 
         <FlexGrid className="absolute bottom-0 flex flex-row gap-24 py-8">

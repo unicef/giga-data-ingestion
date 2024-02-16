@@ -16,13 +16,13 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as UserManagementImport } from './routes/user-management'
 import { Route as UploadImport } from './routes/upload'
 import { Route as IngestApiImport } from './routes/ingest-api'
+import { Route as IndexImport } from './routes/index'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
 import { Route as UploadUploadGroupUploadTypeSuccessImport } from './routes/upload/$uploadGroup/$uploadType/success'
 import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upload/$uploadGroup/$uploadType/metadata'
 
 // Create Virtual Routes
 
-const IndexLazyImport = createFileRoute('/')()
 const UserManagementIndexLazyImport = createFileRoute('/user-management/')()
 const UploadIndexLazyImport = createFileRoute('/upload/')()
 const IngestApiIndexLazyImport = createFileRoute('/ingest-api/')()
@@ -47,10 +47,10 @@ const IngestApiRoute = IngestApiImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const IndexLazyRoute = IndexLazyImport.update({
+const IndexRoute = IndexImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
+} as any)
 
 const UserManagementIndexLazyRoute = UserManagementIndexLazyImport.update({
   path: '/',
@@ -104,7 +104,7 @@ const UploadUploadGroupUploadTypeMetadataRoute =
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/': {
-      preLoaderRoute: typeof IndexLazyImport
+      preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
     '/ingest-api': {
@@ -153,7 +153,7 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 export const routeTree = rootRoute.addChildren([
-  IndexLazyRoute,
+  IndexRoute,
   IngestApiRoute.addChildren([IngestApiIndexLazyRoute]),
   UploadRoute.addChildren([
     UploadIndexLazyRoute,
