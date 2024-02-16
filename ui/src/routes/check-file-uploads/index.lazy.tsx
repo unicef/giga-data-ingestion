@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Link, createLazyFileRoute } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
@@ -43,6 +43,7 @@ export default function FileUploads() {
         per_page: ITEMS_PER_PAGE,
         page_index: currentPage,
       }),
+    placeholderData: keepPreviousData
   });
 
   const rows =
