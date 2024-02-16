@@ -5,6 +5,7 @@ import {
   Button,
   DataTable,
   DataTableHeader,
+  DataTableSkeleton,
   Heading, // @ts-expect-error paginationNav has no typescript declaration yet
   PaginationNav,
   Section,
@@ -35,7 +36,7 @@ export default function FileUploads() {
 
   const ITEMS_PER_PAGE = 5;
 
-  const { data: files } = useQuery({
+  const { data: files, isLoading } = useQuery({
     queryKey: ["files", ITEMS_PER_PAGE, currentPage],
     queryFn: () =>
       api.uploads.list_uploads({
@@ -188,47 +189,57 @@ export default function FileUploads() {
             School coverage
           </Button>
         </div>
-
         <Section>
-          <DataTable headers={columns} rows={rows}>
-            {({
-              rows,
-              headers,
-              getHeaderProps,
-              getRowProps,
-              getTableProps,
-            }) => (
-              <TableContainer>
-                <Table {...getTableProps()}>
-                  <TableHead>
-                    <TableRow>
-                      {headers.map(header => (
-                        // @ts-expect-error onclick bad type https://github.com/carbon-design-system/carbon/issues/14831
-                        <TableHeader {...getHeaderProps({ header })}>
-                          {header.header}
-                        </TableHeader>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {rows.map(row => (
-                      <TableRow {...getRowProps({ row })}>
-                        {row.cells.map(cell => (
-                          <TableCell key={cell.id}>{cell.value}</TableCell>
+          {isLoading ? (
+            <DataTableSkeleton
+              headers={columns}
+              showHeader={false}
+              showToolbar={false}
+            />
+          ) : (
+            <DataTable headers={columns} rows={rows}>
+              {({
+                rows,
+                headers,
+                getHeaderProps,
+                getRowProps,
+                getTableProps,
+              }) => (
+                <TableContainer>
+                  <Table {...getTableProps()}>
+                    <TableHead>
+                      <TableRow>
+                        {headers.map(header => (
+                          // @ts-expect-error onclick bad type https://github.com/carbon-design-system/carbon/issues/14831
+                          <TableHeader
+                            colSpan={1}
+                            {...getHeaderProps({ header })}
+                          >
+                            {header.header}
+                          </TableHeader>
                         ))}
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <PaginationNav
-                  className="pagination-nav-right"
-                  itemsShown={ITEMS_PER_PAGE}
-                  totalItems={files?.data.total_pages}
-                  onChange={(index: number) => setCurrentPage(index)}
-                />
-              </TableContainer>
-            )}
-          </DataTable>
+                    </TableHead>
+                    <TableBody>
+                      {rows.map(row => (
+                        <TableRow {...getRowProps({ row })}>
+                          {row.cells.map(cell => (
+                            <TableCell key={cell.id}>{cell.value}</TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <PaginationNav
+                    className="pagination-nav-right"
+                    itemsShown={ITEMS_PER_PAGE}
+                    totalItems={files?.data.total_pages}
+                    onChange={(index: number) => setCurrentPage(index)}
+                  />
+                </TableContainer>
+              )}
+            </DataTable>
+          )}
         </Section>
       </Stack>
     </Section>
