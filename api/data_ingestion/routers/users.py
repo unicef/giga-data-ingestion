@@ -6,7 +6,7 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
 from data_ingestion.internal.users import UsersApi
 from data_ingestion.permissions.permissions import IsPrivileged
-from data_ingestion.schemas.group import GraphGroup, ModifyUserAccessRequest
+from data_ingestion.schemas.group import ModifyUserAccessRequest
 from data_ingestion.schemas.invitation import (
     GraphInvitation,
     GraphInvitationCreateRequest,
@@ -74,9 +74,10 @@ async def get_current_user(user: User = Depends(azure_scheme)):
     return user
 
 
-@router.get("/me/groups", response_model=list[GraphGroup])
+@router.get("/me/groups")
 async def get_current_user_groups(user: User = Depends(azure_scheme)):
-    return await UsersApi.get_group_memberships(user.sub)
+    groups = await UsersApi.get_group_memberships(user.sub)
+    return [g.display_name for g in groups]
 
 
 @router.get("/email", response_model=GraphUser)
@@ -93,11 +94,10 @@ async def get_user(id: UUID4):
     return await UsersApi.get_user(id)
 
 
-@router.get(
-    "/{id}/groups", response_model=GraphUser, dependencies=[Security(IsPrivileged())]
-)
+@router.get("/{id}/groups", dependencies=[Security(IsPrivileged())])
 async def get_user_groups(id: UUID4):
-    return await UsersApi.get_group_memberships(id)
+    groups = await UsersApi.get_group_memberships(id)
+    return [g.display_name for g in groups]
 
 
 @router.patch(

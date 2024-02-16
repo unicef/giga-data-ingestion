@@ -1,6 +1,5 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
-import { GraphGroup } from "@/types/group.ts";
 import { GraphUser } from "@/types/user.ts";
 
 export default function routes(axi: AxiosInstance) {
@@ -52,7 +51,7 @@ export default function routes(axi: AxiosInstance) {
       });
     },
 
-    getUserGroups: (): Promise<AxiosResponse<GraphGroup[]>> => {
+    getUserGroups: (): Promise<AxiosResponse<string[]>> => {
       return axi.get("/users/me/groups");
     },
   };

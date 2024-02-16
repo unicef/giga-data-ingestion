@@ -10,7 +10,12 @@ import {
   TextArea,
 } from "@carbon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  Link,
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
 
 import { useApi } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
@@ -28,13 +33,19 @@ import {
 } from "@/mocks/metadataFormValues.tsx";
 import { useStore } from "@/store.ts";
 import { MetadataFormValues } from "@/types/metadata.ts";
-import { filterCountryDatasetFromGraphGroup } from "@/utils/group";
+import { filterCountryDatasetFromGroup } from "@/utils/group";
 import { capitalizeFirstLetter } from "@/utils/string.ts";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/metadata",
 )({
   component: Metadata,
+  loader: () => {
+    const { upload } = useStore.getState();
+    if (!upload.file) {
+      throw redirect({ to: ".." });
+    }
+  },
 });
 
 function Metadata() {
@@ -57,20 +68,20 @@ function Metadata() {
     mutationFn: api.uploads.upload_file,
   });
 
-  const { data: userData, isLoading } = useQuery({
-    queryKey: ["user"],
-    queryFn: api.users.get_groups_from_email,
+  const { data: userGroups, isLoading } = useQuery({
+    queryKey: ["me", "groups"],
+    queryFn: api.users.getUserGroups,
   });
 
   const datasetSuffix = `-School ${capitalizeFirstLetter(uploadType)}`;
 
-  const userCountryDatasets = filterCountryDatasetFromGraphGroup(
-    userData?.data.member_of ?? [],
+  const userCountryDatasets = filterCountryDatasetFromGroup(
+    userGroups?.data ?? [],
     datasetSuffix,
   );
 
   const userCountries = userCountryDatasets
-    .map(countryDataset => countryDataset.display_name.split("-")[0])
+    .map(countryDataset => countryDataset.split("-")[0])
     .sort((a, b) => b.localeCompare(a))
     .reverse();
 

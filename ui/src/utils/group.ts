@@ -1,5 +1,4 @@
 import countries from "@/constants/countries";
-import { GraphGroup } from "@/types/group";
 
 export function filterCountries(groups: string[]): string[] {
   return groups.filter(group => {
@@ -9,18 +8,18 @@ export function filterCountries(groups: string[]): string[] {
   });
 }
 
-export function filterCountryDatasetFromGraphGroup(
-  groups: GraphGroup[],
+export function filterCountryDatasetFromGroup(
+  groups: string[],
   dataset: string,
-): GraphGroup[] {
+): string[] {
   const countryGroups = groups.filter(group => {
     return countries.some(country => {
-      return group.display_name.split("-")[0].trim() === country.name;
+      return group.split("-")[0].trim() === country.name;
     });
   });
 
   const countryDatasets = countryGroups.filter(group => {
-    return group.display_name.endsWith(`${dataset}`);
+    return group.endsWith(`${dataset}`);
   });
 
   return countryDatasets;
