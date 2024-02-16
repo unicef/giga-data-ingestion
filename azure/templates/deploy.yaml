@@ -17,6 +17,7 @@ jobs:
                 releaseName: ingestion-portal
                 namespace: $(kubernetesNamespace)
                 arguments: >
+                  --values "$(Build.SourcesDirectory)/infra/helm/values.override.yaml"
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
                   --set image.tag="$(Build.SourceVersion)"
                   --set ingress.enabled=true

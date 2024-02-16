@@ -1,0 +1,7 @@
+envFrom:
+  - configMapRef:
+      name: giga-ingestion-portal-configmap
+  - secretRef:
+      name: giga-ingestion-portal-secrets
+  - secretRef:
+      name: ""
