@@ -3,7 +3,7 @@ import { Column, Grid, Stack } from "@carbon/react";
 import gigaUnicefItu from "@/assets/giga-unicef-itu.svg";
 import instagram from "@/assets/instagram.svg";
 import linkedin from "@/assets/linkedin.svg";
-import x from "@/assets/x.svg";
+import twitter from "@/assets/twitter.svg";
 
 const { VITE_DATAHUB_URL: DATAHUB_URL } = import.meta.env;
 
@@ -93,11 +93,11 @@ export default function Footer() {
       <Column lg={8} className="text-right">
         <Stack orientation="horizontal" gap={4}>
           <a
-            href="https://x.com/Gigaglobal"
+            href="https://twitter.com/Gigaglobal"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <img src={x} alt="X (Twitter)" className="w-[24px]" />
+            <img src={twitter} alt="X (Twitter)" className="w-[24px]" />
           </a>
           <a
             href="https://www.instagram.com/giga_global/"

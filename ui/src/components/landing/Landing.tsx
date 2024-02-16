@@ -4,7 +4,7 @@ import { Link } from "@tanstack/react-router";
 
 export default function Landing() {
   return (
-    <div className="flex h-full flex-col justify-center gap-6">
+    <div className="flex h-full w-full flex-col justify-center gap-6">
       <Grid>
         <Column lg={16}>
           <Heading>

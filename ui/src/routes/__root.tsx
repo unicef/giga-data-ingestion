@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 
 import gigaLogo from "@/assets/GIGA_logo.png";
+import homeBg from "@/assets/home-bg.jpg";
 import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
 import NotFound from "@/components/utils/NotFound.tsx";
@@ -34,6 +35,12 @@ function Base({ children }: PropsWithChildren) {
         <title>{info.title}</title>
         <meta name="description" content={info.description} />
         <link rel="icon" type="image/png" href={gigaLogo} />
+        <meta property="og:title" content={info.title} />
+        <meta property="og:description" content={info.description} />
+        <meta property="og:image" content={homeBg} />
+        <meta property="og:image:type" content="image/jpeg" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="og:type" content="website" />
       </Helmet>
       <ScrollRestoration />
 

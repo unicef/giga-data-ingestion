@@ -1,45 +1,66 @@
-import {
-  Accordion,
-  AccordionItem,
-  Heading,
-  Section,
-  Stack,
-} from "@carbon/react";
+import { Add } from "@carbon/icons-react";
+import { Button, Column, Grid, Heading, Section, Stack } from "@carbon/react";
 import { Link, createLazyFileRoute } from "@tanstack/react-router";
 
 export const Route = createLazyFileRoute("/upload/")({
   component: () => (
     <Section>
       <Section>
-        <Stack gap={6}>
+        <Stack gap={4}>
           <Heading>What will you be uploading today?</Heading>
-          <Accordion>
-            <AccordionItem title="A completely new dataset">
-              Create a new dataset
-            </AccordionItem>
-            <AccordionItem title="An addition to an existing dataset">
-              <Stack gap={2}>
-                <Link
-                  to="/upload/$uploadGroup/$uploadType"
-                  params={{
-                    uploadGroup: "school-data",
-                    uploadType: "geolocation",
-                  }}
-                >
-                  School Geolocation
-                </Link>
-                <Link
-                  to="/upload/$uploadGroup/$uploadType"
-                  params={{
-                    uploadGroup: "school-data",
-                    uploadType: "coverage",
-                  }}
-                >
-                  School Coverage
-                </Link>
-              </Stack>
-            </AccordionItem>
-          </Accordion>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+            aliquip ex ea commodo consequat.
+          </p>
+          <Grid>
+            <Column lg={4}>
+              <Button
+                as={Link}
+                to="/upload/$uploadGroup/$uploadType"
+                params={{
+                  uploadGroup: "school-data",
+                  uploadType: "geolocation",
+                }}
+                className="w-full"
+                size="xl"
+                renderIcon={Add}
+              >
+                School geolocation
+              </Button>
+            </Column>
+            <Column lg={4}>
+              <Button
+                as={Link}
+                to="/upload/$uploadGroup/$uploadType"
+                params={{
+                  uploadGroup: "school-data",
+                  uploadType: "coverage",
+                }}
+                className="w-full"
+                size="xl"
+                renderIcon={Add}
+              >
+                School coverage
+              </Button>
+            </Column>
+            <Column lg={4}>
+              <Button
+                as={Link}
+                to="/upload/$uploadGroup/$uploadType"
+                params={{
+                  uploadGroup: "other",
+                  uploadType: "unstructured",
+                }}
+                className="w-full"
+                size="xl"
+                renderIcon={Add}
+              >
+                Unstructured dataset
+              </Button>
+            </Column>
+          </Grid>
         </Stack>
       </Section>
     </Section>

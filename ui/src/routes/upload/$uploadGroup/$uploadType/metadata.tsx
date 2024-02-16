@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
+import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
   Button,
+  ButtonSet,
+  Heading,
   Loading,
   RadioButton,
+  Section,
   SelectItem,
   Stack,
   TextArea,
@@ -322,13 +326,14 @@ function Metadata() {
   );
 
   return (
-    <>
-      <h4 className="text-base text-giga-gray">Step 1: Upload</h4>
-      <h2 className="text-[23px]">Step 2: Metadata</h2>
-      <p>
-        Please check if any information about the dataset is meant to be
-        updated.
-      </p>
+    <Section>
+      <Section>
+        <Heading>Add Metadata</Heading>
+        <p>
+          Please check if any information about the dataset is meant to be
+          updated.
+        </p>
+      </Section>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack gap={5}>
@@ -381,24 +386,33 @@ function Metadata() {
               required: "Please enter a description",
             })}
           />
-          <div className="flex gap-4">
+
+          <ButtonSet>
             <Button
-              {...(isUploading
-                ? {
-                    disabled: true,
-                    renderIcon: props => (
-                      <Loading small={true} withOverlay={false} {...props} />
-                    ),
-                  }
-                : {})}
-              type="submit"
+              kind="secondary"
+              as={Link}
+              to=".."
+              className="w-full"
+              renderIcon={ArrowLeft}
             >
-              Submit
+              Back
             </Button>
-            <Button kind="tertiary" as={Link} to="..">
-              Cancel
+            <Button
+              disabled={isUploading}
+              renderIcon={
+                isUploading
+                  ? props => (
+                      <Loading small={true} withOverlay={false} {...props} />
+                    )
+                  : ArrowRight
+              }
+              type="submit"
+              className="w-full"
+            >
+              Continue
             </Button>
-          </div>
+          </ButtonSet>
+
           {isUploadError && (
             <div className="text-giga-dark-red">
               Error occurred during file upload. Please try again
@@ -406,6 +420,6 @@ function Metadata() {
           )}
         </Stack>
       </form>
-    </>
+    </Section>
   );
 }
