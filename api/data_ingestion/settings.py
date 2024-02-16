@@ -104,7 +104,7 @@ settings = get_settings()
 
 
 def initialize_sentry():
-    if settings.SENTRY_DSN:
+    if settings.IN_PRODUCTION and settings.SENTRY_DSN:
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
             traces_sample_rate=1.0,
