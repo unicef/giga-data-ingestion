@@ -1,7 +1,6 @@
 from datetime import timedelta
 from http import HTTPStatus
 
-import sentry_sdk
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.models import Response
@@ -12,15 +11,9 @@ from data_ingestion.constants import __version__
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
 from data_ingestion.routers import groups, upload, users
-from data_ingestion.settings import settings
+from data_ingestion.settings import initialize_sentry, settings
 
-if settings.IN_PRODUCTION and settings.SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=settings.SENTRY_DSN,
-        traces_sample_rate=1.0,
-        profiles_sample_rate=1.0,
-        environment=settings.PYTHON_ENV,
-    )
+initialize_sentry()
 
 app = FastAPI(
     title="GigaSync Data Ingestion Portal",

@@ -3,13 +3,10 @@ import { Button, Column, FlexGrid, Heading } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
 import homeBg from "@/assets/home-bg.jpg";
-import { useStore } from "@/store.ts";
 
 const { VITE_DATAHUB_URL: DATAHUB_URL } = import.meta.env;
 
 export default function Landing() {
-  const { featureFlags } = useStore();
-
   return (
     <div
       className="h-full bg-cover text-white"
@@ -27,36 +24,30 @@ export default function Landing() {
             </p>
           </div>
           <div className="flex gap-8">
-            {featureFlags.uploadFilePage && (
-              <Button
-                as={Link}
-                to="/upload"
-                className="gap-4"
-                renderIcon={Upload}
-              >
-                Upload File
-              </Button>
-            )}
-            {featureFlags.checkFileUploadsPage && (
-              <Button
-                as={Link}
-                to="/check-file-uploads"
-                className="gap-4"
-                renderIcon={Upload}
-              >
-                Check File Uploads
-              </Button>
-            )}
-            {featureFlags.ingestApiPage && (
-              <Button
-                as={Link}
-                to="/ingest-api"
-                className="gap-4"
-                renderIcon={WifiBridgeAlt}
-              >
-                Ingest API
-              </Button>
-            )}
+            <Button
+              as={Link}
+              to="/upload"
+              className="gap-4"
+              renderIcon={Upload}
+            >
+              Upload File
+            </Button>
+            <Button
+              as={Link}
+              to="/check-file-uploads"
+              className="gap-4"
+              renderIcon={Upload}
+            >
+              Check File Uploads
+            </Button>
+            <Button
+              as={Link}
+              to="/ingest-api"
+              className="gap-4"
+              renderIcon={WifiBridgeAlt}
+            >
+              Ingest API
+            </Button>
           </div>
         </div>
 

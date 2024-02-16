@@ -9,17 +9,11 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    PYTHON_ENV: Literal["local", "development", "staging", "production"] = "production"
-    DEPLOY_ENV: Literal["local", "dev", "stg", "prd"] = "local"
-    BASE_DIR: Path = Path(__file__).parent.parent
-    ALLOWED_HOSTS: list[str] = ["*"]
-    CORS_ALLOWED_ORIGINS: list[str] = ["*"]
+    # Required envs
     SECRET_KEY: str
     POSTGRESQL_USERNAME: str
     POSTGRESQL_PASSWORD: str
     POSTGRESQL_DATABASE: str
-    DB_HOST: str = "db"
-    DB_PORT: int = 5432
     AZURE_APPLICATION_ID: str
     AZURE_TENANT_NAME: str
     AZURE_TENANT_ID: str
@@ -30,13 +24,24 @@ class Settings(BaseSettings):
     AZURE_SAS_TOKEN: str
     AZURE_BLOB_CONTAINER_NAME: str
     AZURE_STORAGE_ACCOUNT_NAME: str
+    WEB_APP_REDIRECT_URI: str
     AZURE_EMAIL_CONNECTION_STRING: str
     AZURE_EMAIL_SENDER: str
-    WEB_APP_REDIRECT_URI: str
-    SENTRY_DSN: str = ""
+    MAILJET_API_KEY: str
+    MAILJET_API_URL: str
     EMAIL_RENDERER_BEARER_TOKEN: str
     EMAIL_RENDERER_SERVICE_URL: AnyUrl
     EMAIL_TEST_RECIPIENTS: list[str]
+
+    # Optional envs
+    PYTHON_ENV: Literal["local", "development", "staging", "production"] = "production"
+    DEPLOY_ENV: Literal["local", "dev", "stg", "prd"] = "local"
+    BASE_DIR: Path = Path(__file__).parent.parent
+    ALLOWED_HOSTS: list[str] = ["*"]
+    CORS_ALLOWED_ORIGINS: list[str] = ["*"]
+    DB_HOST: str = "db"
+    DB_PORT: int = 5432
+    SENTRY_DSN: str = ""
     COMMIT_SHA: str = ""
 
     class Config:
@@ -99,7 +104,7 @@ settings = get_settings()
 
 
 def initialize_sentry():
-    if settings.SENTRY_DSN:
+    if settings.IN_PRODUCTION and settings.SENTRY_DSN:
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
             traces_sample_rate=1.0,
