@@ -1,10 +1,8 @@
-import json
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
 import sentry_sdk
-from fastapi.encoders import jsonable_encoder
 from loguru import logger
 from pydantic import AnyUrl, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings
@@ -99,9 +97,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings():
-    settings = Settings()
-    logger.info(json.dumps(jsonable_encoder(settings.model_dump()), indent=2))
-    return settings
+    return Settings()
 
 
 settings = get_settings()
