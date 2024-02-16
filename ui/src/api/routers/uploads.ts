@@ -66,7 +66,6 @@ type BlobProperties = {
   name: string;
 };
 
-
 export default function routes(axi: AxiosInstance) {
   return {
     list_column_checks: (): Promise<AxiosResponse<Checks>> => {
@@ -115,6 +114,17 @@ export default function routes(axi: AxiosInstance) {
         },
       });
     },
-    list_uploads: () => {},
+    list_uploads: (params: {
+      limit?: number;
+      offset?: number;
+      id?: string;
+    }): Promise<AxiosResponse<UploadResponse[]>> => {
+      return axi.get("/upload", {
+        params: {
+          limit: params.limit,
+          offset: params.offset,
+        },
+      });
+    },
   };
 }

@@ -3,13 +3,10 @@ import { useMemo, useState } from "react";
 import { Add } from "@carbon/icons-react";
 import {
   Button,
-  Column,
   DataTable,
   DataTableHeader,
-  Grid,
   Heading, // @ts-expect-error paginationNav has no typescript declaration yet
   PaginationNav,
-  Row,
   Section,
   Stack,
   Table,
@@ -25,6 +22,7 @@ import { Link, createLazyFileRoute } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
 import StatusIndicator from "@/components/upload/StatusIndicator";
+import { parseDqResultFilename } from "@/utils/string";
 
 export const Route = createLazyFileRoute("/check-file-uploads/")({
   component: FileUploads,
@@ -37,30 +35,76 @@ export default function FileUploads() {
 
   const { data: files } = useQuery({
     queryKey: ["files"],
-    queryFn: api.uploads.list_files,
+    queryFn: () => api.uploads.list_uploads({ limit: 0 }),
   });
 
   const rows =
     files?.data.map(file => {
-      const { uid, country, dataset, timestamp } = file;
-      const dateUploadedLocal = new Date(timestamp).toLocaleString();
-      return {
-        id: uid,
-        dateUploaded: dateUploadedLocal,
+      const { id, country, dataset, created, dq_report_path } = file;
+
+      const date = new Date(created);
+      const localDate = date.toLocaleString();
+
+      const row = {
+        id: id,
+        dateUploaded: localDate,
         dataset: dataset,
         country: country,
+      };
+
+      if (!dq_report_path) {
+        return {
+          ...row,
+          status: (
+            <div className="flex">
+              <StatusIndicator className="mr-1" type="info" />
+              {"File uploaded, checks running"}
+            </div>
+          ),
+          actions: (
+            <Link
+              className="text-slate-500"
+              disabled
+              params={{
+                uploadId: id,
+              }}
+              to="/check-file-uploads/$uploadId"
+            >
+              View
+            </Link>
+          ),
+        };
+      }
+
+      const { warnings, errors } = parseDqResultFilename(dq_report_path);
+
+      return {
+        ...row,
         status: (
           <div className="flex">
-            <StatusIndicator className="mr-1" type="info" />
-            Uploaded
+            <StatusIndicator
+              className="mr-1"
+              type={
+                warnings === 0 && errors === 0
+                  ? "success"
+                  : errors > 0
+                    ? "error"
+                    : "warning"
+              }
+            />
+            {warnings === 0 && errors === 0
+              ? "Checks completed without errors"
+              : errors > 0
+                ? "Critical Checks Failed"
+                : "Some checks failed"}
           </div>
         ),
         actions: (
           <Link
-            to="/check-file-uploads/$uploadId"
             params={{
-              uploadId: uid,
+              uploadId: id,
             }}
+            to="/check-file-uploads/$uploadId"
           >
             View
           </Link>
@@ -119,35 +163,33 @@ export default function FileUploads() {
             pariatur.
           </p>
         </Section>
-        <Grid fullWidth>
-          <Row>
-            <Column>
-              <Button
-                as={Link}
-                to="/upload/$uploadGroup/$uploadType"
-                params={{
-                  uploadGroup: "school-data",
-                  uploadType: "geolocation",
-                }}
-                size="2xl"
-                renderIcon={Add}
-              >
-                School geolocation
-              </Button>
-            </Column>
-            <Column>
-              <Button
-                as={Link}
-                to="/upload/$uploadGroup/$uploadType"
-                params={{ uploadGroup: "school-data", uploadType: "coverage" }}
-                size="2xl"
-                renderIcon={Add}
-              >
-                School coverage
-              </Button>
-            </Column>
-          </Row>
-        </Grid>
+        <div className="flex gap-6">
+          <Button
+            as={Link}
+            to="/upload/$uploadGroup/$uploadType"
+            params={{
+              uploadGroup: "school-data",
+              uploadType: "geolocation",
+            }}
+            size="2xl"
+            renderIcon={Add}
+          >
+            School geolocation
+          </Button>
+          <Button
+            as={Link}
+            to="/upload/$uploadGroup/$uploadType"
+            params={{
+              uploadGroup: "school-data",
+              uploadType: "coverage",
+            }}
+            size="2xl"
+            renderIcon={Add}
+          >
+            School coverage
+          </Button>
+        </div>
+
         <Section>
           <DataTable headers={columns} rows={rowSlice}>
             {({

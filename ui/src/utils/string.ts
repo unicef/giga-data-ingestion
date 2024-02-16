@@ -82,3 +82,20 @@ export const getUniqueDatasetsNew = (
 export function capitalizeFirstLetter(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+export function parseDqResultFilename(str: string): {
+  uid: string;
+  warnings: number;
+  errors: number;
+  extension: string;
+} {
+  const parts = str.split("_");
+  const [uid, warningsStr, errorsStrWithJson] = parts;
+
+  const [errorsStr, extension] = errorsStrWithJson.split(".");
+
+  const warnings = parseInt(warningsStr, 10);
+  const errors = parseInt(errorsStr, 10);
+
+  return { uid, warnings, errors, extension };
+}
