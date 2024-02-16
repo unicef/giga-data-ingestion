@@ -1,11 +1,14 @@
+import json
 from datetime import timedelta
 from http import HTTPStatus
 
 import sentry_sdk
 from fastapi import FastAPI, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.models import Response
 from fastapi.responses import FileResponse, ORJSONResponse
+from loguru import logger
 from starlette.middleware.sessions import SessionMiddleware
 
 from data_ingestion.constants import __version__
@@ -66,6 +69,12 @@ async def load_config():
     },
 )
 async def api_health_check():
+    logger.info(
+        json.dumps(
+            jsonable_encoder(settings.model_dump()),
+            indent=2,
+        )
+    )
     return {"status": "ok"}
 
 
