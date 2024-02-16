@@ -10,6 +10,7 @@ import { useMsal } from "@azure/msal-react";
 import { CheckmarkOutline, MisuseOutline, Tools } from "@carbon/icons-react";
 import {
   Button,
+  ToastNotification as CarbonToastNotification,
   DataTable,
   DataTableHeader,
   Heading,
@@ -25,10 +26,9 @@ import {
   TableToolbar,
   TableToolbarContent,
   Tag,
-  ToastNotification,
 } from "@carbon/react";
 // @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
-import PaginationNav from "@carbon/react/lib/components/PaginationNav/PaginationNav";
+import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -44,26 +44,49 @@ export const Route = createFileRoute("/user-management/")({
   component: Users,
 });
 
-type ToastProps = {
-  show: boolean;
-  setShow: Dispatch<SetStateAction<boolean>>;
-  kind:
-    | "error"
-    | "info"
-    | "info-square"
-    | "success"
-    | "warning"
-    | "warning-alt"
-    | undefined;
-  caption: string;
-  title: string;
-};
-
 interface TableGraphUser extends GraphUser {
   email_tag: ReactElement | null;
   countries: string;
   roles: string;
   actions: ReactElement | null;
+}
+
+type ToastProps = {
+  show: boolean;
+  setShow: Dispatch<SetStateAction<boolean>>;
+  kind?:
+    | "error"
+    | "info"
+    | "info-square"
+    | "success"
+    | "warning"
+    | "warning-alt";
+  caption: string;
+  title: string;
+};
+
+function ToastNotification({
+  show,
+  setShow,
+  kind,
+  caption,
+  title,
+}: ToastProps) {
+  return (
+    show && (
+      <CarbonToastNotification
+        aria-label={`${title} notification`}
+        kind={kind}
+        caption={caption}
+        onClose={() => setShow(false)}
+        onCloseButtonClick={() => setShow(false)}
+        statusIconDescription={kind}
+        timeout={5000}
+        title={title}
+        className="absolute right-0 top-0 z-50 mx-6 my-16"
+      />
+    )
+  );
 }
 
 export default function Users() {
@@ -76,9 +99,8 @@ export default function Users() {
   const [showEditUserErrorNotification, setShowEditUserErrorNotification] =
     useState(false);
 
-  const [, setCurrentPage] = useState(0);
-
-  const ROWS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const [selectedUser, setSelectedUser] = useState<GraphUser>({
     id: "",
@@ -93,7 +115,7 @@ export default function Users() {
   });
 
   const api = useApi();
-  const msal = useMsal();
+  const { accounts } = useMsal();
 
   const { data: response } = useQuery({
     queryKey: ["users"],
@@ -165,26 +187,28 @@ export default function Users() {
         );
 
         user.countries = [
-          ...new Set(
-            originalUser.member_of
-              .filter(group =>
-                countries.some(country =>
-                  group.display_name.startsWith(country["name"] + "-"),
-                ),
-              )
-              .map(val => val.display_name.split("-")[0]),
-          ),
+          // ...new Set(
+          //   originalUser.member_of
+          //     .filter(group =>
+          //       countries.some(country =>
+          //         group.display_name.startsWith(country["name"] + "-"),
+          //       ),
+          //     )
+          //     .map(val => val.display_name.split("-")[0]),
+          // ),
         ].join(", ");
 
-        user.roles = originalUser.member_of
-          .filter(
-            group =>
-              !countries.some(country =>
-                group.display_name.startsWith(country["name"] + "-"),
-              ),
-          )
-          .map(val => val.display_name)
-          .join(", ");
+        user.roles = "";
+
+        // user.roles = originalUser.member_of
+        //   .filter(
+        //     group =>
+        //       !countries.some(country =>
+        //         group.display_name.startsWith(country["name"] + "-"),
+        //       ),
+        //   )
+        //   .map(val => val.display_name)
+        //   .join(", ");
 
         user.actions = (
           <div className="flex gap-2">
@@ -201,8 +225,7 @@ export default function Users() {
               <Button
                 kind="tertiary"
                 disabled={
-                  groupsIsFetching ||
-                  originalUser.mail === msal.accounts[0].username
+                  groupsIsFetching || originalUser.mail === accounts[0].username
                 }
                 renderIcon={MisuseOutline}
                 size="sm"
@@ -217,8 +240,7 @@ export default function Users() {
               <Button
                 kind="tertiary"
                 disabled={
-                  groupsIsFetching ||
-                  originalUser.mail === msal.accounts[0].username
+                  groupsIsFetching || originalUser.mail === accounts[0].username
                 }
                 renderIcon={CheckmarkOutline}
                 size="sm"
@@ -235,38 +257,14 @@ export default function Users() {
 
         return user;
       }),
-    [groupsIsFetching, msal.accounts, usersData],
+    [groupsIsFetching, accounts, usersData],
   );
-
-  function createToastNotification({
-    show,
-    setShow,
-    kind,
-    caption,
-    title,
-  }: ToastProps) {
-    return (
-      show && (
-        <ToastNotification
-          aria-label={`${title} notification`}
-          kind={kind}
-          caption={caption}
-          onClose={() => setShow(false)}
-          onCloseButtonClick={() => setShow(false)}
-          statusIconDescription={kind}
-          timeout={5000}
-          title={title}
-          className="absolute right-0 top-0 z-50 mx-6 my-16"
-        />
-      )
-    );
-  }
 
   return (
     <Section className="container py-6">
       <Stack gap={6}>
         <Section>
-          <Heading>Giga User Management</Heading>
+          <Heading>User Management</Heading>
         </Section>
         <Section>
           <DataTable headers={columns} rows={filteredUsersData}>
@@ -307,12 +305,21 @@ export default function Users() {
                     ))}
                   </TableBody>
                 </Table>
-                <PaginationNav
-                  itemsShown={5}
-                  totalItems={Math.ceil(
-                    filteredUsersData.length / ROWS_PER_PAGE,
-                  )}
-                  onChange={(index: number) => setCurrentPage(index)}
+                <Pagination
+                  onChange={({
+                    pageSize,
+                    page,
+                  }: {
+                    pageSize: number;
+                    page: number;
+                  }) => {
+                    setCurrentPage(page);
+                    setPageSize(pageSize);
+                  }}
+                  page={currentPage}
+                  pageSize={pageSize}
+                  pageSizes={[10, 25, 50]}
+                  totalItems={usersData.length}
                 />
               </TableContainer>
             )}
@@ -331,21 +338,20 @@ export default function Users() {
               }
             />
           )}
-          {createToastNotification({
-            show: showEditUserSuccessNotification,
-            setShow: setShowEditUserSuccessNotification,
-            kind: "success",
-            caption:
-              "User successfully modified. Please wait a moment or refresh the page for updates",
-            title: "Modify user success",
-          })}
-          {createToastNotification({
-            show: showEditUserErrorNotification,
-            setShow: setShowEditUserErrorNotification,
-            kind: "error",
-            caption: "Operation failed. Please try again",
-            title: "Modify user error",
-          })}
+          <ToastNotification
+            show={showEditUserSuccessNotification}
+            setShow={setShowEditUserSuccessNotification}
+            kind="success"
+            caption="User successfully modified. Please wait a moment or refresh the page for updates"
+            title="Modify user success"
+          />
+          <ToastNotification
+            show={showEditUserErrorNotification}
+            setShow={setShowEditUserErrorNotification}
+            kind="error"
+            caption="Operation failed. Please try again"
+            title="Modify user error"
+          />
 
           <RevokeUserModal
             initialValues={selectedUser}

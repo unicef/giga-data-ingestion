@@ -1,5 +1,7 @@
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
+from kiota_abstractions.api_error import APIError
+from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
 from msgraph.generated.models.invitation import Invitation
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.models.user import User
@@ -37,31 +39,52 @@ class UsersApi:
             query_parameters=get_user_query_parameters,
         )
     )
+    get_group_query_parameters = (
+        GroupsRequestBuilder.GroupsRequestBuilderGetQueryParameters(
+            select=["id", "description", "displayName"],
+            orderby=["displayName"],
+        )
+    )
+    group_request_config = (
+        GroupsRequestBuilder.GroupsRequestBuilderGetRequestConfiguration(
+            query_parameters=get_group_query_parameters,
+        )
+    )
 
     @classmethod
     async def list_users(cls) -> list[GraphUser]:
         try:
+            users_out = []
             users = await graph_client.users.get(
                 request_configuration=cls.user_request_config
             )
-            if users and users.value:
-                users_out = []
-                for val in users.value:
-                    u = GraphUser(**jsonable_encoder(val))
-                    if not u.mail:
-                        if u.user_principal_name and "#EXT#" in u.user_principal_name:
-                            u.mail = u.user_principal_name.split("#EXT")[0].replace(
-                                "_", "@"
-                            )
-                        elif len(u.other_mails) > 0:
-                            u.mail = u.other_mails[0]
-                    users_out.append(u)
-                return users_out
+            while True:
+                if users and users.value:
+                    for val in users.value:
+                        u = GraphUser(**jsonable_encoder(val))
+                        if not u.mail:
+                            if (
+                                u.user_principal_name
+                                and "#EXT#" in u.user_principal_name
+                            ):
+                                u.mail = u.user_principal_name.split("#EXT")[0].replace(
+                                    "_", "@"
+                                )
+                            elif len(u.other_mails) > 0:
+                                u.mail = u.other_mails[0]
+                        users_out.append(u)
 
-            return []
-        except ODataError as err:
+                if users.odata_next_link is None:
+                    break
+
+                users = await graph_client.users.with_url(users.odata_next_link).get(
+                    request_configuration=cls.user_request_config
+                )
+
+            return users_out
+        except APIError as err:
             raise HTTPException(
-                detail=err.error.message, status_code=err.response_status_code
+                detail=err.message, status_code=err.response_status_code
             ) from err
 
     @classmethod

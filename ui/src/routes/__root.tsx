@@ -1,4 +1,4 @@
-import { PropsWithChildren, useEffect } from "react";
+import { PropsWithChildren, Suspense, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { useMsal } from "@azure/msal-react";
@@ -7,12 +7,12 @@ import {
   ScrollRestoration,
   createRootRoute,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 
 import { axi, useApi } from "@/api";
 import gigaLogo from "@/assets/GIGA_logo.png";
 import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
+import TanStackRouterDevtools from "@/components/utils/TanStackRouterDevTools.tsx";
 import info from "@/info.json";
 import { loginRequest } from "@/lib/auth.ts";
 import { useStore } from "@/store.ts";
@@ -34,7 +34,9 @@ function Base({ children }: PropsWithChildren) {
       <Navbar />
       <main className="flex-auto">{children}</main>
       <Footer />
-      <TanStackRouterDevtools initialIsOpen={false} />
+      <Suspense>
+        <TanStackRouterDevtools initialIsOpen={false} />
+      </Suspense>
     </div>
   );
 }
