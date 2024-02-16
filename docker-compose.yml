@@ -18,6 +18,9 @@ services:
     volumes:
       - ./api:/app
       - ./api/.venv-docker:/app/.venv
+    depends_on:
+      db:
+        condition: service_healthy
 
   ui:
     image: node:20-alpine
@@ -40,6 +43,11 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/bitnami/postgresql
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "$POSTGRESQL_USERNAME", "-d", "$POSTGRESQL_DATABASE" ]
+      retries: 3
+      timeout: 5s
+      start_period: 3s
 
   email-api:
     image: node:20-alpine
