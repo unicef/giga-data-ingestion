@@ -23,3 +23,4 @@ jobs:
                   --set ingress.hosts[0].host="io-dataingestion-$(deployEnv).unitst.org"
                   --set ingress.hosts[0].paths[0].path="/"
                   --set ingress.hosts[0].paths[0].pathType=Prefix
+                  --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"

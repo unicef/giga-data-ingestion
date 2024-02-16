@@ -78,11 +78,11 @@ tolerations: [ ]
 
 affinity: { }
 
-envConfigMaps:
-  - name: giga-ingestion-portal-configmap
-
-envSecrets:
-  - name: giga-ingestion-portal-secrets
+envFrom:
+  - configMapRef:
+      name: giga-ingestion-portal-configmap
+  - secretRef:
+      name: giga-ingestion-portal-secrets
 
 postgresql:
   auth:
