@@ -1,3 +1,4 @@
+from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -6,6 +7,20 @@ import sentry_sdk
 from loguru import logger
 from pydantic import AnyUrl, PostgresDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Environment(StrEnum):
+    LOCAL = "local"
+    DEVELOPMENT = "development"
+    STAGING = "staging"
+    PRODUCTION = "production"
+
+
+class DeploymentEnvironment(StrEnum):
+    LOCAL = "local"
+    DEV = "dev"
+    STG = "stg"
+    PRD = "prd"
 
 
 class Settings(BaseSettings):
@@ -36,7 +51,6 @@ class Settings(BaseSettings):
     AZURE_EMAIL_SENDER: str
     AZURE_SCOPE_DESCRIPTION: Literal["User.Impersonate"] = "User.Impersonate"
     WEB_APP_REDIRECT_URI: str
-    SENTRY_DSN: str = ""
     MAILJET_API_KEY: str
     MAILJET_API_URL: str
     EMAIL_RENDERER_BEARER_TOKEN: str
@@ -44,8 +58,8 @@ class Settings(BaseSettings):
     EMAIL_TEST_RECIPIENTS: list[str]
 
     # Optional envs
-    PYTHON_ENV: Literal["local", "development", "staging", "production"] = "production"
-    DEPLOY_ENV: Literal["local", "dev", "stg", "prd"] = "local"
+    PYTHON_ENV: Environment = Environment.PRODUCTION
+    DEPLOY_ENV: DeploymentEnvironment = DeploymentEnvironment.LOCAL
     BASE_DIR: Path = Path(__file__).parent.parent
     ALLOWED_HOSTS: list[str] = ["*"]
     CORS_ALLOWED_ORIGINS: list[str] = ["*"]
@@ -57,7 +71,7 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def IN_PRODUCTION(self) -> bool:
-        return self.PYTHON_ENV != "local"
+        return self.PYTHON_ENV != Environment.LOCAL
 
     @computed_field
     @property
