@@ -21,6 +21,7 @@ class GraphUser(BaseModel):
     user_principal_name: EmailStr
     external_user_state: Literal["Accepted", "PendingAcceptance"] | None
     member_of: list[GraphGroup] | None
+    other_mails: list[EmailStr] | None
 
 
 class GraphUserUpdateRequest(BaseModel):

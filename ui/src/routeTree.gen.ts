@@ -13,17 +13,20 @@ import { createFileRoute } from '@tanstack/react-router'
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as UserManagementImport } from './routes/user-management'
-import { Route as UploadImport } from './routes/upload'
-import { Route as IngestApiImport } from './routes/ingest-api'
+import { Route as IndexImport } from './routes/index'
+import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
+import { Route as UserManagementUserRevokeUserIdImport } from './routes/user-management/user/revoke.$userId'
+import { Route as UserManagementUserEnableUserIdImport } from './routes/user-management/user/enable.$userId'
+import { Route as UserManagementUserEditUserIdImport } from './routes/user-management/user/edit.$userId'
 import { Route as UploadUploadGroupUploadTypeSuccessImport } from './routes/upload/$uploadGroup/$uploadType/success'
 import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upload/$uploadGroup/$uploadType/metadata'
 
 // Create Virtual Routes
 
-const IndexLazyImport = createFileRoute('/')()
-const UserManagementIndexLazyImport = createFileRoute('/user-management/')()
+const UserManagementLazyImport = createFileRoute('/user-management')()
+const UploadLazyImport = createFileRoute('/upload')()
+const IngestApiLazyImport = createFileRoute('/ingest-api')()
 const UploadIndexLazyImport = createFileRoute('/upload/')()
 const IngestApiIndexLazyImport = createFileRoute('/ingest-api/')()
 const UploadUploadGroupUploadTypeIndexLazyImport = createFileRoute(
@@ -32,49 +35,49 @@ const UploadUploadGroupUploadTypeIndexLazyImport = createFileRoute(
 
 // Create/Update Routes
 
-const UserManagementRoute = UserManagementImport.update({
+const UserManagementLazyRoute = UserManagementLazyImport.update({
   path: '/user-management',
   getParentRoute: () => rootRoute,
-} as any)
+} as any).lazy(() =>
+  import('./routes/user-management.lazy').then((d) => d.Route),
+)
 
-const UploadRoute = UploadImport.update({
+const UploadLazyRoute = UploadLazyImport.update({
   path: '/upload',
   getParentRoute: () => rootRoute,
-} as any)
+} as any).lazy(() => import('./routes/upload.lazy').then((d) => d.Route))
 
-const IngestApiRoute = IngestApiImport.update({
+const IngestApiLazyRoute = IngestApiLazyImport.update({
   path: '/ingest-api',
   getParentRoute: () => rootRoute,
-} as any)
+} as any).lazy(() => import('./routes/ingest-api.lazy').then((d) => d.Route))
 
-const IndexLazyRoute = IndexLazyImport.update({
+const IndexRoute = IndexImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
-
-const UserManagementIndexLazyRoute = UserManagementIndexLazyImport.update({
-  path: '/',
-  getParentRoute: () => UserManagementRoute,
-} as any).lazy(() =>
-  import('./routes/user-management/index.lazy').then((d) => d.Route),
-)
+} as any)
 
 const UploadIndexLazyRoute = UploadIndexLazyImport.update({
   path: '/',
-  getParentRoute: () => UploadRoute,
+  getParentRoute: () => UploadLazyRoute,
 } as any).lazy(() => import('./routes/upload/index.lazy').then((d) => d.Route))
 
 const IngestApiIndexLazyRoute = IngestApiIndexLazyImport.update({
   path: '/',
-  getParentRoute: () => IngestApiRoute,
+  getParentRoute: () => IngestApiLazyRoute,
 } as any).lazy(() =>
   import('./routes/ingest-api/index.lazy').then((d) => d.Route),
 )
 
+const UserManagementUserAddRoute = UserManagementUserAddImport.update({
+  path: '/user/add',
+  getParentRoute: () => UserManagementLazyRoute,
+} as any)
+
 const UploadUploadGroupUploadTypeRoute =
   UploadUploadGroupUploadTypeImport.update({
     path: '/$uploadGroup/$uploadType',
-    getParentRoute: () => UploadRoute,
+    getParentRoute: () => UploadLazyRoute,
   } as any)
 
 const UploadUploadGroupUploadTypeIndexLazyRoute =
@@ -86,6 +89,24 @@ const UploadUploadGroupUploadTypeIndexLazyRoute =
       (d) => d.Route,
     ),
   )
+
+const UserManagementUserRevokeUserIdRoute =
+  UserManagementUserRevokeUserIdImport.update({
+    path: '/user/revoke/$userId',
+    getParentRoute: () => UserManagementLazyRoute,
+  } as any)
+
+const UserManagementUserEnableUserIdRoute =
+  UserManagementUserEnableUserIdImport.update({
+    path: '/user/enable/$userId',
+    getParentRoute: () => UserManagementLazyRoute,
+  } as any)
+
+const UserManagementUserEditUserIdRoute =
+  UserManagementUserEditUserIdImport.update({
+    path: '/user/edit/$userId',
+    getParentRoute: () => UserManagementLazyRoute,
+  } as any)
 
 const UploadUploadGroupUploadTypeSuccessRoute =
   UploadUploadGroupUploadTypeSuccessImport.update({
@@ -104,36 +125,36 @@ const UploadUploadGroupUploadTypeMetadataRoute =
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/': {
-      preLoaderRoute: typeof IndexLazyImport
+      preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
     '/ingest-api': {
-      preLoaderRoute: typeof IngestApiImport
+      preLoaderRoute: typeof IngestApiLazyImport
       parentRoute: typeof rootRoute
     }
     '/upload': {
-      preLoaderRoute: typeof UploadImport
+      preLoaderRoute: typeof UploadLazyImport
       parentRoute: typeof rootRoute
     }
     '/user-management': {
-      preLoaderRoute: typeof UserManagementImport
+      preLoaderRoute: typeof UserManagementLazyImport
       parentRoute: typeof rootRoute
     }
     '/ingest-api/': {
       preLoaderRoute: typeof IngestApiIndexLazyImport
-      parentRoute: typeof IngestApiImport
+      parentRoute: typeof IngestApiLazyImport
     }
     '/upload/': {
       preLoaderRoute: typeof UploadIndexLazyImport
-      parentRoute: typeof UploadImport
-    }
-    '/user-management/': {
-      preLoaderRoute: typeof UserManagementIndexLazyImport
-      parentRoute: typeof UserManagementImport
+      parentRoute: typeof UploadLazyImport
     }
     '/upload/$uploadGroup/$uploadType': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeImport
-      parentRoute: typeof UploadImport
+      parentRoute: typeof UploadLazyImport
+    }
+    '/user-management/user/add': {
+      preLoaderRoute: typeof UserManagementUserAddImport
+      parentRoute: typeof UserManagementLazyImport
     }
     '/upload/$uploadGroup/$uploadType/metadata': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeMetadataImport
@@ -142,6 +163,18 @@ declare module '@tanstack/react-router' {
     '/upload/$uploadGroup/$uploadType/success': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeSuccessImport
       parentRoute: typeof UploadUploadGroupUploadTypeImport
+    }
+    '/user-management/user/edit/$userId': {
+      preLoaderRoute: typeof UserManagementUserEditUserIdImport
+      parentRoute: typeof UserManagementLazyImport
+    }
+    '/user-management/user/enable/$userId': {
+      preLoaderRoute: typeof UserManagementUserEnableUserIdImport
+      parentRoute: typeof UserManagementLazyImport
+    }
+    '/user-management/user/revoke/$userId': {
+      preLoaderRoute: typeof UserManagementUserRevokeUserIdImport
+      parentRoute: typeof UserManagementLazyImport
     }
     '/upload/$uploadGroup/$uploadType/': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeIndexLazyImport
@@ -153,9 +186,9 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 export const routeTree = rootRoute.addChildren([
-  IndexLazyRoute,
-  IngestApiRoute.addChildren([IngestApiIndexLazyRoute]),
-  UploadRoute.addChildren([
+  IndexRoute,
+  IngestApiLazyRoute.addChildren([IngestApiIndexLazyRoute]),
+  UploadLazyRoute.addChildren([
     UploadIndexLazyRoute,
     UploadUploadGroupUploadTypeRoute.addChildren([
       UploadUploadGroupUploadTypeMetadataRoute,
@@ -163,7 +196,12 @@ export const routeTree = rootRoute.addChildren([
       UploadUploadGroupUploadTypeIndexLazyRoute,
     ]),
   ]),
-  UserManagementRoute.addChildren([UserManagementIndexLazyRoute]),
+  UserManagementLazyRoute.addChildren([
+    UserManagementUserAddRoute,
+    UserManagementUserEditUserIdRoute,
+    UserManagementUserEnableUserIdRoute,
+    UserManagementUserRevokeUserIdRoute,
+  ]),
 ])
 
 /* prettier-ignore-end */

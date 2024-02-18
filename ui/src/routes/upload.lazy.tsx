@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 
-import { AuthenticatedTemplate } from "@azure/msal-react";
-import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { Outlet, createLazyFileRoute } from "@tanstack/react-router";
 
 import UploadBreadcrumbs from "@/components/upload/UploadBreadcrumbs.tsx";
+import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
 import { useStore } from "@/store.ts";
 
-export const Route = createFileRoute("/upload")({
+export const Route = createLazyFileRoute("/upload")({
   component: UploadLayout,
 });
 
@@ -20,11 +20,11 @@ function UploadLayout() {
   }, [resetUploadState]);
 
   return (
-    <AuthenticatedTemplate>
+    <AuthenticatedRBACView>
       <div className="container flex flex-col gap-4 py-6">
         <UploadBreadcrumbs />
         <Outlet />
       </div>
-    </AuthenticatedTemplate>
+    </AuthenticatedRBACView>
   );
 }

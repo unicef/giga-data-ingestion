@@ -25,6 +25,7 @@ services:
   ui:
     image: node:20-alpine
     restart: unless-stopped
+    env_file: ./ui/.env
     working_dir: /app
     ports:
       - "3000:3000"

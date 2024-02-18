@@ -4,6 +4,7 @@ from pydantic import UUID4
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
 from data_ingestion.internal.users import GraphUserUpdateRequest, UsersApi
+from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.group import (
     AddGroupMemberRequest,
     CreateGroupRequest,
@@ -16,7 +17,7 @@ from data_ingestion.schemas.user import GraphUser
 router = APIRouter(
     prefix="/api/groups",
     tags=["groups"],
-    dependencies=[Security(azure_scheme)],
+    dependencies=[Security(azure_scheme), Security(IsPrivileged())],
 )
 
 

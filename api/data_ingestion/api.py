@@ -1,16 +1,14 @@
 from datetime import timedelta
-from http import HTTPStatus
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.models import Response
 from fastapi.responses import FileResponse, ORJSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from data_ingestion.constants import __version__
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
-from data_ingestion.routers import groups, upload, users
+from data_ingestion.routers import core, groups, upload, users, utils
 from data_ingestion.settings import initialize_sentry, settings
 
 initialize_sentry()
@@ -26,6 +24,7 @@ app = FastAPI(
     swagger_ui_init_oauth={
         "usePkceWithAuthorizationCodeGrant": True,
         "clientId": settings.AZURE_CLIENT_ID,
+        "scopes": settings.AZURE_SCOPE_NAME,
     },
 )
 app.add_middleware(
@@ -49,22 +48,11 @@ async def load_config():
     await azure_scheme.openid_config.load_config()
 
 
-@app.get(
-    "/api",
-    tags=["core"],
-    responses={
-        status.HTTP_500_INTERNAL_SERVER_ERROR: Response(
-            description=HTTPStatus.INTERNAL_SERVER_ERROR.phrase
-        ).model_dump(),
-    },
-)
-async def api_health_check():
-    return {"status": "ok"}
-
-
+app.include_router(core.router)
 app.include_router(upload.router)
 app.include_router(users.router)
 app.include_router(groups.router)
+app.include_router(utils.router)
 
 
 if settings.IN_PRODUCTION:

@@ -21,14 +21,14 @@ from data_ingestion.schemas.group import (
 )
 from data_ingestion.schemas.user import GraphUser
 
-from .auth import credential, graph_client
+from .auth import graph_client, graph_credentials
 
 
 class GroupsApi:
     get_group_query_parameters = (
         GroupsRequestBuilder.GroupsRequestBuilderGetQueryParameters(
-            select=["id", "description", "displayName", "mail"],
-            orderby=["displayName"],
+            select=["id", "description", "displayName"],
+            filter="securityEnabled eq true",
         )
     )
     group_request_config = (
@@ -59,12 +59,24 @@ class GroupsApi:
     @classmethod
     async def list_groups(cls) -> list[GraphGroup]:
         try:
+            groups_out = []
             groups = await graph_client.groups.get(
                 request_configuration=cls.group_request_config
             )
-            if groups and groups.value:
-                return [GraphGroup(**jsonable_encoder(val)) for val in groups.value]
-            return []
+            while True:
+                if groups and groups.value:
+                    groups_out.extend(
+                        [GraphGroup(**jsonable_encoder(val)) for val in groups.value]
+                    )
+
+                if groups.odata_next_link is None:
+                    break
+
+                groups = await graph_client.groups.with_url(groups.odata_next_link).get(
+                    request_configuration=cls.group_request_config
+                )
+
+            return groups_out
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
@@ -177,8 +189,12 @@ class GroupsApi:
             ) from err
 
     @classmethod
-    async def modify_user_access(cls, user_id: UUID4, body: ModifyUserAccessRequest):
-        access_token = credential.get_token("https://graph.microsoft.com/.default")
+    async def modify_user_access(
+        cls, user_id: UUID4, body: ModifyUserAccessRequest
+    ) -> None:
+        access_token = graph_credentials.get_token(
+            "https://graph.microsoft.com/.default"
+        )
         graph_api_endpoint = "https://graph.microsoft.com/v1.0"
 
         groups_to_add = body.groups_to_add

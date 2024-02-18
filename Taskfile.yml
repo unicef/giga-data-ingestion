@@ -38,7 +38,7 @@ tasks:
     desc: Install Python dependencies
     cmds:
       - poetry env use 3.11
-      - poetry install
+      - poetry install --no-root
 
   setup-node:
     internal: true
