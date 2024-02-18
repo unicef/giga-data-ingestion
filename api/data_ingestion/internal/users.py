@@ -89,6 +89,7 @@ class UsersApi:
 
             return users_out
         except APIError as err:
+            logger.error(err.message)
             raise HTTPException(
                 detail=err.message, status_code=err.response_status_code
             ) from err
@@ -129,6 +130,7 @@ class UsersApi:
             )
             await graph_client.users.by_user_id(str(id)).patch(body=body)
         except ODataError as err:
+            logger.error(err.message)
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
             ) from err
@@ -145,6 +147,7 @@ class UsersApi:
             )
             return await graph_client.invitations.post(body=body)
         except ODataError as err:
+            logger.error(err.message)
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
             ) from err

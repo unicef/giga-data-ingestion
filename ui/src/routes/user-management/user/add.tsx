@@ -119,6 +119,7 @@ function AddUser() {
   const {
     mutateAsync: mutateInviteAndAddGroups,
     isPending: isInviteMutationPending,
+    isError: isInviteMutationError,
   } = useMutation({
     mutationFn: api.users.inviteAndAddGroups,
   });
@@ -348,7 +349,7 @@ function AddUser() {
               );
             })()}
 
-            {isInviteMutationPending && (
+            {isInviteMutationError && (
               <InlineNotification
                 aria-label="create user error notification"
                 kind="error"

@@ -37,6 +37,7 @@ export const matchNamesWithIds = (
   names: string[],
   data: { id: string; name: string }[],
 ): { name: string; id: string | undefined }[] => {
+  console.debug(names, data);
   return names.map(name => {
     const matchingData = data.find(d => d.name === name);
     return { name, id: matchingData?.id };
