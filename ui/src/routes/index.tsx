@@ -1,22 +1,12 @@
-import {
-  AuthenticatedTemplate,
-  UnauthenticatedTemplate,
-} from "@azure/msal-react";
 import { createFileRoute } from "@tanstack/react-router";
 
 import Landing from "@/components/landing/Landing.tsx";
-import Login from "@/components/landing/Login";
+import AuthenticatedView from "@/components/utils/AuthenticatedView.tsx";
 
 export const Route = createFileRoute("/")({
   component: () => (
-    <>
-      <AuthenticatedTemplate>
-        <Landing />
-      </AuthenticatedTemplate>
-
-      <UnauthenticatedTemplate>
-        <Login />
-      </UnauthenticatedTemplate>
-    </>
+    <AuthenticatedView>
+      <Landing />
+    </AuthenticatedView>
   ),
 });

@@ -13,8 +13,6 @@ import { createFileRoute } from '@tanstack/react-router'
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as UploadImport } from './routes/upload'
-import { Route as IngestApiImport } from './routes/ingest-api'
 import { Route as IndexImport } from './routes/index'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
@@ -27,6 +25,8 @@ import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upl
 // Create Virtual Routes
 
 const UserManagementLazyImport = createFileRoute('/user-management')()
+const UploadLazyImport = createFileRoute('/upload')()
+const IngestApiLazyImport = createFileRoute('/ingest-api')()
 const UploadIndexLazyImport = createFileRoute('/upload/')()
 const IngestApiIndexLazyImport = createFileRoute('/ingest-api/')()
 const UploadUploadGroupUploadTypeIndexLazyImport = createFileRoute(
@@ -42,15 +42,15 @@ const UserManagementLazyRoute = UserManagementLazyImport.update({
   import('./routes/user-management.lazy').then((d) => d.Route),
 )
 
-const UploadRoute = UploadImport.update({
+const UploadLazyRoute = UploadLazyImport.update({
   path: '/upload',
   getParentRoute: () => rootRoute,
-} as any)
+} as any).lazy(() => import('./routes/upload.lazy').then((d) => d.Route))
 
-const IngestApiRoute = IngestApiImport.update({
+const IngestApiLazyRoute = IngestApiLazyImport.update({
   path: '/ingest-api',
   getParentRoute: () => rootRoute,
-} as any)
+} as any).lazy(() => import('./routes/ingest-api.lazy').then((d) => d.Route))
 
 const IndexRoute = IndexImport.update({
   path: '/',
@@ -59,12 +59,12 @@ const IndexRoute = IndexImport.update({
 
 const UploadIndexLazyRoute = UploadIndexLazyImport.update({
   path: '/',
-  getParentRoute: () => UploadRoute,
+  getParentRoute: () => UploadLazyRoute,
 } as any).lazy(() => import('./routes/upload/index.lazy').then((d) => d.Route))
 
 const IngestApiIndexLazyRoute = IngestApiIndexLazyImport.update({
   path: '/',
-  getParentRoute: () => IngestApiRoute,
+  getParentRoute: () => IngestApiLazyRoute,
 } as any).lazy(() =>
   import('./routes/ingest-api/index.lazy').then((d) => d.Route),
 )
@@ -77,7 +77,7 @@ const UserManagementUserAddRoute = UserManagementUserAddImport.update({
 const UploadUploadGroupUploadTypeRoute =
   UploadUploadGroupUploadTypeImport.update({
     path: '/$uploadGroup/$uploadType',
-    getParentRoute: () => UploadRoute,
+    getParentRoute: () => UploadLazyRoute,
   } as any)
 
 const UploadUploadGroupUploadTypeIndexLazyRoute =
@@ -129,11 +129,11 @@ declare module '@tanstack/react-router' {
       parentRoute: typeof rootRoute
     }
     '/ingest-api': {
-      preLoaderRoute: typeof IngestApiImport
+      preLoaderRoute: typeof IngestApiLazyImport
       parentRoute: typeof rootRoute
     }
     '/upload': {
-      preLoaderRoute: typeof UploadImport
+      preLoaderRoute: typeof UploadLazyImport
       parentRoute: typeof rootRoute
     }
     '/user-management': {
@@ -142,15 +142,15 @@ declare module '@tanstack/react-router' {
     }
     '/ingest-api/': {
       preLoaderRoute: typeof IngestApiIndexLazyImport
-      parentRoute: typeof IngestApiImport
+      parentRoute: typeof IngestApiLazyImport
     }
     '/upload/': {
       preLoaderRoute: typeof UploadIndexLazyImport
-      parentRoute: typeof UploadImport
+      parentRoute: typeof UploadLazyImport
     }
     '/upload/$uploadGroup/$uploadType': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeImport
-      parentRoute: typeof UploadImport
+      parentRoute: typeof UploadLazyImport
     }
     '/user-management/user/add': {
       preLoaderRoute: typeof UserManagementUserAddImport
@@ -187,8 +187,8 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
-  IngestApiRoute.addChildren([IngestApiIndexLazyRoute]),
-  UploadRoute.addChildren([
+  IngestApiLazyRoute.addChildren([IngestApiIndexLazyRoute]),
+  UploadLazyRoute.addChildren([
     UploadIndexLazyRoute,
     UploadUploadGroupUploadTypeRoute.addChildren([
       UploadUploadGroupUploadTypeMetadataRoute,

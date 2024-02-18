@@ -4,7 +4,7 @@ import { Button } from "@carbon/react";
 import loginBg from "@/assets/login-bg.jpeg";
 import { loginRequest } from "@/lib/auth.ts";
 
-export default function Login() {
+function Login() {
   const { instance } = useMsal();
 
   async function handleLogin() {
@@ -28,3 +28,5 @@ export default function Login() {
     </div>
   );
 }
+
+export default Login;

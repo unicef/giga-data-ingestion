@@ -33,8 +33,14 @@ export default function Navbar() {
             aria-label="Main Navigation"
             aria-labelledby="main-nav-label"
           >
+            <HeaderMenuItem as={Link} to="/upload">
+              Upload file
+            </HeaderMenuItem>
+            <HeaderMenuItem as={Link} to="/ingest-api">
+              Ingest API
+            </HeaderMenuItem>
             <HeaderMenuItem as={Link} to="/user-management">
-              User Management
+              User management
             </HeaderMenuItem>
           </HeaderNavigation>
         )}

@@ -1,7 +1,7 @@
 import { PropsWithChildren, Suspense, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
-import { useIsAuthenticated, useMsal } from "@azure/msal-react";
+import { useMsal } from "@azure/msal-react";
 import {
   Outlet,
   ScrollRestoration,
@@ -12,7 +12,7 @@ import { axi, useApi } from "@/api";
 import gigaLogo from "@/assets/GIGA_logo.png";
 import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
-import Login from "@/components/landing/Login.tsx";
+import NotFound from "@/components/utils/NotFound.tsx";
 import TanStackRouterDevtools from "@/components/utils/TanStackRouterDevTools.tsx";
 import info from "@/info.json";
 import { loginRequest } from "@/lib/auth.ts";
@@ -20,7 +20,11 @@ import { useStore } from "@/store.ts";
 
 export const Route = createRootRoute({
   component: Layout,
-  notFoundComponent: NotFound,
+  notFoundComponent: () => (
+    <Base>
+      <NotFound />
+    </Base>
+  ),
 });
 
 function Base({ children }: PropsWithChildren) {
@@ -72,23 +76,6 @@ function Layout() {
   return (
     <Base>
       <Outlet />
-    </Base>
-  );
-}
-
-function NotFound() {
-  const isAuthenticated = useIsAuthenticated();
-
-  return (
-    <Base>
-      {isAuthenticated ? (
-        <div className="flex h-full items-center justify-center gap-4">
-          <h2>404</h2>
-          <h2 className="border-l border-solid pl-4">Not Found</h2>
-        </div>
-      ) : (
-        <Login />
-      )}
     </Base>
   );
 }
