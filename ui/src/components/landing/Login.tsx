@@ -23,11 +23,7 @@ export default function Login() {
       }}
     >
       <div className="flex h-full w-full flex-col items-center justify-center backdrop-brightness-50">
-        <div className="flex flex-col items-center gap-4">
-          <Button className="flex items-center gap-4" onClick={handleLogin}>
-            Login with Azure AD
-          </Button>
-        </div>
+        <Button onClick={handleLogin}>Login</Button>
       </div>
     </div>
   );

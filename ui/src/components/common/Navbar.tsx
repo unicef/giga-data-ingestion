@@ -13,10 +13,10 @@ import {
   HeaderPanel,
   Switcher,
 } from "@carbon/react";
-import { Link, LinkComponent, useRouterState } from "@tanstack/react-router";
+import { Link, LinkComponent } from "@tanstack/react-router";
 
-import { useStore } from "@/store.ts";
 import gigaLogoBlue from "@/assets/GIGA_logo_blue.png";
+import { useStore } from "@/store.ts";
 
 type SwitcherLinkItemProps = ComponentProps<typeof CarbonSwitcherItem> &
   PropsWithChildren & {
@@ -29,14 +29,11 @@ const SwitcherLinkItem = ({ children, ...props }: SwitcherLinkItemProps) => {
 };
 
 export default function Navbar() {
-  const { location } = useRouterState();
   const [isSwitcherExpanded, setIsSwitcherExpanded] = useState(false);
   const {
     user: { roles },
   } = useStore();
   const isPrivileged = roles.includes("Admin") || roles.includes("Super");
-
-  const isUserManagementPage = location.pathname === "/user-management";
 
   return (
     <Header
@@ -56,7 +53,7 @@ export default function Navbar() {
             aria-labelledby="main-nav-label"
           >
             <HeaderMenuItem as={Link} to="/user-management">
-              Admin Panel
+              User Management
             </HeaderMenuItem>
           </HeaderNavigation>
         )}
@@ -88,9 +85,9 @@ export default function Navbar() {
               <SwitcherLinkItem
                 aria-label="user management"
                 as={Link}
-                to={isUserManagementPage ? "/" : "/user-management"}
+                to="/user-management"
               >
-                {isUserManagementPage ? "Ingestion Portal" : "Admin Panel"}
+                User Management
               </SwitcherLinkItem>
             )}
           </AuthenticatedTemplate>

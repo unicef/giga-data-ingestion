@@ -28,7 +28,7 @@ class GroupsApi:
     get_group_query_parameters = (
         GroupsRequestBuilder.GroupsRequestBuilderGetQueryParameters(
             select=["id", "description", "displayName"],
-            orderby=["displayName"],
+            filter="securityEnabled eq true",
         )
     )
     group_request_config = (

@@ -1011,10 +1011,29 @@
 
                 <OrchestrationStep Order="2" Type="ClaimsExchange">
                     <ClaimsExchanges>
+                        <ClaimsExchange Id="REST-AcquireAccessTokenForGraph" TechnicalProfileReferenceId="REST-AcquireAccessTokenForGraph" />
+                    </ClaimsExchanges>
+                </OrchestrationStep>
+
+                <OrchestrationStep Order="3" Type="ClaimsExchange">
+                    <ClaimsExchanges>
+                        <ClaimsExchange Id="REST-GetGroupMembership" TechnicalProfileReferenceId="REST-GetGroupMembership" />
+                    </ClaimsExchanges>
+                </OrchestrationStep>
+
+                <OrchestrationStep Order="4" Type="ClaimsExchange">
+                    <ClaimsExchanges>
+                        <ClaimsExchange Id="REST-TransformGroupMembership" TechnicalProfileReferenceId="REST-TransformGroupMembership" />
+                    </ClaimsExchanges>
+                </OrchestrationStep>
+
+                <OrchestrationStep Order="5" Type="ClaimsExchange">
+                    <ClaimsExchanges>
                         <ClaimsExchange Id="CheckRefreshTokenDateFromAadExchange" TechnicalProfileReferenceId="AAD-UserReadUsingObjectId-CheckRefreshTokenDate" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
-                <OrchestrationStep Order="3" Type="SendClaims" CpimIssuerTechnicalProfileReferenceId="JwtIssuer" />
+
+                <OrchestrationStep Order="6" Type="SendClaims" CpimIssuerTechnicalProfileReferenceId="JwtIssuer" />
             </OrchestrationSteps>
         </UserJourney>
     </UserJourneys>

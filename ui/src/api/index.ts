@@ -2,7 +2,7 @@ import { PropsWithChildren, useEffect, useRef } from "react";
 
 import { InteractionStatus } from "@azure/msal-browser";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, keepPreviousData } from "@tanstack/react-query";
 import axios, {
   AxiosError,
   AxiosResponse,
@@ -23,7 +23,7 @@ export const axi = axios.create({
   withCredentials: true,
 });
 
-const api = {
+export const api = {
   users: usersRouter(axi),
   groups: rolesRouter(axi),
   uploads: uploadsRouter(axi),
@@ -102,4 +102,10 @@ export function AxiosProvider(props: PropsWithChildren) {
   return props.children;
 }
 
-export const queryClient = new QueryClient();
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      placeholderData: keepPreviousData,
+    },
+  },
+});

@@ -1,26 +1,33 @@
 import { useCallback, useState } from "react";
 
 import { InlineNotification, Modal, ToastNotification } from "@carbon/react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { useApi } from "@/api";
-import { GraphUser } from "@/types/user";
+import { api, queryClient } from "@/api";
 
-interface RevokeUserModalProps {
-  initialValues: GraphUser;
-  isRevokeModalOpen: boolean;
-  setIsRevokeModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}
+export const Route = createFileRoute("/user-management/user/enable/$userId")({
+  component: EnableUser,
+  loader: ({ params: { userId } }) => {
+    return queryClient.ensureQueryData({
+      queryKey: ["user", userId],
+      queryFn: () => api.users.get(userId),
+    });
+  },
+});
 
-export default function RevokeUserModal({
-  initialValues,
-  isRevokeModalOpen,
-  setIsRevokeModalOpen,
-}: RevokeUserModalProps) {
-  const api = useApi();
-
+function EnableUser() {
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { userId } = Route.useParams();
+  const {
+    data: { data: initialValues },
+  } = useSuspenseQuery({
+    queryKey: ["user", userId],
+    queryFn: () => api.users.get(userId),
+  });
   const [error, setError] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+
   const revokeUser = useMutation({
     mutationFn: api.users.editUser,
   });
@@ -28,34 +35,33 @@ export default function RevokeUserModal({
   const handleSubmit = useCallback(async () => {
     try {
       await revokeUser.mutateAsync({
-        account_enabled: false,
+        account_enabled: true,
         id: initialValues.id,
       });
 
       setShowSuccessNotification(true);
-      setIsRevokeModalOpen(false);
+      await navigate({ to: "../../.." });
     } catch (err) {
       setError(true);
     }
-  }, [revokeUser, setIsRevokeModalOpen, initialValues.id]);
+  }, [revokeUser, initialValues.id, navigate]);
 
   return (
     <>
       <Modal
-        aria-label="confirm revoke user modal"
+        open
+        aria-label="confirm enable user modal"
         loadingStatus={revokeUser.isPending ? "active" : "inactive"}
         modalHeading="Confirm Revoke User"
-        open={isRevokeModalOpen}
         primaryButtonText="Confirm"
         secondaryButtonText="Cancel"
-        onRequestClose={() => setIsRevokeModalOpen(false)}
+        onRequestClose={async () => await navigate({ to: "../../.." })}
         onRequestSubmit={handleSubmit}
       >
         <div>
           <p>
-            This will revoke access of the user with email{" "}
-            <b>{initialValues.mail}</b> to the whole Giga platform, meaning they
-            won't be able to access any part of the Giga platform
+            This will re-enable access of the user with email{" "}
+            <b>{initialValues.mail}</b> to the whole Giga platform
           </p>
           <br />
 
@@ -75,14 +81,14 @@ export default function RevokeUserModal({
 
       {showSuccessNotification && (
         <ToastNotification
-          aria-label="revoke user success notification"
+          aria-label="enable user success notification"
           kind="success"
-          caption="User successfully revoked. Please wait a moment or refresh the page for updates"
+          caption="User successfully enabled. Please wait a moment or refresh the page for updates"
           onClose={() => setShowSuccessNotification(false)}
           onCloseButtonClick={() => setShowSuccessNotification(false)}
           statusIconDescription="success"
           timeout={5000}
-          title="Revoke user success"
+          title="Enable user success"
           className="absolute right-0 top-0 z-50 mx-6 my-16"
         />
       )}

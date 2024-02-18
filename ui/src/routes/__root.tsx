@@ -2,7 +2,6 @@ import { PropsWithChildren, Suspense, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Outlet,
   ScrollRestoration,
@@ -50,11 +49,6 @@ function Layout() {
   const { setUser } = useStore();
   const { accounts, instance } = useMsal();
 
-  const { data: roles } = useQuery({
-    queryFn: api.users.getUserGroups,
-    queryKey: ["me", "groups"],
-  });
-
   useEffect(() => {
     (async () => {
       if (accounts.length > 0) {
@@ -63,20 +57,17 @@ function Layout() {
         const user = {
           name: account.name ?? "",
           email: account.username,
-          roles: [],
+          roles: (account.idTokenClaims?.groups ?? []) as string[],
         };
         const result = await instance.acquireTokenSilent(loginRequest);
         axi.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${result.accessToken}`;
 
-        setUser({
-          ...user,
-          roles: roles?.data ?? [],
-        });
+        setUser(user);
       }
     })();
-  }, [accounts, api.users, instance, setUser, roles]);
+  }, [accounts, api, instance, setUser]);
 
   return (
     <Base>

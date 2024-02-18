@@ -1,6 +1,10 @@
+import asyncio
+
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from kiota_abstractions.api_error import APIError
+from kiota_abstractions.headers_collection import HeadersCollection
+from loguru import logger
 from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
 from msgraph.generated.models.invitation import Invitation
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
@@ -42,12 +46,14 @@ class UsersApi:
     get_group_query_parameters = (
         GroupsRequestBuilder.GroupsRequestBuilderGetQueryParameters(
             select=["id", "description", "displayName"],
-            orderby=["displayName"],
         )
     )
+    group_request_headers = HeadersCollection()
+    group_request_headers.add("ConsistencyLevel", "eventual")
     group_request_config = (
         GroupsRequestBuilder.GroupsRequestBuilderGetRequestConfiguration(
             query_parameters=get_group_query_parameters,
+            headers=group_request_headers,
         )
     )
 
@@ -90,11 +96,27 @@ class UsersApi:
     @classmethod
     async def get_user(cls, id: UUID4) -> GraphUser:
         try:
-            x = await graph_client.users.by_user_id(str(id)).get(
-                request_configuration=cls.user_request_config
+            user, groups = await asyncio.gather(
+                graph_client.users.by_user_id(str(id)).get(
+                    request_configuration=cls.user_request_config
+                ),
+                graph_client.users.by_user_id(str(id)).member_of.get(
+                    request_configuration=cls.group_request_config
+                ),
             )
-            return x
+            user.member_of = [
+                g for g in groups.value if g.odata_type == "#microsoft.graph.group"
+            ]
+            if not user.mail:
+                if user.user_principal_name and "#EXT#" in user.user_principal_name:
+                    user.mail = user.user_principal_name.split("#EXT")[0].replace(
+                        "_", "@"
+                    )
+                elif len(user.other_mails) > 0:
+                    user.mail = user.other_mails[0]
+            return user
         except ODataError as err:
+            logger.error(err.message)
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
             ) from err
@@ -130,11 +152,18 @@ class UsersApi:
     @classmethod
     async def get_group_memberships(cls, id: UUID4):
         try:
-            groups = await graph_client.users.by_user_id(str(id)).member_of.get()
+            groups = await graph_client.users.by_user_id(str(id)).member_of.get(
+                request_configuration=cls.group_request_config
+            )
             if groups and groups.value:
-                return [GraphGroup(**jsonable_encoder(g)) for g in groups.value]
+                return [
+                    GraphGroup(**jsonable_encoder(g))
+                    for g in groups.value
+                    if g.odata_type == "#microsoft.graph.group"
+                ]
             return []
         except ODataError as err:
+            logger.error(err.message)
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
             ) from err
