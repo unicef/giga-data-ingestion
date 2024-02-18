@@ -1,28 +1,36 @@
 import { useCallback, useState } from "react";
 
 import { InlineNotification, Modal, ToastNotification } from "@carbon/react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { useApi } from "@/api";
-import { GraphUser } from "@/types/user";
+import { api, queryClient } from "@/api";
 
-interface RevokeUserModalProps {
-  initialValues: GraphUser;
-  isRevokeModalOpen: boolean;
-  setIsRevokeModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}
+export const Route = createFileRoute("/user-management/user/revoke/$userId")({
+  component: RevokeUser,
+  loader: ({ params: { userId } }) => {
+    return queryClient.ensureQueryData({
+      queryKey: ["user", userId],
+      queryFn: () => api.users.get(userId),
+    });
+  },
+});
 
-export default function RevokeUserModal({
-  initialValues,
-  isRevokeModalOpen,
-  setIsRevokeModalOpen,
-}: RevokeUserModalProps) {
-  const api = useApi();
+function RevokeUser() {
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { userId } = Route.useParams();
+  const {
+    data: { data: initialValues },
+  } = useSuspenseQuery({
+    queryKey: ["user", userId],
+    queryFn: () => api.users.get(userId),
+  });
 
   const [error, setError] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+
   const revokeUser = useMutation({
-    mutationFn: api.users.edit_user,
+    mutationFn: api.users.editUser,
   });
 
   const handleSubmit = useCallback(async () => {
@@ -33,22 +41,22 @@ export default function RevokeUserModal({
       });
 
       setShowSuccessNotification(true);
-      setIsRevokeModalOpen(false);
+      await navigate({ to: "../../.." });
     } catch (err) {
       setError(true);
     }
-  }, [revokeUser, setIsRevokeModalOpen, initialValues.id]);
+  }, [revokeUser, initialValues.id, navigate]);
 
   return (
     <>
       <Modal
+        open
         aria-label="confirm revoke user modal"
         loadingStatus={revokeUser.isPending ? "active" : "inactive"}
         modalHeading="Confirm Revoke User"
-        open={isRevokeModalOpen}
         primaryButtonText="Confirm"
         secondaryButtonText="Cancel"
-        onRequestClose={() => setIsRevokeModalOpen(false)}
+        onRequestClose={async () => await navigate({ to: "../../.." })}
         onRequestSubmit={handleSubmit}
       >
         <div>

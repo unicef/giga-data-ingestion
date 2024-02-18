@@ -5,6 +5,7 @@ from pydantic import UUID4
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
 from data_ingestion.internal.users import UsersApi
+from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.group import ModifyUserAccessRequest
 from data_ingestion.schemas.invitation import (
     GraphInvitation,
@@ -23,7 +24,7 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[GraphUser])
+@router.get("", response_model=list[GraphUser], dependencies=[Security(IsPrivileged())])
 async def list_users():
     return await UsersApi.list_users()
 
@@ -32,12 +33,17 @@ async def list_users():
     "/invite",
     status_code=status.HTTP_201_CREATED,
     response_model=GraphInvitation,
+    dependencies=[Security(IsPrivileged())],
 )
 async def invite_user(body: GraphInvitationCreateRequest):
     return await UsersApi.send_user_invite(body)
 
 
-@router.post("/invite_and_add_groups", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/invite_and_add_groups",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Security(IsPrivileged())],
+)
 async def invite_user_and_add_groups(body: GraphUserInviteAndAddGroupsRequest):
     groups_to_add = body.groups_to_add
     invited_user_display_name = body.invited_user_display_name
@@ -68,6 +74,12 @@ async def get_current_user(user: User = Depends(azure_scheme)):
     return user
 
 
+@router.get("/me/groups")
+async def get_current_user_groups(user: User = Depends(azure_scheme)):
+    groups = await UsersApi.get_group_memberships(user.sub)
+    return [g.display_name for g in groups]
+
+
 @router.get("/email", response_model=GraphUser)
 async def get_groups_from_email(azure_user: User = Depends(azure_scheme)):
     all_users = await UsersApi.list_users()
@@ -82,6 +94,16 @@ async def get_user(id: UUID4):
     return await UsersApi.get_user(id)
 
 
-@router.patch("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.get("/{id}/groups", dependencies=[Security(IsPrivileged())])
+async def get_user_groups(id: UUID4):
+    groups = await UsersApi.get_group_memberships(id)
+    return [g.display_name for g in groups]
+
+
+@router.patch(
+    "/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
 async def edit_user(id: UUID4, body: GraphUserUpdateRequest):
     await UsersApi.edit_user(id, body)

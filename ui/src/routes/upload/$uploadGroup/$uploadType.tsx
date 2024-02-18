@@ -1,7 +1,25 @@
-import { Outlet, createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
   component: Layout,
+  loader: ({ params }) => {
+    const { uploadGroup, uploadType } = params;
+
+    if (!["school-data", "other"].includes(uploadGroup)) {
+      throw redirect({ to: "/upload" });
+    }
+
+    if (
+      uploadGroup === "school-data" &&
+      !["geolocation", "coverage"].includes(uploadType)
+    ) {
+      throw redirect({ to: "/upload" });
+    }
+
+    if (uploadGroup === "other" && uploadType !== "unstructured") {
+      throw redirect({ to: "/upload" });
+    }
+  },
 });
 
 function Layout() {

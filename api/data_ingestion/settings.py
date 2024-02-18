@@ -1,3 +1,4 @@
+from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 from typing import Literal
@@ -5,10 +6,31 @@ from typing import Literal
 import sentry_sdk
 from loguru import logger
 from pydantic import AnyUrl, PostgresDsn, computed_field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Environment(StrEnum):
+    LOCAL = "local"
+    DEVELOPMENT = "development"
+    STAGING = "staging"
+    PRODUCTION = "production"
+
+
+class DeploymentEnvironment(StrEnum):
+    LOCAL = "local"
+    DEV = "dev"
+    STG = "stg"
+    PRD = "prd"
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
+
     # Required envs
     SECRET_KEY: str
     POSTGRESQL_USERNAME: str
@@ -27,6 +49,8 @@ class Settings(BaseSettings):
     WEB_APP_REDIRECT_URI: str
     AZURE_EMAIL_CONNECTION_STRING: str
     AZURE_EMAIL_SENDER: str
+    AZURE_SCOPE_DESCRIPTION: Literal["User.Impersonate"] = "User.Impersonate"
+    WEB_APP_REDIRECT_URI: str
     MAILJET_API_KEY: str
     MAILJET_API_URL: str
     EMAIL_RENDERER_BEARER_TOKEN: str
@@ -34,8 +58,8 @@ class Settings(BaseSettings):
     EMAIL_TEST_RECIPIENTS: list[str]
 
     # Optional envs
-    PYTHON_ENV: Literal["local", "development", "staging", "production"] = "production"
-    DEPLOY_ENV: Literal["local", "dev", "stg", "prd"] = "local"
+    PYTHON_ENV: Environment = Environment.PRODUCTION
+    DEPLOY_ENV: DeploymentEnvironment = DeploymentEnvironment.LOCAL
     BASE_DIR: Path = Path(__file__).parent.parent
     ALLOWED_HOSTS: list[str] = ["*"]
     CORS_ALLOWED_ORIGINS: list[str] = ["*"]
@@ -44,14 +68,10 @@ class Settings(BaseSettings):
     SENTRY_DSN: str = ""
     COMMIT_SHA: str = ""
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
-
     @computed_field
     @property
     def IN_PRODUCTION(self) -> bool:
-        return self.PYTHON_ENV != "local"
+        return self.PYTHON_ENV != Environment.LOCAL
 
     @computed_field
     @property
@@ -60,8 +80,28 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
-    def AUTHORITY_URL(self) -> str:
-        return f"https://login.microsoftonline.com/{self.AZURE_TENANT_ID}"
+    def AZURE_SCOPE_NAME(self) -> str:
+        return f"https://{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_CLIENT_ID}/{self.AZURE_SCOPE_DESCRIPTION}"
+
+    @computed_field
+    @property
+    def AZURE_SCOPES(self) -> dict[str, str]:
+        return {self.AZURE_SCOPE_NAME: self.AZURE_SCOPE_DESCRIPTION}
+
+    @computed_field
+    @property
+    def OPENID_CONFIG_URL(self) -> str:
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_AUTH_POLICY_NAME}/v2.0/.well-known/openid-configuration"
+
+    @computed_field
+    @property
+    def OPENAPI_AUTHORIZATION_URL(self) -> str:
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_AUTH_POLICY_NAME}/oauth2/v2.0/authorize"
+
+    @computed_field
+    @property
+    def OPENAPI_TOKEN_URL(self) -> str:
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_AUTH_POLICY_NAME}/oauth2/v2.0/token"
 
     @computed_field
     @property
