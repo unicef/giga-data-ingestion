@@ -1,8 +1,14 @@
 stages:
-  - stage: BuildAndPush
+  - stage: BuildAndPushPortal
     displayName: Build and push Ingestion Portal image
     jobs:
-      - template: build-and-push.yaml
+      - template: build-and-push-portal.yaml
+
+  - stage: BuildAndPushEmail
+    displayName: Build and push email service
+    dependsOn: [ ]
+    jobs:
+      - template: build-and-push-email.yaml
 
   - stage: CreateConfig
     displayName: Create/update K8s configuration resources
@@ -13,7 +19,8 @@ stages:
   - stage: Deploy
     displayName: Deploy Data Ingestion
     dependsOn:
-      - BuildAndPush
+      - BuildAndPushPortal
+      - BuildAndPushEmail
       - CreateConfig
     jobs:
       - template: deploy.yaml

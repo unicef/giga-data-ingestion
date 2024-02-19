@@ -3,6 +3,7 @@ version: '3'
 dotenv:
   - api/.env
   - ui/.env
+  - email/.env
 
 env:
   COMMIT_SHA:
@@ -89,12 +90,14 @@ tasks:
     desc: Build Docker image
     cmds:
       - docker build --tag {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.COMMIT_SHA}} -f Dockerfile.prod .
+      - docker build --tag {{.EMAIL_SERVICE_IMAGE_REPOSITORY}}:{{.COMMIT_SHA}} -f ./email/Dockerfile.prod ./email
 
   push-cr:
     internal: true
     desc: Push Docker image
     cmds:
       - docker push {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.COMMIT_SHA}}
+      - docker push {{.EMAIL_SERVICE_IMAGE_REPOSITORY}}:{{.COMMIT_SHA}}
 
   helm-up:
     desc: Install/upgrade Helm chart to a K8s cluster running on localhost
@@ -110,6 +113,11 @@ tasks:
         --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}}
         --set image.tag={{.COMMIT_SHA}}
         --set service.type=LoadBalancer
+      - >
+        helm upgrade --install email-service ./helm/email-service
+        --namespace giga-data-ingestion
+        --set image.repository={{.EMAIL_SERVICE_IMAGE_REPOSITORY}}
+        --set image.tag={{.COMMIT_SHA}}
 
   helm-upi:
     desc: Install/upgrade Helm chart to a K8s cluster with configured HTTPS ingress
@@ -129,11 +137,17 @@ tasks:
         --set ingress.hosts[0].host={{.INGESTION_PORTAL_INGRESS_HOST}}
         --set ingress.hosts[0].paths[0].path=/
         --set ingress.hosts[0].paths[0].pathType=Prefix
+      - >
+        helm upgrade --install email-service ./helm/email-service
+        --namespace giga-data-ingestion
+        --set image.repository={{.EMAIL_SERVICE_IMAGE_REPOSITORY}}
+        --set image.tag={{.COMMIT_SHA}}
 
   helm-down:
     desc: Uninstall Helm chart
     dir: infra/helm
     cmds:
+      - helm uninstall email-service --namespace giga-data-ingestion
       - helm uninstall ingestion-portal --namespace giga-data-ingestion
       - kubectl delete all --all --namespace giga-data-ingestion
       - kubectl delete pvc --all --namespace giga-data-ingestion

@@ -51,7 +51,6 @@ jobs:
                     AZURE_STORAGE_ACCOUNT_NAME: "$(storageAccountName)"
                     AZURE_BLOB_CONTAINER_NAME: "$(storageContainerName)"
                     EMAIL_RENDERER_BEARER_TOKEN: "$(emailRendererBearerToken)"
-                    EMAIL_RENDERER_SERVICE_URL: "$(emailRendererServiceUrl)"
                     EMAIL_TEST_RECIPIENTS: '$(emailTestRecipients)'
                     POSTGRESQL_USERNAME: "$(postgresqlUsername)"
                     POSTGRESQL_PASSWORD: "$(postgresqlPassword)"

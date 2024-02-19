@@ -1,0 +1,26 @@
+jobs:
+  - deployment: Deploy
+    displayName: Build and push Ingestion Portal Email Service
+    environment: $(kubernetesEnvironment)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+            - checkout: self
+
+            - task: Docker@2
+              displayName: Login to container Registry
+              inputs:
+                command: login
+                containerRegistry: $(ACR_SERVICE_CONNECTION)
+
+            - task: Docker@2
+              displayName: Build and push Ingestion Portal email service to container registry
+              inputs:
+                command: buildAndPush
+                repository: giga-ingestion-portal-email
+                dockerfile: $(Build.SourcesDirectory)/email/Dockerfile.prod
+                buildContext: $(Build.SourcesDirectory)/email
+                containerRegistry: $(ACR_SERVICE_CONNECTION)
+                tags: |
+                  $(Build.SourceVersion)

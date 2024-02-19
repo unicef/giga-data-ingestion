@@ -1,6 +1,6 @@
 jobs:
   - deployment: Deploy
-    displayName: Data Ingestion Portal Deployment
+    displayName: Build and push Data Ingestion Portal
     environment: $(kubernetesEnvironment)
     strategy:
       runOnce:

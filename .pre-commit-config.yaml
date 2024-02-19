@@ -34,7 +34,7 @@ repos:
     rev: v2.7.1
     hooks:
       - id: prettier
-        files: (?i)\.(json|jsx?|tsx?|html|css|scss)$
+        files: ui/.+\.(json|jsx?|tsx?|html|css|scss)$
         exclude: ".+\\.gen\\.ts$"
         additional_dependencies:
           - prettier@2.7.1
@@ -51,7 +51,7 @@ repos:
         args: [ '--fix=lf' ]
       - id: check-merge-conflict
       - id: check-yaml
-        exclude: infra/helm/data-ingestion/templates/.*
+        exclude: infra/helm/.+/templates/.*
   - repo: https://github.com/zricethezav/gitleaks
     rev: v8.18.0
     hooks:
