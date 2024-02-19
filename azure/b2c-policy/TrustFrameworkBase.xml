@@ -9,7 +9,6 @@
     PublicPolicyUri="http://kvdstudiob2ctest.onmicrosoft.com/B2C_1A_TrustFrameworkBase"
     DeploymentMode="Development"
 >
-
     <BuildingBlocks>
         <ClaimsSchema>
             <!-- The ClaimsSchema is divided into three sections:
@@ -31,10 +30,11 @@
             <ClaimType Id="issuerUserId">
                 <DisplayName>Username</DisplayName>
                 <DataType>string</DataType>
-                <UserHelpText/>
+                <UserHelpText />
                 <UserInputType>TextBox</UserInputType>
                 <Restriction>
-                    <Pattern RegularExpression="^[a-zA-Z0-9]+[a-zA-Z0-9_-]*$" HelpText="The username you provided is not valid. It must begin with an alphabet or number and can contain alphabets, numbers and the following symbols: _ -" />
+                    <Pattern RegularExpression="^[a-zA-Z0-9]+[a-zA-Z0-9_-]*$"
+                             HelpText="The username you provided is not valid. It must begin with an alphabet or number and can contain alphabets, numbers and the following symbols: _ -" />
                 </Restriction>
             </ClaimType>
 
@@ -60,7 +60,8 @@
                 <DefaultPartnerClaimTypes>
                     <Protocol Name="OAuth2" PartnerClaimType="oid" />
                     <Protocol Name="OpenIdConnect" PartnerClaimType="oid" />
-                    <Protocol Name="SAML2" PartnerClaimType="http://schemas.microsoft.com/identity/claims/objectidentifier" />
+                    <Protocol Name="SAML2"
+                              PartnerClaimType="http://schemas.microsoft.com/identity/claims/objectidentifier" />
                 </DefaultPartnerClaimTypes>
                 <UserHelpText>Object identifier (ID) of the user object in Azure AD.</UserHelpText>
             </ClaimType>
@@ -71,13 +72,13 @@
                 <DefaultPartnerClaimTypes>
                     <Protocol Name="OpenIdConnect" PartnerClaimType="sub" />
                 </DefaultPartnerClaimTypes>
-                <UserHelpText/>
+                <UserHelpText />
             </ClaimType>
 
             <ClaimType Id="alternativeSecurityId">
                 <DisplayName>AlternativeSecurityId</DisplayName>
                 <DataType>string</DataType>
-                <UserHelpText/>
+                <UserHelpText />
             </ClaimType>
 
             <ClaimType Id="mailNickName">
@@ -92,9 +93,10 @@
                 <DefaultPartnerClaimTypes>
                     <Protocol Name="OAuth2" PartnerClaimType="idp" />
                     <Protocol Name="OpenIdConnect" PartnerClaimType="idp" />
-                    <Protocol Name="SAML2" PartnerClaimType="http://schemas.microsoft.com/identity/claims/identityprovider" />
+                    <Protocol Name="SAML2"
+                              PartnerClaimType="http://schemas.microsoft.com/identity/claims/identityprovider" />
                 </DefaultPartnerClaimTypes>
-                <UserHelpText/>
+                <UserHelpText />
             </ClaimType>
 
             <ClaimType Id="displayName">
@@ -103,7 +105,8 @@
                 <DefaultPartnerClaimTypes>
                     <Protocol Name="OAuth2" PartnerClaimType="unique_name" />
                     <Protocol Name="OpenIdConnect" PartnerClaimType="name" />
-                    <Protocol Name="SAML2" PartnerClaimType="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name" />
+                    <Protocol Name="SAML2"
+                              PartnerClaimType="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name" />
                 </DefaultPartnerClaimTypes>
                 <UserHelpText>Your display name.</UserHelpText>
                 <UserInputType>TextBox</UserInputType>
@@ -118,7 +121,9 @@
                 <UserHelpText>Email address that can be used to contact you.</UserHelpText>
                 <UserInputType>TextBox</UserInputType>
                 <Restriction>
-                    <Pattern RegularExpression="^[a-zA-Z0-9!#$%&amp;'+^_`{}~-]+(?:\.[a-zA-Z0-9!#$%&amp;'+^_`{}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$" HelpText="Please enter a valid email address." />
+                    <Pattern
+                        RegularExpression="^[a-zA-Z0-9!#$%&amp;'+^_`{}~-]+(?:\.[a-zA-Z0-9!#$%&amp;'+^_`{}~-]+)*@(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$"
+                        HelpText="Please enter a valid email address." />
                 </Restriction>
             </ClaimType>
 
@@ -134,7 +139,8 @@
                 <DefaultPartnerClaimTypes>
                     <Protocol Name="OAuth2" PartnerClaimType="upn" />
                     <Protocol Name="OpenIdConnect" PartnerClaimType="upn" />
-                    <Protocol Name="SAML2" PartnerClaimType="http://schemas.microsoft.com/identity/claims/userprincipalname" />
+                    <Protocol Name="SAML2"
+                              PartnerClaimType="http://schemas.microsoft.com/identity/claims/userprincipalname" />
                 </DefaultPartnerClaimTypes>
                 <UserHelpText>Your user name as stored in the Azure Active Directory.</UserHelpText>
             </ClaimType>
@@ -148,7 +154,7 @@
             <ClaimType Id="newUser">
                 <DisplayName>User is new</DisplayName>
                 <DataType>boolean</DataType>
-                <UserHelpText/>
+                <UserHelpText />
             </ClaimType>
 
             <ClaimType Id="rawGroups">
@@ -182,7 +188,8 @@
             <ClaimType Id="authenticationSource">
                 <DisplayName>AuthenticationSource</DisplayName>
                 <DataType>string</DataType>
-                <UserHelpText>Specifies whether the user was authenticated at Social IDP or local account.</UserHelpText>
+                <UserHelpText>Specifies whether the user was authenticated at Social IDP or local account.
+                </UserHelpText>
             </ClaimType>
 
 
@@ -190,15 +197,23 @@
             <ClaimType Id="refreshTokenIssuedOnDateTime">
                 <DisplayName>refreshTokenIssuedOnDateTime</DisplayName>
                 <DataType>string</DataType>
-                <AdminHelpText>Used to determine if the user should be permitted to reauthenticate silently via their existing refresh token.</AdminHelpText>
-                <UserHelpText>Used to determine if the user should be permitted to reauthenticate silently via their existing refresh token.</UserHelpText>
+                <AdminHelpText>Used to determine if the user should be permitted to reauthenticate silently via their
+                    existing refresh token.
+                </AdminHelpText>
+                <UserHelpText>Used to determine if the user should be permitted to reauthenticate silently via their
+                    existing refresh token.
+                </UserHelpText>
             </ClaimType>
 
             <ClaimType Id="refreshTokensValidFromDateTime">
                 <DisplayName>refreshTokensValidFromDateTime</DisplayName>
                 <DataType>string</DataType>
-                <AdminHelpText>Used to determine if the user should be permitted to reauthenticate silently via their existing refresh token.</AdminHelpText>
-                <UserHelpText>Used to determine if the user should be permitted to reauthenticate silently via their existing refresh token.</UserHelpText>
+                <AdminHelpText>Used to determine if the user should be permitted to reauthenticate silently via their
+                    existing refresh token.
+                </AdminHelpText>
+                <UserHelpText>Used to determine if the user should be permitted to reauthenticate silently via their
+                    existing refresh token.
+                </UserHelpText>
             </ClaimType>
 
             <!-- SECTION II: Claims required to pass on special parameters (including some query string parameters) to other claims providers -->
@@ -206,13 +221,17 @@
             <ClaimType Id="objectIdFromSession">
                 <DisplayName>objectIdFromSession</DisplayName>
                 <DataType>boolean</DataType>
-                <UserHelpText>Parameter provided by the default session management provider to indicate that the object id has been retrieved from an SSO session.</UserHelpText>
+                <UserHelpText>Parameter provided by the default session management provider to indicate that the object
+                    id has been retrieved from an SSO session.
+                </UserHelpText>
             </ClaimType>
 
             <ClaimType Id="isActiveMFASession">
                 <DisplayName>isActiveMFASession</DisplayName>
                 <DataType>boolean</DataType>
-                <UserHelpText>Parameter provided by the MFA session management to indicate that the user has an active MFA session.</UserHelpText>
+                <UserHelpText>Parameter provided by the MFA session management to indicate that the user has an active
+                    MFA session.
+                </UserHelpText>
             </ClaimType>
 
             <!-- SECTION III: Additional claims that can be collected from the users, stored in the directory, and sent in the token. Add additional claims here. -->
@@ -223,7 +242,8 @@
                 <DefaultPartnerClaimTypes>
                     <Protocol Name="OAuth2" PartnerClaimType="given_name" />
                     <Protocol Name="OpenIdConnect" PartnerClaimType="given_name" />
-                    <Protocol Name="SAML2" PartnerClaimType="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname" />
+                    <Protocol Name="SAML2"
+                              PartnerClaimType="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname" />
                 </DefaultPartnerClaimTypes>
                 <UserHelpText>Your given name (also known as first name).</UserHelpText>
                 <UserInputType>TextBox</UserInputType>
@@ -235,7 +255,8 @@
                 <DefaultPartnerClaimTypes>
                     <Protocol Name="OAuth2" PartnerClaimType="family_name" />
                     <Protocol Name="OpenIdConnect" PartnerClaimType="family_name" />
-                    <Protocol Name="SAML2" PartnerClaimType="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname" />
+                    <Protocol Name="SAML2"
+                              PartnerClaimType="http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname" />
                 </DefaultPartnerClaimTypes>
                 <UserHelpText>Your surname (also known as family name or last name).</UserHelpText>
                 <UserInputType>TextBox</UserInputType>
@@ -281,11 +302,13 @@
                     <InputClaim ClaimTypeReferenceId="identityProvider" TransformationClaimType="identityProvider" />
                 </InputClaims>
                 <OutputClaims>
-                    <OutputClaim ClaimTypeReferenceId="alternativeSecurityId" TransformationClaimType="alternativeSecurityId" />
+                    <OutputClaim ClaimTypeReferenceId="alternativeSecurityId"
+                                 TransformationClaimType="alternativeSecurityId" />
                 </OutputClaims>
             </ClaimsTransformation>
 
-            <ClaimsTransformation Id="CreateSubjectClaimFromAlternativeSecurityId" TransformationMethod="CreateStringClaim">
+            <ClaimsTransformation Id="CreateSubjectClaimFromAlternativeSecurityId"
+                                  TransformationMethod="CreateStringClaim">
                 <InputParameters>
                     <InputParameter Id="value" DataType="string" Value="Not supported currently. Use oid claim." />
                 </InputParameters>
@@ -304,10 +327,13 @@
             </ClaimsTransformation>
 
             <!--claims transformation for refresh token revocation -->
-            <ClaimsTransformation Id="AssertRefreshTokenIssuedLaterThanValidFromDate" TransformationMethod="AssertDateTimeIsGreaterThan">
+            <ClaimsTransformation Id="AssertRefreshTokenIssuedLaterThanValidFromDate"
+                                  TransformationMethod="AssertDateTimeIsGreaterThan">
                 <InputClaims>
-                    <InputClaim ClaimTypeReferenceId="refreshTokenIssuedOnDateTime" TransformationClaimType="leftOperand" />
-                    <InputClaim ClaimTypeReferenceId="refreshTokensValidFromDateTime" TransformationClaimType="rightOperand" />
+                    <InputClaim ClaimTypeReferenceId="refreshTokenIssuedOnDateTime"
+                                TransformationClaimType="leftOperand" />
+                    <InputClaim ClaimTypeReferenceId="refreshTokensValidFromDateTime"
+                                TransformationClaimType="rightOperand" />
                 </InputClaims>
                 <InputParameters>
                     <InputParameter Id="AssertIfEqualTo" DataType="boolean" Value="false" />
@@ -416,7 +442,8 @@
                         <Item Key="scope">email profile openid</Item>
                         <Item Key="HttpBinding">POST</Item>
                         <Item Key="UsePolicyInRedirectUri">false</Item>
-                        <Item Key="client_id">271421194835-2h388jnupeup5m52m621nimfjv6bv2q0.apps.googleusercontent.com</Item>
+                        <Item Key="client_id">271421194835-2h388jnupeup5m52m621nimfjv6bv2q0.apps.googleusercontent.com
+                        </Item>
                     </Metadata>
                     <CryptographicKeys>
                         <Key Id="client_secret" StorageReferenceId="B2C_1A_GoogleSecret" />
@@ -428,55 +455,14 @@
                         <OutputClaim ClaimTypeReferenceId="surname" PartnerClaimType="family_name" />
                         <OutputClaim ClaimTypeReferenceId="displayName" PartnerClaimType="name" />
                         <OutputClaim ClaimTypeReferenceId="identityProvider" DefaultValue="google.com" />
-                        <OutputClaim ClaimTypeReferenceId="authenticationSource" DefaultValue="socialIdpAuthentication" />
+                        <OutputClaim ClaimTypeReferenceId="authenticationSource"
+                                     DefaultValue="socialIdpAuthentication" />
                     </OutputClaims>
                     <OutputClaimsTransformations>
                         <OutputClaimsTransformation ReferenceId="CreateRandomUPNUserName" />
                         <OutputClaimsTransformation ReferenceId="CreateUserPrincipalName" />
                         <OutputClaimsTransformation ReferenceId="CreateAlternativeSecurityId" />
                         <OutputClaimsTransformation ReferenceId="CreateSubjectClaimFromAlternativeSecurityId" />
-                    </OutputClaimsTransformations>
-                    <UseTechnicalProfileForSessionManagement ReferenceId="SM-SocialLogin" />
-                </TechnicalProfile>
-            </TechnicalProfiles>
-        </ClaimsProvider>
-
-        <ClaimsProvider>
-            <Domain>github.com</Domain>
-            <DisplayName>GitHub</DisplayName>
-            <TechnicalProfiles>
-                <TechnicalProfile Id="GitHub-OAuth2">
-                    <DisplayName>GitHub</DisplayName>
-                    <Protocol Name="OAuth2" />
-                    <Metadata>
-                        <Item Key="ProviderName">github.com</Item>
-                        <Item Key="authorization_endpoint">https://github.com/login/oauth/authorize</Item>
-                        <Item Key="AccessTokenEndpoint">https://github.com/login/oauth/access_token</Item>
-                        <Item Key="ClaimsEndpoint">https://api.github.com/user</Item>
-                        <Item Key="HttpBinding">GET</Item>
-                        <Item Key="scope">read:user user:email</Item>
-                        <Item Key="UsePolicyInRedirectUri">0</Item>
-                        <Item Key="BearerTokenTransmissionMethod">AuthorizationHeader</Item>
-                        <Item Key="UserAgentForClaimsExchange">CPIM-Basic/{tenant}/{policy}</Item>
-                        <Item Key="client_id">39a9ab5727d4152582d0</Item>
-                    </Metadata>
-                    <CryptographicKeys>
-                        <Key Id="client_secret" StorageReferenceId="B2C_1A_GitHubSecret"/>
-                    </CryptographicKeys>
-                    <OutputClaims>
-                        <OutputClaim ClaimTypeReferenceId="displayName" PartnerClaimType="name" />
-                        <OutputClaim ClaimTypeReferenceId="email" PartnerClaimType="email" />
-                        <OutputClaim ClaimTypeReferenceId="numericUserId" PartnerClaimType="id" />
-                        <OutputClaim ClaimTypeReferenceId="issuerUserId" />
-                        <OutputClaim ClaimTypeReferenceId="identityProvider" DefaultValue="github.com" AlwaysUseDefaultValue="true" />
-                        <OutputClaim ClaimTypeReferenceId="authenticationSource" DefaultValue="socialIdpAuthentication" AlwaysUseDefaultValue="true" />
-                    </OutputClaims>
-                    <OutputClaimsTransformations>
-                        <OutputClaimsTransformation ReferenceId="CreateIssuerUserId" />
-                        <OutputClaimsTransformation ReferenceId="CreateRandomUPNUserName"/>
-                        <OutputClaimsTransformation ReferenceId="CreateUserPrincipalName"/>
-                        <OutputClaimsTransformation ReferenceId="CreateAlternativeSecurityId"/>
-                        <OutputClaimsTransformation ReferenceId="CreateSubjectClaimFromAlternativeSecurityId"/>
                     </OutputClaimsTransformations>
                     <UseTechnicalProfileForSessionManagement ReferenceId="SM-SocialLogin" />
                 </TechnicalProfile>
@@ -508,7 +494,8 @@
                         <OutputClaim ClaimTypeReferenceId="givenName" PartnerClaimType="given_name" />
                         <OutputClaim ClaimTypeReferenceId="surName" PartnerClaimType="family_name" />
                         <OutputClaim ClaimTypeReferenceId="displayName" PartnerClaimType="name" />
-                        <OutputClaim ClaimTypeReferenceId="authenticationSource" DefaultValue="socialIdpAuthentication" />
+                        <OutputClaim ClaimTypeReferenceId="authenticationSource"
+                                     DefaultValue="socialIdpAuthentication" />
                         <OutputClaim ClaimTypeReferenceId="identityProvider" PartnerClaimType="iss" />
                         <OutputClaim ClaimTypeReferenceId="email" />
                     </OutputClaims>
@@ -528,9 +515,12 @@
             <TechnicalProfiles>
                 <TechnicalProfile Id="REST-AcquireAccessTokenForGraph">
                     <DisplayName>Acquire Token</DisplayName>
-                    <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+                    <Protocol Name="Proprietary"
+                              Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
                     <Metadata>
-                        <Item Key="ServiceUrl">https://login.microsoftonline.com/kvdstudiob2ctest.onmicrosoft.com/oauth2/v2.0/token</Item>
+                        <Item Key="ServiceUrl">
+                            https://login.microsoftonline.com/kvdstudiob2ctest.onmicrosoft.com/oauth2/v2.0/token
+                        </Item>
                         <Item Key="AuthenticationType">Basic</Item>
                         <Item Key="SendClaimsIn">Form</Item>
                     </Metadata>
@@ -551,9 +541,12 @@
                 <!-- Call Microsoft Graph API to get group claims-->
                 <TechnicalProfile Id="REST-GetGroupMembership">
                     <DisplayName>Get user's groups using Graph API</DisplayName>
-                    <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+                    <Protocol Name="Proprietary"
+                              Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
                     <Metadata>
-                        <Item Key="ServiceUrl">https://graph.microsoft.com/v1.0/users/{objectId}/memberOf?$select=displayName</Item>
+                        <Item Key="ServiceUrl">
+                            https://graph.microsoft.com/v1.0/users/{objectId}/memberOf?$select=displayName
+                        </Item>
                         <Item Key="SendClaimsIn">Url</Item>
                         <Item Key="AuthenticationType">Bearer</Item>
                         <Item Key="UseClaimAsBearerToken">bearerToken</Item>
@@ -566,7 +559,7 @@
                         <InputClaim ClaimTypeReferenceId="bearerToken" />
                     </InputClaims>
                     <OutputClaims>
-                        <OutputClaim ClaimTypeReferenceId="rawGroups" PartnerClaimType="value"/>
+                        <OutputClaim ClaimTypeReferenceId="rawGroups" PartnerClaimType="value" />
                     </OutputClaims>
                     <UseTechnicalProfileForSessionManagement ReferenceId="SM-Noop" />
                 </TechnicalProfile>
@@ -574,10 +567,13 @@
                 <!-- Group claims JSON transformation -->
                 <TechnicalProfile Id="REST-TransformGroupMembership">
                     <DisplayName>Transform group names</DisplayName>
-                    <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+                    <Protocol Name="Proprietary"
+                              Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
                     <Metadata>
-                        <Item Key="ServiceUrl">https://json-groups-parser.azurewebsites.net/api/parse_group_values</Item>
+                        <Item Key="ServiceUrl">https://json-groups-parser.azurewebsites.net/api/parse_group_values
+                        </Item>
                         <Item Key="AuthenticationType">None</Item>
+                        <Item Key="AllowInsecureAuthInProduction">true</Item>
                         <Item Key="SendClaimsIn">Body</Item>
                         <Item Key="IncludeClaimResolvingInClaimsHandling">true</Item>
                         <Item Key="ResolveJsonPathsInJsonTokens">true</Item>
@@ -599,7 +595,8 @@
 
                 <TechnicalProfile Id="AAD-Common">
                     <DisplayName>Azure Active Directory</DisplayName>
-                    <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.AzureActiveDirectoryProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+                    <Protocol Name="Proprietary"
+                              Handler="Web.TPEngine.Providers.AzureActiveDirectoryProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
 
                     <CryptographicKeys>
                         <Key Id="issuer_secret" StorageReferenceId="B2C_1A_TokenSigningKeyContainer" />
@@ -622,7 +619,8 @@
                         <InputClaimsTransformation ReferenceId="CreateOtherMailsFromEmail" />
                     </InputClaimsTransformations>
                     <InputClaims>
-                        <InputClaim ClaimTypeReferenceId="alternativeSecurityId" PartnerClaimType="alternativeSecurityId" Required="true" />
+                        <InputClaim ClaimTypeReferenceId="alternativeSecurityId"
+                                    PartnerClaimType="alternativeSecurityId" Required="true" />
                     </InputClaims>
                     <PersistedClaims>
                         <!-- Required claims -->
@@ -653,7 +651,8 @@
                         <Item Key="RaiseErrorIfClaimsPrincipalDoesNotExist">true</Item>
                     </Metadata>
                     <InputClaims>
-                        <InputClaim ClaimTypeReferenceId="alternativeSecurityId" PartnerClaimType="alternativeSecurityId" Required="true" />
+                        <InputClaim ClaimTypeReferenceId="alternativeSecurityId"
+                                    PartnerClaimType="alternativeSecurityId" Required="true" />
                     </InputClaims>
                     <OutputClaims>
                         <!-- Required claims -->
@@ -728,7 +727,8 @@
 
                 <TechnicalProfile Id="SelfAsserted-Social">
                     <DisplayName>User ID signup</DisplayName>
-                    <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.SelfAssertedAttributeProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+                    <Protocol Name="Proprietary"
+                              Handler="Web.TPEngine.Providers.SelfAssertedAttributeProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
                     <Metadata>
                         <Item Key="ContentDefinitionReferenceId">api.socialccountsignup</Item>
                     </Metadata>
@@ -768,7 +768,8 @@
 
                 <TechnicalProfile Id="SelfAsserted-ProfileUpdate">
                     <DisplayName>User ID signup</DisplayName>
-                    <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.SelfAssertedAttributeProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+                    <Protocol Name="Proprietary"
+                              Handler="Web.TPEngine.Providers.SelfAssertedAttributeProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
                     <Metadata>
                         <Item Key="ContentDefinitionReferenceId">api.selfasserted.profileupdate</Item>
                     </Metadata>
@@ -803,12 +804,14 @@
             <TechnicalProfiles>
                 <TechnicalProfile Id="SM-Noop">
                     <DisplayName>Noop Session Management Provider</DisplayName>
-                    <Protocol Name="Proprietary" Handler="Web.TPEngine.SSO.NoopSSOSessionProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+                    <Protocol Name="Proprietary"
+                              Handler="Web.TPEngine.SSO.NoopSSOSessionProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
                 </TechnicalProfile>
 
                 <TechnicalProfile Id="SM-AAD">
                     <DisplayName>Session Mananagement Provider</DisplayName>
-                    <Protocol Name="Proprietary" Handler="Web.TPEngine.SSO.DefaultSSOSessionProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+                    <Protocol Name="Proprietary"
+                              Handler="Web.TPEngine.SSO.DefaultSSOSessionProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
                     <PersistedClaims>
                         <PersistedClaim ClaimTypeReferenceId="objectId" />
 
@@ -829,7 +832,8 @@
 
                 <TechnicalProfile Id="SM-SocialLogin">
                     <DisplayName>Session Mananagement Provider</DisplayName>
-                    <Protocol Name="Proprietary" Handler="Web.TPEngine.SSO.ExternalLoginSSOSessionProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+                    <Protocol Name="Proprietary"
+                              Handler="Web.TPEngine.SSO.ExternalLoginSSOSessionProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
                     <Metadata>
                         <Item Key="AlwaysFetchClaimsFromProvider">true</Item>
                     </Metadata>
@@ -841,7 +845,8 @@
                 <!-- Session management technical profile for OIDC based tokens -->
                 <TechnicalProfile Id="SM-jwt-issuer">
                     <DisplayName>Session Management Provider</DisplayName>
-                    <Protocol Name="Proprietary" Handler="Web.TPEngine.SSO.OAuthSSOSessionProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+                    <Protocol Name="Proprietary"
+                              Handler="Web.TPEngine.SSO.OAuthSSOSessionProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
                 </TechnicalProfile>
             </TechnicalProfiles>
         </ClaimsProvider>
@@ -922,10 +927,10 @@
         <UserJourney Id="SignUpOrSignIn">
             <OrchestrationSteps>
 
-                <OrchestrationStep Order="1" Type="CombinedSignInAndSignUp" ContentDefinitionReferenceId="api.signuporsignin">
+                <OrchestrationStep Order="1" Type="CombinedSignInAndSignUp"
+                                   ContentDefinitionReferenceId="api.signuporsignin">
                     <ClaimsProviderSelections>
                         <ClaimsProviderSelection TargetClaimsExchangeId="GoogleExchange" />
-                        <ClaimsProviderSelection TargetClaimsExchangeId="GitHubExchange" />
                         <ClaimsProviderSelection TargetClaimsExchangeId="MicrosoftAccountExchange" />
                     </ClaimsProviderSelections>
                 </OrchestrationStep>
@@ -933,15 +938,16 @@
                 <OrchestrationStep Order="2" Type="ClaimsExchange">
                     <ClaimsExchanges>
                         <ClaimsExchange Id="GoogleExchange" TechnicalProfileReferenceId="Google-OAuth2" />
-                        <ClaimsExchange Id="GitHubExchange" TechnicalProfileReferenceId="GitHub-OAuth2" />
-                        <ClaimsExchange Id="MicrosoftAccountExchange" TechnicalProfileReferenceId="MSA-MicrosoftAccount-OpenIdConnect" />
+                        <ClaimsExchange Id="MicrosoftAccountExchange"
+                                        TechnicalProfileReferenceId="MSA-MicrosoftAccount-OpenIdConnect" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
 
                 <!-- For social IDP authentication, attempt to find the user account in the directory. -->
                 <OrchestrationStep Order="3" Type="ClaimsExchange">
                     <ClaimsExchanges>
-                        <ClaimsExchange Id="AADUserReadUsingAlternativeSecurityId" TechnicalProfileReferenceId="AAD-UserReadUsingAlternativeSecurityId-NoError" />
+                        <ClaimsExchange Id="AADUserReadUsingAlternativeSecurityId"
+                                        TechnicalProfileReferenceId="AAD-UserReadUsingAlternativeSecurityId-NoError" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
 
@@ -969,25 +975,29 @@
                         </Precondition>
                     </Preconditions>
                     <ClaimsExchanges>
-                        <ClaimsExchange Id="AADUserWrite" TechnicalProfileReferenceId="AAD-UserWriteUsingAlternativeSecurityId" />
+                        <ClaimsExchange Id="AADUserWrite"
+                                        TechnicalProfileReferenceId="AAD-UserWriteUsingAlternativeSecurityId" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
 
                 <OrchestrationStep Order="6" Type="ClaimsExchange">
                     <ClaimsExchanges>
-                        <ClaimsExchange Id="REST-AcquireAccessTokenForGraph" TechnicalProfileReferenceId="REST-AcquireAccessTokenForGraph" />
+                        <ClaimsExchange Id="REST-AcquireAccessTokenForGraph"
+                                        TechnicalProfileReferenceId="REST-AcquireAccessTokenForGraph" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
 
                 <OrchestrationStep Order="7" Type="ClaimsExchange">
                     <ClaimsExchanges>
-                        <ClaimsExchange Id="REST-GetGroupMembership" TechnicalProfileReferenceId="REST-GetGroupMembership" />
+                        <ClaimsExchange Id="REST-GetGroupMembership"
+                                        TechnicalProfileReferenceId="REST-GetGroupMembership" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
 
                 <OrchestrationStep Order="8" Type="ClaimsExchange">
                     <ClaimsExchanges>
-                        <ClaimsExchange Id="REST-TransformGroupMembership" TechnicalProfileReferenceId="REST-TransformGroupMembership" />
+                        <ClaimsExchange Id="REST-TransformGroupMembership"
+                                        TechnicalProfileReferenceId="REST-TransformGroupMembership" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
 
@@ -1003,7 +1013,8 @@
             <OrchestrationSteps>
                 <OrchestrationStep Order="1" Type="ClaimsExchange">
                     <ClaimsExchanges>
-                        <ClaimsExchange Id="RefreshTokenSetupExchange" TechnicalProfileReferenceId="RefreshTokenReadAndSetup" />
+                        <ClaimsExchange Id="RefreshTokenSetupExchange"
+                                        TechnicalProfileReferenceId="RefreshTokenReadAndSetup" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
 
@@ -1011,25 +1022,29 @@
 
                 <OrchestrationStep Order="2" Type="ClaimsExchange">
                     <ClaimsExchanges>
-                        <ClaimsExchange Id="REST-AcquireAccessTokenForGraph" TechnicalProfileReferenceId="REST-AcquireAccessTokenForGraph" />
+                        <ClaimsExchange Id="REST-AcquireAccessTokenForGraph"
+                                        TechnicalProfileReferenceId="REST-AcquireAccessTokenForGraph" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
 
                 <OrchestrationStep Order="3" Type="ClaimsExchange">
                     <ClaimsExchanges>
-                        <ClaimsExchange Id="REST-GetGroupMembership" TechnicalProfileReferenceId="REST-GetGroupMembership" />
+                        <ClaimsExchange Id="REST-GetGroupMembership"
+                                        TechnicalProfileReferenceId="REST-GetGroupMembership" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
 
                 <OrchestrationStep Order="4" Type="ClaimsExchange">
                     <ClaimsExchanges>
-                        <ClaimsExchange Id="REST-TransformGroupMembership" TechnicalProfileReferenceId="REST-TransformGroupMembership" />
+                        <ClaimsExchange Id="REST-TransformGroupMembership"
+                                        TechnicalProfileReferenceId="REST-TransformGroupMembership" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
 
                 <OrchestrationStep Order="5" Type="ClaimsExchange">
                     <ClaimsExchanges>
-                        <ClaimsExchange Id="CheckRefreshTokenDateFromAadExchange" TechnicalProfileReferenceId="AAD-UserReadUsingObjectId-CheckRefreshTokenDate" />
+                        <ClaimsExchange Id="CheckRefreshTokenDateFromAadExchange"
+                                        TechnicalProfileReferenceId="AAD-UserReadUsingObjectId-CheckRefreshTokenDate" />
                     </ClaimsExchanges>
                 </OrchestrationStep>
 
