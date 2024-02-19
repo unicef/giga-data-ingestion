@@ -10,7 +10,9 @@ import { bearerAuth } from "hono/bearer-auth";
 import { secureHeaders } from "hono/secure-headers";
 
 import DataQualityReport from "../emails/dq-report";
+import InviteUser from "../emails/invite-user";
 import { DataQualityReportEmailProps } from "../types/dq-report";
+import { InviteUserProps } from "../types/invite-user";
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -32,6 +34,15 @@ app.use(
 
 app.get("/", ctx => {
   return ctx.text("ok");
+});
+
+app.post("/email/invite-user", zValidator("json", InviteUserProps), ctx => {
+  const json = ctx.req.valid("json");
+  const html = render(createElement(InviteUser, json, null));
+  const text = render(createElement(InviteUser, json, null), {
+    plainText: true,
+  });
+  return ctx.json({ html, text });
 });
 
 app.post(

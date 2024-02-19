@@ -67,6 +67,7 @@ services:
   email-ui:
     image: node:20-alpine
     restart: unless-stopped
+    env_file: ./email/.env
     working_dir: /app
     entrypoint:
       - /bin/sh

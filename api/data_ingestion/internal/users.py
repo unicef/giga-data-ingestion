@@ -1,4 +1,6 @@
 import asyncio
+import json
+from secrets import token_urlsafe
 
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
@@ -8,13 +10,22 @@ from loguru import logger
 from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
 from msgraph.generated.models.invitation import Invitation
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+from msgraph.generated.models.object_identity import ObjectIdentity
+from msgraph.generated.models.password_profile import PasswordProfile
 from msgraph.generated.models.user import User
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
-from pydantic import UUID4
+from pydantic import UUID4, ValidationError
 
 from data_ingestion.schemas.group import GraphGroup
-from data_ingestion.schemas.invitation import GraphInvitationCreateRequest
-from data_ingestion.schemas.user import GraphUser, GraphUserUpdateRequest
+from data_ingestion.schemas.invitation import (
+    GraphInvitationCreateRequest,
+)
+from data_ingestion.schemas.user import (
+    GraphUser,
+    GraphUserCreateRequest,
+    GraphUserCreateResponse,
+    GraphUserUpdateRequest,
+)
 from data_ingestion.settings import settings
 
 from .auth import graph_client
@@ -140,6 +151,46 @@ class UsersApi:
             ) from err
 
     @classmethod
+    async def create_user(
+        cls, request_body: GraphUserCreateRequest
+    ) -> GraphUserCreateResponse:
+        temporary_password = token_urlsafe(12)
+        try:
+            body = User(
+                display_name=request_body.display_name,
+                mail=request_body.email,
+                account_enabled=True,
+                password_profile=PasswordProfile(
+                    force_change_password_next_sign_in=True,
+                    password=temporary_password,
+                ),
+                identities=[
+                    ObjectIdentity(
+                        sign_in_type="emailAddress",
+                        issuer=settings.AUTHORITY_DOMAIN,
+                        issuer_assigned_id=request_body.email,
+                    )
+                ],
+                user_type="Member",
+            )
+            user = await graph_client.users.post(body)
+            user_jsonable = jsonable_encoder(user)
+
+            try:
+                user_model = GraphUser(**user_jsonable)
+                return GraphUserCreateResponse(
+                    user=user_model, temporary_password=temporary_password
+                )
+            except ValidationError as err:
+                logger.error(err.message)
+                logger.debug(json.dumps(user_jsonable, indent=2))
+        except ODataError as err:
+            logger.error(err.message)
+            raise HTTPException(
+                detail=err.error.message, status_code=err.response_status_code
+            ) from err
+
+    @classmethod
     async def send_user_invite(
         cls, request_body: GraphInvitationCreateRequest
     ) -> Invitation:
@@ -148,6 +199,7 @@ class UsersApi:
                 **request_body.model_dump(),
                 invite_redirect_url=settings.WEB_APP_REDIRECT_URI,
                 send_invitation_message=True,
+                invited_user_type="Member",
             )
             return await graph_client.invitations.post(body=body)
         except ODataError as err:

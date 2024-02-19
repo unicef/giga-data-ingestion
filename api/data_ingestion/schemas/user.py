@@ -13,7 +13,7 @@ class User(BaseModel):
 
 class GraphUser(BaseModel):
     id: UUID4
-    account_enabled: bool
+    account_enabled: bool | None
     given_name: str | None
     surname: str | None
     mail: EmailStr | None
@@ -35,6 +35,17 @@ class GraphUserUpdateRequest(BaseModel):
         if not any(v is not None for v in self.model_dump().values()):
             raise ValueError("At least one field must be provided")
         return self
+
+
+class GraphUserCreateRequest(BaseModel):
+    display_name: str
+    email: EmailStr
+    groups: list[UUID4]
+
+
+class GraphUserCreateResponse(BaseModel):
+    user: GraphUser
+    temporary_password: str
 
 
 class GraphUserInviteAndAddGroupsRequest(BaseModel):
