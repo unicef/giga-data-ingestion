@@ -1,4 +1,8 @@
-import { Configuration, PopupRequest } from "@azure/msal-browser";
+import {
+  Configuration,
+  EndSessionRequest,
+  PopupRequest,
+} from "@azure/msal-browser";
 
 const {
   VITE_AZURE_CLIENT_ID: AZURE_CLIENT_ID,
@@ -50,4 +54,8 @@ export const loginRequest: PopupRequest = {
   scopes: [
     `https://${AZURE_TENANT_NAME}.onmicrosoft.com/${AZURE_CLIENT_ID}/User.Impersonate`,
   ],
+};
+
+export const logoutRequest: EndSessionRequest = {
+  postLogoutRedirectUri: "/",
 };
