@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { AuthenticatedTemplate } from "@azure/msal-react";
+import { AuthenticatedTemplate, useAccount } from "@azure/msal-react";
 import { Logout } from "@carbon/icons-react";
 import {
   Header,
@@ -14,18 +14,15 @@ import { Link } from "@tanstack/react-router";
 
 import gigaLogoBlue from "@/assets/GIGA_logo_blue.png";
 import useLogout from "@/hooks/useLogout.ts";
-import { useStore } from "@/store.ts";
 
 export default function Navbar() {
-  const {
-    user: { roles },
-  } = useStore();
   const logout = useLogout();
+  const account = useAccount();
 
-  const isPrivileged = useMemo(
-    () => roles.includes("Admin") || roles.includes("Super"),
-    [roles],
-  );
+  const isPrivileged = useMemo(() => {
+    const roles = (account?.idTokenClaims?.groups ?? []) as string[];
+    return roles.includes("Admin") || roles.includes("Super");
+  }, [account]);
 
   return (
     <Header
@@ -55,7 +52,10 @@ export default function Navbar() {
             </HeaderMenuItem>
           )}
         </HeaderNavigation>
-        <HeaderGlobalBar>
+        <HeaderGlobalBar className="flex items-center">
+          <div className="text-sm text-giga-dark-gray">
+            {(account?.idTokenClaims?.email as string) ?? ""}
+          </div>
           <HeaderGlobalAction aria-label="Logout" onClick={logout}>
             <Logout />
           </HeaderGlobalAction>
