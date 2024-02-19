@@ -78,6 +78,8 @@ class UsersApi:
                                 )
                             elif len(u.other_mails) > 0:
                                 u.mail = u.other_mails[0]
+                            else:
+                                u.mail = u.user_principal_name
                         users_out.append(u)
 
                 if users.odata_next_link is None:
@@ -115,6 +117,8 @@ class UsersApi:
                     )
                 elif len(user.other_mails) > 0:
                     user.mail = user.other_mails[0]
+                else:
+                    user.mail = user.user_principal_name
             return user
         except ODataError as err:
             logger.error(err.message)

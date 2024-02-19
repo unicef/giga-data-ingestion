@@ -24,7 +24,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[GraphUser], dependencies=[Security(IsPrivileged())])
+@router.get(
+    "",
+    response_model=list[GraphUser],
+    dependencies=[Security(IsPrivileged())],
+)
 async def list_users():
     return await UsersApi.list_users()
 
