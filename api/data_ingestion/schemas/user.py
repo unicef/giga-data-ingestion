@@ -38,9 +38,10 @@ class GraphUserUpdateRequest(BaseModel):
 
 
 class GraphUserCreateRequest(BaseModel):
-    display_name: str
+    given_name: str
+    surname: str
     email: EmailStr
-    groups: list[UUID4]
+    groups: list[GraphGroup]
 
 
 class GraphUserCreateResponse(BaseModel):

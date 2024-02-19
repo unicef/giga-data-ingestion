@@ -44,7 +44,7 @@ async def create_user(body: GraphUserCreateRequest, background_tasks: Background
         user.id,
         ModifyUserAccessRequest(
             email=user.mail,
-            groups_to_add=body.groups,
+            groups_to_add=[g.id for g in body.groups],
             groups_to_remove=[],
         ),
     )
@@ -55,7 +55,7 @@ async def create_user(body: GraphUserCreateRequest, background_tasks: Background
             displayName=user.display_name,
             email=user.mail,
             temporaryPassword=user_response.temporary_password,
-            groups=[str(g) for g in body.groups],
+            groups=[g.display_name for g in body.groups],
         ),
     )
     return user_response.user

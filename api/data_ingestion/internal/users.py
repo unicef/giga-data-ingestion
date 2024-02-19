@@ -157,7 +157,9 @@ class UsersApi:
         temporary_password = token_urlsafe(12)
         try:
             body = User(
-                display_name=request_body.display_name,
+                given_name=request_body.given_name,
+                surname=request_body.surname,
+                display_name=f"{request_body.given_name} {request_body.surname}",
                 mail=request_body.email,
                 account_enabled=True,
                 password_profile=PasswordProfile(
