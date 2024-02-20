@@ -11,6 +11,12 @@ class User(BaseModel):
     roles: list[str]
 
 
+class GraphIdentity(BaseModel):
+    issuer: str
+    issuer_assigned_id: str | None
+    sign_in_type: str
+
+
 class GraphUser(BaseModel):
     id: UUID4
     account_enabled: bool | None
@@ -22,6 +28,7 @@ class GraphUser(BaseModel):
     external_user_state: Literal["Accepted", "PendingAcceptance"] | None
     member_of: list[GraphGroup] | None
     other_mails: list[EmailStr] | None
+    identities: list[GraphIdentity] | None
 
 
 class GraphUserUpdateRequest(BaseModel):

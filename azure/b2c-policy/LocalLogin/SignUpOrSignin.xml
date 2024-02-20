@@ -6,15 +6,16 @@
   PolicySchemaVersion="0.3.0.0"
   TenantId="kvdstudiob2ctest.onmicrosoft.com"
   PolicyId="B2C_1A_signup_signin"
-  PublicPolicyUri="http://kvdstudiob2ctest.onmicrosoft.com/B2C_1A_signup_signin">
+  PublicPolicyUri="http://kvdstudiob2ctest.onmicrosoft.com/B2C_1A_signup_signin"
+>
 
   <BasePolicy>
     <TenantId>kvdstudiob2ctest.onmicrosoft.com</TenantId>
-    <PolicyId>B2C_1A_TrustFrameworkExtensions</PolicyId>
+    <PolicyId>B2C_1A_TrustFrameworkExtensions_groups</PolicyId>
   </BasePolicy>
 
   <RelyingParty>
-    <DefaultUserJourney ReferenceId="SignUpOrSignIn" />
+    <DefaultUserJourney ReferenceId="SignUpOrSignInPasswordLess" />
     <Endpoints>
       <!--points to refresh token journey when app makes refresh token request-->
       <Endpoint Id="Token" UserJourneyReferenceId="RedeemRefreshToken" />
@@ -29,8 +30,11 @@
         <OutputClaim ClaimTypeReferenceId="email" />
         <OutputClaim ClaimTypeReferenceId="groups" />
         <OutputClaim ClaimTypeReferenceId="objectId" PartnerClaimType="sub" />
-        <OutputClaim ClaimTypeReferenceId="tenantId" AlwaysUseDefaultValue="true"
-                     DefaultValue="{Policy:TenantObjectId}" />
+        <OutputClaim
+          ClaimTypeReferenceId="tenantId"
+          AlwaysUseDefaultValue="true"
+          DefaultValue="{Policy:TenantObjectId}"
+        />
 
       </OutputClaims>
       <SubjectNamingInfo ClaimType="sub" />

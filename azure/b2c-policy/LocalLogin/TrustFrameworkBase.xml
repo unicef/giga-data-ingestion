@@ -260,20 +260,6 @@
         </UserHelpText>
       </ClaimType>
 
-      <!-- Claims needed for interacting with Microsoft Graph API -->
-      <ClaimType Id="rawGroups">
-        <DisplayName>Raw Graph API response for group membership</DisplayName>
-        <DataType>stringCollection</DataType>
-      </ClaimType>
-      <ClaimType Id="groups">
-        <DisplayName>Collection of group membership display names</DisplayName>
-        <DataType>stringCollection</DataType>
-      </ClaimType>
-      <ClaimType Id="bearerToken">
-        <DisplayName>Bearer token</DisplayName>
-        <DataType>string</DataType>
-      </ClaimType>
-
       <!-- SECTION II: Claims required to pass on special parameters (including some query string parameters) to other claims providers -->
 
       <ClaimType Id="nca">
@@ -915,85 +901,6 @@
       </TechnicalProfiles>
     </ClaimsProvider>
 
-    <ClaimsProvider>
-      <DisplayName>Graph REST APIs</DisplayName>
-      <TechnicalProfiles>
-        <TechnicalProfile Id="REST-AcquireAccessTokenForGraph">
-          <DisplayName>Acquire Token</DisplayName>
-          <Protocol Name="Proprietary"
-                    Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
-          <Metadata>
-            <Item Key="ServiceUrl">
-              https://login.microsoftonline.com/kvdstudiob2ctest.onmicrosoft.com/oauth2/v2.0/token
-            </Item>
-            <Item Key="AuthenticationType">Basic</Item>
-            <Item Key="SendClaimsIn">Form</Item>
-          </Metadata>
-          <CryptographicKeys>
-            <Key Id="BasicAuthenticationUsername" StorageReferenceId="B2C_1A_MSGraphClientId" />
-            <Key Id="BasicAuthenticationPassword" StorageReferenceId="B2C_1A_MSGraphClientSecret" />
-          </CryptographicKeys>
-          <InputClaims>
-            <InputClaim ClaimTypeReferenceId="grant_type" DefaultValue="client_credentials" />
-            <InputClaim ClaimTypeReferenceId="scope" DefaultValue="https://graph.microsoft.com/.default" />
-          </InputClaims>
-          <OutputClaims>
-            <OutputClaim ClaimTypeReferenceId="bearerToken" PartnerClaimType="access_token" />
-          </OutputClaims>
-          <UseTechnicalProfileForSessionManagement ReferenceId="SM-Noop" />
-        </TechnicalProfile>
-
-        <!-- Call Microsoft Graph API to get group claims-->
-        <TechnicalProfile Id="REST-GetGroupMembership">
-          <DisplayName>Get user's groups using Graph API</DisplayName>
-          <Protocol Name="Proprietary"
-                    Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
-          <Metadata>
-            <Item Key="ServiceUrl">
-              https://graph.microsoft.com/v1.0/users/{objectId}/memberOf?$select=displayName
-            </Item>
-            <Item Key="SendClaimsIn">Url</Item>
-            <Item Key="AuthenticationType">Bearer</Item>
-            <Item Key="UseClaimAsBearerToken">bearerToken</Item>
-            <Item Key="IncludeClaimResolvingInClaimsHandling">true</Item>
-            <Item Key="ClaimResolverUrlFormatting">true</Item>
-            <Item Key="ResolveJsonPathsInJsonTokens">true</Item>
-          </Metadata>
-          <InputClaims>
-            <InputClaim ClaimTypeReferenceId="objectId" />
-            <InputClaim ClaimTypeReferenceId="bearerToken" />
-          </InputClaims>
-          <OutputClaims>
-            <OutputClaim ClaimTypeReferenceId="rawGroups" PartnerClaimType="value" />
-          </OutputClaims>
-          <UseTechnicalProfileForSessionManagement ReferenceId="SM-Noop" />
-        </TechnicalProfile>
-
-        <!-- Group claims JSON transformation -->
-        <TechnicalProfile Id="REST-TransformGroupMembership">
-          <DisplayName>Transform group names</DisplayName>
-          <Protocol Name="Proprietary"
-                    Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
-          <Metadata>
-            <Item Key="ServiceUrl">https://json-groups-parser.azurewebsites.net/api/parse_group_values
-            </Item>
-            <Item Key="AuthenticationType">None</Item>
-            <Item Key="AllowInsecureAuthInProduction">true</Item>
-            <Item Key="SendClaimsIn">Body</Item>
-            <Item Key="IncludeClaimResolvingInClaimsHandling">true</Item>
-            <Item Key="ResolveJsonPathsInJsonTokens">true</Item>
-          </Metadata>
-          <InputClaims>
-            <InputClaim ClaimTypeReferenceId="rawGroups" />
-          </InputClaims>
-          <OutputClaims>
-            <OutputClaim ClaimTypeReferenceId="groups" PartnerClaimType="value" />
-          </OutputClaims>
-          <UseTechnicalProfileForSessionManagement ReferenceId="SM-Noop" />
-        </TechnicalProfile>
-      </TechnicalProfiles>
-    </ClaimsProvider>
-
   </ClaimsProviders>
 
   <UserJourneys>
@@ -1031,28 +938,39 @@
           </ClaimsExchanges>
         </OrchestrationStep>
 
+        <OrchestrationStep Order="4" Type="SendClaims" CpimIssuerTechnicalProfileReferenceId="JwtIssuer" />
+
+      </OrchestrationSteps>
+      <ClientDefinition ReferenceId="DefaultWeb" />
+    </UserJourney>
+
+    <UserJourney Id="ProfileEdit">
+      <OrchestrationSteps>
+
+        <OrchestrationStep Order="1" Type="ClaimsProviderSelection" ContentDefinitionReferenceId="api.idpselections">
+          <ClaimsProviderSelections>
+            <ClaimsProviderSelection TargetClaimsExchangeId="LocalAccountSigninEmailExchange" />
+          </ClaimsProviderSelections>
+        </OrchestrationStep>
+        <OrchestrationStep Order="2" Type="ClaimsExchange">
+          <ClaimsExchanges>
+            <ClaimsExchange Id="LocalAccountSigninEmailExchange"
+                            TechnicalProfileReferenceId="SelfAsserted-LocalAccountSignin-Email" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+        <OrchestrationStep Order="3" Type="ClaimsExchange">
+          <ClaimsExchanges>
+            <ClaimsExchange Id="AADUserReadWithObjectId" TechnicalProfileReferenceId="AAD-UserReadUsingObjectId" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+
         <OrchestrationStep Order="4" Type="ClaimsExchange">
           <ClaimsExchanges>
-            <ClaimsExchange Id="REST-AcquireAccessTokenForGraph"
-                            TechnicalProfileReferenceId="REST-AcquireAccessTokenForGraph" />
+            <ClaimsExchange Id="B2CUserProfileUpdateExchange"
+                            TechnicalProfileReferenceId="SelfAsserted-ProfileUpdate" />
           </ClaimsExchanges>
         </OrchestrationStep>
-
-        <OrchestrationStep Order="5" Type="ClaimsExchange">
-          <ClaimsExchanges>
-            <ClaimsExchange Id="REST-GetGroupMembership"
-                            TechnicalProfileReferenceId="REST-GetGroupMembership" />
-          </ClaimsExchanges>
-        </OrchestrationStep>
-
-        <OrchestrationStep Order="6" Type="ClaimsExchange">
-          <ClaimsExchanges>
-            <ClaimsExchange Id="REST-TransformGroupMembership"
-                            TechnicalProfileReferenceId="REST-TransformGroupMembership" />
-          </ClaimsExchanges>
-        </OrchestrationStep>
-
-        <OrchestrationStep Order="7" Type="SendClaims" CpimIssuerTechnicalProfileReferenceId="JwtIssuer" />
+        <OrchestrationStep Order="5" Type="SendClaims" CpimIssuerTechnicalProfileReferenceId="JwtIssuer" />
 
       </OrchestrationSteps>
       <ClientDefinition ReferenceId="DefaultWeb" />
@@ -1074,49 +992,6 @@
         <OrchestrationStep Order="3" Type="SendClaims" CpimIssuerTechnicalProfileReferenceId="JwtIssuer" />
       </OrchestrationSteps>
       <ClientDefinition ReferenceId="DefaultWeb" />
-    </UserJourney>
-
-    <UserJourney Id="RedeemRefreshToken">
-      <PreserveOriginalAssertion>false</PreserveOriginalAssertion>
-      <OrchestrationSteps>
-        <OrchestrationStep Order="1" Type="ClaimsExchange">
-          <ClaimsExchanges>
-            <ClaimsExchange Id="RefreshTokenSetupExchange" TechnicalProfileReferenceId="RefreshTokenReadAndSetup" />
-          </ClaimsExchanges>
-        </OrchestrationStep>
-
-        <!-- Extra steps can be added before or after this step for REST API or claims transformation calls-->
-
-        <OrchestrationStep Order="2" Type="ClaimsExchange">
-          <ClaimsExchanges>
-            <ClaimsExchange Id="CheckRefreshTokenDateFromAadExchange"
-                            TechnicalProfileReferenceId="AAD-UserReadUsingObjectId-CheckRefreshTokenDate" />
-          </ClaimsExchanges>
-        </OrchestrationStep>
-
-        <OrchestrationStep Order="3" Type="ClaimsExchange">
-          <ClaimsExchanges>
-            <ClaimsExchange Id="REST-AcquireAccessTokenForGraph"
-                            TechnicalProfileReferenceId="REST-AcquireAccessTokenForGraph" />
-          </ClaimsExchanges>
-        </OrchestrationStep>
-
-        <OrchestrationStep Order="4" Type="ClaimsExchange">
-          <ClaimsExchanges>
-            <ClaimsExchange Id="REST-GetGroupMembership"
-                            TechnicalProfileReferenceId="REST-GetGroupMembership" />
-          </ClaimsExchanges>
-        </OrchestrationStep>
-
-        <OrchestrationStep Order="5" Type="ClaimsExchange">
-          <ClaimsExchanges>
-            <ClaimsExchange Id="REST-TransformGroupMembership"
-                            TechnicalProfileReferenceId="REST-TransformGroupMembership" />
-          </ClaimsExchanges>
-        </OrchestrationStep>
-
-        <OrchestrationStep Order="6" Type="SendClaims" CpimIssuerTechnicalProfileReferenceId="JwtIssuer" />
-      </OrchestrationSteps>
     </UserJourney>
 
   </UserJourneys>

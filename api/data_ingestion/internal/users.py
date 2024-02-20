@@ -4,7 +4,6 @@ from secrets import token_urlsafe
 
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
-from kiota_abstractions.api_error import APIError
 from kiota_abstractions.headers_collection import HeadersCollection
 from loguru import logger
 from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
@@ -45,6 +44,7 @@ class UsersApi:
                 "givenName",
                 "surname",
                 "otherMails",
+                "identities",
             ],
             orderby=["displayName", "mail", "userPrincipalName"],
         )
@@ -80,17 +80,24 @@ class UsersApi:
                     for val in users.value:
                         u = GraphUser(**jsonable_encoder(val))
                         if not u.mail:
-                            if (
-                                u.user_principal_name
-                                and "#EXT#" in u.user_principal_name
-                            ):
-                                u.mail = u.user_principal_name.split("#EXT")[0].replace(
-                                    "_", "@"
+                            email_identity = None
+                            if len(u.identities) > 0:
+                                email_identity = next(
+                                    (
+                                        i
+                                        for i in u.identities
+                                        if i.sign_in_type == "emailAddress"
+                                    ),
+                                    None,
                                 )
-                            elif len(u.other_mails) > 0:
-                                u.mail = u.other_mails[0]
+
+                            if email_identity is None:
+                                if len(u.other_mails) > 0:
+                                    u.mail = u.other_mails[0]
+                                else:
+                                    u.mail = u.user_principal_name
                             else:
-                                u.mail = u.user_principal_name
+                                u.mail = email_identity.issuer_assigned_id
                         users_out.append(u)
 
                 if users.odata_next_link is None:
@@ -101,10 +108,10 @@ class UsersApi:
                 )
 
             return users_out
-        except APIError as err:
-            logger.error(err.message)
+        except ODataError as err:
+            logger.error(err.error.message)
             raise HTTPException(
-                detail=err.message, status_code=err.response_status_code
+                detail=err.error.message, status_code=err.response_status_code
             ) from err
 
     @classmethod
@@ -163,7 +170,7 @@ class UsersApi:
                 mail=request_body.email,
                 account_enabled=True,
                 password_profile=PasswordProfile(
-                    force_change_password_next_sign_in=True,
+                    force_change_password_next_sign_in=False,
                     password=temporary_password,
                 ),
                 identities=[
