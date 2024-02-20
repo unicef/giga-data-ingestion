@@ -1,3 +1,5 @@
+import { ReactElement } from "react";
+
 import {
   DataTable as CarbonDatatable,
   Table,
@@ -16,7 +18,7 @@ interface Header {
 
 interface Row {
   id: string;
-  [key: string]: string | number | JSX.Element;
+  [key: string]: string | number | ReactElement;
 }
 interface DatatableProps {
   headers: Header[];
