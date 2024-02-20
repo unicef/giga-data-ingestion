@@ -17,3 +17,10 @@ export interface GraphUser {
   external_user_state: "Accepted" | "PendingAcceptance" | null;
   member_of: GraphGroup[];
 }
+
+export interface CreateUserRequest {
+  given_name: string;
+  surname: string;
+  email: string;
+  groups: GraphGroup[];
+}

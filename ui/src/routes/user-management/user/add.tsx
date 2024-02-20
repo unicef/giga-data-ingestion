@@ -24,6 +24,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { api, queryClient } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import countries from "@/constants/countries.ts";
+import { GraphGroup } from "@/types/group.ts";
+import { CreateUserRequest } from "@/types/user.ts";
 import { filterRoles, matchNamesWithIds } from "@/utils/group.ts";
 import {
   getUniqueDatasets,
@@ -105,8 +107,9 @@ function AddUser() {
 
   const { data: groupsData } = useSuspenseQuery(groupsQueryOptions);
 
+  const rawGroups = groupsData?.data ?? [];
   const groups =
-    groupsData?.data.map(group => {
+    rawGroups.map(group => {
       return { id: group.id, name: group.display_name };
     }) ?? [];
   const roles = filterRoles(groups.map(group => group.name));
@@ -117,11 +120,11 @@ function AddUser() {
   }));
 
   const {
-    mutateAsync: mutateInviteAndAddGroups,
-    isPending: isInviteMutationPending,
-    isError: isInviteMutationError,
+    mutateAsync: createUser,
+    isPending: isCreateUserPending,
+    isError: isCreateUserError,
   } = useMutation({
-    mutationFn: api.users.inviteAndAddGroups,
+    mutationFn: api.users.create,
   });
 
   const dataSetOptions = [
@@ -180,21 +183,23 @@ function AddUser() {
     const { givenName, surname, email } = data;
 
     const { addedDatasetsWithIds, addedRolesWithIds } = deriveAddedValues();
-    const addGroupsPayload = {
-      groups_to_add: [
-        ...addedDatasetsWithIds.map(
-          addedDatasetWithId => addedDatasetWithId.id ?? "",
-        ),
-        ...addedRolesWithIds.map(addedRoleWithId => addedRoleWithId.id ?? ""),
-      ],
-      invited_user_display_name: `${givenName} ${surname}`,
-      invited_user_given_name: givenName,
-      invited_user_surname: surname,
-      invited_user_email_address: email,
+    const groupIdsToAdd = [
+      ...addedDatasetsWithIds.map(
+        addedDatasetWithId => addedDatasetWithId.id ?? "",
+      ),
+      ...addedRolesWithIds.map(addedRoleWithId => addedRoleWithId.id ?? ""),
+    ];
+    const addGroupsPayload: CreateUserRequest = {
+      groups: groupIdsToAdd
+        .map(id => rawGroups.find(group => group.id === id))
+        .filter(Boolean) as GraphGroup[],
+      given_name: givenName,
+      surname,
+      email,
     };
 
     try {
-      await mutateInviteAndAddGroups(addGroupsPayload);
+      await createUser(addGroupsPayload);
       setShowSuccessNotification(true);
       reset();
       setSwapModal(false);
@@ -317,7 +322,7 @@ function AddUser() {
       {swapModal && (
         <Modal
           aria-label="confirm new user modal"
-          loadingStatus={isInviteMutationPending ? "active" : "inactive"}
+          loadingStatus={isCreateUserPending ? "active" : "inactive"}
           modalHeading="Confirm New User"
           open={swapModal}
           primaryButtonText="Confirm"
@@ -349,7 +354,7 @@ function AddUser() {
               );
             })()}
 
-            {isInviteMutationError && (
+            {isCreateUserError && (
               <InlineNotification
                 aria-label="create user error notification"
                 kind="error"

@@ -1,20 +1,30 @@
 import asyncio
+import json
+from secrets import token_urlsafe
 
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
-from kiota_abstractions.api_error import APIError
 from kiota_abstractions.headers_collection import HeadersCollection
 from loguru import logger
 from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
 from msgraph.generated.models.invitation import Invitation
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+from msgraph.generated.models.object_identity import ObjectIdentity
+from msgraph.generated.models.password_profile import PasswordProfile
 from msgraph.generated.models.user import User
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
-from pydantic import UUID4
+from pydantic import UUID4, ValidationError
 
 from data_ingestion.schemas.group import GraphGroup
-from data_ingestion.schemas.invitation import GraphInvitationCreateRequest
-from data_ingestion.schemas.user import GraphUser, GraphUserUpdateRequest
+from data_ingestion.schemas.invitation import (
+    GraphInvitationCreateRequest,
+)
+from data_ingestion.schemas.user import (
+    GraphUser,
+    GraphUserCreateRequest,
+    GraphUserCreateResponse,
+    GraphUserUpdateRequest,
+)
 from data_ingestion.settings import settings
 
 from .auth import graph_client
@@ -34,6 +44,7 @@ class UsersApi:
                 "givenName",
                 "surname",
                 "otherMails",
+                "identities",
             ],
             orderby=["displayName", "mail", "userPrincipalName"],
         )
@@ -69,15 +80,24 @@ class UsersApi:
                     for val in users.value:
                         u = GraphUser(**jsonable_encoder(val))
                         if not u.mail:
-                            if (
-                                u.user_principal_name
-                                and "#EXT#" in u.user_principal_name
-                            ):
-                                u.mail = u.user_principal_name.split("#EXT")[0].replace(
-                                    "_", "@"
+                            email_identity = None
+                            if len(u.identities) > 0:
+                                email_identity = next(
+                                    (
+                                        i
+                                        for i in u.identities
+                                        if i.sign_in_type == "emailAddress"
+                                    ),
+                                    None,
                                 )
-                            elif len(u.other_mails) > 0:
-                                u.mail = u.other_mails[0]
+
+                            if email_identity is None:
+                                if len(u.other_mails) > 0:
+                                    u.mail = u.other_mails[0]
+                                else:
+                                    u.mail = u.user_principal_name
+                            else:
+                                u.mail = email_identity.issuer_assigned_id
                         users_out.append(u)
 
                 if users.odata_next_link is None:
@@ -88,10 +108,10 @@ class UsersApi:
                 )
 
             return users_out
-        except APIError as err:
-            logger.error(err.message)
+        except ODataError as err:
+            logger.error(err.error.message)
             raise HTTPException(
-                detail=err.message, status_code=err.response_status_code
+                detail=err.error.message, status_code=err.response_status_code
             ) from err
 
     @classmethod
@@ -115,6 +135,8 @@ class UsersApi:
                     )
                 elif len(user.other_mails) > 0:
                     user.mail = user.other_mails[0]
+                else:
+                    user.mail = user.user_principal_name
             return user
         except ODataError as err:
             logger.error(err.message)
@@ -136,6 +158,48 @@ class UsersApi:
             ) from err
 
     @classmethod
+    async def create_user(
+        cls, request_body: GraphUserCreateRequest
+    ) -> GraphUserCreateResponse:
+        temporary_password = token_urlsafe(12)
+        try:
+            body = User(
+                given_name=request_body.given_name,
+                surname=request_body.surname,
+                display_name=f"{request_body.given_name} {request_body.surname}",
+                mail=request_body.email,
+                account_enabled=True,
+                password_profile=PasswordProfile(
+                    force_change_password_next_sign_in=False,
+                    password=temporary_password,
+                ),
+                identities=[
+                    ObjectIdentity(
+                        sign_in_type="emailAddress",
+                        issuer=settings.AUTHORITY_DOMAIN,
+                        issuer_assigned_id=request_body.email,
+                    )
+                ],
+                user_type="Member",
+            )
+            user = await graph_client.users.post(body)
+            user_jsonable = jsonable_encoder(user)
+
+            try:
+                user_model = GraphUser(**user_jsonable)
+                return GraphUserCreateResponse(
+                    user=user_model, temporary_password=temporary_password
+                )
+            except ValidationError as err:
+                logger.error(err.message)
+                logger.debug(json.dumps(user_jsonable, indent=2))
+        except ODataError as err:
+            logger.error(err.message)
+            raise HTTPException(
+                detail=err.error.message, status_code=err.response_status_code
+            ) from err
+
+    @classmethod
     async def send_user_invite(
         cls, request_body: GraphInvitationCreateRequest
     ) -> Invitation:
@@ -144,6 +208,7 @@ class UsersApi:
                 **request_body.model_dump(),
                 invite_redirect_url=settings.WEB_APP_REDIRECT_URI,
                 send_invitation_message=True,
+                invited_user_type="Member",
             )
             return await graph_client.invitations.post(body=body)
         except ODataError as err:

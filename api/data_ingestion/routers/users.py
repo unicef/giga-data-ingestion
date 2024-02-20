@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Security, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Security, status
 from fastapi_azure_auth.user import User
 from pydantic import UUID4
 
+from data_ingestion.internal import email
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
 from data_ingestion.internal.users import UsersApi
@@ -10,9 +11,11 @@ from data_ingestion.schemas.group import ModifyUserAccessRequest
 from data_ingestion.schemas.invitation import (
     GraphInvitation,
     GraphInvitationCreateRequest,
+    InviteEmailRenderRequest,
 )
 from data_ingestion.schemas.user import (
     GraphUser,
+    GraphUserCreateRequest,
     GraphUserInviteAndAddGroupsRequest,
     GraphUserUpdateRequest,
 )
@@ -24,9 +27,38 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[GraphUser], dependencies=[Security(IsPrivileged())])
+@router.get(
+    "",
+    response_model=list[GraphUser],
+    dependencies=[Security(IsPrivileged())],
+)
 async def list_users():
     return await UsersApi.list_users()
+
+
+@router.post("", response_model=GraphUser, dependencies=[Security(IsPrivileged())])
+async def create_user(body: GraphUserCreateRequest, background_tasks: BackgroundTasks):
+    user_response = await UsersApi.create_user(body)
+    user = user_response.user
+    await GroupsApi.modify_user_access(
+        user.id,
+        ModifyUserAccessRequest(
+            email=user.mail,
+            groups_to_add=[g.id for g in body.groups],
+            groups_to_remove=[],
+        ),
+    )
+
+    background_tasks.add_task(
+        email.invite_user,
+        InviteEmailRenderRequest(
+            displayName=user.display_name,
+            email=user.mail,
+            temporaryPassword=user_response.temporary_password,
+            groups=[g.display_name for g in body.groups],
+        ),
+    )
+    return user_response.user
 
 
 @router.post(

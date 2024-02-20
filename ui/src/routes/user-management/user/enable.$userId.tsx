@@ -28,13 +28,13 @@ function EnableUser() {
   const [error, setError] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
 
-  const revokeUser = useMutation({
+  const enableUser = useMutation({
     mutationFn: api.users.editUser,
   });
 
   const handleSubmit = useCallback(async () => {
     try {
-      await revokeUser.mutateAsync({
+      await enableUser.mutateAsync({
         account_enabled: true,
         id: initialValues.id,
       });
@@ -44,15 +44,15 @@ function EnableUser() {
     } catch (err) {
       setError(true);
     }
-  }, [revokeUser, initialValues.id, navigate]);
+  }, [enableUser, initialValues.id, navigate]);
 
   return (
     <>
       <Modal
         open
         aria-label="confirm enable user modal"
-        loadingStatus={revokeUser.isPending ? "active" : "inactive"}
-        modalHeading="Confirm Revoke User"
+        loadingStatus={enableUser.isPending ? "active" : "inactive"}
+        modalHeading="Confirm Enable User"
         primaryButtonText="Confirm"
         secondaryButtonText="Cancel"
         onRequestClose={async () => await navigate({ to: "../../.." })}

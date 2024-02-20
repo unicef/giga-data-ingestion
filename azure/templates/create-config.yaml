@@ -18,6 +18,13 @@ jobs:
                 configuration: $(Build.SourcesDirectory)/infra/k8s/configmap.yaml
 
             - task: Kubernetes@1
+              displayName: Delete secret
+              inputs:
+                namespace: $(kubernetesNamespace)
+                command: delete
+                arguments: secret giga-ingestion-portal-secrets --ignore-not-found=true
+
+            - task: Kubernetes@1
               displayName: Create secret
               inputs:
                 namespace: $(kubernetesNamespace)
@@ -44,14 +51,13 @@ jobs:
                     AZURE_TENANT_NAME: "$(azureAdTenantName)"
                     AZURE_AUTH_POLICY_NAME: "$(azureAdPolicyName)"
                     AZURE_REDIRECT_URI: "$(azureAdRedirectUri)"
-                    WEB_APP_REDIRECT_URI: "$(webAppHost)"
+                    WEB_APP_REDIRECT_URI: "https://io-dataingestion-$(deployEnv).unitst.org"
                     AZURE_EMAIL_CONNECTION_STRING: "$(azureEmailConnectionString)"
                     AZURE_EMAIL_SENDER: "$(azureEmailSender)"
                     AZURE_SAS_TOKEN: "$(azureSasToken)"
                     AZURE_STORAGE_ACCOUNT_NAME: "$(storageAccountName)"
                     AZURE_BLOB_CONTAINER_NAME: "$(storageContainerName)"
                     EMAIL_RENDERER_BEARER_TOKEN: "$(emailRendererBearerToken)"
-                    EMAIL_RENDERER_SERVICE_URL: "$(emailRendererServiceUrl)"
                     EMAIL_TEST_RECIPIENTS: '$(emailTestRecipients)'
                     POSTGRESQL_USERNAME: "$(postgresqlUsername)"
                     POSTGRESQL_PASSWORD: "$(postgresqlPassword)"
