@@ -4,7 +4,7 @@ import { immer } from "zustand/middleware/immer";
 
 import { User } from "@/types/user.ts";
 
-interface UploadState {
+interface UploadSlice {
   file: File | null;
   timestamp: Date | null;
   uploadId: string;
@@ -13,16 +13,18 @@ interface UploadState {
 
 interface AppState {
   user: User;
-  upload: UploadState;
+  fullPageLoading: boolean;
+  upload: UploadSlice;
 }
 
 interface AppActions {
   setUser: (user: User) => void;
-  setUpload: (upload: UploadState) => void;
+  setFullPageLoading: (loading: boolean) => void;
+  setUpload: (upload: UploadSlice) => void;
   resetUploadState: () => void;
 }
 
-const initialUploadState: UploadState = {
+const initialUploadState: UploadSlice = {
   file: null,
   timestamp: null,
   uploadId: "",
@@ -35,6 +37,7 @@ const initialState: AppState = {
     email: "",
     roles: [],
   },
+  fullPageLoading: true,
   upload: initialUploadState,
 };
 
@@ -47,7 +50,11 @@ export const useStore = create<AppState & AppActions>()(
           set(state => {
             state.user = user;
           }),
-        setUpload: (upload: UploadState) =>
+        setFullPageLoading: (loading: boolean) =>
+          set(state => {
+            state.fullPageLoading = loading;
+          }),
+        setUpload: (upload: UploadSlice) =>
           set(state => {
             state.upload = upload;
           }),
@@ -58,6 +65,8 @@ export const useStore = create<AppState & AppActions>()(
       }),
       {
         enabled: !import.meta.env.PROD,
+        name: "ingestionPortalState",
+        anonymousActionType: "zustand/action",
       },
     ),
   ),

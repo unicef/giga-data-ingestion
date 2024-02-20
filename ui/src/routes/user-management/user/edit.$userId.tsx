@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
 import { Add } from "@carbon/icons-react";
@@ -13,31 +12,39 @@ import {
   TextInput,
 } from "@carbon/react";
 import MultiSelect from "@carbon/react/lib/components/MultiSelect/MultiSelect";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { useApi } from "@/api";
-import { Select } from "@/components/forms/Select";
-import countries from "@/constants/countries";
-import { GraphUser } from "@/types/user";
-import { filterCountries, filterRoles } from "@/utils/group";
-import { matchNamesWithIds } from "@/utils/group";
+import { api, queryClient, useApi } from "@/api";
+import { Select } from "@/components/forms/Select.tsx";
+import ToastNotification from "@/components/user-management/ToastNotification.tsx";
+import countries from "@/constants/countries.ts";
+import {
+  filterCountries,
+  filterRoles,
+  matchNamesWithIds,
+} from "@/utils/group.ts";
 import {
   getUniqueDatasets,
   pluralizeCountries,
   pluralizeDatasets,
-} from "@/utils/string";
+} from "@/utils/string.ts";
 
-interface EditUserModalProps {
-  initialValues: GraphUser;
-  isEditModalOpen: boolean;
-  setIsEditModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setShowEditUserSuccessNotification: React.Dispatch<
-    React.SetStateAction<boolean>
-  >;
-  setShowEditUserErrorNotification: React.Dispatch<
-    React.SetStateAction<boolean>
-  >;
-}
+export const Route = createFileRoute("/user-management/user/edit/$userId")({
+  component: EditUser,
+  loader: ({ params: { userId } }) => {
+    const userQueryOptions = queryOptions({
+      queryKey: ["user", userId],
+      queryFn: () => api.users.get(userId),
+    });
+    return queryClient.ensureQueryData(userQueryOptions);
+  },
+});
 
 type CountryDataset = {
   country: string;
@@ -52,13 +59,21 @@ interface EditUserInputs {
   countryDatasets: CountryDataset[];
 }
 
-export default function EditUserModal({
-  initialValues,
-  isEditModalOpen,
-  setIsEditModalOpen,
-  setShowEditUserErrorNotification,
-  setShowEditUserSuccessNotification,
-}: EditUserModalProps) {
+function EditUser() {
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { userId } = Route.useParams();
+  const {
+    data: { data: initialValues },
+  } = useSuspenseQuery({
+    queryKey: ["user", userId],
+    queryFn: () => api.users.get(userId),
+  });
+
+  const [showEditUserSuccessNotification, setShowEditUserSuccessNotification] =
+    useState(false);
+  const [showEditUserErrorNotification, setShowEditUserErrorNotification] =
+    useState(false);
+
   const initialId = initialValues.id;
   const givenName = initialValues.given_name;
   const surname = initialValues.surname;
@@ -150,8 +165,8 @@ export default function EditUserModal({
     ]);
   };
 
-  const handleModalCancel = (modalName: string) => {
-    if (modalName == "EditModal") setIsEditModalOpen(false);
+  const handleModalCancel = async (modalName: "EditModal" | "ConfirmModal") => {
+    if (modalName == "EditModal") await navigate({ to: "../../.." });
     setSwapModal(false);
   };
 
@@ -287,7 +302,7 @@ export default function EditUserModal({
       setShowEditUserSuccessNotification(true);
       reset();
       setSwapModal(false);
-      setIsEditModalOpen(false);
+      await navigate({ to: "../../.." });
     } catch (err) {
       console.error(err);
       setShowEditUserErrorNotification(true);
@@ -296,181 +311,183 @@ export default function EditUserModal({
 
   return (
     <>
-      {isEditModalOpen &&
-        createPortal(
-          <Modal
-            aria-label="edit user modal"
-            hasScrollingContent
-            modalHeading="Edit user"
-            open={isEditModalOpen && !swapModal}
-            preventCloseOnClickOutside
-            primaryButtonDisabled={!formState.isValid}
-            primaryButtonText="Confirm"
-            secondaryButtonText="Cancel"
-            onRequestClose={() => handleModalCancel("EditModal")}
-            onRequestSubmit={() => setSwapModal(true)}
-          >
-            {isEditModalOpen && (
-              <form aria-label="edit user form">
-                <Stack gap={4}>
-                  <TextInput
-                    id="givenName"
-                    labelText="First Name"
-                    readOnly
-                    value={givenName}
-                    {...register("givenName", { required: true })}
-                  />
-                  <TextInput
-                    id="surname"
-                    labelText="Last Name"
-                    readOnly
-                    value={surname}
-                    {...register("surname", { required: true })}
-                  />
-                  <TextInput
-                    id="email"
-                    labelText="Email"
-                    readOnly
-                    value={initialEmail}
-                    {...register("email", { required: true })}
-                  />
+      <Modal
+        aria-label="edit user modal"
+        hasScrollingContent
+        modalHeading="Edit user"
+        open={!swapModal}
+        primaryButtonDisabled={!formState.isValid}
+        primaryButtonText="Confirm"
+        secondaryButtonText="Cancel"
+        onRequestClose={() => handleModalCancel("EditModal")}
+        onRequestSubmit={() => setSwapModal(true)}
+      >
+        <form aria-label="edit user form">
+          <Stack gap={4}>
+            <TextInput
+              id="givenName"
+              labelText="First Name"
+              readOnly
+              value={givenName}
+              {...register("givenName", { required: true })}
+            />
+            <TextInput
+              id="surname"
+              labelText="Last Name"
+              readOnly
+              value={surname}
+              {...register("surname", { required: true })}
+            />
+            <TextInput
+              id="email"
+              labelText="Email"
+              readOnly
+              value={initialEmail}
+              {...register("email", { required: true })}
+            />
+            <Controller
+              name="roles"
+              control={control}
+              render={({ field }) => (
+                <MultiSelect
+                  id="roles"
+                  initialSelectedItems={watchedRoles.selectedItems}
+                  items={roleOptions}
+                  itemToString={item => item.label}
+                  label="What level of access does this user have for Giga?"
+                  titleText="Role"
+                  {...field}
+                />
+              )}
+              rules={{ required: true, minLength: 1 }}
+            />
+
+            {watchedCountryDatasets.map((countryDataset, i) => (
+              <FormGroup key={i} legendText="">
+                <Select
+                  id={`country.${i}`}
+                  labelText={`Country ${i + 1}`}
+                  placeholder="Select a country"
+                  {...register(`countryDatasets.${i}.country`, {
+                    required: true,
+                  })}
+                >
+                  <SelectItem text="Select a country" value="" />
+                  {countryOptions.map(country => (
+                    <SelectItem
+                      key={country.value}
+                      text={country.label}
+                      value={country.value}
+                    />
+                  ))}
+                </Select>
+                {watchedCountryDatasets.length > 1 && (
+                  <Button
+                    kind="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveCountryDataset(i)}
+                  >
+                    Remove pair
+                  </Button>
+                )}
+                <FormGroup legendText="Dataset">
                   <Controller
-                    name="roles"
+                    name={`countryDatasets.${i}.dataset`}
                     control={control}
                     render={({ field }) => (
                       <MultiSelect
-                        id="roles"
-                        initialSelectedItems={watchedRoles.selectedItems}
-                        items={roleOptions}
+                        id={`dataset.${i}`}
+                        label="Select datasets"
+                        initialSelectedItems={
+                          countryDataset.dataset.selectedItems
+                        }
+                        items={dataSetOptions}
                         itemToString={item => item.label}
-                        label="What level of access does this user have for Giga?"
-                        titleText="Role"
                         {...field}
                       />
                     )}
                     rules={{ required: true, minLength: 1 }}
                   />
+                </FormGroup>
+                {i + 1 < watchedCountryDatasets.length && (
+                  <hr className="mt-8 opacity-30" />
+                )}
+              </FormGroup>
+            ))}
 
-                  {watchedCountryDatasets.map((countryDataset, i) => (
-                    <FormGroup key={i} legendText="">
-                      <Select
-                        id={`country.${i}`}
-                        labelText={`Country ${i + 1}`}
-                        placeholder="Select a country"
-                        {...register(`countryDatasets.${i}.country`, {
-                          required: true,
-                        })}
-                      >
-                        <SelectItem text="Select a country" value="" />
-                        {countryOptions.map(country => (
-                          <SelectItem
-                            key={country.value}
-                            text={country.label}
-                            value={country.value}
-                          />
-                        ))}
-                      </Select>
-                      {watchedCountryDatasets.length > 1 && (
-                        <Button
-                          kind="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveCountryDataset(i)}
-                        >
-                          Remove pair
-                        </Button>
-                      )}
-                      <FormGroup legendText="Dataset">
-                        <Controller
-                          name={`countryDatasets.${i}.dataset`}
-                          control={control}
-                          render={({ field }) => (
-                            <MultiSelect
-                              id={`dataset.${i}`}
-                              label="Select datasets"
-                              initialSelectedItems={
-                                countryDataset.dataset.selectedItems
-                              }
-                              items={dataSetOptions}
-                              itemToString={item => item.label}
-                              {...field}
-                            />
-                          )}
-                          rules={{ required: true, minLength: 1 }}
-                        />
-                      </FormGroup>
-                      {i + 1 < watchedCountryDatasets.length && (
-                        <hr className="mt-8 opacity-30" />
-                      )}
-                    </FormGroup>
-                  ))}
+            <Button
+              kind="ghost"
+              renderIcon={Add}
+              onClick={handleAddCountryDataset}
+            >
+              Add country
+            </Button>
+          </Stack>
+        </form>
+      </Modal>
 
-                  <Button
-                    kind="ghost"
-                    renderIcon={Add}
-                    onClick={handleAddCountryDataset}
-                  >
-                    Add country
-                  </Button>
-                </Stack>
-              </form>
-            )}
-          </Modal>,
-
-          document.body,
-        )}
-
-      {isEditModalOpen &&
-        swapModal &&
-        createPortal(
-          <Modal
-            aria-label="confirm edit user modal"
-            loadingStatus={modifyUserAccess.isPending ? "active" : "inactive"}
-            modalHeading="Confirm New User"
-            open={isEditModalOpen && swapModal}
-            primaryButtonText="Confirm"
-            secondaryButtonText="Cancel"
-            onRequestClose={() => handleModalCancel("ConfirmModal")}
-            onRequestSubmit={() => {
-              handleSubmit(onSubmit)();
-            }}
-          >
-            <form aria-label="confirm edit user form">
-              {(() => {
-                const countries = getUniqueDatasets(
+      {swapModal && (
+        <Modal
+          aria-label="confirm edit user modal"
+          loadingStatus={modifyUserAccess.isPending ? "active" : "inactive"}
+          modalHeading="Confirm New User"
+          open={swapModal}
+          primaryButtonText="Confirm"
+          secondaryButtonText="Cancel"
+          onRequestClose={() => handleModalCancel("ConfirmModal")}
+          onRequestSubmit={handleSubmit(onSubmit)}
+        >
+          <form aria-label="confirm edit user form">
+            {(() => {
+              const countries = getUniqueDatasets(
+                getValues("email"),
+                deriveAddedValues().addedDatasetsWithIds,
+              ).countries;
+              const datasets = pluralizeDatasets(
+                getUniqueDatasets(
                   getValues("email"),
                   deriveAddedValues().addedDatasetsWithIds,
-                ).countries;
-                const datasets = pluralizeDatasets(
-                  getUniqueDatasets(
-                    getValues("email"),
-                    deriveAddedValues().addedDatasetsWithIds,
-                  ).uniqueDatasets,
-                );
+                ).uniqueDatasets,
+              );
 
-                return (
-                  <p>
-                    This will give the user with email{" "}
-                    <b>{getValues("email")}</b> access to Giga data for{" "}
-                    <b>{datasets}</b> across {countries.length}{" "}
-                    {countries.length === 1 ? "country" : "countries"}:{" "}
-                    <b>{pluralizeCountries(countries)}</b>.
-                  </p>
-                );
-              })()}
+              return (
+                <p>
+                  This will give the user with email <b>{getValues("email")}</b>{" "}
+                  access to Giga data for <b>{datasets}</b> across{" "}
+                  {countries.length}{" "}
+                  {countries.length === 1 ? "country" : "countries"}:{" "}
+                  <b>{pluralizeCountries(countries)}</b>.
+                </p>
+              );
+            })()}
 
-              {modifyUserAccess.isError && (
-                <InlineNotification
-                  aria-label="create user error notification"
-                  kind="error"
-                  statusIconDescription="notification"
-                  subtitle="Operation failed. Please try again."
-                  title="Error"
-                />
-              )}
-            </form>
-          </Modal>,
-          document.body,
-        )}
+            {modifyUserAccess.isError && (
+              <InlineNotification
+                aria-label="create user error notification"
+                kind="error"
+                statusIconDescription="notification"
+                subtitle="Operation failed. Please try again."
+                title="Error"
+              />
+            )}
+          </form>
+        </Modal>
+      )}
+
+      <ToastNotification
+        show={showEditUserSuccessNotification}
+        setShow={setShowEditUserSuccessNotification}
+        kind="success"
+        caption="User successfully modified. Please wait a moment or refresh the page for updates"
+        title="Modify user success"
+      />
+      <ToastNotification
+        show={showEditUserErrorNotification}
+        setShow={setShowEditUserErrorNotification}
+        kind="error"
+        caption="Operation failed. Please try again"
+        title="Modify user error"
+      />
     </>
   );
 }

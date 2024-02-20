@@ -18,7 +18,7 @@ import * as Sentry from "@sentry/react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
-import { queryClient } from "@/api";
+import { AxiosProvider, queryClient } from "@/api";
 import App from "@/app.tsx";
 import { msalConfig } from "@/lib/auth.ts";
 import "@/styles/index.scss";
@@ -56,12 +56,14 @@ auth
     ReactDOM.createRoot(document.getElementById("root")!).render(
       <React.StrictMode>
         <MsalProvider instance={auth}>
-          <QueryClientProvider client={queryClient}>
-            <HelmetProvider>
-              <App />
-            </HelmetProvider>
-            <ReactQueryDevtools initialIsOpen={false} />
-          </QueryClientProvider>
+          <AxiosProvider>
+            <QueryClientProvider client={queryClient}>
+              <HelmetProvider>
+                <App />
+              </HelmetProvider>
+              <ReactQueryDevtools initialIsOpen={false} />
+            </QueryClientProvider>
+          </AxiosProvider>
         </MsalProvider>
       </React.StrictMode>,
     );

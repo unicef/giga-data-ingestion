@@ -14,7 +14,7 @@ export default function routes(axi: AxiosInstance) {
       return axi.get("/users/email");
     },
 
-    invite_and_add_groups: ({
+    inviteAndAddGroups: ({
       groups_to_add,
       invited_user_display_name,
       invited_user_email_address,
@@ -28,15 +28,15 @@ export default function routes(axi: AxiosInstance) {
       invited_user_surname: string;
     }): Promise<AxiosResponse<null>> => {
       return axi.post(`/users/invite_and_add_groups`, {
-        groups_to_add: groups_to_add,
-        invited_user_display_name: invited_user_display_name,
-        invited_user_email_address: invited_user_email_address,
-        invited_user_given_name: invited_user_given_name,
-        invited_user_surname: invited_user_surname,
+        groups_to_add,
+        invited_user_display_name,
+        invited_user_email_address,
+        invited_user_given_name,
+        invited_user_surname,
       });
     },
 
-    edit_user: ({
+    editUser: ({
       account_enabled,
       display_name,
       id,
@@ -49,6 +49,10 @@ export default function routes(axi: AxiosInstance) {
         account_enabled,
         display_name,
       });
+    },
+
+    getUserGroups: (): Promise<AxiosResponse<string[]>> => {
+      return axi.get("/users/me/groups");
     },
   };
 }

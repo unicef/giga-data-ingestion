@@ -1,11 +1,16 @@
-import { useEffect } from "react";
+import { PropsWithChildren, useEffect, useRef } from "react";
 
 import { InteractionStatus } from "@azure/msal-browser";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
-import { QueryClient } from "@tanstack/react-query";
-import axios, { AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import { QueryClient, keepPreviousData } from "@tanstack/react-query";
+import axios, {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 
 import { loginRequest } from "@/lib/auth.ts";
+import { useStore } from "@/store.ts";
 
 import rolesRouter from "./routers/groups.ts";
 import uploadsRouter from "./routers/uploads.ts";
@@ -18,52 +23,89 @@ export const axi = axios.create({
   withCredentials: true,
 });
 
-const api = {
-  health: (): Promise<AxiosResponse<string>> => {
-    return axi.get("");
-  },
+export const api = {
   users: usersRouter(axi),
   groups: rolesRouter(axi),
   uploads: uploadsRouter(axi),
 };
 
 export function useApi() {
-  const { instance, accounts, inProgress } = useMsal();
-  const isAuthenticated = useIsAuthenticated();
-
-  useEffect(() => {
-    async function onRequestFulfilled(
-      config: InternalAxiosRequestConfig,
-    ): Promise<InternalAxiosRequestConfig> {
-      if (isAuthenticated && inProgress === InteractionStatus.None) {
-        try {
-          const result = await instance.acquireTokenSilent({
-            ...loginRequest,
-            account: accounts[0],
-          });
-          axi.defaults.headers.common[
-            "Authorization"
-          ] = `Bearer ${result.accessToken}`;
-        } catch (error) {
-          return Promise.reject(error);
-        }
-      }
-
-      return Promise.resolve(config);
-    }
-
-    const resId = axi.interceptors.request.use(
-      onRequestFulfilled,
-      error => error,
-    );
-
-    return () => {
-      axi.interceptors.request.eject(resId);
-      delete axi.defaults.headers.common["Authorization"];
-    };
-  }, [accounts, inProgress, isAuthenticated, instance]);
-
   return api;
 }
 
-export const queryClient = new QueryClient();
+export function AxiosProvider(props: PropsWithChildren) {
+  const { instance, accounts, inProgress } = useMsal();
+  const isAuthenticated = useIsAuthenticated();
+
+  const { setFullPageLoading } = useStore();
+  const reqInterceptId = useRef(
+    axi.interceptors.request.use(
+      requestFulFilledInterceptor,
+      requestRejectedInterceptor,
+    ),
+  );
+  const resInterceptId = useRef(
+    axi.interceptors.response.use(
+      responseFulFilledInterceptor,
+      responseRejectedInterceptor,
+    ),
+  );
+
+  async function requestFulFilledInterceptor(
+    config: InternalAxiosRequestConfig,
+  ) {
+    setFullPageLoading(true);
+
+    if (isAuthenticated && inProgress === InteractionStatus.None) {
+      try {
+        const result = await instance.acquireTokenSilent({
+          ...loginRequest,
+          account: accounts[0],
+        });
+        axi.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${result.accessToken}`;
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }
+
+    return Promise.resolve(config);
+  }
+
+  function requestRejectedInterceptor(error: AxiosError) {
+    return Promise.reject(error);
+  }
+
+  function responseFulFilledInterceptor(response: AxiosResponse) {
+    setFullPageLoading(false);
+    return response;
+  }
+
+  function responseRejectedInterceptor(error: AxiosError) {
+    setFullPageLoading(false);
+    return Promise.reject(error);
+  }
+
+  useEffect(() => {
+    const reqIntId = reqInterceptId.current;
+    const resIntId = resInterceptId.current;
+
+    return () => {
+      if (reqIntId) axi.interceptors.request.eject(reqIntId);
+      if (resIntId) axi.interceptors.response.eject(resIntId);
+
+      delete axi.defaults.headers.common["Authorization"];
+    };
+  }, []);
+
+  return props.children;
+}
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      placeholderData: keepPreviousData,
+    },
+  },
+});

@@ -1,6 +1,6 @@
 import { CheckmarkOutline } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 
 import { useStore } from "@/store.ts";
 
@@ -8,6 +8,12 @@ export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/success",
 )({
   component: Success,
+  loader: () => {
+    const { upload } = useStore.getState();
+    if (!upload.file) {
+      throw redirect({ to: ".." });
+    }
+  },
 });
 
 function Success() {
