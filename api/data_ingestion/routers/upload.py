@@ -19,7 +19,7 @@ from fastapi import (
     status,
 )
 from fastapi_azure_auth.user import User
-from pydantic import AwareDatetime
+from pydantic import AwareDatetime, Field
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -220,8 +220,8 @@ async def get_file_properties(upload_id: str):
 async def list_uploads(
     user: User = Depends(azure_scheme),
     db: AsyncSession = Depends(get_db),
-    per_page: Annotated[int, Query(ge=0, le=50)] = 10,
-    page_index: Annotated[int, Query(ge=0)] = 0,
+    count: Annotated[int, Field(ge=1, le=50)] = 10,
+    page: Annotated[int, Query(ge=0)] = 0,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -235,14 +235,14 @@ async def list_uploads(
     count_query = select(func.count()).select_from(base_query.subquery())
     total = await db.scalar(count_query)
 
-    items = await db.scalars(base_query.offset(page_index * per_page).limit(per_page))
+    items = await db.scalars(base_query.offset(page * count).limit(count))
 
     paged_response = PagedResponseSchema(
         data=items,
-        page_index=page_index,
-        per_page=per_page,
+        page_index=page,
+        per_page=count,
         total_items=total,
-        total_pages=math.ceil(total / per_page),
+        total_pages=math.ceil(total / count),
     )
 
     return paged_response
