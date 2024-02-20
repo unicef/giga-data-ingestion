@@ -1,5 +1,3 @@
-import { createElement } from "react";
-
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { render } from "@react-email/render";
@@ -9,8 +7,10 @@ import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { secureHeaders } from "hono/secure-headers";
 
-import DataQualityReport from "../emails/dq-report";
-import { DataQualityReportEmailProps } from "../types/dq-report";
+import DataQualityReport from "./emails/dq-report";
+import InviteUser from "./emails/invite-user";
+import { DataQualityReportEmailProps } from "./types/dq-report";
+import { InviteUserProps } from "./types/invite-user";
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -30,17 +30,26 @@ app.use(
   bearerAuth({ token: process.env.EMAIL_RENDERER_BEARER_TOKEN ?? "" }),
 );
 
-app.get("/", ctx => {
+app.get("/", (ctx) => {
   return ctx.text("ok");
+});
+
+app.post("/email/invite-user", zValidator("json", InviteUserProps), (ctx) => {
+  const json = ctx.req.valid("json") as InviteUserProps;
+  const html = render(<InviteUser {...json} />);
+  const text = render(<InviteUser {...json} />, {
+    plainText: true,
+  });
+  return ctx.json({ html, text });
 });
 
 app.post(
   "/email/dq-report",
   zValidator("json", DataQualityReportEmailProps),
-  ctx => {
-    const json = ctx.req.valid("json");
-    const html = render(createElement(DataQualityReport, json, null));
-    const text = render(createElement(DataQualityReport, json, null), {
+  (ctx) => {
+    const json = ctx.req.valid("json") as DataQualityReportEmailProps;
+    const html = render(<DataQualityReport {...json} />);
+    const text = render(<DataQualityReport {...json} />, {
       plainText: true,
     });
     return ctx.json({ html, text });

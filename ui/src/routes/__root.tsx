@@ -1,21 +1,21 @@
 import { PropsWithChildren, Suspense, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
-import { useMsal } from "@azure/msal-react";
+import { useAccount, useMsal } from "@azure/msal-react";
 import {
   Outlet,
   ScrollRestoration,
   createRootRoute,
 } from "@tanstack/react-router";
 
-import { axi, useApi } from "@/api";
 import gigaLogo from "@/assets/GIGA_logo.png";
 import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
 import NotFound from "@/components/utils/NotFound.tsx";
 import TanStackRouterDevtools from "@/components/utils/TanStackRouterDevTools.tsx";
+import useGetToken from "@/hooks/useGetToken.ts";
+import useLogout from "@/hooks/useLogout.ts";
 import info from "@/info.json";
-import { loginRequest } from "@/lib/auth.ts";
 import { useStore } from "@/store.ts";
 
 export const Route = createRootRoute({
@@ -49,29 +49,31 @@ function Base({ children }: PropsWithChildren) {
 }
 
 function Layout() {
-  const api = useApi();
   const { setUser } = useStore();
-  const { accounts, instance } = useMsal();
+  const { instance } = useMsal();
+  const account = useAccount();
+  const getToken = useGetToken();
+  const logout = useLogout();
 
   useEffect(() => {
     (async () => {
-      if (accounts.length > 0) {
-        const account = accounts[0];
+      if (account) {
         console.debug(account);
         const user = {
           name: account.name ?? "",
           email: account.username,
           roles: (account.idTokenClaims?.groups ?? []) as string[],
         };
-        const result = await instance.acquireTokenSilent(loginRequest);
-        axi.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${result.accessToken}`;
-
-        setUser(user);
+        try {
+          await getToken();
+          setUser(user);
+        } catch (err) {
+          console.error(err);
+          await logout();
+        }
       }
     })();
-  }, [accounts, api, instance, setUser]);
+  }, [account, getToken, instance, logout, setUser]);
 
   return (
     <Base>

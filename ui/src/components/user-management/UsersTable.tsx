@@ -120,11 +120,12 @@ function UsersTable() {
               pending
             </Tag>
           )}
-          {!user.account_enabled && user.external_user_state === "Accepted" && (
-            <Tag className="uppercase" type="gray">
-              Disabled
-            </Tag>
-          )}
+          {!user.account_enabled &&
+            user.external_user_state !== "PendingAcceptance" && (
+              <Tag className="uppercase" type="gray">
+                Disabled
+              </Tag>
+            )}
         </>
       );
 
@@ -189,10 +190,9 @@ function UsersTable() {
               }
               renderIcon={CheckmarkOutline}
               size="sm"
-              onClick={() => {
-                // setSelectedUser(originalUser);
-                // setIsEnableModalOpen(true);
-              }}
+              as={Link}
+              to="./user/enable/$userId"
+              params={{ userId: originalUser.id }}
             >
               Enable
             </Button>

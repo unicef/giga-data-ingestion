@@ -49,7 +49,6 @@ class Settings(BaseSettings):
     WEB_APP_REDIRECT_URI: str
     AZURE_EMAIL_CONNECTION_STRING: str
     AZURE_EMAIL_SENDER: str
-    AZURE_SCOPE_DESCRIPTION: Literal["User.Impersonate"] = "User.Impersonate"
     WEB_APP_REDIRECT_URI: str
     MAILJET_API_KEY: str
     MAILJET_API_URL: str
@@ -63,6 +62,7 @@ class Settings(BaseSettings):
     BASE_DIR: Path = Path(__file__).parent.parent
     ALLOWED_HOSTS: list[str] = ["*"]
     CORS_ALLOWED_ORIGINS: list[str] = ["*"]
+    AZURE_SCOPE_DESCRIPTION: Literal["User.Impersonate"] = "User.Impersonate"
     DB_HOST: str = "db"
     DB_PORT: int = 5432
     SENTRY_DSN: str = ""
@@ -80,8 +80,13 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
+    def AUTHORITY_DOMAIN(self) -> str:
+        return f"{self.AZURE_TENANT_NAME}.onmicrosoft.com"
+
+    @computed_field
+    @property
     def AZURE_SCOPE_NAME(self) -> str:
-        return f"https://{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_CLIENT_ID}/{self.AZURE_SCOPE_DESCRIPTION}"
+        return f"https://{self.AUTHORITY_DOMAIN}/{self.AZURE_CLIENT_ID}/{self.AZURE_SCOPE_DESCRIPTION}"
 
     @computed_field
     @property
@@ -91,17 +96,17 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def OPENID_CONFIG_URL(self) -> str:
-        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_AUTH_POLICY_NAME}/v2.0/.well-known/openid-configuration"
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AUTHORITY_DOMAIN}/{self.AZURE_AUTH_POLICY_NAME}/v2.0/.well-known/openid-configuration"
 
     @computed_field
     @property
     def OPENAPI_AUTHORIZATION_URL(self) -> str:
-        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_AUTH_POLICY_NAME}/oauth2/v2.0/authorize"
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AUTHORITY_DOMAIN}/{self.AZURE_AUTH_POLICY_NAME}/oauth2/v2.0/authorize"
 
     @computed_field
     @property
     def OPENAPI_TOKEN_URL(self) -> str:
-        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AZURE_TENANT_NAME}.onmicrosoft.com/{self.AZURE_AUTH_POLICY_NAME}/oauth2/v2.0/token"
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AUTHORITY_DOMAIN}/{self.AZURE_AUTH_POLICY_NAME}/oauth2/v2.0/token"
 
     @computed_field
     @property

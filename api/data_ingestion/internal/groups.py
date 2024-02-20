@@ -76,7 +76,7 @@ class GroupsApi:
                     request_configuration=cls.group_request_config
                 )
 
-            return groups_out
+            return sorted(groups_out, key=lambda g: g.display_name)
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code

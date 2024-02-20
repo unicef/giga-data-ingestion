@@ -25,3 +25,15 @@ jobs:
                   --set ingress.hosts[0].paths[0].path="/"
                   --set ingress.hosts[0].paths[0].pathType=Prefix
                   --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
+
+            - task: HelmDeploy@0
+              displayName: Helm deploy email service
+              inputs:
+                command: upgrade
+                chartType: FilePath
+                chartPath: "$(Build.SourcesDirectory)/infra/helm/email-service"
+                releaseName: email-service
+                namespace: $(kubernetesNamespace)
+                arguments: >
+                  --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
+                  --set image.tag="$(Build.SourceVersion)"

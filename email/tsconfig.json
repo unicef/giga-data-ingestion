@@ -1,6 +1,12 @@
 {
   "compilerOptions": {
-    "strict": true,
-    "jsx": "react-jsx"
-  }
+    "strict": false,
+    "jsx": "react-jsx",
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "target": "ESNext",
+    "outDir": "./dist",
+    "esModuleInterop": true
+  },
+  "exclude": ["node_modules"]
 }

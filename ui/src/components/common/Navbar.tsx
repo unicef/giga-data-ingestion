@@ -1,6 +1,11 @@
-import { AuthenticatedTemplate } from "@azure/msal-react";
+import { useMemo } from "react";
+
+import { AuthenticatedTemplate, useAccount } from "@azure/msal-react";
+import { Logout } from "@carbon/icons-react";
 import {
   Header,
+  HeaderGlobalAction,
+  HeaderGlobalBar,
   HeaderMenuItem,
   HeaderName,
   HeaderNavigation,
@@ -8,13 +13,16 @@ import {
 import { Link } from "@tanstack/react-router";
 
 import gigaLogoBlue from "@/assets/GIGA_logo_blue.png";
-import { useStore } from "@/store.ts";
+import useLogout from "@/hooks/useLogout.ts";
 
 export default function Navbar() {
-  const {
-    user: { roles },
-  } = useStore();
-  const isPrivileged = roles.includes("Admin") || roles.includes("Super");
+  const logout = useLogout();
+  const account = useAccount();
+
+  const isPrivileged = useMemo(() => {
+    const roles = (account?.idTokenClaims?.groups ?? []) as string[];
+    return roles.includes("Admin") || roles.includes("Super");
+  }, [account]);
 
   return (
     <Header
@@ -28,22 +36,30 @@ export default function Navbar() {
         <b className="ml-0.5 text-xl">sync</b>
       </HeaderName>
       <AuthenticatedTemplate>
-        {isPrivileged && (
-          <HeaderNavigation
-            aria-label="Main Navigation"
-            aria-labelledby="main-nav-label"
-          >
-            <HeaderMenuItem as={Link} to="/upload">
-              Upload file
-            </HeaderMenuItem>
-            <HeaderMenuItem as={Link} to="/ingest-api">
-              Ingest API
-            </HeaderMenuItem>
+        <HeaderNavigation
+          aria-label="Main Navigation"
+          aria-labelledby="main-nav-label"
+        >
+          <HeaderMenuItem as={Link} to="/upload">
+            Upload file
+          </HeaderMenuItem>
+          <HeaderMenuItem as={Link} to="/ingest-api">
+            Ingest API
+          </HeaderMenuItem>
+          {isPrivileged && (
             <HeaderMenuItem as={Link} to="/user-management">
               User management
             </HeaderMenuItem>
-          </HeaderNavigation>
-        )}
+          )}
+        </HeaderNavigation>
+        <HeaderGlobalBar className="flex items-center">
+          <div className="text-sm text-giga-dark-gray">
+            {(account?.idTokenClaims?.email as string) ?? ""}
+          </div>
+          <HeaderGlobalAction aria-label="Logout" onClick={logout}>
+            <Logout />
+          </HeaderGlobalAction>
+        </HeaderGlobalBar>
       </AuthenticatedTemplate>
     </Header>
   );

@@ -9,7 +9,7 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 
-import { loginRequest } from "@/lib/auth.ts";
+import useGetToken from "@/hooks/useGetToken.ts";
 import { useStore } from "@/store.ts";
 
 import rolesRouter from "./routers/groups.ts";
@@ -34,8 +34,9 @@ export function useApi() {
 }
 
 export function AxiosProvider(props: PropsWithChildren) {
-  const { instance, accounts, inProgress } = useMsal();
+  const { inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
+  const getToken = useGetToken();
 
   const { setFullPageLoading } = useStore();
   const reqInterceptId = useRef(
@@ -58,13 +59,7 @@ export function AxiosProvider(props: PropsWithChildren) {
 
     if (isAuthenticated && inProgress === InteractionStatus.None) {
       try {
-        const result = await instance.acquireTokenSilent({
-          ...loginRequest,
-          account: accounts[0],
-        });
-        axi.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${result.accessToken}`;
+        await getToken();
       } catch (error) {
         return Promise.reject(error);
       }

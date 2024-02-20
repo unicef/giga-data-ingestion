@@ -11,9 +11,15 @@ class User(BaseModel):
     roles: list[str]
 
 
+class GraphIdentity(BaseModel):
+    issuer: str
+    issuer_assigned_id: str | None
+    sign_in_type: str
+
+
 class GraphUser(BaseModel):
     id: UUID4
-    account_enabled: bool
+    account_enabled: bool | None
     given_name: str | None
     surname: str | None
     mail: EmailStr | None
@@ -22,6 +28,7 @@ class GraphUser(BaseModel):
     external_user_state: Literal["Accepted", "PendingAcceptance"] | None
     member_of: list[GraphGroup] | None
     other_mails: list[EmailStr] | None
+    identities: list[GraphIdentity] | None
 
 
 class GraphUserUpdateRequest(BaseModel):
@@ -35,6 +42,18 @@ class GraphUserUpdateRequest(BaseModel):
         if not any(v is not None for v in self.model_dump().values()):
             raise ValueError("At least one field must be provided")
         return self
+
+
+class GraphUserCreateRequest(BaseModel):
+    given_name: str
+    surname: str
+    email: EmailStr
+    groups: list[GraphGroup]
+
+
+class GraphUserCreateResponse(BaseModel):
+    user: GraphUser
+    temporary_password: str
 
 
 class GraphUserInviteAndAddGroupsRequest(BaseModel):
