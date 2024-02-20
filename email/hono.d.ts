@@ -4,6 +4,6 @@ declare namespace NodeJS {
     DEPLOY_ENV: "local" | "dev" | "stg" | "prd";
     EMAIL_RENDERER_BEARER_TOKEN: string;
     NODE_SENTRY_DSN?: string;
-    WEB_APP_URL: string;
+    WEB_APP_REDIRECT_URI: string;
   }
 }

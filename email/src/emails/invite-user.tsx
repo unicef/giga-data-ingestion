@@ -16,7 +16,7 @@ import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
 import { InviteUserProps } from "../types/invite-user";
 
-const baseUrl = process.env.WEB_APP_URL;
+const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
 export const InviteUserEmail = ({
   displayName,
@@ -53,7 +53,7 @@ export const InviteUserEmail = ({
               You have been invited to <strong>Giga Sync</strong> with the
               following roles:
               <ul>
-                {groups.map(group => (
+                {groups.map((group) => (
                   <li key={group}>
                     <Text>{group}</Text>
                   </li>
