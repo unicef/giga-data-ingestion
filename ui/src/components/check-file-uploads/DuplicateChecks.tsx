@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { Link, Modal } from "@carbon/react";
 
@@ -72,23 +71,19 @@ export default function DuplicateChecks({
         rows={duplicateChecksRows ?? []}
       />
 
-      {isInvalidDuplicateChecksModalOpen &&
-        createPortal(
-          <Modal
-            modalHeading="Invalid Values Check"
-            open={isInvalidDuplicateChecksModalOpen}
-            passiveModal
-            onRequestClose={() => setIsInvalidDuplicateChecksModalOpen(false)}
-          >
-            There are <b>{invalidDuplicateChecksValuesRows.length}</b> invalid
-            values in <b>{selectedDuplicateCheckRow}</b>:
-            <Datatable
-              headers={duplicateCheckModalHeaders ?? []}
-              rows={invalidDuplicateChecksValuesRows ?? []}
-            />
-          </Modal>,
-          document.body,
-        )}
+      <Modal
+        modalHeading="Invalid Values Check"
+        open={isInvalidDuplicateChecksModalOpen}
+        passiveModal
+        onRequestClose={() => setIsInvalidDuplicateChecksModalOpen(false)}
+      >
+        There are <b>{invalidDuplicateChecksValuesRows.length}</b> invalid
+        values in <b>{selectedDuplicateCheckRow}</b>:
+        <Datatable
+          headers={duplicateCheckModalHeaders ?? []}
+          rows={invalidDuplicateChecksValuesRows ?? []}
+        />
+      </Modal>
     </>
   );
 }

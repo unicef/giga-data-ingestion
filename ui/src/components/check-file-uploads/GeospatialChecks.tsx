@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { Link, Modal } from "@carbon/react";
 
@@ -71,23 +70,20 @@ export default function GeospatialChecks({
         headers={geospatialChecksHeaders ?? []}
         rows={geospatialChecksRows ?? []}
       />
-      {isInvalidGeospatialChecksModalOpen &&
-        createPortal(
-          <Modal
-            modalHeading="Invalid Values Check"
-            open={isInvalidGeospatialChecksModalOpen}
-            passiveModal
-            onRequestClose={() => setIsInvalidGeospatialChecksModalOpen(false)}
-          >
-            There are <b>{invalidGeospatialChecksValuesRows.length}</b> invalid
-            values in <b>{selectedGeoSpatialCheckRow}</b>:
-            <Datatable
-              headers={geospatialChecksModalHeaders ?? []}
-              rows={invalidGeospatialChecksValuesRows ?? []}
-            />
-          </Modal>,
-          document.body,
-        )}
+
+      <Modal
+        modalHeading="Invalid Values Check"
+        open={isInvalidGeospatialChecksModalOpen}
+        passiveModal
+        onRequestClose={() => setIsInvalidGeospatialChecksModalOpen(false)}
+      >
+        There are <b>{invalidGeospatialChecksValuesRows.length}</b> invalid
+        values in <b>{selectedGeoSpatialCheckRow}</b>:
+        <Datatable
+          headers={geospatialChecksModalHeaders ?? []}
+          rows={invalidGeospatialChecksValuesRows ?? []}
+        />
+      </Modal>
     </>
   );
 }

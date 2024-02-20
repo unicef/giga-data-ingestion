@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 
 import { Information } from "@carbon/icons-react";
 import { Link, Modal, Tooltip } from "@carbon/react";
@@ -149,26 +148,22 @@ export default function ColumnChecks({
         rows={columnChecksRows ?? []}
       />
 
-      {isColumnChecksModalOpen &&
-        createPortal(
-          <Modal
-            modalHeading="Unique Values Check"
-            open={isColumnChecksModalOpen}
-            passiveModal
-            onRequestClose={() => setIsColumnChecksModalOpen(false)}
-          >
-            <p>
-              {" "}
-              There are <b>{selectedColumnCheck.unique_values_count}</b> unique
-              values in <b>{selectedColumnCheck.assertion}</b>
-            </p>
-            <Datatable
-              headers={columnCheckModalHeaders ?? []}
-              rows={columnCheckModalRows ?? []}
-            />
-          </Modal>,
-          document.body,
-        )}
+      <Modal
+        modalHeading="Unique Values Check"
+        open={isColumnChecksModalOpen}
+        passiveModal
+        onRequestClose={() => setIsColumnChecksModalOpen(false)}
+      >
+        <p>
+          {" "}
+          There are <b>{selectedColumnCheck.unique_values_count}</b> unique
+          values in <b>{selectedColumnCheck.assertion}</b>
+        </p>
+        <Datatable
+          headers={columnCheckModalHeaders ?? []}
+          rows={columnCheckModalRows ?? []}
+        />
+      </Modal>
     </>
   );
 }
