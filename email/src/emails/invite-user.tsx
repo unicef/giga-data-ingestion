@@ -22,7 +22,6 @@ export const InviteUserEmail = ({
   displayName,
   email,
   groups,
-  temporaryPassword,
 }: InviteUserProps) => {
   const previewText = "Welcome to Giga Sync";
 
@@ -60,13 +59,7 @@ export const InviteUserEmail = ({
                 ))}
               </ul>
             </Text>
-            <Text>
-              Your temporary password is: <strong>{temporaryPassword}</strong>
-            </Text>
-            <Text>
-              Login using the link below. You will be prompted to change your
-              password:
-            </Text>
+            <Text>Login using the link below:</Text>
             <Section className="my-8 text-center">
               <Button
                 className="bg-primary px-6 py-4 text-center font-semibold text-white no-underline"
