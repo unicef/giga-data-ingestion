@@ -49,7 +49,7 @@ jobs:
                     AZURE_CLIENT_SECRET: "$(azureAdClientSecret)"
                     AZURE_APPLICATION_ID: "$(azureAdApplicationId)"
                     AZURE_TENANT_NAME: "$(azureAdTenantName)"
-                    AZURE_AUTH_POLICY_NAME: "$(azureAdPolicyName)"
+                    AZURE_AUTH_POLICY_NAME: "$(azureAdSusiPolicyName)"
                     AZURE_REDIRECT_URI: "$(azureAdRedirectUri)"
                     WEB_APP_REDIRECT_URI: "https://io-dataingestion-$(deployEnv).unitst.org"
                     AZURE_EMAIL_CONNECTION_STRING: "$(azureEmailConnectionString)"
