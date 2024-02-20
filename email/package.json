@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "author": "Thinking Machines <hello@thinkingmachin.es>",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/index.tsx",
     "build": "tsc",
     "build:email": "email build --dir ./src/emails",
     "dev:email": "email dev --port 3030 --dir ./src/emails",
@@ -21,6 +21,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/node": "^20.11.19",
     "tsx": "^3.12.2",
     "typescript": "^5.3.3"
   }

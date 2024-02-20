@@ -1,5 +1,3 @@
-import { createElement } from "react";
-
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { render } from "@react-email/render";
@@ -32,14 +30,14 @@ app.use(
   bearerAuth({ token: process.env.EMAIL_RENDERER_BEARER_TOKEN ?? "" }),
 );
 
-app.get("/", ctx => {
+app.get("/", (ctx) => {
   return ctx.text("ok");
 });
 
-app.post("/email/invite-user", zValidator("json", InviteUserProps), ctx => {
+app.post("/email/invite-user", zValidator("json", InviteUserProps), (ctx) => {
   const json = ctx.req.valid("json") as InviteUserProps;
-  const html = render(createElement(InviteUser, json, null));
-  const text = render(createElement(InviteUser, json, null), {
+  const html = render(<InviteUser {...json} />);
+  const text = render(<InviteUser {...json} />, {
     plainText: true,
   });
   return ctx.json({ html, text });
@@ -48,10 +46,10 @@ app.post("/email/invite-user", zValidator("json", InviteUserProps), ctx => {
 app.post(
   "/email/dq-report",
   zValidator("json", DataQualityReportEmailProps),
-  ctx => {
+  (ctx) => {
     const json = ctx.req.valid("json") as DataQualityReportEmailProps;
-    const html = render(createElement(DataQualityReport, json, null));
-    const text = render(createElement(DataQualityReport, json, null), {
+    const html = render(<DataQualityReport {...json} />);
+    const text = render(<DataQualityReport {...json} />, {
       plainText: true,
     });
     return ctx.json({ html, text });
