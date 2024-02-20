@@ -30,7 +30,7 @@ export const Route = createLazyFileRoute("/check-file-uploads/")({
 });
 
 export default function FileUploads() {
-  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   const api = useApi();
 
@@ -40,8 +40,8 @@ export default function FileUploads() {
     queryKey: ["files", ITEMS_PER_PAGE, currentPage],
     queryFn: () =>
       api.uploads.list_uploads({
-        per_page: ITEMS_PER_PAGE,
-        page_index: currentPage,
+        count: ITEMS_PER_PAGE,
+        page: currentPage,
       }),
     placeholderData: keepPreviousData
   });
@@ -235,7 +235,7 @@ export default function FileUploads() {
                     className="pagination-nav-right"
                     itemsShown={ITEMS_PER_PAGE}
                     totalItems={files?.data.total_pages}
-                    onChange={(index: number) => setCurrentPage(index)}
+                    onChange={(index: number) => setCurrentPage(index + 1)}
                   />
                 </TableContainer>
               )}

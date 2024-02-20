@@ -221,7 +221,7 @@ async def list_uploads(
     user: User = Depends(azure_scheme),
     db: AsyncSession = Depends(get_db),
     count: Annotated[int, Field(ge=1, le=50)] = 10,
-    page: Annotated[int, Query(ge=0)] = 0,
+    page: Annotated[int, Query(ge=1)] = 1,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -235,9 +235,9 @@ async def list_uploads(
     count_query = select(func.count()).select_from(base_query.subquery())
     total = await db.scalar(count_query)
 
-    items = await db.scalars(base_query.offset(page * count).limit(count))
+    items = await db.scalars(base_query.offset((page - 1) * count).limit(count))
 
-    paged_response = PagedResponseSchema(
+    paged_response = PagedResponseSchema[FileUploadSchema](
         data=items,
         page_index=page,
         per_page=count,

@@ -115,13 +115,13 @@ export default function routes(axi: AxiosInstance) {
       });
     },
     list_uploads: (params: {
-      per_page: number;
-      page_index: number;
+      count: number;
+      page: number;
     }): Promise<AxiosResponse<PagedUploadResponse>> => {
       return axi.get("/upload", {
         params: {
-          per_page: params.per_page,
-          page_index: params.page_index,
+          count: params.count,
+          page: params.page,
         },
       });
     },
