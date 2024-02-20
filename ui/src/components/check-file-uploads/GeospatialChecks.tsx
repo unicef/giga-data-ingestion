@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Link, Modal } from "@carbon/react";
+import { DataTableSkeleton, Link, Modal } from "@carbon/react";
 
 import {
   geospatialChecksHeaders,
@@ -17,8 +17,10 @@ type GeoSpatialRow = {
 
 export default function GeospatialChecks({
   data: data,
+  isLoading: isLoading,
 }: {
   data: DataQualityCheckResult | undefined;
+  isLoading: boolean;
 }) {
   const [
     isInvalidGeospatialChecksModalOpen,
@@ -59,6 +61,9 @@ export default function GeospatialChecks({
       ),
     };
   });
+
+  if (isLoading)
+    return <DataTableSkeleton headers={geospatialChecksModalHeaders ?? []} />;
 
   return (
     <>

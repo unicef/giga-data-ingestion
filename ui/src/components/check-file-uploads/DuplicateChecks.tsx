@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Link, Modal } from "@carbon/react";
+import { DataTableSkeleton, Link, Modal } from "@carbon/react";
 
 import Datatable from "@/components/upload/Datatable";
 import {
@@ -16,8 +16,10 @@ type DuplicateCheckRow = {
 
 export default function DuplicateChecks({
   data: data,
+  isLoading: isLoading,
 }: {
   data: DataQualityCheckResult | undefined;
+  isLoading: boolean;
 }) {
   const [
     isInvalidDuplicateChecksModalOpen,
@@ -59,6 +61,9 @@ export default function DuplicateChecks({
       ),
     };
   });
+
+  if (isLoading)
+    return <DataTableSkeleton headers={duplicateCheckModalHeaders ?? []} />;
 
   return (
     <>

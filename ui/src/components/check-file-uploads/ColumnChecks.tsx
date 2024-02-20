@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { Information } from "@carbon/icons-react";
-import { Link, Modal, Tooltip } from "@carbon/react";
+import { DataTableSkeleton, Link, Modal, Tooltip } from "@carbon/react";
 
 import PaginatedDatatable from "@/components/upload/PaginatedDatatable";
 import { columnChecksHeaders } from "@/constants/check-file-uploads";
@@ -20,8 +20,10 @@ type ColumnCheckRow = {
 
 export default function ColumnChecks({
   data: data,
+  isLoading: isLoading,
 }: {
   data: DataQualityCheckResult | undefined;
+  isLoading: boolean;
 }) {
   const [isColumnChecksModalOpen, setIsColumnChecksModalOpen] =
     useState<boolean>(false);
@@ -135,6 +137,9 @@ export default function ColumnChecks({
         : acc,
     0,
   );
+
+  if (isLoading)
+    return <DataTableSkeleton headers={columnCheckModalHeaders ?? []} />;
 
   return (
     <>

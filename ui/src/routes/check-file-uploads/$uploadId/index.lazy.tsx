@@ -23,7 +23,7 @@ export default function Index() {
 
   const api = useApi();
 
-  const { data: dqResult, isLoading: dqResultLoading } = useQuery({
+  const { data: dqResult, isLoading: isDqResultLoading } = useQuery({
     queryKey: ["dq_check", uploadId],
     queryFn: () => {
       const data = api.uploads.get_dq_check_result(uploadId);
@@ -58,7 +58,7 @@ export default function Index() {
     <div className="flex flex-col gap-8">
       <div className="m-0 w-full">
         <div className="px=28 ">
-          {dqResultLoading && filePropertiesLoading ? (
+          {isDqResultLoading && filePropertiesLoading ? (
             <div>
               <SkeletonText paragraph />
               <Accordion align="start">
@@ -92,13 +92,22 @@ export default function Index() {
                   <p>Checks performed at {checksRunTime}</p>
                 </AccordionItem>
                 <AccordionItem title="Checks per column">
-                  <ColumnChecks data={dqResult?.data} />
+                  <ColumnChecks
+                    data={dqResult?.data}
+                    isLoading={isDqResultLoading}
+                  />
                 </AccordionItem>
                 <AccordionItem title="Checks for duplicate rows">
-                  <DuplicateChecks data={dqResult?.data} />
+                  <DuplicateChecks
+                    data={dqResult?.data}
+                    isLoading={isDqResultLoading}
+                  />
                 </AccordionItem>
                 <AccordionItem title="Checks based on geospatial data points">
-                  <GeospatialChecks data={dqResult?.data} />
+                  <GeospatialChecks
+                    data={dqResult?.data}
+                    isLoading={isDqResultLoading}
+                  />
                 </AccordionItem>
               </Accordion>
               <div className="flex flex-col gap-4 pt-4">
