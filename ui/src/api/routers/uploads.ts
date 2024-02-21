@@ -1,5 +1,6 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
+import { DataQualityCheckResult, PagedUploadResponse } from "@/types/upload";
 import { UploadResponse } from "@/types/upload.ts";
 
 type Header = {
@@ -51,10 +52,37 @@ type Checks = {
   geospatial_data_points: GeospatialDataPoints;
 };
 
+type Files = {
+  filename: string;
+  uid: string;
+  country: string;
+  dataset: string;
+  source: string;
+  timestamp: Date;
+}[];
+
+type BlobProperties = {
+  creation_time: Date;
+  name: string;
+};
+
 export default function routes(axi: AxiosInstance) {
   return {
     list_column_checks: (): Promise<AxiosResponse<Checks>> => {
       return axi.get("/upload/column-checks");
+    },
+    list_files: (): Promise<AxiosResponse<Files>> => {
+      return axi.get("/upload/files");
+    },
+    get_file_properties: (
+      upload_id: string,
+    ): Promise<AxiosResponse<BlobProperties>> => {
+      return axi.get(`/upload/properties/${upload_id}`);
+    },
+    get_dq_check_result: (
+      upload_id: string,
+    ): Promise<AxiosResponse<DataQualityCheckResult>> => {
+      return axi.get(`upload/dq_check/${upload_id}`);
     },
     upload_file: (params: {
       dataset: string;
@@ -86,6 +114,16 @@ export default function routes(axi: AxiosInstance) {
         },
       });
     },
-    list_uploads: () => {},
+    list_uploads: (params: {
+      count: number;
+      page: number;
+    }): Promise<AxiosResponse<PagedUploadResponse>> => {
+      return axi.get("/upload", {
+        params: {
+          count: params.count,
+          page: params.page,
+        },
+      });
+    },
   };
 }

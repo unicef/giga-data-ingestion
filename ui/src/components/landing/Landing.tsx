@@ -43,6 +43,14 @@ export default function Landing() {
 
             <Button
               as={Link}
+              to="/check-file-uploads"
+              className="gap-4"
+              renderIcon={Upload}
+            >
+              Check File Uploads
+            </Button>
+            <Button
+              as={Link}
               to="/ingest-api"
               className="gap-4"
               renderIcon={WifiBridgeAlt}

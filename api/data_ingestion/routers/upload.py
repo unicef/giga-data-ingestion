@@ -1,9 +1,12 @@
 import asyncio
+import json
+import math
 import os
 from typing import Annotated
 
 import country_converter as coco
 import magic
+from azure.core.exceptions import HttpResponseError
 from fastapi import (
     APIRouter,
     Depends,
@@ -16,18 +19,20 @@ from fastapi import (
     status,
 )
 from fastapi_azure_auth.user import User
-from pydantic import AwareDatetime
+from pydantic import AwareDatetime, Field
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
 from data_ingestion.db import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.mocks.upload_checks import get_upload_checks
 from data_ingestion.models import FileUpload
-from data_ingestion.schemas.upload import FileUpload as FileUploadSchema
+from data_ingestion.schemas.upload import (
+    FileUpload as FileUploadSchema,
+    PagedResponseSchema,
+)
 
 router = APIRouter(
     prefix="/api/upload",
@@ -145,12 +150,78 @@ async def list_column_checks():
     return upload_checks
 
 
-@router.get("", response_model=list[FileUploadSchema])
+@router.get(
+    "/files",
+)
+async def list_files():
+    blob_list = storage_client.list_blobs(name_starts_with="raw/uploads/")
+    files = []
+    for blob in blob_list:
+        parts = blob.name.replace("raw/uploads/", "").split("_")
+
+        if len(parts) == 4:
+            uid, country, dataset, _ = parts
+        else:
+            uid, country, dataset, source, _ = parts
+
+        file = {
+            "filename": blob.name,
+            "uid": uid,
+            "country": country,
+            "dataset": dataset,
+            "timestamp": blob.creation_time.isoformat(),
+        }
+        try:
+            file["source"] = source
+        except NameError:
+            pass
+        files.append(file)
+
+    return files
+
+
+@router.get(
+    "/dq_check/{upload_id}",
+)
+async def get_dq_check(upload_id: str):
+    file_name_prefix = f"raw/uploads_DEV/{upload_id}"
+    blob_list = storage_client.list_blobs(name_starts_with=file_name_prefix)
+    first_blob = next(blob_list, None)
+    if first_blob is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found",
+        )
+
+    blob = storage_client.get_blob_client(first_blob.name)
+
+    data = blob.download_blob().readall()
+    obj = json.loads(data.decode("utf-8"))
+    return obj
+
+
+@router.get(
+    "/properties/{upload_id}",
+)
+async def get_file_properties(upload_id: str):
+    file_name_prefix = f"raw/uploads/{upload_id}"
+    blob_list = storage_client.list_blobs(name_starts_with=file_name_prefix)
+    first_blob = next(blob_list, None)
+
+    blob = storage_client.get_blob_client(first_blob.name)
+    data = blob.get_blob_properties()
+
+    res = {"name": first_blob.name, "creation_time": data.creation_time}
+
+    return res
+
+
+@router.get("", response_model=PagedResponseSchema)
 async def list_uploads(
     user: User = Depends(azure_scheme),
     db: AsyncSession = Depends(get_db),
-    limit: Annotated[int, Query(ge=0, le=50)] = 10,
-    offset: Annotated[int, Query(ge=0)] = 0,
+    count: Annotated[int, Field(ge=1, le=50)] = 10,
+    page: Annotated[int, Query(ge=1)] = 1,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -161,4 +232,17 @@ async def list_uploads(
     if id_search:
         base_query = base_query.where(func.starts_with(FileUpload.id, id_search))
 
-    return await db.scalars(base_query.limit(limit).offset(offset))
+    count_query = select(func.count()).select_from(base_query.subquery())
+    total = await db.scalar(count_query)
+
+    items = await db.scalars(base_query.offset((page - 1) * count).limit(count))
+
+    paged_response = PagedResponseSchema[FileUploadSchema](
+        data=items,
+        page_index=page,
+        per_page=count,
+        total_items=total,
+        total_pages=math.ceil(total / count),
+    )
+
+    return paged_response
