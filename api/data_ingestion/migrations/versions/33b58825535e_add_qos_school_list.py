@@ -1,8 +1,8 @@
 """add_qos_school_list
 
-Revision ID: 9355eb9d8ba1
+Revision ID: 33b58825535e
 Revises: d0ecb42fa08e
-Create Date: 2024-02-21 07:26:38.934756
+Create Date: 2024-02-21 08:32:49.396244
 
 """
 from typing import Sequence, Union
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "9355eb9d8ba1"
+revision: str = "33b58825535e"
 down_revision: Union[str, None] = "d0ecb42fa08e"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -23,7 +23,7 @@ def upgrade() -> None:
         "qos_school_list",
         sa.Column(
             "request_method",
-            sa.Enum("POST", "GET", name="request_method_enum"),
+            sa.Enum("POST", "GET", name="requestmethodenum"),
             nullable=False,
         ),
         sa.Column("api_endpoint", sa.String(), nullable=False),
@@ -34,7 +34,7 @@ def upgrade() -> None:
         sa.Column(
             "authorization_type",
             sa.Enum(
-                "BEARER_TOKEN", "BASIC_AUTH", "API_KEY", name="authorization_type_enum"
+                "BEARER_TOKEN", "BASIC_AUTH", "API_KEY", name="authorizationtypeenum"
             ),
             nullable=False,
         ),
@@ -45,22 +45,32 @@ def upgrade() -> None:
         sa.Column("api_auth_api_value", sa.String(), nullable=False),
         sa.Column(
             "pagination_type",
-            sa.Enum("PAGE_NUMBER", "LIMIT_OFFSET", name="pagination_type_enum"),
+            sa.Enum("PAGE_NUMBER", "LIMIT_OFFSET", name="paginationtypeenum"),
             nullable=False,
         ),
         sa.Column("size", sa.Integer(), nullable=False),
         sa.Column("page_size_key", sa.String(), nullable=False),
         sa.Column(
             "send_query_in",
-            sa.Enum("BODY", "QUERY_PARAMETERS", "HEADERS", name="send_query_in_enum"),
+            sa.Enum("BODY", "QUERY_PARAMETERS", "HEADERS", name="sendqueryinenum"),
             nullable=False,
         ),
         sa.Column("page_number_key", sa.String(), nullable=False),
         sa.Column("page_starts_with", sa.Integer(), nullable=False),
         sa.Column("page_offset_key", sa.String(), nullable=False),
         sa.Column("enabled", sa.Boolean(), nullable=False),
-        sa.Column("date_created", sa.DateTime(timezone=True), nullable=False),
-        sa.Column("date_modified", sa.DateTime(timezone=True), nullable=False),
+        sa.Column(
+            "date_created",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
+        sa.Column(
+            "date_modified",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.Column("user_id", sa.String(), nullable=False),
         sa.Column("user_email", sa.String(), nullable=False),
         sa.Column("id", sa.String(), nullable=False),
@@ -86,5 +96,4 @@ def downgrade() -> None:
     sa.Enum("BODY", "QUERY_PARAMETERS", "HEADERS", name="send_query_in_enum").drop(
         op.get_bind()
     )
-
     # ### end Alembic commands ###
