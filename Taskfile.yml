@@ -171,6 +171,11 @@ tasks:
     cmds:
       - task exec -- api poetry run alembic upgrade head
 
+  downgrade:
+    desc: Downgrade database migrations
+    cmds:
+      - task exec -- api poetry run alembic downgrade "{{.CLI_ARGS}}"
+
   psql:
     desc: Open a psql shell
     cmds:
