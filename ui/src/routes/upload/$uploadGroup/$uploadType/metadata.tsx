@@ -21,6 +21,7 @@ import { useApi } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import ControlledDatepicker from "@/components/upload/ControlledDatepicker.tsx";
 import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
+import useRoles from "@/hooks/useRoles.ts";
 import {
   dataCollectionModalityOptions,
   dataOwnerOptions,
@@ -33,7 +34,6 @@ import {
 } from "@/mocks/metadataFormValues.tsx";
 import { useStore } from "@/store.ts";
 import { MetadataFormValues } from "@/types/metadata.ts";
-import { filterCountryDatasetFromGroup } from "@/utils/group";
 import { capitalizeFirstLetter } from "@/utils/string.ts";
 
 export const Route = createFileRoute(
@@ -52,7 +52,10 @@ function Metadata() {
   const api = useApi();
   const { upload, setUpload } = useStore();
   const navigate = useNavigate({ from: Route.fullPath });
-  const { uploadType = "" } = Route.useParams();
+  const { uploadType } = Route.useParams();
+  const { countryDatasets, isPrivileged } = useRoles();
+  const userCountryNames =
+    countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [];
 
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isUploadError, setIsUploadError] = useState<boolean>(false);
@@ -68,22 +71,20 @@ function Metadata() {
     mutationFn: api.uploads.upload_file,
   });
 
-  const { data: userGroups, isLoading } = useQuery({
-    queryKey: ["me", "groups"],
-    queryFn: api.users.getUserGroups,
+  const { data: allGroupsQuery, isLoading } = useQuery({
+    queryKey: ["groups"],
+    queryFn: api.groups.list,
   });
-
-  const datasetSuffix = `-School ${capitalizeFirstLetter(uploadType)}`;
-
-  const userCountryDatasets = filterCountryDatasetFromGroup(
-    userGroups?.data ?? [],
-    datasetSuffix,
-  );
-
-  const userCountries = userCountryDatasets
-    .map(countryDataset => countryDataset.split("-")[0])
-    .sort((a, b) => b.localeCompare(a))
-    .reverse();
+  const allGroups = allGroupsQuery?.data ?? [];
+  const allGroupNames = allGroups.map(group => group.display_name);
+  const allCountryNames = [
+    ...new Set(
+      allGroupNames
+        .map(name => name.split("-"))
+        .filter(split => split.length > 1)
+        .map(split => split[0]),
+    ),
+  ];
 
   const onSubmit: SubmitHandler<MetadataFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
@@ -365,7 +366,10 @@ function Metadata() {
           />
           {uploadType === "coverage" && <SourceSelect />}
           <DataOwnerSelect />
-          <CountrySelect countryOptions={userCountries} isLoading={isLoading} />
+          <CountrySelect
+            countryOptions={isPrivileged ? allCountryNames : userCountryNames}
+            isLoading={isLoading}
+          />
           <SchoolIdTypeSelect />
           <TextArea
             invalid={Boolean(errors.description)}
