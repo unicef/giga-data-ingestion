@@ -24,7 +24,7 @@ router = APIRouter(
 fake = Faker()
 
 
-@router.post("mock_school_lists")
+@router.post("/mock_school_lists")
 async def create_mock_school_lists(
     response: Response,
     number: int,
@@ -68,7 +68,7 @@ async def create_mock_school_lists(
     response.status_code = status.HTTP_201_CREATED
 
 
-@router.get("school_list", response_model=PagedResponseSchema)
+@router.get("/school_list", response_model=PagedResponseSchema)
 async def list_school_lists(
     response: Response,
     db: AsyncSession = Depends(get_db),
@@ -89,9 +89,6 @@ async def list_school_lists(
 
     items = await db.scalars(base_query.offset((page - 1) * count).limit(count))
 
-    if not items.all():
-        response.status_code = status.HTTP_204_NO_CONTENT
-
     paged_response = PagedResponseSchema[SchoolListSchema](
         data=items,
         page_index=page,
@@ -99,5 +96,8 @@ async def list_school_lists(
         total_items=total,
         total_pages=math.ceil(total / count),
     )
+
+    if not len(paged_response.data):
+        response.status_code = status.HTTP_204_NO_CONTENT
 
     return paged_response
