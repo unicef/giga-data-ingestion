@@ -3,16 +3,12 @@ import { Button, Column, FlexGrid, Heading } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
 import homeBg from "@/assets/home-bg.jpg";
-import { useStore } from "@/store.ts";
+import useRoles from "@/hooks/useRoles.ts";
 
 const { VITE_DATAHUB_URL: DATAHUB_URL } = import.meta.env;
 
 export default function Landing() {
-  const {
-    user: { roles },
-  } = useStore();
-
-  const hasRoles = roles.length > 0;
+  const { hasRoles } = useRoles();
 
   return (
     <div
@@ -46,6 +42,7 @@ export default function Landing() {
               to="/check-file-uploads"
               className="gap-4"
               renderIcon={Upload}
+              disabled={!hasRoles}
             >
               Check File Uploads
             </Button>

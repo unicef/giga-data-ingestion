@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import { AuthenticatedTemplate, useAccount } from "@azure/msal-react";
 import { Logout } from "@carbon/icons-react";
 import {
@@ -14,15 +12,12 @@ import { Link } from "@tanstack/react-router";
 
 import gigaLogoBlue from "@/assets/GIGA_logo_blue.png";
 import useLogout from "@/hooks/useLogout.ts";
+import useRoles from "@/hooks/useRoles.ts";
 
 export default function Navbar() {
   const logout = useLogout();
   const account = useAccount();
-
-  const isPrivileged = useMemo(() => {
-    const roles = (account?.idTokenClaims?.groups ?? []) as string[];
-    return roles.includes("Admin") || roles.includes("Super");
-  }, [account]);
+  const { isPrivileged, hasRoles } = useRoles();
 
   return (
     <Header
@@ -40,10 +35,10 @@ export default function Navbar() {
           aria-label="Main Navigation"
           aria-labelledby="main-nav-label"
         >
-          <HeaderMenuItem as={Link} to="/upload">
+          <HeaderMenuItem as={Link} to="/upload" disabled={!hasRoles}>
             Upload file
           </HeaderMenuItem>
-          <HeaderMenuItem as={Link} to="/ingest-api">
+          <HeaderMenuItem as={Link} to="/ingest-api" disabled={!hasRoles}>
             Ingest API
           </HeaderMenuItem>
           {isPrivileged && (
