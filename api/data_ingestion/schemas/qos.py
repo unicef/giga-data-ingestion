@@ -40,5 +40,6 @@ class SchoolListSchema(BaseModel):
     date_modified: datetime
     user_id: str
     user_email: EmailStr
+    status: bool
 
     model_config = ConfigDict(from_attributes=True)

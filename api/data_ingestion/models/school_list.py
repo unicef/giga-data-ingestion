@@ -72,3 +72,4 @@ class SchoolList(BaseModel):
     )
     user_id: Mapped[str] = mapped_column()
     user_email: Mapped[EmailStr] = mapped_column(String())
+    status: Mapped[bool] = mapped_column(default=False)
