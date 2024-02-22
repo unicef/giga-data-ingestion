@@ -29,9 +29,9 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.mocks.upload_checks import get_upload_checks
 from data_ingestion.models import FileUpload
+from data_ingestion.schemas.common import PagedResponseSchema
 from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
-    PagedResponseSchema,
 )
 
 router = APIRouter(
