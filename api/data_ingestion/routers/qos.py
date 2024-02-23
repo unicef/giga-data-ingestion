@@ -3,9 +3,9 @@ import random
 from typing import Annotated
 
 from faker import Faker
-from fastapi import APIRouter, Depends, Query, Response, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, Security, status
 from pydantic import Field
-from sqlalchemy import desc, func, select
+from sqlalchemy import desc, exc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from data_ingestion.db import get_db
@@ -33,7 +33,7 @@ async def create_mock_school_lists(
     for _ in range(number):
         file_upload = SchoolList(
             request_method=random.choice(["GET", "POST"]),
-            api_endpoint="hello wolrtd",
+            api_endpoint=fake.url(),
             data_key="test",
             school_id_key="adsasdasd",
             query_parameters="sometihing",
@@ -101,3 +101,43 @@ async def list_school_lists(
         response.status_code = status.HTTP_204_NO_CONTENT
 
     return paged_response
+
+
+@router.get("/school_list/{id}", response_model=SchoolListSchema)
+async def get_school_list(
+    response: Response,
+    id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    base_query = (
+        select(SchoolList)
+        .order_by(desc(SchoolList.date_created))
+        .where(func.starts_with(SchoolList.id, id))
+    )
+
+    school_list = await db.scalar(base_query)
+
+    return school_list
+
+
+@router.patch("/school_list/{id}/status/{enabled}", status_code=status.HTTP_201_CREATED)
+async def update_school_list_status(
+    response: Response,
+    id: str,
+    enabled: bool,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        update_query = (
+            update(SchoolList).where(SchoolList.id == id).values(enabled=enabled)
+        )
+        await db.execute(update_query)
+        await db.commit()
+        response.status_code = status.HTTP_204_NO_CONTENT
+
+    except exc.SQLAlchemyError as err:
+        raise HTTPException(
+            detail=err._message, status_code=status.HTTP_400_BAD_REQUEST
+        ) from err
+
+    return 0

@@ -13,6 +13,7 @@ import useGetToken from "@/hooks/useGetToken.ts";
 import { useStore } from "@/store.ts";
 
 import rolesRouter from "./routers/groups.ts";
+import qosRouter from "./routers/qos.ts";
 import uploadsRouter from "./routers/uploads.ts";
 import usersRouter from "./routers/users.ts";
 
@@ -27,6 +28,7 @@ export const api = {
   users: usersRouter(axi),
   groups: rolesRouter(axi),
   uploads: uploadsRouter(axi),
+  qos: qosRouter(axi),
 };
 
 export function useApi() {

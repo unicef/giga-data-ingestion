@@ -1,4 +1,9 @@
+import { Heading, Section, Stack } from "@carbon/react";
 import { createLazyFileRoute } from "@tanstack/react-router";
+import { Outlet } from "@tanstack/react-router";
+
+import IngestTable from "@/components/ingest-api/IngestTable";
+import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView";
 
 export const Route = createLazyFileRoute("/ingest-api/")({
   component: IngestApi,
@@ -6,8 +11,21 @@ export const Route = createLazyFileRoute("/ingest-api/")({
 
 function IngestApi() {
   return (
-    <div className="container flex h-full flex-col items-center justify-center gap-4 py-6">
-      <h3>Under development</h3>
-    </div>
+    <AuthenticatedRBACView roles={["Admin", "Super"]}>
+      <Stack gap={4}>
+        <Section className="container py-6">
+          <Stack gap={6}>
+            <Section>
+              <Heading>User Management</Heading>
+            </Section>
+            <Section>
+              <IngestTable />
+            </Section>
+          </Stack>
+
+          <Outlet />
+        </Section>
+      </Stack>
+    </AuthenticatedRBACView>
   );
 }
