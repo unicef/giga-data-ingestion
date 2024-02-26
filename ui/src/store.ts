@@ -8,7 +8,7 @@ interface UploadSlice {
   file: File | null;
   timestamp: Date | null;
   uploadId: string;
-  uploadDate: string;
+  uploadDate: Date | null;
   stepIndex: number;
 }
 
@@ -31,7 +31,7 @@ const initialUploadState: UploadSlice = {
   file: null,
   timestamp: null,
   uploadId: "",
-  uploadDate: "",
+  uploadDate: null,
   stepIndex: 0,
 };
 

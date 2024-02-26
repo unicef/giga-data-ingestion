@@ -18,8 +18,10 @@ import {
 import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
+import { format } from "date-fns";
 
 import { api } from "@/api";
+import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { PagedResponse } from "@/types/api.ts";
 import { UploadResponse } from "@/types/upload.ts";
 
@@ -46,14 +48,14 @@ const columns: DataTableHeader[] = [
   },
   {
     key: "actions",
-    header: "Actions",
+    header: "",
   },
 ];
 
-interface TableUpload extends UploadResponse {
-  status: ReactElement | string | null;
-  actions: ReactElement | null;
-}
+type TableUpload = Record<
+  keyof UploadResponse,
+  ReactElement | string | number | null
+> & { id: string };
 
 function UploadsTable() {
   const [page, setPage] = useState(1);
@@ -84,6 +86,8 @@ function UploadsTable() {
 
       return {
         ...upload,
+        created: format(new Date(upload.created), DEFAULT_DATETIME_FORMAT),
+        dataset: <span className="capitalize">{upload.dataset}</span>,
         status: isStatusCompleted ? (
           <Tag type="blue">Completed</Tag>
         ) : (

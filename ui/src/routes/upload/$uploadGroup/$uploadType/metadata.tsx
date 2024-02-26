@@ -132,7 +132,7 @@ function Metadata() {
 
       setUpload({
         ...upload,
-        uploadDate: upload.timestamp?.toLocaleString() ?? "",
+        uploadDate: upload.timestamp,
         uploadId,
       });
 
