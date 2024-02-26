@@ -1,7 +1,7 @@
-import { useState } from "react";
-
 import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+
+import { useStore } from "@/store.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
   component: Layout,
@@ -29,7 +29,8 @@ function Layout() {
   const { uploadType } = Route.useParams();
   const title = uploadType.replace(/-/g, " ");
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const { upload } = useStore();
+  const { stepIndex } = upload;
 
   return (
     <Stack gap={10}>
@@ -40,10 +41,7 @@ function Layout() {
           name, education level, internet connection, computer count etc.
         </p>
       </Stack>
-      <ProgressIndicator
-        currentIndex={currentIndex}
-        onChange={index => setCurrentIndex(index)}
-      >
+      <ProgressIndicator currentIndex={stepIndex}>
         <ProgressStep label="1" description="Upload" secondaryLabel="Upload" />
         <ProgressStep
           label="2"

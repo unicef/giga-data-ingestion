@@ -54,7 +54,8 @@ export const Route = createFileRoute(
 
 function Metadata() {
   const api = useApi();
-  const { upload, setUpload } = useStore();
+  const { upload, setUpload, incrementStepIndex, decrementStepIndex } =
+    useStore();
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType } = Route.useParams();
   const { countryDatasets, isPrivileged } = useRoles();
@@ -130,6 +131,7 @@ function Metadata() {
       });
 
       void navigate({ to: "../success" });
+      incrementStepIndex();
     } catch {
       console.error(
         "uploadFile.error.message",
@@ -392,6 +394,7 @@ function Metadata() {
               kind="secondary"
               as={Link}
               to=".."
+              onClick={decrementStepIndex}
               className="w-full"
               renderIcon={ArrowLeft}
             >

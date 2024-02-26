@@ -10,7 +10,8 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
 });
 
 export default function Index() {
-  const { upload, setUpload, resetUploadState } = useStore();
+  const { upload, setUpload, resetUploadState, incrementStepIndex } =
+    useStore();
 
   const hasUploadedFile = upload.file != null;
 
@@ -39,6 +40,7 @@ export default function Index() {
           disabled={!hasUploadedFile}
           as={Link}
           to="./metadata"
+          onClick={incrementStepIndex}
           className="w-full"
           renderIcon={ArrowRight}
         >
