@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
@@ -45,8 +45,10 @@ export const Route = createFileRoute(
 )({
   component: Metadata,
   loader: () => {
-    const { upload } = useStore.getState();
-    if (!upload.file) {
+    const {
+      upload: { file },
+    } = useStore.getState();
+    if (!file) {
       throw redirect({ to: ".." });
     }
   },
@@ -59,8 +61,10 @@ function Metadata() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType } = Route.useParams();
   const { countryDatasets, isPrivileged } = useRoles();
-  const userCountryNames =
-    countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [];
+  const userCountryNames = useMemo(
+    () => countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [],
+    [countryDatasets, uploadType],
+  );
 
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isUploadError, setIsUploadError] = useState<boolean>(false);
@@ -80,16 +84,18 @@ function Metadata() {
     queryKey: ["groups"],
     queryFn: api.groups.list,
   });
-  const allGroups = allGroupsQuery?.data ?? [];
-  const allGroupNames = allGroups.map(group => group.display_name);
-  const allCountryNames = [
-    ...new Set(
-      allGroupNames
-        .map(name => name.split("-"))
-        .filter(split => split.length > 1)
-        .map(split => split[0]),
-    ),
-  ];
+  const allCountryNames = useMemo(() => {
+    const allGroups = allGroupsQuery?.data ?? [];
+    const allGroupNames = allGroups.map(group => group.display_name);
+    return [
+      ...new Set(
+        allGroupNames
+          .map(name => name.split("-"))
+          .filter(split => split.length > 1)
+          .map(split => split[0]),
+      ),
+    ];
+  }, [allGroupsQuery?.data]);
 
   const onSubmit: SubmitHandler<MetadataFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
@@ -130,8 +136,8 @@ function Metadata() {
         uploadId,
       });
 
-      void navigate({ to: "../success" });
       incrementStepIndex();
+      void navigate({ to: "../success" });
     } catch {
       console.error(
         "uploadFile.error.message",

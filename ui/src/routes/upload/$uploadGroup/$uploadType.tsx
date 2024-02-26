@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
@@ -29,8 +31,12 @@ function Layout() {
   const { uploadType } = Route.useParams();
   const title = uploadType.replace(/-/g, " ");
 
-  const { upload } = useStore();
+  const { upload, resetUploadState } = useStore();
   const { stepIndex } = upload;
+
+  useEffect(() => {
+    return resetUploadState;
+  }, [resetUploadState]);
 
   return (
     <Stack gap={10}>
@@ -41,22 +47,24 @@ function Layout() {
           name, education level, internet connection, computer count etc.
         </p>
       </Stack>
-      <ProgressIndicator currentIndex={stepIndex}>
+      <ProgressIndicator currentIndex={stepIndex} spaceEqually>
         <ProgressStep label="1" description="Upload" secondaryLabel="Upload" />
         <ProgressStep
           label="2"
           description="Add metadata"
           secondaryLabel="Add metadata"
         />
+        {/* TODO: Add column mapping */}
+        {/*<ProgressStep*/}
+        {/*  label="3"*/}
+        {/*  description="Configure columns"*/}
+        {/*  secondaryLabel="Configure columns"*/}
+        {/*/>*/}
         <ProgressStep
           label="3"
-          description="Configure columns"
-          secondaryLabel="Configure columns"
-        />
-        <ProgressStep
-          label="4"
-          description="Data quality review & submit"
-          secondaryLabel="Data quality review & submit"
+          // description="Data quality review & submit"
+          // secondaryLabel="Data quality review & submit"
+          secondaryLabel="Submit"
         />
       </ProgressIndicator>
 
