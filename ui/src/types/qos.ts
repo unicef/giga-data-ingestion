@@ -1,29 +1,28 @@
-enum RequestMethodEnum {
-  POST = "POST",
-  GET = "GET",
-}
-
-enum AuthorizationTypeEnum {
-  BEARER_TOKEN = "BEARER_TOKEN",
-  BASIC_AUTH = "BASIC_AUTH",
+export enum AuthorizationTypeEnum {
   API_KEY = "API_KEY",
+  BASIC_AUTH = "BASIC_AUTH",
+  BEARER_TOKEN = "BEARER_TOKEN",
 }
 
-enum PaginationTypeEnum {
-  PAGE_NUMBER = "PAGE_NUMBER",
+export enum PaginationTypeEnum {
   LIMIT_OFFSET = "LIMIT_OFFSET",
+  PAGE_NUMBER = "PAGE_NUMBER",
+}
+export enum RequestMethodEnum {
+  GET = "GET",
+  POST = "POST",
 }
 
-enum SendQueryInEnum {
+export enum SendQueryInEnum {
   BODY = "BODY",
-  QUERY_PARAMETERS = "QUERY_PARAMETERS",
   HEADERS = "HEADERS",
+  QUERY_PARAMETERS = "QUERY_PARAMETERS",
 }
 
 export interface SchoolListResponse {
   id: string;
   api_auth_api_key: string;
-  api_auth_api_valur: string;
+  api_auth_api_value: string;
   api_endpoint: string;
   authorization_type: AuthorizationTypeEnum;
   basic_auth_password: string;
