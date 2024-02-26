@@ -9,8 +9,8 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 
+import { useStore } from "@/context/store.ts";
 import useGetToken from "@/hooks/useGetToken.ts";
-import { useStore } from "@/store.ts";
 
 import rolesRouter from "./routers/groups.ts";
 import qosRouter from "./routers/qos.ts";
