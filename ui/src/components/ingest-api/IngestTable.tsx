@@ -137,7 +137,7 @@ function IngestTable() {
         name: name,
         endpoint: schoolList.api_endpoint,
         frequency: FREQUENCY_IN_MINUTES,
-        lastRun: lastRun,
+        lastRunConnectivity: lastRun,
         status: (
           <div className="flex">
             <StatusIndicator
@@ -147,7 +147,7 @@ function IngestTable() {
             {schoolList.status ? "Success" : "Failed"}
           </div>
         ),
-        nextRun: nextRun,
+        lastRunList: nextRun,
         active: (
           <Toggle
             disabled={loadingStates[schoolList.id]}
@@ -195,7 +195,7 @@ function IngestTable() {
                 }}
                 disabled={isSchoolListRefetching}
               />
-              <Button renderIcon={Add} as={Link} to="./user/add">
+              <Button renderIcon={Add} as={Link} to="./ingestion/add">
                 Create New Ingestion
               </Button>
             </TableToolbarContent>
