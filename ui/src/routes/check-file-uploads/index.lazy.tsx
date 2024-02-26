@@ -39,11 +39,11 @@ export default function FileUploads() {
   const { data: files, isLoading } = useQuery({
     queryKey: ["files", ITEMS_PER_PAGE, currentPage],
     queryFn: () =>
-      api.uploads.list_uploads({
-        count: ITEMS_PER_PAGE,
+      api.uploads.list({
+        page_size: ITEMS_PER_PAGE,
         page: currentPage,
       }),
-    placeholderData: keepPreviousData
+    placeholderData: keepPreviousData,
   });
 
   const rows =
@@ -96,15 +96,15 @@ export default function FileUploads() {
                 warnings === 0 && errors === 0
                   ? "success"
                   : errors > 0
-                    ? "error"
-                    : "warning"
+                  ? "error"
+                  : "warning"
               }
             />
             {warnings === 0 && errors === 0
               ? "Checks completed without errors"
               : errors > 0
-                ? "Critical Checks Failed"
-                : "Some checks failed"}
+              ? "Critical Checks Failed"
+              : "Some checks failed"}
           </div>
         ),
         actions: (
@@ -234,7 +234,7 @@ export default function FileUploads() {
                   <PaginationNav
                     className="pagination-nav-right"
                     itemsShown={ITEMS_PER_PAGE}
-                    totalItems={files?.data.total_pages}
+                    totalItems={files?.data.total_count}
                     onChange={(index: number) => setCurrentPage(index + 1)}
                   />
                 </TableContainer>

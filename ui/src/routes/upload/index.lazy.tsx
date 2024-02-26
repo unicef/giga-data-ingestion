@@ -2,6 +2,8 @@ import { Add } from "@carbon/icons-react";
 import { Button, Column, Grid, Heading, Section, Stack } from "@carbon/react";
 import { Link, createLazyFileRoute } from "@tanstack/react-router";
 
+import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
+
 export const Route = createLazyFileRoute("/upload/")({
   component: () => (
     <Section>
@@ -26,6 +28,7 @@ export const Route = createLazyFileRoute("/upload/")({
                 className="w-full"
                 size="xl"
                 renderIcon={Add}
+                isExpressive
               >
                 School geolocation
               </Button>
@@ -41,26 +44,30 @@ export const Route = createLazyFileRoute("/upload/")({
                 className="w-full"
                 size="xl"
                 renderIcon={Add}
+                isExpressive
               >
                 School coverage
               </Button>
             </Column>
-            <Column lg={4}>
-              <Button
-                as={Link}
-                to="/upload/$uploadGroup/$uploadType"
-                params={{
-                  uploadGroup: "other",
-                  uploadType: "unstructured",
-                }}
-                className="w-full"
-                size="xl"
-                renderIcon={Add}
-              >
-                Unstructured dataset
-              </Button>
-            </Column>
+            {/* TODO: Scope this out */}
+            {/*<Column lg={4}>*/}
+            {/*  <Button*/}
+            {/*    as={Link}*/}
+            {/*    to="/upload/$uploadGroup/$uploadType"*/}
+            {/*    params={{*/}
+            {/*      uploadGroup: "other",*/}
+            {/*      uploadType: "unstructured",*/}
+            {/*    }}*/}
+            {/*    className="w-full"*/}
+            {/*    size="xl"*/}
+            {/*    renderIcon={Add}*/}
+            {/*  >*/}
+            {/*    Unstructured dataset*/}
+            {/*  </Button>*/}
+            {/*</Column>*/}
           </Grid>
+
+          <UploadsTable />
         </Stack>
       </Section>
     </Section>

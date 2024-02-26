@@ -39,7 +39,7 @@ function Success() {
       </p>
       <p>You may now safely close this page</p>
       <div>
-        <Button as={Link} to="/" onClick={resetUploadState}>
+        <Button as={Link} to="/" onClick={resetUploadState} isExpressive>
           Back to Home
         </Button>
       </div>

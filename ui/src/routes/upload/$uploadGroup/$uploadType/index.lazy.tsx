@@ -33,6 +33,7 @@ export default function Index() {
           onClick={resetUploadState}
           className="w-full"
           renderIcon={ArrowLeft}
+          isExpressive
         >
           Cancel
         </Button>
@@ -43,6 +44,7 @@ export default function Index() {
           onClick={incrementStepIndex}
           className="w-full"
           renderIcon={ArrowRight}
+          isExpressive
         >
           Proceed
         </Button>

@@ -77,7 +77,7 @@ function Metadata() {
   } = useForm<MetadataFormValues>();
 
   const uploadFile = useMutation({
-    mutationFn: api.uploads.upload_file,
+    mutationFn: api.uploads.upload,
   });
 
   const { data: allGroupsQuery, isLoading } = useQuery({
@@ -403,6 +403,7 @@ function Metadata() {
               onClick={decrementStepIndex}
               className="w-full"
               renderIcon={ArrowLeft}
+              isExpressive
             >
               Back
             </Button>
@@ -417,6 +418,7 @@ function Metadata() {
               }
               type="submit"
               className="w-full"
+              isExpressive
             >
               Continue
             </Button>

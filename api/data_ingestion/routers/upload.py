@@ -1,12 +1,10 @@
 import asyncio
 import json
-import math
 import os
 from typing import Annotated
 
 import country_converter as coco
 import magic
-from azure.core.exceptions import HttpResponseError
 from fastapi import (
     APIRouter,
     Depends,
@@ -23,15 +21,16 @@ from pydantic import AwareDatetime, Field
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
 from data_ingestion.db import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.mocks.upload_checks import get_upload_checks
 from data_ingestion.models import FileUpload
+from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
-    PagedResponseSchema,
 )
 
 router = APIRouter(
@@ -94,8 +93,8 @@ async def upload_file(
     country_code = coco.convert(country, to="ISO3")
 
     file_upload = FileUpload(
-        uploader_id=user.oid,
-        uploader_email=user.email or user.preferred_username or user.upn,
+        uploader_id=user.sub,
+        uploader_email=user.claims.get("email", user.email),
         country=country_code,
         dataset=dataset,
         source=source,
@@ -216,12 +215,12 @@ async def get_file_properties(upload_id: str):
     return res
 
 
-@router.get("", response_model=PagedResponseSchema)
+@router.get("", response_model=PagedResponseSchema[FileUploadSchema])
 async def list_uploads(
     user: User = Depends(azure_scheme),
     db: AsyncSession = Depends(get_db),
-    count: Annotated[int, Field(ge=1, le=50)] = 10,
     page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Field(ge=1, le=50)] = 10,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -235,14 +234,11 @@ async def list_uploads(
     count_query = select(func.count()).select_from(base_query.subquery())
     total = await db.scalar(count_query)
 
-    items = await db.scalars(base_query.offset((page - 1) * count).limit(count))
+    items = await db.scalars(base_query.offset((page - 1) * page_size).limit(page_size))
 
-    paged_response = PagedResponseSchema[FileUploadSchema](
-        data=items,
-        page_index=page,
-        per_page=count,
-        total_items=total,
-        total_pages=math.ceil(total / count),
-    )
-
-    return paged_response
+    return {
+        "data": items,
+        "page": page,
+        "page_size": page_size,
+        "total_count": total,
+    }

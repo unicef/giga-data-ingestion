@@ -38,7 +38,10 @@ export default function Navbar() {
             as={Link}
             to="/upload"
             disabled={!hasRoles}
-            isActive={location.pathname.startsWith("/upload")}
+            isActive={
+              location.pathname.startsWith("/upload") ||
+              location.pathname === "/"
+            }
           >
             File uploads
           </HeaderMenuItem>
