@@ -1,12 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-import Landing from "@/components/landing/Landing.tsx";
-import AuthenticatedView from "@/components/utils/AuthenticatedView.tsx";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
-  component: () => (
-    <AuthenticatedView>
-      <Landing />
-    </AuthenticatedView>
-  ),
+  component: () => null,
+  beforeLoad: async () => {
+    throw redirect({ to: "/upload" });
+  },
 });

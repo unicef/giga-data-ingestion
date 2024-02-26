@@ -8,7 +8,7 @@ import {
   HeaderName,
   HeaderNavigation,
 } from "@carbon/react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 
 import useLogout from "@/hooks/useLogout.ts";
 import useRoles from "@/hooks/useRoles.ts";
@@ -17,6 +17,7 @@ export default function Navbar() {
   const logout = useLogout();
   const account = useAccount();
   const { isPrivileged, hasRoles } = useRoles();
+  const { location } = useRouterState();
 
   return (
     <Header
@@ -33,14 +34,28 @@ export default function Navbar() {
           aria-label="Main Navigation"
           aria-labelledby="main-nav-label"
         >
-          <HeaderMenuItem as={Link} to="/upload" disabled={!hasRoles}>
+          <HeaderMenuItem
+            as={Link}
+            to="/upload"
+            disabled={!hasRoles}
+            isActive={location.pathname.startsWith("/upload")}
+          >
             File uploads
           </HeaderMenuItem>
-          <HeaderMenuItem as={Link} to="/ingest-api" disabled={!hasRoles}>
+          <HeaderMenuItem
+            as={Link}
+            to="/ingest-api"
+            disabled={!hasRoles}
+            isActive={location.pathname.startsWith("/ingest-api")}
+          >
             Ingest API
           </HeaderMenuItem>
           {isPrivileged && (
-            <HeaderMenuItem as={Link} to="/user-management">
+            <HeaderMenuItem
+              as={Link}
+              to="/user-management"
+              isActive={location.pathname.startsWith("/user-management")}
+            >
               User management
             </HeaderMenuItem>
           )}

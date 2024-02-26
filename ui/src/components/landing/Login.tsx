@@ -1,14 +1,9 @@
-import { EventError } from "@azure/msal-browser";
 import { useMsal } from "@azure/msal-react";
-import { Button } from "@carbon/react";
+import { ArrowRight, DocumentAdd } from "@carbon/icons-react";
+import { Button, Column, Grid, Heading } from "@carbon/react";
+import { Link } from "@tanstack/react-router";
 
-import loginBg from "@/assets/login-bg.jpeg";
-import {
-  AAD_B2C_FORGOT_PASSWORD_ERROR,
-  apiConfig,
-  b2cPolicies,
-  loginRequest,
-} from "@/lib/auth.ts";
+import { loginRequest } from "@/lib/auth.ts";
 
 function Login() {
   const { instance } = useMsal();
@@ -17,28 +12,69 @@ function Login() {
     try {
       await instance.loginPopup(loginRequest);
     } catch (error) {
-      const err = error as EventError;
-      console.error(err?.message);
-
-      if (err?.message.includes(AAD_B2C_FORGOT_PASSWORD_ERROR)) {
-        await instance.loginPopup({
-          authority: b2cPolicies.authorities.forgotPassword.authority,
-          scopes: apiConfig.b2cScopes,
-        });
-      }
+      console.error(error);
     }
   }
 
   return (
-    <div
-      className="h-full bg-cover text-white"
-      style={{
-        backgroundImage: `url('${loginBg}')`,
-      }}
-    >
-      <div className="flex h-full w-full flex-col items-center justify-center backdrop-brightness-50">
-        <Button onClick={handleLogin}>Login</Button>
-      </div>
+    <div className="flex h-full w-full flex-col justify-center gap-6">
+      <Grid>
+        <Column lg={16}>
+          <Heading>
+            giga<b>sync</b>
+          </Heading>
+          <p className="text-2xl">
+            Upload and view quality datasets to help connect every school to the
+            internet.
+          </p>
+        </Column>
+      </Grid>
+
+      <Grid>
+        <Column lg={4}>
+          <div className="flex-col gap-4 bg-giga-light-gray p-4 text-black hover:bg-giga-light-gray hover:text-black">
+            <div className="text-xl">Upload data file</div>
+            <div>Lorem ipsum dolor sit amet, consectetur adipiscing elit</div>
+            <DocumentAdd size={60} />
+          </div>
+        </Column>
+        <Column lg={4}>
+          <div className="flex-col gap-4 bg-giga-light-gray p-4 text-black hover:bg-giga-light-gray hover:text-black">
+            <div className="text-xl">Configure API</div>
+            <div>
+              Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua
+            </div>
+            <DocumentAdd size={60} />
+          </div>
+        </Column>
+        <Column lg={4}>
+          <div className="flex-col gap-4 bg-giga-light-gray p-4 text-black hover:bg-giga-light-gray hover:text-black">
+            <div className="text-xl">Check data quality</div>
+            <div>
+              Ut enim ad minim veniam, quis nostrud exercitation ullamco
+            </div>
+            <DocumentAdd size={60} />
+          </div>
+        </Column>
+      </Grid>
+
+      <Grid>
+        <Column lg={4}>
+          <Button
+            className="w-full"
+            renderIcon={ArrowRight}
+            onClick={handleLogin}
+          >
+            Log in
+          </Button>
+          <div>
+            Login lorem ipsum{" "}
+            <Link to="/">
+              <u>Dolor sit Amet</u>
+            </Link>
+          </div>
+        </Column>
+      </Grid>
     </div>
   );
 }
