@@ -13,7 +13,7 @@ import { useApi } from "@/api";
 import Datatable from "@/components/upload/Datatable";
 import PaginatedDatatable from "@/components/upload/PaginatedDatatable";
 import UploadFile from "@/components/upload/UploadFile.tsx";
-import { useStore } from "@/store.ts";
+import { useStore } from "@/context/store";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
   component: Index,

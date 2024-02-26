@@ -2,7 +2,7 @@ import { CheckmarkOutline } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
 import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 
-import { useStore } from "@/store.ts";
+import { useStore } from "@/context/store";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/success",

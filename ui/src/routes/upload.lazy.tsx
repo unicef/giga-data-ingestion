@@ -4,7 +4,7 @@ import { Outlet, createLazyFileRoute } from "@tanstack/react-router";
 
 import UploadBreadcrumbs from "@/components/upload/UploadBreadcrumbs.tsx";
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
-import { useStore } from "@/store.ts";
+import { useStore } from "@/context/store";
 
 export const Route = createLazyFileRoute("/upload")({
   component: UploadLayout,

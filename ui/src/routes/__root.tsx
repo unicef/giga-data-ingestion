@@ -13,10 +13,10 @@ import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
 import NotFound from "@/components/utils/NotFound.tsx";
 import TanStackRouterDevtools from "@/components/utils/TanStackRouterDevTools.tsx";
+import { useStore } from "@/context/store";
 import useGetToken from "@/hooks/useGetToken.ts";
 import useLogout from "@/hooks/useLogout.ts";
 import info from "@/info.json";
-import { useStore } from "@/store.ts";
 
 export const Route = createRootRoute({
   component: Layout,

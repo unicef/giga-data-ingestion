@@ -21,6 +21,7 @@ import { useApi } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import ControlledDatepicker from "@/components/upload/ControlledDatepicker.tsx";
 import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
+import { useStore } from "@/context/store";
 import useRoles from "@/hooks/useRoles.ts";
 import {
   dataCollectionModalityOptions,
@@ -32,7 +33,6 @@ import {
   sensitivityOptions,
   sourceOptions,
 } from "@/mocks/metadataFormValues.tsx";
-import { useStore } from "@/store.ts";
 import { MetadataFormValues } from "@/types/metadata.ts";
 import { capitalizeFirstLetter } from "@/utils/string.ts";
 
