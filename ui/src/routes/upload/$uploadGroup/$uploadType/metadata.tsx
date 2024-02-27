@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
+import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
   Button,
+  ButtonSet,
+  Heading,
   Loading,
   RadioButton,
+  Section,
   SelectItem,
   Stack,
   TextArea,
@@ -41,8 +45,10 @@ export const Route = createFileRoute(
 )({
   component: Metadata,
   loader: () => {
-    const { upload } = useStore.getState();
-    if (!upload.file) {
+    const {
+      upload: { file },
+    } = useStore.getState();
+    if (!file) {
       throw redirect({ to: ".." });
     }
   },
@@ -50,12 +56,15 @@ export const Route = createFileRoute(
 
 function Metadata() {
   const api = useApi();
-  const { upload, setUpload } = useStore();
+  const { upload, setUpload, incrementStepIndex, decrementStepIndex } =
+    useStore();
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType } = Route.useParams();
   const { countryDatasets, isPrivileged } = useRoles();
-  const userCountryNames =
-    countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [];
+  const userCountryNames = useMemo(
+    () => countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [],
+    [countryDatasets, uploadType],
+  );
 
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isUploadError, setIsUploadError] = useState<boolean>(false);
@@ -68,23 +77,25 @@ function Metadata() {
   } = useForm<MetadataFormValues>();
 
   const uploadFile = useMutation({
-    mutationFn: api.uploads.upload_file,
+    mutationFn: api.uploads.upload,
   });
 
   const { data: allGroupsQuery, isLoading } = useQuery({
     queryKey: ["groups"],
     queryFn: api.groups.list,
   });
-  const allGroups = allGroupsQuery?.data ?? [];
-  const allGroupNames = allGroups.map(group => group.display_name);
-  const allCountryNames = [
-    ...new Set(
-      allGroupNames
-        .map(name => name.split("-"))
-        .filter(split => split.length > 1)
-        .map(split => split[0]),
-    ),
-  ];
+  const allCountryNames = useMemo(() => {
+    const allGroups = allGroupsQuery?.data ?? [];
+    const allGroupNames = allGroups.map(group => group.display_name);
+    return [
+      ...new Set(
+        allGroupNames
+          .map(name => name.split("-"))
+          .filter(split => split.length > 1)
+          .map(split => split[0]),
+      ),
+    ];
+  }, [allGroupsQuery?.data]);
 
   const onSubmit: SubmitHandler<MetadataFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
@@ -121,10 +132,11 @@ function Metadata() {
 
       setUpload({
         ...upload,
-        uploadDate: upload.timestamp?.toLocaleString() ?? "",
+        uploadDate: upload.timestamp,
         uploadId,
       });
 
+      incrementStepIndex();
       void navigate({ to: "../success" });
     } catch {
       console.error(
@@ -322,13 +334,14 @@ function Metadata() {
   );
 
   return (
-    <>
-      <h4 className="text-base text-giga-gray">Step 1: Upload</h4>
-      <h2 className="text-[23px]">Step 2: Metadata</h2>
-      <p>
-        Please check if any information about the dataset is meant to be
-        updated.
-      </p>
+    <Section>
+      <Section>
+        <Heading>Add Metadata</Heading>
+        <p>
+          Please check if any information about the dataset is meant to be
+          updated.
+        </p>
+      </Section>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack gap={5}>
@@ -381,24 +394,36 @@ function Metadata() {
               required: "Please enter a description",
             })}
           />
-          <div className="flex gap-4">
+
+          <ButtonSet>
             <Button
-              {...(isUploading
-                ? {
-                    disabled: true,
-                    renderIcon: props => (
-                      <Loading small={true} withOverlay={false} {...props} />
-                    ),
-                  }
-                : {})}
-              type="submit"
+              kind="secondary"
+              as={Link}
+              to=".."
+              onClick={decrementStepIndex}
+              className="w-full"
+              renderIcon={ArrowLeft}
+              isExpressive
             >
-              Submit
+              Back
             </Button>
-            <Button kind="tertiary" as={Link} to="..">
-              Cancel
+            <Button
+              disabled={isUploading}
+              renderIcon={
+                isUploading
+                  ? props => (
+                      <Loading small={true} withOverlay={false} {...props} />
+                    )
+                  : ArrowRight
+              }
+              type="submit"
+              className="w-full"
+              isExpressive
+            >
+              Continue
             </Button>
-          </div>
+          </ButtonSet>
+
           {isUploadError && (
             <div className="text-giga-dark-red">
               Error occurred during file upload. Please try again
@@ -406,6 +431,6 @@ function Metadata() {
           )}
         </Stack>
       </form>
-    </>
+    </Section>
   );
 }

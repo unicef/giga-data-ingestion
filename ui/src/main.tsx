@@ -6,7 +6,6 @@ import {
   AuthenticationResult,
   EventMessage,
   EventType,
-  PublicClientApplication,
 } from "@azure/msal-browser";
 import { MsalProvider } from "@azure/msal-react";
 import "@fontsource/open-sans/300.css";
@@ -20,7 +19,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import { AxiosProvider, queryClient } from "@/api";
 import App from "@/app.tsx";
-import { msalConfig } from "@/lib/auth.ts";
+import { msalInstance } from "@/lib/auth.ts";
 import "@/styles/index.scss";
 
 if (import.meta.env.SENTRY_DSN) {
@@ -36,26 +35,24 @@ if (import.meta.env.SENTRY_DSN) {
   });
 }
 
-const auth = new PublicClientApplication(msalConfig);
-
-auth
+msalInstance
   .initialize()
   .then(() => {
-    const accounts = auth.getAllAccounts();
+    const accounts = msalInstance.getAllAccounts();
     if (accounts.length > 0) {
-      auth.setActiveAccount(accounts[0]);
+      msalInstance.setActiveAccount(accounts[0]);
     }
 
-    auth.addEventCallback((event: EventMessage) => {
+    msalInstance.addEventCallback((event: EventMessage) => {
       if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
         const { account } = event.payload as AuthenticationResult;
-        auth.setActiveAccount(account);
+        msalInstance.setActiveAccount(account);
       }
     });
 
     ReactDOM.createRoot(document.getElementById("root")!).render(
       <React.StrictMode>
-        <MsalProvider instance={auth}>
+        <MsalProvider instance={msalInstance}>
           <AxiosProvider>
             <QueryClientProvider client={queryClient}>
               <HelmetProvider>

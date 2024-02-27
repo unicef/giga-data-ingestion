@@ -8,9 +8,8 @@ import {
   HeaderName,
   HeaderNavigation,
 } from "@carbon/react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 
-import gigaLogoBlue from "@/assets/GIGA_logo_blue.png";
 import useLogout from "@/hooks/useLogout.ts";
 import useRoles from "@/hooks/useRoles.ts";
 
@@ -18,6 +17,7 @@ export default function Navbar() {
   const logout = useLogout();
   const account = useAccount();
   const { isPrivileged, hasRoles } = useRoles();
+  const { location } = useRouterState();
 
   return (
     <Header
@@ -26,23 +26,39 @@ export default function Navbar() {
       className="relative"
     >
       <HeaderName as={Link} to="/" prefix="">
-        <img src={gigaLogoBlue} className="h-5/6" alt="Giga" />
-        <span className="ml-1 text-xl font-light">giga</span>
-        <b className="ml-0.5 text-xl">sync</b>
+        <span className="font-light">giga</span>
+        <b>sync</b>
       </HeaderName>
       <AuthenticatedTemplate>
         <HeaderNavigation
           aria-label="Main Navigation"
           aria-labelledby="main-nav-label"
         >
-          <HeaderMenuItem as={Link} to="/upload" disabled={!hasRoles}>
-            Upload file
+          <HeaderMenuItem
+            as={Link}
+            to="/upload"
+            disabled={!hasRoles}
+            isActive={
+              location.pathname.startsWith("/upload") ||
+              location.pathname === "/"
+            }
+          >
+            File uploads
           </HeaderMenuItem>
-          <HeaderMenuItem as={Link} to="/ingest-api" disabled={!hasRoles}>
+          <HeaderMenuItem
+            as={Link}
+            to="/ingest-api"
+            disabled={!hasRoles}
+            isActive={location.pathname.startsWith("/ingest-api")}
+          >
             Ingest API
           </HeaderMenuItem>
           {isPrivileged && (
-            <HeaderMenuItem as={Link} to="/user-management">
+            <HeaderMenuItem
+              as={Link}
+              to="/user-management"
+              isActive={location.pathname.startsWith("/user-management")}
+            >
               User management
             </HeaderMenuItem>
           )}

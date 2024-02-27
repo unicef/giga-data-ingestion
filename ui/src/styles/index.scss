@@ -78,3 +78,11 @@ ul {
 .pagination-nav-right > .cds--pagination-nav__list {
   justify-content: flex-end;
 }
+
+*,
+::before,
+::after {
+  border-width: 0;
+  border-style: solid;
+  border-color: theme("borderColor.DEFAULT");
+}

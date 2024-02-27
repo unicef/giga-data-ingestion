@@ -29,6 +29,7 @@
     icon-interactive: colors.$giga-blue,
     focus: colors.$giga-blue,
     interactive: colors.$giga-blue,
+    use-flexbox-grid: true,
   )
 );
 @use "@carbon/react/scss/components/button/tokens" as button-tokens with (

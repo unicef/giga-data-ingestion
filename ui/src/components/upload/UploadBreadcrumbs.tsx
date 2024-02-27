@@ -17,10 +17,7 @@ export default function UploadBreadcrumbs() {
       label: string;
       path?: string;
       params?: Record<string, string>;
-    }[] = [
-      { label: "Home", path: "/" },
-      { label: "Upload", path: "/upload" },
-    ];
+    }[] = [{ label: "File uploads", path: "/upload" }];
 
     if (uploadGroup && uploadType) {
       breadcrumbItems.push(

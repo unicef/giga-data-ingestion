@@ -8,7 +8,8 @@ interface UploadSlice {
   file: File | null;
   timestamp: Date | null;
   uploadId: string;
-  uploadDate: string;
+  uploadDate: Date | null;
+  stepIndex: number;
 }
 
 interface AppState {
@@ -21,6 +22,8 @@ interface AppActions {
   setUser: (user: User) => void;
   setFullPageLoading: (loading: boolean) => void;
   setUpload: (upload: UploadSlice) => void;
+  incrementStepIndex: () => void;
+  decrementStepIndex: () => void;
   resetUploadState: () => void;
 }
 
@@ -28,7 +31,8 @@ const initialUploadState: UploadSlice = {
   file: null,
   timestamp: null,
   uploadId: "",
-  uploadDate: "",
+  uploadDate: null,
+  stepIndex: 0,
 };
 
 const initialState: AppState = {
@@ -57,6 +61,14 @@ export const useStore = create<AppState & AppActions>()(
         setUpload: (upload: UploadSlice) =>
           set(state => {
             state.upload = upload;
+          }),
+        incrementStepIndex: () =>
+          set(state => {
+            state.upload.stepIndex += 1;
+          }),
+        decrementStepIndex: () =>
+          set(state => {
+            state.upload.stepIndex -= 1;
           }),
         resetUploadState: () =>
           set(state => {
