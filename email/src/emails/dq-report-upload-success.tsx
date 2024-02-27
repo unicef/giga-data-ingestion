@@ -13,15 +13,15 @@ import {
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
-import { DataQualityUploadSuccessProps } from "../types/dq-report";
+import { IDataQualityUploadSuccessProps } from "../types/dq-report";
 
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
-export const DataQualityReportSuccess = ({
+export const DataQualityReportUploadSuccess = ({
   uploadId,
   dataset,
-  uploadedAt,
-}: DataQualityUploadSuccessProps) => {
+  uploadDate,
+}: IDataQualityUploadSuccessProps) => {
   const previewText = "Successful file upload";
 
   return (
@@ -51,7 +51,6 @@ export const DataQualityReportSuccess = ({
 
             <div className="p-6 mx-auto">
               <Heading className="mx-0 my-[30px] p-0 text-2xl font-normal text-giga-green">
-
                 <strong>Your data quality review is in progress</strong>
               </Heading>
               <Text>
@@ -61,12 +60,7 @@ export const DataQualityReportSuccess = ({
                 Dataset: <strong>{dataset}</strong>
               </Text>
               <Text>
-                File Uploaded at{" "}
-                <strong>
-                  {uploadedAt.toLocaleString(undefined, {
-                    timeZoneName: "short",
-                  })}
-                </strong>
+                File Uploaded at <strong>{uploadDate}</strong>
               </Text>
 
               <Hr className="border-gray-4 mx-0 my-6 w-full border border-solid" />
@@ -92,10 +86,12 @@ export const DataQualityReportSuccess = ({
   );
 };
 
-DataQualityReportSuccess.PreviewProps = {
+DataQualityReportUploadSuccess.PreviewProps = {
   uploadId: "NjA5NzUy",
   dataset: "School Geolocation",
-  uploadedAt: new Date(),
-} as DataQualityUploadSuccessProps;
+  uploadDate: new Date().toLocaleString(undefined, {
+    timeZoneName: "short",
+  }),
+} as IDataQualityUploadSuccessProps;
 
-export default DataQualityReportSuccess;
+export default DataQualityReportUploadSuccess;

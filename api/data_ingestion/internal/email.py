@@ -1,8 +1,15 @@
+from typing import Any
+
 import requests
+from azure.communication.email import EmailClient
 from loguru import logger
 from requests import HTTPError, JSONDecodeError
 
-from azure.communication.email import EmailClient
+from data_ingestion.schemas.email import (
+    DataCheckSuccessRenderRequest,
+    EmailRenderRequest,
+    UploadSuccessRenderRequest,
+)
 from data_ingestion.schemas.invitation import InviteEmailRenderRequest
 from data_ingestion.settings import settings
 
@@ -54,3 +61,26 @@ def invite_user(body: InviteEmailRenderRequest):
         subject="Welcome to Giga Sync",
     )
 
+
+def send_upload_success_email(body: EmailRenderRequest[UploadSuccessRenderRequest]):
+    json_dump = body.props.model_dump()
+    json_dump["uploadDate"] = json_dump["uploadDate"].isoformat()
+
+    send_email_base(
+        endpoint="email/dq-report-upload-success",
+        json=json_dump,
+        recepient=body.email,
+        subject=body.subject,
+    )
+
+
+def send_check_success_email(body: EmailRenderRequest[DataCheckSuccessRenderRequest]):
+    json_dump = body.props.model_dump()
+    json_dump["uploadDate"] = json_dump["uploadDate"].isoformat()
+    json_dump["checkDate"] = json_dump["checkDate"].isoformat()
+    send_email_base(
+        endpoint="email/dq-report-check-success",
+        json=json_dump,
+        recepient=body.email,
+        subject=body.subject,
+    )

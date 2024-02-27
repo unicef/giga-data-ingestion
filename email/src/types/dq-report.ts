@@ -1,27 +1,27 @@
 import { z } from "zod";
 
-export interface DataQualityUploadSuccessProps {
+export interface IDataQualityUploadSuccessProps {
   uploadId: string;
   dataset: string;
-  uploadedAt: Date;
+  uploadDate: string;
 }
 
 export const DataQualityUploadSuccessProps = z.object({
   uploadId: z.string(),
   dataset: z.string(),
-  uploadedAt: z.date(),
+  uploadDate: z.string(),
 });
 
-export interface DataQualityCheckSuccessProps {
+export interface IDataQualityCheckSuccessProps {
   uploadId: string;
   dataset: string;
-  uploadedAt: Date;
-  checkedAt: Date;
+  uploadDate: string;
+  checkDate: string;
 }
 
 export const DataQualityCheckSuccessProps = z.object({
   uploadId: z.string(),
   dataset: z.string(),
-  uploadedAt: z.date(),
-  checkedAt: z.date(),
+  uploadDate: z.string(),
+  checkDate: z.string(),
 });

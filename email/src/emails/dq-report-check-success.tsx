@@ -13,16 +13,16 @@ import {
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
-import { DataQualityCheckSuccessProps } from "../types/dq-report";
+import { IDataQualityCheckSuccessProps } from "../types/dq-report";
 
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
-export const DataQualityReportSuccess = ({
+export const DataQualityReportCheckSuccess = ({
   uploadId,
   dataset,
-  uploadedAt,
-  checkedAt,
-}: DataQualityCheckSuccessProps) => {
+  uploadDate,
+  checkDate,
+}: IDataQualityCheckSuccessProps) => {
   const previewText = "Successful file upload";
 
   return (
@@ -62,21 +62,11 @@ export const DataQualityReportSuccess = ({
                 Dataset: <strong>{dataset}</strong>
               </Text>
               <Text>
-                File Uploaded at{" "}
-                <strong>
-                  {uploadedAt.toLocaleString(undefined, {
-                    timeZoneName: "short",
-                  })}
-                </strong>
+                File Uploaded at <strong>{uploadDate}</strong>
               </Text>
 
               <Text>
-                Checks performed at{" "}
-                <strong>
-                  {uploadedAt.toLocaleString(undefined, {
-                    timeZoneName: "short",
-                  })}
-                </strong>
+                Checks performed at <strong>{checkDate}</strong>
               </Text>
 
               <Hr className="border-gray-4 mx-0 my-6 w-full border border-solid" />
@@ -102,11 +92,15 @@ export const DataQualityReportSuccess = ({
   );
 };
 
-DataQualityReportSuccess.PreviewProps = {
+DataQualityReportCheckSuccess.PreviewProps = {
   uploadId: "NjA5NzUy",
   dataset: "School Geolocation",
-  uploadedAt: new Date(),
-  checkedAt: new Date(),
-} as DataQualityCheckSuccessProps;
+  uploadDate: new Date().toLocaleString(undefined, {
+    timeZoneName: "short",
+  }),
+  checkDate: new Date().toLocaleString(undefined, {
+    timeZoneName: "short",
+  }),
+} as IDataQualityCheckSuccessProps;
 
-export default DataQualityReportSuccess;
+export default DataQualityReportCheckSuccess;

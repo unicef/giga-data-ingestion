@@ -8,7 +8,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from data_ingestion.constants import __version__
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
-from data_ingestion.routers import core, groups, upload, users, utils
+from data_ingestion.routers import core, email, groups, upload, users, utils
 from data_ingestion.settings import initialize_sentry, settings
 
 initialize_sentry()
@@ -49,6 +49,7 @@ async def load_config():
 
 
 app.include_router(core.router)
+app.include_router(email.router)
 app.include_router(upload.router)
 app.include_router(users.router)
 app.include_router(groups.router)
