@@ -21,6 +21,10 @@ export enum SendQueryInEnum {
 
 export interface SchoolListResponse {
   id: string;
+  date_created: Date;
+  date_modified: Date;
+  name: string;
+
   api_auth_api_key: string;
   api_auth_api_value: string;
   api_endpoint: string;
@@ -28,10 +32,6 @@ export interface SchoolListResponse {
   basic_auth_password: string;
   basic_auth_username: string;
   bearer_auth_bearer_token: string;
-  data_key: string;
-  date_created: Date;
-  date_modified: Date;
-  enabled: boolean;
   page_number_key: string;
   page_offset_key: string;
   page_size_key: string;
@@ -40,12 +40,15 @@ export interface SchoolListResponse {
   query_parameters: string;
   request_body: string;
   request_method: RequestMethodEnum;
+  data_key: string;
   school_id_key: string;
   send_query_in: SendQueryInEnum;
   size: number;
-  status: boolean;
   user_email: string;
   user_id: string;
+
+  status: boolean;
+  enabled: boolean;
 }
 
 export interface PagedSchoolListResponse {
@@ -54,4 +57,39 @@ export interface PagedSchoolListResponse {
   per_page: string;
   total_items: string;
   total_pages: string;
+}
+
+export interface SchoolListFormValues {
+  // metadata
+  // id: string;
+  // date_created: Date;
+  // date_modified: Date;
+  name: string;
+
+  // provided by me
+
+  apiAuthApiKey: string | null;
+  apiAuthApiValue: string | null;
+  apiEndpoint: string;
+
+  authType: AuthorizationTypeEnum;
+  basicAuthPassword: string | null;
+  basicAuthUsername: string | null;
+  bearerAuthBearerToken: string | null;
+  // page_number_key: string| null;
+  // page_offset_key: string| null;
+  // page_size_key: string| null;
+  // page_starts_with: number| null;
+  pagination_type: PaginationTypeEnum | null;
+  // query_parameters: string;
+  // request_body: string;
+  requestMethod: RequestMethodEnum;
+  // data_key: string;
+  // school_id_key: string;
+  // send_query_in: SendQueryInEnum;
+  // size: number;
+  userEmail: string;
+  userId: string;
+
+  // needed but in database
 }

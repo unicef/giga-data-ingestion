@@ -21,11 +21,11 @@ class SchoolListSchema(BaseModel):
     request_body: str
     authorization_type: AuthorizationTypeEnum
 
-    bearer_auth_bearer_token: str
-    basic_auth_username: str
-    basic_auth_password: str
-    api_auth_api_key: str
-    api_auth_api_value: str
+    bearer_auth_bearer_token: str | None
+    basic_auth_username: str | None
+    basic_auth_password: str | None
+    api_auth_api_key: str | None
+    api_auth_api_value: str | None
 
     pagination_type: PaginationTypeEnum
     size: int
