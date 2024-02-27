@@ -3,26 +3,22 @@ import {
   EndSessionRequest,
   LogLevel,
   PopupRequest,
+  PublicClientApplication,
 } from "@azure/msal-browser";
 
 const {
   VITE_AZURE_CLIENT_ID: AZURE_CLIENT_ID,
   VITE_AZURE_TENANT_NAME: AZURE_TENANT_NAME,
   VITE_AZURE_SUSI_AUTH_POLICY_NAME: B2C_SUSI_POLICY_NAME,
-  VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME: B2C_PASSWORD_RESET_POLICY_NAME,
 } = import.meta.env;
 
 export const b2cPolicies = {
   names: {
     signUpSignIn: B2C_SUSI_POLICY_NAME,
-    forgotPassword: B2C_PASSWORD_RESET_POLICY_NAME,
   },
   authorities: {
     signUpSignIn: {
       authority: `https://${AZURE_TENANT_NAME}.b2clogin.com/${AZURE_TENANT_NAME}.onmicrosoft.com/${B2C_SUSI_POLICY_NAME}`,
-    },
-    forgotPassword: {
-      authority: `https://${AZURE_TENANT_NAME}.b2clogin.com/${AZURE_TENANT_NAME}.onmicrosoft.com/${B2C_PASSWORD_RESET_POLICY_NAME}`,
     },
   },
   authorityDomain: `${AZURE_TENANT_NAME}.b2clogin.com`,
@@ -82,4 +78,4 @@ export const logoutRequest: EndSessionRequest = {
   postLogoutRedirectUri: "/",
 };
 
-export const AAD_B2C_FORGOT_PASSWORD_ERROR = "AADB2C90118";
+export const msalInstance = new PublicClientApplication(msalConfig);

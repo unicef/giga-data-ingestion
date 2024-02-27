@@ -1,8 +1,10 @@
 import { CheckmarkOutline } from "@carbon/icons-react";
 import { Button } from "@carbon/react";
 import { Link, createFileRoute, redirect } from "@tanstack/react-router";
+import { format } from "date-fns";
 
-import { useStore } from "@/context/store";
+import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
+import { useStore } from "@/store.ts";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/success",
@@ -35,11 +37,14 @@ function Success() {
         Data quality checks will now be performed on your upload; you may check
         the progress and output of the checks on the File Uploads page. To check
         this upload in the future, it has Upload ID <b>{upload.uploadId}</b> and
-        completed at <b>{upload.uploadDate}</b>
+        completed at{" "}
+        <b>
+          {format(upload.uploadDate ?? new Date(), DEFAULT_DATETIME_FORMAT)}
+        </b>
       </p>
       <p>You may now safely close this page</p>
       <div>
-        <Button as={Link} to="/" onClick={resetUploadState}>
+        <Button as={Link} to="/" onClick={resetUploadState} isExpressive>
           Back to Home
         </Button>
       </div>

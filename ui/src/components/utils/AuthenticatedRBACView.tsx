@@ -1,29 +1,26 @@
 import { PropsWithChildren, useMemo } from "react";
 
-import { useAccount } from "@azure/msal-react";
-
 import AuthenticatedView from "@/components/utils/AuthenticatedView.tsx";
 import Forbidden from "@/components/utils/Forbidden.tsx";
+import useRoles from "@/hooks/useRoles.ts";
 
 interface AuthenticatedRBACViewProps extends PropsWithChildren {
-  roles: string[];
+  roles?: string[];
 }
 
 function AuthenticatedRBACView({
   roles = [],
   children,
 }: AuthenticatedRBACViewProps) {
-  const idTokenClaims = useAccount()?.idTokenClaims ?? {};
+  const { roles: userRoles } = useRoles();
 
   const hasPermissions = useMemo(() => {
-    const groups = (idTokenClaims.groups ?? []) as string[];
-
     if (roles.length === 0) {
-      return groups.length > 0;
+      return userRoles.length > 0;
     } else {
-      return roles.some(role => groups.includes(role));
+      return roles.some(role => userRoles.includes(role));
     }
-  }, [idTokenClaims.groups, roles]);
+  }, [roles, userRoles]);
 
   return (
     <AuthenticatedView>

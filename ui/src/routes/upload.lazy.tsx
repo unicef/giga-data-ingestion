@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 
+import { Column, Grid, Stack } from "@carbon/react";
 import { Outlet, createLazyFileRoute } from "@tanstack/react-router";
 
 import UploadBreadcrumbs from "@/components/upload/UploadBreadcrumbs.tsx";
@@ -21,10 +22,14 @@ function UploadLayout() {
 
   return (
     <AuthenticatedRBACView>
-      <div className="container flex flex-col gap-4 py-6">
-        <UploadBreadcrumbs />
-        <Outlet />
-      </div>
+      <Grid>
+        <Column lg={16} className="py-6">
+          <Stack gap={6}>
+            <UploadBreadcrumbs />
+            <Outlet />
+          </Stack>
+        </Column>
+      </Grid>
     </AuthenticatedRBACView>
   );
 }

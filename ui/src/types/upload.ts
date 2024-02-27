@@ -78,10 +78,3 @@ export interface UploadResponse {
   original_filename: string;
   upload_path: string;
 }
-export interface PagedUploadResponse {
-  data: UploadResponse[];
-  page_index: string;
-  per_page: string;
-  total_items: string;
-  total_pages: string;
-}
