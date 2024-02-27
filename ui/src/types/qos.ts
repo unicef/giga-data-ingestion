@@ -76,18 +76,18 @@ export interface SchoolListFormValues {
   basicAuthPassword: string | null;
   basicAuthUsername: string | null;
   bearerAuthBearerToken: string | null;
-  // page_number_key: string| null;
-  // page_offset_key: string| null;
-  // page_size_key: string| null;
-  // page_starts_with: number| null;
-  pagination_type: PaginationTypeEnum | null;
-  // query_parameters: string;
-  // request_body: string;
+  pageNumberKey: string | null;
+  pageOffsetKey: string | null;
+  pageSizeKey: string | null;
+  pageStartsWith: number | null;
+  paginationType: PaginationTypeEnum | null | "none";
+  queryParamters: string | null;
+  requestBody: string | null;
   requestMethod: RequestMethodEnum;
   // data_key: string;
   // school_id_key: string;
-  // send_query_in: SendQueryInEnum;
-  // size: number;
+  sendQueryIn: SendQueryInEnum;
+  size: number | null;
   userEmail: string;
   userId: string;
 

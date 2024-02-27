@@ -15,12 +15,15 @@ import { Outlet } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { Select } from "@/components/forms/Select";
+import ControllerNumberInputSchoolList from "@/components/upload/ControllerNumberInputSchoolList";
 // import { TextInput } from "@/components/forms/TextInput";
 // import { z } from "zod";
 import {
   AuthorizationTypeEnum,
+  PaginationTypeEnum,
   RequestMethodEnum,
   SchoolListFormValues,
+  SendQueryInEnum,
 } from "@/types/qos";
 
 // import type { json } from "../../../types/json";
@@ -33,6 +36,8 @@ function AddIngestion() {
   // const { schoolList, setSchoolList } = useQosStore();
 
   const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
+  const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
+  const { BODY, QUERY_PARAMETERS } = SendQueryInEnum;
 
   const {
     handleSubmit,
@@ -40,7 +45,7 @@ function AddIngestion() {
     register,
     resetField,
     watch,
-    // control,
+    control,
 
     formState: { errors },
   } = useForm<SchoolListFormValues>({
@@ -49,16 +54,28 @@ function AddIngestion() {
     defaultValues: {
       name: "someName", // remove this after dev
       requestMethod: RequestMethodEnum.GET, // remove this after dev
+      authType: AuthorizationTypeEnum.BEARER_TOKEN, // remove this after dev
       apiEndpoint: "myEndpoint", // remove this after dev
+
+      paginationType: null,
+      pageNumberKey: null,
+      pageOffsetKey: null,
+      pageSizeKey: null,
+      pageStartsWith: null,
       apiAuthApiKey: null,
       apiAuthApiValue: null,
       basicAuthUsername: null,
       basicAuthPassword: null,
       bearerAuthBearerToken: null,
+      size: null,
+      queryParamters: null,
+      requestBody: null,
     },
   });
 
   const watchAuthType = watch("authType");
+  const watchPaginationType = watch("paginationType");
+  const watchSendQueryIn = watch("sendQueryIn");
 
   useEffect(() => {
     resetField("apiAuthApiKey");
@@ -66,6 +83,12 @@ function AddIngestion() {
     resetField("basicAuthUsername");
     resetField("basicAuthPassword");
     resetField("bearerAuthBearerToken");
+    resetField("pageNumberKey");
+    resetField("pageOffsetKey");
+    resetField("pageStartsWith");
+    resetField("size");
+    resetField("queryParamters");
+    resetField("requestBody");
   }, [watchAuthType, resetField]);
 
   const {
@@ -107,6 +130,12 @@ function AddIngestion() {
 
     const user = users.find(user => user.id === data.userId);
 
+    console.log(data.pageStartsWith);
+    let paginationType = data.paginationType;
+
+    if (data.paginationType === "none") paginationType = null;
+
+    console.log(paginationType);
     console.log(
       `submitting user with email ${user?.mail} with user id ${data.userId}`,
     );
@@ -185,6 +214,7 @@ function AddIngestion() {
                   <Button size="md">hello world</Button>
                 </div>
               </div>
+
               <Select
                 id="authType"
                 invalid={!!errors.authType}
@@ -200,8 +230,6 @@ function AddIngestion() {
                   />
                 ))}
               </Select>
-              {/* )}
-            /> */}
 
               {watchAuthType === API_KEY && (
                 <>
@@ -256,16 +284,97 @@ function AddIngestion() {
                   />
                 </>
               )}
-              {/*
 
-            
-                  
+              <Select
+                id="paginationType"
+                invalid={!!errors.paginationType}
+                labelText="Pagination Method"
+                {...register("paginationType", { required: true })}
+              >
+                <SelectItem value="none" text="None" />
+                {Object.keys(PaginationTypeEnum).map(paginationType => (
+                  <SelectItem
+                    key={paginationType}
+                    text={paginationType.replace(/_/g, " ")}
+                    value={paginationType}
+                  />
+                ))}
+              </Select>
 
-      
-          
-            {/*
-              TODO: JSON VALIDATION
-            */}
+              {watchPaginationType === LIMIT_OFFSET && (
+                <>
+                  <TextInput
+                    id="pageNumberKey"
+                    invalid={!!errors.pageNumberKey}
+                    labelText="Page number"
+                    placeholder="Input Page number"
+                    {...register("pageNumberKey", { required: true })}
+                  />
+                  <TextInput
+                    id="pageOffsetKey"
+                    invalid={!!errors.pageOffsetKey}
+                    labelText="Page Offset"
+                    placeholder="Input Page Offset"
+                    {...register("pageOffsetKey", { required: true })}
+                  />
+                </>
+              )}
+
+              {watchPaginationType === PAGE_NUMBER && (
+                <>
+                  <TextInput
+                    id="pageSizeKey"
+                    invalid={!!errors.pageSizeKey}
+                    labelText="Page size key"
+                    placeholder="Input Page size key"
+                    {...register("pageSizeKey", { required: true })}
+                  />
+                  <ControllerNumberInputSchoolList
+                    control={control}
+                    name="pageStartsWith"
+                    numberInputProps={{
+                      id: "pageStartsWith",
+                      label: <span>Page Starts With</span>,
+                    }}
+                  />
+                </>
+              )}
+
+              <Select
+                id="sendQueryIn"
+                invalid={!!errors.sendQueryIn}
+                labelText="Send query in"
+                {...register("sendQueryIn", { required: true })}
+              >
+                {Object.keys(SendQueryInEnum).map(sendQueryIn => (
+                  <SelectItem
+                    key={sendQueryIn}
+                    text={sendQueryIn.replace(/_/g, " ")}
+                    value={sendQueryIn}
+                  />
+                ))}
+              </Select>
+
+              {watchSendQueryIn === QUERY_PARAMETERS && (
+                <TextArea
+                  id="queryParamters"
+                  invalid={!!errors.queryParamters}
+                  labelText="Query parameters"
+                  placeholder="Input query parameters"
+                  {...register("queryParamters", { required: true })}
+                />
+              )}
+
+              {watchSendQueryIn === BODY && (
+                <TextArea
+                  id="requestBody"
+                  invalid={!!errors.requestBody}
+                  labelText="Request body"
+                  placeholder="Input request body"
+                  {...register("requestBody", { required: true })}
+                />
+              )}
+
               <TextArea
                 id="requestBody"
                 helperText="Click on the plus icon when adding a variable"
@@ -275,7 +384,8 @@ function AddIngestion() {
               />
               <Button type="submit">Submit</Button>
             </section>
-            <aside>JSON display here</aside>
+            {/* <aside>{JSON.stringify(usersQuery?.data)}</aside> */}
+            <aside>actual data</aside>
           </section>
         </form>
         <Outlet />
