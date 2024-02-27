@@ -4,7 +4,7 @@ import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { format } from "date-fns";
 
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
-import { useStore } from "@/store.ts";
+import { useStore } from "@/context/store";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/success",
