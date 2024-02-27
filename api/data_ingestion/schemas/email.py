@@ -8,7 +8,6 @@ DataT = TypeVar("DataT")
 
 class EmailRenderRequest(BaseModel, Generic[DataT]):
     email: str
-    subject: str
     props: DataT
 
 

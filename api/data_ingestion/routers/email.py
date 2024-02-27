@@ -30,7 +30,6 @@ async def send_upload_success_email(
         email.send_upload_success_email,
         EmailRenderRequest[UploadSuccessRenderRequest](
             email=body.email,
-            subject=body.subject,
             props=props,
         ),
     )
@@ -53,7 +52,6 @@ async def send_check_success_email(
         email.send_check_success_email,
         EmailRenderRequest[DataCheckSuccessRenderRequest](
             email=body.email,
-            subject=body.subject,
             props=props,
         ),
     )

@@ -70,7 +70,7 @@ def send_upload_success_email(body: EmailRenderRequest[UploadSuccessRenderReques
         endpoint="email/dq-report-upload-success",
         json=json_dump,
         recepient=body.email,
-        subject=body.subject,
+        subject="Successfuly uploaded file",
     )
 
 
@@ -82,5 +82,5 @@ def send_check_success_email(body: EmailRenderRequest[DataCheckSuccessRenderRequ
         endpoint="email/dq-report-check-success",
         json=json_dump,
         recepient=body.email,
-        subject=body.subject,
+        subject="Data checks successfully passed",
     )

@@ -23,7 +23,7 @@ export const DataQualityReportCheckSuccess = ({
   uploadDate,
   checkDate,
 }: IDataQualityCheckSuccessProps) => {
-  const previewText = "Successful file upload";
+  const previewText = "Successful data quality checks";
 
   return (
     <Html>
