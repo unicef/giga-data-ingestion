@@ -11,6 +11,7 @@ import {
 import {
   Button,
   DataTable,
+  DataTableHeader,
   DataTableSkeleton,
   SelectItem,
   Table,
@@ -33,7 +34,7 @@ import { useApi } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import { GraphUser } from "@/types/user.ts";
 
-const columns = [
+const columns: DataTableHeader[] = [
   {
     key: "surname",
     header: "Surname",
