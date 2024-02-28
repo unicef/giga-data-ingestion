@@ -15,7 +15,6 @@ export enum RequestMethodEnum {
 
 export enum SendQueryInEnum {
   BODY = "BODY",
-  HEADERS = "HEADERS",
   QUERY_PARAMETERS = "QUERY_PARAMETERS",
 }
 

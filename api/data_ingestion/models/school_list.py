@@ -28,7 +28,6 @@ class PaginationTypeEnum(enum.Enum):
 class SendQueryInEnum(enum.Enum):
     BODY = "BODY"
     QUERY_PARAMETERS = "QUERY_PARAMETERS"
-    HEADERS = "HEADERS"
 
 
 class SchoolList(BaseModel):

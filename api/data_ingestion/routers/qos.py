@@ -54,7 +54,7 @@ async def create_mock_school_lists(
             pagination_type=random.choice(["PAGE_NUMBER", "LIMIT_OFFSET"]),
             size=23,
             page_size_key="1qdweqew",
-            send_query_in=random.choice(["HEADERS", "QUERY_PARAMETERS", "BODY"]),
+            send_query_in=random.choice(["QUERY_PARAMETERS", "BODY"]),
             page_number_key="asdasd",
             page_starts_with=123,
             page_offset_key="asdfasdf",
