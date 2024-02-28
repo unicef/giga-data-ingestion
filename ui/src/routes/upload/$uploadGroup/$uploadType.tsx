@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
-import { useStore } from "@/store.ts";
+import { useStore } from "@/context/store.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
   component: Layout,
