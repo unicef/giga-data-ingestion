@@ -2,11 +2,13 @@ export enum AuthorizationTypeEnum {
   API_KEY = "API_KEY",
   BASIC_AUTH = "BASIC_AUTH",
   BEARER_TOKEN = "BEARER_TOKEN",
+  NONE = "NONE",
 }
 
 export enum PaginationTypeEnum {
   LIMIT_OFFSET = "LIMIT_OFFSET",
   PAGE_NUMBER = "PAGE_NUMBER",
+  NONE = "NONE",
 }
 export enum RequestMethodEnum {
   GET = "GET",
@@ -16,6 +18,7 @@ export enum RequestMethodEnum {
 export enum SendQueryInEnum {
   BODY = "BODY",
   QUERY_PARAMETERS = "QUERY_PARAMETERS",
+  NONE = "NONE",
 }
 
 export interface SchoolListResponse {
@@ -90,3 +93,30 @@ export interface SchoolListFormValues {
   userEmail: string;
   userId: string;
 }
+
+export const initialSchoolListFormValues: SchoolListFormValues = {
+  name: "",
+
+  apiAuthApiKey: null,
+  apiAuthApiValue: null,
+  apiEndpoint: "",
+
+  authType: AuthorizationTypeEnum.API_KEY,
+  basicAuthPassword: null,
+  basicAuthUsername: null,
+  bearerAuthBearerToken: null,
+  pageNumberKey: null,
+  pageOffsetKey: null,
+  pageSizeKey: null,
+  pageStartsWith: null,
+  paginationType: PaginationTypeEnum.NONE,
+  queryParamters: null,
+  requestBody: null,
+  requestMethod: RequestMethodEnum.GET,
+  dataKey: "",
+  schoolIdKey: "",
+  sendQueryIn: SendQueryInEnum.BODY,
+  size: null,
+  userEmail: "",
+  userId: "",
+};

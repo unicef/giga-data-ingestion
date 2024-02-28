@@ -9,32 +9,35 @@ from sqlalchemy.sql import func
 from .base import BaseModel
 
 
-class RequestMethodEnum(enum.Enum):
-    POST = "POST"
-    GET = "GET"
-
-
 class AuthorizationTypeEnum(enum.Enum):
     BEARER_TOKEN = "BEARER_TOKEN"
     BASIC_AUTH = "BASIC_AUTH"
     API_KEY = "API_KEY"
+    NONE = "NONE"
 
 
 class PaginationTypeEnum(enum.Enum):
     PAGE_NUMBER = "PAGE_NUMBER"
     LIMIT_OFFSET = "LIMIT_OFFSET"
+    NONE = "NONE"
+
+
+class RequestMethodEnum(enum.Enum):
+    POST = "POST"
+    GET = "GET"
 
 
 class SendQueryInEnum(enum.Enum):
     BODY = "BODY"
     QUERY_PARAMETERS = "QUERY_PARAMETERS"
+    NONE = "NONE"
 
 
 class SchoolList(BaseModel):
     __tablename__ = "qos_school_list"
 
     request_method: Mapped[RequestMethodEnum] = mapped_column(
-        Enum(RequestMethodEnum), nullable=False
+        Enum(RequestMethodEnum), default=RequestMethodEnum.GET, nullable=False
     )
     api_endpoint: Mapped[str] = mapped_column(nullable=False)
     data_key: Mapped[str] = mapped_column()
@@ -43,7 +46,7 @@ class SchoolList(BaseModel):
     query_parameters: Mapped[str] = mapped_column()
     request_body: Mapped[str] = mapped_column()
     authorization_type: Mapped[AuthorizationTypeEnum] = mapped_column(
-        Enum(AuthorizationTypeEnum)
+        Enum(AuthorizationTypeEnum), default=AuthorizationTypeEnum.NONE, nullable=False
     )
     bearer_auth_bearer_token: Mapped[str] = mapped_column()
     basic_auth_username: Mapped[str] = mapped_column()
@@ -52,11 +55,13 @@ class SchoolList(BaseModel):
     api_auth_api_value: Mapped[str] = mapped_column()
 
     pagination_type: Mapped[PaginationTypeEnum] = mapped_column(
-        Enum(PaginationTypeEnum)
+        Enum(PaginationTypeEnum), default=PaginationTypeEnum.NONE, nullable=False
     )
     size: Mapped[int] = mapped_column()
     page_size_key: Mapped[str] = mapped_column()
-    send_query_in: Mapped[SendQueryInEnum] = mapped_column(Enum(SendQueryInEnum))
+    send_query_in: Mapped[SendQueryInEnum] = mapped_column(
+        Enum(SendQueryInEnum), default=SendQueryInEnum.NONE, nullable=False
+    )
 
     page_number_key: Mapped[str] = mapped_column()
     page_starts_with: Mapped[int] = mapped_column()
