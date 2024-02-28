@@ -101,7 +101,7 @@ export const initialSchoolListFormValues: SchoolListFormValues = {
   apiAuthApiValue: null,
   apiEndpoint: "",
 
-  authType: AuthorizationTypeEnum.API_KEY,
+  authType: AuthorizationTypeEnum.NONE,
   basicAuthPassword: null,
   basicAuthUsername: null,
   bearerAuthBearerToken: null,
@@ -115,7 +115,7 @@ export const initialSchoolListFormValues: SchoolListFormValues = {
   requestMethod: RequestMethodEnum.GET,
   dataKey: "",
   schoolIdKey: "",
-  sendQueryIn: SendQueryInEnum.BODY,
+  sendQueryIn: SendQueryInEnum.NONE,
   size: null,
   userEmail: "",
   userId: "",

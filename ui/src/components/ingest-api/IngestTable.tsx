@@ -122,9 +122,6 @@ function IngestTable() {
       // TODO: REPLACE THIS WITH ACTUAL LAST RUN
       const lastRun = new Date(schoolList.date_modified).toLocaleString();
 
-      // TODO: REPLACE WITH ACTUAL DATA:
-      const name = faker.finance.accountName();
-
       const nextRun = new Date(
         new Date(schoolList.date_modified).setMinutes(
           new Date(schoolList.date_modified).getMinutes() +
@@ -134,7 +131,7 @@ function IngestTable() {
 
       return {
         id: schoolList.id,
-        name: name,
+        name: schoolList.name,
         endpoint: schoolList.api_endpoint,
         frequency: FREQUENCY_IN_MINUTES,
         lastRunConnectivity: lastRun,
@@ -167,7 +164,7 @@ function IngestTable() {
             renderIcon={Tools}
             size="sm"
             as={Link}
-            to="./ingestion/edit/$ingestionId"
+            to="./edit/$ingestionId"
             params={{ ingestionId: schoolList.id }}
           >
             Edit
@@ -195,7 +192,7 @@ function IngestTable() {
                 }}
                 disabled={isSchoolListRefetching}
               />
-              <Button renderIcon={Add} as={Link} to="./ingestion/add">
+              <Button renderIcon={Add} as={Link} to="./add">
                 Create New Ingestion
               </Button>
             </TableToolbarContent>

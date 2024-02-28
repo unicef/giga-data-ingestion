@@ -28,7 +28,11 @@ const ControllerNumberInputSchoolList = ({
     <NumberInput
       invalid={fieldState.invalid}
       onChange={(_, value) => {
-        field.onChange(value.value);
+        field.onChange(
+          typeof value.value === "string"
+            ? parseInt(value.value, 10)
+            : value.value,
+        );
       }}
       {...numberInputProps}
     />

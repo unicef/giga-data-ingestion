@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
+import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
   Button,
+  ButtonSet,
   Section,
   SelectItem,
   Stack,
@@ -10,15 +12,18 @@ import {
   TextInput,
 } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { Outlet } from "@tanstack/react-router";
+import {
+  Link,
+  Outlet,
+  createFileRoute,
+  useNavigate,
+} from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { Select } from "@/components/forms/Select";
 import ControllerNumberInputSchoolList from "@/components/upload/ControllerNumberInputSchoolList";
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView";
-// import { TextInput } from "@/components/forms/TextInput";
-// import { z } from "zod";
+import { useQosStore } from "@/context/apiIngestionStore";
 import {
   AuthorizationTypeEnum,
   PaginationTypeEnum,
@@ -27,14 +32,15 @@ import {
   SendQueryInEnum,
 } from "@/types/qos";
 
-// import type { json } from "../../../types/json";
-
-export const Route = createFileRoute("/ingest-api/ingestion/add")({
+export const Route = createFileRoute("/ingest-api/add/")({
   component: AddIngestion,
 });
 
 function AddIngestion() {
-  // const { schoolList, setSchoolList } = useQosStore();
+  const { setSchoolListFormValues, incrementStepIndex, resetQosState } =
+    useQosStore();
+
+  const navigate = useNavigate({ from: Route.fullPath });
 
   const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
   const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
@@ -42,7 +48,6 @@ function AddIngestion() {
 
   const {
     handleSubmit,
-
     register,
     resetField,
     watch,
@@ -106,46 +111,15 @@ function AddIngestion() {
 
   const users = usersQuery?.data ?? [];
 
-  // const stringToJSONSchema = z
-  //   .string()
-  //   .transform((str, ctx): z.infer<ReturnType<typeof json>> => {
-  //     try {
-  //       const json = JSON.parse(str);
-
-  //       setValidJson(true);
-
-  //       return json;
-  //     } catch (e) {
-  //       console.log("setting error");
-  //       ctx.addIssue({ code: "custom", message: "Invalid JSON" });
-  //       console.log("setting error2");
-
-  //       setValidJson(false);
-  //       return z.NEVER;
-  //     }
-  //   });
-
   const onSubmit: SubmitHandler<SchoolListFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
       console.log("Form has errors, not submitting");
       return;
     }
 
-    const user = users.find(user => user.id === data.userId);
-
-    console.log(data.pageStartsWith);
-    let paginationType = data.paginationType;
-
-    if (data.paginationType === "none") paginationType = null;
-
-    console.log(paginationType);
-    console.log(
-      `submitting user with email ${user?.mail} with user id ${data.userId}`,
-    );
-
-    console.log(data);
-
-    // set other fields to none ok?
+    setSchoolListFormValues(data);
+    incrementStepIndex();
+    void navigate({ to: "./column-mapping" });
   };
 
   if (isUsersLoading) return <div>SKELETON</div>;
@@ -180,7 +154,7 @@ function AddIngestion() {
                   id="userId"
                   disabled={isUsersRefetching}
                   helperText="Who will be the designated point person responsible for this ingestion?"
-                  invalid={!!errors.requestMethod}
+                  invalid={!!errors.userId}
                   labelText="Owner"
                   {...register("userId", { required: true })}
                 >
@@ -221,7 +195,7 @@ function AddIngestion() {
                     {...register("apiEndpoint", { required: true })}
                   />
                   <div className="bottom-px">
-                    <Button size="md">hello world</Button>
+                    <Button size="md">Test</Button>
                   </div>
                 </div>
 
@@ -306,7 +280,6 @@ function AddIngestion() {
                   labelText="Pagination Method"
                   {...register("paginationType", { required: true })}
                 >
-                  <SelectItem value="none" text="None" />
                   {Object.keys(PaginationTypeEnum).map(paginationType => (
                     <SelectItem
                       key={paginationType}
@@ -317,39 +290,64 @@ function AddIngestion() {
                 </Select>
                 {watchPaginationType === LIMIT_OFFSET && (
                   <>
+                    <ControllerNumberInputSchoolList
+                      control={control}
+                      name="size"
+                      numberInputProps={{
+                        id: "size",
+                        label: <span>Records per page</span>,
+                      }}
+                    />
                     <TextInput
-                      id="pageNumberKey"
-                      invalid={!!errors.pageNumberKey}
-                      labelText="Page number"
-                      placeholder="Input Page number"
-                      {...register("pageNumberKey", { required: true })}
+                      id="pageSizeKey"
+                      invalid={!!errors.pageSizeKey}
+                      labelText="Page size key"
+                      placeholder="Input page size key"
+                      {...register("pageSizeKey", { required: true })}
                     />
                     <TextInput
                       id="pageOffsetKey"
                       invalid={!!errors.pageOffsetKey}
-                      labelText="Page Offset"
-                      placeholder="Input Page Offset"
+                      labelText="Page Offset key"
+                      placeholder="Input Page Offset key"
                       {...register("pageOffsetKey", { required: true })}
                     />
                   </>
                 )}
                 {watchPaginationType === PAGE_NUMBER && (
                   <>
+                    <ControllerNumberInputSchoolList
+                      control={control}
+                      name="size"
+                      numberInputProps={{
+                        id: "size",
+                        label: <span>Records per page</span>,
+                      }}
+                    />
                     <TextInput
                       id="pageSizeKey"
                       invalid={!!errors.pageSizeKey}
                       labelText="Page size key"
-                      placeholder="Input Page size key"
+                      placeholder="Input page size key"
                       {...register("pageSizeKey", { required: true })}
                     />
-                    <ControllerNumberInputSchoolList
-                      control={control}
-                      name="pageStartsWith"
-                      numberInputProps={{
-                        id: "pageStartsWith",
-                        label: <span>Page Starts With</span>,
-                      }}
+                    <TextInput
+                      id="pageNumberKey"
+                      invalid={!!errors.pageNumberKey}
+                      labelText="Page number key"
+                      placeholder="Input page number key"
+                      {...register("pageNumberKey", { required: true })}
                     />
+
+                    <Select
+                      id="pageStartsWith"
+                      invalid={!!errors.pageStartsWith}
+                      labelText="Page Starts with"
+                      {...register("pageStartsWith", { required: true })}
+                    >
+                      <SelectItem key="0" text="0" value={0} />
+                      <SelectItem key="1" text="1" value={1} />
+                    </Select>
                   </>
                 )}
                 <Select
@@ -385,7 +383,27 @@ function AddIngestion() {
                   />
                 )}
 
-                <Button type="submit">Submit</Button>
+                <ButtonSet className="w-full">
+                  <Button
+                    as={Link}
+                    className="w-full"
+                    isExpressive
+                    kind="secondary"
+                    renderIcon={ArrowLeft}
+                    to="/ingest-api"
+                    onClick={resetQosState}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="w-full"
+                    isExpressive
+                    renderIcon={ArrowRight}
+                    type="submit"
+                  >
+                    Proceed
+                  </Button>
+                </ButtonSet>
               </section>
             </section>
             {/* <aside>{JSON.stringify(usersQuery?.data)}</aside> */}

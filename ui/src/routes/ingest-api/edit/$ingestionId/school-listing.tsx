@@ -3,19 +3,19 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { api, queryClient } from "@/api";
 
-export const Route = createFileRoute("/ingest-api/ingestion/edit/$ingestionId")(
-  {
-    component: EditIngestion,
-    loader: ({ params: { ingestionId } }) => {
-      const schoolListQueryOptions = queryOptions({
-        queryKey: ["ingestion", ingestionId],
-        queryFn: () => api.qos.get_school_list(ingestionId),
-      });
+export const Route = createFileRoute(
+  "/ingest-api/edit/$ingestionId/school-listing",
+)({
+  component: EditIngestion,
+  loader: ({ params: { ingestionId } }) => {
+    const schoolListQueryOptions = queryOptions({
+      queryKey: ["ingestion", ingestionId],
+      queryFn: () => api.qos.get_school_list(ingestionId),
+    });
 
-      return queryClient.ensureQueryData(schoolListQueryOptions);
-    },
+    return queryClient.ensureQueryData(schoolListQueryOptions);
   },
-);
+});
 
 function EditIngestion() {
   const { ingestionId } = Route.useParams();
