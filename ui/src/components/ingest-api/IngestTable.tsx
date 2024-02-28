@@ -33,10 +33,10 @@ type LoadingStates = {
   [key: string]: boolean;
 };
 
-// TODO: REMOVE THIS WHEN NO DUMMY DATA
-faker.seed(1);
-
 function IngestTable() {
+  // TODO: REMOVE THIS WHEN NO DUMMY DATA
+  faker.seed(1);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({});
