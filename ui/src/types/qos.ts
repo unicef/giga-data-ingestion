@@ -83,12 +83,10 @@ export interface SchoolListFormValues {
   queryParamters: string | null;
   requestBody: string | null;
   requestMethod: RequestMethodEnum;
-  // data_key: string;
-  // school_id_key: string;
+  dataKey: string;
+  schoolIdKey: string;
   sendQueryIn: SendQueryInEnum;
   size: number | null;
   userEmail: string;
   userId: string;
-
-  // needed but in database
 }
