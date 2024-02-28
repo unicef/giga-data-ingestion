@@ -61,6 +61,7 @@ async def create_mock_school_lists(
             enabled=fake.boolean(chance_of_getting_true=70),
             user_id="useriddd",
             user_email=fake.ascii_safe_email(),
+            name=fake.name(),
         )
         db.add(file_upload)
 

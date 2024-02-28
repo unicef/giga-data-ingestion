@@ -42,4 +42,6 @@ class SchoolListSchema(BaseModel):
     user_email: EmailStr
     status: bool
 
+    name: str
+
     model_config = ConfigDict(from_attributes=True)
