@@ -13,8 +13,8 @@ function Layout() {
   return (
     <Stack gap={10}>
       <Stack gap={1}>
-        <h2 className="text-[23px] capitalize">Adders</h2>
-        <p>School List Description</p>
+        <h2 className="text-[23px] capitalize">Create New Ingestion</h2>
+        <p>Create a new ingestion description</p>
       </Stack>
       <ProgressIndicator currentIndex={stepIndex} spaceEqually>
         <ProgressStep

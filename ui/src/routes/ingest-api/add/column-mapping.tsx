@@ -1,9 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { useQosStore } from "@/context/apiIngestionStore";
 
 export const Route = createFileRoute("/ingest-api/add/column-mapping")({
   component: AddIngestion,
+  loader: () => {
+    const { stepIndex } = useQosStore.getState();
+    if (!stepIndex) throw redirect({ to: ".." });
+  },
 });
 
 function AddIngestion() {

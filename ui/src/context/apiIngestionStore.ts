@@ -41,6 +41,7 @@ export const useQosStore = create<StoreState & StoreActions>()(
         resetQosState: () =>
           set(state => {
             state.schoolList = initialSchoolListFormValues;
+            state.stepIndex = 0;
           }),
       }),
 
