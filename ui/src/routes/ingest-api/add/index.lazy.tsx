@@ -9,6 +9,7 @@ import {
   SelectItem,
   Stack,
   TextArea,
+  TextAreaSkeleton,
   TextInput,
 } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
@@ -123,7 +124,20 @@ function AddIngestion() {
     void navigate({ to: "./column-mapping" });
   };
 
-  if (isUsersLoading) return <div>SKELETON</div>;
+  if (isUsersLoading)
+    return (
+      <Stack orientation="horizontal">
+        <section className="flex flex-col gap-4">
+          <TextAreaSkeleton />
+          <TextAreaSkeleton />
+          <TextAreaSkeleton />
+          <TextAreaSkeleton />
+        </section>
+        <section className="flex flex-col gap-4">
+          <TextAreaSkeleton />
+        </section>
+      </Stack>
+    );
 
   return (
     <AuthenticatedRBACView roles={["Admin", "Super"]}>
@@ -134,7 +148,7 @@ function AddIngestion() {
           </p>
         </header>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Stack orientation="horizontal">
+          <Stack className="w-full" orientation="horizontal">
             <section className="flex flex-col gap-4">
               <section className="flex flex-col gap-6">
                 <header className="text-2xl">Name</header>
@@ -408,8 +422,9 @@ function AddIngestion() {
                 </ButtonSet>
               </section>
             </section>
-            {/* <aside>{JSON.stringify(usersQuery?.data)}</aside> */}
-            <aside>actual data</aside>
+            <aside className="flex h-full">
+              <TextArea disabled labelText="Preview" rows={40} />
+            </aside>
           </Stack>
         </form>
         <Outlet />
