@@ -62,18 +62,10 @@ export interface PagedSchoolListResponse {
 }
 
 export interface SchoolListFormValues {
-  // metadata
-  // id: string;
-  // date_created: Date;
-  // date_modified: Date;
   name: string;
-
-  // provided by me
-
   apiAuthApiKey: string | null;
   apiAuthApiValue: string | null;
   apiEndpoint: string;
-
   authType: AuthorizationTypeEnum;
   basicAuthPassword: string | null;
   basicAuthUsername: string | null;
@@ -96,11 +88,9 @@ export interface SchoolListFormValues {
 
 export const initialSchoolListFormValues: SchoolListFormValues = {
   name: "",
-
   apiAuthApiKey: null,
   apiAuthApiValue: null,
   apiEndpoint: "",
-
   authType: AuthorizationTypeEnum.NONE,
   basicAuthPassword: null,
   basicAuthUsername: null,
@@ -120,3 +110,18 @@ export const initialSchoolListFormValues: SchoolListFormValues = {
   userEmail: "",
   userId: "",
 };
+
+export interface MasterColumnMapping {
+  school_id: string;
+  student_count: string;
+  long: string;
+  lat: string;
+}
+
+// MOCKED Values
+export const masterColumns = [
+  { name: "school_id", description: "school id description" },
+  { name: "student_count", description: "student_count description" },
+  { name: "lat", description: "lat  description" },
+  { name: "long", description: "long description" },
+];

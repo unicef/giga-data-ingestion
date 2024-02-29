@@ -6,11 +6,13 @@ import { SchoolListFormValues, initialSchoolListFormValues } from "@/types/qos";
 
 interface StoreState {
   stepIndex: number;
+  columnMapping: Record<string, string>;
   schoolList: SchoolListFormValues;
   // schoolConnectivity: string;
 }
 interface StoreActions {
-  setSchoolListFormValues: (upload: SchoolListFormValues) => void;
+  setSchoolListFormValues: (formValues: SchoolListFormValues) => void;
+  setColumnMapping: (columnMapping: Record<string, string>) => void;
   incrementStepIndex: () => void;
   decrementStepIndex: () => void;
   resetQosState: () => void;
@@ -18,10 +20,11 @@ interface StoreActions {
 
 const initialState: StoreState = {
   stepIndex: 0,
+  columnMapping: {},
   schoolList: initialSchoolListFormValues,
 };
 
-export const apiIngestionStore = create<StoreState & StoreActions>()(
+export const useQosStore = create<StoreState & StoreActions>()(
   immer(
     devtools(
       set => ({
@@ -29,6 +32,10 @@ export const apiIngestionStore = create<StoreState & StoreActions>()(
         setSchoolListFormValues: (schoolList: SchoolListFormValues) =>
           set(state => {
             state.schoolList = schoolList;
+          }),
+        setColumnMapping: (columnMapping: Record<string, string>) =>
+          set(state => {
+            state.columnMapping = columnMapping;
           }),
         incrementStepIndex: () =>
           set(state => {
@@ -40,14 +47,15 @@ export const apiIngestionStore = create<StoreState & StoreActions>()(
           }),
         resetQosState: () =>
           set(state => {
-            state.schoolList = initialSchoolListFormValues;
+            state.columnMapping = {};
             state.stepIndex = 0;
+            state.schoolList = initialSchoolListFormValues;
           }),
       }),
 
       {
         enabled: !import.meta.env.PROD,
-        name: "apiIngestionState",
+        name: "qosStoreState",
         anonymousActionType: "zustand/action",
       },
     ),

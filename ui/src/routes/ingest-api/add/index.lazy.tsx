@@ -23,7 +23,7 @@ import { api } from "@/api";
 import { Select } from "@/components/forms/Select";
 import ControllerNumberInputSchoolList from "@/components/upload/ControllerNumberInputSchoolList";
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView";
-import { apiIngestionStore } from "@/context/apiIngestionStore";
+import { useQosStore } from "@/context/qosStore";
 import {
   AuthorizationTypeEnum,
   PaginationTypeEnum,
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/ingest-api/add/")({
 
 function AddIngestion() {
   const { setSchoolListFormValues, incrementStepIndex, resetQosState } =
-    apiIngestionStore();
+    useQosStore();
 
   const navigate = useNavigate({ from: Route.fullPath });
 
