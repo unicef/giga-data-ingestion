@@ -60,12 +60,13 @@ function AddIngestion() {
     defaultValues: {
       name: "someName", // remove this after dev
       requestMethod: RequestMethodEnum.GET, // remove this after dev
-      authType: AuthorizationTypeEnum.BEARER_TOKEN, // remove this after dev
+      authType: AuthorizationTypeEnum.NONE, // remove this after dev
+      paginationType: PaginationTypeEnum.NONE,
+      sendQueryIn: SendQueryInEnum.NONE,
       apiEndpoint: "myEndpoint", // remove this after dev
       dataKey: "",
-      schoolIdKey: "",
 
-      paginationType: null,
+      schoolIdKey: "",
       pageNumberKey: null,
       pageOffsetKey: null,
       pageSizeKey: null,
@@ -128,7 +129,6 @@ function AddIngestion() {
     <AuthenticatedRBACView roles={["Admin", "Super"]}>
       <Section className="container py-6">
         <header className="gap-2">
-          <p className="my-0 py-1 text-2xl">Create a New Ingestion</p>
           <p className="my-0 py-1 text-2xl">
             Step 1: Configure school listing API
           </p>
@@ -296,6 +296,7 @@ function AddIngestion() {
                       numberInputProps={{
                         id: "size",
                         label: <span>Records per page</span>,
+                        min: 0,
                       }}
                     />
                     <TextInput
@@ -322,6 +323,7 @@ function AddIngestion() {
                       numberInputProps={{
                         id: "size",
                         label: <span>Records per page</span>,
+                        min: 0,
                       }}
                     />
                     <TextInput
