@@ -4,14 +4,14 @@ import { Column, Grid, Stack } from "@carbon/react";
 import { Outlet, createLazyFileRoute } from "@tanstack/react-router";
 
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
-import { useQosStore } from "@/context/apiIngestionStore";
+import { apiIngestionStore } from "@/context/apiIngestionStore";
 
 export const Route = createLazyFileRoute("/ingest-api")({
   component: IngestApiLayout,
 });
 
 function IngestApiLayout() {
-  const { resetQosState } = useQosStore();
+  const { resetQosState } = apiIngestionStore();
 
   useEffect(() => {
     return () => {

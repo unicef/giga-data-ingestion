@@ -1,14 +1,14 @@
 import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
-import { useQosStore } from "@/context/apiIngestionStore";
+import { apiIngestionStore } from "@/context/apiIngestionStore";
 
 export const Route = createFileRoute("/ingest-api/add")({
   component: Layout,
 });
 
 function Layout() {
-  const { stepIndex } = useQosStore();
+  const { stepIndex } = apiIngestionStore();
 
   return (
     <Stack gap={10}>

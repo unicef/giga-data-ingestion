@@ -21,7 +21,7 @@ const initialState: StoreState = {
   schoolList: initialSchoolListFormValues,
 };
 
-export const useQosStore = create<StoreState & StoreActions>()(
+export const apiIngestionStore = create<StoreState & StoreActions>()(
   immer(
     devtools(
       set => ({
