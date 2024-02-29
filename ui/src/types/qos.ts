@@ -74,7 +74,7 @@ export interface SchoolListFormValues {
   pageOffsetKey: string | null;
   pageSizeKey: string | null;
   pageStartsWith: number | null;
-  paginationType: PaginationTypeEnum | null | "none";
+  paginationType: PaginationTypeEnum | null;
   queryParamters: string | null;
   requestBody: string | null;
   requestMethod: RequestMethodEnum;
@@ -125,3 +125,51 @@ export const masterColumns = [
   { name: "lat", description: "lat  description" },
   { name: "long", description: "long description" },
 ];
+
+export interface SchoolConnectivityFormValues {
+  name: string;
+  requestMethod: RequestMethodEnum;
+  apiEndpoint: string;
+  dataKey: string;
+  queryParamters: string;
+  requestBody: string;
+  authType: AuthorizationTypeEnum;
+  bearerAuthBearerToken: string | null;
+  basicAuthUsername: string | null;
+  basicAuthPassword: string | null;
+  apiAuthApiKey: string | null;
+  apiAuthApiValue: string | null;
+  pageStartsWith: number | null;
+  paginationType: PaginationTypeEnum;
+  size: number | null;
+  pageSizeKey: string | null;
+  sendQueryIn: SendQueryInEnum;
+  pageNumberKey: string | null;
+  pageOffsetKey: string | null;
+  enabled: boolean;
+  ingestionFrequency: number; // in minutes
+}
+export const initialSchoolConnectivityFormValues: SchoolConnectivityFormValues =
+  {
+    name: "",
+    requestMethod: RequestMethodEnum.GET,
+    apiEndpoint: "",
+    dataKey: "",
+    queryParamters: "",
+    requestBody: "",
+    authType: AuthorizationTypeEnum.NONE,
+    bearerAuthBearerToken: null,
+    basicAuthUsername: null,
+    basicAuthPassword: null,
+    apiAuthApiKey: null,
+    apiAuthApiValue: null,
+    pageStartsWith: null,
+    paginationType: PaginationTypeEnum.NONE,
+    size: null,
+    pageSizeKey: null,
+    sendQueryIn: SendQueryInEnum.NONE,
+    pageNumberKey: null,
+    pageOffsetKey: null,
+    enabled: false,
+    ingestionFrequency: 1, // in minutes
+  };
