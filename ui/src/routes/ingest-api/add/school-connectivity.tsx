@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
@@ -12,13 +12,9 @@ import {
   TextInput,
   Toggle,
 } from "@carbon/react";
-import {
-  Link,
-  Outlet,
-  createFileRoute,
-  redirect,
-} from "@tanstack/react-router";
+import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 
+import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
 import ControllerNumberInputSchoolConnectivity from "@/components/upload/ControllerNumberInputSchoolConnectivity";
 import { useQosStore } from "@/context/qosStore";
 import {
@@ -37,9 +33,26 @@ export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
   },
 });
 
+const FREQUENCY_DEFAULT_VALUE = 5;
+
+const { GET } = RequestMethodEnum;
+const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
+const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
+const { BODY, QUERY_PARAMETERS } = SendQueryInEnum;
+
+// TODO add parsing for the json display
+const ugly = '{"some":"key", "value":"pairs"}';
+const obj = JSON.parse(ugly);
+const PRETTY = JSON.stringify(obj, undefined, 4);
+
 function SchoolConnectivity() {
-  const { decrementStepIndex, resetSchoolConnectivityFormValues } =
-    useQosStore();
+  const {
+    decrementStepIndex,
+    resetSchoolConnectivityFormValues,
+    setSchoolConnectivityFormValues,
+  } = useQosStore();
+
+  const [open, setOpen] = useState<boolean>(false);
 
   const {
     handleSubmit,
@@ -49,6 +62,20 @@ function SchoolConnectivity() {
     watch,
     formState: { errors },
   } = useForm<SchoolConnectivityFormValues>({
+    defaultValues: {
+      ingestionFrequency: FREQUENCY_DEFAULT_VALUE,
+      requestMethod: GET,
+      apiEndpoint: "123123",
+      authType: BEARER_TOKEN,
+      bearerAuthBearerToken: "my_bearer",
+      dataKey: "somedatakey",
+      paginationType: PAGE_NUMBER,
+      size: 12312,
+      pageSizeKey: "asfasdfafsd",
+      pageNumberKey: "asdasd",
+      sendQueryIn: BODY,
+      requestBody: "this is the body",
+    },
     mode: "onChange",
     reValidateMode: "onChange",
   });
@@ -78,12 +105,14 @@ function SchoolConnectivity() {
   }, [watchSendQueryIn, resetField]);
 
   const onSubmit: SubmitHandler<SchoolConnectivityFormValues> = async data => {
-    console.log(data);
-  };
+    if (Object.keys(errors).length > 0) {
+      console.log("Form has errors, not submitting");
+      return;
+    }
 
-  const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
-  const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
-  const { BODY, QUERY_PARAMETERS } = SendQueryInEnum;
+    setSchoolConnectivityFormValues(data);
+    setOpen(true);
+  };
 
   const RequestMethodSelect = () => (
     <Select
@@ -333,6 +362,7 @@ function SchoolConnectivity() {
       name="ingestionFrequency"
       numberInputProps={{
         id: "ingestionFrequency",
+        defaultValue: FREQUENCY_DEFAULT_VALUE,
         helperText: "In minutes. Min 5",
         label: <span>Frequency</span>,
         min: 5,
@@ -417,11 +447,16 @@ function SchoolConnectivity() {
             </ButtonSet>
           </section>
           <aside className="flex h-full">
-            <TextArea disabled labelText="Preview" rows={40} />
+            <TextArea
+              defaultValue={PRETTY}
+              disabled
+              labelText="Preview"
+              rows={40}
+            />
           </aside>
         </Stack>
       </form>
-      <Outlet />
+      <ConfirmAddIngestionModal open={open} setOpen={setOpen} />
     </section>
   );
 }

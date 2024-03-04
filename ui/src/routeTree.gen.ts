@@ -18,6 +18,7 @@ import { Route as IndexImport } from './routes/index'
 import { Route as IngestApiAddImport } from './routes/ingest-api/add'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
+import { Route as IngestApiAddSchoolConnectivityImport } from './routes/ingest-api/add/school-connectivity'
 import { Route as IngestApiAddColumnMappingImport } from './routes/ingest-api/add/column-mapping'
 import { Route as UserManagementUserRevokeUserIdImport } from './routes/user-management/user/revoke.$userId'
 import { Route as UserManagementUserEnableUserIdImport } from './routes/user-management/user/enable.$userId'
@@ -134,6 +135,12 @@ const UploadUploadGroupUploadTypeRoute =
     getParentRoute: () => UploadLazyRoute,
   } as any)
 
+const IngestApiAddSchoolConnectivityRoute =
+  IngestApiAddSchoolConnectivityImport.update({
+    path: '/school-connectivity',
+    getParentRoute: () => IngestApiAddRoute,
+  } as any)
+
 const IngestApiAddColumnMappingRoute = IngestApiAddColumnMappingImport.update({
   path: '/column-mapping',
   getParentRoute: () => IngestApiAddRoute,
@@ -235,6 +242,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiAddColumnMappingImport
       parentRoute: typeof IngestApiAddImport
     }
+    '/ingest-api/add/school-connectivity': {
+      preLoaderRoute: typeof IngestApiAddSchoolConnectivityImport
+      parentRoute: typeof IngestApiAddImport
+    }
     '/upload/$uploadGroup/$uploadType': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeImport
       parentRoute: typeof UploadLazyImport
@@ -301,6 +312,7 @@ export const routeTree = rootRoute.addChildren([
   IngestApiLazyRoute.addChildren([
     IngestApiAddRoute.addChildren([
       IngestApiAddColumnMappingRoute,
+      IngestApiAddSchoolConnectivityRoute,
       IngestApiAddIndexLazyRoute,
     ]),
     IngestApiIndexLazyRoute,

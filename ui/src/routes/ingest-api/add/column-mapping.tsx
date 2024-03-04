@@ -35,8 +35,8 @@ export const Route = createFileRoute("/ingest-api/add/column-mapping")({
   loader: () => {
     // remove return after testing
     return;
-    const { stepIndex } = useQosStore.getState();
-    if (stepIndex) throw redirect({ to: ".." });
+    const { apiEndpoint } = useQosStore.getState().schoolList;
+    if (apiEndpoint === "") throw redirect({ to: ".." });
   },
 });
 
