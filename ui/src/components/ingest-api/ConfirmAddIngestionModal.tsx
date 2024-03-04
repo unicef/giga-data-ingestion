@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 
 import { Modal } from "@carbon/react";
+import { useNavigate } from "@tanstack/react-router";
 
 import { useQosStore } from "@/context/qosStore";
 
@@ -14,11 +15,13 @@ const ConfirmAddIngestionModal = ({
   setOpen,
 }: ConfirmAddIngestionModalInputs) => {
   const { schoolConnectivity } = useQosStore.getState();
+  const navigate = useNavigate({ from: "/ingest-api" });
 
   const onSubmit = () => {
     // TODO: Add call to routes and onLoaders
 
     setOpen(false);
+    navigate({ to: "/ingest-api" });
   };
 
   const onCancel = () => {
