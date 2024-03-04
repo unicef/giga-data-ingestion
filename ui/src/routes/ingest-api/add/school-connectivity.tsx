@@ -148,6 +148,7 @@ function SchoolConnectivity() {
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
+        autoComplete="on"
         id="apiAuthApiValue"
         invalid={!!errors.apiAuthApiValue}
         labelText="Authentication Credentials"
@@ -169,6 +170,7 @@ function SchoolConnectivity() {
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
+        autoComplete="on"
         id="basicAuthPassword"
         invalid={!!errors.basicAuthPassword}
         labelText="Authentication Credentials"
@@ -183,6 +185,7 @@ function SchoolConnectivity() {
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
+        autoComplete="on"
         id="bearerAuthBearerToken"
         invalid={!!errors.bearerAuthBearerToken}
         labelText="Authentication Credentials"
