@@ -2,15 +2,12 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
-
-
 import {
   SchoolConnectivityFormValues,
   SchoolListFormValues,
   initialSchoolConnectivityFormValues,
   initialSchoolListFormValues,
 } from "@/types/qos";
-
 
 interface StoreState {
   stepIndex: number;
@@ -72,6 +69,7 @@ export const useQosStore = create<StoreState & StoreActions>()(
             state.columnMapping = {};
             state.stepIndex = 0;
             state.schoolList = initialSchoolListFormValues;
+            state.schoolConnectivity = initialSchoolConnectivityFormValues;
           }),
         resetSchoolListFormValues: () =>
           set(state => {

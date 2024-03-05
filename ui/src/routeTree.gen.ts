@@ -26,6 +26,8 @@ import { Route as UserManagementUserEnableUserIdImport } from './routes/user-man
 import { Route as UserManagementUserEditUserIdImport } from './routes/user-management/user/edit.$userId'
 import { Route as UploadUploadGroupUploadTypeSuccessImport } from './routes/upload/$uploadGroup/$uploadType/success'
 import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upload/$uploadGroup/$uploadType/metadata'
+import { Route as IngestApiEditIngestionIdSchoolConnectivityImport } from './routes/ingest-api/edit/$ingestionId/school-connectivity'
+import { Route as IngestApiEditIngestionIdColumnMappingImport } from './routes/ingest-api/edit/$ingestionId/column-mapping'
 
 // Create Virtual Routes
 
@@ -203,6 +205,18 @@ const UploadUploadGroupUploadTypeMetadataRoute =
     getParentRoute: () => UploadUploadGroupUploadTypeRoute,
   } as any)
 
+const IngestApiEditIngestionIdSchoolConnectivityRoute =
+  IngestApiEditIngestionIdSchoolConnectivityImport.update({
+    path: '/$ingestionId/school-connectivity',
+    getParentRoute: () => IngestApiEditRoute,
+  } as any)
+
+const IngestApiEditIngestionIdColumnMappingRoute =
+  IngestApiEditIngestionIdColumnMappingImport.update({
+    path: '/$ingestionId/column-mapping',
+    getParentRoute: () => IngestApiEditRoute,
+  } as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -275,6 +289,14 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UploadUploadIdIndexLazyImport
       parentRoute: typeof UploadLazyImport
     }
+    '/ingest-api/edit/$ingestionId/column-mapping': {
+      preLoaderRoute: typeof IngestApiEditIngestionIdColumnMappingImport
+      parentRoute: typeof IngestApiEditImport
+    }
+    '/ingest-api/edit/$ingestionId/school-connectivity': {
+      preLoaderRoute: typeof IngestApiEditIngestionIdSchoolConnectivityImport
+      parentRoute: typeof IngestApiEditImport
+    }
     '/upload/$uploadGroup/$uploadType/metadata': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeMetadataImport
       parentRoute: typeof UploadUploadGroupUploadTypeImport
@@ -320,7 +342,11 @@ export const routeTree = rootRoute.addChildren([
       IngestApiAddSchoolConnectivityRoute,
       IngestApiAddIndexLazyRoute,
     ]),
-    IngestApiEditRoute.addChildren([IngestApiEditIngestionIdIndexLazyRoute]),
+    IngestApiEditRoute.addChildren([
+      IngestApiEditIngestionIdColumnMappingRoute,
+      IngestApiEditIngestionIdSchoolConnectivityRoute,
+      IngestApiEditIngestionIdIndexLazyRoute,
+    ]),
     IngestApiIndexLazyRoute,
   ]),
   UploadLazyRoute.addChildren([

@@ -30,7 +30,9 @@ import {
 import { useQosStore } from "@/context/qosStore";
 import { MasterColumnMapping } from "@/types/qos";
 
-export const Route = createFileRoute("/ingest-api/add/column-mapping")({
+export const Route = createFileRoute(
+  "/ingest-api/edit/$ingestionId/column-mapping",
+)({
   component: ColumnMapping,
   loader: () => {
     // remove return after testing
@@ -65,8 +67,6 @@ function ColumnMapping() {
     mode: "onChange",
     reValidateMode: "onChange",
   });
-
-  //memoize this
 
   const rows = useMemo(() => {
     return masterColumns.map(masterColumn => {
@@ -105,6 +105,7 @@ function ColumnMapping() {
     incrementStepIndex();
     setColumnMapping({ ...data });
     void navigate({ to: "../school-connectivity" });
+    console.log("navigaciones");
   };
 
   return (

@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 
 import { Column, Grid, Stack } from "@carbon/react";
-import { Outlet, createLazyFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
 import { useQosStore } from "@/context/qosStore";
 
-export const Route = createLazyFileRoute("/ingest-api")({
+export const Route = createFileRoute("/ingest-api")({
   component: IngestApiLayout,
 });
 
@@ -20,7 +20,7 @@ function IngestApiLayout() {
   }, [resetQosState]);
 
   return (
-    <AuthenticatedRBACView>
+    <AuthenticatedRBACView roles={["Admin", "Super"]}>
       <Grid>
         <Column lg={16} className="py-6">
           <Stack gap={6}>

@@ -1,6 +1,10 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
-import { PagedSchoolListResponse, SchoolListResponse } from "@/types/qos";
+import {
+  PagedSchoolListResponse,
+  SchoolConnectivityResponse,
+  SchoolListResponse,
+} from "@/types/qos";
 
 export default function route(axi: AxiosInstance) {
   return {
@@ -18,7 +22,12 @@ export default function route(axi: AxiosInstance) {
     get_school_list: (
       id: string,
     ): Promise<AxiosResponse<SchoolListResponse>> => {
-      return axi.get(`qos/school_list/${id}`);
+      return axi.get(`/qos/school_list/${id}`);
+    },
+    get_school_connectivity: (
+      id: string,
+    ): Promise<AxiosResponse<SchoolConnectivityResponse>> => {
+      return axi.get(`/qos/school_connectivity/${id}`);
     },
     update_school_list_status: (params: {
       id: string;

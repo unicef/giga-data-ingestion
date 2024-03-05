@@ -21,12 +21,8 @@ export enum SendQueryInEnum {
   NONE = "NONE",
 }
 
-export interface SchoolListResponse {
+export interface ApiConfigurationResponse {
   id: string;
-  date_created: Date;
-  date_modified: Date;
-  name: string;
-
   api_auth_api_key: string;
   api_auth_api_value: string;
   api_endpoint: string;
@@ -34,6 +30,9 @@ export interface SchoolListResponse {
   basic_auth_password: string;
   basic_auth_username: string;
   bearer_auth_bearer_token: string;
+  date_created: Date;
+  date_modified: Date;
+  enabled: boolean;
   page_number_key: string;
   page_offset_key: string;
   page_size_key: string;
@@ -46,11 +45,14 @@ export interface SchoolListResponse {
   school_id_key: string;
   send_query_in: SendQueryInEnum;
   size: number;
+  status: boolean;
   user_email: string;
   user_id: string;
+}
 
-  status: boolean;
-  enabled: boolean;
+export interface SchoolListResponse extends ApiConfigurationResponse {
+  column_to_schema_mapping: string;
+  name: string;
 }
 
 export interface PagedSchoolListResponse {
@@ -126,32 +128,47 @@ export const masterColumns = [
   { name: "long", description: "long description" },
 ];
 
+export interface SchoolConnectivityResponse extends ApiConfigurationResponse {
+  ingestion_frequency: number;
+  schema_url: string;
+  school_list: SchoolListResponse;
+  school_list_id: string;
+}
+
+export interface PagedSchoolConnectivityResponse {
+  data: SchoolConnectivityResponse[];
+  page_index: string;
+  per_page: string;
+  total_items: string;
+  total_pages: string;
+}
+
 export interface SchoolConnectivityFormValues {
-  name: string;
   requestMethod: RequestMethodEnum;
   apiEndpoint: string;
-  dataKey: string;
-  queryParamters: string;
-  requestBody: string;
   authType: AuthorizationTypeEnum;
-  bearerAuthBearerToken: string | null;
-  basicAuthUsername: string | null;
-  basicAuthPassword: string | null;
   apiAuthApiKey: string | null;
   apiAuthApiValue: string | null;
-  pageStartsWith: number | null;
+  bearerAuthBearerToken: string | null;
+  basicAuthPassword: string | null;
+  basicAuthUsername: string | null;
+
+  dataKey: string;
   paginationType: PaginationTypeEnum;
-  size: number | null;
-  pageSizeKey: string | null;
-  sendQueryIn: SendQueryInEnum;
+  queryParamters: string;
   pageNumberKey: string | null;
   pageOffsetKey: string | null;
+  pageSizeKey: string | null;
+  pageStartsWith: number | null;
+  size: number | null;
+
+  sendQueryIn: SendQueryInEnum;
+  requestBody: string;
   enabled: boolean;
-  ingestionFrequency: number; // in minutes
+  ingestionFrequency: number;
 }
 export const initialSchoolConnectivityFormValues: SchoolConnectivityFormValues =
   {
-    name: "",
     requestMethod: RequestMethodEnum.GET,
     apiEndpoint: "",
     dataKey: "",
