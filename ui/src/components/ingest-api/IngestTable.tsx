@@ -25,6 +25,7 @@ import { AxiosResponse } from "axios";
 
 import { queryClient, useApi } from "@/api";
 import { HEADERS, ITEMS_PER_PAGE } from "@/constants/ingest-api";
+import { useQosStore } from "@/context/qosStore";
 import { PagedSchoolListResponse } from "@/types/qos";
 
 import StatusIndicator from "../upload/StatusIndicator";
@@ -42,6 +43,8 @@ function IngestTable() {
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({});
 
   const api = useApi();
+
+  const { resetQosState } = useQosStore();
 
   const {
     data: schoolListQuery,
@@ -192,7 +195,12 @@ function IngestTable() {
                 }}
                 disabled={isSchoolListRefetching}
               />
-              <Button renderIcon={Add} as={Link} to="./add">
+              <Button
+                renderIcon={Add}
+                as={Link}
+                to="./add"
+                onClick={() => resetQosState()}
+              >
                 Create New Ingestion
               </Button>
             </TableToolbarContent>
