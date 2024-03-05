@@ -23,7 +23,6 @@ import { api } from "@/api";
 import { Select } from "@/components/forms/Select";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import ControllerNumberInputSchoolList from "@/components/upload/ControllerNumberInputSchoolList";
-import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView";
 import { useQosStore } from "@/context/qosStore";
 import {
   AuthorizationTypeEnum,
@@ -120,7 +119,7 @@ function AddIngestion() {
 
   const onSubmit: SubmitHandler<SchoolListFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
-      console.log("Form has errors, not submitting");
+      // form has errors, don't submit
       return;
     }
 
@@ -391,80 +390,78 @@ function AddIngestion() {
   );
 
   return (
-    <AuthenticatedRBACView roles={["Admin", "Super"]}>
-      <Section className="container py-6">
-        <header className="gap-2">
-          <p className="my-0 py-1 text-2xl">
-            Step 1: Configure school listing API
-          </p>
-        </header>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Stack className="w-full" orientation="horizontal">
-            <section className="flex flex-col gap-4">
-              <section className="flex flex-col gap-6">
-                <NameTextInput />
-              </section>
-
-              <header className="text-2xl">Ingestion Details</header>
-              <UserSelect />
-
-              <section className="flex flex-col gap-6">
-                <header className="text-2xl">Ingestion Source</header>
-                <RequestMethodSelect />
-                <ApiEndpointTextinput />
-                <AuthTypeSelect />
-
-                {watchAuthType === API_KEY && <AuthApiKeyInputs />}
-                {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
-                {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
-              </section>
-
-              <section className="flex flex-col gap-6">
-                <header className="text-2xl">Ingestion Parameters</header>
-                <PaginationTypeSelect />
-                {watchPaginationType === LIMIT_OFFSET && (
-                  <PaginationLimitOffsetInputs />
-                )}
-                {watchPaginationType === PAGE_NUMBER && (
-                  <PaginationPageNumberInputs />
-                )}
-
-                <SendQueryInSelect />
-                {watchSendQueryIn === QUERY_PARAMETERS && (
-                  <SendQueryInQueryParametersInputs />
-                )}
-                {watchSendQueryIn === BODY && <SendQueryInBodyInputs />}
-
-                <ButtonSet className="w-full">
-                  <Button
-                    as={Link}
-                    className="w-full"
-                    isExpressive
-                    kind="secondary"
-                    renderIcon={ArrowLeft}
-                    to="/ingest-api"
-                    onClick={resetQosState}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    className="w-full"
-                    isExpressive
-                    renderIcon={ArrowRight}
-                    type="submit"
-                  >
-                    Proceed
-                  </Button>
-                </ButtonSet>
-              </section>
+    <Section className="container py-6">
+      <header className="gap-2">
+        <p className="my-0 py-1 text-2xl">
+          Step 1: Configure school listing API
+        </p>
+      </header>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Stack className="w-full" orientation="horizontal">
+          <section className="flex flex-col gap-4">
+            <section className="flex flex-col gap-6">
+              <NameTextInput />
             </section>
-            <aside className="flex h-full">
-              <TextArea disabled labelText="Preview" rows={40} />
-            </aside>
-          </Stack>
-        </form>
-        <Outlet />
-      </Section>
-    </AuthenticatedRBACView>
+
+            <header className="text-2xl">Ingestion Details</header>
+            <UserSelect />
+
+            <section className="flex flex-col gap-6">
+              <header className="text-2xl">Ingestion Source</header>
+              <RequestMethodSelect />
+              <ApiEndpointTextinput />
+              <AuthTypeSelect />
+
+              {watchAuthType === API_KEY && <AuthApiKeyInputs />}
+              {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
+              {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
+            </section>
+
+            <section className="flex flex-col gap-6">
+              <header className="text-2xl">Ingestion Parameters</header>
+              <PaginationTypeSelect />
+              {watchPaginationType === LIMIT_OFFSET && (
+                <PaginationLimitOffsetInputs />
+              )}
+              {watchPaginationType === PAGE_NUMBER && (
+                <PaginationPageNumberInputs />
+              )}
+
+              <SendQueryInSelect />
+              {watchSendQueryIn === QUERY_PARAMETERS && (
+                <SendQueryInQueryParametersInputs />
+              )}
+              {watchSendQueryIn === BODY && <SendQueryInBodyInputs />}
+
+              <ButtonSet className="w-full">
+                <Button
+                  as={Link}
+                  className="w-full"
+                  isExpressive
+                  kind="secondary"
+                  renderIcon={ArrowLeft}
+                  to="/ingest-api"
+                  onClick={resetQosState}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="w-full"
+                  isExpressive
+                  renderIcon={ArrowRight}
+                  type="submit"
+                >
+                  Proceed
+                </Button>
+              </ButtonSet>
+            </section>
+          </section>
+          <aside className="flex h-full">
+            <TextArea disabled labelText="Preview" rows={40} />
+          </aside>
+        </Stack>
+      </form>
+      <Outlet />
+    </Section>
   );
 }

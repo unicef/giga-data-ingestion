@@ -108,7 +108,6 @@ function ColumnMapping() {
   const onSubmit: SubmitHandler<MasterColumnMapping> = data => {
     incrementStepIndex();
     setColumnMapping({ ...data });
-    console.log("NAVIGATOR");
     void navigate({ to: "../school-connectivity" });
   };
 

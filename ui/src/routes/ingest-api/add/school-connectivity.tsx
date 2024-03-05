@@ -106,7 +106,7 @@ function SchoolConnectivity() {
 
   const onSubmit: SubmitHandler<SchoolConnectivityFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
-      console.log("Form has errors, not submitting");
+      // form has errors, don't submit
       return;
     }
 
