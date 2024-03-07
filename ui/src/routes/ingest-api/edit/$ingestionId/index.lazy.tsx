@@ -1,22 +1,40 @@
 import { useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
-
-
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import { Button, ButtonSet, Section, SelectItem, Stack, TextArea, TextInput } from "@carbon/react";
-import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { Link, Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
-
-
+import {
+  Button,
+  ButtonSet,
+  Section,
+  SelectItem,
+  Stack,
+  TextArea,
+  TextInput,
+} from "@carbon/react";
+import {
+  queryOptions,
+  useQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import {
+  Link,
+  Outlet,
+  createFileRoute,
+  useNavigate,
+} from "@tanstack/react-router";
 
 import { api, queryClient } from "@/api";
 import { Select } from "@/components/forms/Select";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import ControllerNumberInputSchoolList from "@/components/upload/ControllerNumberInputSchoolList";
 import { useQosStore } from "@/context/qosStore";
-import { AuthorizationTypeEnum, PaginationTypeEnum, RequestMethodEnum, SchoolListFormValues, SendQueryInEnum } from "@/types/qos";
-
+import {
+  AuthorizationTypeEnum,
+  PaginationTypeEnum,
+  RequestMethodEnum,
+  SchoolListFormValues,
+  SendQueryInEnum,
+} from "@/types/qos";
 
 export const Route = createFileRoute("/ingest-api/edit/$ingestionId/")({
   component: EditIngestion,
@@ -26,7 +44,6 @@ export const Route = createFileRoute("/ingest-api/edit/$ingestionId/")({
       queryFn: () => api.qos.get_school_list(ingestionId),
     });
 
-    console.log("DOING THISD");
     return await queryClient.ensureQueryData(options);
   },
   errorComponent: IngestFormSkeleton,
@@ -77,52 +94,52 @@ function EditIngestion() {
     reValidateMode: "onChange",
     defaultValues: {
       name: schoolListQuery.name,
-      apiAuthApiKey: schoolListQuery.api_auth_api_key,
-      apiAuthApiValue: schoolListQuery.api_auth_api_value,
-      apiEndpoint: schoolListQuery.api_endpoint,
-      authType: schoolListQuery.authorization_type,
-      basicAuthPassword: schoolListQuery.basic_auth_password,
-      basicAuthUsername: schoolListQuery.basic_auth_username,
-      bearerAuthBearerToken: schoolListQuery.bearer_auth_bearer_token,
-      pageNumberKey: schoolListQuery.page_number_key,
-      pageOffsetKey: schoolListQuery.page_offset_key,
-      pageSizeKey: schoolListQuery.page_size_key,
-      pageStartsWith: schoolListQuery.page_starts_with,
-      paginationType: schoolListQuery.pagination_type,
-      queryParamters: schoolListQuery.query_parameters,
-      requestBody: schoolListQuery.request_body,
-      requestMethod: schoolListQuery.request_method,
-      dataKey: schoolListQuery.data_key,
-      schoolIdKey: schoolListQuery.school_id_key,
-      sendQueryIn: schoolListQuery.send_query_in,
+      api_auth_api_key: schoolListQuery.api_auth_api_key,
+      api_auth_api_value: schoolListQuery.api_auth_api_value,
+      api_endpoint: schoolListQuery.api_endpoint,
+      authorization_type: schoolListQuery.authorization_type,
+      basic_auth_password: schoolListQuery.basic_auth_password,
+      basic_auth_username: schoolListQuery.basic_auth_username,
+      bearer_auth_bearer_token: schoolListQuery.bearer_auth_bearer_token,
+      page_number_key: schoolListQuery.page_number_key,
+      page_offset_key: schoolListQuery.page_offset_key,
+      page_size_key: schoolListQuery.page_size_key,
+      page_starts_with: schoolListQuery.page_starts_with,
+      pagination_type: schoolListQuery.pagination_type,
+      query_parameters: schoolListQuery.query_parameters,
+      request_body: schoolListQuery.request_body,
+      request_method: schoolListQuery.request_method,
+      data_key: schoolListQuery.data_key,
+      school_id_key: schoolListQuery.school_id_key,
+      send_query_in: schoolListQuery.send_query_in,
       size: schoolListQuery.size,
-      userEmail: schoolListQuery.user_email,
-      userId: schoolListQuery.user_id,
+      user_email: schoolListQuery.user_email,
+      user_id: schoolListQuery.user_id,
     },
   });
 
-  const watchAuthType = watch("authType");
-  const watchPaginationType = watch("paginationType");
-  const watchSendQueryIn = watch("sendQueryIn");
+  const watchAuthType = watch("authorization_type");
+  const watchPaginationType = watch("pagination_type");
+  const watchSendQueryIn = watch("send_query_in");
 
   useEffect(() => {
-    resetField("apiAuthApiKey");
-    resetField("apiAuthApiValue");
-    resetField("basicAuthUsername");
-    resetField("basicAuthPassword");
-    resetField("bearerAuthBearerToken");
+    resetField("api_auth_api_key");
+    resetField("api_auth_api_value");
+    resetField("basic_auth_username");
+    resetField("basic_auth_password");
+    resetField("bearer_auth_bearer_token");
   }, [watchAuthType, resetField]);
 
   useEffect(() => {
-    resetField("pageNumberKey");
-    resetField("pageOffsetKey");
-    resetField("pageStartsWith");
+    resetField("page_number_key");
+    resetField("page_offset_key");
+    resetField("page_starts_with");
     resetField("size");
   }, [watchPaginationType, resetField]);
 
   useEffect(() => {
-    resetField("queryParamters");
-    resetField("requestBody");
+    resetField("query_parameters");
+    resetField("request_body");
   }, [watchSendQueryIn, resetField]);
 
   const onSubmit: SubmitHandler<SchoolListFormValues> = async data => {
@@ -150,12 +167,12 @@ function EditIngestion() {
 
   const UserSelect = () => (
     <Select
-      id="userId"
+      id="user_id"
       disabled={isUsersRefetching || isSchoolListRefetching}
       helperText="Who will be the designated point person responsible for this ingestion?"
-      invalid={!!errors.userId}
+      invalid={!!errors.user_id}
       labelText="Owner"
-      {...register("userId", { required: true })}
+      {...register("user_id", { required: true })}
     >
       <SelectItem value="" text="" />
       {users.map(user => (
@@ -170,17 +187,17 @@ function EditIngestion() {
 
   const RequestMethodSelect = () => (
     <Select
-      id="requestMethod"
-      invalid={!!errors.requestMethod}
+      id="request_method"
+      invalid={!!errors.request_method}
       labelText="Request Method"
-      {...register("requestMethod", { required: true })}
+      {...register("request_method", { required: true })}
     >
       <SelectItem value="" text="" />
-      {Object.keys(RequestMethodEnum).map(requestMethod => (
+      {Object.keys(RequestMethodEnum).map(request_method => (
         <SelectItem
-          key={requestMethod}
-          value={requestMethod}
-          text={requestMethod}
+          key={request_method}
+          value={request_method}
+          text={request_method}
         />
       ))}
     </Select>
@@ -189,11 +206,11 @@ function EditIngestion() {
   const ApiEndpointTextinput = () => (
     <div className="flex items-end">
       <TextInput
-        id="apiEndpoint"
-        invalid={!!errors.apiEndpoint}
+        id="api_endpoint"
+        invalid={!!errors.api_endpoint}
         labelText="API Endpoint"
         placeholder="https://example.com/api/ingest"
-        {...register("apiEndpoint", { required: true })}
+        {...register("api_endpoint", { required: true })}
       />
       <div className="bottom-px">
         <Button size="md">Test</Button>
@@ -203,17 +220,17 @@ function EditIngestion() {
 
   const AuthTypeSelect = () => (
     <Select
-      id="authType"
-      invalid={!!errors.authType}
+      id="authorization_type"
+      invalid={!!errors.authorization_type}
       labelText="Authentication Method"
-      {...register("authType", { required: true })}
+      {...register("authorization_type", { required: true })}
     >
       <SelectItem value="" text="" />
-      {Object.keys(AuthorizationTypeEnum).map(authType => (
+      {Object.keys(AuthorizationTypeEnum).map(authorization_type => (
         <SelectItem
-          key={authType}
-          text={authType.replace(/_/g, " ")}
-          value={authType}
+          key={authorization_type}
+          text={authorization_type.replace(/_/g, " ")}
+          value={authorization_type}
         />
       ))}
     </Select>
@@ -222,20 +239,20 @@ function EditIngestion() {
   const AuthApiKeyInputs = () => (
     <>
       <TextInput
-        id="apiAuthApiKey"
-        invalid={!!errors.apiAuthApiKey}
+        id="api_auth_api_key"
+        invalid={!!errors.api_auth_api_key}
         labelText="api response key"
         placeholder="Input Authentication Credentials"
-        {...register("apiAuthApiKey", { required: true })}
+        {...register("api_auth_api_key", { required: true })}
       />
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
-        id="apiAuthApiValue"
-        invalid={!!errors.apiAuthApiValue}
+        id="api_auth_api_value"
+        invalid={!!errors.api_auth_api_value}
         labelText="Authentication Credentials"
         placeholder="Input Authentication Credentials"
-        {...register("apiAuthApiValue", { required: true })}
+        {...register("api_auth_api_value", { required: true })}
       />
     </>
   );
@@ -243,20 +260,20 @@ function EditIngestion() {
   const AuthBasicInputs = () => (
     <>
       <TextInput
-        id="basicAuthUsername"
-        invalid={!!errors.basicAuthUsername}
+        id="basic_auth_username"
+        invalid={!!errors.basic_auth_username}
         labelText="api response key"
         placeholder="Input Authentication Credentials"
-        {...register("basicAuthUsername", { required: true })}
+        {...register("basic_auth_username", { required: true })}
       />
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
-        id="basicAuthPassword"
-        invalid={!!errors.basicAuthPassword}
+        id="basic_auth_password"
+        invalid={!!errors.basic_auth_password}
         labelText="Authentication Credentials"
         placeholder="Input Authentication Credentials"
-        {...register("basicAuthPassword", { required: true })}
+        {...register("basic_auth_password", { required: true })}
       />
     </>
   );
@@ -266,11 +283,11 @@ function EditIngestion() {
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
-        id="bearerAuthBearerToken"
-        invalid={!!errors.bearerAuthBearerToken}
+        id="bearer_auth_bearer_token"
+        invalid={!!errors.bearer_auth_bearer_token}
         labelText="Authentication Credentials"
         placeholder="Input Authentication Credentials"
-        {...register("bearerAuthBearerToken", {
+        {...register("bearer_auth_bearer_token", {
           required: true,
         })}
       />
@@ -279,16 +296,16 @@ function EditIngestion() {
 
   const PaginationTypeSelect = () => (
     <Select
-      id="paginationType"
-      invalid={!!errors.paginationType}
+      id="pagination_type"
+      invalid={!!errors.pagination_type}
       labelText="Pagination Method"
-      {...register("paginationType", { required: true })}
+      {...register("pagination_type", { required: true })}
     >
-      {Object.keys(PaginationTypeEnum).map(paginationType => (
+      {Object.keys(PaginationTypeEnum).map(pagination_type => (
         <SelectItem
-          key={paginationType}
-          text={paginationType.replace(/_/g, " ")}
-          value={paginationType}
+          key={pagination_type}
+          text={pagination_type.replace(/_/g, " ")}
+          value={pagination_type}
         />
       ))}
     </Select>
@@ -306,18 +323,18 @@ function EditIngestion() {
         }}
       />
       <TextInput
-        id="pageSizeKey"
-        invalid={!!errors.pageSizeKey}
+        id="page_size_key"
+        invalid={!!errors.page_size_key}
         labelText="Page size key"
         placeholder="Input page size key"
-        {...register("pageSizeKey", { required: true })}
+        {...register("page_size_key", { required: true })}
       />
       <TextInput
-        id="pageOffsetKey"
-        invalid={!!errors.pageOffsetKey}
+        id="page_offset_key"
+        invalid={!!errors.page_offset_key}
         labelText="Page Offset key"
         placeholder="Input Page Offset key"
-        {...register("pageOffsetKey", { required: true })}
+        {...register("page_offset_key", { required: true })}
       />
     </>
   );
@@ -334,25 +351,25 @@ function EditIngestion() {
         }}
       />
       <TextInput
-        id="pageSizeKey"
-        invalid={!!errors.pageSizeKey}
+        id="page_size_key"
+        invalid={!!errors.page_size_key}
         labelText="Page size key"
         placeholder="Input page size key"
-        {...register("pageSizeKey", { required: true })}
+        {...register("page_size_key", { required: true })}
       />
       <TextInput
-        id="pageNumberKey"
-        invalid={!!errors.pageNumberKey}
+        id="page_number_key"
+        invalid={!!errors.page_number_key}
         labelText="Page number key"
         placeholder="Input page number key"
-        {...register("pageNumberKey", { required: true })}
+        {...register("page_number_key", { required: true })}
       />
 
       <Select
-        id="pageStartsWith"
-        invalid={!!errors.pageStartsWith}
+        id="page_starts_with"
+        invalid={!!errors.page_starts_with}
         labelText="Page Starts with"
-        {...register("pageStartsWith", { required: true })}
+        {...register("page_starts_with", { required: true })}
       >
         <SelectItem key="0" text="0" value={0} />
         <SelectItem key="1" text="1" value={1} />
@@ -362,16 +379,16 @@ function EditIngestion() {
 
   const SendQueryInSelect = () => (
     <Select
-      id="sendQueryIn"
-      invalid={!!errors.sendQueryIn}
+      id="send_query_in"
+      invalid={!!errors.send_query_in}
       labelText="Send query in"
-      {...register("sendQueryIn", { required: true })}
+      {...register("send_query_in", { required: true })}
     >
-      {Object.keys(SendQueryInEnum).map(sendQueryIn => (
+      {Object.keys(SendQueryInEnum).map(send_query_in => (
         <SelectItem
-          key={sendQueryIn}
-          text={sendQueryIn.replace(/_/g, " ")}
-          value={sendQueryIn}
+          key={send_query_in}
+          text={send_query_in.replace(/_/g, " ")}
+          value={send_query_in}
         />
       ))}
     </Select>
@@ -379,21 +396,41 @@ function EditIngestion() {
 
   const SendQueryInQueryParametersInputs = () => (
     <TextArea
-      id="queryParamters"
-      invalid={!!errors.queryParamters}
+      id="query_parameters"
+      invalid={!!errors.query_parameters}
       labelText="Query parameters"
       placeholder="Input query parameters"
-      {...register("queryParamters", { required: true })}
+      {...register("query_parameters", { required: true })}
     />
   );
 
   const SendQueryInBodyInputs = () => (
     <TextArea
-      id="requestBody"
-      invalid={!!errors.requestBody}
+      id="request_body"
+      invalid={!!errors.request_body}
       labelText="Request body"
       placeholder="Input request body"
-      {...register("requestBody", { required: true })}
+      {...register("request_body", { required: true })}
+    />
+  );
+
+  const DataKeyTextInput = () => (
+    <TextInput
+      id="data_key"
+      helperText="The key in the JSON response that will contain the data to be ingested"
+      invalid={!!errors.data_key}
+      labelText="Data key"
+      {...register("data_key", { required: true })}
+    />
+  );
+
+  const SchoolIdKeyTextInput = () => (
+    <TextInput
+      id="school_id_key"
+      helperText="The key in the JSON response that will contain the data to be ingested"
+      invalid={!!errors.school_id_key}
+      labelText="School ID key"
+      {...register("school_id_key", { required: true })}
     />
   );
 
@@ -411,6 +448,8 @@ function EditIngestion() {
           <section className="flex flex-col gap-4">
             <section className="flex flex-col gap-6">
               <NameTextInput />
+              <DataKeyTextInput />
+              <SchoolIdKeyTextInput />
             </section>
 
             <header className="text-2xl">Ingestion Details</header>

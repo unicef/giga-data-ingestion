@@ -1,5 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import SyntaxHighlighter from "react-syntax-highlighter";
+import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
@@ -7,7 +9,7 @@ import {
   ButtonSet,
   Section,
   SelectItem,
-  Stack,
+  Tag,
   TextArea,
   TextInput,
 } from "@carbon/react";
@@ -21,7 +23,7 @@ import {
 
 import { api } from "@/api";
 import { Select } from "@/components/forms/Select";
-import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
+import TestSchoolListApiButton from "@/components/ingest-api/TestSchoolListApiButton";
 import ControllerNumberInputSchoolList from "@/components/upload/ControllerNumberInputSchoolList";
 import { useQosStore } from "@/context/qosStore";
 import {
@@ -37,6 +39,10 @@ export const Route = createFileRoute("/ingest-api/add/")({
 });
 
 function AddIngestion() {
+  const [responsePreview, setResponsePreview] = useState<string | string[]>("");
+  const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
+  const [isValidDatakey, setIsValidDatakey] = useState<boolean>(false);
+  const [isResponseError, setIsResponseError] = useState<boolean>(false);
   const { setSchoolListFormValues, incrementStepIndex, resetQosState } =
     useQosStore();
 
@@ -44,73 +50,77 @@ function AddIngestion() {
 
   const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
   const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
-  const { BODY, QUERY_PARAMETERS } = SendQueryInEnum;
+  const { GET, POST } = RequestMethodEnum;
 
   const {
     handleSubmit,
     register,
     resetField,
+    getValues,
     watch,
     control,
-    formState: { errors },
+    trigger,
+    formState,
   } = useForm<SchoolListFormValues>({
-    mode: "onChange",
-    reValidateMode: "onChange",
+    mode: "onBlur",
+    reValidateMode: "onBlur",
     defaultValues: {
       name: "someName", // remove this after dev
-      requestMethod: RequestMethodEnum.GET, // remove this after dev
-      authType: AuthorizationTypeEnum.NONE, // remove this after dev
-      paginationType: PaginationTypeEnum.NONE,
-      sendQueryIn: SendQueryInEnum.NONE,
-      apiEndpoint: "myEndpoint", // remove this after dev
-      dataKey: "",
+      request_method: RequestMethodEnum.GET,
+      // authorization_type: AuthorizationTypeEnum.NONE,
+      authorization_type: AuthorizationTypeEnum.BEARER_TOKEN, // remove this after dev
 
-      schoolIdKey: "",
-      pageNumberKey: null,
-      pageOffsetKey: null,
-      pageSizeKey: null,
-      pageStartsWith: null,
-      apiAuthApiKey: null,
-      apiAuthApiValue: null,
-      basicAuthUsername: null,
-      basicAuthPassword: null,
-      bearerAuthBearerToken: null,
+      pagination_type: PaginationTypeEnum.NONE,
+      send_query_in: SendQueryInEnum.QUERY_PARAMETERS,
+      api_endpoint:
+        "https://uni-connect-services-dev.azurewebsites.net/api/v1/schools/country/32", // remove this after dev
+      page_number_key: null,
+      page_offset_key: null,
+      page_size_key: "",
+      page_starts_with: null,
+      api_auth_api_key: null,
+      api_auth_api_value: null,
+      basic_auth_username: null,
+      basic_auth_password: null,
+      bearer_auth_bearer_token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImRhaWx5Y2hlY2thcHAiLCJpYXQiOjE1MTYyMzkwMjJ9.9lHxUZ0XmSc-5ddqEEKFt2Opx2CC-gSsRTGSCI-KcQU",
       size: null,
-      queryParamters: null,
-      requestBody: null,
+      query_parameters: null,
+      request_body: null,
     },
   });
 
-  const watchAuthType = watch("authType");
-  const watchPaginationType = watch("paginationType");
-  const watchSendQueryIn = watch("sendQueryIn");
+  const { errors } = formState;
+  const watchAuthType = watch("authorization_type");
+  const watchPaginationType = watch("pagination_type");
+  const watchRequestMethod = watch("request_method");
 
   useEffect(() => {
-    resetField("apiAuthApiKey");
-    resetField("apiAuthApiValue");
-    resetField("basicAuthUsername");
-    resetField("basicAuthPassword");
-    resetField("bearerAuthBearerToken");
+    resetField("api_auth_api_key");
+    resetField("api_auth_api_value");
+    resetField("basic_auth_username");
+    resetField("basic_auth_password");
+    resetField("bearer_auth_bearer_token");
+
+    setResponsePreview("");
+    setIsValidResponse(false);
+    setIsValidDatakey(false);
+    setIsResponseError(false);
   }, [watchAuthType, resetField]);
 
   useEffect(() => {
-    resetField("pageNumberKey");
-    resetField("pageOffsetKey");
-    resetField("pageStartsWith");
+    resetField("page_number_key");
+    resetField("page_offset_key");
+    resetField("page_starts_with");
     resetField("size");
   }, [watchPaginationType, resetField]);
 
   useEffect(() => {
-    resetField("queryParamters");
-    resetField("requestBody");
-  }, [watchSendQueryIn, resetField]);
+    resetField("query_parameters");
+    resetField("request_body");
+  }, [watchRequestMethod, resetField]);
 
-  const {
-    data: usersQuery,
-    isLoading: isUsersLoading,
-    // refetch: refetchUsers,
-    isRefetching: isUsersRefetching,
-  } = useQuery({
+  const { data: usersQuery, isRefetching: isUsersRefetching } = useQuery({
     queryKey: ["users"],
     queryFn: api.users.list,
   });
@@ -123,12 +133,13 @@ function AddIngestion() {
       return;
     }
 
-    setSchoolListFormValues(data);
+    const user = users.find(user => user.id === data.user_id);
+    const dataWithUserEmail = { ...data, user_email: user?.mail ?? "" };
+
+    setSchoolListFormValues(dataWithUserEmail);
     incrementStepIndex();
     void navigate({ to: "./column-mapping" });
   };
-
-  if (isUsersLoading) return <IngestFormSkeleton />;
 
   const NameTextInput = () => (
     <TextInput
@@ -142,12 +153,14 @@ function AddIngestion() {
 
   const UserSelect = () => (
     <Select
-      id="userId"
+      //key ref
+
+      id="user_id"
       disabled={isUsersRefetching}
       helperText="Who will be the designated point person responsible for this ingestion?"
-      invalid={!!errors.userId}
+      invalid={!!errors.user_id}
       labelText="Owner"
-      {...register("userId", { required: true })}
+      {...register("user_id", { required: true })}
     >
       <SelectItem value="" text="" />
       {users.map(user => (
@@ -162,17 +175,16 @@ function AddIngestion() {
 
   const RequestMethodSelect = () => (
     <Select
-      id="requestMethod"
-      invalid={!!errors.requestMethod}
+      id="request_method"
+      invalid={!!errors.request_method}
       labelText="Request Method"
-      {...register("requestMethod", { required: true })}
+      {...register("request_method", { required: true })}
     >
-      <SelectItem value="" text="" />
-      {Object.keys(RequestMethodEnum).map(requestMethod => (
+      {Object.keys(RequestMethodEnum).map(request_method => (
         <SelectItem
-          key={requestMethod}
-          value={requestMethod}
-          text={requestMethod}
+          key={request_method}
+          value={request_method}
+          text={request_method}
         />
       ))}
     </Select>
@@ -181,31 +193,37 @@ function AddIngestion() {
   const ApiEndpointTextinput = () => (
     <div className="flex items-end">
       <TextInput
-        id="apiEndpoint"
-        invalid={!!errors.apiEndpoint}
+        id="api_endpoint"
+        invalid={!!errors.api_endpoint}
         labelText="API Endpoint"
         placeholder="https://example.com/api/ingest"
-        {...register("apiEndpoint", { required: true })}
+        {...register("api_endpoint", { required: true })}
       />
       <div className="bottom-px">
-        <Button size="md">Test</Button>
+        <TestSchoolListApiButton
+          setIsValidDatakey={setIsValidDatakey}
+          setIsValidResponse={setIsValidResponse}
+          setIsResponseError={setIsResponseError}
+          formState={formState}
+          getValues={getValues}
+          setResponsePreview={setResponsePreview}
+          trigger={trigger}
+        />
       </div>
     </div>
   );
-
   const AuthTypeSelect = () => (
     <Select
-      id="authType"
-      invalid={!!errors.authType}
+      id="authorization_type"
+      invalid={!!errors.authorization_type}
       labelText="Authentication Method"
-      {...register("authType", { required: true })}
+      {...register("authorization_type", { required: true })}
     >
-      <SelectItem value="" text="" />
-      {Object.keys(AuthorizationTypeEnum).map(authType => (
+      {Object.keys(AuthorizationTypeEnum).map(authorization_type => (
         <SelectItem
-          key={authType}
-          text={authType.replace(/_/g, " ")}
-          value={authType}
+          key={authorization_type}
+          text={authorization_type.replace(/_/g, " ")}
+          value={authorization_type}
         />
       ))}
     </Select>
@@ -214,20 +232,20 @@ function AddIngestion() {
   const AuthApiKeyInputs = () => (
     <>
       <TextInput
-        id="apiAuthApiKey"
-        invalid={!!errors.apiAuthApiKey}
+        id="api_auth_api_key"
+        invalid={!!errors.api_auth_api_key}
         labelText="api response key"
         placeholder="Input Authentication Credentials"
-        {...register("apiAuthApiKey", { required: true })}
+        {...register("api_auth_api_key", { required: true })}
       />
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
-        id="apiAuthApiValue"
-        invalid={!!errors.apiAuthApiValue}
+        id="api_auth_api_value"
+        invalid={!!errors.api_auth_api_value}
         labelText="Authentication Credentials"
         placeholder="Input Authentication Credentials"
-        {...register("apiAuthApiValue", { required: true })}
+        {...register("api_auth_api_value", { required: true })}
       />
     </>
   );
@@ -235,34 +253,33 @@ function AddIngestion() {
   const AuthBasicInputs = () => (
     <>
       <TextInput
-        id="basicAuthUsername"
-        invalid={!!errors.basicAuthUsername}
+        id="basic_auth_username"
+        invalid={!!errors.basic_auth_username}
         labelText="api response key"
         placeholder="Input Authentication Credentials"
-        {...register("basicAuthUsername", { required: true })}
+        {...register("basic_auth_username", { required: true })}
       />
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
-        id="basicAuthPassword"
-        invalid={!!errors.basicAuthPassword}
+        id="basic_auth_password"
+        invalid={!!errors.basic_auth_password}
         labelText="Authentication Credentials"
         placeholder="Input Authentication Credentials"
-        {...register("basicAuthPassword", { required: true })}
+        {...register("basic_auth_password", { required: true })}
       />
     </>
   );
-
   const AuthBearerInputs = () => (
     <>
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
-        id="bearerAuthBearerToken"
-        invalid={!!errors.bearerAuthBearerToken}
+        id="bearer_auth_bearer_token"
+        invalid={!!errors.bearer_auth_bearer_token}
         labelText="Authentication Credentials"
         placeholder="Input Authentication Credentials"
-        {...register("bearerAuthBearerToken", {
+        {...register("bearer_auth_bearer_token", {
           required: true,
         })}
       />
@@ -271,16 +288,16 @@ function AddIngestion() {
 
   const PaginationTypeSelect = () => (
     <Select
-      id="paginationType"
-      invalid={!!errors.paginationType}
+      id="pagination_type"
+      invalid={!!errors.pagination_type}
       labelText="Pagination Method"
-      {...register("paginationType", { required: true })}
+      {...register("pagination_type", { required: true })}
     >
-      {Object.keys(PaginationTypeEnum).map(paginationType => (
+      {Object.keys(PaginationTypeEnum).map(pagination_type => (
         <SelectItem
-          key={paginationType}
-          text={paginationType.replace(/_/g, " ")}
-          value={paginationType}
+          key={pagination_type}
+          text={pagination_type.replace(/_/g, " ")}
+          value={pagination_type}
         />
       ))}
     </Select>
@@ -298,18 +315,18 @@ function AddIngestion() {
         }}
       />
       <TextInput
-        id="pageSizeKey"
-        invalid={!!errors.pageSizeKey}
+        id="page_size_key"
+        invalid={!!errors.page_size_key}
         labelText="Page size key"
         placeholder="Input page size key"
-        {...register("pageSizeKey", { required: true })}
+        {...register("page_size_key", { required: true })}
       />
       <TextInput
-        id="pageOffsetKey"
-        invalid={!!errors.pageOffsetKey}
+        id="page_offset_key"
+        invalid={!!errors.page_offset_key}
         labelText="Page Offset key"
         placeholder="Input Page Offset key"
-        {...register("pageOffsetKey", { required: true })}
+        {...register("page_offset_key", { required: true })}
       />
     </>
   );
@@ -326,25 +343,25 @@ function AddIngestion() {
         }}
       />
       <TextInput
-        id="pageSizeKey"
-        invalid={!!errors.pageSizeKey}
+        id="page_size_key"
+        invalid={!!errors.page_size_key}
         labelText="Page size key"
         placeholder="Input page size key"
-        {...register("pageSizeKey", { required: true })}
+        {...register("page_size_key", { required: true })}
       />
       <TextInput
-        id="pageNumberKey"
-        invalid={!!errors.pageNumberKey}
+        id="page_number_key"
+        invalid={!!errors.page_number_key}
         labelText="Page number key"
         placeholder="Input page number key"
-        {...register("pageNumberKey", { required: true })}
+        {...register("page_number_key", { required: true })}
       />
 
       <Select
-        id="pageStartsWith"
-        invalid={!!errors.pageStartsWith}
+        id="page_starts_with"
+        invalid={!!errors.page_starts_with}
         labelText="Page Starts with"
-        {...register("pageStartsWith", { required: true })}
+        {...register("page_starts_with", { required: true })}
       >
         <SelectItem key="0" text="0" value={0} />
         <SelectItem key="1" text="1" value={1} />
@@ -354,16 +371,16 @@ function AddIngestion() {
 
   const SendQueryInSelect = () => (
     <Select
-      id="sendQueryIn"
-      invalid={!!errors.sendQueryIn}
+      id="send_query_in"
+      invalid={!!errors.send_query_in}
       labelText="Send query in"
-      {...register("sendQueryIn", { required: true })}
+      {...register("send_query_in", { required: true })}
     >
-      {Object.keys(SendQueryInEnum).map(sendQueryIn => (
+      {Object.keys(SendQueryInEnum).map(send_query_in => (
         <SelectItem
-          key={sendQueryIn}
-          text={sendQueryIn.replace(/_/g, " ")}
-          value={sendQueryIn}
+          key={send_query_in}
+          text={send_query_in.replace(/_/g, " ")}
+          value={send_query_in}
         />
       ))}
     </Select>
@@ -371,23 +388,79 @@ function AddIngestion() {
 
   const SendQueryInQueryParametersInputs = () => (
     <TextArea
-      id="queryParamters"
-      invalid={!!errors.queryParamters}
+      id="query_parameters"
+      invalid={
+        errors.query_parameters?.type === "required" ||
+        errors.query_parameters?.type === "validate"
+      }
       labelText="Query parameters"
       placeholder="Input query parameters"
-      {...register("queryParamters", { required: true })}
+      // warn={errors.query_parameters?.type === "validate"}
+      {...register("query_parameters", {
+        required: true,
+        validate: value => {
+          if (!value) return true;
+
+          try {
+            JSON.parse(value);
+            return true;
+          } catch (e) {
+            return false;
+          }
+        },
+      })}
     />
   );
 
   const SendQueryInBodyInputs = () => (
     <TextArea
-      id="requestBody"
-      invalid={!!errors.requestBody}
+      id="request_body"
+      invalid={
+        errors.request_body?.type === "required" ||
+        errors.request_body?.type === "validate"
+      }
       labelText="Request body"
       placeholder="Input request body"
-      {...register("requestBody", { required: true })}
+      rows={10}
+      {...register("request_body", {
+        required: true,
+        validate: value => {
+          if (!value) return true;
+
+          try {
+            JSON.parse(value);
+            return true;
+          } catch (e) {
+            return false;
+          }
+        },
+      })}
     />
   );
+
+  const DataKeyTextInput = () => (
+    <TextInput
+      id="data_key"
+      helperText="The key in the JSON response that will contain the data to be ingested"
+      invalid={!!errors.data_key}
+      labelText="Data key"
+      {...register("data_key")}
+    />
+  );
+
+  const SchoolIdKeyTextInput = () => (
+    <TextInput
+      id="school_id_key"
+      helperText="The key in the JSON response that will contain the data to be ingested"
+      invalid={!!errors.school_id_key}
+      labelText="School ID key"
+      {...register("school_id_key", { required: true })}
+    />
+  );
+
+  const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
+
+  // if (isUsersLoading) return <IngestFormSkeleton />;
 
   return (
     <Section className="container py-6">
@@ -396,11 +469,14 @@ function AddIngestion() {
           Step 1: Configure school listing API
         </p>
       </header>
+
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack className="w-full" orientation="horizontal">
-          <section className="flex flex-col gap-4">
+        <div className="flex w-full space-x-10 ">
+          <section className="flex w-full flex-col gap-4 ">
             <section className="flex flex-col gap-6">
               <NameTextInput />
+              <DataKeyTextInput />
+              <SchoolIdKeyTextInput />
             </section>
 
             <header className="text-2xl">Ingestion Details</header>
@@ -415,6 +491,11 @@ function AddIngestion() {
               {watchAuthType === API_KEY && <AuthApiKeyInputs />}
               {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
               {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
+
+              {watchRequestMethod === GET && (
+                <SendQueryInQueryParametersInputs />
+              )}
+              {watchRequestMethod === POST && <SendQueryInBodyInputs />}
             </section>
 
             <section className="flex flex-col gap-6">
@@ -428,10 +509,6 @@ function AddIngestion() {
               )}
 
               <SendQueryInSelect />
-              {watchSendQueryIn === QUERY_PARAMETERS && (
-                <SendQueryInQueryParametersInputs />
-              )}
-              {watchSendQueryIn === BODY && <SendQueryInBodyInputs />}
 
               <ButtonSet className="w-full">
                 <Button
@@ -447,6 +524,9 @@ function AddIngestion() {
                 </Button>
                 <Button
                   className="w-full"
+                  disabled={
+                    !isValidResponse || !isValidDatakey || isResponseError
+                  }
                   isExpressive
                   renderIcon={ArrowRight}
                   type="submit"
@@ -456,10 +536,28 @@ function AddIngestion() {
               </ButtonSet>
             </section>
           </section>
-          <aside className="flex h-full">
-            <TextArea disabled labelText="Preview" rows={40} />
-          </aside>
-        </Stack>
+          <div className="flex  w-full flex-col">
+            <aside className="grow basis-0 overflow-y-auto">
+              {isResponseError && (
+                <Tag type="red">Invalid Output from api request</Tag>
+              )}
+              {isValidResponse && !isValidDatakey && (
+                <Tag type="blue">Invalid Datakey</Tag>
+              )}
+              <SyntaxHighlighter
+                customStyle={{ height: "100%" }}
+                language="json"
+                style={docco}
+              >
+                {responsePreview === ""
+                  ? "Preview"
+                  : isValidResponse
+                    ? prettyResponse
+                    : "Invalid Response"}
+              </SyntaxHighlighter>
+            </aside>
+          </div>
+        </div>
       </form>
       <Outlet />
     </Section>

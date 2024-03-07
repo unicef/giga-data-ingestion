@@ -40,8 +40,8 @@ const ConfirmEditIngestionModal = ({
       onRequestSubmit={onSubmit}
     >
       This will create a new ingesiton that will ingest from{" "}
-      <b>{schoolConnectivity.apiEndpoint}</b> every{" "}
-      <b>{schoolConnectivity.ingestionFrequency}</b> minutes
+      <b>{schoolConnectivity.api_endpoint}</b> every{" "}
+      <b>{schoolConnectivity.ingestion_frequency}</b> minutes
     </Modal>
   );
 };

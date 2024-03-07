@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
-from data_ingestion.models.school_list import (
+from data_ingestion.models.ingest_api_qos import (
     AuthorizationTypeEnum,
     PaginationTypeEnum,
     RequestMethodEnum,
@@ -10,38 +10,102 @@ from data_ingestion.models.school_list import (
 )
 
 
-class SchoolListSchema(BaseModel):
+class ApiConfiguration(BaseModel):
     id: str
-    request_method: RequestMethodEnum
-    api_endpoint: str
-    data_key: str
-    school_id_key: str
-
-    query_parameters: str
-    request_body: str
-    authorization_type: AuthorizationTypeEnum
-
-    bearer_auth_bearer_token: str | None
-    basic_auth_username: str | None
-    basic_auth_password: str | None
     api_auth_api_key: str | None
     api_auth_api_value: str | None
-
-    pagination_type: PaginationTypeEnum
-    size: int
-    page_size_key: str
-    send_query_in: SendQueryInEnum
-
-    page_number_key: str
-    page_starts_with: int
-    page_offset_key: str
-    enabled: bool
+    api_endpoint: str
+    authorization_type: AuthorizationTypeEnum
+    basic_auth_password: str | None
+    basic_auth_username: str | None
+    bearer_auth_bearer_token: str | None
+    data_key: str
     date_created: datetime
     date_modified: datetime
-    user_id: str
-    user_email: EmailStr
+    enabled: bool
+    page_number_key: str | None
+    page_offset_key: str | None
+    page_size_key: str | None
+    page_starts_with: int | None
+    pagination_type: PaginationTypeEnum
+    query_parameters: str | None
+    request_body: str | None
+    request_method: RequestMethodEnum
+    school_id_key: str
+    send_query_in: SendQueryInEnum
+    size: int | None
     status: bool
+    user_email: EmailStr
+    user_id: str
 
+
+class SchoolListSchema(ApiConfiguration):
+    column_to_schema_mapping: str
     name: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SchoolConnectivitySchema(ApiConfiguration):
+    ingestion_frequency: int
+    schema_url: str
+    school_list_id: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CreateSchoolConnectivityRequest(BaseModel):
+    api_auth_api_key: str | None
+    api_auth_api_value: str | None
+    api_endpoint: str
+    authorization_type: AuthorizationTypeEnum
+    basic_auth_password: str | None
+    basic_auth_username: str | None
+    bearer_auth_bearer_token: str | None
+    data_key: str
+    enabled: bool | None
+    page_number_key: str | None
+    page_offset_key: str | None
+    page_size_key: str | None
+    page_starts_with: int | None
+    pagination_type: PaginationTypeEnum
+    query_parameters: str | None
+    request_body: str | None
+    request_method: RequestMethodEnum
+    send_query_in: SendQueryInEnum
+    size: int | None
+    status: bool
+    user_email: str
+    user_id: str
+    ingestion_frequency: int
+
+
+class CreateSchoolListRequest(BaseModel):
+    name: str
+    api_auth_api_key: str | None
+    api_auth_api_value: str | None
+    api_endpoint: str
+    authorization_type: AuthorizationTypeEnum
+    basic_auth_password: str | None
+    basic_auth_username: str | None
+    bearer_auth_bearer_token: str | None
+    data_key: str
+    page_number_key: str | None
+    page_offset_key: str | None
+    page_size_key: str | None
+    page_starts_with: int | None
+    pagination_type: PaginationTypeEnum | None
+    query_parameters: str | None
+    request_body: str | None
+    request_method: RequestMethodEnum
+    school_id_key: str
+    send_query_in: SendQueryInEnum
+    size: int | None
+    user_email: str
+    user_id: str
+    column_to_schema_mapping: str
+
+
+class CreateApiIngestionRequest(BaseModel):
+    school_connectivity: CreateSchoolConnectivityRequest
+    school_list: CreateSchoolListRequest

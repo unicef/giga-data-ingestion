@@ -27,18 +27,21 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 
+import {
+  DataRelevanceEnum,
+  ISchoolData,
+  SchoolDataItem,
+  schoolData,
+} from "@/constants/school-data";
 import { useQosStore } from "@/context/qosStore";
-import { MasterColumnMapping } from "@/types/qos";
 
 export const Route = createFileRoute(
   "/ingest-api/edit/$ingestionId/column-mapping",
 )({
   component: ColumnMapping,
   loader: () => {
-    // remove return after testing
-    return;
-    const { apiEndpoint } = useQosStore.getState().schoolList;
-    if (apiEndpoint === "") throw redirect({ to: ".." });
+    const { api_endpoint } = useQosStore.getState().schoolList;
+    if (api_endpoint === "") throw redirect({ to: ".." });
   },
 });
 
@@ -47,47 +50,73 @@ const headers: DataTableHeader[] = [
   { key: "detectedColumns", header: "Detected Columns" },
 ];
 
-const mockDetectedColumns = ["num_stud", "id", "latitud", "long"];
-const masterColumns = [
-  { name: "school_id", description: "school id description" },
-  { name: "student_count", description: "student_count description" },
-  { name: "lat", description: "lat  description" },
-  { name: "long", description: "long description" },
-];
-
-type MasterColumnMappingKeys = keyof MasterColumnMapping;
-
 function ColumnMapping() {
   const { incrementStepIndex, decrementStepIndex, setColumnMapping } =
     useQosStore();
 
+  const { detectedColumns } = useQosStore.getState();
+
   const navigate = useNavigate({ from: Route.fullPath });
 
-  const { handleSubmit, register } = useForm<MasterColumnMapping>({
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm<ISchoolData>({
     mode: "onChange",
     reValidateMode: "onChange",
   });
 
+  const onSubmit: SubmitHandler<ISchoolData> = data => {
+    incrementStepIndex();
+    const updatedData = Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [
+        key,
+        value === "" ? null : value,
+      ]),
+    );
+
+    setColumnMapping(updatedData);
+    void navigate({ to: "../school-connectivity" });
+  };
+
   const rows = useMemo(() => {
-    return masterColumns.map(masterColumn => {
-      const { name, description } = masterColumn;
+    return (
+      Object.entries(schoolData) as [keyof ISchoolData, SchoolDataItem][]
+    ).map(([key, schoolDataItem]) => {
+      const { data_relevance, description } = schoolDataItem;
 
       return {
-        id: name,
+        id: key,
         masterColumn: (
-          <DefinitionTooltip align="right" definition={description} openOnHover>
-            {masterColumn.name}
-          </DefinitionTooltip>
+          <div className="flex items-center gap-4">
+            <DefinitionTooltip
+              align="right"
+              definition={description}
+              openOnHover
+            >
+              {key}
+              {data_relevance === DataRelevanceEnum.Required && (
+                <span className="text-giga-red">*</span>
+              )}
+              {data_relevance === DataRelevanceEnum.Important && (
+                <span className="text-purple-600">{" (!)"}</span>
+              )}
+            </DefinitionTooltip>
+          </div>
         ),
         detectedColumns: (
           <div className="w-11/12 px-2 pb-2">
             <Select
-              id={`${name}-mapping`}
+              id={`${key}-mapping`}
+              invalid={key in errors}
               labelText=""
-              {...register(name as MasterColumnMappingKeys)}
+              {...register(key, {
+                required: data_relevance === DataRelevanceEnum.Required,
+              })}
             >
               <SelectItem text="" value="" />
-              {mockDetectedColumns.map(detectedColumn => (
+              {detectedColumns.map(detectedColumn => (
                 <SelectItem
                   key={detectedColumn}
                   text={detectedColumn}
@@ -99,14 +128,7 @@ function ColumnMapping() {
         ),
       };
     });
-  }, [register]);
-
-  const onSubmit: SubmitHandler<MasterColumnMapping> = data => {
-    incrementStepIndex();
-    setColumnMapping({ ...data });
-    void navigate({ to: "../school-connectivity" });
-    console.log("navigaciones");
-  };
+  }, [errors, register, detectedColumns]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

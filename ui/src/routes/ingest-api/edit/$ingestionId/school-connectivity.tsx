@@ -32,8 +32,8 @@ export const Route = createFileRoute(
 )({
   component: SchoolConnectivity,
   loader: async ({ params: { ingestionId } }) => {
-    const { apiEndpoint } = useQosStore.getState().schoolList;
-    if (apiEndpoint === "") throw redirect({ to: ".." });
+    const { api_endpoint } = useQosStore.getState().schoolList;
+    if (api_endpoint === "") throw redirect({ to: ".." });
 
     return await queryClient.ensureQueryData({
       queryKey: ["ingestion", ingestionId],
@@ -80,53 +80,54 @@ function SchoolConnectivity() {
     formState: { errors },
   } = useForm<SchoolConnectivityFormValues>({
     defaultValues: {
-      requestMethod: schoolConnectivityQuery.request_method,
-      apiEndpoint: schoolConnectivityQuery.api_endpoint,
-      authType: schoolConnectivityQuery.authorization_type,
-      apiAuthApiKey: schoolConnectivityQuery.api_auth_api_key,
-      apiAuthApiValue: schoolConnectivityQuery.api_auth_api_value,
-      bearerAuthBearerToken: schoolConnectivityQuery.bearer_auth_bearer_token,
-      basicAuthPassword: schoolConnectivityQuery.basic_auth_password,
-      basicAuthUsername: schoolConnectivityQuery.basic_auth_username,
-      dataKey: schoolConnectivityQuery.data_key,
-      paginationType: schoolConnectivityQuery.pagination_type,
-      queryParamters: schoolConnectivityQuery.query_parameters,
-      pageNumberKey: schoolConnectivityQuery.page_number_key,
-      pageOffsetKey: schoolConnectivityQuery.page_offset_key,
-      pageSizeKey: schoolConnectivityQuery.page_size_key,
-      pageStartsWith: schoolConnectivityQuery.page_starts_with,
+      request_method: schoolConnectivityQuery.request_method,
+      api_endpoint: schoolConnectivityQuery.api_endpoint,
+      authorization_type: schoolConnectivityQuery.authorization_type,
+      api_auth_api_key: schoolConnectivityQuery.api_auth_api_key,
+      api_auth_api_value: schoolConnectivityQuery.api_auth_api_value,
+      bearer_auth_bearer_token:
+        schoolConnectivityQuery.bearer_auth_bearer_token,
+      basic_auth_password: schoolConnectivityQuery.basic_auth_password,
+      basic_auth_username: schoolConnectivityQuery.basic_auth_username,
+      data_key: schoolConnectivityQuery.data_key,
+      pagination_type: schoolConnectivityQuery.pagination_type,
+      query_parameters: schoolConnectivityQuery.query_parameters,
+      page_number_key: schoolConnectivityQuery.page_number_key,
+      page_offset_key: schoolConnectivityQuery.page_offset_key,
+      page_size_key: schoolConnectivityQuery.page_size_key,
+      page_starts_with: schoolConnectivityQuery.page_starts_with,
       size: schoolConnectivityQuery.size,
-      sendQueryIn: schoolConnectivityQuery.send_query_in,
-      requestBody: schoolConnectivityQuery.request_body,
+      send_query_in: schoolConnectivityQuery.send_query_in,
+      request_body: schoolConnectivityQuery.request_body,
       enabled: schoolConnectivityQuery.enabled,
-      ingestionFrequency: schoolConnectivityQuery.ingestion_frequency,
+      ingestion_frequency: schoolConnectivityQuery.ingestion_frequency,
     },
     mode: "onChange",
     reValidateMode: "onChange",
   });
 
-  const watchAuthType = watch("authType");
-  const watchPaginationType = watch("paginationType");
-  const watchSendQueryIn = watch("sendQueryIn");
+  const watchAuthType = watch("authorization_type");
+  const watchPaginationType = watch("pagination_type");
+  const watchSendQueryIn = watch("send_query_in");
 
   useEffect(() => {
-    resetField("apiAuthApiKey");
-    resetField("apiAuthApiValue");
-    resetField("basicAuthUsername");
-    resetField("basicAuthPassword");
-    resetField("bearerAuthBearerToken");
+    resetField("api_auth_api_key");
+    resetField("api_auth_api_value");
+    resetField("basic_auth_username");
+    resetField("basic_auth_password");
+    resetField("bearer_auth_bearer_token");
   }, [watchAuthType, resetField]);
 
   useEffect(() => {
-    resetField("pageNumberKey");
-    resetField("pageOffsetKey");
-    resetField("pageStartsWith");
+    resetField("page_number_key");
+    resetField("page_offset_key");
+    resetField("page_starts_with");
     resetField("size");
   }, [watchPaginationType, resetField]);
 
   useEffect(() => {
-    resetField("queryParamters");
-    resetField("requestBody");
+    resetField("query_parameters");
+    resetField("request_body");
   }, [watchSendQueryIn, resetField]);
 
   const onSubmit: SubmitHandler<SchoolConnectivityFormValues> = async data => {
@@ -141,17 +142,17 @@ function SchoolConnectivity() {
 
   const RequestMethodSelect = () => (
     <Select
-      id="requestMethod"
-      invalid={!!errors.requestMethod}
+      id="request_method"
+      invalid={!!errors.request_method}
       labelText="Request Method"
-      {...register("requestMethod", { required: true })}
+      {...register("request_method", { required: true })}
     >
       <SelectItem value="" text="" />
-      {Object.keys(RequestMethodEnum).map(requestMethod => (
+      {Object.keys(RequestMethodEnum).map(request_method => (
         <SelectItem
-          key={requestMethod}
-          value={requestMethod}
-          text={requestMethod}
+          key={request_method}
+          value={request_method}
+          text={request_method}
         />
       ))}
     </Select>
@@ -160,11 +161,11 @@ function SchoolConnectivity() {
   const ApiEndpointTextInput = () => (
     <div className="flex items-end">
       <TextInput
-        id="apiEndpoint"
-        invalid={!!errors.apiEndpoint}
+        id="api_endpoint"
+        invalid={!!errors.api_endpoint}
         labelText="API Endpoint"
         placeholder="https://example.com/api/ingest"
-        {...register("apiEndpoint", { required: true })}
+        {...register("api_endpoint", { required: true })}
       />
       <div className="bottom-px">
         <Button size="md">Test</Button>
@@ -174,17 +175,17 @@ function SchoolConnectivity() {
 
   const AuthTypeSelect = () => (
     <Select
-      id="authType"
-      invalid={!!errors.authType}
+      id="authorization_type"
+      invalid={!!errors.authorization_type}
       labelText="Authentication Method"
-      {...register("authType", { required: true })}
+      {...register("authorization_type", { required: true })}
     >
       <SelectItem value="" text="" />
-      {Object.keys(AuthorizationTypeEnum).map(authType => (
+      {Object.keys(AuthorizationTypeEnum).map(authorization_type => (
         <SelectItem
-          key={authType}
-          text={authType.replace(/_/g, " ")}
-          value={authType}
+          key={authorization_type}
+          text={authorization_type.replace(/_/g, " ")}
+          value={authorization_type}
         />
       ))}
     </Select>
@@ -193,21 +194,21 @@ function SchoolConnectivity() {
   const AuthApiKeyInputs = () => (
     <>
       <TextInput
-        id="apiAuthApiKey"
-        invalid={!!errors.apiAuthApiKey}
+        id="api_auth_api_key"
+        invalid={!!errors.api_auth_api_key}
         labelText="api response key"
         placeholder="Input Authentication Credentials"
-        {...register("apiAuthApiKey", { required: true })}
+        {...register("api_auth_api_key", { required: true })}
       />
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
         autoComplete="on"
-        id="apiAuthApiValue"
-        invalid={!!errors.apiAuthApiValue}
+        id="api_auth_api_value"
+        invalid={!!errors.api_auth_api_value}
         labelText="Authentication Credentials"
         placeholder="Input Authentication Credentials"
-        {...register("apiAuthApiValue", { required: true })}
+        {...register("api_auth_api_value", { required: true })}
       />
     </>
   );
@@ -215,21 +216,21 @@ function SchoolConnectivity() {
   const AuthBasicInputs = () => (
     <>
       <TextInput
-        id="basicAuthUsername"
-        invalid={!!errors.basicAuthUsername}
+        id="basic_auth_username"
+        invalid={!!errors.basic_auth_username}
         labelText="api response key"
         placeholder="Input Authentication Credentials"
-        {...register("basicAuthUsername", { required: true })}
+        {...register("basic_auth_username", { required: true })}
       />
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
         autoComplete="on"
-        id="basicAuthPassword"
-        invalid={!!errors.basicAuthPassword}
+        id="basic_auth_password"
+        invalid={!!errors.basic_auth_password}
         labelText="Authentication Credentials"
         placeholder="Input Authentication Credentials"
-        {...register("basicAuthPassword", { required: true })}
+        {...register("basic_auth_password", { required: true })}
       />
     </>
   );
@@ -240,11 +241,11 @@ function SchoolConnectivity() {
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
         autoComplete="on"
-        id="bearerAuthBearerToken"
-        invalid={!!errors.bearerAuthBearerToken}
+        id="bearer_auth_bearer_token"
+        invalid={!!errors.bearer_auth_bearer_token}
         labelText="Authentication Credentials"
         placeholder="Input Authentication Credentials"
-        {...register("bearerAuthBearerToken", {
+        {...register("bearer_auth_bearer_token", {
           required: true,
         })}
       />
@@ -253,26 +254,26 @@ function SchoolConnectivity() {
 
   const DataKeyTextInput = () => (
     <TextInput
-      id="dataKey"
+      id="data_key"
       helperText="The key in the JSON response that will contain the data to be ingested"
-      invalid={!!errors.dataKey}
+      invalid={!!errors.data_key}
       labelText="Data key"
-      {...register("dataKey", { required: true })}
+      {...register("data_key", { required: true })}
     />
   );
 
   const PaginationTypeSelect = () => (
     <Select
-      id="paginationType"
-      invalid={!!errors.paginationType}
+      id="pagination_type"
+      invalid={!!errors.pagination_type}
       labelText="Pagination Method"
-      {...register("paginationType", { required: true })}
+      {...register("pagination_type", { required: true })}
     >
-      {Object.keys(PaginationTypeEnum).map(paginationType => (
+      {Object.keys(PaginationTypeEnum).map(pagination_type => (
         <SelectItem
-          key={paginationType}
-          text={paginationType.replace(/_/g, " ")}
-          value={paginationType}
+          key={pagination_type}
+          text={pagination_type.replace(/_/g, " ")}
+          value={pagination_type}
         />
       ))}
     </Select>
@@ -290,18 +291,18 @@ function SchoolConnectivity() {
         }}
       />
       <TextInput
-        id="pageSizeKey"
-        invalid={!!errors.pageSizeKey}
+        id="page_size_key"
+        invalid={!!errors.page_size_key}
         labelText="Page size key"
         placeholder="Input page size key"
-        {...register("pageSizeKey", { required: true })}
+        {...register("page_size_key", { required: true })}
       />
       <TextInput
-        id="pageOffsetKey"
-        invalid={!!errors.pageOffsetKey}
+        id="page_offset_key"
+        invalid={!!errors.page_offset_key}
         labelText="Page Offset key"
         placeholder="Input Page Offset key"
-        {...register("pageOffsetKey", { required: true })}
+        {...register("page_offset_key", { required: true })}
       />
     </>
   );
@@ -318,25 +319,25 @@ function SchoolConnectivity() {
         }}
       />
       <TextInput
-        id="pageSizeKey"
-        invalid={!!errors.pageSizeKey}
+        id="page_size_key"
+        invalid={!!errors.page_size_key}
         labelText="Page size key"
         placeholder="Input page size key"
-        {...register("pageSizeKey", { required: true })}
+        {...register("page_size_key", { required: true })}
       />
       <TextInput
-        id="pageNumberKey"
-        invalid={!!errors.pageNumberKey}
+        id="page_number_key"
+        invalid={!!errors.page_number_key}
         labelText="Page number key"
         placeholder="Input page number key"
-        {...register("pageNumberKey", { required: true })}
+        {...register("page_number_key", { required: true })}
       />
 
       <Select
-        id="pageStartsWith"
-        invalid={!!errors.pageStartsWith}
+        id="page_starts_with"
+        invalid={!!errors.page_starts_with}
         labelText="Page Starts with"
-        {...register("pageStartsWith", { required: true })}
+        {...register("page_starts_with", { required: true })}
       >
         <SelectItem key="0" text="0" value={0} />
         <SelectItem key="1" text="1" value={1} />
@@ -346,16 +347,16 @@ function SchoolConnectivity() {
 
   const SendQueryInSelect = () => (
     <Select
-      id="sendQueryIn"
-      invalid={!!errors.sendQueryIn}
+      id="send_query_in"
+      invalid={!!errors.send_query_in}
       labelText="Send query in"
-      {...register("sendQueryIn", { required: true })}
+      {...register("send_query_in", { required: true })}
     >
-      {Object.keys(SendQueryInEnum).map(sendQueryIn => (
+      {Object.keys(SendQueryInEnum).map(send_query_in => (
         <SelectItem
-          key={sendQueryIn}
-          text={sendQueryIn.replace(/_/g, " ")}
-          value={sendQueryIn}
+          key={send_query_in}
+          text={send_query_in.replace(/_/g, " ")}
+          value={send_query_in}
         />
       ))}
     </Select>
@@ -363,30 +364,30 @@ function SchoolConnectivity() {
 
   const SendQueryInQueryParametersInputs = () => (
     <TextArea
-      id="queryParamters"
-      invalid={!!errors.queryParamters}
+      id="query_parameters"
+      invalid={!!errors.query_parameters}
       labelText="Query parameters"
       placeholder="Input query parameters"
-      {...register("queryParamters", { required: true })}
+      {...register("query_parameters", { required: true })}
     />
   );
 
   const SendQueryInBodyInputs = () => (
     <TextArea
-      id="requestBody"
-      invalid={!!errors.requestBody}
+      id="request_body"
+      invalid={!!errors.request_body}
       labelText="Request body"
       placeholder="Input request body"
-      {...register("requestBody", { required: true })}
+      {...register("request_body", { required: true })}
     />
   );
 
   const FrequencySelect = () => (
     <ControllerNumberInputSchoolConnectivity
       control={control}
-      name="ingestionFrequency"
+      name="ingestion_frequency"
       numberInputProps={{
-        id: "ingestionFrequency",
+        id: "ingestion_frequency",
         defaultValue: FREQUENCY_DEFAULT_VALUE,
         helperText: "In minutes. Min 5",
         label: <span>Frequency</span>,

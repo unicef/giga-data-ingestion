@@ -10,10 +10,13 @@ import {
 } from "@/types/qos";
 
 interface StoreState {
-  stepIndex: number;
   columnMapping: Record<string, string>;
+  detectedColumns: string[];
   schoolList: SchoolListFormValues;
   schoolConnectivity: SchoolConnectivityFormValues;
+  stepIndex: number;
+  testButtonLoadingState: boolean;
+  isValidTest: boolean;
 }
 interface StoreActions {
   setSchoolListFormValues: (formValues: SchoolListFormValues) => void;
@@ -21,6 +24,9 @@ interface StoreActions {
   setSchoolConnectivityFormValues: (
     formValues: SchoolConnectivityFormValues,
   ) => void;
+  setDetectedColumns: (detectedColumns: Array<string>) => void;
+  setIsValidTest: (isValid: boolean) => void;
+
   incrementStepIndex: () => void;
   decrementStepIndex: () => void;
   resetQosState: () => void;
@@ -30,10 +36,13 @@ interface StoreActions {
 }
 
 const initialState: StoreState = {
-  stepIndex: 0,
   columnMapping: {},
+  detectedColumns: [],
   schoolList: initialSchoolListFormValues,
   schoolConnectivity: initialSchoolConnectivityFormValues,
+  stepIndex: 0,
+  testButtonLoadingState: false,
+  isValidTest: false,
 };
 
 export const useQosStore = create<StoreState & StoreActions>()(
@@ -49,11 +58,23 @@ export const useQosStore = create<StoreState & StoreActions>()(
           set(state => {
             state.columnMapping = columnMapping;
           }),
+        setDetectedColumns: (detectedColumns: Array<string>) =>
+          set(state => {
+            state.detectedColumns = detectedColumns;
+          }),
         setSchoolConnectivityFormValues: (
           formValues: SchoolConnectivityFormValues,
         ) =>
           set(state => {
             state.schoolConnectivity = formValues;
+          }),
+        setTestButtonLoadingState: (isLoading: boolean) =>
+          set(state => {
+            state.testButtonLoadingState = isLoading;
+          }),
+        setIsValidTest: (isValid: boolean) =>
+          set(state => {
+            state.isValidTest = isValid;
           }),
         incrementStepIndex: () =>
           set(state => {
@@ -63,10 +84,10 @@ export const useQosStore = create<StoreState & StoreActions>()(
           set(state => {
             state.stepIndex -= 1;
           }),
-
         resetQosState: () =>
           set(state => {
             state.columnMapping = {};
+            state.detectedColumns = [];
             state.stepIndex = 0;
             state.schoolList = initialSchoolListFormValues;
             state.schoolConnectivity = initialSchoolConnectivityFormValues;
