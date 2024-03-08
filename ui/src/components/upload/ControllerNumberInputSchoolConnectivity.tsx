@@ -27,6 +27,7 @@ const ControllerNumberInputSchoolConnectivity = ({
   return (
     <NumberInput
       invalid={fieldState.invalid}
+      value={field.value as number}
       onChange={(_, value) => {
         field.onChange(
           typeof value.value === "string"
