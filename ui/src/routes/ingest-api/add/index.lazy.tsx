@@ -50,7 +50,7 @@ function AddIngestion() {
 
   const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
   const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
-  const { GET, POST } = RequestMethodEnum;
+  const { POST } = RequestMethodEnum;
 
   const {
     handleSubmit,
@@ -141,6 +141,8 @@ function AddIngestion() {
     void navigate({ to: "./column-mapping" });
   };
 
+  const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
+
   const NameTextInput = () => (
     <TextInput
       id="name"
@@ -148,6 +150,25 @@ function AddIngestion() {
       labelText="Name"
       placeholder="How would you like to indentify your ingestion?"
       {...register("name", { required: true })}
+    />
+  );
+
+  const DataKeyTextInput = () => (
+    <TextInput
+      id="data_key"
+      helperText="The key in the JSON response that will contain the data to be ingested"
+      invalid={!!errors.data_key}
+      labelText="Data key"
+      {...register("data_key")}
+    />
+  );
+
+  const SchoolIdKeyTextInput = () => (
+    <TextInput
+      id="school_id_key"
+      invalid={!!errors.school_id_key}
+      labelText="School ID key"
+      {...register("school_id_key", { required: true })}
     />
   );
 
@@ -239,8 +260,9 @@ function AddIngestion() {
         {...register("api_auth_api_key", { required: true })}
       />
       {/*
-                  //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
+      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
+        autoComplete="on"
         id="api_auth_api_value"
         invalid={!!errors.api_auth_api_value}
         labelText="Authentication Credentials"
@@ -262,6 +284,7 @@ function AddIngestion() {
       {/*
                   //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
+        autoComplete="on"
         id="basic_auth_password"
         invalid={!!errors.basic_auth_password}
         labelText="Authentication Credentials"
@@ -273,8 +296,9 @@ function AddIngestion() {
   const AuthBearerInputs = () => (
     <>
       {/*
-                  //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
+      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
+        autoComplete="on"
         id="bearer_auth_bearer_token"
         invalid={!!errors.bearer_auth_bearer_token}
         labelText="Authentication Credentials"
@@ -395,7 +419,6 @@ function AddIngestion() {
       }
       labelText="Query parameters"
       placeholder="Input query parameters"
-      // warn={errors.query_parameters?.type === "validate"}
       {...register("query_parameters", {
         required: true,
         validate: value => {
@@ -438,27 +461,39 @@ function AddIngestion() {
     />
   );
 
-  const DataKeyTextInput = () => (
-    <TextInput
-      id="data_key"
-      helperText="The key in the JSON response that will contain the data to be ingested"
-      invalid={!!errors.data_key}
-      labelText="Data key"
-      {...register("data_key")}
-    />
+  const IngestionDetailsSection = () => (
+    <section className="flex flex-col gap-6">
+      <header className="text-2xl">Ingestion Details</header>
+      <NameTextInput />
+      <UserSelect />
+      <SchoolIdKeyTextInput />
+    </section>
   );
 
-  const SchoolIdKeyTextInput = () => (
-    <TextInput
-      id="school_id_key"
-      helperText="The key in the JSON response that will contain the data to be ingested"
-      invalid={!!errors.school_id_key}
-      labelText="School ID key"
-      {...register("school_id_key", { required: true })}
-    />
+  const IngestionSourceSection = () => (
+    <section className="flex flex-col gap-6">
+      <header className="text-2xl">Ingestion Source</header>
+      <DataKeyTextInput />
+      <RequestMethodSelect />
+      <ApiEndpointTextinput />
+      <AuthTypeSelect />
+      {watchAuthType === API_KEY && <AuthApiKeyInputs />}
+      {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
+      {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
+      <SendQueryInQueryParametersInputs />
+      {watchRequestMethod === POST && <SendQueryInBodyInputs />}
+    </section>
   );
 
-  const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
+  const IngestionParametersSection = () => (
+    <section className="flex flex-col gap-6">
+      <header className="text-2xl">Ingestion Parameters</header>
+      <PaginationTypeSelect />
+      {watchPaginationType === PAGE_NUMBER && <PaginationPageNumberInputs />}
+      {watchPaginationType === LIMIT_OFFSET && <PaginationLimitOffsetInputs />}
+      <SendQueryInSelect />
+    </section>
+  );
 
   // if (isUsersLoading) return <IngestFormSkeleton />;
 
@@ -472,72 +507,37 @@ function AddIngestion() {
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex w-full space-x-10 ">
-          <section className="flex w-full flex-col gap-4 ">
-            <section className="flex flex-col gap-6">
-              <NameTextInput />
-              <DataKeyTextInput />
-              <SchoolIdKeyTextInput />
-            </section>
-
-            <header className="text-2xl">Ingestion Details</header>
-            <UserSelect />
-
-            <section className="flex flex-col gap-6">
-              <header className="text-2xl">Ingestion Source</header>
-              <RequestMethodSelect />
-              <ApiEndpointTextinput />
-              <AuthTypeSelect />
-
-              {watchAuthType === API_KEY && <AuthApiKeyInputs />}
-              {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
-              {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
-
-              {watchRequestMethod === GET && (
-                <SendQueryInQueryParametersInputs />
-              )}
-              {watchRequestMethod === POST && <SendQueryInBodyInputs />}
-            </section>
-
-            <section className="flex flex-col gap-6">
-              <header className="text-2xl">Ingestion Parameters</header>
-              <PaginationTypeSelect />
-              {watchPaginationType === LIMIT_OFFSET && (
-                <PaginationLimitOffsetInputs />
-              )}
-              {watchPaginationType === PAGE_NUMBER && (
-                <PaginationPageNumberInputs />
-              )}
-
-              <SendQueryInSelect />
-
-              <ButtonSet className="w-full">
-                <Button
-                  as={Link}
-                  className="w-full"
-                  isExpressive
-                  kind="secondary"
-                  renderIcon={ArrowLeft}
-                  to="/ingest-api"
-                  onClick={resetQosState}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="w-full"
-                  disabled={
-                    !isValidResponse || !isValidDatakey || isResponseError
-                  }
-                  isExpressive
-                  renderIcon={ArrowRight}
-                  type="submit"
-                >
-                  Proceed
-                </Button>
-              </ButtonSet>
-            </section>
+          <section className="flex w-full flex-col gap-4">
+            <IngestionDetailsSection />
+            <IngestionSourceSection />
+            <IngestionParametersSection />
+            <ButtonSet className="w-full">
+              <Button
+                as={Link}
+                className="w-full"
+                isExpressive
+                kind="secondary"
+                renderIcon={ArrowLeft}
+                to="/ingest-api"
+                onClick={resetQosState}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="w-full"
+                disabled={
+                  !isValidResponse || !isValidDatakey || isResponseError
+                }
+                isExpressive
+                renderIcon={ArrowRight}
+                type="submit"
+              >
+                Proceed
+              </Button>
+            </ButtonSet>
           </section>
-          <div className="flex  w-full flex-col">
-            <aside className="grow basis-0 overflow-y-auto">
+          <aside className="flex  w-full flex-col">
+            <div className="grow basis-0 overflow-y-auto">
               {isResponseError && (
                 <Tag type="red">Invalid Output from api request</Tag>
               )}
@@ -555,8 +555,8 @@ function AddIngestion() {
                     ? prettyResponse
                     : "Invalid Response"}
               </SyntaxHighlighter>
-            </aside>
-          </div>
+            </div>
+          </aside>
         </div>
       </form>
       <Outlet />
