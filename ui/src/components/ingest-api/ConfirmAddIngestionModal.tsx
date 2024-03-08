@@ -16,7 +16,7 @@ const ConfirmAddIngestionModal = ({
   open,
   setOpen,
 }: ConfirmAddIngestionModalInputs) => {
-  const { schoolConnectivity, schoolList, columnMapping } =
+  const { schoolConnectivity, schoolList, columnMapping, file } =
     useQosStore.getState();
   const navigate = useNavigate({ from: "/ingest-api" });
 
@@ -35,7 +35,9 @@ const ConfirmAddIngestionModal = ({
       school_list: {
         ...schoolList,
         column_to_schema_mapping: JSON.stringify(columnMapping),
+        enabled: true,
       },
+      file: file,
     });
 
     setOpen(false);

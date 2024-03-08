@@ -44,7 +44,6 @@ export const Route = createFileRoute(
   pendingComponent: IngestFormSkeleton,
 });
 
-
 const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
 const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
 const { BODY, QUERY_PARAMETERS } = SendQueryInEnum;

@@ -47,11 +47,18 @@ export default function route(axi: AxiosInstance) {
     create_api_ingestion: (
       params: CreateApiIngestionRequest,
     ): Promise<null> => {
-      return axi.post(`/qos/api_ingestion`, {
-        school_connectivity: params.school_connectivity,
-        school_list: params.school_list,
-        
-      });
+      const formData = new FormData();
+
+      const jsonSchoolConnectivity = JSON.stringify(params.school_connectivity);
+      const jsonSchoolList = JSON.stringify(params.school_list);
+
+      formData.append("school_connectivity", jsonSchoolConnectivity);
+      formData.append("school_list", jsonSchoolList);
+      if (params.file) {
+        formData.append("file", params.file);
+      }
+
+      return axi.post(`/qos/api_ingestion`, formData);
     },
   };
 }

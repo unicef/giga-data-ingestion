@@ -37,8 +37,6 @@ export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
   },
 });
 
-const FREQUENCY_DEFAULT_VALUE = 5;
-
 const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
 const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
 const { POST } = RequestMethodEnum;
@@ -56,7 +54,7 @@ function SchoolConnectivity() {
     setFile,
   } = useQosStore();
 
-  const { file, schoolList } = useQosStore.getState();
+  const { file } = useQosStore.getState();
 
   const hasUploadedFile = file != null;
 
@@ -143,7 +141,7 @@ function SchoolConnectivity() {
       return;
     }
     setSchoolConnectivityFormValues(data);
-    // setOpen(true);
+    setOpen(true);
   };
 
   const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
@@ -452,7 +450,6 @@ function SchoolConnectivity() {
       name="ingestion_frequency"
       numberInputProps={{
         id: "ingestion_frequency",
-        defaultValue: FREQUENCY_DEFAULT_VALUE,
         helperText: "In minutes. Min 5",
         label: <span>Frequency</span>,
         min: 5,

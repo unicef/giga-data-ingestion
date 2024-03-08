@@ -1,14 +1,28 @@
+import os
 import random
 from typing import Annotated
 
+import magic
+from azure.core.exceptions import HttpResponseError
 from faker import Faker
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, Security, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    Response,
+    Security,
+    UploadFile,
+    status,
+)
 from pydantic import Field
-from sqlalchemy import desc, exc, func, select, update
+from sqlalchemy import delete, desc, exc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from data_ingestion.constants import constants
 from data_ingestion.db import get_db
 from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import SchoolConnectivity, SchoolList
 from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.qos import CreateApiIngestionRequest, SchoolListSchema
@@ -18,7 +32,6 @@ router = APIRouter(
     tags=["qos"],
     dependencies=[Security(azure_scheme)],
 )
-
 
 fake = Faker()
 
@@ -201,30 +214,80 @@ async def get_school_connectivity(
     return school_connectivity
 
 
-# also uploads here
 @router.post("/api_ingestion")
 async def create_api_ingestion(
     response: Response,
-    body: CreateApiIngestionRequest,
+    file: UploadFile,
     db: AsyncSession = Depends(get_db),
+    data: CreateApiIngestionRequest = Depends(),
 ):
-    school_connectivity_body = body.school_connectivity
-    school_list_body = body.school_list
+    if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds 10 MB limit",
+        )
 
-    school_list = SchoolList(**school_list_body.model_dump())
+    valid_types = {
+        "application/csv": [".csv"],
+        "text/csv": [".csv"],
+    }
+
+    file_content = await file.read(2048)
+    file_type = magic.from_buffer(file_content, mime=True)
+    file_extension = os.path.splitext(file.filename)[1]
+
+    if file_type not in valid_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file type.",
+        )
+
+    if file_extension not in valid_types[file_type]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File extension does not match file type.",
+        )
+
+    school_connectivity_data = data.get_school_connectivity_model()
+    school_list_data = data.get_school_list_model()
+
+    print(school_connectivity_data)
+    print(school_list_data)
+
+    school_list = SchoolList(**school_list_data.model_dump())
     db.add(school_list)
     await db.commit()
 
-    # upload the file and pas the schema url into shool connectivity
+    timestamp = school_list.date_created.strftime("%Y%m%d-%H%M%S")
+    ext = os.path.splitext(file.filename)[1]
+    filename_elements = [school_list.id]
+    filename_elements.append(timestamp)
+    filename = "_".join(filename_elements)
+    upload_path = f"{constants.API_INGESTION_UPLOAD_PATH_PREFIX}/{filename}{ext}"
 
-    dummy_schema_url = "somasdaskdjfljasdfkljasdklfjklasdfj"
+    client = storage_client.get_blob_client(upload_path)
+
+    try:
+        client.upload_blob(await file.read())
+        response.status_code = status.HTTP_201_CREATED
+    except HttpResponseError as err:
+        await db.execute(delete(SchoolList).where(SchoolList.id == SchoolList.id))
+        await db.commit()
+        raise HTTPException(
+            detail=err.message, status_code=err.response.status_code
+        ) from err
+    except Exception as err:
+        await db.execute(delete(SchoolList).where(SchoolList.id == SchoolList.id))
+        await db.commit()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from err
 
     school_connectivity = SchoolConnectivity(
-        **school_connectivity_body.model_dump(),
-        schema_url=dummy_schema_url,
+        **school_connectivity_data.model_dump(),
+        schema_url=upload_path,
         school_list_id=school_list.id,
     )
 
     db.add(school_connectivity)
     await db.commit()
+
     response.status_code = status.HTTP_201_CREATED

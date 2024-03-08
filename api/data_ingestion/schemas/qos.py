@@ -1,5 +1,7 @@
+from dataclasses import dataclass
 from datetime import datetime
 
+from fastapi import Form
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 from data_ingestion.models.ingest_api_qos import (
@@ -76,6 +78,7 @@ class ApiConfigurationRequest(BaseModel):
     size: int | None
 
 
+@dataclass
 class CreateSchoolListRequest(ApiConfigurationRequest):
     column_to_schema_mapping: str
     name: str
@@ -83,10 +86,24 @@ class CreateSchoolListRequest(ApiConfigurationRequest):
     user_id: str
 
 
+@dataclass
 class CreateSchoolConnectivityRequest(ApiConfigurationRequest):
     ingestion_frequency: int
 
 
-class CreateApiIngestionRequest(BaseModel):
-    school_connectivity: CreateSchoolConnectivityRequest
-    school_list: CreateSchoolListRequest
+@dataclass
+class CreateApiIngestionRequest:
+    school_connectivity: str = Form(...)
+    school_list: str = Form(...)
+
+    def get_school_connectivity_model(
+        self,
+    ) -> CreateSchoolConnectivityRequest:
+        return CreateSchoolConnectivityRequest.model_validate_json(
+            self.school_connectivity
+        )
+
+    def get_school_list_model(
+        self,
+    ) -> CreateSchoolListRequest:
+        return CreateSchoolListRequest.model_validate_json(self.school_list)
