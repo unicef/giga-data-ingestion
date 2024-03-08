@@ -107,20 +107,23 @@ function Metadata() {
     setIsUploadError(false);
 
     const body = {
-      dataset: uploadType,
-      file: upload.file!,
-      sensitivity_level: data.sensitivityLevel,
-      pii_classification: data.piiClassification,
-      geolocation_data_source: data.geolocationDataSource,
-      data_collection_modality: data.dataCollectionModality,
-      data_collection_date: new Date(data.dataCollectionDate).toISOString(),
-      domain: data.domain,
-      date_modified: new Date(data.dateModified).toISOString(),
-      source: data.source,
-      data_owner: data.dataOwner,
+      // TODO: Add actual column to schema mapping from csv headers
+      // get it from use state in index->columnmapping->metadata->success
+      column_to_schema_mapping: "Sample",
       country: data.country,
-      school_id_type: data.schoolIdType,
+      data_collection_date: new Date(data.dataCollectionDate).toISOString(),
+      data_collection_modality: data.dataCollectionModality,
+      data_owner: data.dataOwner,
+      dataset: uploadType,
+      date_modified: new Date(data.dateModified).toISOString(),
       description: data.description,
+      domain: data.domain,
+      file: upload.file!,
+      geolocation_data_source: data.geolocationDataSource,
+      pii_classification: data.piiClassification,
+      school_id_type: data.schoolIdType,
+      sensitivity_level: data.sensitivityLevel,
+      source: data.source,
     };
 
     try {

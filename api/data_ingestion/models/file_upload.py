@@ -25,6 +25,9 @@ class FileUpload(BaseModel):
     dataset: Mapped[str] = mapped_column(nullable=False)
     source: Mapped[str] = mapped_column(nullable=True)
     original_filename: Mapped[str] = mapped_column(nullable=False)
+    column_to_schema_mapping: Mapped[str] = mapped_column(
+        nullable=False, server_default=""
+    )
 
     @hybrid_property
     def upload_path(self) -> str:

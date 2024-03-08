@@ -77,4 +77,5 @@ export interface UploadResponse {
   source: string | null;
   original_filename: string;
   upload_path: string;
+  column_to_schema_mapping: string;
 }

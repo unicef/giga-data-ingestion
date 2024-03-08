@@ -86,20 +86,21 @@ export default function routes(axi: AxiosInstance) {
       return axi.get(`upload/dq_check/${upload_id}`);
     },
     upload: (params: {
-      dataset: string;
-      file: File;
-      sensitivity_level: string;
-      pii_classification: string;
-      geolocation_data_source: string;
-      data_collection_modality: string;
-      data_collection_date: string;
-      domain: string;
-      date_modified: string;
-      source?: string | null;
-      data_owner: string;
+      column_to_schema_mapping: string;
       country: string;
-      school_id_type: string;
+      data_collection_date: string;
+      data_collection_modality: string;
+      data_owner: string;
+      dataset: string;
+      date_modified: string;
       description: string;
+      domain: string;
+      file: File;
+      geolocation_data_source: string;
+      pii_classification: string;
+      school_id_type: string;
+      sensitivity_level: string;
+      source?: string | null;
       [key: string]: string | File | null | undefined;
     }): Promise<AxiosResponse<UploadResponse>> => {
       const formData = new FormData();
