@@ -74,16 +74,15 @@ class ApiConfiguration(BaseModel):
         Enum(SendQueryInEnum), default=SendQueryInEnum.NONE, nullable=False
     )
     size: Mapped[int] = mapped_column(nullable=True)
-    status: Mapped[bool] = mapped_column(default=False)
 
 
 class SchoolList(ApiConfiguration):
     __tablename__ = "qos_school_list"
 
-    name: Mapped[str] = mapped_column(nullable=False, server_default="")
     column_to_schema_mapping: Mapped[str] = mapped_column(
         nullable=False, server_default=""
     )
+    name: Mapped[str] = mapped_column(nullable=False, server_default="")
     user_email: Mapped[EmailStr] = mapped_column(String(), nullable=False)
     user_id: Mapped[str] = mapped_column(nullable=False)
 
@@ -95,8 +94,8 @@ class SchoolList(ApiConfiguration):
 class SchoolConnectivity(ApiConfiguration):
     __tablename__ = "qos_school_connectivity"
 
-    schema_url: Mapped[str] = mapped_column()
     ingestion_frequency: Mapped[int] = mapped_column()
+    schema_url: Mapped[str] = mapped_column()
 
     school_list_id: Mapped[str] = mapped_column(ForeignKey("qos_school_list.id"))
     school_list: Mapped["SchoolList"] = relationship(
