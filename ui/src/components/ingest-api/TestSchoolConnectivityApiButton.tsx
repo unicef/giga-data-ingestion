@@ -15,14 +15,14 @@ import { useQosStore } from "@/context/qosStore";
 import {
   AuthorizationTypeEnum,
   RequestMethodEnum,
-  SchoolListFormValues,
+  SchoolConnectivityFormValues,
 } from "@/types/qos";
 
 interface TestSchoolListApiButtonProps {
-  formState: UseFormStateReturn<SchoolListFormValues>;
-  getValues: UseFormGetValues<SchoolListFormValues>;
+  formState: UseFormStateReturn<SchoolConnectivityFormValues>;
+  getValues: UseFormGetValues<SchoolConnectivityFormValues>;
   setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
-  trigger: UseFormTrigger<SchoolListFormValues>;
+  trigger: UseFormTrigger<SchoolConnectivityFormValues>;
 
   setIsValidResponse: Dispatch<SetStateAction<boolean>>;
   setIsResponseError: Dispatch<SetStateAction<boolean>>;

@@ -15,17 +15,16 @@ interface StoreState {
   schoolList: SchoolListFormValues;
   schoolConnectivity: SchoolConnectivityFormValues;
   stepIndex: number;
-  testButtonLoadingState: boolean;
-  isValidTest: boolean;
+  file: File | null;
 }
 interface StoreActions {
-  setSchoolListFormValues: (formValues: SchoolListFormValues) => void;
   setColumnMapping: (columnMapping: Record<string, string>) => void;
+  setDetectedColumns: (detectedColumns: Array<string>) => void;
   setSchoolConnectivityFormValues: (
     formValues: SchoolConnectivityFormValues,
   ) => void;
-  setDetectedColumns: (detectedColumns: Array<string>) => void;
-  setIsValidTest: (isValid: boolean) => void;
+  setSchoolListFormValues: (formValues: SchoolListFormValues) => void;
+  setFile: (file: File | null) => void;
 
   incrementStepIndex: () => void;
   decrementStepIndex: () => void;
@@ -41,8 +40,7 @@ const initialState: StoreState = {
   schoolList: initialSchoolListFormValues,
   schoolConnectivity: initialSchoolConnectivityFormValues,
   stepIndex: 0,
-  testButtonLoadingState: false,
-  isValidTest: false,
+  file: null,
 };
 
 export const useQosStore = create<StoreState & StoreActions>()(
@@ -68,13 +66,9 @@ export const useQosStore = create<StoreState & StoreActions>()(
           set(state => {
             state.schoolConnectivity = formValues;
           }),
-        setTestButtonLoadingState: (isLoading: boolean) =>
+        setFile: (file: File | null) =>
           set(state => {
-            state.testButtonLoadingState = isLoading;
-          }),
-        setIsValidTest: (isValid: boolean) =>
-          set(state => {
-            state.isValidTest = isValid;
+            state.file = file;
           }),
         incrementStepIndex: () =>
           set(state => {
@@ -91,6 +85,7 @@ export const useQosStore = create<StoreState & StoreActions>()(
             state.stepIndex = 0;
             state.schoolList = initialSchoolListFormValues;
             state.schoolConnectivity = initialSchoolConnectivityFormValues;
+            state.file = null;
           }),
         resetSchoolListFormValues: () =>
           set(state => {

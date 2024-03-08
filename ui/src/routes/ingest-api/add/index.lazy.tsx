@@ -38,6 +38,10 @@ export const Route = createFileRoute("/ingest-api/add/")({
   component: AddIngestion,
 });
 
+const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
+const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
+const { POST } = RequestMethodEnum;
+
 function AddIngestion() {
   const [responsePreview, setResponsePreview] = useState<string | string[]>("");
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
@@ -48,19 +52,15 @@ function AddIngestion() {
 
   const navigate = useNavigate({ from: Route.fullPath });
 
-  const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
-  const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
-  const { POST } = RequestMethodEnum;
-
   const {
+    control,
+    formState,
+    getValues,
     handleSubmit,
     register,
     resetField,
-    getValues,
-    watch,
-    control,
     trigger,
-    formState,
+    watch,
   } = useForm<SchoolListFormValues>({
     mode: "onBlur",
     reValidateMode: "onBlur",
@@ -222,11 +222,11 @@ function AddIngestion() {
       />
       <div className="bottom-px">
         <TestSchoolListApiButton
-          setIsValidDatakey={setIsValidDatakey}
-          setIsValidResponse={setIsValidResponse}
-          setIsResponseError={setIsResponseError}
           formState={formState}
           getValues={getValues}
+          setIsResponseError={setIsResponseError}
+          setIsValidDatakey={setIsValidDatakey}
+          setIsValidResponse={setIsValidResponse}
           setResponsePreview={setResponsePreview}
           trigger={trigger}
         />
@@ -549,11 +549,7 @@ function AddIngestion() {
                 language="json"
                 style={docco}
               >
-                {responsePreview === ""
-                  ? "Preview"
-                  : isValidResponse
-                    ? prettyResponse
-                    : "Invalid Response"}
+                {responsePreview === "" ? "Preview" : prettyResponse}
               </SyntaxHighlighter>
             </div>
           </aside>

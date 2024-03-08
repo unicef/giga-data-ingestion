@@ -4,16 +4,17 @@ export default function route() {
   const axi = axios.create();
 
   return {
-    bearerGetRequest: async (params: {
-      bearerToken: string;
+    apiKeyAuthGetRequest: async (params: {
+      apiKeyName: string;
+      apiKeyValue: string;
       queryParams: Record<string, unknown>;
       url: string;
     }): Promise<AxiosResponse> => {
-      const { bearerToken, queryParams, url } = params;
+      const { apiKeyName, apiKeyValue, queryParams, url } = params;
 
       return await axi.get(url, {
         params: queryParams,
-        headers: { Authorization: `Bearer ${bearerToken}` },
+        headers: { [apiKeyName]: apiKeyValue },
       });
     },
     basicAuthGetRequest: async (params: {
@@ -32,17 +33,50 @@ export default function route() {
         },
       });
     },
-    apiKeyAuthGetRequest: async (params: {
-      apiKeyName: string;
-      apiKeyValue: string;
+    bearerGetRequest: async (params: {
+      bearerToken: string;
       queryParams: Record<string, unknown>;
       url: string;
     }): Promise<AxiosResponse> => {
-      const { apiKeyName, apiKeyValue, queryParams, url } = params;
+      const { bearerToken, queryParams, url } = params;
 
       return await axi.get(url, {
         params: queryParams,
-        headers: { [apiKeyName]: apiKeyValue },
+        headers: { Authorization: `Bearer ${bearerToken}` },
+      });
+    },
+
+    noneAuthGetRequest: async (params: {
+      queryParams: Record<string, unknown>;
+      url: string;
+    }): Promise<AxiosResponse> => {
+      const { queryParams, url } = params;
+
+      return await axi.get(url, {
+        params: queryParams,
+      });
+    },
+
+    bearerPostRequest: async (params: {
+      bearerToken: string;
+      queryParams: Record<string, unknown>;
+      requestBody: Record<string, unknown>;
+      url: string;
+    }): Promise<AxiosResponse> => {
+      const { bearerToken, queryParams, url, requestBody } = params;
+
+      axios.post("/user", {
+        firstName: "Fred",
+        lastName: "Flintstone",
+      });
+
+      return await axi.post(url, requestBody, {
+        params: queryParams,
+        withCredentials: false,
+        headers: {
+          "Authorization": `Bearer ${bearerToken}`,
+          "Content-Type": "application/json;charset=UTF-8",
+        },
       });
     },
   };

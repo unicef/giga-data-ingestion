@@ -7,8 +7,10 @@ import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
+  Section,
   Select,
   SelectItem,
+  Tag,
   TextArea,
   TextInput,
   Toggle,
@@ -16,7 +18,9 @@ import {
 import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 
 import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
+import TestSchoolConnectivityApiButton from "@/components/ingest-api/TestSchoolConnectivityApiButton";
 import ControllerNumberInputSchoolConnectivity from "@/components/upload/ControllerNumberInputSchoolConnectivity";
+import UploadFile from "@/components/upload/UploadFile.tsx";
 import { useQosStore } from "@/context/qosStore";
 import {
   PaginationTypeEnum,
@@ -28,7 +32,6 @@ import { AuthorizationTypeEnum, RequestMethodEnum } from "@/types/qos";
 export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
   component: SchoolConnectivity,
   loader: () => {
-    return;
     const { api_endpoint } = useQosStore.getState().schoolList;
     if (api_endpoint === "") throw redirect({ to: ".." });
   },
@@ -41,23 +44,33 @@ const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
 const { POST } = RequestMethodEnum;
 
 function SchoolConnectivity() {
+  const [responsePreview, setResponsePreview] = useState<string | string[]>("");
+  const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
+  const [isValidDatakey, setIsValidDatakey] = useState<boolean>(false);
+  const [isResponseError, setIsResponseError] = useState<boolean>(false);
+
   const {
     decrementStepIndex,
     resetSchoolConnectivityFormValues,
     setSchoolConnectivityFormValues,
+    setFile,
   } = useQosStore();
 
-  const { schoolList } = useQosStore.getState();
+  const { file, schoolList } = useQosStore.getState();
+
+  const hasUploadedFile = file != null;
 
   const [open, setOpen] = useState<boolean>(false);
 
   const {
+    control,
+    formState,
+    getValues,
     handleSubmit,
     register,
-    control,
     resetField,
     watch,
-    formState: { errors },
+    trigger,
   } = useForm<SchoolConnectivityFormValues>({
     defaultValues: {
       api_auth_api_key: null,
@@ -85,6 +98,7 @@ function SchoolConnectivity() {
     reValidateMode: "onBlur",
   });
 
+  const { errors } = formState;
   const watchAuthType = watch("authorization_type");
   const watchPaginationType = watch("pagination_type");
   const watchSendQueryIn = watch("send_query_in");
@@ -118,6 +132,8 @@ function SchoolConnectivity() {
     setSchoolConnectivityFormValues(data);
     // setOpen(true);
   };
+
+  const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
 
   const DataKeyTextInput = () => (
     <TextInput
@@ -165,17 +181,15 @@ function SchoolConnectivity() {
         {...register("api_endpoint", { required: true })}
       />
       <div className="bottom-px">
-        <Button size="md">Test</Button>
-        {/* 
-        <TestSchoolListApiButton
-          setIsValidDatakey={setIsValidDatakey}
-          setIsValidResponse={setIsValidResponse}
-          setIsResponseError={setIsResponseError}
+        <TestSchoolConnectivityApiButton
           formState={formState}
           getValues={getValues}
+          setIsResponseError={setIsResponseError}
+          setIsValidDatakey={setIsValidDatakey}
+          setIsValidResponse={setIsValidResponse}
           setResponsePreview={setResponsePreview}
           trigger={trigger}
-        /> */}
+        />
       </div>
     </div>
   );
@@ -462,12 +476,23 @@ function SchoolConnectivity() {
       {watchPaginationType === LIMIT_OFFSET && <PaginationLimitOffsetInputs />}
       <SendQueryInSelect />
       <FrequencySelect />
+
+      <header className="text-lg">CSV Schema</header>
+      <UploadFile
+        acceptType={{
+          "text/csv": [".csv"],
+        }}
+        description="CSV only"
+        file={file}
+        setFile={file => setFile(file)}
+      />
+
       <IngestionEnabledToggle />
     </section>
   );
 
   return (
-    <section className="container py-6">
+    <Section className="container py-6">
       <header className="gap-2">
         <p className="my-0 py-1 text-2xl">
           Step 3: Configure school connectivity API
@@ -475,7 +500,7 @@ function SchoolConnectivity() {
       </header>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex w-full space-x-10 ">
-          <section className="flex flex-col gap-4">
+          <section className="flex w-full flex-col gap-4">
             <IngestionDetailsSection />
             <IngestionSourceSection />
             <IngestionParametersSection />
@@ -496,9 +521,12 @@ function SchoolConnectivity() {
               </Button>
               <Button
                 className="w-full"
-                // disabled={
-                //   !isValidResponse || !isValidDatakey || isResponseError
-                // }
+                disabled={
+                  !isValidResponse ||
+                  !isValidDatakey ||
+                  isResponseError ||
+                  !hasUploadedFile
+                }
                 isExpressive
                 renderIcon={ArrowRight}
                 type="submit"
@@ -507,31 +535,26 @@ function SchoolConnectivity() {
               </Button>
             </ButtonSet>
           </section>
-          <aside className="flex  w-full flex-col">
+          <aside className="flex w-full flex-col ">
             <div className="grow basis-0 overflow-y-auto">
-              {/* {isResponseError && (
+              {isResponseError && (
                 <Tag type="red">Invalid Output from api request</Tag>
               )}
               {isValidResponse && !isValidDatakey && (
                 <Tag type="blue">Invalid Datakey</Tag>
-              )} */}
+              )}
               <SyntaxHighlighter
                 customStyle={{ height: "100%" }}
                 language="json"
                 style={docco}
               >
-                {/* {responsePreview === ""
-                  ? "Preview"
-                  : isValidResponse
-                    ? prettyResponse
-                    : "Invalid Response"} */}
-                somePrettyTxet
+                {responsePreview === "" ? "Preview" : prettyResponse}
               </SyntaxHighlighter>
             </div>
           </aside>
         </div>
       </form>
       <ConfirmAddIngestionModal open={open} setOpen={setOpen} />
-    </section>
+    </Section>
   );
 }
