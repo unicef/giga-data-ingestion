@@ -18,7 +18,7 @@ import {
 import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 
 import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
-import TestSchoolConnectivityApiButton from "@/components/ingest-api/TestSchoolConnectivityApiButton";
+import TestApiButton from "@/components/ingest-api/TestApiButton";
 import ControllerNumberInputSchoolConnectivity from "@/components/upload/ControllerNumberInputSchoolConnectivity";
 import UploadFile from "@/components/upload/UploadFile.tsx";
 import { useQosStore } from "@/context/qosStore";
@@ -104,6 +104,19 @@ function SchoolConnectivity() {
   const watchSendQueryIn = watch("send_query_in");
   const watchRequestMethod = watch("request_method");
 
+  const hasError = Object.keys(errors).length > 0;
+  const authorizationType = getValues("authorization_type");
+  const queryParams = getValues("query_parameters");
+  const requestBody = getValues("request_body");
+  const requestMethod = getValues("request_method");
+  const dataKey = getValues("data_key");
+  const apiKeyName = getValues("api_auth_api_key");
+  const apiKeyValue = getValues("api_auth_api_value");
+  const basicAuthUserName = getValues("basic_auth_username");
+  const basicAuthPassword = getValues("basic_auth_password");
+  const apiEndpoint = getValues("api_endpoint");
+  const bearerAuthBearerToken = getValues("bearer_auth_bearer_token");
+
   useEffect(() => {
     resetField("api_auth_api_key");
     resetField("api_auth_api_value");
@@ -181,14 +194,24 @@ function SchoolConnectivity() {
         {...register("api_endpoint", { required: true })}
       />
       <div className="bottom-px">
-        <TestSchoolConnectivityApiButton
-          formState={formState}
-          getValues={getValues}
+        <TestApiButton
+          apiEndpoint={apiEndpoint}
+          authorizationType={authorizationType}
+          apiKeyName={apiKeyName}
+          apiKeyValue={apiKeyValue}
+          basicAuthPassword={basicAuthPassword}
+          basicAuthUserName={basicAuthUserName}
+          bearerAuthBearerToken={bearerAuthBearerToken}
+          dataKey={dataKey}
+          hasError={hasError}
+          queryParams={queryParams}
+          requestBody={requestBody}
+          requestMethod={requestMethod}
           setIsResponseError={setIsResponseError}
           setIsValidDatakey={setIsValidDatakey}
           setIsValidResponse={setIsValidResponse}
           setResponsePreview={setResponsePreview}
-          trigger={trigger}
+          handleTriggerValidation={() => trigger()}
         />
       </div>
     </div>
@@ -540,7 +563,7 @@ function SchoolConnectivity() {
               {isResponseError && (
                 <Tag type="red">Invalid Output from api request</Tag>
               )}
-              {isValidResponse && !isValidDatakey && (
+              {responsePreview === "invalid" && (
                 <Tag type="blue">Invalid Datakey</Tag>
               )}
               <SyntaxHighlighter

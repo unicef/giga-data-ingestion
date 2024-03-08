@@ -1,9 +1,4 @@
 import { Dispatch, SetStateAction } from "react";
-import {
-  UseFormGetValues,
-  UseFormStateReturn,
-  UseFormTrigger,
-} from "react-hook-form";
 
 import { Button } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
@@ -12,39 +7,50 @@ import { isPlainObject } from "lodash";
 
 import { api } from "@/api";
 import { useQosStore } from "@/context/qosStore";
-import {
-  AuthorizationTypeEnum,
-  RequestMethodEnum,
-  SchoolListFormValues,
-} from "@/types/qos";
+import { AuthorizationTypeEnum, RequestMethodEnum } from "@/types/qos";
 
-interface TestSchoolListApiButtonProps {
-  formState: UseFormStateReturn<SchoolListFormValues>;
-  getValues: UseFormGetValues<SchoolListFormValues>;
+interface TestApiButtonProps {
   setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
-  trigger: UseFormTrigger<SchoolListFormValues>;
-
+  hasError: boolean;
   setIsValidResponse: Dispatch<SetStateAction<boolean>>;
   setIsResponseError: Dispatch<SetStateAction<boolean>>;
   setIsValidDatakey: Dispatch<SetStateAction<boolean>>;
+  authorizationType: AuthorizationTypeEnum;
+  dataKey: string;
+  apiKeyName: string | null;
+  apiKeyValue: string | null;
+  basicAuthUserName: string | null;
+  basicAuthPassword: string | null;
+  apiEndpoint: string;
+  bearerAuthBearerToken: string | null;
+  queryParams: string | null;
+  requestBody: string | null;
+  requestMethod: RequestMethodEnum;
+  handleTriggerValidation: () => void;
 }
 
-const TestSchoolListApiButton = ({
-  formState: { errors },
-  getValues,
-  trigger,
+const TestApiButton = ({
+  hasError,
   setIsValidResponse,
   setIsResponseError,
   setResponsePreview,
   setIsValidDatakey,
-}: TestSchoolListApiButtonProps) => {
+  authorizationType,
+  dataKey,
+  apiKeyName,
+  apiKeyValue,
+  basicAuthUserName,
+  basicAuthPassword,
+  apiEndpoint,
+  bearerAuthBearerToken,
+  handleTriggerValidation,
+  queryParams,
+  requestBody,
+  requestMethod,
+}: TestApiButtonProps) => {
   const { setDetectedColumns } = useQosStore();
   const { API_KEY, BASIC_AUTH, BEARER_TOKEN, NONE } = AuthorizationTypeEnum;
   const { GET, POST } = RequestMethodEnum;
-  const authorizationType = getValues("authorization_type");
-  const queryParams = getValues("query_parameters");
-  const requestBody = getValues("request_body");
-  const requestMethod = getValues("request_method");
 
   const { mutateAsync: apiKeyGetRequest } = useMutation({
     mutationKey: ["api_key_get_request"],
@@ -69,12 +75,9 @@ const TestSchoolListApiButton = ({
   const { mutateAsync: beaerPostRequest } = useMutation({
     mutationKey: ["bearer_post_request"],
     mutationFn: api.externalRequests.bearerPostRequest,
-    onMutate: () => {},
   });
   // eslint-disable-next-line
   const handleValidationTry = (responseData: any) => {
-    const dataKey = getValues("data_key");
-
     if (dataKey === "") {
       if (!Array.isArray(responseData)) {
         // if the to level is not an array, MUST have datakey
@@ -128,9 +131,9 @@ const TestSchoolListApiButton = ({
   };
 
   const handleOnClick = async () => {
-    trigger();
+    handleTriggerValidation();
 
-    if (Object.keys(errors).length > 0) {
+    if (hasError) {
       // do nothing since the parent component will show what fields to fill up
       return;
     }
@@ -141,11 +144,11 @@ const TestSchoolListApiButton = ({
       if (authorizationType === API_KEY) {
         try {
           const { data: requestData } = await apiKeyGetRequest({
-            apiKeyName: getValues("api_auth_api_key") ?? "",
-            apiKeyValue: getValues("api_auth_api_value") ?? "",
+            apiKeyName: apiKeyName ?? "",
+            apiKeyValue: apiKeyValue ?? "",
 
             queryParams: jsonQueryParams,
-            url: getValues("api_endpoint"),
+            url: apiEndpoint,
           });
           handleValidationTry(requestData);
         } catch {
@@ -156,10 +159,10 @@ const TestSchoolListApiButton = ({
       if (authorizationType === BASIC_AUTH) {
         try {
           const { data: requestData } = await basicAuthGetRequest({
-            username: getValues("basic_auth_username") ?? "",
-            password: getValues("basic_auth_password") ?? "",
+            username: basicAuthUserName ?? "",
+            password: basicAuthPassword ?? "",
             queryParams: jsonQueryParams,
-            url: getValues("api_endpoint"),
+            url: apiEndpoint,
           });
 
           handleValidationTry(requestData);
@@ -171,9 +174,9 @@ const TestSchoolListApiButton = ({
       if (authorizationType === BEARER_TOKEN) {
         try {
           const { data } = await bearerGetRequest({
-            bearerToken: getValues("bearer_auth_bearer_token") ?? "",
+            bearerToken: bearerAuthBearerToken ?? "",
             queryParams: jsonQueryParams,
-            url: getValues("api_endpoint"),
+            url: apiEndpoint,
           });
           handleValidationTry(data);
         } catch {
@@ -185,7 +188,7 @@ const TestSchoolListApiButton = ({
         try {
           const { data: requestData } = await noAuthGetRequest({
             queryParams: jsonQueryParams,
-            url: getValues("api_endpoint"),
+            url: apiEndpoint,
           });
           handleValidationTry(requestData);
         } catch {
@@ -201,11 +204,11 @@ const TestSchoolListApiButton = ({
       if (authorizationType === BEARER_TOKEN) {
         try {
           const { data: requestData } = await beaerPostRequest({
-            bearerToken: getValues("bearer_auth_bearer_token") ?? "",
+            bearerToken: bearerAuthBearerToken ?? "",
 
             queryParams: jsonQueryParams,
             requestBody: jsonRequestBody,
-            url: getValues("api_endpoint"),
+            url: apiEndpoint,
           });
           handleValidationTry(requestData);
         } catch {
@@ -228,4 +231,4 @@ const TestSchoolListApiButton = ({
   );
 };
 
-export default TestSchoolListApiButton;
+export default TestApiButton;

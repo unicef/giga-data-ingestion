@@ -23,7 +23,7 @@ import {
 
 import { api } from "@/api";
 import { Select } from "@/components/forms/Select";
-import TestSchoolListApiButton from "@/components/ingest-api/TestSchoolListApiButton";
+import TestApiButton from "@/components/ingest-api/TestApiButton";
 import ControllerNumberInputSchoolList from "@/components/upload/ControllerNumberInputSchoolList";
 import { useQosStore } from "@/context/qosStore";
 import {
@@ -94,6 +94,19 @@ function AddIngestion() {
   const watchAuthType = watch("authorization_type");
   const watchPaginationType = watch("pagination_type");
   const watchRequestMethod = watch("request_method");
+
+  const hasError = Object.keys(errors).length > 0;
+  const authorizationType = getValues("authorization_type");
+  const queryParams = getValues("query_parameters");
+  const requestBody = getValues("request_body");
+  const requestMethod = getValues("request_method");
+  const dataKey = getValues("data_key");
+  const apiKeyName = getValues("api_auth_api_key");
+  const apiKeyValue = getValues("api_auth_api_value");
+  const basicAuthUserName = getValues("basic_auth_username");
+  const basicAuthPassword = getValues("basic_auth_password");
+  const apiEndpoint = getValues("api_endpoint");
+  const bearerAuthBearerToken = getValues("bearer_auth_bearer_token");
 
   useEffect(() => {
     resetField("api_auth_api_key");
@@ -211,28 +224,40 @@ function AddIngestion() {
     </Select>
   );
 
-  const ApiEndpointTextinput = () => (
-    <div className="flex items-end">
-      <TextInput
-        id="api_endpoint"
-        invalid={!!errors.api_endpoint}
-        labelText="API Endpoint"
-        placeholder="https://example.com/api/ingest"
-        {...register("api_endpoint", { required: true })}
-      />
-      <div className="bottom-px">
-        <TestSchoolListApiButton
-          formState={formState}
-          getValues={getValues}
-          setIsResponseError={setIsResponseError}
-          setIsValidDatakey={setIsValidDatakey}
-          setIsValidResponse={setIsValidResponse}
-          setResponsePreview={setResponsePreview}
-          trigger={trigger}
+  const ApiEndpointTextinput = () => {
+    return (
+      <div className="flex items-end">
+        <TextInput
+          id="api_endpoint"
+          invalid={!!errors.api_endpoint}
+          labelText="API Endpoint"
+          placeholder="https://example.com/api/ingest"
+          {...register("api_endpoint", { required: true })}
         />
+        <div className="bottom-px">
+          <TestApiButton
+            apiEndpoint={apiEndpoint}
+            authorizationType={authorizationType}
+            apiKeyName={apiKeyName}
+            apiKeyValue={apiKeyValue}
+            basicAuthPassword={basicAuthPassword}
+            basicAuthUserName={basicAuthUserName}
+            bearerAuthBearerToken={bearerAuthBearerToken}
+            dataKey={dataKey}
+            hasError={hasError}
+            queryParams={queryParams}
+            requestBody={requestBody}
+            requestMethod={requestMethod}
+            setIsResponseError={setIsResponseError}
+            setIsValidDatakey={setIsValidDatakey}
+            setIsValidResponse={setIsValidResponse}
+            setResponsePreview={setResponsePreview}
+            handleTriggerValidation={() => trigger()}
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
   const AuthTypeSelect = () => (
     <Select
       id="authorization_type"
@@ -541,7 +566,7 @@ function AddIngestion() {
               {isResponseError && (
                 <Tag type="red">Invalid Output from api request</Tag>
               )}
-              {isValidResponse && !isValidDatakey && (
+              {responsePreview === "invalid" && (
                 <Tag type="blue">Invalid Datakey</Tag>
               )}
               <SyntaxHighlighter
