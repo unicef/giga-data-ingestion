@@ -57,6 +57,41 @@ export default function route() {
       });
     },
 
+    apiKeyPostRequest: async (params: {
+      apiKeyName: string;
+      apiKeyValue: string;
+      queryParams: Record<string, unknown>;
+      requestBody: Record<string, unknown>;
+      url: string;
+    }): Promise<AxiosResponse> => {
+      const { apiKeyName, apiKeyValue, queryParams, url, requestBody } = params;
+
+      return await axi.post(url, requestBody, {
+        params: queryParams,
+        withCredentials: false,
+        headers: { [apiKeyName]: apiKeyValue },
+      });
+    },
+
+    basicPostRequest: async (params: {
+      username: string;
+      password: string;
+      queryParams: Record<string, unknown>;
+      requestBody: Record<string, unknown>;
+      url: string;
+    }): Promise<AxiosResponse> => {
+      const { username, password, queryParams, url, requestBody } = params;
+
+      return await axi.post(url, requestBody, {
+        params: queryParams,
+        withCredentials: false,
+        auth: {
+          username: username,
+          password: password,
+        },
+      });
+    },
+
     bearerPostRequest: async (params: {
       bearerToken: string;
       queryParams: Record<string, unknown>;
@@ -65,18 +100,23 @@ export default function route() {
     }): Promise<AxiosResponse> => {
       const { bearerToken, queryParams, url, requestBody } = params;
 
-      axios.post("/user", {
-        firstName: "Fred",
-        lastName: "Flintstone",
+      return await axi.post(url, requestBody, {
+        params: queryParams,
+        withCredentials: false,
+        headers: { Authorization: `Bearer ${bearerToken}` },
       });
+    },
+
+    noneAuthPostRequest: async (params: {
+      queryParams: Record<string, unknown>;
+      requestBody: Record<string, unknown>;
+      url: string;
+    }): Promise<AxiosResponse> => {
+      const { queryParams, url, requestBody } = params;
 
       return await axi.post(url, requestBody, {
         params: queryParams,
         withCredentials: false,
-        headers: {
-          "Authorization": `Bearer ${bearerToken}`,
-          "Content-Type": "application/json;charset=UTF-8",
-        },
       });
     },
   };

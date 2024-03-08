@@ -72,15 +72,30 @@ const TestApiButton = ({
     mutationFn: api.externalRequests.noneAuthGetRequest,
   });
 
-  const { mutateAsync: beaerPostRequest } = useMutation({
+  const { mutateAsync: apiKeyPostRequest } = useMutation({
+    mutationKey: ["api_key_post_request"],
+    mutationFn: api.externalRequests.apiKeyPostRequest,
+  });
+
+  const { mutateAsync: basicPostRequest } = useMutation({
+    mutationKey: ["basic_post_request"],
+    mutationFn: api.externalRequests.basicPostRequest,
+  });
+
+  const { mutateAsync: bearerPostRequest } = useMutation({
     mutationKey: ["bearer_post_request"],
     mutationFn: api.externalRequests.bearerPostRequest,
   });
+
+  const { mutateAsync: noneAuthPostRequest } = useMutation({
+    mutationKey: ["none_post_request"],
+    mutationFn: api.externalRequests.noneAuthPostRequest,
+  });
+
   // eslint-disable-next-line
   const handleValidationTry = (responseData: any) => {
     if (dataKey === "") {
       if (!Array.isArray(responseData)) {
-        // if the to level is not an array, MUST have datakey
         setResponsePreview("invalid");
         setIsValidDatakey(false);
       }
@@ -94,8 +109,6 @@ const TestApiButton = ({
 
     if (dataKey !== "") {
       if (!Array.isArray(responseData)) {
-        // if the to level is not an array, MUST have datakey
-
         const keyExists = !!responseData[dataKey];
 
         const isValidDatakey =
@@ -134,7 +147,6 @@ const TestApiButton = ({
     handleTriggerValidation();
 
     if (hasError) {
-      // do nothing since the parent component will show what fields to fill up
       return;
     }
 
@@ -201,11 +213,41 @@ const TestApiButton = ({
       const jsonQueryParams = JSON.parse(queryParams);
       const jsonRequestBody = JSON.parse(requestBody);
 
+      if (authorizationType === API_KEY) {
+        try {
+          const { data: requestData } = await apiKeyPostRequest({
+            apiKeyName: apiKeyName ?? "",
+            apiKeyValue: apiKeyValue ?? "",
+            queryParams: jsonQueryParams,
+            requestBody: jsonRequestBody,
+            url: apiEndpoint,
+          });
+          handleValidationTry(requestData);
+        } catch {
+          handleValidationCatch();
+        }
+      }
+
+      if (authorizationType === BASIC_AUTH) {
+        try {
+          const { data: requestData } = await basicPostRequest({
+            username: basicAuthUserName ?? "",
+            password: basicAuthPassword ?? "",
+            queryParams: jsonQueryParams,
+            requestBody: jsonRequestBody,
+            url: apiEndpoint,
+          });
+
+          handleValidationTry(requestData);
+        } catch {
+          handleValidationCatch();
+        }
+      }
+
       if (authorizationType === BEARER_TOKEN) {
         try {
-          const { data: requestData } = await beaerPostRequest({
+          const { data: requestData } = await bearerPostRequest({
             bearerToken: bearerAuthBearerToken ?? "",
-
             queryParams: jsonQueryParams,
             requestBody: jsonRequestBody,
             url: apiEndpoint,
@@ -217,7 +259,16 @@ const TestApiButton = ({
       }
 
       if (authorizationType === NONE) {
-        // pass
+        try {
+          const { data: requestData } = await noneAuthPostRequest({
+            queryParams: jsonQueryParams,
+            requestBody: jsonRequestBody,
+            url: apiEndpoint,
+          });
+          handleValidationTry(requestData);
+        } catch {
+          handleValidationCatch();
+        }
       }
     }
   };
