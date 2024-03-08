@@ -161,6 +161,7 @@ export interface SchoolConnectivityFormValues {
   query_parameters: string;
   request_body: string;
   request_method: RequestMethodEnum;
+  school_id_key: string;
   send_query_in: SendQueryInEnum;
   size: number | null;
   status: boolean;
@@ -188,6 +189,7 @@ export const initialSchoolConnectivityFormValues: SchoolConnectivityFormValues =
     query_parameters: "",
     request_body: "",
     request_method: RequestMethodEnum.GET,
+    school_id_key: "",
     send_query_in: SendQueryInEnum.NONE,
     size: null,
     status: false,

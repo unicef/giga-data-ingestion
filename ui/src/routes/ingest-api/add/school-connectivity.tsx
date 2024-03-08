@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import SyntaxHighlighter from "react-syntax-highlighter";
+import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
@@ -7,7 +9,6 @@ import {
   ButtonSet,
   Select,
   SelectItem,
-  Stack,
   TextArea,
   TextInput,
   Toggle,
@@ -27,6 +28,7 @@ import { AuthorizationTypeEnum, RequestMethodEnum } from "@/types/qos";
 export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
   component: SchoolConnectivity,
   loader: () => {
+    return;
     const { api_endpoint } = useQosStore.getState().schoolList;
     if (api_endpoint === "") throw redirect({ to: ".." });
   },
@@ -36,12 +38,7 @@ const FREQUENCY_DEFAULT_VALUE = 5;
 
 const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
 const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
-const { BODY, QUERY_PARAMETERS } = SendQueryInEnum;
-
-// TODO add parsing for the json display
-const ugly = '{"some":"key", "value":"pairs"}';
-const obj = JSON.parse(ugly);
-const PRETTY = JSON.stringify(obj, undefined, 4);
+const { POST } = RequestMethodEnum;
 
 function SchoolConnectivity() {
   const {
@@ -84,13 +81,14 @@ function SchoolConnectivity() {
       user_email: schoolList.user_email,
       user_id: schoolList.user_id,
     },
-    mode: "onChange",
-    reValidateMode: "onChange",
+    mode: "onBlur",
+    reValidateMode: "onBlur",
   });
 
   const watchAuthType = watch("authorization_type");
   const watchPaginationType = watch("pagination_type");
   const watchSendQueryIn = watch("send_query_in");
+  const watchRequestMethod = watch("request_method");
 
   useEffect(() => {
     resetField("api_auth_api_key");
@@ -117,10 +115,28 @@ function SchoolConnectivity() {
       // form has errors, don't submit
       return;
     }
-
     setSchoolConnectivityFormValues(data);
-    setOpen(true);
+    // setOpen(true);
   };
+
+  const DataKeyTextInput = () => (
+    <TextInput
+      id="data_key"
+      helperText="The key in the JSON response that will contain the data to be ingested"
+      invalid={!!errors.data_key}
+      labelText="Data key"
+      {...register("data_key")}
+    />
+  );
+
+  const SchoolIdKeyTextInput = () => (
+    <TextInput
+      id="school_id_key"
+      invalid={!!errors.school_id_key}
+      labelText="School ID key"
+      {...register("school_id_key", { required: true })}
+    />
+  );
 
   const RequestMethodSelect = () => (
     <Select
@@ -129,7 +145,6 @@ function SchoolConnectivity() {
       labelText="Request Method"
       {...register("request_method", { required: true })}
     >
-      <SelectItem value="" text="" />
       {Object.keys(RequestMethodEnum).map(request_method => (
         <SelectItem
           key={request_method}
@@ -151,6 +166,16 @@ function SchoolConnectivity() {
       />
       <div className="bottom-px">
         <Button size="md">Test</Button>
+        {/* 
+        <TestSchoolListApiButton
+          setIsValidDatakey={setIsValidDatakey}
+          setIsValidResponse={setIsValidResponse}
+          setIsResponseError={setIsResponseError}
+          formState={formState}
+          getValues={getValues}
+          setResponsePreview={setResponsePreview}
+          trigger={trigger}
+        /> */}
       </div>
     </div>
   );
@@ -162,7 +187,6 @@ function SchoolConnectivity() {
       labelText="Authentication Method"
       {...register("authorization_type", { required: true })}
     >
-      <SelectItem value="" text="" />
       {Object.keys(AuthorizationTypeEnum).map(authorization_type => (
         <SelectItem
           key={authorization_type}
@@ -183,7 +207,7 @@ function SchoolConnectivity() {
         {...register("api_auth_api_key", { required: true })}
       />
       {/*
-                  //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
+      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
         autoComplete="on"
         id="api_auth_api_value"
@@ -205,7 +229,7 @@ function SchoolConnectivity() {
         {...register("basic_auth_username", { required: true })}
       />
       {/*
-                  //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
+      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
         autoComplete="on"
         id="basic_auth_password"
@@ -220,7 +244,7 @@ function SchoolConnectivity() {
   const AuthBearerInputs = () => (
     <>
       {/*
-                  //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
+      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
       <TextInput.PasswordInput
         autoComplete="on"
         id="bearer_auth_bearer_token"
@@ -232,16 +256,6 @@ function SchoolConnectivity() {
         })}
       />
     </>
-  );
-
-  const DataKeyTextInput = () => (
-    <TextInput
-      id="data_key"
-      helperText="The key in the JSON response that will contain the data to be ingested"
-      invalid={!!errors.data_key}
-      labelText="Data key"
-      {...register("data_key", { required: true })}
-    />
   );
 
   const PaginationTypeSelect = () => (
@@ -347,20 +361,51 @@ function SchoolConnectivity() {
   const SendQueryInQueryParametersInputs = () => (
     <TextArea
       id="query_parameters"
-      invalid={!!errors.query_parameters}
+      invalid={
+        errors.query_parameters?.type === "required" ||
+        errors.query_parameters?.type === "validate"
+      }
       labelText="Query parameters"
       placeholder="Input query parameters"
-      {...register("query_parameters", { required: true })}
+      {...register("query_parameters", {
+        required: true,
+        validate: value => {
+          if (!value) return true;
+
+          try {
+            JSON.parse(value);
+            return true;
+          } catch (e) {
+            return false;
+          }
+        },
+      })}
     />
   );
 
   const SendQueryInBodyInputs = () => (
     <TextArea
       id="request_body"
-      invalid={!!errors.request_body}
+      invalid={
+        errors.request_body?.type === "required" ||
+        errors.request_body?.type === "validate"
+      }
       labelText="Request body"
       placeholder="Input request body"
-      {...register("request_body", { required: true })}
+      rows={10}
+      {...register("request_body", {
+        required: true,
+        validate: value => {
+          if (!value) return true;
+
+          try {
+            JSON.parse(value);
+            return true;
+          } catch (e) {
+            return false;
+          }
+        },
+      })}
     />
   );
 
@@ -386,6 +431,41 @@ function SchoolConnectivity() {
     />
   );
 
+  const IngestionDetailsSection = () => (
+    <section className="flex flex-col gap-6">
+      <header className="text-2xl">Ingestion Details</header>
+      <SchoolIdKeyTextInput />
+    </section>
+  );
+
+  const IngestionSourceSection = () => (
+    <section className="flex flex-col gap-6">
+      <header className="text-2xl">Ingestion Source</header>
+      <DataKeyTextInput />
+      <RequestMethodSelect />
+      <ApiEndpointTextInput />
+      <AuthTypeSelect />
+      {watchAuthType === API_KEY && <AuthApiKeyInputs />}
+      {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
+      {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
+      <SendQueryInQueryParametersInputs />
+      {watchRequestMethod === POST && <SendQueryInBodyInputs />}
+    </section>
+  );
+
+  const IngestionParametersSection = () => (
+    <section className="flex flex-col gap-6">
+      <header className="text-2xl">Ingestion Parameters</header>
+
+      <PaginationTypeSelect />
+      {watchPaginationType === PAGE_NUMBER && <PaginationPageNumberInputs />}
+      {watchPaginationType === LIMIT_OFFSET && <PaginationLimitOffsetInputs />}
+      <SendQueryInSelect />
+      <FrequencySelect />
+      <IngestionEnabledToggle />
+    </section>
+  );
+
   return (
     <section className="container py-6">
       <header className="gap-2">
@@ -394,40 +474,11 @@ function SchoolConnectivity() {
         </p>
       </header>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack className="w-full" orientation="horizontal">
+        <div className="flex w-full space-x-10 ">
           <section className="flex flex-col gap-4">
-            <section className="flex flex-col gap-6">
-              <section className="flex flex-col gap-6">
-                <header className="text-2xl">Ingestion Source</header>
-                <RequestMethodSelect />
-                <ApiEndpointTextInput />
-                <AuthTypeSelect />
-                {watchAuthType === API_KEY && <AuthApiKeyInputs />}
-                {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
-                {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
-              </section>
-              <section className="flex flex-col gap-6">
-                <header className="text-2xl">Ingestion Parameters</header>
-
-                <DataKeyTextInput />
-
-                <PaginationTypeSelect />
-                {watchPaginationType === PAGE_NUMBER && (
-                  <PaginationPageNumberInputs />
-                )}
-                {watchPaginationType === LIMIT_OFFSET && (
-                  <PaginationLimitOffsetInputs />
-                )}
-                <SendQueryInSelect />
-                {watchSendQueryIn === BODY && <SendQueryInBodyInputs />}
-                {watchSendQueryIn === QUERY_PARAMETERS && (
-                  <SendQueryInQueryParametersInputs />
-                )}
-              </section>
-              <header className="text-2xl">Ingestion Details</header>
-              <FrequencySelect />
-              <IngestionEnabledToggle />
-            </section>
+            <IngestionDetailsSection />
+            <IngestionSourceSection />
+            <IngestionParametersSection />
             <ButtonSet className="w-full">
               <Button
                 as={Link}
@@ -443,9 +494,11 @@ function SchoolConnectivity() {
               >
                 Cancel
               </Button>
-              {/* this should modal submit */}
               <Button
                 className="w-full"
+                // disabled={
+                //   !isValidResponse || !isValidDatakey || isResponseError
+                // }
                 isExpressive
                 renderIcon={ArrowRight}
                 type="submit"
@@ -454,15 +507,29 @@ function SchoolConnectivity() {
               </Button>
             </ButtonSet>
           </section>
-          <aside className="flex h-full">
-            <TextArea
-              defaultValue={PRETTY}
-              disabled
-              labelText="Preview"
-              rows={40}
-            />
+          <aside className="flex  w-full flex-col">
+            <div className="grow basis-0 overflow-y-auto">
+              {/* {isResponseError && (
+                <Tag type="red">Invalid Output from api request</Tag>
+              )}
+              {isValidResponse && !isValidDatakey && (
+                <Tag type="blue">Invalid Datakey</Tag>
+              )} */}
+              <SyntaxHighlighter
+                customStyle={{ height: "100%" }}
+                language="json"
+                style={docco}
+              >
+                {/* {responsePreview === ""
+                  ? "Preview"
+                  : isValidResponse
+                    ? prettyResponse
+                    : "Invalid Response"} */}
+                somePrettyTxet
+              </SyntaxHighlighter>
+            </div>
           </aside>
-        </Stack>
+        </div>
       </form>
       <ConfirmAddIngestionModal open={open} setOpen={setOpen} />
     </section>
