@@ -534,7 +534,7 @@ function SchoolConnectivity() {
                 isExpressive
                 kind="secondary"
                 renderIcon={ArrowLeft}
-                to="/ingest-api/column-mapping"
+                to="/ingest-api/add/column-mapping"
                 onClick={() => {
                   decrementStepIndex();
                   resetSchoolConnectivityFormValues();
