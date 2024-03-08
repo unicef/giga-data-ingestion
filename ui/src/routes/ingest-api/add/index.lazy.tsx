@@ -133,7 +133,11 @@ function AddIngestion() {
     resetField("request_body");
   }, [watchRequestMethod, resetField]);
 
-  const { data: usersQuery, isRefetching: isUsersRefetching } = useQuery({
+  const {
+    data: usersQuery,
+    isRefetching: isUsersRefetching,
+    isFetching: isUsersFetching,
+  } = useQuery({
     queryKey: ["users"],
     queryFn: api.users.list,
   });
@@ -190,7 +194,7 @@ function AddIngestion() {
       //key ref
 
       id="user_id"
-      disabled={isUsersRefetching}
+      disabled={isUsersRefetching || isUsersFetching}
       helperText="Who will be the designated point person responsible for this ingestion?"
       invalid={!!errors.user_id}
       labelText="Owner"

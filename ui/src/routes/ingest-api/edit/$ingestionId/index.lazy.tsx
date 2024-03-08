@@ -1,40 +1,22 @@
 import { useEffect } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
+
+
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import {
-  Button,
-  ButtonSet,
-  Section,
-  SelectItem,
-  Stack,
-  TextArea,
-  TextInput,
-} from "@carbon/react";
-import {
-  queryOptions,
-  useQuery,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
-import {
-  Link,
-  Outlet,
-  createFileRoute,
-  useNavigate,
-} from "@tanstack/react-router";
+import { Button, ButtonSet, Section, SelectItem, Stack, TextArea, TextInput } from "@carbon/react";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { Link, Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
+
+
 
 import { api, queryClient } from "@/api";
 import { Select } from "@/components/forms/Select";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import ControllerNumberInputSchoolList from "@/components/upload/ControllerNumberInputSchoolList";
 import { useQosStore } from "@/context/qosStore";
-import {
-  AuthorizationTypeEnum,
-  PaginationTypeEnum,
-  RequestMethodEnum,
-  SchoolListFormValues,
-  SendQueryInEnum,
-} from "@/types/qos";
+import { AuthorizationTypeEnum, PaginationTypeEnum, RequestMethodEnum, SchoolListFormValues, SendQueryInEnum } from "@/types/qos";
+
 
 export const Route = createFileRoute("/ingest-api/edit/$ingestionId/")({
   component: EditIngestion,
@@ -74,6 +56,7 @@ function EditIngestion() {
     data: usersQuery,
     // isLoading: isUsersLoading,
     // refetch: refetchUsers,
+    isFetching: isUsersFetching,
     isRefetching: isUsersRefetching,
   } = useQuery({
     queryKey: ["users"],
@@ -168,7 +151,7 @@ function EditIngestion() {
   const UserSelect = () => (
     <Select
       id="user_id"
-      disabled={isUsersRefetching || isSchoolListRefetching}
+      disabled={isUsersRefetching || isSchoolListRefetching || isUsersFetching}
       helperText="Who will be the designated point person responsible for this ingestion?"
       invalid={!!errors.user_id}
       labelText="Owner"
