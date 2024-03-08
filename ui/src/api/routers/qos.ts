@@ -1,6 +1,7 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
 import {
+  CreateApiIngestionRequest,
   PagedSchoolListResponse,
   SchoolConnectivityResponse,
   SchoolListResponse,
@@ -42,6 +43,15 @@ export default function route(axi: AxiosInstance) {
           },
         },
       );
+    },
+    create_api_ingestion: (
+      params: CreateApiIngestionRequest,
+    ): Promise<null> => {
+      return axi.post(`/qos/api_ingestion`, {
+        school_connectivity: params.school_connectivity,
+        school_list: params.school_list,
+        
+      });
     },
   };
 }

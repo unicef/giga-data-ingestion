@@ -1,4 +1,3 @@
-import math
 import random
 from typing import Annotated
 
@@ -10,9 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from data_ingestion.db import get_db
 from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.models import SchoolList
-from data_ingestion.schemas.common import PagedResponseSchema
-from data_ingestion.schemas.qos import SchoolListSchema
+from data_ingestion.models import SchoolConnectivity, SchoolList
+from data_ingestion.schemas.core import PagedResponseSchema
+from data_ingestion.schemas.qos import CreateApiIngestionRequest, SchoolListSchema
 
 router = APIRouter(
     prefix="/api/qos",
@@ -24,18 +23,28 @@ router = APIRouter(
 fake = Faker()
 
 
-@router.post("/mock_school_lists")
-async def create_mock_school_lists(
+@router.post("/create_dummy_ingestion")
+async def create_dummy_ingestion(
     response: Response,
     number: int,
     db: AsyncSession = Depends(get_db),
 ):
     for _ in range(number):
-        file_upload = SchoolList(
-            request_method=random.choice(["GET", "POST"]),
+        school_list = SchoolList(
+            api_auth_api_key=f"api_key_{number}",
+            api_auth_api_value=f"api_value_{number}",
             api_endpoint=fake.url(),
-            data_key="test",
-            school_id_key="adsasdasd",
+            authorization_type=random.choice(["BEARER_TOKEN", "BASIC_AUTH", "API_KEY"]),
+            basic_auth_password="authpassword",
+            basic_auth_username="authyuser",
+            bearer_auth_bearer_token="bearertoken",
+            data_key="datakey",
+            enabled=fake.boolean(chance_of_getting_true=70),
+            page_number_key="asdasd",
+            page_offset_key="asdfasdf",
+            page_size_key="1qdweqew",
+            page_starts_with=123,
+            pagination_type=random.choice(["PAGE_NUMBER", "LIMIT_OFFSET"]),
             query_parameters="sometihing",
             request_body=fake.json(
                 data_columns={
@@ -45,28 +54,63 @@ async def create_mock_school_lists(
                 },
                 num_rows=2,
             ),
-            authorization_type=random.choice(["BEARER_TOKEN", "BASIC_AUTH", "API_KEY"]),
-            bearer_auth_bearer_token="asdasdasd",
-            basic_auth_username="authyuser",
-            basic_auth_password="authpassword",
-            api_auth_api_key="asdasd",
-            api_auth_api_value="asas",
-            pagination_type=random.choice(["PAGE_NUMBER", "LIMIT_OFFSET"]),
-            size=23,
-            page_size_key="1qdweqew",
+            request_method=random.choice(["GET", "POST"]),
+            school_id_key="adsasdasd",
             send_query_in=random.choice(["QUERY_PARAMETERS", "BODY"]),
-            page_number_key="asdasd",
-            page_starts_with=123,
-            page_offset_key="asdfasdf",
-            enabled=fake.boolean(chance_of_getting_true=70),
-            user_id="useriddd",
+            size=23,
             user_email=fake.ascii_safe_email(),
+            user_id="useriddd",
             name=fake.name(),
+            column_to_schema_mapping=fake.json(
+                data_columns={
+                    "Spec": "@1.0.1",
+                    "ID": "pyint",
+                    "Details": {"Name": "name", "Address": "address"},
+                },
+                num_rows=2,
+            ),
         )
-        db.add(file_upload)
+        db.add(school_list)
+        await db.commit()
 
-    await db.commit()
-    response.status_code = status.HTTP_201_CREATED
+        school_connectivity = SchoolConnectivity(
+            api_auth_api_key=f"api_key_{number}",
+            api_auth_api_value=f"api_value_{number}",
+            api_endpoint=fake.url(),
+            authorization_type=random.choice(["BEARER_TOKEN", "BASIC_AUTH", "API_KEY"]),
+            basic_auth_password="authpassword",
+            basic_auth_username="authyuser",
+            bearer_auth_bearer_token="bearertoken",
+            data_key="datakey",
+            enabled=fake.boolean(chance_of_getting_true=70),
+            page_number_key="asdasd",
+            page_offset_key="asdfasdf",
+            page_size_key="1qdweqew",
+            page_starts_with=random.choice([0, 1]),
+            pagination_type=random.choice(["PAGE_NUMBER", "LIMIT_OFFSET"]),
+            query_parameters="sometihing",
+            request_body=fake.json(
+                data_columns={
+                    "Spec": "@1.0.1",
+                    "ID": "pyint",
+                    "Details": {"Name": "name", "Address": "address"},
+                },
+                num_rows=2,
+            ),
+            request_method=random.choice(["GET", "POST"]),
+            school_id_key="adsasdasd",
+            send_query_in=random.choice(["QUERY_PARAMETERS", "BODY"]),
+            size=23,
+            user_email=fake.ascii_safe_email(),
+            user_id="useriddd",
+            ingestion_frequency=50,
+            schema_url=fake.url(),
+            school_list_id=school_list.id,
+        )
+
+        db.add(school_connectivity)
+        await db.commit()
+        response.status_code = status.HTTP_201_CREATED
 
 
 @router.get("/school_list", response_model=PagedResponseSchema)
@@ -91,11 +135,7 @@ async def list_school_lists(
     items = await db.scalars(base_query.offset((page - 1) * count).limit(count))
 
     paged_response = PagedResponseSchema[SchoolListSchema](
-        data=items,
-        page_index=page,
-        per_page=count,
-        total_items=total,
-        total_pages=math.ceil(total / count),
+        data=items, page=page, page_size=count, total_count=total
     )
 
     if not len(paged_response.data):
@@ -142,3 +182,49 @@ async def update_school_list_status(
         ) from err
 
     return 0
+
+
+@router.get("/school_connectivity/{school_list_id}")
+async def get_school_connectivity(
+    response: Response,
+    school_list_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    base_query = (
+        select(SchoolConnectivity)
+        .order_by(desc(SchoolConnectivity.date_created))
+        .where(func.starts_with(SchoolConnectivity.school_list_id, school_list_id))
+    )
+
+    school_connectivity = await db.scalar(base_query)
+
+    return school_connectivity
+
+
+# also uploads here
+@router.post("/api_ingestion")
+async def create_api_ingestion(
+    response: Response,
+    body: CreateApiIngestionRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    school_connectivity_body = body.school_connectivity
+    school_list_body = body.school_list
+
+    school_list = SchoolList(**school_list_body.model_dump())
+    db.add(school_list)
+    await db.commit()
+
+    # upload the file and pas the schema url into shool connectivity
+
+    dummy_schema_url = "somasdaskdjfljasdfkljasdklfjklasdfj"
+
+    school_connectivity = SchoolConnectivity(
+        **school_connectivity_body.model_dump(),
+        schema_url=dummy_schema_url,
+        school_list_id=school_list.id,
+    )
+
+    db.add(school_connectivity)
+    await db.commit()
+    response.status_code = status.HTTP_201_CREATED

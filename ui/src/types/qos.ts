@@ -45,7 +45,6 @@ export interface ApiConfigurationResponse {
   school_id_key: string;
   send_query_in: SendQueryInEnum;
   size: number;
-  status: boolean;
   user_email: string;
   user_id: string;
 }
@@ -63,71 +62,6 @@ export interface PagedSchoolListResponse {
   total_pages: string;
 }
 
-export interface SchoolListFormValues {
-  name: string;
-  api_auth_api_key: string | null;
-  api_auth_api_value: string | null;
-  api_endpoint: string;
-  authorization_type: AuthorizationTypeEnum;
-  basic_auth_password: string | null;
-  basic_auth_username: string | null;
-  bearer_auth_bearer_token: string | null;
-  data_key: string;
-  page_number_key: string | null;
-  page_offset_key: string | null;
-  page_size_key: string | null;
-  page_starts_with: number | null;
-  pagination_type: PaginationTypeEnum | null;
-  query_parameters: string | null;
-  request_body: string | null;
-  request_method: RequestMethodEnum;
-  school_id_key: string;
-  send_query_in: SendQueryInEnum;
-  size: number | null;
-  user_email: string;
-  user_id: string;
-}
-
-export const initialSchoolListFormValues: SchoolListFormValues = {
-  name: "",
-  api_auth_api_key: null,
-  api_auth_api_value: null,
-  api_endpoint: "",
-  authorization_type: AuthorizationTypeEnum.NONE,
-  basic_auth_password: null,
-  basic_auth_username: null,
-  bearer_auth_bearer_token: null,
-  data_key: "",
-  page_number_key: null,
-  page_offset_key: null,
-  page_size_key: null,
-  page_starts_with: null,
-  pagination_type: PaginationTypeEnum.NONE,
-  query_parameters: null,
-  request_body: null,
-  request_method: RequestMethodEnum.GET,
-  school_id_key: "",
-  send_query_in: SendQueryInEnum.NONE,
-  size: null,
-  user_email: "",
-  user_id: "",
-};
-
-export interface MasterColumnMapping {
-  school_id: string;
-  student_count: string;
-  long: string;
-  lat: string;
-}
-
-// MOCKED Values
-export const masterColumns = [
-  { name: "school_id", description: "school id description" },
-  { name: "student_count", description: "student_count description" },
-  { name: "lat", description: "lat  description" },
-  { name: "long", description: "long description" },
-];
-
 export interface SchoolConnectivityResponse extends ApiConfigurationResponse {
   ingestion_frequency: number;
   schema_url: string;
@@ -143,7 +77,7 @@ export interface PagedSchoolConnectivityResponse {
   total_pages: string;
 }
 
-export interface SchoolConnectivityFormValues {
+export interface ApiIngestionFormValues {
   api_auth_api_key: string | null;
   api_auth_api_value: string | null;
   api_endpoint: string;
@@ -157,52 +91,68 @@ export interface SchoolConnectivityFormValues {
   page_offset_key: string | null;
   page_size_key: string | null;
   page_starts_with: number | null;
-  pagination_type: PaginationTypeEnum;
-  query_parameters: string;
-  request_body: string;
+  pagination_type: PaginationTypeEnum | null;
+  query_parameters: string | null;
+  request_body: string | null;
   request_method: RequestMethodEnum;
   school_id_key: string;
   send_query_in: SendQueryInEnum;
   size: number | null;
-  status: boolean;
+}
+
+export interface SchoolListFormValues extends ApiIngestionFormValues {
+  name: string;
+  column_to_schema_mapping: string;
   user_email: string;
   user_id: string;
+}
 
+export interface SchoolConnectivityFormValues extends ApiIngestionFormValues {
   ingestion_frequency: number;
 }
+
+export const initialApiIngestionFormValues: ApiIngestionFormValues = {
+  api_auth_api_key: null,
+  api_auth_api_value: null,
+  api_endpoint: "",
+  authorization_type: AuthorizationTypeEnum.NONE,
+  basic_auth_password: null,
+  basic_auth_username: null,
+  bearer_auth_bearer_token: null,
+  data_key: "",
+  enabled: true,
+  page_number_key: null,
+  page_offset_key: null,
+  page_size_key: null,
+  page_starts_with: null,
+  pagination_type: PaginationTypeEnum.NONE,
+  query_parameters: null,
+  request_body: null,
+  request_method: RequestMethodEnum.GET,
+  school_id_key: "",
+  send_query_in: SendQueryInEnum.NONE,
+  size: null,
+};
+
+export const initialSchoolListFormValues: SchoolListFormValues = {
+  ...initialApiIngestionFormValues,
+  name: "",
+  column_to_schema_mapping: "",
+  user_email: "",
+  user_id: "",
+};
+
 export const initialSchoolConnectivityFormValues: SchoolConnectivityFormValues =
   {
-    api_auth_api_key: null,
-    api_auth_api_value: null,
-    api_endpoint: "",
-    authorization_type: AuthorizationTypeEnum.NONE,
-    basic_auth_password: null,
-    basic_auth_username: null,
-    bearer_auth_bearer_token: null,
-    data_key: "",
-    enabled: false,
-    page_number_key: null,
-    page_offset_key: null,
-    page_size_key: null,
-    page_starts_with: null,
-    pagination_type: PaginationTypeEnum.NONE,
-    query_parameters: "",
-    request_body: "",
-    request_method: RequestMethodEnum.GET,
-    school_id_key: "",
-    send_query_in: SendQueryInEnum.NONE,
-    size: null,
-    status: false,
-    user_email: "",
-    user_id: "",
-    ingestion_frequency: 5, // in minutes
+    ...initialApiIngestionFormValues,
+    ingestion_frequency: 5,
   };
 
-export interface CreateSchoolListRequest extends SchoolListFormValues {
-  column_to_schema_mapping: string;
-}
+export interface CreateSchoolListRequest extends SchoolListFormValues {}
 
+export interface CreateSchoolConnectivityRequest
+  extends SchoolConnectivityFormValues {}
 export interface CreateApiIngestionRequest {
-  school_connectivity: SchoolConnectivityFormValues;
+  school_connectivity: CreateSchoolConnectivityRequest;
   school_list: CreateSchoolListRequest;
 }

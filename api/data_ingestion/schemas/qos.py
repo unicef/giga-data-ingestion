@@ -34,14 +34,13 @@ class ApiConfiguration(BaseModel):
     school_id_key: str
     send_query_in: SendQueryInEnum
     size: int | None
-    status: bool
-    user_email: EmailStr
-    user_id: str
 
 
 class SchoolListSchema(ApiConfiguration):
     column_to_schema_mapping: str
     name: str
+    user_email: EmailStr
+    user_id: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -54,7 +53,7 @@ class SchoolConnectivitySchema(ApiConfiguration):
     model_config = ConfigDict(from_attributes=True)
 
 
-class CreateSchoolConnectivityRequest(BaseModel):
+class ApiConfigurationRequest(BaseModel):
     api_auth_api_key: str | None
     api_auth_api_value: str | None
     api_endpoint: str
@@ -63,7 +62,7 @@ class CreateSchoolConnectivityRequest(BaseModel):
     basic_auth_username: str | None
     bearer_auth_bearer_token: str | None
     data_key: str
-    enabled: bool | None
+    enabled: bool
     page_number_key: str | None
     page_offset_key: str | None
     page_size_key: str | None
@@ -72,38 +71,20 @@ class CreateSchoolConnectivityRequest(BaseModel):
     query_parameters: str | None
     request_body: str | None
     request_method: RequestMethodEnum
-    send_query_in: SendQueryInEnum
-    size: int | None
-    status: bool
-    user_email: str
-    user_id: str
-    ingestion_frequency: int
-
-
-class CreateSchoolListRequest(BaseModel):
-    name: str
-    api_auth_api_key: str | None
-    api_auth_api_value: str | None
-    api_endpoint: str
-    authorization_type: AuthorizationTypeEnum
-    basic_auth_password: str | None
-    basic_auth_username: str | None
-    bearer_auth_bearer_token: str | None
-    data_key: str
-    page_number_key: str | None
-    page_offset_key: str | None
-    page_size_key: str | None
-    page_starts_with: int | None
-    pagination_type: PaginationTypeEnum | None
-    query_parameters: str | None
-    request_body: str | None
-    request_method: RequestMethodEnum
     school_id_key: str
     send_query_in: SendQueryInEnum
     size: int | None
-    user_email: str
-    user_id: str
+
+
+class CreateSchoolListRequest(ApiConfigurationRequest):
     column_to_schema_mapping: str
+    name: str
+    user_email: EmailStr
+    user_id: str
+
+
+class CreateSchoolConnectivityRequest(ApiConfigurationRequest):
+    ingestion_frequency: int
 
 
 class CreateApiIngestionRequest(BaseModel):

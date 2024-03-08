@@ -44,7 +44,6 @@ export const Route = createFileRoute(
   pendingComponent: IngestFormSkeleton,
 });
 
-const FREQUENCY_DEFAULT_VALUE = 5;
 
 const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
 const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
@@ -388,7 +387,6 @@ function SchoolConnectivity() {
       name="ingestion_frequency"
       numberInputProps={{
         id: "ingestion_frequency",
-        defaultValue: FREQUENCY_DEFAULT_VALUE,
         helperText: "In minutes. Min 5",
         label: <span>Frequency</span>,
         min: 5,
