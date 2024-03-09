@@ -16,21 +16,16 @@ const ConfirmAddIngestionModal = ({
   open,
   setOpen,
 }: ConfirmAddIngestionModalInputs) => {
-  const { schoolConnectivity, schoolList, columnMapping, file } =
+  const { columnMapping, file, schoolConnectivity, schoolList } =
     useQosStore.getState();
   const navigate = useNavigate({ from: "/ingest-api" });
 
-  const addIngestion = useMutation({
+  const { mutateAsync: mutateAsync, isPending } = useMutation({
     mutationFn: api.qos.create_api_ingestion,
   });
 
   const onSubmit = async () => {
-    // TODO: Add  onLoaders
-
-    console.log(schoolConnectivity);
-    console.log(schoolList);
-
-    await addIngestion.mutateAsync({
+    await mutateAsync({
       school_connectivity: schoolConnectivity,
       school_list: {
         ...schoolList,
@@ -50,6 +45,7 @@ const ConfirmAddIngestionModal = ({
 
   return (
     <Modal
+      loadingStatus={isPending ? "active" : "error"}
       modalHeading="Create New Ingestion"
       open={open}
       primaryButtonText="Proceed"

@@ -45,7 +45,6 @@ interface GetValuesProps {
 
 interface UseFormHookReturnValues {
   control: Control<SchoolConnectivityFormValues>;
-
   errors: FieldErrors<SchoolConnectivityFormValues>;
   register: UseFormRegister<SchoolConnectivityFormValues>;
   trigger: UseFormTrigger<SchoolConnectivityFormValues>;
@@ -59,6 +58,7 @@ interface SchoolConnectivityFormInputsProps {
   watchPaginationType: PaginationTypeEnum;
   watchRequestMethod: RequestMethodEnum;
   useFormHookReturnValues: UseFormHookReturnValues;
+  hasFileUpload?: boolean;
 }
 
 const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
@@ -73,6 +73,7 @@ export function SchoolConnectivityFormInputs({
   watchPaginationType,
   watchRequestMethod,
   useFormHookReturnValues,
+  hasFileUpload = true,
 }: SchoolConnectivityFormInputsProps) {
   const {
     setIsResponseError,
@@ -451,16 +452,20 @@ export function SchoolConnectivityFormInputs({
       {watchPaginationType === LIMIT_OFFSET && <PaginationLimitOffsetInputs />}
       <SendQueryInSelect />
       <FrequencySelect />
+      {hasFileUpload && (
+        <>
+          <header className="text-lg">CSV Schema</header>
 
-      <header className="text-lg">CSV Schema</header>
-      <UploadFile
-        acceptType={{
-          "text/csv": [".csv"],
-        }}
-        description="CSV only"
-        file={file}
-        setFile={file => setFile(file)}
-      />
+          <UploadFile
+            acceptType={{
+              "text/csv": [".csv"],
+            }}
+            description="CSV only"
+            file={file}
+            setFile={file => setFile(file)}
+          />
+        </>
+      )}
 
       <IngestionEnabledToggle />
     </section>

@@ -25,7 +25,11 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import SchoolConnectivity, SchoolList
 from data_ingestion.schemas.core import PagedResponseSchema
-from data_ingestion.schemas.qos import CreateApiIngestionRequest, SchoolListSchema
+from data_ingestion.schemas.qos import (
+    CreateApiIngestionRequest,
+    EditApiIngestionRequest,
+    SchoolListSchema,
+)
 
 router = APIRouter(
     prefix="/api/qos",
@@ -197,16 +201,16 @@ async def update_school_list_status(
     return 0
 
 
-@router.get("/school_connectivity/{school_list_id}")
+@router.get("/school_connectivity/{id}", status_code=status.HTTP_200_OK)
 async def get_school_connectivity(
     response: Response,
-    school_list_id: str,
+    id: str,
     db: AsyncSession = Depends(get_db),
 ):
     base_query = (
         select(SchoolConnectivity)
         .order_by(desc(SchoolConnectivity.date_created))
-        .where(func.starts_with(SchoolConnectivity.school_list_id, school_list_id))
+        .where(func.starts_with(SchoolConnectivity.school_list_id, id))
     )
 
     school_connectivity = await db.scalar(base_query)
@@ -251,9 +255,6 @@ async def create_api_ingestion(
     school_connectivity_data = data.get_school_connectivity_model()
     school_list_data = data.get_school_list_model()
 
-    print(school_connectivity_data)
-    print(school_list_data)
-
     school_list = SchoolList(**school_list_data.model_dump())
     db.add(school_list)
     await db.commit()
@@ -266,7 +267,6 @@ async def create_api_ingestion(
     upload_path = f"{constants.API_INGESTION_UPLOAD_PATH_PREFIX}/{filename}{ext}"
 
     client = storage_client.get_blob_client(upload_path)
-
     try:
         client.upload_blob(await file.read())
         response.status_code = status.HTTP_201_CREATED
@@ -291,3 +291,35 @@ async def create_api_ingestion(
     await db.commit()
 
     response.status_code = status.HTTP_201_CREATED
+
+
+@router.patch("/api_ingestion/{id}", status_code=status.HTTP_200_OK)
+async def update_api_ingestion(
+    response: Response,
+    data: EditApiIngestionRequest,
+    id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    school_list_values = data.school_list.model_dump()
+    school_connectivity_values = data.school_connectivity.model_dump()
+    try:
+        update_school_list_query = (
+            update(SchoolList).where(SchoolList.id == id).values(**school_list_values)
+        )
+        await db.execute(update_school_list_query)
+        await db.commit()
+
+        update_school_connectivity_query = (
+            update(SchoolConnectivity)
+            .where(SchoolConnectivity.school_list_id == id)
+            .values(**school_connectivity_values)
+        )
+        await db.execute(update_school_connectivity_query)
+        await db.commit()
+
+        response.status_code = status.HTTP_204_NO_CONTENT
+
+    except exc.SQLAlchemyError as err:
+        raise HTTPException(
+            detail=err._message, status_code=status.HTTP_400_BAD_REQUEST
+        ) from err

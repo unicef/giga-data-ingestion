@@ -107,3 +107,19 @@ class CreateApiIngestionRequest:
         self,
     ) -> CreateSchoolListRequest:
         return CreateSchoolListRequest.model_validate_json(self.school_list)
+
+
+class EditSchoolConnectivityRequest(ApiConfigurationRequest):
+    ingestion_frequency: int
+
+
+class EditSchoolListRequest(ApiConfigurationRequest):
+    column_to_schema_mapping: str
+    name: str
+    user_email: EmailStr
+    user_id: str
+
+
+class EditApiIngestionRequest(BaseModel):
+    school_connectivity: EditSchoolConnectivityRequest
+    school_list: EditSchoolListRequest

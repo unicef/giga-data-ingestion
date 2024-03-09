@@ -157,3 +157,8 @@ export interface CreateApiIngestionRequest {
   school_list: CreateSchoolListRequest;
   file: File | null;
 }
+
+export interface EditApiIngestionRequest {
+  school_connectivity: CreateSchoolConnectivityRequest;
+  school_list: CreateSchoolListRequest;
+}

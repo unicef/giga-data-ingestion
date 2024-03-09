@@ -53,7 +53,7 @@ function EditIngestion() {
     data: { data: schoolListQuery },
     isError,
   } = useSuspenseQuery({
-    queryKey: ["ingestion", ingestionId],
+    queryKey: ["school_list", ingestionId],
     queryFn: () => api.qos.get_school_list(ingestionId),
   });
 

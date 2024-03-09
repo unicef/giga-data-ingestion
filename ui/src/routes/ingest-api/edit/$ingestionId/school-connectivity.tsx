@@ -1,112 +1,115 @@
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
+import SyntaxHighlighter from "react-syntax-highlighter";
+import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import {
-  Button,
-  ButtonSet,
-  Select,
-  SelectItem,
-  Stack,
-  TextArea,
-  TextInput,
-  Toggle,
-} from "@carbon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute, redirect } from "@tanstack/react-router";
+import { Button, ButtonSet, Tag } from "@carbon/react";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { api, queryClient } from "@/api";
-import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
+import ConfirmEditIngestionModal from "@/components/ingest-api/ConfirmEditIngestionModal";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
-import ControllerNumberInputSchoolConnectivity from "@/components/upload/ControllerNumberInputSchoolConnectivity";
+import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs";
 import { useQosStore } from "@/context/qosStore";
-import {
-  PaginationTypeEnum,
-  SchoolConnectivityFormValues,
-  SendQueryInEnum,
-} from "@/types/qos";
-import { AuthorizationTypeEnum, RequestMethodEnum } from "@/types/qos";
+import { SchoolConnectivityFormValues } from "@/types/qos";
 
 export const Route = createFileRoute(
   "/ingest-api/edit/$ingestionId/school-connectivity",
 )({
   component: SchoolConnectivity,
   loader: async ({ params: { ingestionId } }) => {
-    const { api_endpoint } = useQosStore.getState().schoolList;
-    if (api_endpoint === "") throw redirect({ to: ".." });
-
-    return await queryClient.ensureQueryData({
-      queryKey: ["ingestion", ingestionId],
+    const options = queryOptions({
+      queryKey: ["school_connectivity", ingestionId],
       queryFn: () => api.qos.get_school_connectivity(ingestionId),
     });
+
+    return await queryClient.ensureQueryData(options);
   },
   errorComponent: IngestFormSkeleton,
   pendingComponent: IngestFormSkeleton,
 });
 
-const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
-const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
-const { BODY, QUERY_PARAMETERS } = SendQueryInEnum;
-
-// TODO add parsing for the json display
-const ugly = '{"some":"key", "value":"pairs"}';
-const obj = JSON.parse(ugly);
-const PRETTY = JSON.stringify(obj, undefined, 4);
-
 function SchoolConnectivity() {
   ``;
+  const [isResponseError, setIsResponseError] = useState<boolean>(false);
+  const [isValidDatakey, setIsValidDatakey] = useState<boolean>(false);
+  const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
   const [open, setOpen] = useState<boolean>(false);
+  const [responsePreview, setResponsePreview] = useState<string | string[]>("");
 
-  const { decrementStepIndex, setSchoolConnectivityFormValues } = useQosStore();
+  const {
+    decrementStepIndex,
+    setSchoolConnectivityFormValues,
+    resetSchoolConnectivityFormValues,
+  } = useQosStore();
 
   const { ingestionId } = Route.useParams();
 
   const {
     data: { data: schoolConnectivityQuery },
-    isError,
   } = useSuspenseQuery({
-    queryKey: ["ingestion", ingestionId],
+    queryKey: ["school_connectivity", ingestionId],
     queryFn: () => api.qos.get_school_connectivity(ingestionId),
   });
 
   const {
+    control,
+    formState,
+    getValues,
     handleSubmit,
     register,
-    control,
     resetField,
     watch,
-    formState: { errors },
+    trigger,
   } = useForm<SchoolConnectivityFormValues>({
     defaultValues: {
-      request_method: schoolConnectivityQuery.request_method,
-      api_endpoint: schoolConnectivityQuery.api_endpoint,
-      authorization_type: schoolConnectivityQuery.authorization_type,
       api_auth_api_key: schoolConnectivityQuery.api_auth_api_key,
       api_auth_api_value: schoolConnectivityQuery.api_auth_api_value,
-      bearer_auth_bearer_token:
-        schoolConnectivityQuery.bearer_auth_bearer_token,
+      api_endpoint: schoolConnectivityQuery.api_endpoint,
+      authorization_type: schoolConnectivityQuery.authorization_type,
       basic_auth_password: schoolConnectivityQuery.basic_auth_password,
       basic_auth_username: schoolConnectivityQuery.basic_auth_username,
+      bearer_auth_bearer_token:
+        schoolConnectivityQuery.bearer_auth_bearer_token,
       data_key: schoolConnectivityQuery.data_key,
-      pagination_type: schoolConnectivityQuery.pagination_type,
-      query_parameters: schoolConnectivityQuery.query_parameters,
+      enabled: schoolConnectivityQuery.enabled,
       page_number_key: schoolConnectivityQuery.page_number_key,
       page_offset_key: schoolConnectivityQuery.page_offset_key,
       page_size_key: schoolConnectivityQuery.page_size_key,
       page_starts_with: schoolConnectivityQuery.page_starts_with,
-      size: schoolConnectivityQuery.size,
-      send_query_in: schoolConnectivityQuery.send_query_in,
+      pagination_type: schoolConnectivityQuery.pagination_type,
+      query_parameters: schoolConnectivityQuery.query_parameters,
       request_body: schoolConnectivityQuery.request_body,
-      enabled: schoolConnectivityQuery.enabled,
+      request_method: schoolConnectivityQuery.request_method,
+      school_id_key: schoolConnectivityQuery.school_id_key,
+      send_query_in: schoolConnectivityQuery.send_query_in,
+      size: schoolConnectivityQuery.size,
       ingestion_frequency: schoolConnectivityQuery.ingestion_frequency,
     },
-    mode: "onChange",
-    reValidateMode: "onChange",
+    mode: "onBlur",
+    reValidateMode: "onBlur",
   });
 
+  const { errors } = formState;
   const watchAuthType = watch("authorization_type");
   const watchPaginationType = watch("pagination_type");
   const watchSendQueryIn = watch("send_query_in");
+  const watchRequestMethod = watch("request_method");
+
+  const hasError = Object.keys(errors).length > 0;
+  const authorizationType = getValues("authorization_type");
+  const queryParams = getValues("query_parameters");
+  const requestBody = getValues("request_body");
+  const requestMethod = getValues("request_method");
+  const dataKey = getValues("data_key");
+  const apiKeyName = getValues("api_auth_api_key");
+  const apiKeyValue = getValues("api_auth_api_value");
+  const basicAuthUserName = getValues("basic_auth_username");
+  const basicAuthPassword = getValues("basic_auth_password");
+  const apiEndpoint = getValues("api_endpoint");
+  const bearerAuthBearerToken = getValues("bearer_auth_bearer_token");
 
   useEffect(() => {
     resetField("api_auth_api_key");
@@ -138,270 +141,35 @@ function SchoolConnectivity() {
     setOpen(true);
   };
 
-  const RequestMethodSelect = () => (
-    <Select
-      id="request_method"
-      invalid={!!errors.request_method}
-      labelText="Request Method"
-      {...register("request_method", { required: true })}
-    >
-      <SelectItem value="" text="" />
-      {Object.keys(RequestMethodEnum).map(request_method => (
-        <SelectItem
-          key={request_method}
-          value={request_method}
-          text={request_method}
-        />
-      ))}
-    </Select>
-  );
+  const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
 
-  const ApiEndpointTextInput = () => (
-    <div className="flex items-end">
-      <TextInput
-        id="api_endpoint"
-        invalid={!!errors.api_endpoint}
-        labelText="API Endpoint"
-        placeholder="https://example.com/api/ingest"
-        {...register("api_endpoint", { required: true })}
-      />
-      <div className="bottom-px">
-        <Button size="md">Test</Button>
-      </div>
-    </div>
-  );
+  const errorStates = {
+    setIsResponseError,
+    setIsValidDatakey,
+    setIsValidResponse,
+    setResponsePreview,
+  };
 
-  const AuthTypeSelect = () => (
-    <Select
-      id="authorization_type"
-      invalid={!!errors.authorization_type}
-      labelText="Authentication Method"
-      {...register("authorization_type", { required: true })}
-    >
-      <SelectItem value="" text="" />
-      {Object.keys(AuthorizationTypeEnum).map(authorization_type => (
-        <SelectItem
-          key={authorization_type}
-          text={authorization_type.replace(/_/g, " ")}
-          value={authorization_type}
-        />
-      ))}
-    </Select>
-  );
+  const gettedFormValues = {
+    apiEndpoint,
+    apiKeyName,
+    apiKeyValue,
+    authorizationType,
+    basicAuthPassword,
+    basicAuthUserName,
+    bearerAuthBearerToken,
+    dataKey,
+    queryParams,
+    requestBody,
+    requestMethod,
+  };
 
-  const AuthApiKeyInputs = () => (
-    <>
-      <TextInput
-        id="api_auth_api_key"
-        invalid={!!errors.api_auth_api_key}
-        labelText="api response key"
-        placeholder="Input Authentication Credentials"
-        {...register("api_auth_api_key", { required: true })}
-      />
-      {/*
-                  //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="api_auth_api_value"
-        invalid={!!errors.api_auth_api_value}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("api_auth_api_value", { required: true })}
-      />
-    </>
-  );
-
-  const AuthBasicInputs = () => (
-    <>
-      <TextInput
-        id="basic_auth_username"
-        invalid={!!errors.basic_auth_username}
-        labelText="api response key"
-        placeholder="Input Authentication Credentials"
-        {...register("basic_auth_username", { required: true })}
-      />
-      {/*
-                  //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="basic_auth_password"
-        invalid={!!errors.basic_auth_password}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("basic_auth_password", { required: true })}
-      />
-    </>
-  );
-
-  const AuthBearerInputs = () => (
-    <>
-      {/*
-                  //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="bearer_auth_bearer_token"
-        invalid={!!errors.bearer_auth_bearer_token}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("bearer_auth_bearer_token", {
-          required: true,
-        })}
-      />
-    </>
-  );
-
-  const DataKeyTextInput = () => (
-    <TextInput
-      id="data_key"
-      helperText="The key in the JSON response that will contain the data to be ingested"
-      invalid={!!errors.data_key}
-      labelText="Data key"
-      {...register("data_key", { required: true })}
-    />
-  );
-
-  const PaginationTypeSelect = () => (
-    <Select
-      id="pagination_type"
-      invalid={!!errors.pagination_type}
-      labelText="Pagination Method"
-      {...register("pagination_type", { required: true })}
-    >
-      {Object.keys(PaginationTypeEnum).map(pagination_type => (
-        <SelectItem
-          key={pagination_type}
-          text={pagination_type.replace(/_/g, " ")}
-          value={pagination_type}
-        />
-      ))}
-    </Select>
-  );
-
-  const PaginationLimitOffsetInputs = () => (
-    <>
-      <ControllerNumberInputSchoolConnectivity
-        control={control}
-        name="size"
-        numberInputProps={{
-          id: "size",
-          label: <span>Records per page</span>,
-          min: 0,
-        }}
-      />
-      <TextInput
-        id="page_size_key"
-        invalid={!!errors.page_size_key}
-        labelText="Page size key"
-        placeholder="Input page size key"
-        {...register("page_size_key", { required: true })}
-      />
-      <TextInput
-        id="page_offset_key"
-        invalid={!!errors.page_offset_key}
-        labelText="Page Offset key"
-        placeholder="Input Page Offset key"
-        {...register("page_offset_key", { required: true })}
-      />
-    </>
-  );
-
-  const PaginationPageNumberInputs = () => (
-    <>
-      <ControllerNumberInputSchoolConnectivity
-        control={control}
-        name="size"
-        numberInputProps={{
-          id: "size",
-          label: <span>Records per page</span>,
-          min: 0,
-        }}
-      />
-      <TextInput
-        id="page_size_key"
-        invalid={!!errors.page_size_key}
-        labelText="Page size key"
-        placeholder="Input page size key"
-        {...register("page_size_key", { required: true })}
-      />
-      <TextInput
-        id="page_number_key"
-        invalid={!!errors.page_number_key}
-        labelText="Page number key"
-        placeholder="Input page number key"
-        {...register("page_number_key", { required: true })}
-      />
-
-      <Select
-        id="page_starts_with"
-        invalid={!!errors.page_starts_with}
-        labelText="Page Starts with"
-        {...register("page_starts_with", { required: true })}
-      >
-        <SelectItem key="0" text="0" value={0} />
-        <SelectItem key="1" text="1" value={1} />
-      </Select>
-    </>
-  );
-
-  const SendQueryInSelect = () => (
-    <Select
-      id="send_query_in"
-      invalid={!!errors.send_query_in}
-      labelText="Send query in"
-      {...register("send_query_in", { required: true })}
-    >
-      {Object.keys(SendQueryInEnum).map(send_query_in => (
-        <SelectItem
-          key={send_query_in}
-          text={send_query_in.replace(/_/g, " ")}
-          value={send_query_in}
-        />
-      ))}
-    </Select>
-  );
-
-  const SendQueryInQueryParametersInputs = () => (
-    <TextArea
-      id="query_parameters"
-      invalid={!!errors.query_parameters}
-      labelText="Query parameters"
-      placeholder="Input query parameters"
-      {...register("query_parameters", { required: true })}
-    />
-  );
-
-  const SendQueryInBodyInputs = () => (
-    <TextArea
-      id="request_body"
-      invalid={!!errors.request_body}
-      labelText="Request body"
-      placeholder="Input request body"
-      {...register("request_body", { required: true })}
-    />
-  );
-
-  const FrequencySelect = () => (
-    <ControllerNumberInputSchoolConnectivity
-      control={control}
-      name="ingestion_frequency"
-      numberInputProps={{
-        id: "ingestion_frequency",
-        helperText: "In minutes. Min 5",
-        label: <span>Frequency</span>,
-        min: 5,
-      }}
-    />
-  );
-
-  const IngestionEnabledToggle = () => (
-    <Toggle
-      id="enabled"
-      defaultToggled={true}
-      labelText="Whether to retroactively ingest data before the start date"
-    />
-  );
-
-  if (isError) return <IngestFormSkeleton />;
+  const useFormHookReturnValues = {
+    control,
+    errors,
+    register,
+    trigger,
+  };
 
   return (
     <section className="container py-6">
@@ -411,40 +179,25 @@ function SchoolConnectivity() {
         </p>
       </header>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Stack className="w-full" orientation="horizontal">
-          <section className="flex flex-col gap-4">
-            <section className="flex flex-col gap-6">
-              <section className="flex flex-col gap-6">
-                <header className="text-2xl">Ingestion Source</header>
-                <RequestMethodSelect />
-                <ApiEndpointTextInput />
-                <AuthTypeSelect />
-                {watchAuthType === API_KEY && <AuthApiKeyInputs />}
-                {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
-                {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
-              </section>
-              <section className="flex flex-col gap-6">
-                <header className="text-2xl">Ingestion Parameters</header>
-
-                <DataKeyTextInput />
-
-                <PaginationTypeSelect />
-                {watchPaginationType === PAGE_NUMBER && (
-                  <PaginationPageNumberInputs />
-                )}
-                {watchPaginationType === LIMIT_OFFSET && (
-                  <PaginationLimitOffsetInputs />
-                )}
-                <SendQueryInSelect />
-                {watchSendQueryIn === BODY && <SendQueryInBodyInputs />}
-                {watchSendQueryIn === QUERY_PARAMETERS && (
-                  <SendQueryInQueryParametersInputs />
-                )}
-              </section>
-              <header className="text-2xl">Ingestion Details</header>
-              <FrequencySelect />
-              <IngestionEnabledToggle />
-            </section>
+        <div className="flex w-full space-x-10 ">
+          <section className="flex w-full flex-col gap-4">
+            <div
+              onClick={() => {
+                setOpen(true);
+              }}
+            >
+              ENABLE SUBMIT
+            </div>
+            <SchoolConnectivityFormInputs
+              errorStates={errorStates}
+              gettedFormValues={gettedFormValues}
+              hasFileUpload={false}
+              hasError={hasError}
+              watchAuthType={watchAuthType}
+              watchPaginationType={watchPaginationType}
+              watchRequestMethod={watchRequestMethod}
+              useFormHookReturnValues={useFormHookReturnValues}
+            />
             <ButtonSet className="w-full">
               <Button
                 as={Link}
@@ -452,16 +205,19 @@ function SchoolConnectivity() {
                 isExpressive
                 kind="secondary"
                 renderIcon={ArrowLeft}
-                to={`/ingest-api/edit/${ingestionId}/column-mapping`}
+                to="/ingest-api/add/column-mapping"
                 onClick={() => {
                   decrementStepIndex();
+                  resetSchoolConnectivityFormValues();
                 }}
               >
                 Cancel
               </Button>
-              {/* this should modal submit */}
               <Button
                 className="w-full"
+                disabled={
+                  !isValidResponse || !isValidDatakey || isResponseError
+                }
                 isExpressive
                 renderIcon={ArrowRight}
                 type="submit"
@@ -470,17 +226,30 @@ function SchoolConnectivity() {
               </Button>
             </ButtonSet>
           </section>
-          <aside className="flex h-full">
-            <TextArea
-              defaultValue={PRETTY}
-              disabled
-              labelText="Preview"
-              rows={40}
-            />
+          <aside className="flex w-full flex-col ">
+            <div className="grow basis-0 overflow-y-auto">
+              {isResponseError && (
+                <Tag type="red">Invalid Output from api request</Tag>
+              )}
+              {responsePreview === "invalid" && (
+                <Tag type="blue">Invalid Datakey</Tag>
+              )}
+              <SyntaxHighlighter
+                customStyle={{ height: "100%" }}
+                language="json"
+                style={docco}
+              >
+                {responsePreview === "" ? "Preview" : prettyResponse}
+              </SyntaxHighlighter>
+            </div>
           </aside>
-        </Stack>
+        </div>
       </form>
-      <ConfirmAddIngestionModal open={open} setOpen={setOpen} />
+      <ConfirmEditIngestionModal
+        open={open}
+        setOpen={setOpen}
+        schoolListId={ingestionId}
+      />
     </section>
   );
 }

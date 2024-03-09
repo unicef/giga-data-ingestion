@@ -1,25 +1,43 @@
 import { Dispatch, SetStateAction } from "react";
 
 import { Modal } from "@carbon/react";
+import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
+import { api } from "@/api";
 import { useQosStore } from "@/context/qosStore";
 
 interface ConfirmAddIngestionModalInputs {
+  schoolListId: string;
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
 const ConfirmEditIngestionModal = ({
+  schoolListId,
   open,
   setOpen,
 }: ConfirmAddIngestionModalInputs) => {
-  const { schoolConnectivity } = useQosStore.getState();
+  const { schoolConnectivity, schoolList, columnMapping } =
+    useQosStore.getState();
   const navigate = useNavigate({ from: "/ingest-api" });
 
-  const onSubmit = () => {
-    // TODO: Add call to routes and onLoaders
-    // loading spinners if the
+  const { mutateAsync: mutateAsync, isPending } = useMutation({
+    mutationFn: api.qos.update_api_ingestion,
+  });
+
+  const onSubmit = async () => {
+    await mutateAsync({
+      id: schoolListId,
+      body: {
+        school_connectivity: schoolConnectivity,
+        school_list: {
+          ...schoolList,
+          column_to_schema_mapping: JSON.stringify(columnMapping),
+          enabled: true,
+        },
+      },
+    });
 
     setOpen(false);
     navigate({ to: "/ingest-api" });
@@ -31,7 +49,7 @@ const ConfirmEditIngestionModal = ({
 
   return (
     <Modal
-      // loadingStatus=""
+      loadingStatus={isPending ? "active" : "inactive"}
       modalHeading="Create New Ingestion"
       open={open}
       primaryButtonText="Proceed"
@@ -39,7 +57,7 @@ const ConfirmEditIngestionModal = ({
       onRequestClose={onCancel}
       onRequestSubmit={onSubmit}
     >
-      This will create a new ingesiton that will ingest from{" "}
+      This will edit a new ingesiton that will ingest from{" "}
       <b>{schoolConnectivity.api_endpoint}</b> every{" "}
       <b>{schoolConnectivity.ingestion_frequency}</b> minutes
     </Modal>

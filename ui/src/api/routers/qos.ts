@@ -2,6 +2,7 @@ import { AxiosInstance, AxiosResponse } from "axios";
 
 import {
   CreateApiIngestionRequest,
+  EditApiIngestionRequest,
   PagedSchoolListResponse,
   SchoolConnectivityResponse,
   SchoolListResponse,
@@ -59,6 +60,15 @@ export default function route(axi: AxiosInstance) {
       }
 
       return axi.post(`/qos/api_ingestion`, formData);
+    },
+    update_api_ingestion: (params: {
+      body: EditApiIngestionRequest;
+      id: string;
+    }): Promise<null> => {
+      return axi.patch(`/qos/api_ingestion/${params.id}`, {
+        school_connectivity: params.body.school_connectivity,
+        school_list: params.body.school_list,
+      });
     },
   };
 }
