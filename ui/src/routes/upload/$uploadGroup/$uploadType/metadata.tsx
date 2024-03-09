@@ -56,8 +56,9 @@ export const Route = createFileRoute(
 
 function Metadata() {
   const api = useApi();
-  const { upload, setUpload, incrementStepIndex, decrementStepIndex } =
-    useStore();
+  const { setUpload, incrementStepIndex, decrementStepIndex } = useStore();
+
+  const { upload } = useStore.getState();
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType } = Route.useParams();
   const { countryDatasets, isPrivileged } = useRoles();
@@ -107,9 +108,7 @@ function Metadata() {
     setIsUploadError(false);
 
     const body = {
-      // TODO: Add actual column to schema mapping from csv headers
-      // get it from use state in index->columnmapping->metadata->success
-      column_to_schema_mapping: "Sample",
+      column_to_schema_mapping: JSON.stringify(upload.columnMapping),
       country: data.country,
       data_collection_date: new Date(data.dataCollectionDate).toISOString(),
       data_collection_modality: data.dataCollectionModality,

@@ -276,13 +276,27 @@ async def create_api_ingestion(
         client.upload_blob(await file.read())
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
-        await db.execute(delete(SchoolList).where(SchoolList.id == SchoolList.id))
+        await db.execute(
+            delete(SchoolConnectivity).where(
+                SchoolConnectivity.school_list_id == school_list.id
+            )
+        )
+        await db.commit()
+
+        await db.execute(delete(SchoolList).where(SchoolList.id == school_list.id))
         await db.commit()
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
     except Exception as err:
-        await db.execute(delete(SchoolList).where(SchoolList.id == SchoolList.id))
+        await db.execute(
+            delete(SchoolConnectivity).where(
+                SchoolConnectivity.school_list_id == school_list.id
+            )
+        )
+        await db.commit()
+
+        await db.execute(delete(SchoolList).where(SchoolList.id == school_list.id))
         await db.commit()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from err
 

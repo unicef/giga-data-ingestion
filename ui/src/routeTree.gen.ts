@@ -26,6 +26,7 @@ import { Route as UserManagementUserEnableUserIdImport } from './routes/user-man
 import { Route as UserManagementUserEditUserIdImport } from './routes/user-management/user/edit.$userId'
 import { Route as UploadUploadGroupUploadTypeSuccessImport } from './routes/upload/$uploadGroup/$uploadType/success'
 import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upload/$uploadGroup/$uploadType/metadata'
+import { Route as UploadUploadGroupUploadTypeColumnMappingImport } from './routes/upload/$uploadGroup/$uploadType/column-mapping'
 import { Route as IngestApiEditIngestionIdSchoolConnectivityImport } from './routes/ingest-api/edit/$ingestionId/school-connectivity'
 import { Route as IngestApiEditIngestionIdColumnMappingImport } from './routes/ingest-api/edit/$ingestionId/column-mapping'
 
@@ -205,6 +206,12 @@ const UploadUploadGroupUploadTypeMetadataRoute =
     getParentRoute: () => UploadUploadGroupUploadTypeRoute,
   } as any)
 
+const UploadUploadGroupUploadTypeColumnMappingRoute =
+  UploadUploadGroupUploadTypeColumnMappingImport.update({
+    path: '/column-mapping',
+    getParentRoute: () => UploadUploadGroupUploadTypeRoute,
+  } as any)
+
 const IngestApiEditIngestionIdSchoolConnectivityRoute =
   IngestApiEditIngestionIdSchoolConnectivityImport.update({
     path: '/$ingestionId/school-connectivity',
@@ -297,6 +304,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiEditIngestionIdSchoolConnectivityImport
       parentRoute: typeof IngestApiEditImport
     }
+    '/upload/$uploadGroup/$uploadType/column-mapping': {
+      preLoaderRoute: typeof UploadUploadGroupUploadTypeColumnMappingImport
+      parentRoute: typeof UploadUploadGroupUploadTypeImport
+    }
     '/upload/$uploadGroup/$uploadType/metadata': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeMetadataImport
       parentRoute: typeof UploadUploadGroupUploadTypeImport
@@ -352,6 +363,7 @@ export const routeTree = rootRoute.addChildren([
   UploadLazyRoute.addChildren([
     UploadIndexLazyRoute,
     UploadUploadGroupUploadTypeRoute.addChildren([
+      UploadUploadGroupUploadTypeColumnMappingRoute,
       UploadUploadGroupUploadTypeMetadataRoute,
       UploadUploadGroupUploadTypeSuccessRoute,
       UploadUploadGroupUploadTypeIndexLazyRoute,

@@ -5,6 +5,8 @@ import { immer } from "zustand/middleware/immer";
 import { User } from "@/types/user.ts";
 
 interface UploadSlice {
+  columnMapping: Record<string, string>;
+  detectedColumns: string[];
   file: File | null;
   timestamp: Date | null;
   uploadId: string;
@@ -28,6 +30,8 @@ interface AppActions {
 }
 
 const initialUploadState: UploadSlice = {
+  columnMapping: {},
+  detectedColumns: [],
   file: null,
   timestamp: null,
   uploadId: "",
