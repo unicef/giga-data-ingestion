@@ -4,23 +4,11 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import {
-  Button,
-  ButtonSet,
-  Section,
-  Select,
-  SelectItem,
-  Tag,
-  TextArea,
-  TextInput,
-  Toggle,
-} from "@carbon/react";
+import { Button, ButtonSet, Section, Tag } from "@carbon/react";
 import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 
 import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
-import TestApiButton from "@/components/ingest-api/TestApiButton";
-import ControllerNumberInputSchoolConnectivity from "@/components/upload/ControllerNumberInputSchoolConnectivity";
-import UploadFile from "@/components/upload/UploadFile.tsx";
+import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs";
 import { useQosStore } from "@/context/qosStore";
 import {
   PaginationTypeEnum,
@@ -37,10 +25,6 @@ export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
   },
 });
 
-const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
-const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
-const { POST } = RequestMethodEnum;
-
 function SchoolConnectivity() {
   const [responsePreview, setResponsePreview] = useState<string | string[]>("");
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
@@ -51,7 +35,6 @@ function SchoolConnectivity() {
     decrementStepIndex,
     resetSchoolConnectivityFormValues,
     setSchoolConnectivityFormValues,
-    setFile,
   } = useQosStore();
 
   const { file } = useQosStore.getState();
@@ -73,24 +56,31 @@ function SchoolConnectivity() {
     defaultValues: {
       api_auth_api_key: null,
       api_auth_api_value: null,
-      authorization_type: AuthorizationTypeEnum.NONE,
+      authorization_type: AuthorizationTypeEnum.BEARER_TOKEN,
       basic_auth_password: null,
       basic_auth_username: null,
-      bearer_auth_bearer_token: null,
+      bearer_auth_bearer_token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImRhaWx5Y2hlY2thcHAiLCJpYXQiOjE1MTYyMzkwMjJ9.9lHxUZ0XmSc-5ddqEEKFt2Opx2CC-gSsRTGSCI-KcQU",
+
+      data_key: "data",
       enabled: false,
       page_number_key: null,
       page_offset_key: null,
       page_size_key: null,
       page_starts_with: null,
       pagination_type: PaginationTypeEnum.NONE,
+      query_parameters: JSON.stringify({
+        page: 1,
+        size: 3,
+      }),
       request_body: "",
       request_method: RequestMethodEnum.GET,
-      query_parameters: "",
       send_query_in: SendQueryInEnum.NONE,
       size: null,
-      status: true,
-      user_email: schoolList.user_email,
-      user_id: schoolList.user_id,
+      //delete these non-nullabes
+      school_id_key: "SOMESCHOOLID",
+      api_endpoint:
+        "https://uni-connect-services-dev.azurewebsites.net/api/v1/schools/country/32",
     },
     mode: "onBlur",
     reValidateMode: "onBlur",
@@ -146,370 +136,33 @@ function SchoolConnectivity() {
 
   const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
 
-  const DataKeyTextInput = () => (
-    <TextInput
-      id="data_key"
-      helperText="The key in the JSON response that will contain the data to be ingested"
-      invalid={!!errors.data_key}
-      labelText="Data key"
-      {...register("data_key")}
-    />
-  );
+  const errorStates = {
+    setIsResponseError,
+    setIsValidDatakey,
+    setIsValidResponse,
+    setResponsePreview,
+  };
 
-  const SchoolIdKeyTextInput = () => (
-    <TextInput
-      id="school_id_key"
-      invalid={!!errors.school_id_key}
-      labelText="School ID key"
-      {...register("school_id_key", { required: true })}
-    />
-  );
+  const gettedFormValues = {
+    apiEndpoint,
+    apiKeyName,
+    apiKeyValue,
+    authorizationType,
+    basicAuthPassword,
+    basicAuthUserName,
+    bearerAuthBearerToken,
+    dataKey,
+    queryParams,
+    requestBody,
+    requestMethod,
+  };
 
-  const RequestMethodSelect = () => (
-    <Select
-      id="request_method"
-      invalid={!!errors.request_method}
-      labelText="Request Method"
-      {...register("request_method", { required: true })}
-    >
-      {Object.keys(RequestMethodEnum).map(request_method => (
-        <SelectItem
-          key={request_method}
-          value={request_method}
-          text={request_method}
-        />
-      ))}
-    </Select>
-  );
-
-  const ApiEndpointTextInput = () => (
-    <div className="flex items-end">
-      <TextInput
-        id="api_endpoint"
-        invalid={!!errors.api_endpoint}
-        labelText="API Endpoint"
-        placeholder="https://example.com/api/ingest"
-        {...register("api_endpoint", { required: true })}
-      />
-      <div className="bottom-px">
-        <TestApiButton
-          apiEndpoint={apiEndpoint}
-          authorizationType={authorizationType}
-          apiKeyName={apiKeyName}
-          apiKeyValue={apiKeyValue}
-          basicAuthPassword={basicAuthPassword}
-          basicAuthUserName={basicAuthUserName}
-          bearerAuthBearerToken={bearerAuthBearerToken}
-          dataKey={dataKey}
-          hasError={hasError}
-          queryParams={queryParams}
-          requestBody={requestBody}
-          requestMethod={requestMethod}
-          setIsResponseError={setIsResponseError}
-          setIsValidDatakey={setIsValidDatakey}
-          setIsValidResponse={setIsValidResponse}
-          setResponsePreview={setResponsePreview}
-          handleTriggerValidation={() => trigger()}
-        />
-      </div>
-    </div>
-  );
-
-  const AuthTypeSelect = () => (
-    <Select
-      id="authorization_type"
-      invalid={!!errors.authorization_type}
-      labelText="Authentication Method"
-      {...register("authorization_type", { required: true })}
-    >
-      {Object.keys(AuthorizationTypeEnum).map(authorization_type => (
-        <SelectItem
-          key={authorization_type}
-          text={authorization_type.replace(/_/g, " ")}
-          value={authorization_type}
-        />
-      ))}
-    </Select>
-  );
-
-  const AuthApiKeyInputs = () => (
-    <>
-      <TextInput
-        id="api_auth_api_key"
-        invalid={!!errors.api_auth_api_key}
-        labelText="api response key"
-        placeholder="Input Authentication Credentials"
-        {...register("api_auth_api_key", { required: true })}
-      />
-      {/*
-      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="api_auth_api_value"
-        invalid={!!errors.api_auth_api_value}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("api_auth_api_value", { required: true })}
-      />
-    </>
-  );
-
-  const AuthBasicInputs = () => (
-    <>
-      <TextInput
-        id="basic_auth_username"
-        invalid={!!errors.basic_auth_username}
-        labelText="api response key"
-        placeholder="Input Authentication Credentials"
-        {...register("basic_auth_username", { required: true })}
-      />
-      {/*
-      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="basic_auth_password"
-        invalid={!!errors.basic_auth_password}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("basic_auth_password", { required: true })}
-      />
-    </>
-  );
-
-  const AuthBearerInputs = () => (
-    <>
-      {/*
-      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="bearer_auth_bearer_token"
-        invalid={!!errors.bearer_auth_bearer_token}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("bearer_auth_bearer_token", {
-          required: true,
-        })}
-      />
-    </>
-  );
-
-  const PaginationTypeSelect = () => (
-    <Select
-      id="pagination_type"
-      invalid={!!errors.pagination_type}
-      labelText="Pagination Method"
-      {...register("pagination_type", { required: true })}
-    >
-      {Object.keys(PaginationTypeEnum).map(pagination_type => (
-        <SelectItem
-          key={pagination_type}
-          text={pagination_type.replace(/_/g, " ")}
-          value={pagination_type}
-        />
-      ))}
-    </Select>
-  );
-
-  const PaginationLimitOffsetInputs = () => (
-    <>
-      <ControllerNumberInputSchoolConnectivity
-        control={control}
-        name="size"
-        numberInputProps={{
-          id: "size",
-          label: <span>Records per page</span>,
-          min: 0,
-        }}
-      />
-      <TextInput
-        id="page_size_key"
-        invalid={!!errors.page_size_key}
-        labelText="Page size key"
-        placeholder="Input page size key"
-        {...register("page_size_key", { required: true })}
-      />
-      <TextInput
-        id="page_offset_key"
-        invalid={!!errors.page_offset_key}
-        labelText="Page Offset key"
-        placeholder="Input Page Offset key"
-        {...register("page_offset_key", { required: true })}
-      />
-    </>
-  );
-
-  const PaginationPageNumberInputs = () => (
-    <>
-      <ControllerNumberInputSchoolConnectivity
-        control={control}
-        name="size"
-        numberInputProps={{
-          id: "size",
-          label: <span>Records per page</span>,
-          min: 0,
-        }}
-      />
-      <TextInput
-        id="page_size_key"
-        invalid={!!errors.page_size_key}
-        labelText="Page size key"
-        placeholder="Input page size key"
-        {...register("page_size_key", { required: true })}
-      />
-      <TextInput
-        id="page_number_key"
-        invalid={!!errors.page_number_key}
-        labelText="Page number key"
-        placeholder="Input page number key"
-        {...register("page_number_key", { required: true })}
-      />
-
-      <Select
-        id="page_starts_with"
-        invalid={!!errors.page_starts_with}
-        labelText="Page Starts with"
-        {...register("page_starts_with", { required: true })}
-      >
-        <SelectItem key="0" text="0" value={0} />
-        <SelectItem key="1" text="1" value={1} />
-      </Select>
-    </>
-  );
-
-  const SendQueryInSelect = () => (
-    <Select
-      id="send_query_in"
-      invalid={!!errors.send_query_in}
-      labelText="Send query in"
-      {...register("send_query_in", { required: true })}
-    >
-      {Object.keys(SendQueryInEnum).map(send_query_in => (
-        <SelectItem
-          key={send_query_in}
-          text={send_query_in.replace(/_/g, " ")}
-          value={send_query_in}
-        />
-      ))}
-    </Select>
-  );
-
-  const SendQueryInQueryParametersInputs = () => (
-    <TextArea
-      id="query_parameters"
-      invalid={
-        errors.query_parameters?.type === "required" ||
-        errors.query_parameters?.type === "validate"
-      }
-      labelText="Query parameters"
-      placeholder="Input query parameters"
-      {...register("query_parameters", {
-        required: true,
-        validate: value => {
-          if (!value) return true;
-
-          try {
-            JSON.parse(value);
-            return true;
-          } catch (e) {
-            return false;
-          }
-        },
-      })}
-    />
-  );
-
-  const SendQueryInBodyInputs = () => (
-    <TextArea
-      id="request_body"
-      invalid={
-        errors.request_body?.type === "required" ||
-        errors.request_body?.type === "validate"
-      }
-      labelText="Request body"
-      placeholder="Input request body"
-      rows={10}
-      {...register("request_body", {
-        required: true,
-        validate: value => {
-          if (!value) return true;
-
-          try {
-            JSON.parse(value);
-            return true;
-          } catch (e) {
-            return false;
-          }
-        },
-      })}
-    />
-  );
-
-  const FrequencySelect = () => (
-    <ControllerNumberInputSchoolConnectivity
-      control={control}
-      name="ingestion_frequency"
-      numberInputProps={{
-        id: "ingestion_frequency",
-        helperText: "In minutes. Min 5",
-        label: <span>Frequency</span>,
-        min: 5,
-      }}
-    />
-  );
-
-  const IngestionEnabledToggle = () => (
-    <Toggle
-      id="enabled"
-      defaultToggled={true}
-      labelText="Whether to retroactively ingest data before the start date"
-    />
-  );
-
-  const IngestionDetailsSection = () => (
-    <section className="flex flex-col gap-6">
-      <header className="text-2xl">Ingestion Details</header>
-      <SchoolIdKeyTextInput />
-    </section>
-  );
-
-  const IngestionSourceSection = () => (
-    <section className="flex flex-col gap-6">
-      <header className="text-2xl">Ingestion Source</header>
-      <DataKeyTextInput />
-      <RequestMethodSelect />
-      <ApiEndpointTextInput />
-      <AuthTypeSelect />
-      {watchAuthType === API_KEY && <AuthApiKeyInputs />}
-      {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
-      {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
-      <SendQueryInQueryParametersInputs />
-      {watchRequestMethod === POST && <SendQueryInBodyInputs />}
-    </section>
-  );
-
-  const IngestionParametersSection = () => (
-    <section className="flex flex-col gap-6">
-      <header className="text-2xl">Ingestion Parameters</header>
-
-      <PaginationTypeSelect />
-      {watchPaginationType === PAGE_NUMBER && <PaginationPageNumberInputs />}
-      {watchPaginationType === LIMIT_OFFSET && <PaginationLimitOffsetInputs />}
-      <SendQueryInSelect />
-      <FrequencySelect />
-
-      <header className="text-lg">CSV Schema</header>
-      <UploadFile
-        acceptType={{
-          "text/csv": [".csv"],
-        }}
-        description="CSV only"
-        file={file}
-        setFile={file => setFile(file)}
-      />
-
-      <IngestionEnabledToggle />
-    </section>
-  );
+  const useFormHookReturnValues = {
+    control,
+    errors,
+    register,
+    trigger,
+  };
 
   return (
     <Section className="container py-6">
@@ -521,9 +174,15 @@ function SchoolConnectivity() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex w-full space-x-10 ">
           <section className="flex w-full flex-col gap-4">
-            <IngestionDetailsSection />
-            <IngestionSourceSection />
-            <IngestionParametersSection />
+            <SchoolConnectivityFormInputs
+              errorStates={errorStates}
+              gettedFormValues={gettedFormValues}
+              hasError={hasError}
+              watchAuthType={watchAuthType}
+              watchPaginationType={watchPaginationType}
+              watchRequestMethod={watchRequestMethod}
+              useFormHookReturnValues={useFormHookReturnValues}
+            />
             <ButtonSet className="w-full">
               <Button
                 as={Link}
