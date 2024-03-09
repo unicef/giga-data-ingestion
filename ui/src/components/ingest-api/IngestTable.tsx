@@ -28,8 +28,6 @@ import { HEADERS, ITEMS_PER_PAGE } from "@/constants/ingest-api";
 import { useQosStore } from "@/context/qosStore";
 import { PagedSchoolListResponse } from "@/types/qos";
 
-import StatusIndicator from "../upload/StatusIndicator";
-
 type LoadingStates = {
   [key: string]: boolean;
 };
@@ -136,17 +134,17 @@ function IngestTable() {
         id: schoolList.id,
         name: schoolList.name,
         endpoint: schoolList.api_endpoint,
-        frequency: FREQUENCY_IN_MINUTES,
+        frequency: schoolList.school_connectivity.ingestion_frequency,
         lastRunConnectivity: lastRun,
-        status: (
-          <div className="flex">
-            <StatusIndicator
-              className="mr-1"
-              type={schoolList.status ? "success" : "error"}
-            />
-            {schoolList.status ? "Success" : "Failed"}
-          </div>
-        ),
+        // status: (
+        //   <div className="flex">
+        //     <StatusIndicator
+        //       className="mr-1"
+        //       type={schoolList.status ? "success" : "error"}
+        //     />
+        //     {schoolList.status ? "Success" : "Failed"}
+        //   </div>
+        // ),
         lastRunList: nextRun,
         active: (
           <Toggle

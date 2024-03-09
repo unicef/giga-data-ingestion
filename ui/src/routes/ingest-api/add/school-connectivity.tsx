@@ -26,10 +26,11 @@ export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
 });
 
 function SchoolConnectivity() {
-  const [responsePreview, setResponsePreview] = useState<string | string[]>("");
-  const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
+    const [isResponseError, setIsResponseError] = useState<boolean>(false);
   const [isValidDatakey, setIsValidDatakey] = useState<boolean>(false);
-  const [isResponseError, setIsResponseError] = useState<boolean>(false);
+  const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
+  const [open, setOpen] = useState<boolean>(false);
+  const [responsePreview, setResponsePreview] = useState<string | string[]>("");
 
   const {
     decrementStepIndex,
@@ -40,8 +41,6 @@ function SchoolConnectivity() {
   const { file } = useQosStore.getState();
 
   const hasUploadedFile = file != null;
-
-  const [open, setOpen] = useState<boolean>(false);
 
   const {
     control,

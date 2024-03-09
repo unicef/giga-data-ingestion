@@ -18,6 +18,7 @@ from fastapi import (
 from pydantic import Field
 from sqlalchemy import delete, desc, exc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from data_ingestion.constants import constants
 from data_ingestion.db import get_db
@@ -141,7 +142,11 @@ async def list_school_lists(
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
     ] = None,
 ):
-    base_query = select(SchoolList).order_by(desc(SchoolList.date_created))
+    base_query = (
+        select(SchoolList)
+        .options(joinedload(SchoolList.school_connectivity))
+        .order_by(desc(SchoolList.date_created))
+    )
 
     if id_search:
         base_query = base_query.where(func.starts_with(SchoolList.id, id_search))

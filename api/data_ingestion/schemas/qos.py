@@ -38,19 +38,20 @@ class ApiConfiguration(BaseModel):
     size: int | None
 
 
+class SchoolConnectivitySchema(ApiConfiguration):
+    ingestion_frequency: int
+    schema_url: str
+    school_list_id: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class SchoolListSchema(ApiConfiguration):
     column_to_schema_mapping: str
     name: str
     user_email: EmailStr
     user_id: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class SchoolConnectivitySchema(ApiConfiguration):
-    ingestion_frequency: int
-    schema_url: str
-    school_list_id: str
+    school_connectivity: SchoolConnectivitySchema
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -50,6 +50,7 @@ export interface ApiConfigurationResponse {
 }
 
 export interface SchoolListResponse extends ApiConfigurationResponse {
+  school_connectivity: SchoolConnectivityResponse;
   column_to_schema_mapping: string;
   name: string;
 }
