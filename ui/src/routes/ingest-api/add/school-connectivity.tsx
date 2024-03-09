@@ -10,12 +10,7 @@ import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
 import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs";
 import { useQosStore } from "@/context/qosStore";
-import {
-  PaginationTypeEnum,
-  SchoolConnectivityFormValues,
-  SendQueryInEnum,
-} from "@/types/qos";
-import { AuthorizationTypeEnum, RequestMethodEnum } from "@/types/qos";
+import { SchoolConnectivityFormValues } from "@/types/qos";
 
 export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
   component: SchoolConnectivity,
@@ -26,7 +21,7 @@ export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
 });
 
 function SchoolConnectivity() {
-    const [isResponseError, setIsResponseError] = useState<boolean>(false);
+  const [isResponseError, setIsResponseError] = useState<boolean>(false);
   const [isValidDatakey, setIsValidDatakey] = useState<boolean>(false);
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
   const [open, setOpen] = useState<boolean>(false);
@@ -55,31 +50,18 @@ function SchoolConnectivity() {
     defaultValues: {
       api_auth_api_key: null,
       api_auth_api_value: null,
-      authorization_type: AuthorizationTypeEnum.BEARER_TOKEN,
       basic_auth_password: null,
       basic_auth_username: null,
-      bearer_auth_bearer_token:
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImRhaWx5Y2hlY2thcHAiLCJpYXQiOjE1MTYyMzkwMjJ9.9lHxUZ0XmSc-5ddqEEKFt2Opx2CC-gSsRTGSCI-KcQU",
-
-      data_key: "data",
+      bearer_auth_bearer_token: null,
+      data_key: "",
       enabled: false,
       page_number_key: null,
       page_offset_key: null,
       page_size_key: null,
       page_starts_with: null,
-      pagination_type: PaginationTypeEnum.NONE,
-      query_parameters: JSON.stringify({
-        page: 1,
-        size: 3,
-      }),
+      query_parameters: "",
       request_body: "",
-      request_method: RequestMethodEnum.GET,
-      send_query_in: SendQueryInEnum.NONE,
       size: null,
-      //delete these non-nullabes
-      school_id_key: "SOMESCHOOLID",
-      api_endpoint:
-        "https://uni-connect-services-dev.azurewebsites.net/api/v1/schools/country/32",
     },
     mode: "onBlur",
     reValidateMode: "onBlur",

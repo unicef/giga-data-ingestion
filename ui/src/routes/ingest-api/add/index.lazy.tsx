@@ -17,13 +17,7 @@ import { api } from "@/api";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
 import { useQosStore } from "@/context/qosStore";
-import {
-  AuthorizationTypeEnum,
-  PaginationTypeEnum,
-  RequestMethodEnum,
-  SchoolListFormValues,
-  SendQueryInEnum,
-} from "@/types/qos";
+import { SchoolListFormValues } from "@/types/qos";
 
 export const Route = createFileRoute("/ingest-api/add/")({
   component: AddIngestion,
@@ -64,31 +58,19 @@ function AddIngestion() {
     mode: "onBlur",
     reValidateMode: "onBlur",
     defaultValues: {
-      // TODO: Delete non-nullables
       api_auth_api_key: null,
       api_auth_api_value: null,
-      api_endpoint:
-        "https://uni-connect-services-dev.azurewebsites.net/api/v1/schools/country/32",
-      authorization_type: AuthorizationTypeEnum.BEARER_TOKEN,
       basic_auth_password: null,
       basic_auth_username: null,
-      bearer_auth_bearer_token:
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImRhaWx5Y2hlY2thcHAiLCJpYXQiOjE1MTYyMzkwMjJ9.9lHxUZ0XmSc-5ddqEEKFt2Opx2CC-gSsRTGSCI-KcQU",
-      data_key: "data",
-      name: "someName",
+      bearer_auth_bearer_token: null,
+      data_key: "",
+      name: "",
       page_number_key: null,
       page_offset_key: null,
       page_size_key: "",
       page_starts_with: null,
-      pagination_type: PaginationTypeEnum.NONE,
-      query_parameters: JSON.stringify({
-        page: 1,
-        size: 3,
-      }),
+      query_parameters: null,
       request_body: null,
-      request_method: RequestMethodEnum.GET,
-      school_id_key: "SOMERANDOMSCHOOLID", //delete this (not nullable)
-      send_query_in: SendQueryInEnum.QUERY_PARAMETERS,
       size: null,
     },
   });
