@@ -45,7 +45,7 @@ const ConfirmAddIngestionModal = ({
 
   return (
     <Modal
-      loadingStatus={isPending ? "active" : "error"}
+      loadingStatus={isPending ? "active" : "inactive"}
       modalHeading="Create New Ingestion"
       open={open}
       primaryButtonText="Proceed"

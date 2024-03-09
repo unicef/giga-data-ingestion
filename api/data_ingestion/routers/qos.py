@@ -166,7 +166,7 @@ async def list_school_lists(
     return paged_response
 
 
-@router.get("/school_list/{id}", response_model=SchoolListSchema)
+@router.get("/school_list/{id}")
 async def get_school_list(
     response: Response,
     id: str,

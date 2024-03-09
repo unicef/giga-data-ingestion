@@ -27,7 +27,7 @@ export const Route = createFileRoute("/ingest-api/edit/$ingestionId/")({
   component: EditIngestion,
   loader: async ({ params: { ingestionId } }) => {
     const options = queryOptions({
-      queryKey: ["ingestion", ingestionId],
+      queryKey: ["school_list", ingestionId],
       queryFn: () => api.qos.get_school_list(ingestionId),
     });
 
