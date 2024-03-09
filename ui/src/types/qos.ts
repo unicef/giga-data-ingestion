@@ -57,10 +57,9 @@ export interface SchoolListResponse extends ApiConfigurationResponse {
 
 export interface PagedSchoolListResponse {
   data: SchoolListResponse[];
-  page_index: string;
-  per_page: string;
-  total_items: string;
-  total_pages: string;
+  page: number;
+  page_size: number;
+  total_count: number;
 }
 
 export interface SchoolConnectivityResponse extends ApiConfigurationResponse {

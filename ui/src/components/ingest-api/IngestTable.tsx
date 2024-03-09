@@ -228,7 +228,7 @@ function IngestTable() {
             page={currentPage}
             pageSize={pageSize}
             pageSizes={[10, 25, 50]}
-            totalItems={schoolListQuery?.data.total_items}
+            totalItems={schoolListQuery?.data.total_count}
             onChange={({
               pageSize,
               page,
