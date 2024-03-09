@@ -129,7 +129,7 @@ const TestApiButton = ({
 
         if (!isValidDatakey) {
           setIsValidDatakey(false);
-          setResponsePreview("");
+          setResponsePreview("invalid");
           return;
         }
       }

@@ -4,15 +4,7 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import {
-  Button,
-  ButtonSet,
-  Section,
-  SelectItem,
-  Tag,
-  TextArea,
-  TextInput,
-} from "@carbon/react";
+import { Button, ButtonSet, Section, Tag } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Link,
@@ -22,9 +14,8 @@ import {
 } from "@tanstack/react-router";
 
 import { api } from "@/api";
-import { Select } from "@/components/forms/Select";
-import TestApiButton from "@/components/ingest-api/TestApiButton";
-import ControllerNumberInputSchoolList from "@/components/upload/ControllerNumberInputSchoolList";
+import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
+import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
 import { useQosStore } from "@/context/qosStore";
 import {
   AuthorizationTypeEnum,
@@ -37,10 +28,6 @@ import {
 export const Route = createFileRoute("/ingest-api/add/")({
   component: AddIngestion,
 });
-
-const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
-const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
-const { POST } = RequestMethodEnum;
 
 function AddIngestion() {
   const [responsePreview, setResponsePreview] = useState<string | string[]>("");
@@ -65,28 +52,32 @@ function AddIngestion() {
     mode: "onBlur",
     reValidateMode: "onBlur",
     defaultValues: {
-      name: "someName", // remove this after dev
-      request_method: RequestMethodEnum.GET,
-      // authorization_type: AuthorizationTypeEnum.NONE,
-      authorization_type: AuthorizationTypeEnum.BEARER_TOKEN, // remove this after dev
-
-      pagination_type: PaginationTypeEnum.NONE,
-      send_query_in: SendQueryInEnum.QUERY_PARAMETERS,
+      // TODO: Delete non-nullables
+      api_auth_api_key: null,
+      api_auth_api_value: null,
       api_endpoint:
-        "https://uni-connect-services-dev.azurewebsites.net/api/v1/schools/country/32", // remove this after dev
+        "https://uni-connect-services-dev.azurewebsites.net/api/v1/schools/country/32",
+      authorization_type: AuthorizationTypeEnum.BEARER_TOKEN,
+      basic_auth_password: null,
+      basic_auth_username: null,
+      bearer_auth_bearer_token:
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImRhaWx5Y2hlY2thcHAiLCJpYXQiOjE1MTYyMzkwMjJ9.9lHxUZ0XmSc-5ddqEEKFt2Opx2CC-gSsRTGSCI-KcQU",
+      data_key: "data",
+      name: "someName",
       page_number_key: null,
       page_offset_key: null,
       page_size_key: "",
       page_starts_with: null,
-      api_auth_api_key: null,
-      api_auth_api_value: null,
-      basic_auth_username: null,
-      basic_auth_password: null,
-      bearer_auth_bearer_token:
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6ImRhaWx5Y2hlY2thcHAiLCJpYXQiOjE1MTYyMzkwMjJ9.9lHxUZ0XmSc-5ddqEEKFt2Opx2CC-gSsRTGSCI-KcQU",
-      size: null,
-      query_parameters: null,
+      pagination_type: PaginationTypeEnum.NONE,
+      query_parameters: JSON.stringify({
+        page: 1,
+        size: 3,
+      }),
       request_body: null,
+      request_method: RequestMethodEnum.GET,
+      school_id_key: "SOMERANDOMSCHOOLID", //delete this (not nullable)
+      send_query_in: SendQueryInEnum.QUERY_PARAMETERS,
+      size: null,
     },
   });
 
@@ -96,17 +87,17 @@ function AddIngestion() {
   const watchRequestMethod = watch("request_method");
 
   const hasError = Object.keys(errors).length > 0;
+  const apiEndpoint = getValues("api_endpoint");
+  const apiKeyName = getValues("api_auth_api_key");
+  const apiKeyValue = getValues("api_auth_api_value");
   const authorizationType = getValues("authorization_type");
+  const basicAuthPassword = getValues("basic_auth_password");
+  const basicAuthUserName = getValues("basic_auth_username");
+  const bearerAuthBearerToken = getValues("bearer_auth_bearer_token");
+  const dataKey = getValues("data_key");
   const queryParams = getValues("query_parameters");
   const requestBody = getValues("request_body");
   const requestMethod = getValues("request_method");
-  const dataKey = getValues("data_key");
-  const apiKeyName = getValues("api_auth_api_key");
-  const apiKeyValue = getValues("api_auth_api_value");
-  const basicAuthUserName = getValues("basic_auth_username");
-  const basicAuthPassword = getValues("basic_auth_password");
-  const apiEndpoint = getValues("api_endpoint");
-  const bearerAuthBearerToken = getValues("bearer_auth_bearer_token");
 
   useEffect(() => {
     resetField("api_auth_api_key");
@@ -137,6 +128,7 @@ function AddIngestion() {
     data: usersQuery,
     isRefetching: isUsersRefetching,
     isFetching: isUsersFetching,
+    isLoading: isUsersLoading,
   } = useQuery({
     queryKey: ["users"],
     queryFn: api.users.list,
@@ -160,371 +152,40 @@ function AddIngestion() {
 
   const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
 
-  const NameTextInput = () => (
-    <TextInput
-      id="name"
-      invalid={!!errors.name}
-      labelText="Name"
-      placeholder="How would you like to indentify your ingestion?"
-      {...register("name", { required: true })}
-    />
-  );
-
-  const DataKeyTextInput = () => (
-    <TextInput
-      id="data_key"
-      helperText="The key in the JSON response that will contain the data to be ingested"
-      invalid={!!errors.data_key}
-      labelText="Data key"
-      {...register("data_key")}
-    />
-  );
-
-  const SchoolIdKeyTextInput = () => (
-    <TextInput
-      id="school_id_key"
-      invalid={!!errors.school_id_key}
-      labelText="School ID key"
-      {...register("school_id_key", { required: true })}
-    />
-  );
-
-  const UserSelect = () => (
-    <Select
-      //key ref
-
-      id="user_id"
-      disabled={isUsersRefetching || isUsersFetching}
-      helperText="Who will be the designated point person responsible for this ingestion?"
-      invalid={!!errors.user_id}
-      labelText="Owner"
-      {...register("user_id", { required: true })}
-    >
-      <SelectItem value="" text="" />
-      {users.map(user => (
-        <SelectItem
-          key={user.id}
-          text={user.display_name ?? ""}
-          value={user.id}
-        />
-      ))}
-    </Select>
-  );
-
-  const RequestMethodSelect = () => (
-    <Select
-      id="request_method"
-      invalid={!!errors.request_method}
-      labelText="Request Method"
-      {...register("request_method", { required: true })}
-    >
-      {Object.keys(RequestMethodEnum).map(request_method => (
-        <SelectItem
-          key={request_method}
-          value={request_method}
-          text={request_method}
-        />
-      ))}
-    </Select>
-  );
-
-  const ApiEndpointTextinput = () => {
-    return (
-      <div className="flex items-end">
-        <TextInput
-          id="api_endpoint"
-          invalid={!!errors.api_endpoint}
-          labelText="API Endpoint"
-          placeholder="https://example.com/api/ingest"
-          {...register("api_endpoint", { required: true })}
-        />
-        <div className="bottom-px">
-          <TestApiButton
-            apiEndpoint={apiEndpoint}
-            authorizationType={authorizationType}
-            apiKeyName={apiKeyName}
-            apiKeyValue={apiKeyValue}
-            basicAuthPassword={basicAuthPassword}
-            basicAuthUserName={basicAuthUserName}
-            bearerAuthBearerToken={bearerAuthBearerToken}
-            dataKey={dataKey}
-            hasError={hasError}
-            queryParams={queryParams}
-            requestBody={requestBody}
-            requestMethod={requestMethod}
-            setIsResponseError={setIsResponseError}
-            setIsValidDatakey={setIsValidDatakey}
-            setIsValidResponse={setIsValidResponse}
-            setResponsePreview={setResponsePreview}
-            handleTriggerValidation={() => trigger()}
-          />
-        </div>
-      </div>
-    );
+  const errorStates = {
+    setIsResponseError,
+    setIsValidDatakey,
+    setIsValidResponse,
+    setResponsePreview,
   };
-  const AuthTypeSelect = () => (
-    <Select
-      id="authorization_type"
-      invalid={!!errors.authorization_type}
-      labelText="Authentication Method"
-      {...register("authorization_type", { required: true })}
-    >
-      {Object.keys(AuthorizationTypeEnum).map(authorization_type => (
-        <SelectItem
-          key={authorization_type}
-          text={authorization_type.replace(/_/g, " ")}
-          value={authorization_type}
-        />
-      ))}
-    </Select>
-  );
 
-  const AuthApiKeyInputs = () => (
-    <>
-      <TextInput
-        id="api_auth_api_key"
-        invalid={!!errors.api_auth_api_key}
-        labelText="api response key"
-        placeholder="Input Authentication Credentials"
-        {...register("api_auth_api_key", { required: true })}
-      />
-      {/*
-      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="api_auth_api_value"
-        invalid={!!errors.api_auth_api_value}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("api_auth_api_value", { required: true })}
-      />
-    </>
-  );
+  const fetchingStates = {
+    isUsersFetching,
+    isUsersRefetching,
+  };
 
-  const AuthBasicInputs = () => (
-    <>
-      <TextInput
-        id="basic_auth_username"
-        invalid={!!errors.basic_auth_username}
-        labelText="api response key"
-        placeholder="Input Authentication Credentials"
-        {...register("basic_auth_username", { required: true })}
-      />
-      {/*
-                  //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="basic_auth_password"
-        invalid={!!errors.basic_auth_password}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("basic_auth_password", { required: true })}
-      />
-    </>
-  );
-  const AuthBearerInputs = () => (
-    <>
-      {/*
-      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="bearer_auth_bearer_token"
-        invalid={!!errors.bearer_auth_bearer_token}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("bearer_auth_bearer_token", {
-          required: true,
-        })}
-      />
-    </>
-  );
+  const gettedFormValues = {
+    apiEndpoint,
+    apiKeyName,
+    apiKeyValue,
+    authorizationType,
+    basicAuthPassword,
+    basicAuthUserName,
+    bearerAuthBearerToken,
+    dataKey,
+    queryParams,
+    requestBody,
+    requestMethod,
+  };
 
-  const PaginationTypeSelect = () => (
-    <Select
-      id="pagination_type"
-      invalid={!!errors.pagination_type}
-      labelText="Pagination Method"
-      {...register("pagination_type", { required: true })}
-    >
-      {Object.keys(PaginationTypeEnum).map(pagination_type => (
-        <SelectItem
-          key={pagination_type}
-          text={pagination_type.replace(/_/g, " ")}
-          value={pagination_type}
-        />
-      ))}
-    </Select>
-  );
+  const useFormHookReturnValues = {
+    control,
+    errors,
+    register,
+    trigger,
+  };
 
-  const PaginationLimitOffsetInputs = () => (
-    <>
-      <ControllerNumberInputSchoolList
-        control={control}
-        name="size"
-        numberInputProps={{
-          id: "size",
-          label: <span>Records per page</span>,
-          min: 0,
-        }}
-      />
-      <TextInput
-        id="page_size_key"
-        invalid={!!errors.page_size_key}
-        labelText="Page size key"
-        placeholder="Input page size key"
-        {...register("page_size_key", { required: true })}
-      />
-      <TextInput
-        id="page_offset_key"
-        invalid={!!errors.page_offset_key}
-        labelText="Page Offset key"
-        placeholder="Input Page Offset key"
-        {...register("page_offset_key", { required: true })}
-      />
-    </>
-  );
-
-  const PaginationPageNumberInputs = () => (
-    <>
-      <ControllerNumberInputSchoolList
-        control={control}
-        name="size"
-        numberInputProps={{
-          id: "size",
-          label: <span>Records per page</span>,
-          min: 0,
-        }}
-      />
-      <TextInput
-        id="page_size_key"
-        invalid={!!errors.page_size_key}
-        labelText="Page size key"
-        placeholder="Input page size key"
-        {...register("page_size_key", { required: true })}
-      />
-      <TextInput
-        id="page_number_key"
-        invalid={!!errors.page_number_key}
-        labelText="Page number key"
-        placeholder="Input page number key"
-        {...register("page_number_key", { required: true })}
-      />
-
-      <Select
-        id="page_starts_with"
-        invalid={!!errors.page_starts_with}
-        labelText="Page Starts with"
-        {...register("page_starts_with", { required: true })}
-      >
-        <SelectItem key="0" text="0" value={0} />
-        <SelectItem key="1" text="1" value={1} />
-      </Select>
-    </>
-  );
-
-  const SendQueryInSelect = () => (
-    <Select
-      id="send_query_in"
-      invalid={!!errors.send_query_in}
-      labelText="Send query in"
-      {...register("send_query_in", { required: true })}
-    >
-      {Object.keys(SendQueryInEnum).map(send_query_in => (
-        <SelectItem
-          key={send_query_in}
-          text={send_query_in.replace(/_/g, " ")}
-          value={send_query_in}
-        />
-      ))}
-    </Select>
-  );
-
-  const SendQueryInQueryParametersInputs = () => (
-    <TextArea
-      id="query_parameters"
-      invalid={
-        errors.query_parameters?.type === "required" ||
-        errors.query_parameters?.type === "validate"
-      }
-      labelText="Query parameters"
-      placeholder="Input query parameters"
-      {...register("query_parameters", {
-        required: true,
-        validate: value => {
-          if (!value) return true;
-
-          try {
-            JSON.parse(value);
-            return true;
-          } catch (e) {
-            return false;
-          }
-        },
-      })}
-    />
-  );
-
-  const SendQueryInBodyInputs = () => (
-    <TextArea
-      id="request_body"
-      invalid={
-        errors.request_body?.type === "required" ||
-        errors.request_body?.type === "validate"
-      }
-      labelText="Request body"
-      placeholder="Input request body"
-      rows={10}
-      {...register("request_body", {
-        required: true,
-        validate: value => {
-          if (!value) return true;
-
-          try {
-            JSON.parse(value);
-            return true;
-          } catch (e) {
-            return false;
-          }
-        },
-      })}
-    />
-  );
-
-  const IngestionDetailsSection = () => (
-    <section className="flex flex-col gap-6">
-      <header className="text-2xl">Ingestion Details</header>
-      <NameTextInput />
-      <UserSelect />
-      <SchoolIdKeyTextInput />
-    </section>
-  );
-
-  const IngestionSourceSection = () => (
-    <section className="flex flex-col gap-6">
-      <header className="text-2xl">Ingestion Source</header>
-      <DataKeyTextInput />
-      <RequestMethodSelect />
-      <ApiEndpointTextinput />
-      <AuthTypeSelect />
-      {watchAuthType === API_KEY && <AuthApiKeyInputs />}
-      {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
-      {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
-      <SendQueryInQueryParametersInputs />
-      {watchRequestMethod === POST && <SendQueryInBodyInputs />}
-    </section>
-  );
-
-  const IngestionParametersSection = () => (
-    <section className="flex flex-col gap-6">
-      <header className="text-2xl">Ingestion Parameters</header>
-      <PaginationTypeSelect />
-      {watchPaginationType === PAGE_NUMBER && <PaginationPageNumberInputs />}
-      {watchPaginationType === LIMIT_OFFSET && <PaginationLimitOffsetInputs />}
-      <SendQueryInSelect />
-    </section>
-  );
-
-  // if (isUsersLoading) return <IngestFormSkeleton />;
+  if (isUsersLoading) return <IngestFormSkeleton />;
 
   return (
     <Section className="container py-6">
@@ -537,9 +198,17 @@ function AddIngestion() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex w-full space-x-10 ">
           <section className="flex w-full flex-col gap-4">
-            <IngestionDetailsSection />
-            <IngestionSourceSection />
-            <IngestionParametersSection />
+            <SchoolListFormInputs
+              errorStates={errorStates}
+              fetchingStates={fetchingStates}
+              gettedFormValues={gettedFormValues}
+              hasError={hasError}
+              users={users}
+              watchAuthType={watchAuthType}
+              watchPaginationType={watchPaginationType}
+              watchRequestMethod={watchRequestMethod}
+              useFormHookReturnValues={useFormHookReturnValues}
+            />
             <ButtonSet className="w-full">
               <Button
                 as={Link}

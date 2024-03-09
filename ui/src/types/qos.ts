@@ -91,7 +91,7 @@ export interface ApiIngestionFormValues {
   page_offset_key: string | null;
   page_size_key: string | null;
   page_starts_with: number | null;
-  pagination_type: PaginationTypeEnum | null;
+  pagination_type: PaginationTypeEnum;
   query_parameters: string | null;
   request_body: string | null;
   request_method: RequestMethodEnum;
