@@ -40,6 +40,18 @@ function AddIngestion() {
   const navigate = useNavigate({ from: Route.fullPath });
 
   const {
+    data: usersQuery,
+    isRefetching: isUsersRefetching,
+    isFetching: isUsersFetching,
+    isLoading: isUsersLoading,
+  } = useQuery({
+    queryKey: ["users"],
+    queryFn: api.users.list,
+  });
+
+  const users = usersQuery?.data ?? [];
+
+  const {
     control,
     formState,
     getValues,
@@ -123,18 +135,6 @@ function AddIngestion() {
     resetField("query_parameters");
     resetField("request_body");
   }, [watchRequestMethod, resetField]);
-
-  const {
-    data: usersQuery,
-    isRefetching: isUsersRefetching,
-    isFetching: isUsersFetching,
-    isLoading: isUsersLoading,
-  } = useQuery({
-    queryKey: ["users"],
-    queryFn: api.users.list,
-  });
-
-  const users = usersQuery?.data ?? [];
 
   const onSubmit: SubmitHandler<SchoolListFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
