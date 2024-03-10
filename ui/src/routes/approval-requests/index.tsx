@@ -2,7 +2,7 @@ import { ReactElement, useMemo } from "react";
 
 import { Button, DataTableHeader, Heading, Section } from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 
 import { api, queryClient } from "@/api";
@@ -17,7 +17,7 @@ const listQueryOptions = queryOptions({
 
 export const Route = createFileRoute("/approval-requests/")({
   component: ApprovalRequests,
-  loader: async () => {
+  loader: () => {
     return queryClient.ensureQueryData(listQueryOptions);
   },
 });
@@ -69,7 +69,15 @@ function ApprovalRequests() {
         ...request,
         id: `${request.country} (${request.country_iso3})`,
         actions: (
-          <Button kind="ghost" size="sm">
+          <Button
+            kind="ghost"
+            size="sm"
+            as={Link}
+            to="./$subpath"
+            params={{
+              subpath: encodeURIComponent(request.subpath),
+            }}
+          >
             Approve Rows
           </Button>
         ),

@@ -16,6 +16,7 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as CheckFileUploadsImport } from './routes/check-file-uploads'
 import { Route as IndexImport } from './routes/index'
 import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
+import { Route as ApprovalRequestsSubpathIndexImport } from './routes/approval-requests/$subpath/index'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
 import { Route as UserManagementUserRevokeUserIdImport } from './routes/user-management/user/revoke.$userId'
@@ -120,6 +121,12 @@ const CheckFileUploadsUploadIdIndexLazyRoute =
     ),
   )
 
+const ApprovalRequestsSubpathIndexRoute =
+  ApprovalRequestsSubpathIndexImport.update({
+    path: '/$subpath/',
+    getParentRoute: () => ApprovalRequestsLazyRoute,
+  } as any)
+
 const UserManagementUserAddRoute = UserManagementUserAddImport.update({
   path: '/user/add',
   getParentRoute: () => UserManagementLazyRoute,
@@ -223,6 +230,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserManagementUserAddImport
       parentRoute: typeof UserManagementLazyImport
     }
+    '/approval-requests/$subpath/': {
+      preLoaderRoute: typeof ApprovalRequestsSubpathIndexImport
+      parentRoute: typeof ApprovalRequestsLazyImport
+    }
     '/check-file-uploads/$uploadId/': {
       preLoaderRoute: typeof CheckFileUploadsUploadIdIndexLazyImport
       parentRoute: typeof CheckFileUploadsImport
@@ -266,7 +277,10 @@ export const routeTree = rootRoute.addChildren([
     CheckFileUploadsIndexLazyRoute,
     CheckFileUploadsUploadIdIndexLazyRoute,
   ]),
-  ApprovalRequestsLazyRoute.addChildren([ApprovalRequestsIndexRoute]),
+  ApprovalRequestsLazyRoute.addChildren([
+    ApprovalRequestsIndexRoute,
+    ApprovalRequestsSubpathIndexRoute,
+  ]),
   IngestApiLazyRoute.addChildren([IngestApiIndexLazyRoute]),
   UploadLazyRoute.addChildren([
     UploadIndexLazyRoute,
