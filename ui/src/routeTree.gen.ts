@@ -15,6 +15,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Route as rootRoute } from './routes/__root'
 import { Route as CheckFileUploadsImport } from './routes/check-file-uploads'
 import { Route as IndexImport } from './routes/index'
+import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
 import { Route as UserManagementUserRevokeUserIdImport } from './routes/user-management/user/revoke.$userId'
@@ -34,7 +35,6 @@ const IngestApiIndexLazyImport = createFileRoute('/ingest-api/')()
 const CheckFileUploadsIndexLazyImport = createFileRoute(
   '/check-file-uploads/',
 )()
-const ApprovalRequestsIndexLazyImport = createFileRoute('/approval-requests/')()
 const UploadUploadIdIndexLazyImport = createFileRoute('/upload/$uploadId/')()
 const CheckFileUploadsUploadIdIndexLazyImport = createFileRoute(
   '/check-file-uploads/$uploadId/',
@@ -98,12 +98,10 @@ const CheckFileUploadsIndexLazyRoute = CheckFileUploadsIndexLazyImport.update({
   import('./routes/check-file-uploads/index.lazy').then((d) => d.Route),
 )
 
-const ApprovalRequestsIndexLazyRoute = ApprovalRequestsIndexLazyImport.update({
+const ApprovalRequestsIndexRoute = ApprovalRequestsIndexImport.update({
   path: '/',
   getParentRoute: () => ApprovalRequestsLazyRoute,
-} as any).lazy(() =>
-  import('./routes/approval-requests/index.lazy').then((d) => d.Route),
-)
+} as any)
 
 const UploadUploadIdIndexLazyRoute = UploadUploadIdIndexLazyImport.update({
   path: '/$uploadId/',
@@ -202,7 +200,7 @@ declare module '@tanstack/react-router' {
       parentRoute: typeof rootRoute
     }
     '/approval-requests/': {
-      preLoaderRoute: typeof ApprovalRequestsIndexLazyImport
+      preLoaderRoute: typeof ApprovalRequestsIndexImport
       parentRoute: typeof ApprovalRequestsLazyImport
     }
     '/check-file-uploads/': {
@@ -268,7 +266,7 @@ export const routeTree = rootRoute.addChildren([
     CheckFileUploadsIndexLazyRoute,
     CheckFileUploadsUploadIdIndexLazyRoute,
   ]),
-  ApprovalRequestsLazyRoute.addChildren([ApprovalRequestsIndexLazyRoute]),
+  ApprovalRequestsLazyRoute.addChildren([ApprovalRequestsIndexRoute]),
   IngestApiLazyRoute.addChildren([IngestApiIndexLazyRoute]),
   UploadLazyRoute.addChildren([
     UploadIndexLazyRoute,

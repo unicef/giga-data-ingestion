@@ -20,7 +20,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[ApprovalRequestListing])
+@router.get("", response_model=list[ApprovalRequestListing])
 async def list_approval_requests():
     body: list[ApprovalRequestListing] = []
 

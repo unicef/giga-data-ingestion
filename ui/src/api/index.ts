@@ -12,6 +12,7 @@ import axios, {
 import useGetToken from "@/hooks/useGetToken.ts";
 import { useStore } from "@/store.ts";
 
+import approvalRequestsRouter from "./routers/approvalRequests.ts";
 import rolesRouter from "./routers/groups.ts";
 import uploadsRouter from "./routers/uploads.ts";
 import usersRouter from "./routers/users.ts";
@@ -27,6 +28,7 @@ export const api = {
   users: usersRouter(axi),
   groups: rolesRouter(axi),
   uploads: uploadsRouter(axi),
+  approvalRequests: approvalRequestsRouter(axi),
 };
 
 export function useApi() {
