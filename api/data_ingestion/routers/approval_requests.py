@@ -1,20 +1,22 @@
+import urllib.parse
 from io import BytesIO
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from country_converter import country_converter as coco
-from fastapi import APIRouter, Security
+from fastapi import APIRouter, HTTPException, status
 
+from azure.core.exceptions import ResourceNotFoundError
 from azure.storage.blob import BlobProperties
 from data_ingestion.constants import constants
-from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.schemas.approval_requests import ApprovalRequestListing
 
 router = APIRouter(
     prefix="/api/approval-requests",
     tags=["approval-requests"],
-    dependencies=[Security(azure_scheme)],
+    # dependencies=[Security(azure_scheme)],
 )
 
 
@@ -38,6 +40,9 @@ async def list_approval_requests():
                     country=coco.convert(country_iso3, to="name_short"),
                     country_iso3=country_iso3,
                     dataset=path.parent.name.replace("-", " ").title(),
+                    subpath=blob.name.replace(
+                        f"{constants.APPROVAL_REQUESTS_PATH_PREFIX}/", ""
+                    ),
                     last_modified=blob.last_modified,
                     rows_added=df[df["_change_type"] == "insert"].count(),
                     rows_updated=df[df["_change_type"] == "update_preimage"].count(),
@@ -46,3 +51,39 @@ async def list_approval_requests():
             )
 
     return body
+
+
+@router.get("/{subpath}")
+async def get_approval_request(subpath: str):
+    subpath = urllib.parse.unquote(subpath)
+    try:
+        blob = storage_client.download_blob(
+            f"{constants.APPROVAL_REQUESTS_PATH_PREFIX}/{subpath}"
+        )
+    except ResourceNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+
+    with BytesIO() as buffer:
+        blob.readinto(buffer)
+        buffer.seek(0)
+        df = (
+            pd.read_csv(buffer, dtype="string").fillna(np.nan).replace([np.nan], [None])
+        )
+        updates = df[
+            (df["_change_type"] == "update_preimage")
+            | (df["_change_type"] == "update_postimage")
+        ]
+        for i, row in updates.iterrows():
+            if i % 2 != 0:
+                continue
+
+            for col in updates.columns:
+                if col == "_change_type":
+                    continue
+
+                if (old := getattr(row, col)) != (update := updates.at[i + 1, col]):
+                    df.at[i, col] = f"~~{old}~~ {update}"
+
+        df = df[df["_change_type"] != "update_postimage"]
+
+    return df.to_dict(orient="records")
