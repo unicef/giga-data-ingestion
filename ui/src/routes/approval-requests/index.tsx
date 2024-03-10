@@ -1,24 +1,12 @@
 import { ReactElement, useMemo } from "react";
 
-import {
-  Button,
-  DataTable,
-  DataTableHeader,
-  Heading,
-  Section,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@carbon/react";
+import { Button, DataTableHeader, Heading, Section } from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 
 import { api, queryClient } from "@/api";
+import DataTable from "@/components/common/DataTable.tsx";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { ApprovalRequestListing } from "@/types/approvalRequests.ts";
 
@@ -99,33 +87,7 @@ function ApprovalRequests() {
         <Heading>Approval Requests</Heading>
       </Section>
 
-      <DataTable headers={columns} rows={formattedApprovalRequests}>
-        {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
-          <TableContainer>
-            <Table {...getTableProps()}>
-              <TableHead>
-                <TableRow>
-                  {headers.map(header => (
-                    // @ts-expect-error onclick bad type https://github.com/carbon-design-system/carbon/issues/14831
-                    <TableHeader colSpan={1} {...getHeaderProps({ header })}>
-                      {header.header}
-                    </TableHeader>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.map(row => (
-                  <TableRow {...getRowProps({ row })}>
-                    {row.cells.map(cell => (
-                      <TableCell key={cell.id}>{cell.value}</TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </DataTable>
+      <DataTable columns={columns} rows={formattedApprovalRequests} />
     </Section>
   );
 }
