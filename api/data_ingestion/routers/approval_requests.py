@@ -5,11 +5,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from country_converter import country_converter as coco
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from azure.core.exceptions import ResourceNotFoundError
 from azure.storage.blob import BlobProperties
 from data_ingestion.constants import constants
+from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.schemas.approval_requests import ApprovalRequestListing
 
@@ -21,13 +22,24 @@ router = APIRouter(
 
 
 @router.get("", response_model=list[ApprovalRequestListing])
-async def list_approval_requests():
-    body: list[ApprovalRequestListing] = []
+async def list_approval_requests(user=Depends(azure_scheme)):
+    groups = [g.lower() for g in user.groups]
 
+    body: list[ApprovalRequestListing] = []
     for blob in storage_client.list_blobs(constants.APPROVAL_REQUESTS_PATH_PREFIX):
         blob: BlobProperties
         path = Path(blob.name)
-        if path.suffix == ".csv" and len(country_iso3 := path.name.split("_")[0]) == 3:
+        country_iso3 = path.name.split("_")[0]
+        if len(country_iso3) != 3:
+            continue
+
+        country = coco.convert(country_iso3, to="name_short")
+        dataset = path.parent.name.replace("-", " ").title()
+        country_dataset = f"{country}-{dataset}".lower()
+
+        if path.suffix == ".csv" and (
+            "admin" in groups or "super" in groups or country_dataset in groups
+        ):
             with BytesIO() as buffer:
                 storage_client.download_blob(blob.name).readinto(buffer)
                 buffer.seek(0)
@@ -37,13 +49,14 @@ async def list_approval_requests():
 
             body.append(
                 ApprovalRequestListing(
-                    country=coco.convert(country_iso3, to="name_short"),
+                    country=country,
                     country_iso3=country_iso3,
-                    dataset=path.parent.name.replace("-", " ").title(),
+                    dataset=dataset,
                     subpath=blob.name.replace(
                         f"{constants.APPROVAL_REQUESTS_PATH_PREFIX}/", ""
                     ),
                     last_modified=blob.last_modified,
+                    rows_count=df[df["_change_type"] != "update_postimage"].count(),
                     rows_added=df[df["_change_type"] == "insert"].count(),
                     rows_updated=df[df["_change_type"] == "update_preimage"].count(),
                     rows_deleted=df[df["_change_type"] == "delete"].count(),
@@ -54,8 +67,18 @@ async def list_approval_requests():
 
 
 @router.get("/{subpath}")
-async def get_approval_request(subpath: str):
+async def get_approval_request(subpath: str, user=Depends(azure_scheme)):
+    groups = [g.lower() for g in user.groups]
     subpath = urllib.parse.unquote(subpath)
+    subpath = Path(subpath)
+    dataset = subpath.parent.name.replace("-", " ")
+    country_iso3 = subpath.name.split("_")[0]
+    country = coco.convert(country_iso3, to="name_short")
+    country_dataset = f"{country}-{dataset}".lower()
+
+    if not ("admin" in groups or "super" in groups or country_dataset in groups):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
     try:
         blob = storage_client.download_blob(
             f"{constants.APPROVAL_REQUESTS_PATH_PREFIX}/{subpath}"

@@ -7,6 +7,7 @@ class ApprovalRequestListing(BaseModel):
     dataset: str
     subpath: str
     last_modified: AwareDatetime
+    rows_count: int
     rows_added: int
     rows_updated: int
     rows_deleted: int

@@ -227,9 +227,11 @@ async def list_uploads(
     ] = None,
 ):
     # TODO: Proper filtering w/ RBAC
-    base_query = select(FileUpload).order_by(desc(FileUpload.created))
+    base_query = select(FileUpload)
     if id_search:
-        base_query = base_query.where(func.starts_with(FileUpload.id, id_search))
+        base_query = base_query.where(
+            func.starts_with(FileUpload.id, id_search)
+        ).order_by(desc(FileUpload.created))
 
     count_query = select(func.count()).select_from(base_query.subquery())
     total = await db.scalar(count_query)

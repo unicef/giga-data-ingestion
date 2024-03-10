@@ -48,6 +48,18 @@ const columns: DataTableHeader[] = [
     header: "Last Modified",
   },
   {
+    key: "rows_count",
+    header: "Row Count",
+  },
+  {
+    key: "rows_added",
+    header: "Rows Added",
+  },
+  {
+    key: "rows_updated",
+    header: "Rows Updated",
+  },
+  {
     key: "actions",
     header: "",
   },

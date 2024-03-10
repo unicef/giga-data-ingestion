@@ -4,6 +4,7 @@ export interface ApprovalRequestListing {
   dataset: string;
   subpath: string;
   last_modified: string;
+  rows_count: number;
   rows_added: number;
   rows_updated: number;
   rows_deleted: number;
