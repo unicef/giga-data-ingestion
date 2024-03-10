@@ -11,6 +11,7 @@ from data_ingestion.settings import settings
 class Constants(BaseSettings):
     UPLOAD_FILE_SIZE_LIMIT_MB: int | float = 10
     UPLOAD_PATH_PREFIX: str = "raw/uploads"
+    APPROVAL_REQUESTS_PATH_PREFIX: str = "raw/approval_requests"
 
     @computed_field
     @property
