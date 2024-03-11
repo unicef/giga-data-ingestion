@@ -1,31 +1,42 @@
-import axios, { AxiosResponse } from "axios";
+import axios, { AxiosResponse, Method } from "axios";
 
 export default function route() {
   const axi = axios.create();
 
   return {
-    apiKeyAuthGetRequest: async (params: {
+    apiKeyAuthRequest: async (params: {
+      method: Method;
       apiKeyName: string;
       apiKeyValue: string;
       queryParams: Record<string, unknown>;
+      requestBody?: Record<string, unknown>;
       url: string;
     }): Promise<AxiosResponse> => {
-      const { apiKeyName, apiKeyValue, queryParams, url } = params;
-
-      return await axi.get(url, {
+      const { apiKeyName, apiKeyValue, method, queryParams, requestBody, url } =
+        params;
+      return await axi({
+        method: method,
+        data: requestBody,
+        url: url,
         params: queryParams,
         headers: { [apiKeyName]: apiKeyValue },
       });
     },
-    basicAuthGetRequest: async (params: {
+    basicAuthRequest: async (params: {
+      method: Method;
       username: string;
       password: string;
       queryParams: Record<string, unknown>;
+      requestBody?: Record<string, unknown>;
       url: string;
     }): Promise<AxiosResponse> => {
-      const { username, password, queryParams, url } = params;
+      const { username, password, method, queryParams, requestBody, url } =
+        params;
 
-      return await axi.get(url, {
+      return await axi({
+        method: method,
+        data: requestBody,
+        url: url,
         params: queryParams,
         auth: {
           username: username,
@@ -33,90 +44,37 @@ export default function route() {
         },
       });
     },
-    bearerGetRequest: async (params: {
+    bearerRequest: async (params: {
+      method: Method;
       bearerToken: string;
       queryParams: Record<string, unknown>;
+      requestBody?: Record<string, unknown>;
       url: string;
     }): Promise<AxiosResponse> => {
-      const { bearerToken, queryParams, url } = params;
+      const { bearerToken, method, queryParams, requestBody, url } = params;
 
-      return await axi.get(url, {
+      return await axi({
+        method: method,
+        data: requestBody,
         params: queryParams,
+        url: url,
         headers: { Authorization: `Bearer ${bearerToken}` },
       });
     },
 
-    noneAuthGetRequest: async (params: {
+    noAuthRequest: async (params: {
+      method: Method;
       queryParams: Record<string, unknown>;
+      requestBody?: Record<string, unknown>;
       url: string;
     }): Promise<AxiosResponse> => {
-      const { queryParams, url } = params;
+      const { method, queryParams, requestBody, url } = params;
 
-      return await axi.get(url, {
+      return await axi({
+        method: method,
+        data: requestBody,
+        url: url,
         params: queryParams,
-      });
-    },
-
-    apiKeyPostRequest: async (params: {
-      apiKeyName: string;
-      apiKeyValue: string;
-      queryParams: Record<string, unknown>;
-      requestBody: Record<string, unknown>;
-      url: string;
-    }): Promise<AxiosResponse> => {
-      const { apiKeyName, apiKeyValue, queryParams, url, requestBody } = params;
-
-      return await axi.post(url, requestBody, {
-        params: queryParams,
-        withCredentials: false,
-        headers: { [apiKeyName]: apiKeyValue },
-      });
-    },
-
-    basicPostRequest: async (params: {
-      username: string;
-      password: string;
-      queryParams: Record<string, unknown>;
-      requestBody: Record<string, unknown>;
-      url: string;
-    }): Promise<AxiosResponse> => {
-      const { username, password, queryParams, url, requestBody } = params;
-
-      return await axi.post(url, requestBody, {
-        params: queryParams,
-        withCredentials: false,
-        auth: {
-          username: username,
-          password: password,
-        },
-      });
-    },
-
-    bearerPostRequest: async (params: {
-      bearerToken: string;
-      queryParams: Record<string, unknown>;
-      requestBody: Record<string, unknown>;
-      url: string;
-    }): Promise<AxiosResponse> => {
-      const { bearerToken, queryParams, url, requestBody } = params;
-
-      return await axi.post(url, requestBody, {
-        params: queryParams,
-        withCredentials: false,
-        headers: { Authorization: `Bearer ${bearerToken}` },
-      });
-    },
-
-    noneAuthPostRequest: async (params: {
-      queryParams: Record<string, unknown>;
-      requestBody: Record<string, unknown>;
-      url: string;
-    }): Promise<AxiosResponse> => {
-      const { queryParams, url, requestBody } = params;
-
-      return await axi.post(url, requestBody, {
-        params: queryParams,
-        withCredentials: false,
       });
     },
   };

@@ -1,13 +1,18 @@
 import { Dispatch, SetStateAction } from "react";
 
+
+
 import { Button } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
 import "@tanstack/react-query";
 import { isPlainObject } from "lodash";
 
+
+
 import { api } from "@/api";
 import { useStore } from "@/context/store";
 import { AuthorizationTypeEnum, RequestMethodEnum } from "@/types/qos";
+
 
 interface TestApiButtonProps {
   setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
@@ -54,44 +59,24 @@ const TestApiButton = ({
   const { API_KEY, BASIC_AUTH, BEARER_TOKEN, NONE } = AuthorizationTypeEnum;
   const { GET, POST } = RequestMethodEnum;
 
-  const { mutateAsync: apiKeyGetRequest } = useMutation({
-    mutationKey: ["api_key_get_request"],
-    mutationFn: api.externalRequests.apiKeyAuthGetRequest,
+  const { mutateAsync: apiKeyRequest } = useMutation({
+    mutationKey: ["api_key_request"],
+    mutationFn: api.externalRequests.apiKeyAuthRequest,
   });
 
-  const { mutateAsync: bearerGetRequest } = useMutation({
-    mutationKey: ["bearer_get_request"],
-    mutationFn: api.externalRequests.bearerGetRequest,
+  const { mutateAsync: bearerRequest } = useMutation({
+    mutationKey: ["bearer_request"],
+    mutationFn: api.externalRequests.bearerRequest,
   });
 
-  const { mutateAsync: basicAuthGetRequest } = useMutation({
-    mutationKey: ["basic_get_request"],
-    mutationFn: api.externalRequests.basicAuthGetRequest,
+  const { mutateAsync: basicAuthRequest } = useMutation({
+    mutationKey: ["basic_request"],
+    mutationFn: api.externalRequests.basicAuthRequest,
   });
 
-  const { mutateAsync: noAuthGetRequest } = useMutation({
-    mutationKey: ["none_get_request"],
-    mutationFn: api.externalRequests.noneAuthGetRequest,
-  });
-
-  const { mutateAsync: apiKeyPostRequest } = useMutation({
-    mutationKey: ["api_key_post_request"],
-    mutationFn: api.externalRequests.apiKeyPostRequest,
-  });
-
-  const { mutateAsync: basicPostRequest } = useMutation({
-    mutationKey: ["basic_post_request"],
-    mutationFn: api.externalRequests.basicPostRequest,
-  });
-
-  const { mutateAsync: bearerPostRequest } = useMutation({
-    mutationKey: ["bearer_post_request"],
-    mutationFn: api.externalRequests.bearerPostRequest,
-  });
-
-  const { mutateAsync: noneAuthPostRequest } = useMutation({
-    mutationKey: ["none_post_request"],
-    mutationFn: api.externalRequests.noneAuthPostRequest,
+  const { mutateAsync: noAuthRequest } = useMutation({
+    mutationKey: ["no_auth_request"],
+    mutationFn: api.externalRequests.noAuthRequest,
   });
 
   // eslint-disable-next-line
@@ -157,10 +142,10 @@ const TestApiButton = ({
 
       if (authorizationType === API_KEY) {
         try {
-          const { data: requestData } = await apiKeyGetRequest({
+          const { data: requestData } = await apiKeyRequest({
             apiKeyName: apiKeyName ?? "",
             apiKeyValue: apiKeyValue ?? "",
-
+            method: "GET",
             queryParams: jsonQueryParams,
             url: apiEndpoint,
           });
@@ -172,7 +157,8 @@ const TestApiButton = ({
 
       if (authorizationType === BASIC_AUTH) {
         try {
-          const { data: requestData } = await basicAuthGetRequest({
+          const { data: requestData } = await basicAuthRequest({
+            method: "GET",
             username: basicAuthUserName ?? "",
             password: basicAuthPassword ?? "",
             queryParams: jsonQueryParams,
@@ -187,7 +173,8 @@ const TestApiButton = ({
 
       if (authorizationType === BEARER_TOKEN) {
         try {
-          const { data } = await bearerGetRequest({
+          const { data } = await bearerRequest({
+            method: "GET",
             bearerToken: bearerAuthBearerToken ?? "",
             queryParams: jsonQueryParams,
             url: apiEndpoint,
@@ -200,7 +187,8 @@ const TestApiButton = ({
 
       if (authorizationType === NONE) {
         try {
-          const { data: requestData } = await noAuthGetRequest({
+          const { data: requestData } = await noAuthRequest({
+            method: "GET",
             queryParams: jsonQueryParams,
             url: apiEndpoint,
           });
@@ -217,9 +205,10 @@ const TestApiButton = ({
 
       if (authorizationType === API_KEY) {
         try {
-          const { data: requestData } = await apiKeyPostRequest({
+          const { data: requestData } = await apiKeyRequest({
             apiKeyName: apiKeyName ?? "",
             apiKeyValue: apiKeyValue ?? "",
+            method: "POST",
             queryParams: jsonQueryParams,
             requestBody: jsonRequestBody,
             url: apiEndpoint,
@@ -232,7 +221,8 @@ const TestApiButton = ({
 
       if (authorizationType === BASIC_AUTH) {
         try {
-          const { data: requestData } = await basicPostRequest({
+          const { data: requestData } = await basicAuthRequest({
+            method: "POST",
             username: basicAuthUserName ?? "",
             password: basicAuthPassword ?? "",
             queryParams: jsonQueryParams,
@@ -248,7 +238,8 @@ const TestApiButton = ({
 
       if (authorizationType === BEARER_TOKEN) {
         try {
-          const { data: requestData } = await bearerPostRequest({
+          const { data: requestData } = await bearerRequest({
+            method: "GET",
             bearerToken: bearerAuthBearerToken ?? "",
             queryParams: jsonQueryParams,
             requestBody: jsonRequestBody,
@@ -262,7 +253,8 @@ const TestApiButton = ({
 
       if (authorizationType === NONE) {
         try {
-          const { data: requestData } = await noneAuthPostRequest({
+          const { data: requestData } = await noAuthRequest({
+            method:"POST",
             queryParams: jsonQueryParams,
             requestBody: jsonRequestBody,
             url: apiEndpoint,
