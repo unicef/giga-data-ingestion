@@ -20,7 +20,7 @@ function IngestApiLayout() {
   }, [resetQosState]);
 
   return (
-    <AuthenticatedRBACView roles={["Admin", "Super"]}>
+    <AuthenticatedRBACView>
       <Grid>
         <Column lg={16} className="py-6">
           <Stack gap={6}>
