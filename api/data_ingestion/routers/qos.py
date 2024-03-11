@@ -28,7 +28,9 @@ from data_ingestion.models import SchoolConnectivity, SchoolList
 from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.qos import (
     CreateApiIngestionRequest,
+    CreateApiIngestionResponse,
     EditApiIngestionRequest,
+    SchoolConnectivitySchema,
     SchoolListSchema,
 )
 
@@ -164,7 +166,7 @@ async def list_school_lists(
     }
 
 
-@router.get("/school_list/{id}")
+@router.get("/school_list/{id}", response_model=SchoolListSchema)
 async def get_school_list(
     response: Response,
     id: str,
@@ -204,7 +206,11 @@ async def update_school_list_status(
     return 0
 
 
-@router.get("/school_connectivity/{id}", status_code=status.HTTP_200_OK)
+@router.get(
+    "/school_connectivity/{id}",
+    response_model=SchoolConnectivitySchema,
+    status_code=status.HTTP_200_OK,
+)
 async def get_school_connectivity(
     response: Response,
     id: str,
@@ -221,7 +227,11 @@ async def get_school_connectivity(
     return school_connectivity
 
 
-@router.post("/api_ingestion")
+@router.post(
+    "/api_ingestion",
+    response_model=CreateApiIngestionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_api_ingestion(
     response: Response,
     file: UploadFile,
@@ -307,10 +317,10 @@ async def create_api_ingestion(
     db.add(school_connectivity)
     await db.commit()
 
-    response.status_code = status.HTTP_201_CREATED
+    return {"school_list": school_list, "school_connectivity": school_connectivity}
 
 
-@router.patch("/api_ingestion/{id}", status_code=status.HTTP_200_OK)
+@router.patch("/api_ingestion/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_api_ingestion(
     response: Response,
     data: EditApiIngestionRequest,
@@ -333,8 +343,6 @@ async def update_api_ingestion(
         )
         await db.execute(update_school_connectivity_query)
         await db.commit()
-
-        response.status_code = status.HTTP_204_NO_CONTENT
 
     except exc.SQLAlchemyError as err:
         raise HTTPException(

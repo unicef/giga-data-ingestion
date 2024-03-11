@@ -124,3 +124,8 @@ class EditSchoolListRequest(ApiConfigurationRequest):
 class EditApiIngestionRequest(BaseModel):
     school_connectivity: EditSchoolConnectivityRequest
     school_list: EditSchoolListRequest
+
+
+class CreateApiIngestionResponse(BaseModel):
+    school_list: SchoolListSchema
+    school_connectivity: SchoolConnectivitySchema
