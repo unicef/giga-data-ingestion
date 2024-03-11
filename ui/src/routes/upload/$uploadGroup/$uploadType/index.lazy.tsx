@@ -11,7 +11,6 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
 });
 
 const validTypes = {
-  "application/csv": [".csv"],
   "text/csv": [".csv"],
 };
 

@@ -246,7 +246,6 @@ async def create_api_ingestion(
         )
 
     valid_types = {
-        "application/csv": [".csv"],
         "text/csv": [".csv"],
     }
 

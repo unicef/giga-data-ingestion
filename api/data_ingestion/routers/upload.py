@@ -72,7 +72,6 @@ async def upload_file(
         "application/octet-stream": [".parquet"],
         "application/vnd.ms-excel": [".xls"],
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
-        "application/csv": [".csv"],
         "text/csv": [".csv"],
     }
 
