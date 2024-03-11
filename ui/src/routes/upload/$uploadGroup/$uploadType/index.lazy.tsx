@@ -28,6 +28,7 @@ export default function Index() {
         complete: result => {
           setUpload({ ...upload, detectedColumns: result.data[0] as string[] });
         },
+        preview: 1,
       });
 
       incrementStepIndex();
