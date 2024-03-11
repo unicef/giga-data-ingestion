@@ -11,7 +11,7 @@ from data_ingestion.settings import settings
 class Constants(BaseSettings):
     UPLOAD_FILE_SIZE_LIMIT_MB: int | float = 10
     UPLOAD_PATH_PREFIX: str = "raw/uploads"
-    API_INGESTION_UPLOAD_PATH_PREFIX: str = "schemas/qos/school-connectivity"
+    API_INGESTION_SCHEMA_UPLOAD_PATH: str = "schemas/qos/school-connectivity"
 
     @computed_field
     @property

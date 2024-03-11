@@ -269,7 +269,7 @@ async def create_api_ingestion(
     filename_elements = [school_list.id]
     filename_elements.append(timestamp)
     filename = "_".join(filename_elements)
-    upload_path = f"{constants.API_INGESTION_UPLOAD_PATH_PREFIX}/{filename}{ext}"
+    upload_path = f"{constants.API_INGESTION_SCHEMA_UPLOAD_PATH}/{filename}{ext}"
 
     client = storage_client.get_blob_client(upload_path)
     try:
