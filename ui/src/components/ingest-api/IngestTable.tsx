@@ -54,7 +54,6 @@ function IngestTable() {
         count: ITEMS_PER_PAGE,
         page: currentPage,
       }),
-    placeholderData: keepPreviousData,
   });
 
   const { mutateAsync: updateSchoolListStatus } = useMutation({
