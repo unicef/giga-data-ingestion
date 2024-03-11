@@ -1,7 +1,7 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
 import { PagedResponse } from "@/types/api.ts";
-import { DataQualityCheckResult } from "@/types/upload";
+import { DataQualityCheckResult, UploadParams } from "@/types/upload";
 import { UploadResponse } from "@/types/upload.ts";
 
 type Header = {
@@ -85,24 +85,7 @@ export default function routes(axi: AxiosInstance) {
     ): Promise<AxiosResponse<DataQualityCheckResult>> => {
       return axi.get(`upload/dq_check/${upload_id}`);
     },
-    upload: (params: {
-      column_to_schema_mapping: string;
-      country: string;
-      data_collection_date: string;
-      data_collection_modality: string;
-      data_owner: string;
-      dataset: string;
-      date_modified: string;
-      description: string;
-      domain: string;
-      file: File;
-      geolocation_data_source: string;
-      pii_classification: string;
-      school_id_type: string;
-      sensitivity_level: string;
-      source?: string | null;
-      [key: string]: string | File | null | undefined;
-    }): Promise<AxiosResponse<UploadResponse>> => {
+    upload: (params: UploadParams): Promise<AxiosResponse<UploadResponse>> => {
       const formData = new FormData();
       Object.keys(params).forEach(key => {
         if (params[key] !== null && params[key] !== undefined) {
