@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
-import { useQosStore } from "@/context/qosStore";
+import { useStore } from "@/context/store";
 
 interface ConfirmAddIngestionModalInputs {
   schoolListId: string;
@@ -18,8 +18,10 @@ const ConfirmEditIngestionModal = ({
   open,
   setOpen,
 }: ConfirmAddIngestionModalInputs) => {
-  const { schoolConnectivity, schoolList, columnMapping } =
-    useQosStore.getState();
+  const {
+    apiIngestionSlice: { columnMapping, schoolConnectivity, schoolList },
+  } = useStore.getState();
+
   const navigate = useNavigate({ from: "/ingest-api" });
 
   const { mutateAsync: mutateAsync, isPending } = useMutation({

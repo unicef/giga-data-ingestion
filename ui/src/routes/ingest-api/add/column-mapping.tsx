@@ -33,12 +33,17 @@ import {
   SchoolDataItem,
   schoolData,
 } from "@/constants/school-data";
-import { useQosStore } from "@/context/qosStore";
+import { useStore } from "@/context/store";
 
 export const Route = createFileRoute("/ingest-api/add/column-mapping")({
   component: ColumnMapping,
   loader: () => {
-    const { api_endpoint } = useQosStore.getState().schoolList;
+    const {
+      apiIngestionSlice: {
+        schoolList: { api_endpoint },
+      },
+    } = useStore.getState();
+
     if (api_endpoint === "") throw redirect({ to: ".." });
   },
 });
@@ -49,10 +54,14 @@ const headers: DataTableHeader[] = [
 ];
 
 function ColumnMapping() {
-  const { incrementStepIndex, decrementStepIndex, setColumnMapping } =
-    useQosStore();
-
-  const { detectedColumns } = useQosStore.getState();
+  const {
+    apiIngestionSlice: { detectedColumns },
+    apiIngestionSliceActions: {
+      incrementStepIndex,
+      decrementStepIndex,
+      setColumnMapping,
+    },
+  } = useStore();
 
   const navigate = useNavigate({ from: Route.fullPath });
 

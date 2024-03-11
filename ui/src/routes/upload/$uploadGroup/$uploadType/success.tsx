@@ -11,15 +11,21 @@ export const Route = createFileRoute(
 )({
   component: Success,
   loader: () => {
-    const { upload } = useStore.getState();
-    if (!upload.file) {
+    const {
+      uploadSlice: { file },
+    } = useStore.getState();
+
+    if (file) {
       throw redirect({ to: ".." });
     }
   },
 });
 
 function Success() {
-  const { upload, resetUploadState } = useStore();
+  const {
+    uploadSlice: { uploadDate, uploadId },
+    uploadSliceActions: { resetUploadSliceState },
+  } = useStore();
 
   return (
     <>
@@ -36,15 +42,13 @@ function Success() {
       <p>
         Data quality checks will now be performed on your upload; you may check
         the progress and output of the checks on the File Uploads page. To check
-        this upload in the future, it has Upload ID <b>{upload.uploadId}</b> and
+        this upload in the future, it has Upload ID <b>{uploadId}</b> and
         completed at{" "}
-        <b>
-          {format(upload.uploadDate ?? new Date(), DEFAULT_DATETIME_FORMAT)}
-        </b>
+        <b>{format(uploadDate ?? new Date(), DEFAULT_DATETIME_FORMAT)}</b>
       </p>
       <p>You may now safely close this page</p>
       <div>
-        <Button as={Link} to="/" onClick={resetUploadState} isExpressive>
+        <Button as={Link} to="/" onClick={resetUploadSliceState} isExpressive>
           Back to Home
         </Button>
       </div>

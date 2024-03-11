@@ -16,17 +16,29 @@ const validTypes = {
 };
 
 export default function Index() {
-  const { setUpload, resetUploadState, incrementStepIndex } = useStore();
-  const { upload } = useStore.getState();
+  const {
+    uploadSlice,
+    uploadSliceActions: {
+      incrementStepIndex,
+      resetUploadSliceState,
+      setUploadSliceState,
+    },
+  } = useStore();
 
-  const { file } = upload;
-  const hasUploadedFile = upload.file != null;
+  const { file } = uploadSlice;
+
+  const hasUploadedFile = file != null;
 
   const handleProceedToNextStep = () => {
     if (file) {
       parse(file, {
         complete: result => {
-          setUpload({ ...upload, detectedColumns: result.data[0] as string[] });
+          setUploadSliceState({
+            uploadSlice: {
+              ...uploadSlice,
+              detectedColumns: result.data[0] as string[],
+            },
+          });
         },
         preview: 1,
       });
@@ -41,9 +53,17 @@ export default function Index() {
         <UploadFile
           acceptType={validTypes}
           description="csv only, up to 10mb"
-          file={upload.file}
-          setFile={file => setUpload({ ...upload, file })}
-          setTimestamp={timestamp => setUpload({ ...upload, timestamp })}
+          file={file}
+          setFile={file =>
+            setUploadSliceState({
+              uploadSlice: { ...uploadSlice, file: file },
+            })
+          }
+          setTimestamp={timestamp =>
+            setUploadSliceState({
+              uploadSlice: { ...uploadSlice, timeStamp: timestamp },
+            })
+          }
         />
       </div>
 
@@ -52,7 +72,7 @@ export default function Index() {
           kind="secondary"
           as={Link}
           to="/upload"
-          onClick={resetUploadState}
+          onClick={resetUploadSliceState}
           className="w-full"
           renderIcon={ArrowLeft}
           isExpressive

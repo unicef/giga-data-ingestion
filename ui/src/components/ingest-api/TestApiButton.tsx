@@ -6,7 +6,7 @@ import "@tanstack/react-query";
 import { isPlainObject } from "lodash";
 
 import { api } from "@/api";
-import { useQosStore } from "@/context/qosStore";
+import { useStore } from "@/context/store";
 import { AuthorizationTypeEnum, RequestMethodEnum } from "@/types/qos";
 
 interface TestApiButtonProps {
@@ -48,7 +48,9 @@ const TestApiButton = ({
   requestBody,
   requestMethod,
 }: TestApiButtonProps) => {
-  const { setDetectedColumns } = useQosStore();
+  const {
+    apiIngestionSliceActions: { setDetectedColumns },
+  } = useStore();
   const { API_KEY, BASIC_AUTH, BEARER_TOKEN, NONE } = AuthorizationTypeEnum;
   const { GET, POST } = RequestMethodEnum;
 

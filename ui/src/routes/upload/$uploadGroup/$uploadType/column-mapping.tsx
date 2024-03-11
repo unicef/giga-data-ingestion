@@ -41,8 +41,9 @@ export const Route = createFileRoute(
   component: ColumnMapping,
   loader: () => {
     const {
-      upload: { file },
+      uploadSlice: { file },
     } = useStore.getState();
+
     if (!file) {
       throw redirect({ to: ".." });
     }
@@ -55,10 +56,16 @@ const headers: DataTableHeader[] = [
 ];
 
 export default function ColumnMapping() {
-  const { upload } = useStore.getState();
-  const { detectedColumns } = upload;
+  const {
+    uploadSlice,
+    uploadSliceActions: {
+      decrementStepIndex,
+      incrementStepIndex,
+      setUploadSliceState,
+    },
+  } = useStore();
 
-  const { decrementStepIndex, incrementStepIndex, setUpload } = useStore();
+  const { detectedColumns } = uploadSlice;
 
   const navigate = useNavigate({ from: Route.fullPath });
 
@@ -80,7 +87,12 @@ export default function ColumnMapping() {
       ]),
     );
 
-    setUpload({ ...upload, columnMapping: dataWithNullsReplaced });
+    setUploadSliceState({
+      uploadSlice: {
+        ...uploadSlice,
+        columnMapping: dataWithNullsReplaced,
+      },
+    });
     void navigate({ to: "../metadata" });
   };
 

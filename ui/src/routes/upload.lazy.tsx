@@ -12,13 +12,15 @@ export const Route = createLazyFileRoute("/upload")({
 });
 
 function UploadLayout() {
-  const { resetUploadState } = useStore();
+  const {
+    uploadSliceActions: { resetUploadSliceState },
+  } = useStore();
 
   useEffect(() => {
     return () => {
-      resetUploadState();
+      resetUploadSliceState();
     };
-  }, [resetUploadState]);
+  }, [resetUploadSliceState]);
 
   return (
     <AuthenticatedRBACView>

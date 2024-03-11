@@ -25,7 +25,7 @@ import { AxiosResponse } from "axios";
 
 import { queryClient, useApi } from "@/api";
 import { HEADERS, ITEMS_PER_PAGE } from "@/constants/ingest-api";
-import { useQosStore } from "@/context/qosStore";
+import { useStore } from "@/context/store";
 import { PagedSchoolListResponse } from "@/types/qos";
 
 type LoadingStates = {
@@ -42,7 +42,9 @@ function IngestTable() {
 
   const api = useApi();
 
-  const { resetQosState } = useQosStore();
+  const {
+    apiIngestionSliceActions: { resetApiIngestionState: resetState },
+  } = useStore();
 
   const {
     data: schoolListQuery,
@@ -197,7 +199,7 @@ function IngestTable() {
                 renderIcon={Add}
                 as={Link}
                 to="./add"
-                onClick={() => resetQosState()}
+                onClick={() => resetState()}
               >
                 Create New Ingestion
               </Button>

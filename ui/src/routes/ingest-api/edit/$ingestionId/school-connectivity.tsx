@@ -12,7 +12,7 @@ import { api, queryClient } from "@/api";
 import ConfirmEditIngestionModal from "@/components/ingest-api/ConfirmEditIngestionModal";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs";
-import { useQosStore } from "@/context/qosStore";
+import { useStore } from "@/context/store";
 import { SchoolConnectivityFormValues } from "@/types/qos";
 
 export const Route = createFileRoute(
@@ -40,10 +40,12 @@ function SchoolConnectivity() {
   const [responsePreview, setResponsePreview] = useState<string | string[]>("");
 
   const {
-    decrementStepIndex,
-    setSchoolConnectivityFormValues,
-    resetSchoolConnectivityFormValues,
-  } = useQosStore();
+    apiIngestionSliceActions: {
+      decrementStepIndex,
+      setSchoolConnectivityFormValues,
+      resetSchoolConnectivityFormValues,
+    },
+  } = useStore();
 
   const { ingestionId } = Route.useParams();
 

@@ -31,12 +31,14 @@ function Layout() {
   const { uploadType } = Route.useParams();
   const title = uploadType.replace(/-/g, " ");
 
-  const { upload, resetUploadState } = useStore();
-  const { stepIndex } = upload;
+  const {
+    uploadSlice: { stepIndex },
+    uploadSliceActions: { resetUploadSliceState },
+  } = useStore();
 
   useEffect(() => {
-    return resetUploadState;
-  }, [resetUploadState]);
+    return resetUploadSliceState;
+  }, [resetUploadSliceState]);
 
   return (
     <Stack gap={10}>

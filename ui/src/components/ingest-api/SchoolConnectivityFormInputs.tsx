@@ -11,7 +11,7 @@ import { SelectItem, TextArea, TextInput, Toggle } from "@carbon/react";
 import { Select } from "@/components/forms/Select";
 import TestApiButton from "@/components/ingest-api/TestApiButton";
 import UploadFile from "@/components/upload/UploadFile.tsx";
-import { useQosStore } from "@/context/qosStore";
+import { useStore } from "@/context/store";
 import {
   AuthorizationTypeEnum,
   PaginationTypeEnum,
@@ -98,9 +98,10 @@ export function SchoolConnectivityFormInputs({
 
   const { control, errors, register, trigger } = useFormHookReturnValues;
 
-  const { setFile } = useQosStore();
-
-  const { file } = useQosStore.getState();
+  const {
+    apiIngestionSlice: { file },
+    apiIngestionSliceActions: { setFile },
+  } = useStore();
 
   const DataKeyTextInput = () => (
     <TextInput

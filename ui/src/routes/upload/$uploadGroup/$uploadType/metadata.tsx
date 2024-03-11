@@ -46,7 +46,7 @@ export const Route = createFileRoute(
   component: Metadata,
   loader: () => {
     const {
-      upload: { file },
+      apiIngestionSlice: { file },
     } = useStore.getState();
     if (!file) {
       throw redirect({ to: ".." });
@@ -56,9 +56,15 @@ export const Route = createFileRoute(
 
 function Metadata() {
   const api = useApi();
-  const { setUpload, incrementStepIndex, decrementStepIndex } = useStore();
 
-  const { upload } = useStore.getState();
+  const {
+    uploadSlice,
+    uploadSliceActions: {
+      decrementStepIndex,
+      incrementStepIndex,
+      setUploadSliceState,
+    },
+  } = useStore();
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType } = Route.useParams();
   const { countryDatasets, isPrivileged } = useRoles();
@@ -108,7 +114,7 @@ function Metadata() {
     setIsUploadError(false);
 
     const body = {
-      column_to_schema_mapping: JSON.stringify(upload.columnMapping),
+      column_to_schema_mapping: JSON.stringify(uploadSlice.columnMapping),
       country: data.country,
       data_collection_date: new Date(data.dataCollectionDate).toISOString(),
       data_collection_modality: data.dataCollectionModality,
@@ -117,7 +123,7 @@ function Metadata() {
       date_modified: new Date(data.dateModified).toISOString(),
       description: data.description,
       domain: data.domain,
-      file: upload.file!,
+      file: uploadSlice.file!,
       geolocation_data_source: data.geolocationDataSource,
       pii_classification: data.piiClassification,
       school_id_type: data.schoolIdType,
@@ -132,10 +138,12 @@ function Metadata() {
 
       setIsUploading(false);
 
-      setUpload({
-        ...upload,
-        uploadDate: upload.timestamp,
-        uploadId,
+      setUploadSliceState({
+        uploadSlice: {
+          ...uploadSlice,
+          uploadDate: uploadSlice.timeStamp,
+          uploadId: uploadId,
+        },
       });
 
       incrementStepIndex();

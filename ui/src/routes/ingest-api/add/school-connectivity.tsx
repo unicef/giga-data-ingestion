@@ -9,13 +9,16 @@ import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 
 import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
 import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs";
-import { useQosStore } from "@/context/qosStore";
+import { useStore } from "@/context/store";
 import { SchoolConnectivityFormValues } from "@/types/qos";
 
 export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
   component: SchoolConnectivity,
   loader: () => {
-    const { api_endpoint } = useQosStore.getState().schoolList;
+    const {
+      schoolList: { api_endpoint },
+    } = useStore.getState().apiIngestionSlice;
+
     if (api_endpoint === "") throw redirect({ to: ".." });
   },
 });
@@ -28,12 +31,13 @@ function SchoolConnectivity() {
   const [responsePreview, setResponsePreview] = useState<string | string[]>("");
 
   const {
-    decrementStepIndex,
-    resetSchoolConnectivityFormValues,
-    setSchoolConnectivityFormValues,
-  } = useQosStore();
-
-  const { file } = useQosStore.getState();
+    apiIngestionSlice: { file },
+    apiIngestionSliceActions: {
+      decrementStepIndex,
+      resetSchoolConnectivityFormValues,
+      setSchoolConnectivityFormValues,
+    },
+  } = useStore();
 
   const hasUploadedFile = file != null;
 

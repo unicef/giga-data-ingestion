@@ -13,13 +13,14 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { resetUploadState } = useStore();
-
+  const {
+    uploadSliceActions: { resetUploadSliceState: resetUploadSliceState },
+  } = useStore();
   useEffect(() => {
     return () => {
-      resetUploadState();
+      resetUploadSliceState();
     };
-  }, [resetUploadState]);
+  }, [resetUploadSliceState]);
 
   return (
     <AuthenticatedRBACView>

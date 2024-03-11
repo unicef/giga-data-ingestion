@@ -56,7 +56,9 @@ function Base({ children }: PropsWithChildren) {
 }
 
 function Layout() {
-  const { setUser } = useStore();
+  const {
+    appStateActions: { setUser },
+  } = useStore();
   const { instance } = useMsal();
   const account = useAccount();
   const getToken = useGetToken();

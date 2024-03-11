@@ -16,7 +16,7 @@ import {
 import { api } from "@/api";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
-import { useQosStore } from "@/context/qosStore";
+import { useStore } from "@/context/store";
 import { SchoolListFormValues } from "@/types/qos";
 
 export const Route = createFileRoute("/ingest-api/add/")({
@@ -28,8 +28,14 @@ function AddIngestion() {
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
   const [isValidDatakey, setIsValidDatakey] = useState<boolean>(false);
   const [isResponseError, setIsResponseError] = useState<boolean>(false);
-  const { setSchoolListFormValues, incrementStepIndex, resetQosState } =
-    useQosStore();
+
+  const {
+    apiIngestionSliceActions: {
+      setSchoolListFormValues,
+      incrementStepIndex,
+      resetApiIngestionState,
+    },
+  } = useStore();
 
   const navigate = useNavigate({ from: Route.fullPath });
 
@@ -199,7 +205,7 @@ function AddIngestion() {
                 kind="secondary"
                 renderIcon={ArrowLeft}
                 to="/ingest-api"
-                onClick={resetQosState}
+                onClick={resetApiIngestionState}
               >
                 Cancel
               </Button>

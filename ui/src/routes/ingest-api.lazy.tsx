@@ -4,20 +4,22 @@ import { Column, Grid, Stack } from "@carbon/react";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
-import { useQosStore } from "@/context/qosStore";
+import { useStore } from "@/context/store";
 
 export const Route = createFileRoute("/ingest-api")({
   component: IngestApiLayout,
 });
 
 function IngestApiLayout() {
-  const { resetQosState } = useQosStore();
+  const {
+    apiIngestionSliceActions: { resetApiIngestionState: resetState },
+  } = useStore();
 
   useEffect(() => {
     return () => {
-      resetQosState();
+      resetState();
     };
-  }, [resetQosState]);
+  }, [resetState]);
 
   return (
     <AuthenticatedRBACView>

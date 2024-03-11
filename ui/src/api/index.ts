@@ -42,7 +42,10 @@ export function AxiosProvider(props: PropsWithChildren) {
   const isAuthenticated = useIsAuthenticated();
   const getToken = useGetToken();
 
-  const { setFullPageLoading } = useStore();
+  const {
+    appStateActions: { setFullPageLoading },
+  } = useStore();
+
   const reqInterceptId = useRef(
     axi.interceptors.request.use(
       requestFulFilledInterceptor,
