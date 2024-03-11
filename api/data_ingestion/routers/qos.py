@@ -41,6 +41,7 @@ router = APIRouter(
 )
 
 fake = Faker()
+fake.seed(1)
 
 
 @router.post("/create_dummy_ingestion")
