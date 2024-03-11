@@ -46,7 +46,7 @@ export const Route = createFileRoute(
   component: Metadata,
   loader: () => {
     const {
-      apiIngestionSlice: { file },
+      uploadSlice: { file },
     } = useStore.getState();
     if (!file) {
       throw redirect({ to: ".." });
