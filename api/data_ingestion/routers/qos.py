@@ -172,8 +172,8 @@ async def get_school_list(
 ):
     base_query = (
         select(SchoolList)
-        .order_by(desc(SchoolList.date_created))
         .where(func.starts_with(SchoolList.id, id))
+        .order_by(desc(SchoolList.date_created))
     )
 
     school_list = await db.scalar(base_query)
