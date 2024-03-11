@@ -68,7 +68,7 @@ function IngestTable() {
         queryKey: ["school_list", currentPage],
       });
 
-      const previousTodos = queryClient.getQueryData([
+      const previousSchoolList = queryClient.getQueryData([
         "school_list",
         currentPage,
       ]);
@@ -99,7 +99,7 @@ function IngestTable() {
         },
       );
 
-      return { previousTodos };
+      return { previousSchoolList };
     },
 
     onSettled: (_, __, schoolIdStatus) => {
@@ -134,7 +134,7 @@ function IngestTable() {
         id: schoolList.id,
         name: schoolList.name,
         endpoint: schoolList.api_endpoint,
-        frequency: schoolList.school_connectivity.ingestion_frequency,
+        frequency: schoolList.school_connectivity.ingestion_frequency_minutes,
         lastRunConnectivity: lastRun,
         // status: (
         //   <div className="flex">
