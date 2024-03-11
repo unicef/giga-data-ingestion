@@ -86,7 +86,8 @@ function SchoolConnectivity() {
       school_id_key: schoolConnectivityQuery.school_id_key,
       send_query_in: schoolConnectivityQuery.send_query_in,
       size: schoolConnectivityQuery.size,
-      ingestion_frequency: schoolConnectivityQuery.ingestion_frequency,
+      ingestion_frequency_minutes:
+        schoolConnectivityQuery.ingestion_frequency_minutes,
     },
     mode: "onBlur",
     reValidateMode: "onBlur",

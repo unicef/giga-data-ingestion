@@ -63,7 +63,7 @@ export interface PagedSchoolListResponse {
 }
 
 export interface SchoolConnectivityResponse extends ApiConfigurationResponse {
-  ingestion_frequency: number;
+  ingestion_frequency_minutes: number;
   schema_url: string;
   school_list: SchoolListResponse;
   school_list_id: string;
@@ -108,7 +108,7 @@ export interface SchoolListFormValues extends ApiIngestionFormValues {
 }
 
 export interface SchoolConnectivityFormValues extends ApiIngestionFormValues {
-  ingestion_frequency: number;
+  ingestion_frequency_minutes: number;
 }
 
 export const initialApiIngestionFormValues: ApiIngestionFormValues = {
@@ -145,7 +145,7 @@ export const initialSchoolListFormValues: SchoolListFormValues = {
 export const initialSchoolConnectivityFormValues: SchoolConnectivityFormValues =
   {
     ...initialApiIngestionFormValues,
-    ingestion_frequency: 5,
+    ingestion_frequency_minutes: 5,
   };
 
 export interface CreateSchoolListRequest extends SchoolListFormValues {}

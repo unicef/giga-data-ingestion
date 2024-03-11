@@ -121,7 +121,7 @@ async def create_dummy_ingestion(
             size=23,
             user_email=fake.ascii_safe_email(),
             user_id="useriddd",
-            ingestion_frequency=50,
+            ingestion_frequency_minutes=50,
             schema_url=fake.url(),
             school_list_id=school_list.id,
         )

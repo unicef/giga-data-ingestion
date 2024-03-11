@@ -39,7 +39,7 @@ class ApiConfiguration(BaseModel):
 
 
 class SchoolConnectivitySchema(ApiConfiguration):
-    ingestion_frequency: int
+    ingestion_frequency_minutes: int
     schema_url: str
     school_list_id: str
 
@@ -89,7 +89,7 @@ class CreateSchoolListRequest(ApiConfigurationRequest):
 
 @dataclass
 class CreateSchoolConnectivityRequest(ApiConfigurationRequest):
-    ingestion_frequency: int
+    ingestion_frequency_minutes: int
 
 
 @dataclass
@@ -111,7 +111,7 @@ class CreateApiIngestionRequest:
 
 
 class EditSchoolConnectivityRequest(ApiConfigurationRequest):
-    ingestion_frequency: int
+    ingestion_frequency_minutes: int
 
 
 class EditSchoolListRequest(ApiConfigurationRequest):

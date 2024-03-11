@@ -403,9 +403,9 @@ export function SchoolConnectivityFormInputs({
   const FrequencySelect = () => (
     <ControllerNumberInputSchoolConnectivity
       control={control}
-      name="ingestion_frequency"
+      name="ingestion_frequency_minutes"
       numberInputProps={{
-        id: "ingestion_frequency",
+        id: "ingestion_frequency_minutes",
         helperText: "In minutes. Min 5",
         label: <span>Frequency</span>,
         min: 5,

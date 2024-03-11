@@ -55,7 +55,7 @@ const ConfirmAddIngestionModal = ({
     >
       This will create a new ingesiton that will ingest from{" "}
       <b>{schoolConnectivity.api_endpoint}</b> every{" "}
-      <b>{schoolConnectivity.ingestion_frequency}</b> minutes
+      <b>{schoolConnectivity.ingestion_frequency_minutes}</b> minutes
     </Modal>
   );
 };
