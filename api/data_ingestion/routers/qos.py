@@ -131,7 +131,7 @@ async def create_dummy_ingestion(
         response.status_code = status.HTTP_201_CREATED
 
 
-@router.get("/school_list", response_model=PagedResponseSchema)
+@router.get("/school_list", response_model=PagedResponseSchema[SchoolListSchema])
 async def list_school_lists(
     response: Response,
     db: AsyncSession = Depends(get_db),
@@ -156,14 +156,12 @@ async def list_school_lists(
 
     items = await db.scalars(base_query.offset((page - 1) * count).limit(count))
 
-    paged_response = PagedResponseSchema[SchoolListSchema](
-        data=items, page=page, page_size=count, total_count=total
-    )
-
-    if not len(paged_response.data):
-        response.status_code = status.HTTP_204_NO_CONTENT
-
-    return paged_response
+    return {
+        "data": items,
+        "page": page,
+        "page_size": count,
+        "total_count": total,
+    }
 
 
 @router.get("/school_list/{id}")
