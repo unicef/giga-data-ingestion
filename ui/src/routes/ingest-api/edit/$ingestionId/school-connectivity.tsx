@@ -55,6 +55,18 @@ function SchoolConnectivity() {
   });
 
   const {
+    id: _id,
+    date_created: _date_created,
+    date_modified: _date_modified,
+    schema_url: _schema_url,
+    school_list: _school_list,
+    school_list_id: _school_list_id,
+    user_email: _user_email,
+    user_id: _user_id,
+    ...schoolConnectivityFormDefaultValues
+  } = schoolConnectivityQuery;
+
+  const {
     control,
     formState,
     getValues,
@@ -65,29 +77,7 @@ function SchoolConnectivity() {
     trigger,
   } = useForm<SchoolConnectivityFormValues>({
     defaultValues: {
-      api_auth_api_key: schoolConnectivityQuery.api_auth_api_key,
-      api_auth_api_value: schoolConnectivityQuery.api_auth_api_value,
-      api_endpoint: schoolConnectivityQuery.api_endpoint,
-      authorization_type: schoolConnectivityQuery.authorization_type,
-      basic_auth_password: schoolConnectivityQuery.basic_auth_password,
-      basic_auth_username: schoolConnectivityQuery.basic_auth_username,
-      bearer_auth_bearer_token:
-        schoolConnectivityQuery.bearer_auth_bearer_token,
-      data_key: schoolConnectivityQuery.data_key,
-      enabled: schoolConnectivityQuery.enabled,
-      page_number_key: schoolConnectivityQuery.page_number_key,
-      page_offset_key: schoolConnectivityQuery.page_offset_key,
-      page_size_key: schoolConnectivityQuery.page_size_key,
-      page_starts_with: schoolConnectivityQuery.page_starts_with,
-      pagination_type: schoolConnectivityQuery.pagination_type,
-      query_parameters: schoolConnectivityQuery.query_parameters,
-      request_body: schoolConnectivityQuery.request_body,
-      request_method: schoolConnectivityQuery.request_method,
-      school_id_key: schoolConnectivityQuery.school_id_key,
-      send_query_in: schoolConnectivityQuery.send_query_in,
-      size: schoolConnectivityQuery.size,
-      ingestion_frequency_minutes:
-        schoolConnectivityQuery.ingestion_frequency_minutes,
+      ...schoolConnectivityFormDefaultValues,
     },
     mode: "onBlur",
     reValidateMode: "onBlur",

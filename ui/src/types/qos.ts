@@ -30,6 +30,7 @@ export interface ApiConfigurationResponse {
   basic_auth_password: string;
   basic_auth_username: string;
   bearer_auth_bearer_token: string;
+  data_key: string;
   date_created: Date;
   date_modified: Date;
   enabled: boolean;
@@ -41,7 +42,6 @@ export interface ApiConfigurationResponse {
   query_parameters: string;
   request_body: string;
   request_method: RequestMethodEnum;
-  data_key: string;
   school_id_key: string;
   send_query_in: SendQueryInEnum;
   size: number;

@@ -69,6 +69,13 @@ function EditIngestion() {
   const users = usersQuery?.data ?? [];
 
   const {
+    id: _id,
+    date_created: _date_created,
+    date_modified: _date_modified,
+    ...SchoolListFormDefaultValues
+  } = schoolListQuery;
+
+  const {
     control,
     formState,
     getValues,
@@ -81,30 +88,7 @@ function EditIngestion() {
     mode: "onBlur",
     reValidateMode: "onBlur",
     defaultValues: {
-      api_auth_api_key: schoolListQuery.api_auth_api_key,
-      api_auth_api_value: schoolListQuery.api_auth_api_value,
-      api_endpoint: schoolListQuery.api_endpoint,
-      authorization_type: schoolListQuery.authorization_type,
-      basic_auth_password: schoolListQuery.basic_auth_password,
-      basic_auth_username: schoolListQuery.basic_auth_username,
-      bearer_auth_bearer_token: schoolListQuery.bearer_auth_bearer_token,
-      column_to_schema_mapping: schoolListQuery.column_to_schema_mapping,
-      data_key: schoolListQuery.data_key,
-      enabled: schoolListQuery.enabled,
-      name: schoolListQuery.name,
-      page_number_key: schoolListQuery.page_number_key,
-      page_offset_key: schoolListQuery.page_offset_key,
-      page_size_key: schoolListQuery.page_size_key,
-      page_starts_with: schoolListQuery.page_starts_with,
-      pagination_type: schoolListQuery.pagination_type,
-      query_parameters: schoolListQuery.query_parameters,
-      request_body: schoolListQuery.request_body,
-      request_method: schoolListQuery.request_method,
-      school_id_key: schoolListQuery.school_id_key,
-      send_query_in: schoolListQuery.send_query_in,
-      size: schoolListQuery.size,
-      user_email: schoolListQuery.user_email,
-      user_id: schoolListQuery.user_id,
+      ...SchoolListFormDefaultValues,
     },
   });
 
