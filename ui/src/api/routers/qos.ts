@@ -36,10 +36,10 @@ export default function route(axi: AxiosInstance) {
       enabled: boolean;
     }): Promise<AxiosResponse<null>> => {
       return axi.patch(
-        `/qos/school_list/${params.id}/status/${params.enabled}`,
+        `/qos/school_list/${params.id}/status/`,
+        {},
         {
           params: {
-            id: params.id,
             enabled: params.enabled,
           },
         },

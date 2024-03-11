@@ -184,7 +184,7 @@ async def get_school_list(
     return school_list
 
 
-@router.patch("/school_list/{id}/status/{enabled}", status_code=status.HTTP_201_CREATED)
+@router.patch("/school_list/{id}/status/", status_code=status.HTTP_201_CREATED)
 async def update_school_list_status(
     response: Response,
     id: str,
