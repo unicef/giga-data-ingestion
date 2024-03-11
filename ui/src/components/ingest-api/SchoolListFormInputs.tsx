@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import {
   Control,
   FieldErrors,
@@ -80,6 +80,9 @@ export function SchoolListFormInputs({
   watchRequestMethod,
   useFormHookReturnValues,
 }: SchoolListFormInputsProps) {
+  const [queryParameterError, setQueryParameterError] = useState<string>("");
+  const [requestBodyError, setRequestBodyError] = useState<string>("");
+
   const {
     setIsResponseError,
     setIsValidDatakey,
@@ -389,6 +392,7 @@ export function SchoolListFormInputs({
         errors.query_parameters?.type === "required" ||
         errors.query_parameters?.type === "validate"
       }
+      invalidText={queryParameterError}
       labelText="Query parameters"
       placeholder="Input query parameters"
       {...register("query_parameters", {
@@ -400,6 +404,14 @@ export function SchoolListFormInputs({
             JSON.parse(value);
             return true;
           } catch (e) {
+            if (e instanceof Error) {
+              setQueryParameterError(e.message);
+            } else {
+              setQueryParameterError(
+                "An unexpected error occurred during JSON parsing.",
+              );
+            }
+
             return false;
           }
         },
@@ -414,6 +426,7 @@ export function SchoolListFormInputs({
         errors.request_body?.type === "required" ||
         errors.request_body?.type === "validate"
       }
+      invalidText={requestBodyError}
       labelText="Request body"
       placeholder="Input request body"
       rows={10}
@@ -426,6 +439,14 @@ export function SchoolListFormInputs({
             JSON.parse(value);
             return true;
           } catch (e) {
+            if (e instanceof Error) {
+              setRequestBodyError(e.message);
+            } else {
+              setRequestBodyError(
+                "An unexpected error occurred during JSON parsing.",
+              );
+            }
+
             return false;
           }
         },

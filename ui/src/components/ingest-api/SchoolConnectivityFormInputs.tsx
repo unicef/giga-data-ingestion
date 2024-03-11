@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import {
   Control,
   FieldErrors,
@@ -75,6 +75,9 @@ export function SchoolConnectivityFormInputs({
   useFormHookReturnValues,
   hasFileUpload = true,
 }: SchoolConnectivityFormInputsProps) {
+  const [queryParameterError, setQueryParameterError] = useState<string>("");
+  const [requestBodyError, setRequestBodyError] = useState<string>("");
+
   const {
     setIsResponseError,
     setIsValidDatakey,
@@ -357,6 +360,7 @@ export function SchoolConnectivityFormInputs({
         errors.query_parameters?.type === "required" ||
         errors.query_parameters?.type === "validate"
       }
+      invalidText={queryParameterError}
       labelText="Query parameters"
       placeholder="Input query parameters"
       {...register("query_parameters", {
@@ -368,6 +372,14 @@ export function SchoolConnectivityFormInputs({
             JSON.parse(value);
             return true;
           } catch (e) {
+            if (e instanceof Error) {
+              setQueryParameterError(e.message);
+            } else {
+              setQueryParameterError(
+                "An unexpected error occured during JSON parsing.",
+              );
+            }
+
             return false;
           }
         },
@@ -382,6 +394,7 @@ export function SchoolConnectivityFormInputs({
         errors.request_body?.type === "required" ||
         errors.request_body?.type === "validate"
       }
+      invalidText={requestBodyError}
       labelText="Request body"
       placeholder="Input request body"
       rows={10}
@@ -394,6 +407,14 @@ export function SchoolConnectivityFormInputs({
             JSON.parse(value);
             return true;
           } catch (e) {
+            if (e instanceof Error) {
+              setRequestBodyError(e.message);
+            } else {
+              setRequestBodyError(
+                "An unexpected error occurred during JSON parsing.",
+              );
+            }
+
             return false;
           }
         },
