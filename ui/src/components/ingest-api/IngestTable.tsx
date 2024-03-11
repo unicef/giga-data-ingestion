@@ -18,7 +18,6 @@ import {
 } from "@carbon/react";
 // @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
 import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
-import { faker } from "@faker-js/faker";
 import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { AxiosResponse } from "axios";
@@ -33,9 +32,6 @@ type LoadingStates = {
 };
 
 function IngestTable() {
-  // TODO: REMOVE THIS WHEN NO DUMMY DATA
-  faker.seed(1);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({});
@@ -117,18 +113,12 @@ function IngestTable() {
 
   const formattedSchoolListData = useMemo(() => {
     return schoolListData.map(schoolList => {
-      // TODO: this should be retrieved from the qos-connectivity table
-      const FREQUENCY_IN_MINUTES = faker.helpers.arrayElement([
-        15, 30, 45, 60, 75, 90,
-      ]);
-
-      // TODO: REPLACE THIS WITH ACTUAL LAST RUN
       const lastRun = new Date(schoolList.date_modified).toLocaleString();
 
       const nextRun = new Date(
         new Date(schoolList.date_modified).setMinutes(
           new Date(schoolList.date_modified).getMinutes() +
-            FREQUENCY_IN_MINUTES,
+            schoolList.school_connectivity.ingestion_frequency_minutes,
         ),
       ).toLocaleString();
 
