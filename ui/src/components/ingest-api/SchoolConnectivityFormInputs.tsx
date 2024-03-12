@@ -336,12 +336,29 @@ export function SchoolConnectivityFormInputs({
     </>
   );
 
-  const SendQueryInSelect = () => (
+  const PageSendQueryInSelect = () => (
     <Select
-      id="send_query_in"
-      invalid={!!errors.send_query_in}
+      id="page_send_query_in"
+      invalid={!!errors.page_send_query_in}
       labelText="Send query in"
-      {...register("send_query_in", { required: true })}
+      {...register("page_send_query_in", { required: true })}
+    >
+      {Object.keys(SendQueryInEnum).map(send_query_in => (
+        <SelectItem
+          key={send_query_in}
+          text={send_query_in.replace(/_/g, " ")}
+          value={send_query_in}
+        />
+      ))}
+    </Select>
+  );
+
+  const SchoolIdSendQueryInSelect = () => (
+    <Select
+      id="school_send_query_in"
+      invalid={!!errors.school_id_send_query_in}
+      labelText="School Id Send query in"
+      {...register("school_id_send_query_in", { required: true })}
     >
       {Object.keys(SendQueryInEnum).map(send_query_in => (
         <SelectItem
@@ -472,7 +489,9 @@ export function SchoolConnectivityFormInputs({
       <PaginationTypeSelect />
       {watchPaginationType === PAGE_NUMBER && <PaginationPageNumberInputs />}
       {watchPaginationType === LIMIT_OFFSET && <PaginationLimitOffsetInputs />}
-      <SendQueryInSelect />
+      <PageSendQueryInSelect />
+      <SchoolIdSendQueryInSelect />
+
       <FrequencySelect />
       {hasFileUpload && (
         <>
