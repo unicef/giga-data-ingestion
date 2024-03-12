@@ -22,8 +22,8 @@ spec:
             - -c
             - >
               until pg_isready
-                --host $DB_HOST
-                --username $POSTGRESQL_USERNAME;
+              --host $DB_HOST
+              --username $POSTGRESQL_USERNAME;
               do echo waiting for database;
               sleep 2;
               done;
