@@ -80,8 +80,8 @@ tasks:
     cmds:
       - docker compose --project-name {{.PROJECT_NAME}} down --volumes --remove-orphans {{.CLI_ARGS}}
 
-  test:
-    desc: Run unit tests
+  test-api:
+    desc: Run API unit tests
     dir: api
     cmds:
       - poetry run pytest
@@ -210,3 +210,18 @@ tasks:
     desc: Install database fixtures
     cmds:
       - task exec -- api poetry run python -m scripts.load_fixtures {{.CLI_ARGS}}
+
+  test-build:
+    desc: Test UI build
+    dir: ui
+    cmds:
+      - rm -rf build
+      - >
+        docker run --rm 
+        --volume $(pwd):/app 
+        --workdir /app
+        --env-file .env
+        --entrypoint /bin/sh
+        --user $(id -u):$(id -g)
+        node:20-alpine
+        -c "npm install && npm run build"
