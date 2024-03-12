@@ -3,6 +3,7 @@ import { Dispatch, SetStateAction } from "react";
 import { Modal } from "@carbon/react";
 
 interface InfoIngestionModalModalProps {
+  ingestionDate: Date;
   errorMessage: string;
   ingestionName: string;
   open: boolean;
@@ -10,6 +11,7 @@ interface InfoIngestionModalModalProps {
 }
 const InfoIngestionModal = ({
   errorMessage,
+  ingestionDate,
   ingestionName,
   open,
   setOpen,
@@ -17,6 +19,7 @@ const InfoIngestionModal = ({
   const handleRequestclose = () => {
     setOpen(false);
   };
+
   return (
     <Modal
       modalHeading={`${ingestionName} ingestion`}
@@ -24,7 +27,11 @@ const InfoIngestionModal = ({
       onRequestClose={handleRequestclose}
       passiveModal
     >
-      {errorMessage}
+      <p>
+        Run on{" "}
+        {ingestionDate ? new Date(ingestionDate).toLocaleString() : "N/A"}
+      </p>
+      <p>{errorMessage}</p>
     </Modal>
   );
 };

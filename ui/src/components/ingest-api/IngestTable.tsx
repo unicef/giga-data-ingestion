@@ -47,6 +47,8 @@ function IngestTable() {
   const [isOpenConfirmModal, setIsOpenConfirmModal] = useState<boolean>(false);
   const [isOpenInfoModal, setIsOpenInfoModal] = useState<boolean>(false);
   const [infoModalErrorMessage, setInfoModalErrorMesage] = useState<string>("");
+  const [selectedIngestionLastModified, setSelectedIngestionLastModified] =
+    useState<Date>(new Date());
   const api = useApi();
 
   const {
@@ -94,6 +96,7 @@ function IngestTable() {
             className="flex cursor-pointer"
             onClick={() => {
               if (schoolList.error_message) {
+                setSelectedIngestionLastModified(schoolList.date_modified);
                 setInfoModalErrorMesage(schoolList.error_message);
                 setSelectedIngestionName(schoolList.name);
                 setIsOpenInfoModal(true);
@@ -223,6 +226,7 @@ function IngestTable() {
       )}
       {isOpenInfoModal && (
         <InfoIngestionModal
+          ingestionDate={selectedIngestionLastModified}
           errorMessage={infoModalErrorMessage}
           ingestionName={selectedIngestionName}
           open={isOpenInfoModal}
