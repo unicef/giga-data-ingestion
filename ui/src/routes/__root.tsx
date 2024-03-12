@@ -9,14 +9,15 @@ import {
 } from "@tanstack/react-router";
 
 import gigaLogo from "@/assets/GIGA_logo.png";
+import homeBg from "@/assets/home-bg.jpg";
 import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
 import NotFound from "@/components/utils/NotFound.tsx";
 import TanStackRouterDevtools from "@/components/utils/TanStackRouterDevTools.tsx";
+import { useStore } from "@/context/store";
 import useGetToken from "@/hooks/useGetToken.ts";
 import useLogout from "@/hooks/useLogout.ts";
 import info from "@/info.json";
-import { useStore } from "@/store.ts";
 
 export const Route = createRootRoute({
   component: Layout,
@@ -34,11 +35,17 @@ function Base({ children }: PropsWithChildren) {
         <title>{info.title}</title>
         <meta name="description" content={info.description} />
         <link rel="icon" type="image/png" href={gigaLogo} />
+        <meta property="og:title" content={info.title} />
+        <meta property="og:description" content={info.description} />
+        <meta property="og:image" content={homeBg} />
+        <meta property="og:image:type" content="image/jpeg" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="og:type" content="website" />
       </Helmet>
       <ScrollRestoration />
 
       <Navbar />
-      <main className="flex-auto">{children}</main>
+      <main className="flex-auto flex-row">{children}</main>
       <Footer />
 
       <Suspense>
@@ -49,7 +56,9 @@ function Base({ children }: PropsWithChildren) {
 }
 
 function Layout() {
-  const { setUser } = useStore();
+  const {
+    appStateActions: { setUser },
+  } = useStore();
   const { instance } = useMsal();
   const account = useAccount();
   const getToken = useGetToken();

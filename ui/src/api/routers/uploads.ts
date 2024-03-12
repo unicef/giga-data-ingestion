@@ -1,6 +1,7 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
-import { DataQualityCheckResult, PagedUploadResponse } from "@/types/upload";
+import { PagedResponse } from "@/types/api.ts";
+import { DataQualityCheckResult, UploadParams } from "@/types/upload";
 import { UploadResponse } from "@/types/upload.ts";
 
 type Header = {
@@ -84,23 +85,7 @@ export default function routes(axi: AxiosInstance) {
     ): Promise<AxiosResponse<DataQualityCheckResult>> => {
       return axi.get(`upload/dq_check/${upload_id}`);
     },
-    upload_file: (params: {
-      dataset: string;
-      file: File;
-      sensitivity_level: string;
-      pii_classification: string;
-      geolocation_data_source: string;
-      data_collection_modality: string;
-      data_collection_date: string;
-      domain: string;
-      date_modified: string;
-      source?: string | null;
-      data_owner: string;
-      country: string;
-      school_id_type: string;
-      description: string;
-      [key: string]: string | File | null | undefined;
-    }): Promise<AxiosResponse<UploadResponse>> => {
+    upload: (params: UploadParams): Promise<AxiosResponse<UploadResponse>> => {
       const formData = new FormData();
       Object.keys(params).forEach(key => {
         if (params[key] !== null && params[key] !== undefined) {
@@ -114,16 +99,11 @@ export default function routes(axi: AxiosInstance) {
         },
       });
     },
-    list_uploads: (params: {
-      count: number;
-      page: number;
-    }): Promise<AxiosResponse<PagedUploadResponse>> => {
-      return axi.get("/upload", {
-        params: {
-          count: params.count,
-          page: params.page,
-        },
-      });
+    list: (params?: {
+      page?: number;
+      page_size?: number;
+    }): Promise<AxiosResponse<PagedResponse<UploadResponse>>> => {
+      return axi.get("/upload", { params });
     },
   };
 }

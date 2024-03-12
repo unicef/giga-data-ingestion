@@ -66,6 +66,25 @@ export interface DataQualityCheckResult {
   geospatial_points_checks: CheckResult[];
 }
 
+export interface UploadParams {
+  column_to_schema_mapping: string;
+  country: string;
+  data_collection_date: string;
+  data_collection_modality: string;
+  data_owner: string;
+  dataset: string;
+  date_modified: string;
+  description: string;
+  domain: string;
+  file: File;
+  geolocation_data_source: string;
+  pii_classification: string;
+  school_id_type: string;
+  sensitivity_level: string;
+  source?: string | null;
+  [key: string]: string | File | null | undefined;
+}
+
 export interface UploadResponse {
   id: string;
   created: string;
@@ -77,11 +96,5 @@ export interface UploadResponse {
   source: string | null;
   original_filename: string;
   upload_path: string;
-}
-export interface PagedUploadResponse {
-  data: UploadResponse[];
-  page_index: string;
-  per_page: string;
-  total_items: string;
-  total_pages: string;
+  column_to_schema_mapping: string;
 }

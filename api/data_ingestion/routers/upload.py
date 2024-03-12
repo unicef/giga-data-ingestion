@@ -1,6 +1,5 @@
 import asyncio
 import json
-import math
 import os
 from typing import Annotated
 
@@ -29,9 +28,9 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.mocks.upload_checks import get_upload_checks
 from data_ingestion.models import FileUpload
+from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
-    PagedResponseSchema,
 )
 
 router = APIRouter(
@@ -44,19 +43,20 @@ router = APIRouter(
 @router.post("", response_model=FileUploadSchema)
 async def upload_file(
     response: Response,
-    file: UploadFile,
-    dataset: str,
-    sensitivity_level: Annotated[str, Form()],
-    pii_classification: Annotated[str, Form()],
-    geolocation_data_source: Annotated[str, Form()],
-    data_collection_modality: Annotated[str, Form()],
-    data_collection_date: Annotated[AwareDatetime, Form()],
-    domain: Annotated[str, Form()],
-    date_modified: Annotated[AwareDatetime, Form()],
-    data_owner: Annotated[str, Form()],
+    column_to_schema_mapping: Annotated[str, Form()],
     country: Annotated[str, Form()],
-    school_id_type: Annotated[str, Form()],
+    data_collection_date: Annotated[AwareDatetime, Form()],
+    data_collection_modality: Annotated[str, Form()],
+    data_owner: Annotated[str, Form()],
+    dataset: str,
+    date_modified: Annotated[AwareDatetime, Form()],
     description: Annotated[str, Form()],
+    domain: Annotated[str, Form()],
+    file: UploadFile,
+    geolocation_data_source: Annotated[str, Form()],
+    pii_classification: Annotated[str, Form()],
+    school_id_type: Annotated[str, Form()],
+    sensitivity_level: Annotated[str, Form()],
     source: str | None = Form(None),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(azure_scheme),
@@ -94,12 +94,13 @@ async def upload_file(
     country_code = coco.convert(country, to="ISO3")
 
     file_upload = FileUpload(
-        uploader_id=user.oid,
-        uploader_email=user.email or user.preferred_username or user.upn,
+        uploader_id=user.sub,
+        uploader_email=user.claims.get("email", user.email),
         country=country_code,
         dataset=dataset,
         source=source,
         original_filename=file.filename,
+        column_to_schema_mapping=column_to_schema_mapping,
     )
     db.add(file_upload)
     await db.commit()
@@ -216,12 +217,12 @@ async def get_file_properties(upload_id: str):
     return res
 
 
-@router.get("", response_model=PagedResponseSchema)
+@router.get("", response_model=PagedResponseSchema[FileUploadSchema])
 async def list_uploads(
     user: User = Depends(azure_scheme),
     db: AsyncSession = Depends(get_db),
-    count: Annotated[int, Field(ge=1, le=50)] = 10,
     page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Field(ge=1, le=50)] = 10,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -235,14 +236,11 @@ async def list_uploads(
     count_query = select(func.count()).select_from(base_query.subquery())
     total = await db.scalar(count_query)
 
-    items = await db.scalars(base_query.offset((page - 1) * count).limit(count))
+    items = await db.scalars(base_query.offset((page - 1) * page_size).limit(page_size))
 
-    paged_response = PagedResponseSchema[FileUploadSchema](
-        data=items,
-        page_index=page,
-        per_page=count,
-        total_items=total,
-        total_pages=math.ceil(total / count),
-    )
-
-    return paged_response
+    return {
+        "data": items,
+        "page": page,
+        "page_size": page_size,
+        "total_count": total,
+    }

@@ -1,4 +1,9 @@
+import { useEffect } from "react";
+
+import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
+
+import { useStore } from "@/context/store.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
   component: Layout,
@@ -26,18 +31,46 @@ function Layout() {
   const { uploadType } = Route.useParams();
   const title = uploadType.replace(/-/g, " ");
 
+  const {
+    uploadSlice: { stepIndex },
+    uploadSliceActions: { resetUploadSliceState },
+  } = useStore();
+
+  useEffect(() => {
+    return resetUploadSliceState;
+  }, [resetUploadSliceState]);
+
   return (
-    <div className="flex flex-col gap-4">
-      <h2 className="text-[23px] capitalize">{title}</h2>
-      <p>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-        tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
-        veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-        commodo consequat. Duis aute irure dolor in reprehenderit in voluptate
-        velit esse cillum dolore eu fugiat nulla pariatur.
-      </p>
+    <Stack gap={10}>
+      <Stack gap={1}>
+        <h2 className="text-[23px] capitalize">{title}</h2>
+        <p>
+          School data is the dataset of schools location & their attributes like
+          name, education level, internet connection, computer count etc.
+        </p>
+      </Stack>
+      <ProgressIndicator currentIndex={stepIndex} spaceEqually>
+        <ProgressStep label="1" description="Upload" secondaryLabel="Upload" />
+        <ProgressStep
+          label="2"
+          description="Add metadata"
+          secondaryLabel="Add metadata"
+        />
+        {/* TODO: Add column mapping */}
+        {/*<ProgressStep*/}
+        {/*  label="3"*/}
+        {/*  description="Configure columns"*/}
+        {/*  secondaryLabel="Configure columns"*/}
+        {/*/>*/}
+        <ProgressStep
+          label="3"
+          // description="Data quality review & submit"
+          // secondaryLabel="Data quality review & submit"
+          secondaryLabel="Submit"
+        />
+      </ProgressIndicator>
 
       <Outlet />
-    </div>
+    </Stack>
   );
 }
