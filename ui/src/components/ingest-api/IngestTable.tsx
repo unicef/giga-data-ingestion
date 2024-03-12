@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { Add, Restart, Tools } from "@carbon/icons-react";
 import {
   Button,
+  Link as CarbonLink,
   DataTable,
   DataTableSkeleton,
   Table,
@@ -25,7 +26,9 @@ import { useApi } from "@/api";
 import { HEADERS, ITEMS_PER_PAGE } from "@/constants/ingest-api";
 import { useStore } from "@/context/store";
 
+import StatusIndicator from "../upload/StatusIndicator";
 import ConfirmToggleIngestionEnabledModal from "./ConfirmToggleIngestionEnabledModal";
+import InfoIngestionModal from "./InfoIngestionModal";
 
 export type LoadingStates = {
   [key: string]: boolean;
@@ -42,7 +45,8 @@ function IngestTable() {
     useState<boolean>(false);
 
   const [isOpenConfirmModal, setIsOpenConfirmModal] = useState<boolean>(false);
-
+  const [isOpenInfoModal, setIsOpenInfoModal] = useState<boolean>(false);
+  const [infoModalErrorMessage, setInfoModalErrorMesage] = useState<string>("");
   const api = useApi();
 
   const {
@@ -85,15 +89,27 @@ function IngestTable() {
         endpoint: schoolList.api_endpoint,
         frequency: schoolList.school_connectivity.ingestion_frequency_minutes,
         lastRunConnectivity: lastRun,
-        // status: (
-        //   <div className="flex">
-        //     <StatusIndicator
-        //       className="mr-1"
-        //       type={schoolList.status ? "success" : "error"}
-        //     />
-        //     {schoolList.status ? "Success" : "Failed"}
-        //   </div>
-        // ),
+        status: schoolList.error_message ? (
+          <CarbonLink
+            className="flex cursor-pointer"
+            onClick={() => {
+              if (schoolList.error_message) {
+                setInfoModalErrorMesage(schoolList.error_message);
+                setSelectedIngestionName(schoolList.name);
+                setIsOpenInfoModal(true);
+              }
+            }}
+          >
+            <StatusIndicator className="mr-1" type="error" />
+            Failed
+          </CarbonLink>
+        ) : (
+          <div className="flex">
+            <StatusIndicator className="mr-1" type="success" />
+            Success
+          </div>
+        ),
+
         lastRunList: nextRun,
         active: (
           <Toggle
@@ -203,6 +219,14 @@ function IngestTable() {
           setLoadingStates={setLoadingStates}
           setOpen={setIsOpenConfirmModal}
           schoolListId={selectedIngestionId}
+        />
+      )}
+      {isOpenInfoModal && (
+        <InfoIngestionModal
+          errorMessage={infoModalErrorMessage}
+          ingestionName={selectedIngestionName}
+          open={isOpenInfoModal}
+          setOpen={setIsOpenInfoModal}
         />
       )}
     </>

@@ -28,10 +28,10 @@ from data_ingestion.models import SchoolConnectivity, SchoolList
 from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.qos import (
     CreateApiIngestionRequest,
-    CreateApiIngestionResponse,
     EditApiIngestionRequest,
     SchoolConnectivitySchema,
     SchoolListSchema,
+    UpdateSchoolListErrorMessageRequest,
 )
 
 router = APIRouter(
@@ -207,6 +207,30 @@ async def update_school_list_status(
     return 0
 
 
+@router.patch("/school_list/{id}/error_message", status_code=status.HTTP_204_NO_CONTENT)
+async def update_school_list_error_message(
+    response: Response,
+    body: UpdateSchoolListErrorMessageRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        update_query = (
+            update(SchoolList)
+            .where(SchoolList.id == body.id)
+            .values(error_message=body.error_message)
+        )
+        await db.execute(update_query)
+        await db.commit()
+        response.status_code = status.HTTP_204_NO_CONTENT
+
+    except exc.SQLAlchemyError as err:
+        raise HTTPException(
+            detail=err._message, status_code=status.HTTP_400_BAD_REQUEST
+        ) from err
+
+    return 0
+
+
 @router.get(
     "/school_connectivity/{id}",
     response_model=SchoolConnectivitySchema,
@@ -230,14 +254,13 @@ async def get_school_connectivity(
 
 @router.post(
     "/api_ingestion",
-    response_model=CreateApiIngestionResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_api_ingestion(
     response: Response,
     file: UploadFile,
+    data: Annotated[CreateApiIngestionRequest, Depends()],
     db: AsyncSession = Depends(get_db),
-    data: CreateApiIngestionRequest = Depends(),
 ):
     if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
         raise HTTPException(

@@ -25,6 +25,7 @@ class ApiConfiguration(BaseModel):
     date_created: datetime
     date_modified: datetime
     enabled: bool
+    error_message: str | None
     page_number_key: str | None
     page_offset_key: str | None
     page_size_key: str | None
@@ -66,6 +67,7 @@ class ApiConfigurationRequest(BaseModel):
     bearer_auth_bearer_token: str | None
     data_key: str
     enabled: bool
+    error_message: str
     page_number_key: str | None
     page_offset_key: str | None
     page_size_key: str | None
@@ -129,3 +131,8 @@ class EditApiIngestionRequest(BaseModel):
 class CreateApiIngestionResponse(BaseModel):
     school_list: SchoolListSchema
     school_connectivity: SchoolConnectivitySchema
+
+
+class UpdateSchoolListErrorMessageRequest(BaseModel):
+    id: str
+    error_message: str

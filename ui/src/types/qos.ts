@@ -34,6 +34,7 @@ export interface ApiConfigurationResponse {
   date_created: Date;
   date_modified: Date;
   enabled: boolean;
+  error_message: string | null;
   page_number_key: string;
   page_offset_key: string;
   page_size_key: string;

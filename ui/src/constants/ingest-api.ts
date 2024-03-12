@@ -16,10 +16,10 @@ export const HEADERS = [
     header: "Last Connectivity Run",
     key: "lastRunConnectivity",
   },
-  // {
-  //   header: "Status",
-  //   key: "status",
-  // },
+  {
+    header: "Status",
+    key: "status",
+  },
   {
     header: "Last School list run",
     key: "lastRunList",
