@@ -32,11 +32,14 @@ export interface ApiConfigurationResponse {
   bearer_auth_bearer_token: string;
   data_key: string;
   date_created: Date;
+  date_last_ingested: Date;
+  date_last_successfully_ingested: Date;
   date_modified: Date;
   enabled: boolean;
   error_message: string | null;
   page_number_key: string;
   page_offset_key: string;
+  page_send_query_in: SendQueryInEnum;
   page_size_key: string;
   page_starts_with: number;
   pagination_type: PaginationTypeEnum;
@@ -44,7 +47,7 @@ export interface ApiConfigurationResponse {
   request_body: string;
   request_method: RequestMethodEnum;
   school_id_key: string;
-  send_query_in: SendQueryInEnum;
+  school_id_send_query_in: SendQueryInEnum;
   size: number;
   user_email: string;
   user_id: string;
@@ -88,8 +91,10 @@ export interface ApiIngestionFormValues {
   bearer_auth_bearer_token: string | null;
   data_key: string;
   enabled: boolean;
+  error_message: string | null;
   page_number_key: string | null;
   page_offset_key: string | null;
+  page_send_query_in: SendQueryInEnum;
   page_size_key: string | null;
   page_starts_with: number | null;
   pagination_type: PaginationTypeEnum;
@@ -97,7 +102,7 @@ export interface ApiIngestionFormValues {
   request_body: string | null;
   request_method: RequestMethodEnum;
   school_id_key: string;
-  send_query_in: SendQueryInEnum;
+  school_id_send_query_in: SendQueryInEnum;
   size: number | null;
 }
 
@@ -122,8 +127,10 @@ export const initialApiIngestionFormValues: ApiIngestionFormValues = {
   bearer_auth_bearer_token: null,
   data_key: "",
   enabled: true,
+  error_message: null,
   page_number_key: null,
   page_offset_key: null,
+  page_send_query_in: SendQueryInEnum.NONE,
   page_size_key: null,
   page_starts_with: null,
   pagination_type: PaginationTypeEnum.NONE,
@@ -131,7 +138,7 @@ export const initialApiIngestionFormValues: ApiIngestionFormValues = {
   request_body: null,
   request_method: RequestMethodEnum.GET,
   school_id_key: "",
-  send_query_in: SendQueryInEnum.NONE,
+  school_id_send_query_in: SendQueryInEnum.NONE,
   size: null,
 };
 
