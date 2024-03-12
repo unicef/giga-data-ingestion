@@ -36,8 +36,11 @@ jobs:
                 releaseName: email-service
                 namespace: $(kubernetesNamespace)
                 arguments: >
+                  --values infra/helm/data-ingestion.values-override.yaml
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
                   --set image.tag="$(Build.SourceVersion)"
+                  --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
+                  --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
               displayName: Helm deploy production-config email service
@@ -50,8 +53,11 @@ jobs:
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/email-service.values-override-prd.yaml
                 arguments: >
+                  --values infra/helm/data-ingestion.values-override.yaml
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
                   --set image.tag="$(Build.SourceVersion)"
+                  --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
+                  --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
               displayName: Helm deploy Ingestion Portal
@@ -70,6 +76,7 @@ jobs:
                   --set ingress.hosts[0].host="io-dataingestion-$(deployEnv).unitst.org"
                   --set ingress.hosts[0].paths[0].path="/"
                   --set ingress.hosts[0].paths[0].pathType=Prefix
+                  --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
                   --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
@@ -90,4 +97,5 @@ jobs:
                   --set ingress.hosts[0].host="io-dataingestion-$(deployEnv).unitst.org"
                   --set ingress.hosts[0].paths[0].path="/"
                   --set ingress.hosts[0].paths[0].pathType=Prefix
+                  --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
                   --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
