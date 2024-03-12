@@ -23,11 +23,14 @@ class ApiConfiguration(BaseModel):
     bearer_auth_bearer_token: str | None
     data_key: str
     date_created: datetime
+    date_last_ingested: datetime
+    date_last_successfully_ingested: datetime
     date_modified: datetime
     enabled: bool
     error_message: str | None
     page_number_key: str | None
     page_offset_key: str | None
+    page_send_query_in: SendQueryInEnum
     page_size_key: str | None
     page_starts_with: int | None
     pagination_type: PaginationTypeEnum
@@ -35,7 +38,7 @@ class ApiConfiguration(BaseModel):
     request_body: str | None
     request_method: RequestMethodEnum
     school_id_key: str
-    send_query_in: SendQueryInEnum
+    school_id_send_query_in: SendQueryInEnum
     size: int | None
 
 
@@ -67,9 +70,10 @@ class ApiConfigurationRequest(BaseModel):
     bearer_auth_bearer_token: str | None
     data_key: str
     enabled: bool
-    error_message: str
+    error_message: str | None
     page_number_key: str | None
     page_offset_key: str | None
+    page_send_query_in: SendQueryInEnum
     page_size_key: str | None
     page_starts_with: int | None
     pagination_type: PaginationTypeEnum
@@ -77,7 +81,7 @@ class ApiConfigurationRequest(BaseModel):
     request_body: str | None
     request_method: RequestMethodEnum
     school_id_key: str
-    send_query_in: SendQueryInEnum
+    school_id_send_query_in: SendQueryInEnum
     size: int | None
 
 

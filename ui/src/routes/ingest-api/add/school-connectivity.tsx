@@ -74,7 +74,6 @@ function SchoolConnectivity() {
   const { errors } = formState;
   const watchAuthType = watch("authorization_type");
   const watchPaginationType = watch("pagination_type");
-  const watchSendQueryIn = watch("send_query_in");
   const watchRequestMethod = watch("request_method");
 
   const hasError = Object.keys(errors).length > 0;
@@ -108,7 +107,7 @@ function SchoolConnectivity() {
   useEffect(() => {
     resetField("query_parameters");
     resetField("request_body");
-  }, [watchSendQueryIn, resetField]);
+  }, [resetField]);
 
   const onSubmit: SubmitHandler<SchoolConnectivityFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
