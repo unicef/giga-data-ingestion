@@ -25,6 +25,7 @@ import { useApi } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import ControlledDatepicker from "@/components/upload/ControlledDatepicker.tsx";
 import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
+import { useStore } from "@/context/store";
 import useRoles from "@/hooks/useRoles.ts";
 import {
   dataCollectionModalityOptions,
@@ -36,7 +37,6 @@ import {
   sensitivityOptions,
   sourceOptions,
 } from "@/mocks/metadataFormValues.tsx";
-import { useStore } from "@/store.ts";
 import { MetadataFormValues } from "@/types/metadata.ts";
 import { capitalizeFirstLetter } from "@/utils/string.ts";
 
@@ -46,7 +46,7 @@ export const Route = createFileRoute(
   component: Metadata,
   loader: () => {
     const {
-      upload: { file },
+      uploadSlice: { file },
     } = useStore.getState();
     if (!file) {
       throw redirect({ to: ".." });
@@ -56,8 +56,15 @@ export const Route = createFileRoute(
 
 function Metadata() {
   const api = useApi();
-  const { upload, setUpload, incrementStepIndex, decrementStepIndex } =
-    useStore();
+
+  const {
+    uploadSlice,
+    uploadSliceActions: {
+      decrementStepIndex,
+      incrementStepIndex,
+      setUploadSliceState,
+    },
+  } = useStore();
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType } = Route.useParams();
   const { countryDatasets, isPrivileged } = useRoles();
@@ -99,7 +106,7 @@ function Metadata() {
 
   const onSubmit: SubmitHandler<MetadataFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
-      console.log("Form has errors, not submitting");
+      // form has errors, don't submit
       return;
     }
 
@@ -107,20 +114,21 @@ function Metadata() {
     setIsUploadError(false);
 
     const body = {
-      dataset: uploadType,
-      file: upload.file!,
-      sensitivity_level: data.sensitivityLevel,
-      pii_classification: data.piiClassification,
-      geolocation_data_source: data.geolocationDataSource,
-      data_collection_modality: data.dataCollectionModality,
-      data_collection_date: new Date(data.dataCollectionDate).toISOString(),
-      domain: data.domain,
-      date_modified: new Date(data.dateModified).toISOString(),
-      source: data.source,
-      data_owner: data.dataOwner,
+      column_to_schema_mapping: JSON.stringify(uploadSlice.columnMapping),
       country: data.country,
-      school_id_type: data.schoolIdType,
+      data_collection_date: new Date(data.dataCollectionDate).toISOString(),
+      data_collection_modality: data.dataCollectionModality,
+      data_owner: data.dataOwner,
+      dataset: uploadType,
+      date_modified: new Date(data.dateModified).toISOString(),
       description: data.description,
+      domain: data.domain,
+      file: uploadSlice.file!,
+      geolocation_data_source: data.geolocationDataSource,
+      pii_classification: data.piiClassification,
+      school_id_type: data.schoolIdType,
+      sensitivity_level: data.sensitivityLevel,
+      source: data.source,
     };
 
     try {
@@ -130,10 +138,12 @@ function Metadata() {
 
       setIsUploading(false);
 
-      setUpload({
-        ...upload,
-        uploadDate: upload.timestamp,
-        uploadId,
+      setUploadSliceState({
+        uploadSlice: {
+          ...uploadSlice,
+          uploadDate: uploadSlice.timeStamp,
+          uploadId: uploadId,
+        },
       });
 
       incrementStepIndex();

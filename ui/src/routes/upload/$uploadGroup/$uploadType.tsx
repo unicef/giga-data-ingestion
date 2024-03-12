@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
-import { useStore } from "@/store.ts";
+import { useStore } from "@/context/store.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
   component: Layout,
@@ -31,12 +31,14 @@ function Layout() {
   const { uploadType } = Route.useParams();
   const title = uploadType.replace(/-/g, " ");
 
-  const { upload, resetUploadState } = useStore();
-  const { stepIndex } = upload;
+  const {
+    uploadSlice: { stepIndex },
+    uploadSliceActions: { resetUploadSliceState },
+  } = useStore();
 
   useEffect(() => {
-    return resetUploadState;
-  }, [resetUploadState]);
+    return resetUploadSliceState;
+  }, [resetUploadSliceState]);
 
   return (
     <Stack gap={10}>

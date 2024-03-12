@@ -5,6 +5,7 @@ from typing import Annotated
 
 import country_converter as coco
 import magic
+from azure.core.exceptions import HttpResponseError
 from fastapi import (
     APIRouter,
     Depends,
@@ -21,7 +22,6 @@ from pydantic import AwareDatetime, Field
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
 from data_ingestion.db import get_db
 from data_ingestion.internal.auth import azure_scheme
@@ -43,19 +43,20 @@ router = APIRouter(
 @router.post("", response_model=FileUploadSchema)
 async def upload_file(
     response: Response,
-    file: UploadFile,
-    dataset: str,
-    sensitivity_level: Annotated[str, Form()],
-    pii_classification: Annotated[str, Form()],
-    geolocation_data_source: Annotated[str, Form()],
-    data_collection_modality: Annotated[str, Form()],
-    data_collection_date: Annotated[AwareDatetime, Form()],
-    domain: Annotated[str, Form()],
-    date_modified: Annotated[AwareDatetime, Form()],
-    data_owner: Annotated[str, Form()],
+    column_to_schema_mapping: Annotated[str, Form()],
     country: Annotated[str, Form()],
-    school_id_type: Annotated[str, Form()],
+    data_collection_date: Annotated[AwareDatetime, Form()],
+    data_collection_modality: Annotated[str, Form()],
+    data_owner: Annotated[str, Form()],
+    dataset: str,
+    date_modified: Annotated[AwareDatetime, Form()],
     description: Annotated[str, Form()],
+    domain: Annotated[str, Form()],
+    file: UploadFile,
+    geolocation_data_source: Annotated[str, Form()],
+    pii_classification: Annotated[str, Form()],
+    school_id_type: Annotated[str, Form()],
+    sensitivity_level: Annotated[str, Form()],
     source: str | None = Form(None),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(azure_scheme),
@@ -99,6 +100,7 @@ async def upload_file(
         dataset=dataset,
         source=source,
         original_filename=file.filename,
+        column_to_schema_mapping=column_to_schema_mapping,
     )
     db.add(file_upload)
     await db.commit()
