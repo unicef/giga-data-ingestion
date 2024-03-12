@@ -9,6 +9,6 @@ metadata:
     helm.sh/hook-weight: "-10"
     helm.sh/hook-delete-policy: before-hook-creation
 data:
-  DB_HOST: "postgres-postgresql-hl"
+  DB_HOST: "postgres-postgresql-primary-hl"
   DB_PORT: "5432"
   EMAIL_RENDERER_SERVICE_URL: "http://email-service:3020"

@@ -125,10 +125,7 @@ tasks:
         --version 14.0.5
         --namespace giga-data-ingestion
         --values ./helm/pg-values.yaml
-        --set primary.readinessProbe.enabled=false
-        --set primary.livenessProbe.enabled=false
-        --set readReplicas.readinessProbe.enabled=false
-        --set readReplicas.livenessProbe.enabled=false
+        --values ./helm/pg-values-override-local.yaml
       - >
         helm upgrade --install email-service ./helm/email-service
         --namespace giga-data-ingestion
@@ -137,9 +134,9 @@ tasks:
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
         --namespace giga-data-ingestion
+        --values ./helm/data-ingestion.values-override-local.yaml
         --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}}
         --set image.tag={{.COMMIT_SHA}}
-        --set service.type=LoadBalancer
 
   helm-upi:
     desc: Install/upgrade Helm chart to a K8s cluster with configured HTTPS ingress
@@ -151,10 +148,7 @@ tasks:
         --version 14.0.5
         --namespace giga-data-ingestion
         --values ./helm/pg-values.yaml
-        --set primary.readinessProbe.enabled=false
-        --set primary.livenessProbe.enabled=false
-        --set readReplicas.readinessProbe.enabled=false
-        --set readReplicas.livenessProbe.enabled=false
+        --values ./helm/pg-values-override-local.yaml
       - >
         helm upgrade --install email-service ./helm/email-service
         --namespace giga-data-ingestion
@@ -163,13 +157,11 @@ tasks:
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
         --namespace giga-data-ingestion
+        --values ./helm/data-ingestion.values-override-local-ingress.yaml
+        --values ./helm/data-ingestion.values-override-prd.yaml
         --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}}
         --set image.tag={{.COMMIT_SHA}}
-        --set ingress.enabled=true
-        --set ingress.annotations=null
         --set ingress.hosts[0].host={{.INGESTION_PORTAL_INGRESS_HOST}}
-        --set ingress.hosts[0].paths[0].path=/
-        --set ingress.hosts[0].paths[0].pathType=Prefix
 
   helm-down:
     desc: Uninstall Helm chart
