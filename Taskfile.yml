@@ -224,4 +224,4 @@ tasks:
         --entrypoint /bin/sh
         --user $(id -u):$(id -g)
         node:20-alpine
-        -c "npm install && npm run build"
+        -c "npm ci && npm run build"
