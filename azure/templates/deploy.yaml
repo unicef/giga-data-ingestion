@@ -9,25 +9,26 @@ jobs:
             - checkout: self
 
             - task: HelmDeploy@0
-              displayName: Helm deploy Ingestion Portal
+              displayName: Add Bitnami Helm repo
+              inputs:
+                command: repo
+                arguments: add bitnami https://charts.bitnami.com/bitnami
+                namespace: $(kubernetesNamespace)
+
+            - task: HelmDeploy@0
+              displayName: Helm deploy PostgreSQL
               inputs:
                 command: upgrade
-                chartType: FilePath
-                chartPath: "$(Build.SourcesDirectory)/infra/helm/data-ingestion"
-                releaseName: ingestion-portal
+                chartType: Name
+                chartName: bitnami/postgresql
+                chartVersion: 14.0.5
+                releaseName: postgres
                 namespace: $(kubernetesNamespace)
-                arguments: >
-                  --values "$(Build.SourcesDirectory)/infra/helm/values.override.yaml"
-                  --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
-                  --set image.tag="$(Build.SourceVersion)"
-                  --set ingress.enabled=true
-                  --set ingress.hosts[0].host="io-dataingestion-$(deployEnv).unitst.org"
-                  --set ingress.hosts[0].paths[0].path="/"
-                  --set ingress.hosts[0].paths[0].pathType=Prefix
-                  --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
+                valueFile: infra/helm/pg-values.yaml
 
             - task: HelmDeploy@0
               displayName: Helm deploy email service
+              condition: eq(variables.deployEnv, 'dev')
               inputs:
                 command: upgrade
                 chartType: FilePath
@@ -37,3 +38,56 @@ jobs:
                 arguments: >
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
                   --set image.tag="$(Build.SourceVersion)"
+
+            - task: HelmDeploy@0
+              displayName: Helm deploy production-config email service
+              condition: or(eq(variables.deployEnv, 'stg'), eq(variables.deployEnv, 'prd'))
+              inputs:
+                command: upgrade
+                chartType: FilePath
+                chartPath: "$(Build.SourcesDirectory)/infra/helm/email-service"
+                releaseName: email-service
+                namespace: $(kubernetesNamespace)
+                valueFile: infra/helm/email-service.values-override-prd.yaml
+                arguments: >
+                  --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
+                  --set image.tag="$(Build.SourceVersion)"
+
+            - task: HelmDeploy@0
+              displayName: Helm deploy Ingestion Portal
+              condition: eq(variables.deployEnv, 'dev')
+              inputs:
+                command: upgrade
+                chartType: FilePath
+                chartPath: "$(Build.SourcesDirectory)/infra/helm/data-ingestion"
+                releaseName: ingestion-portal
+                namespace: $(kubernetesNamespace)
+                valueFile: infra/helm/data-ingestion.values-override.yaml
+                arguments: >
+                  --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
+                  --set image.tag="$(Build.SourceVersion)"
+                  --set ingress.enabled=true
+                  --set ingress.hosts[0].host="io-dataingestion-$(deployEnv).unitst.org"
+                  --set ingress.hosts[0].paths[0].path="/"
+                  --set ingress.hosts[0].paths[0].pathType=Prefix
+                  --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
+
+            - task: HelmDeploy@0
+              displayName: Helm deploy production-config Ingestion Portal
+              condition: or(eq(variables.deployEnv, 'stg'), eq(variables.deployEnv, 'prd'))
+              inputs:
+                command: upgrade
+                chartType: FilePath
+                chartPath: "$(Build.SourcesDirectory)/infra/helm/data-ingestion"
+                releaseName: ingestion-portal
+                namespace: $(kubernetesNamespace)
+                valueFile: infra/helm/data-ingestion.values-override.yaml
+                arguments: >
+                  --values infra/helm/data-ingestion.values-override-prd.yaml
+                  --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
+                  --set image.tag="$(Build.SourceVersion)"
+                  --set ingress.enabled=true
+                  --set ingress.hosts[0].host="io-dataingestion-$(deployEnv).unitst.org"
+                  --set ingress.hosts[0].paths[0].path="/"
+                  --set ingress.hosts[0].paths[0].pathType=Prefix
+                  --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"

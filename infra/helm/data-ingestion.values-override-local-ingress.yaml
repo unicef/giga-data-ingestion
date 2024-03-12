@@ -1,0 +1,8 @@
+ingress:
+  enabled: true
+  annotations: null
+  hosts:
+    - host: ""
+      paths:
+        - path: /
+          pathType: Prefix

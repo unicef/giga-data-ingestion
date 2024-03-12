@@ -1,0 +1,11 @@
+primary:
+  readinessProbe:
+    enabled: false
+  livenessProbe:
+    enabled: false
+
+readReplicas:
+  readinessProbe:
+    enabled: false
+  livenessProbe:
+    enabled: false
