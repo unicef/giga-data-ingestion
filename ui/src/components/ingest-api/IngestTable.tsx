@@ -18,16 +18,16 @@ import {
 } from "@carbon/react";
 // @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
 import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { AxiosResponse } from "axios";
 
-import { queryClient, useApi } from "@/api";
+import { useApi } from "@/api";
 import { HEADERS, ITEMS_PER_PAGE } from "@/constants/ingest-api";
 import { useStore } from "@/context/store";
-import { PagedSchoolListResponse } from "@/types/qos";
 
-type LoadingStates = {
+import ConfirmToggleIngestionEnabledModal from "./ConfirmToggleIngestionEnabledModal";
+
+export type LoadingStates = {
   [key: string]: boolean;
 };
 
@@ -35,6 +35,13 @@ function IngestTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({});
+  const [selectedIngestionName, setSelectedIngestionName] =
+    useState<string>("");
+  const [selectedIngestionId, setSelectedIngestionId] = useState<string>("");
+  const [selectedIngestionEnabled, setSelectedIngestionEnabled] =
+    useState<boolean>(false);
+
+  const [isOpenConfirmModal, setIsOpenConfirmModal] = useState<boolean>(false);
 
   const api = useApi();
 
@@ -54,55 +61,6 @@ function IngestTable() {
         count: ITEMS_PER_PAGE,
         page: currentPage,
       }),
-  });
-
-  const { mutateAsync: updateSchoolListStatus } = useMutation({
-    mutationFn: api.qos.update_school_list_status,
-    onMutate: async (schoolIdStatus: { id: string; enabled: boolean }) => {
-      setLoadingStates(prev => ({ ...prev, [schoolIdStatus.id]: true }));
-
-      await queryClient.cancelQueries({
-        queryKey: ["school_list", currentPage],
-      });
-
-      const previousSchoolList = queryClient.getQueryData([
-        "school_list",
-        currentPage,
-      ]);
-
-      queryClient.setQueryData(
-        ["school_list", currentPage],
-        (old: AxiosResponse<PagedSchoolListResponse>) => {
-          const newSchoolListStatus = old.data.data.find(
-            item => item.id === schoolIdStatus.id,
-          );
-
-          if (newSchoolListStatus) {
-            const newData = {
-              ...old,
-              data: {
-                ...old.data,
-                data: old.data.data.map(item =>
-                  item.id === schoolIdStatus.id
-                    ? { ...item, enabled: schoolIdStatus.enabled }
-                    : item,
-                ),
-              },
-            };
-            return newData;
-          }
-
-          return old;
-        },
-      );
-
-      return { previousSchoolList };
-    },
-
-    onSettled: (_, __, schoolIdStatus) => {
-      setLoadingStates(prev => ({ ...prev, [schoolIdStatus.id]: false }));
-      queryClient.invalidateQueries({ queryKey: ["school_list", currentPage] });
-    },
   });
 
   const schoolListData = useMemo(
@@ -143,10 +101,11 @@ function IngestTable() {
             id={schoolList.id}
             toggled={schoolList.enabled}
             onClick={async () => {
-              await updateSchoolListStatus({
-                id: schoolList.id,
-                enabled: !schoolList.enabled,
-              });
+              setSelectedIngestionEnabled(schoolList.enabled);
+              setSelectedIngestionId(schoolList.id);
+              setSelectedIngestionName(schoolList.name);
+
+              setIsOpenConfirmModal(true);
             }}
           />
         ),
@@ -164,76 +123,89 @@ function IngestTable() {
         ),
       };
     });
-  }, [schoolListData, updateSchoolListStatus, loadingStates]);
+  }, [schoolListData, loadingStates]);
 
   if (isSchoolListLoading) return <DataTableSkeleton headers={HEADERS} />;
 
   return (
-    <DataTable headers={HEADERS} rows={formattedSchoolListData}>
-      {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
-        <TableContainer>
-          <TableToolbar>
-            <TableToolbarContent className="flex items-center">
-              <Button
-                kind="ghost"
-                renderIcon={Restart}
-                hasIconOnly
-                iconDescription="Reload"
-                onClick={async () => {
-                  await refetchSchoolList();
-                }}
-                disabled={isSchoolListRefetching}
-              />
-              <Button
-                renderIcon={Add}
-                as={Link}
-                to="./add"
-                onClick={() => resetState()}
-              >
-                Create New Ingestion
-              </Button>
-            </TableToolbarContent>
-          </TableToolbar>
-          <Table {...getTableProps()}>
-            <TableHead>
-              <TableRow>
-                {headers.map(header => (
-                  // @ts-expect-error onclick bad type https://github.com/carbon-design-system/carbon/issues/14831
-                  <TableHeader {...getHeaderProps({ header })}>
-                    {header.header}
-                  </TableHeader>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map(row => (
-                <TableRow {...getRowProps({ row })}>
-                  {row.cells.map(cell => (
-                    <TableCell key={cell.id}>{cell.value}</TableCell>
+    <>
+      <DataTable headers={HEADERS} rows={formattedSchoolListData}>
+        {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
+          <TableContainer>
+            <TableToolbar>
+              <TableToolbarContent className="flex items-center">
+                <Button
+                  kind="ghost"
+                  renderIcon={Restart}
+                  hasIconOnly
+                  iconDescription="Reload"
+                  onClick={async () => {
+                    await refetchSchoolList();
+                  }}
+                  disabled={isSchoolListRefetching}
+                />
+                <Button
+                  renderIcon={Add}
+                  as={Link}
+                  to="./add"
+                  onClick={() => resetState()}
+                >
+                  Create New Ingestion
+                </Button>
+              </TableToolbarContent>
+            </TableToolbar>
+            <Table {...getTableProps()}>
+              <TableHead>
+                <TableRow>
+                  {headers.map(header => (
+                    // @ts-expect-error onclick bad type https://github.com/carbon-design-system/carbon/issues/14831
+                    <TableHeader {...getHeaderProps({ header })}>
+                      {header.header}
+                    </TableHeader>
                   ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <Pagination
-            page={currentPage}
-            pageSize={pageSize}
-            pageSizes={[10, 25, 50]}
-            totalItems={schoolListQuery?.data.total_count}
-            onChange={({
-              pageSize,
-              page,
-            }: {
-              pageSize: number;
-              page: number;
-            }) => {
-              setCurrentPage(page);
-              setPageSize(pageSize);
-            }}
-          />
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {rows.map(row => (
+                  <TableRow {...getRowProps({ row })}>
+                    {row.cells.map(cell => (
+                      <TableCell key={cell.id}>{cell.value}</TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <Pagination
+              page={currentPage}
+              pageSize={pageSize}
+              pageSizes={[10, 25, 50]}
+              totalItems={schoolListQuery?.data.total_count}
+              onChange={({
+                pageSize,
+                page,
+              }: {
+                pageSize: number;
+                page: number;
+              }) => {
+                setCurrentPage(page);
+                setPageSize(pageSize);
+              }}
+            />
+          </TableContainer>
+        )}
+      </DataTable>
+      {isOpenConfirmModal && (
+        <ConfirmToggleIngestionEnabledModal
+          isIngestionActive={selectedIngestionEnabled}
+          mutationQueryKey={currentPage}
+          ingestionName={selectedIngestionName}
+          open={isOpenConfirmModal}
+          setLoadingStates={setLoadingStates}
+          setOpen={setIsOpenConfirmModal}
+          schoolListId={selectedIngestionId}
+        />
       )}
-    </DataTable>
+    </>
   );
 }
 export default IngestTable;
