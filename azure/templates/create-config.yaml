@@ -18,6 +18,13 @@ jobs:
                 configuration: $(Build.SourcesDirectory)/infra/k8s/configmap.yaml
 
             - task: Kubernetes@1
+              displayName: Delete secret
+              inputs:
+                namespace: $(kubernetesNamespace)
+                command: delete
+                arguments: secret giga-ingestion-portal-secrets --ignore-not-found
+
+            - task: Kubernetes@1
               displayName: Create secret
               inputs:
                 namespace: $(kubernetesNamespace)
