@@ -13,6 +13,7 @@ class FileUpload(BaseModel):
     dataset: str
     source: str | None
     original_filename: str
+    column_to_schema_mapping: str
     upload_path: str
 
     model_config = ConfigDict(from_attributes=True)
