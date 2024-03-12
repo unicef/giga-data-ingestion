@@ -26,6 +26,13 @@ tasks:
       - task: setup-python
       - task: setup-node
 
+  setup-helm:
+    internal: true
+    desc: Add Helm repos
+    cmds:
+      - helm repo add bitnami https://charts.bitnami.com/bitnami
+      - helm repo update
+
   setup-pre-commit:
     internal: true
     desc: Install pre-commit hooks
@@ -152,6 +159,7 @@ tasks:
       - >
         helm upgrade --install email-service ./helm/email-service
         --namespace giga-data-ingestion
+        --values ./helm/email-service.values-override-prd.yaml
         --set image.repository={{.EMAIL_SERVICE_IMAGE_REPOSITORY}}
         --set image.tag={{.COMMIT_SHA}}
       - >
