@@ -1,8 +1,8 @@
-"""'init file_uploads, qos_school_connectivity, and qos_school_list tables'
+"""'init db'
 
-Revision ID: 361ab4c11911
-Revises: 7f77cd6a7420
-Create Date: 2024-03-12 10:52:48.757383
+Revision ID: 3ae4cebfe253
+Revises:
+Create Date: 2024-03-12 14:10:02.017846
 
 """
 from collections.abc import Sequence
@@ -11,8 +11,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "361ab4c11911"
-down_revision: str | None = "7f77cd6a7420"
+revision: str = "3ae4cebfe253"
+down_revision: str | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
