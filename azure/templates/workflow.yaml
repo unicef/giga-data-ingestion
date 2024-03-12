@@ -1,14 +1,4 @@
 stages:
-  - stage: UninstallAll
-    displayName: Uninstall all Helm charts
-    jobs:
-      - template: helm-uninstall.yaml
-
-  - stage: DeleteAll
-    displayName: Delete K8s resources in namespace
-    jobs:
-      - template: delete-resources.yaml
-
   - stage: BuildAndPushPortal
     displayName: Build and push Ingestion Portal image
     jobs:
@@ -16,13 +6,13 @@ stages:
 
   - stage: BuildAndPushEmail
     displayName: Build and push email service
-    dependsOn: [ DeleteAll ]
+    dependsOn: [ ]
     jobs:
       - template: build-and-push-email.yaml
 
   - stage: CreateConfig
     displayName: Create/update K8s configuration resources
-    dependsOn: [ DeleteAll ]
+    dependsOn: [ ]
     jobs:
       - template: create-config.yaml
 
