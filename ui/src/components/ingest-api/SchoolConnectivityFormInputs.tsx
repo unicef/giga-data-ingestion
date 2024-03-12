@@ -340,7 +340,7 @@ export function SchoolConnectivityFormInputs({
     <Select
       id="page_send_query_in"
       invalid={!!errors.page_send_query_in}
-      labelText="Send query in"
+      labelText="Page send query in"
       {...register("page_send_query_in", { required: true })}
     >
       {Object.keys(SendQueryInEnum).map(send_query_in => (
