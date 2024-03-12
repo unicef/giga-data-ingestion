@@ -108,34 +108,58 @@ tasks:
       - docker push {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.COMMIT_SHA}}
       - docker push {{.EMAIL_SERVICE_IMAGE_REPOSITORY}}:{{.COMMIT_SHA}}
 
+  k8s-prereqs:
+    desc: Install K8s prerequisites
+    dir: infra/k8s
+    cmds:
+      - kubectl apply -f namespace.yaml
+      - kubectl apply -f secrets.yaml --namespace giga-data-ingestion
+
   helm-up:
     desc: Install/upgrade Helm chart to a K8s cluster running on localhost
     dir: infra
     cmds:
-      - helm dependency update ./helm/data-ingestion
-      - kubectl apply -f k8s/namespace.yaml
-      - kubectl apply -f k8s/configmap.yaml
-      - kubectl apply -f k8s/secrets.yaml
+      - task: k8s-prereqs
+      - >
+        helm upgrade --install postgres bitnami/postgresql
+        --version 14.0.5
+        --namespace giga-data-ingestion
+        --values ./helm/pg-values.yaml
+        --set primary.readinessProbe.enabled=false
+        --set primary.livenessProbe.enabled=false
+        --set readReplicas.readinessProbe.enabled=false
+        --set readReplicas.livenessProbe.enabled=false
+      - >
+        helm upgrade --install email-service ./helm/email-service
+        --namespace giga-data-ingestion
+        --set image.repository={{.EMAIL_SERVICE_IMAGE_REPOSITORY}}
+        --set image.tag={{.COMMIT_SHA}}
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
         --namespace giga-data-ingestion
         --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}}
         --set image.tag={{.COMMIT_SHA}}
         --set service.type=LoadBalancer
-      - >
-        helm upgrade --install email-service ./helm/email-service
-        --namespace giga-data-ingestion
-        --set image.repository={{.EMAIL_SERVICE_IMAGE_REPOSITORY}}
-        --set image.tag={{.COMMIT_SHA}}
 
   helm-upi:
     desc: Install/upgrade Helm chart to a K8s cluster with configured HTTPS ingress
     dir: infra
     cmds:
-      - helm dependency update ./helm/data-ingestion
-      - kubectl apply -f k8s/namespace.yaml
-      - kubectl apply -f k8s/configmap.yaml
-      - kubectl apply -f k8s/secrets.yaml
+      - task: k8s-prereqs
+      - >
+        helm upgrade --install postgres bitnami/postgresql
+        --version 14.0.5
+        --namespace giga-data-ingestion
+        --values ./helm/pg-values.yaml
+        --set primary.readinessProbe.enabled=false
+        --set primary.livenessProbe.enabled=false
+        --set readReplicas.readinessProbe.enabled=false
+        --set readReplicas.livenessProbe.enabled=false
+      - >
+        helm upgrade --install email-service ./helm/email-service
+        --namespace giga-data-ingestion
+        --set image.repository={{.EMAIL_SERVICE_IMAGE_REPOSITORY}}
+        --set image.tag={{.COMMIT_SHA}}
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
         --namespace giga-data-ingestion
@@ -146,18 +170,18 @@ tasks:
         --set ingress.hosts[0].host={{.INGESTION_PORTAL_INGRESS_HOST}}
         --set ingress.hosts[0].paths[0].path=/
         --set ingress.hosts[0].paths[0].pathType=Prefix
-      - >
-        helm upgrade --install email-service ./helm/email-service
-        --namespace giga-data-ingestion
-        --set image.repository={{.EMAIL_SERVICE_IMAGE_REPOSITORY}}
-        --set image.tag={{.COMMIT_SHA}}
 
   helm-down:
     desc: Uninstall Helm chart
     dir: infra/helm
     cmds:
-      - helm uninstall email-service --namespace giga-data-ingestion
       - helm uninstall ingestion-portal --namespace giga-data-ingestion
+      - helm uninstall email-service --namespace giga-data-ingestion
+      - helm uninstall postgres --namespace giga-data-ingestion
+
+  helm-clean:
+    desc: Delete K8s resources
+    cmds:
       - kubectl delete all --all --namespace giga-data-ingestion
       - kubectl delete pvc --all --namespace giga-data-ingestion
 

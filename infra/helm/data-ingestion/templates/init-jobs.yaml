@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ include "data-ingestion.fullname" . }}-init-wait-db"
+  labels:
+    {{- include "data-ingestion.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  activeDeadlineSeconds: 300
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: "{{ include "data-ingestion.fullname" . }}-init-wait-db"
+          image: bitnami/postgresql:16.2.0-debian-11-r10
+          command:
+            - /bin/sh
+            - -c
+            - >
+              until pg_isready
+                --host $DB_HOST
+                --username $POSTGRESQL_USERNAME;
+              do echo waiting for database;
+              sleep 2;
+              done;
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ include "data-ingestion.fullname" . }}-init-migrate-db"
+  labels:
+      {{- include "data-ingestion.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-4"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  activeDeadlineSeconds: 300
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: "{{ include "data-ingestion.fullname" . }}-init-migrate-db"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command:
+            - /bin/sh
+            - -c
+            - alembic upgrade head
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
