@@ -55,6 +55,7 @@ class ApiConfiguration(BaseModel):
     )
 
     enabled: Mapped[bool] = mapped_column(default=True)
+    error_message: Mapped[str] = mapped_column(nullable=True)
 
     page_number_key: Mapped[str] = mapped_column(nullable=True)
     page_offset_key: Mapped[str] = mapped_column(nullable=True)
