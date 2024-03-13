@@ -13,7 +13,7 @@ import {
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
-import { IDataQualityCheckSuccessProps } from "../types/dq-report";
+import { DataQualityCheckSuccessProps } from "../types/dq-report";
 
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
@@ -22,7 +22,7 @@ export const DataQualityReportCheckSuccess = ({
   dataset,
   uploadDate,
   checkDate,
-}: IDataQualityCheckSuccessProps) => {
+}: DataQualityCheckSuccessProps) => {
   const previewText = "Successful data quality checks";
 
   return (
@@ -101,6 +101,6 @@ DataQualityReportCheckSuccess.PreviewProps = {
   checkDate: new Date().toLocaleString(undefined, {
     timeZoneName: "short",
   }),
-} as IDataQualityCheckSuccessProps;
+} as DataQualityCheckSuccessProps;
 
 export default DataQualityReportCheckSuccess;

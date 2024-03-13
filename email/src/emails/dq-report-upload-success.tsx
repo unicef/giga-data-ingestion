@@ -13,7 +13,7 @@ import {
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
-import { IDataQualityUploadSuccessProps } from "../types/dq-report";
+import { DataQualityUploadSuccessProps } from "../types/dq-report";
 
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
@@ -21,7 +21,7 @@ export const DataQualityReportUploadSuccess = ({
   uploadId,
   dataset,
   uploadDate,
-}: IDataQualityUploadSuccessProps) => {
+}: DataQualityUploadSuccessProps) => {
   const previewText = "Successful file upload";
 
   return (
@@ -92,6 +92,6 @@ DataQualityReportUploadSuccess.PreviewProps = {
   uploadDate: new Date().toLocaleString(undefined, {
     timeZoneName: "short",
   }),
-} as IDataQualityUploadSuccessProps;
+} as DataQualityUploadSuccessProps;
 
 export default DataQualityReportUploadSuccess;

@@ -11,10 +11,10 @@ import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
 import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
 import InviteUser from "./emails/invite-user";
 import {
-  IDataQualityUploadSuccessProps,
   DataQualityUploadSuccessProps,
-  IDataQualityCheckSuccessProps,
+  DataQualityUploadSuccessSchema,
   DataQualityCheckSuccessProps,
+  DataQualityCheckSuccessSchema,
 } from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
 
@@ -51,9 +51,9 @@ app.post("/email/invite-user", zValidator("json", InviteUserProps), (ctx) => {
 
 app.post(
   "/email/dq-report-upload-success",
-  zValidator("json", DataQualityUploadSuccessProps),
+  zValidator("json", DataQualityUploadSuccessSchema),
   (ctx) => {
-    const json = ctx.req.valid("json") as IDataQualityUploadSuccessProps;
+    const json = ctx.req.valid("json") as DataQualityUploadSuccessProps;
     const html = render(<DataQualityReportUploadSuccess {...json} />);
     const text = render(<DataQualityReportUploadSuccess {...json} />, {
       plainText: true,
@@ -64,9 +64,9 @@ app.post(
 
 app.post(
   "/email/dq-report-check-success",
-  zValidator("json", DataQualityCheckSuccessProps),
+  zValidator("json", DataQualityCheckSuccessSchema),
   (ctx) => {
-    const json = ctx.req.valid("json") as IDataQualityCheckSuccessProps;
+    const json = ctx.req.valid("json") as DataQualityCheckSuccessProps;
     const html = render(<DataQualityReportCheckSuccess {...json} />);
     const text = render(<DataQualityReportCheckSuccess {...json} />, {
       plainText: true,
