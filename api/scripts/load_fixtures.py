@@ -5,6 +5,7 @@ from datetime import datetime
 import yaml
 from data_ingestion import models
 from data_ingestion.db import get_db_context
+from data_ingestion.models import BaseModel
 from data_ingestion.settings import settings
 from loguru import logger
 from sqlalchemy.dialects.postgresql import insert
@@ -23,7 +24,7 @@ async def main(fixtures: list[str]):
             data = yaml.safe_load(f)
 
         try:
-            model = getattr(models, data[0]["model"])
+            model: BaseModel = getattr(models, data[0]["model"])
         except AttributeError as err:
             raise AttributeError(
                 f"Model `{data['model']}` could not be found."
