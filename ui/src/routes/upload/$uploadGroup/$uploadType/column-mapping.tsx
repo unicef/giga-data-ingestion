@@ -42,9 +42,11 @@ export const Route = createFileRoute(
   loader: () => {
     const {
       uploadSlice: { file },
+      uploadSliceActions: { setStepIndex },
     } = useStore.getState();
 
     if (!file) {
+      setStepIndex(0);
       throw redirect({ to: ".." });
     }
   },

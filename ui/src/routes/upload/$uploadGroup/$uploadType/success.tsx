@@ -12,10 +12,12 @@ export const Route = createFileRoute(
   component: Success,
   loader: () => {
     const {
-      uploadSlice: { file },
+      uploadSlice: { file, columnMapping },
+      uploadSliceActions: { setStepIndex },
     } = useStore.getState();
 
-    if (file) {
+    if (!file || Object.values(columnMapping).filter(Boolean).length === 0) {
+      setStepIndex(0);
       throw redirect({ to: ".." });
     }
   },
@@ -29,29 +31,27 @@ function Success() {
 
   return (
     <>
-      <h4 className="text-gray-3 text-base opacity-40">Step 1: Upload</h4>
-      <h4 className="text-gray-3 text-base opacity-40">Step 2: Metadata</h4>
-      <div className="flex items-center gap-2 text-[33px] text-primary">
-        <CheckmarkOutline size={30} />
-        Success!
-      </div>
-      <p>
-        Your data upload was successful. Thank you for uploading your file and
-        filling in the metadata!
-      </p>
-      <p>
-        Data quality checks will now be performed on your upload; you may check
-        the progress and output of the checks on the File Uploads page. To check
-        this upload in the future, it has Upload ID <b>{uploadId}</b> and
-        completed at{" "}
-        <b>{format(uploadDate ?? new Date(), DEFAULT_DATETIME_FORMAT)}</b>
-      </p>
-      <p>You may now safely close this page</p>
       <div>
-        <Button as={Link} to="/" onClick={resetUploadSliceState} isExpressive>
-          Back to Home
-        </Button>
+        <div className="flex items-center gap-2 text-[33px] text-primary">
+          <CheckmarkOutline size={30} />
+          Success!
+        </div>
+        <p>
+          Your data upload was successful. Thank you for uploading your file and
+          filling in the metadata!
+        </p>
+        <p>
+          Data quality checks will now be performed on your upload; you may
+          check the progress and output of the checks on the File Uploads page.
+          To check this upload in the future, it has Upload ID <b>{uploadId}</b>{" "}
+          and completed at{" "}
+          <b>{format(uploadDate ?? new Date(), DEFAULT_DATETIME_FORMAT)}</b>
+        </p>
+        <p>You may now safely close this page</p>
       </div>
+      <Button as={Link} to="/" onClick={resetUploadSliceState} isExpressive>
+        Back to Home
+      </Button>
     </>
   );
 }
