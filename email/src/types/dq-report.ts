@@ -12,7 +12,7 @@ export const DataQualityUploadSuccessProps = z.object({
   uploadDate: z.string(),
 });
 
-export interface IDataQualityCheckSuccessProps {
+export interface DataQualityCheckSuccessProps {
   uploadId: string;
   dataset: string;
   uploadDate: string;
