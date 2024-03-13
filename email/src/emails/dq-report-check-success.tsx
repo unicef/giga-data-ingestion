@@ -15,6 +15,8 @@ import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
 import { DataQualityCheckSuccessProps } from "../types/dq-report";
 
+import { getBase64Image } from "../utils/image";
+
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
 export const DataQualityReportCheckSuccess = ({
@@ -24,6 +26,12 @@ export const DataQualityReportCheckSuccess = ({
   checkDate,
 }: DataQualityCheckSuccessProps) => {
   const previewText = "Successful data quality checks";
+
+  const gigaLogo = getBase64Image("../static/GIGA_logo.png");
+
+  const CheckmarkOutlineGreen = getBase64Image(
+    "../static/CheckmarkOutlineGreen.png"
+  );
 
   return (
     <Html>
@@ -45,14 +53,20 @@ export const DataQualityReportCheckSuccess = ({
         <Body className=" bg-white px-2 font-sans">
           <Container className="border-gray-4  max-w-[1024] border border-solid ">
             <Text className="bg-primary text-white text-2xl p-4 m-0 flex">
-              <Img src="fake.png" />
+              <Img
+                className="w-10 h-10 pr-4 text-black"
+                src={`data:image/png;base64,${gigaLogo}`}
+              />
               <span className="font-light">giga</span>
               <span className="font-bold">sync</span>
             </Text>
 
             <div className="p-6 mx-auto">
-              <Heading className="mx-0 my-[30px] p-0 text-2xl font-normal text-giga-green flex">
-                <Img src="fake.png" />
+              <Heading className="flex align-middle p-0 text-2xl font-normal text-giga-green">
+                <Img
+                  className="w-10 h-10 mr-2 -mt-1"
+                  src={`data:image/png;base64,${CheckmarkOutlineGreen}`}
+                />
                 <strong>Data check successful</strong>
               </Heading>
               <Text>

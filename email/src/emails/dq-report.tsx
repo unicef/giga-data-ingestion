@@ -15,9 +15,11 @@ import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
 import { DataQualityReportEmailProps } from "../types/dq-report";
 import { dqResultSummary } from "../constants/dq-result-summary";
-
 import { cn } from "../lib/utils";
 import ChecksWithError from "../components/ChecksWithError";
+
+import { getBase64Image } from "../utils/image";
+
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
 const DataQualityReport = ({
@@ -37,11 +39,16 @@ const DataQualityReport = ({
     summary: { columns, rows, timestamp },
   } = dataQualityCheck;
 
+  const gigaLogo = getBase64Image("../static/GIGA_logo.png");
+  const MisuseOutlineRed = getBase64Image("../static/MisuseOutlineRed.png");
+  const MisuseOutlineYellow = getBase64Image(
+    "../static/MisuseOutlineYellow.png"
+  );
+
   const hasCriticalError = critical_error_check[0].percent_failed > 1;
   const titleText = hasCriticalError
     ? "Data Check Error: Action Required!"
     : "Data Check Warnings: Action Required!";
-
   return (
     <Html>
       <Tailwind config={tailwindConfig}>
@@ -63,13 +70,22 @@ const DataQualityReport = ({
         <Body className=" bg-white px-2 font-sans">
           <Container className="border-gray-4  max-w-[1024] border border-solid ">
             <Text className="bg-primary text-white text-2xl p-4 m-0 flex">
-              <Img src="/static/GIGA_logo.png" />
+              <Img
+                className="w-10 h-10 pr-4 text-black"
+                src={`data:image/png;base64,${gigaLogo}`}
+              />
               <span className="font-light">giga</span>
               <span className="font-bold">sync</span>
             </Text>
 
             <div className="flex flex-col p-10 mx-auto gap-6">
-              <Heading className="p-0 text-2xl font-normal">
+              <Heading className="flex align-middle p-0 text-2xl font-normal ">
+                <Img
+                  className="w-10 h-10 mr-2 -mt-1"
+                  src={`data:image/png;base64,${
+                    hasCriticalError ? MisuseOutlineRed : MisuseOutlineYellow
+                  }`}
+                />
                 <strong
                   className={cn({
                     "text-giga-red": hasCriticalError,

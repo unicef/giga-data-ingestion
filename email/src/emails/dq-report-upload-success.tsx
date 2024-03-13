@@ -15,6 +15,7 @@ import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
 import { DataQualityUploadSuccessProps } from "../types/dq-report";
 
+import { getBase64Image } from "../utils/image";
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
 export const DataQualityReportUploadSuccess = ({
@@ -24,6 +25,7 @@ export const DataQualityReportUploadSuccess = ({
 }: DataQualityUploadSuccessProps) => {
   const previewText = "Successful file upload";
 
+  const gigaLogo = getBase64Image("../static/GIGA_logo.png");
   return (
     <Html>
       <Tailwind config={tailwindConfig}>
@@ -44,7 +46,10 @@ export const DataQualityReportUploadSuccess = ({
         <Body className=" bg-white px-2 font-sans">
           <Container className="border-gray-4  max-w-[1024] border border-solid ">
             <Text className="bg-primary text-white text-2xl p-4 m-0 flex">
-              <Img src="fake.png" />
+              <Img
+                className="w-10 h-10 pr-4 text-black"
+                src={`data:image/png;base64,${gigaLogo}`}
+              />
               <span className="font-light">giga</span>
               <span className="font-bold">sync</span>
             </Text>
