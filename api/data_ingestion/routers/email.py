@@ -5,6 +5,7 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.email import (
     DataCheckSuccessRenderRequest,
+    DqReportRenderRequest,
     EmailRenderRequest,
     UploadSuccessRenderRequest,
 )
@@ -46,6 +47,23 @@ async def send_check_success_email(
     background_tasks.add_task(
         email.send_check_success_email,
         EmailRenderRequest[DataCheckSuccessRenderRequest](
+            email=body.email,
+            props=props,
+        ),
+    )
+    return 0
+
+
+@router.post("/dq-report", dependencies=[Security(IsPrivileged())])
+async def send_dq_report_email(
+    body: EmailRenderRequest[DqReportRenderRequest],
+    background_tasks: BackgroundTasks,
+):
+    props = DqReportRenderRequest(**body.model_dump()["props"])
+
+    background_tasks.add_task(
+        email.send_dq_report_email,
+        EmailRenderRequest[DqReportRenderRequest](
             email=body.email,
             props=props,
         ),

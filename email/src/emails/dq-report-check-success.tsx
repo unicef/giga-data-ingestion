@@ -69,6 +69,7 @@ export const DataQualityReportCheckSuccess = ({
                 />
                 <strong>Data check successful</strong>
               </Heading>
+              <Text>{`data:image/png;base64,${CheckmarkOutlineGreen}`}</Text>
               <Text>
                 Upload Id <strong>{uploadId}</strong>
               </Text>

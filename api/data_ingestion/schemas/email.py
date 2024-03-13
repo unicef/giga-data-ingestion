@@ -3,6 +3,8 @@ from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 
+from .data_quality_report import DataQualityCheck
+
 DataT = TypeVar("DataT")
 
 
@@ -22,3 +24,10 @@ class DataCheckSuccessRenderRequest(BaseModel):
     dataset: str
     uploadDate: datetime
     checkDate: datetime
+
+
+class DqReportRenderRequest(BaseModel):
+    dataset: str
+    dataQualityCheck: DataQualityCheck
+    uploadDate: datetime
+    uploadId: str

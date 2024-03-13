@@ -12,7 +12,7 @@ const ChecksWithError = ({ checks, title }: ChecksWithErrorProps) => {
     <Section>
       <span className="text-2xl px-2">{title}</span>
       <Hr className="border-gray-6 mx-0 w-full border border-solid opacity-20" />
-      <ul className="flex flex-col list-decimal gap-4 px-20">
+      <ul className=" list-decimal gap-4 px-20">
         {failedChecks.map((check) => (
           <li>
             {check.description}

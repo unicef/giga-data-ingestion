@@ -7,6 +7,7 @@ from requests import HTTPError, JSONDecodeError
 
 from data_ingestion.schemas.email import (
     DataCheckSuccessRenderRequest,
+    DqReportRenderRequest,
     EmailRenderRequest,
     UploadSuccessRenderRequest,
 )
@@ -83,4 +84,18 @@ def send_check_success_email(body: EmailRenderRequest[DataCheckSuccessRenderRequ
         json=json_dump,
         recepient=body.email,
         subject="Data checks successfully passed",
+    )
+
+
+def send_dq_report_email(body: EmailRenderRequest[DqReportRenderRequest]):
+    json_dump = body.props.model_dump()
+    json_dump["uploadDate"] = json_dump["uploadDate"].isoformat()
+    json_dump["dataQualityCheck"]["summary"]["timestamp"] = json_dump[
+        "dataQualityCheck"
+    ]["summary"]["timestamp"].isoformat()
+    send_email_base(
+        endpoint="email/dq-report",
+        json=json_dump,
+        recepient=body.email,
+        subject="DQ summary report",
     )

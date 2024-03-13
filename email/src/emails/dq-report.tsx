@@ -8,6 +8,8 @@ import {
   Hr,
   Section,
   Preview,
+  Row,
+  Column,
   Html,
   Text,
 } from "@react-email/components";
@@ -66,7 +68,6 @@ const DataQualityReport = ({
           />
         </Head>
         <Preview>{titleText}</Preview>
-
         <Body className=" bg-white px-2 font-sans">
           <Container className="border-gray-4  max-w-[1024] border border-solid ">
             <Text className="bg-primary text-white text-2xl p-4 m-0 flex">
@@ -78,7 +79,7 @@ const DataQualityReport = ({
               <span className="font-bold">sync</span>
             </Text>
 
-            <div className="flex flex-col p-10 mx-auto gap-6">
+            <div className="p-10 mx-auto gap-6">
               <Heading className="flex align-middle p-0 text-2xl font-normal ">
                 <Img
                   className="w-10 h-10 mr-2 -mt-1"
@@ -97,27 +98,27 @@ const DataQualityReport = ({
               </Heading>
 
               <Section className="flex flex-col gap-4 px-0">
-                <ul className="list-none m-0 p-0">
-                  <li>
+                <Column className="list-none m-0 p-0">
+                  <Row>
                     Upload Id <strong>{uploadId}</strong>
-                  </li>
-                  <li>
+                  </Row>
+                  <Row>
                     {" "}
                     Dataset: <strong>{dataset}</strong>
-                  </li>
-                  <li>
+                  </Row>
+                  <Row>
                     File Uploaded at <strong>{uploadDate}</strong>
-                  </li>
-                  <li>
+                  </Row>
+                  <Row>
                     Checks performed at <strong>{timestamp}</strong>
-                  </li>
-                  <li>
+                  </Row>
+                  <Row>
                     Total rows: <strong>{rows}</strong>
-                  </li>
-                  <li>
+                  </Row>
+                  <Row>
                     Total columns: <strong>{columns}</strong>
-                  </li>
-                </ul>
+                  </Row>
+                </Column>
               </Section>
 
               <ChecksWithError

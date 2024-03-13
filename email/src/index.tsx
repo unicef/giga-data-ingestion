@@ -9,12 +9,15 @@ import { secureHeaders } from "hono/secure-headers";
 
 import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
 import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
+import DataQualityReport from "./emails/dq-report";
 import InviteUser from "./emails/invite-user";
 import {
   DataQualityUploadSuccessProps,
   DataQualityUploadSuccessSchema,
   DataQualityCheckSuccessProps,
   DataQualityCheckSuccessSchema,
+  DataQualityReportEmailProps,
+  DataQualityReportEmailSchema,
 } from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
 
@@ -69,6 +72,19 @@ app.post(
     const json = ctx.req.valid("json") as DataQualityCheckSuccessProps;
     const html = render(<DataQualityReportCheckSuccess {...json} />);
     const text = render(<DataQualityReportCheckSuccess {...json} />, {
+      plainText: true,
+    });
+    return ctx.json({ html, text });
+  }
+);
+
+app.post(
+  "/email/dq-report",
+  zValidator("json", DataQualityReportEmailSchema),
+  (ctx) => {
+    const json = ctx.req.valid("json") as DataQualityReportEmailProps;
+    const html = render(<DataQualityReport {...json} />);
+    const text = render(<DataQualityReport {...json} />, {
       plainText: true,
     });
     return ctx.json({ html, text });
