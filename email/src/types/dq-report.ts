@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  DataQualityCheck,
+  DataQualityCheckSchema,
+} from "./data-quality-checks";
 
 export interface DataQualityUploadSuccessProps {
   uploadId: string;
@@ -24,4 +28,18 @@ export const DataQualityCheckSuccessSchema = z.object({
   dataset: z.string(),
   uploadDate: z.string(),
   checkDate: z.string(),
+});
+
+export interface DataQualityReportEmailProps {
+  dataset: string;
+  dataQualityCheck?: DataQualityCheck;
+  uploadDate: string;
+  uploadId: string;
+}
+
+export const DataQualityReportEmailSchema = z.object({
+  dataQualityCheck: z.optional(DataQualityCheckSchema),
+  dataset: z.string(),
+  uploadDate: z.string(),
+  uploadId: z.string(),
 });
