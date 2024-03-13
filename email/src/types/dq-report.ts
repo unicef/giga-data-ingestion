@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export interface IDataQualityUploadSuccessProps {
+export interface DataQualityUploadSuccessProps {
   uploadId: string;
   dataset: string;
   uploadDate: string;
