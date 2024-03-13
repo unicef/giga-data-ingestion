@@ -50,7 +50,7 @@ app.post("/email/invite-user", zValidator("json", InviteUserProps), (ctx) => {
 });
 
 app.post(
-  "/email/dq-report-upload-success",
+  "/email/upload_success_email",
   zValidator("json", DataQualityUploadSuccessSchema),
   (ctx) => {
     const json = ctx.req.valid("json") as DataQualityUploadSuccessProps;
@@ -63,7 +63,7 @@ app.post(
 );
 
 app.post(
-  "/email/dq-report-check-success",
+  "/email/check_success_email",
   zValidator("json", DataQualityCheckSuccessSchema),
   (ctx) => {
     const json = ctx.req.valid("json") as DataQualityCheckSuccessProps;
