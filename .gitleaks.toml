@@ -1,0 +1,7 @@
+title = "gitleaks config"
+
+[allowlist]
+description = "global allowlist"
+paths = [
+    "fixtures/*.yaml"
+]

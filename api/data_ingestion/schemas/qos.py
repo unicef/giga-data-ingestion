@@ -41,13 +41,13 @@ class ApiConfiguration(BaseModel):
     school_id_send_query_in: SendQueryInEnum
     size: int | None
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class SchoolConnectivitySchema(ApiConfiguration):
     ingestion_frequency_minutes: int
     schema_url: str
     school_list_id: str
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class SchoolListSchema(ApiConfiguration):
@@ -56,8 +56,6 @@ class SchoolListSchema(ApiConfiguration):
     user_email: EmailStr
     user_id: str
     school_connectivity: SchoolConnectivitySchema
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class ApiConfigurationRequest(BaseModel):

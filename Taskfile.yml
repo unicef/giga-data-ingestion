@@ -205,3 +205,8 @@ tasks:
     desc: Open a psql shell
     cmds:
       - task exec -- db psql -U {{.POSTGRESQL_USERNAME}} -d {{.POSTGRESQL_DATABASE}}
+
+  load-fixtures:
+    desc: Install database fixtures
+    cmds:
+      - task exec -- api poetry run python -m scripts.load_fixtures {{.CLI_ARGS}}
