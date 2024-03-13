@@ -1,0 +1,171 @@
+- fields:
+    api_auth_api_key: X-API-KEY
+    api_auth_api_value: JEdXaWQ3bGEqQkBhIXJQMQ==
+    api_endpoint: http://rhodes.com/
+    authorization_type: BEARER_TOKEN
+    basic_auth_password: '*!f9gsyRxPt26yOu'
+    basic_auth_username: lperry
+    bearer_auth_bearer_token: XkZLUGpRV3kjJGV5OEgwUA==
+    data_key: results
+    date_created: '2024-01-10T18:03:43.704035'
+    date_last_ingested: '2024-01-12T14:36:43.704035'
+    date_last_successfully_ingested: '2024-01-14T17:53:43.704035'
+    date_modified: '2024-01-12T03:03:43.704035'
+    enabled: true
+    error_message: 'HTTP Error 500: Weight official learn especially nature whatever.'
+    ingestion_frequency_minutes: 15
+    page_number_key: page
+    page_offset_key: page_offset
+    page_send_query_in: QUERY_PARAMETERS
+    page_size_key: page_size
+    page_starts_with: 36
+    pagination_type: LIMIT_OFFSET
+    query_parameters: '{"school_id": "db610487-c89d-411b-a239-7bc701762741", "country_id":
+      "QUMQADwcTDkAzsrCGFxb", "page": 3761}'
+    request_body: '{"school_id": "959f3a51-8cfe-4cd1-ad5d-b79ba2a7ae1f", "country_id":
+      "jeCSWbXdTxNonPjpinXI"}'
+    request_method: POST
+    schema_url: https://morris.biz/
+    school_id_key: school_id
+    school_id_send_query_in: BODY
+    school_list_id: c2ce6f44-7ed4-457b-9e2f-eb89414c343c
+    size: 37
+  id: 1027c4d1-c386-4bc4-8d61-3e30d8f16adf
+  model: SchoolConnectivity
+- fields:
+    api_auth_api_key: X-API-Key
+    api_auth_api_value: KzhibE9KaCkzJF5edEErVA==
+    api_endpoint: https://www.dean.com/
+    authorization_type: NONE
+    basic_auth_password: VOv9P@XH8+p$V_Jn
+    basic_auth_username: cameronwilliams
+    bearer_auth_bearer_token: M2lXMkZEOXFXdyNfciojXg==
+    data_key: data
+    date_created: '2024-02-22T04:12:33.828429'
+    date_last_ingested: '2024-02-26T03:36:33.828429'
+    date_last_successfully_ingested: '2024-02-25T07:07:33.828429'
+    date_modified: '2024-02-23T11:12:33.828429'
+    enabled: true
+    error_message: 'HTTP Error 500: Nearly not weight half far move boy.'
+    ingestion_frequency_minutes: 60
+    page_number_key: page_number
+    page_offset_key: offset
+    page_send_query_in: NONE
+    page_size_key: size
+    page_starts_with: 28
+    pagination_type: LIMIT_OFFSET
+    query_parameters: '{"school_id": "c979cb06-1b94-4cfc-86f5-7327e5920673", "country_id":
+      "cpFavQPjOEixJiRwYPCQ", "page": 9014}'
+    request_body: '{"school_id": "50806f01-7a1d-456c-b62c-228e40df7c9a", "country_id":
+      "fHcaZpFxqdVYYflGYCJI"}'
+    request_method: POST
+    schema_url: https://www.clark.com/
+    school_id_key: school_id
+    school_id_send_query_in: QUERY_PARAMETERS
+    school_list_id: d50e0097-8b71-49cd-ad39-eb43ad9cedde
+    size: 17
+  id: 819d7ca7-b461-48cc-b217-54ef2904acec
+  model: SchoolConnectivity
+- fields:
+    api_auth_api_key: X-Api-Key
+    api_auth_api_value: IXVFTTEqQUNQQDErX3FBZQ==
+    api_endpoint: https://www.evans.com/
+    authorization_type: NONE
+    basic_auth_password: '%xlSI3LH!7@ZyU%E'
+    basic_auth_username: halladrian
+    bearer_auth_bearer_token: dXVaNEJRdWVDKGY1eDR1aQ==
+    data_key: result
+    date_created: '2024-02-12T00:35:27.678377'
+    date_last_ingested: '2024-02-14T04:26:27.678377'
+    date_last_successfully_ingested: '2024-02-16T11:02:27.678377'
+    date_modified: '2024-02-13T13:35:27.678377'
+    enabled: true
+    error_message: 'HTTP Error 500: Support he red say organization.'
+    ingestion_frequency_minutes: 15
+    page_number_key: pageNumber
+    page_offset_key: offset
+    page_send_query_in: QUERY_PARAMETERS
+    page_size_key: pageSize
+    page_starts_with: 8
+    pagination_type: LIMIT_OFFSET
+    query_parameters: '{"school_id": "9b29b54b-e587-4d21-9f8c-e97adb34fa8d", "country_id":
+      "XDjnlDNcJLsAiLcZQGnV", "page": 2279}'
+    request_body: '{"school_id": "d788c7cc-9ded-44fd-8698-06eaf81f5c80", "country_id":
+      "YJeSmSWUuVwGzlwBVIot"}'
+    request_method: GET
+    schema_url: http://www.gonzales.org/
+    school_id_key: schoolID
+    school_id_send_query_in: NONE
+    school_list_id: 66daa365-3e67-426c-8eea-590b05373b76
+    size: 8
+  id: 385c1b33-3ebe-4e3e-9790-30da98910052
+  model: SchoolConnectivity
+- fields:
+    api_auth_api_key: X-Api-Key
+    api_auth_api_value: KGwoaFN4aXlfJlUzSkV6IQ==
+    api_endpoint: https://holland.biz/
+    authorization_type: NONE
+    basic_auth_password: Zf8f2uWQve$eAi2Q
+    basic_auth_username: phuerta
+    bearer_auth_bearer_token: SV9Zdmo0aW1XRDdlcVNVYQ==
+    data_key: result
+    date_created: '2024-03-03T12:16:46.578882'
+    date_last_ingested: '2024-03-06T10:37:46.578882'
+    date_last_successfully_ingested: '2024-03-05T21:35:46.578882'
+    date_modified: '2024-03-03T22:16:46.578882'
+    enabled: true
+    error_message: 'HTTP Error 500: Better opportunity attorney attack kind clearly
+      report.'
+    ingestion_frequency_minutes: 60
+    page_number_key: pageNumber
+    page_offset_key: pageOffset
+    page_send_query_in: QUERY_PARAMETERS
+    page_size_key: size
+    page_starts_with: 40
+    pagination_type: NONE
+    query_parameters: '{"school_id": "66e47927-17d2-49ad-b0c1-2c6029606598", "country_id":
+      "HopBmrdKVIyCcpMZCsMu", "page": 6548}'
+    request_body: '{"school_id": "427005f6-ca2e-4611-bbce-c85d2c1ffacc", "country_id":
+      "TrlYKRbUGqwNOjGiYxVL"}'
+    request_method: GET
+    schema_url: https://martin.info/
+    school_id_key: schoolId
+    school_id_send_query_in: BODY
+    school_list_id: db0f0126-6b82-4d5c-bda5-ad525b616e42
+    size: 40
+  id: 8b9dd3d4-2b00-4570-b93e-e7ccdae720b2
+  model: SchoolConnectivity
+- fields:
+    api_auth_api_key: X-API-Key
+    api_auth_api_value: Yis5TzQ1a2h5NThTR0w3Tw==
+    api_endpoint: http://www.flores-reyes.org/
+    authorization_type: API_KEY
+    basic_auth_password: r3+M@_b%%)Motf%o
+    basic_auth_username: leevictor
+    bearer_auth_bearer_token: Ykc0eFo1Z3YjRFdUUVZFSQ==
+    data_key: results
+    date_created: '2024-01-14T13:20:15.348406'
+    date_last_ingested: '2024-01-17T08:28:15.348406'
+    date_last_successfully_ingested: '2024-01-18T09:38:15.348406'
+    date_modified: '2024-01-15T20:20:15.348406'
+    enabled: false
+    error_message: null
+    ingestion_frequency_minutes: 30
+    page_number_key: page
+    page_offset_key: page_offset
+    page_send_query_in: QUERY_PARAMETERS
+    page_size_key: size
+    page_starts_with: 27
+    pagination_type: NONE
+    query_parameters: '{"school_id": "e9901243-175a-4163-a31a-7b190d8509db", "country_id":
+      "QytZcBxguKTbBePebtMq", "page": 2130}'
+    request_body: '{"school_id": "ce9244cb-6153-4f71-8b69-15c142a305d5", "country_id":
+      "gJeRAkVAuUzgQBDREBbY"}'
+    request_method: GET
+    schema_url: https://www.wood.com/
+    school_id_key: school_id
+    school_id_send_query_in: NONE
+    school_list_id: aeecb544-3770-44cf-809f-025ee38d62a7
+    size: 50
+  id: 05f5e71b-98f6-4644-8f39-efd70e2af641
+  model: SchoolConnectivity

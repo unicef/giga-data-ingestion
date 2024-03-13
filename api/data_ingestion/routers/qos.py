@@ -3,7 +3,6 @@ import random
 from typing import Annotated
 
 import magic
-from azure.core.exceptions import HttpResponseError
 from faker import Faker
 from fastapi import (
     APIRouter,
@@ -11,7 +10,6 @@ from fastapi import (
     HTTPException,
     Query,
     Response,
-    Security,
     UploadFile,
     status,
 )
@@ -20,9 +18,9 @@ from sqlalchemy import delete, desc, exc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
 from data_ingestion.db import get_db
-from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import SchoolConnectivity, SchoolList
 from data_ingestion.schemas.core import PagedResponseSchema
@@ -37,7 +35,7 @@ from data_ingestion.schemas.qos import (
 router = APIRouter(
     prefix="/api/qos",
     tags=["qos"],
-    dependencies=[Security(azure_scheme)],
+    # dependencies=[Security(azure_scheme)],
 )
 
 fake = Faker()
