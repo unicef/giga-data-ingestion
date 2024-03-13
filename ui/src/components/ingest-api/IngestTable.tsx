@@ -96,7 +96,7 @@ function IngestTable() {
             className="flex cursor-pointer"
             onClick={() => {
               if (schoolList.error_message) {
-                setSelectedIngestionLastModified(schoolList.date_modified);
+                setSelectedIngestionLastModified(schoolList.date_last_ingested);
                 setInfoModalErrorMesage(schoolList.error_message);
                 setSelectedIngestionName(schoolList.name);
                 setIsOpenInfoModal(true);

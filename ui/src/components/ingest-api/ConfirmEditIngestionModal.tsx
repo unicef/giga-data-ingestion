@@ -32,11 +32,12 @@ const ConfirmEditIngestionModal = ({
     await mutateAsync({
       id: schoolListId,
       body: {
-        school_connectivity: schoolConnectivity,
+        school_connectivity: { ...schoolConnectivity, error_message: null },
         school_list: {
           ...schoolList,
           column_to_schema_mapping: JSON.stringify(columnMapping),
           enabled: true,
+          error_message: null,
         },
       },
     });

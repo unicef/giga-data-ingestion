@@ -3,8 +3,10 @@ kind: ConfigMap
 metadata:
   name: giga-ingestion-portal-configmap
   labels:
-    app: giga-ingestion-portal
+    app.kubernetes.io/name: giga-data-ingestion
+    app.kubernetes.io/part-of: giga-dataops-platform
+    app.kubernetes.io/component: data-ingestion
 data:
-  DB_HOST: "ingestion-portal-postgresql"
+  DB_HOST: "postgres-postgresql-primary-hl"
   DB_PORT: "5432"
   EMAIL_RENDERER_SERVICE_URL: "http://email-service:3020"

@@ -199,7 +199,7 @@
             Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
           />
           <Metadata>
-            <Item Key="ServiceUrl">https://json-groups-parser.azurewebsites.net/api/parse_group_values
+            <Item Key="ServiceUrl">https://io-dataingestion-dev.unitst.org/api/utils/parse-group-displayname
             </Item>
             <Item Key="AuthenticationType">None</Item>
             <Item Key="AllowInsecureAuthInProduction">true</Item>

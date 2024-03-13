@@ -22,7 +22,7 @@ jobs:
               inputs:
                 namespace: $(kubernetesNamespace)
                 command: delete
-                arguments: secret giga-ingestion-portal-secrets --ignore-not-found=true
+                arguments: "secret giga-ingestion-portal-secrets-$(deployEnv) --ignore-not-found"
 
             - task: Kubernetes@1
               displayName: Create secret
@@ -35,7 +35,7 @@ jobs:
                   apiVersion: v1
                   kind: Secret
                   metadata:
-                    name: giga-ingestion-portal-secrets
+                    name: "giga-ingestion-portal-secrets-$(deployEnv)"
                     labels:
                       app.kubernetes.io/name: giga-data-ingestion
                       app.kubernetes.io/part-of: giga-dataops-platform
