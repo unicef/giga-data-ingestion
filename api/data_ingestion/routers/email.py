@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 
-@router.post("/upload_success_email", dependencies=[Security(IsPrivileged())])
+@router.post("/dq-report-upload-success", dependencies=[Security(IsPrivileged())])
 async def send_upload_success_email(
     body: EmailRenderRequest[UploadSuccessRenderRequest],
     background_tasks: BackgroundTasks,
@@ -36,7 +36,7 @@ async def send_upload_success_email(
     return 0
 
 
-@router.post("/check_success_email", dependencies=[Security(IsPrivileged())])
+@router.post("/dq-report-check-success", dependencies=[Security(IsPrivileged())])
 async def send_check_success_email(
     body: EmailRenderRequest[DataCheckSuccessRenderRequest],
     background_tasks: BackgroundTasks,
