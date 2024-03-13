@@ -61,7 +61,16 @@ async def upload_file(
     source: str | None = Form(None),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
 ):
+    if not is_privileged:
+        country_dataset = f"{country}-School {dataset.capitalize()}"
+        if country_dataset not in user.groups:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have permissions on this dataset",
+            )
+
     if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
