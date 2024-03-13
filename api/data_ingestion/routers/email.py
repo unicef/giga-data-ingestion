@@ -41,12 +41,7 @@ async def send_check_success_email(
     body: EmailRenderRequest[DataCheckSuccessRenderRequest],
     background_tasks: BackgroundTasks,
 ):
-    props = DataCheckSuccessRenderRequest(
-        uploadId=body.props.uploadId,
-        dataset=body.props.dataset,
-        uploadDate=body.props.uploadDate,
-        checkDate=body.props.checkDate,
-    )
+    props = DataCheckSuccessRenderRequest(**body.model_dump()["props"])
 
     background_tasks.add_task(
         email.send_check_success_email,
