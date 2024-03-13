@@ -6,10 +6,10 @@ from loguru import logger
 
 from data_ingestion.schemas.core import B2CPolicyGroupRequest, B2CPolicyGroupResponse
 
-router = APIRouter(tags=["utils"])
+router = APIRouter(prefix="/api/utils", tags=["utils"])
 
 
-@router.post("/utils/parse-group-displayname", response_model=B2CPolicyGroupResponse)
+@router.post("/parse-group-displayname", response_model=B2CPolicyGroupResponse)
 def parse_group_display_names(body: B2CPolicyGroupRequest):
     logger.info(f"{body.model_dump()=}")
     try:
