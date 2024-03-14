@@ -3,6 +3,7 @@ import random
 from typing import Annotated
 
 import magic
+from azure.core.exceptions import HttpResponseError
 from faker import Faker
 from fastapi import (
     APIRouter,
@@ -19,7 +20,6 @@ from sqlalchemy import delete, desc, exc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
 from data_ingestion.db import get_db
 from data_ingestion.internal.auth import azure_scheme
@@ -204,8 +204,6 @@ async def update_school_list_status(
             detail=err._message, status_code=status.HTTP_400_BAD_REQUEST
         ) from err
 
-    return 0
-
 
 @router.patch("/school_list/{id}/error_message", status_code=status.HTTP_204_NO_CONTENT)
 async def update_school_list_error_message(
@@ -227,8 +225,6 @@ async def update_school_list_error_message(
         raise HTTPException(
             detail=err._message, status_code=status.HTTP_400_BAD_REQUEST
         ) from err
-
-    return 0
 
 
 @router.get(
