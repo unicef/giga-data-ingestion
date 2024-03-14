@@ -27,7 +27,7 @@ def send_email_base(
         f"{settings.EMAIL_RENDERER_SERVICE_URL}{endpoint}",
         headers={
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",  #
+            "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
         },
         json=json,
     )
