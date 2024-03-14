@@ -70,7 +70,7 @@ class Settings(BaseSettings):
     SENTRY_DSN: str = ""
     COMMIT_SHA: str = ""
     TRINO_HOST: str = "trino"
-    TRINO_PORT: int = 8040
+    TRINO_PORT: int = 8080
     TRINO_CATALOG: str = "delta_lake"
 
     @computed_field

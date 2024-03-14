@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
-from data_ingestion.db import get_db
+from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.mocks.upload_checks import get_upload_checks

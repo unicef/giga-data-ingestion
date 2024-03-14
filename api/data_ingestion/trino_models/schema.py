@@ -1,7 +1,9 @@
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
+
+from .base import BaseModel
 
 
-class Schema(DeclarativeBase):
+class Schema(BaseModel):
     __tablename__ = "schemas"
 
     name: Mapped[str] = mapped_column(primary_key=True)
