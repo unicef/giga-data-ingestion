@@ -25,7 +25,6 @@ export const DataQualityReportUploadSuccess = ({
 }: DataQualityUploadSuccessProps) => {
   const previewText = "Successful file upload";
 
-  const gigaLogo = getBase64Image("../static/GIGA_logo.png");
   return (
     <Html>
       <Tailwind config={tailwindConfig}>
@@ -48,7 +47,7 @@ export const DataQualityReportUploadSuccess = ({
             <Text className="bg-primary text-white text-2xl p-4 m-0 flex">
               <Img
                 className="w-10 h-10 pr-4 text-black"
-                src={`data:image/png;base64,${gigaLogo}`}
+                src="https://storage.googleapis.com/giga-test-app-static-assets/GIGA_logo.png"
               />
               <span className="font-light">giga</span>
               <span className="font-bold">sync</span>

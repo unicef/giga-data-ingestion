@@ -27,12 +27,6 @@ export const DataQualityReportCheckSuccess = ({
 }: DataQualityCheckSuccessProps) => {
   const previewText = "Successful data quality checks";
 
-  const gigaLogo = getBase64Image("../static/GIGA_logo.png");
-
-  const CheckmarkOutlineGreen = getBase64Image(
-    "../static/CheckmarkOutlineGreen.png"
-  );
-
   return (
     <Html>
       <Tailwind config={tailwindConfig}>
@@ -55,7 +49,7 @@ export const DataQualityReportCheckSuccess = ({
             <Text className="bg-primary text-white text-2xl p-4 m-0 flex">
               <Img
                 className="w-10 h-10 pr-4 text-black"
-                src={`data:image/png;base64,${gigaLogo}`}
+                src="https://storage.googleapis.com/giga-test-app-static-assets/GIGA_logo.png"
               />
               <span className="font-light">giga</span>
               <span className="font-bold">sync</span>
@@ -65,11 +59,10 @@ export const DataQualityReportCheckSuccess = ({
               <Heading className="flex align-middle p-0 text-2xl font-normal text-giga-green">
                 <Img
                   className="w-10 h-10 mr-2 -mt-1"
-                  src={`data:image/png;base64,${CheckmarkOutlineGreen}`}
+                  src="https://storage.googleapis.com/giga-test-app-static-assets/CheckmarkOutlineGreen.png"
                 />
                 <strong>Data check successful</strong>
               </Heading>
-              <Text>{`data:image/png;base64,${CheckmarkOutlineGreen}`}</Text>
               <Text>
                 Upload Id <strong>{uploadId}</strong>
               </Text>

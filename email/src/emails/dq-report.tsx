@@ -41,13 +41,7 @@ const DataQualityReport = ({
     summary: { columns, rows, timestamp },
   } = dataQualityCheck;
 
-  const gigaLogo = getBase64Image("../static/GIGA_logo.png");
-  const MisuseOutlineRed = getBase64Image("../static/MisuseOutlineRed.png");
-  const MisuseOutlineYellow = getBase64Image(
-    "../static/MisuseOutlineYellow.png"
-  );
-
-  const hasCriticalError = critical_error_check[0].percent_failed > 1;
+  const hasCriticalError = critical_error_check[0].percent_failed > 0;
   const titleText = hasCriticalError
     ? "Data Check Error: Action Required!"
     : "Data Check Warnings: Action Required!";
@@ -73,7 +67,7 @@ const DataQualityReport = ({
             <Text className="bg-primary text-white text-2xl p-4 m-0 flex">
               <Img
                 className="w-10 h-10 pr-4 text-black"
-                src={`data:image/png;base64,${gigaLogo}`}
+                src="https://storage.googleapis.com/giga-test-app-static-assets/GIGA_logo.png"
               />
               <span className="font-light">giga</span>
               <span className="font-bold">sync</span>
@@ -83,8 +77,10 @@ const DataQualityReport = ({
               <Heading className="flex align-middle p-0 text-2xl font-normal ">
                 <Img
                   className="w-10 h-10 mr-2 -mt-1"
-                  src={`data:image/png;base64,${
-                    hasCriticalError ? MisuseOutlineRed : MisuseOutlineYellow
+                  src={`${
+                    hasCriticalError
+                      ? "https://storage.googleapis.com/giga-test-app-static-assets/MisuseOutlineRed.png"
+                      : "https://storage.googleapis.com/giga-test-app-static-assets/MisuseOutlineYellow.png"
                   }`}
                 />
                 <strong
