@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     EMAIL_RENDERER_BEARER_TOKEN: str
     EMAIL_RENDERER_SERVICE_URL: AnyUrl
     EMAIL_TEST_RECIPIENTS: list[str]
+    TRINO_USERNAME: str
+    TRINO_PASSWORD: str
 
     # Optional envs
     PYTHON_ENV: Environment = Environment.PRODUCTION
@@ -67,6 +69,9 @@ class Settings(BaseSettings):
     DB_PORT: int = 5432
     SENTRY_DSN: str = ""
     COMMIT_SHA: str = ""
+    TRINO_HOST: str = "trino"
+    TRINO_PORT: int = 8040
+    TRINO_CATALOG: str = "delta_lake"
 
     @computed_field
     @property
@@ -136,6 +141,27 @@ class Settings(BaseSettings):
             PostgresDsn.build(
                 scheme="postgresql+asyncpg",
                 **self.DATABASE_CONNECTION_DICT,
+            )
+        )
+
+    @computed_field
+    @property
+    def TRINO_CONNECTION_DICT(self) -> dict:
+        return {
+            "username": self.TRINO_USERNAME,
+            "password": self.TRINO_PASSWORD,
+            "host": self.TRINO_HOST,
+            "port": self.TRINO_PORT,
+            "path": self.TRINO_CATALOG,
+        }
+
+    @computed_field
+    @property
+    def TRINO_URL(self) -> str:
+        return str(
+            PostgresDsn.build(
+                scheme="trino",
+                **self.TRINO_CONNECTION_DICT,
             )
         )
 
