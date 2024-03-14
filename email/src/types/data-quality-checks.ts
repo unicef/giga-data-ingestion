@@ -9,7 +9,7 @@ export interface Check {
   percent_failed: number;
   percent_passed: number;
 }
-const CheckSchema = z.object({
+const Check = z.object({
   assertion: z.string(),
   column: z.string(),
   count_failed: z.number(),
@@ -26,7 +26,7 @@ interface SummaryCheck {
   timestamp: string;
 }
 
-const SummaryCheckSchema = z.object({
+const SummaryCheck = z.object({
   columns: z.number(),
   rows: z.number(),
   timestamp: z.string(),
@@ -43,13 +43,13 @@ export interface DataQualityCheck {
   summary: SummaryCheck;
 }
 
-export const DataQualityCheckSchema = z.object({
-  completeness_checks: z.array(CheckSchema),
-  critical_error_check: z.array(CheckSchema),
-  domain_checks: z.array(CheckSchema),
-  duplicate_rows_checks: z.array(CheckSchema),
-  format_validation_checks: z.array(CheckSchema),
-  geospatial_checks: z.array(CheckSchema),
-  range_checks: z.array(CheckSchema),
-  summary: SummaryCheckSchema,
+export const DataQualityCheck = z.object({
+  completeness_checks: z.array(Check),
+  critical_error_check: z.array(Check),
+  domain_checks: z.array(Check),
+  duplicate_rows_checks: z.array(Check),
+  format_validation_checks: z.array(Check),
+  geospatial_checks: z.array(Check),
+  range_checks: z.array(Check),
+  summary: SummaryCheck,
 });

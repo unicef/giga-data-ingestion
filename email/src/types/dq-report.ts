@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  DataQualityCheck,
-  DataQualityCheckSchema,
-} from "./data-quality-checks";
+import { DataQualityCheck } from "./data-quality-checks";
 
 export interface DataQualityUploadSuccessProps {
   uploadId: string;
@@ -10,7 +7,7 @@ export interface DataQualityUploadSuccessProps {
   uploadDate: string;
 }
 
-export const DataQualityUploadSuccessSchema = z.object({
+export const DataQualityUploadSuccessProps = z.object({
   uploadId: z.string(),
   dataset: z.string(),
   uploadDate: z.string(),
@@ -23,7 +20,7 @@ export interface DataQualityCheckSuccessProps {
   checkDate: string;
 }
 
-export const DataQualityCheckSuccessSchema = z.object({
+export const DataQualityCheckSuccessProps = z.object({
   uploadId: z.string(),
   dataset: z.string(),
   uploadDate: z.string(),
@@ -37,8 +34,8 @@ export interface DataQualityReportEmailProps {
   uploadId: string;
 }
 
-export const DataQualityReportEmailSchema = z.object({
-  dataQualityCheck: z.optional(DataQualityCheckSchema),
+export const DataQualityReportEmailProps = z.object({
+  dataQualityCheck: z.optional(DataQualityCheck),
   dataset: z.string(),
   uploadDate: z.string(),
   uploadId: z.string(),

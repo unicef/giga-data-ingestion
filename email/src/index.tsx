@@ -13,11 +13,8 @@ import DataQualityReport from "./emails/dq-report";
 import InviteUser from "./emails/invite-user";
 import {
   DataQualityUploadSuccessProps,
-  DataQualityUploadSuccessSchema,
   DataQualityCheckSuccessProps,
-  DataQualityCheckSuccessSchema,
   DataQualityReportEmailProps,
-  DataQualityReportEmailSchema,
 } from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
 
@@ -54,7 +51,7 @@ app.post("/email/invite-user", zValidator("json", InviteUserProps), (ctx) => {
 
 app.post(
   "/email/dq-report-upload-success",
-  zValidator("json", DataQualityUploadSuccessSchema),
+  zValidator("json", DataQualityUploadSuccessProps),
   (ctx) => {
     const json = ctx.req.valid("json") as DataQualityUploadSuccessProps;
     const html = render(<DataQualityReportUploadSuccess {...json} />);
@@ -67,7 +64,7 @@ app.post(
 
 app.post(
   "/email/dq-report-check-success",
-  zValidator("json", DataQualityCheckSuccessSchema),
+  zValidator("json", DataQualityCheckSuccessProps),
   (ctx) => {
     const json = ctx.req.valid("json") as DataQualityCheckSuccessProps;
     const html = render(<DataQualityReportCheckSuccess {...json} />);
@@ -80,7 +77,7 @@ app.post(
 
 app.post(
   "/email/dq-report",
-  zValidator("json", DataQualityReportEmailSchema),
+  zValidator("json", DataQualityReportEmailProps),
   (ctx) => {
     const json = ctx.req.valid("json") as DataQualityReportEmailProps;
     const html = render(<DataQualityReport {...json} />);
