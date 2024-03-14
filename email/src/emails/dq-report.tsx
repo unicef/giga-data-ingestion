@@ -122,6 +122,11 @@ const DataQualityReport = ({
               </Section>
 
               <ChecksWithError
+                checks={critical_error_check}
+                title="Critical Error Checks"
+              />
+
+              <ChecksWithError
                 checks={format_validation_checks}
                 title="Format Validation Checks"
               />
