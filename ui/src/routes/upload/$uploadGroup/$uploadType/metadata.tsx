@@ -116,8 +116,13 @@ function Metadata() {
     setIsUploading(true);
     setIsUploadError(false);
 
+    const columnToSchemaMapping = uploadSlice.columnMapping;
+    const correctedColumnToSchemaMapping = Object.fromEntries(
+      Object.entries(columnToSchemaMapping).map(([key, value]) => [value, key]),
+    );
+
     const body = {
-      column_to_schema_mapping: JSON.stringify(uploadSlice.columnMapping),
+      column_to_schema_mapping: JSON.stringify(correctedColumnToSchemaMapping),
       country: data.country,
       data_collection_date: new Date(data.dataCollectionDate).toISOString(),
       data_collection_modality: data.dataCollectionModality,
