@@ -5,7 +5,6 @@ from typing import Annotated
 
 import country_converter as coco
 import magic
-from azure.core.exceptions import HttpResponseError
 from fastapi import (
     APIRouter,
     Depends,
@@ -22,12 +21,14 @@ from pydantic import AwareDatetime, Field
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
 from data_ingestion.db import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.mocks.upload_checks import get_upload_checks
 from data_ingestion.models import FileUpload
+from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
@@ -60,32 +61,33 @@ async def upload_file(
     source: str | None = Form(None),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
 ):
+    if not is_privileged:
+        country_dataset = f"{country}-School {dataset.capitalize()}"
+        if country_dataset not in user.groups:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have permissions on this dataset",
+            )
+
     if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File size exceeds 10 MB limit",
         )
 
-    valid_types = {
-        "application/json": [".json"],
-        "application/octet-stream": [".parquet"],
-        "application/vnd.ms-excel": [".xls"],
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
-        "text/csv": [".csv"],
-    }
-
     file_content = await file.read(2048)
     file_type = magic.from_buffer(file_content, mime=True)
     file_extension = os.path.splitext(file.filename)[1]
 
-    if file_type not in valid_types:
+    if file_type not in constants.VALID_UPLOAD_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid file type.",
         )
 
-    if file_extension not in valid_types[file_type]:
+    if file_extension not in constants.VALID_UPLOAD_TYPES[file_type]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File extension does not match file type.",
@@ -162,6 +164,7 @@ async def list_files():
 
         if len(parts) == 4:
             uid, country, dataset, _ = parts
+            source = None
         else:
             uid, country, dataset, source, _ = parts
 
@@ -172,10 +175,10 @@ async def list_files():
             "dataset": dataset,
             "timestamp": blob.creation_time.isoformat(),
         }
-        try:
+
+        if source is not None:
             file["source"] = source
-        except NameError:
-            pass
+
         files.append(file)
 
     return files
@@ -220,6 +223,7 @@ async def get_file_properties(upload_id: str):
 @router.get("", response_model=PagedResponseSchema[FileUploadSchema])
 async def list_uploads(
     user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
     db: AsyncSession = Depends(get_db),
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Field(ge=1, le=50)] = 10,
@@ -228,15 +232,21 @@ async def list_uploads(
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
     ] = None,
 ):
-    # TODO: Proper filtering w/ RBAC
-    base_query = select(FileUpload).order_by(desc(FileUpload.created))
-    if id_search:
-        base_query = base_query.where(func.starts_with(FileUpload.id, id_search))
+    query = select(FileUpload)
+    if not is_privileged:
+        query = query.where(FileUpload.uploader_id == user.sub)
 
-    count_query = select(func.count()).select_from(base_query.subquery())
+    if id_search:
+        query = query.where(func.starts_with(FileUpload.id, id_search))
+
+    count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query)
 
-    items = await db.scalars(base_query.offset((page - 1) * page_size).limit(page_size))
+    items = await db.scalars(
+        query.limit(page_size)
+        .offset((page - 1) * page_size)
+        .order_by(desc(FileUpload.created))
+    )
 
     return {
         "data": items,

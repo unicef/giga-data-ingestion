@@ -53,21 +53,15 @@ function Layout() {
         <ProgressStep label="1" description="Upload" secondaryLabel="Upload" />
         <ProgressStep
           label="2"
+          description="Configure columns"
+          secondaryLabel="Configure columns"
+        />
+        <ProgressStep
+          label="3"
           description="Add metadata"
           secondaryLabel="Add metadata"
         />
-        {/* TODO: Add column mapping */}
-        {/*<ProgressStep*/}
-        {/*  label="3"*/}
-        {/*  description="Configure columns"*/}
-        {/*  secondaryLabel="Configure columns"*/}
-        {/*/>*/}
-        <ProgressStep
-          label="3"
-          // description="Data quality review & submit"
-          // secondaryLabel="Data quality review & submit"
-          secondaryLabel="Submit"
-        />
+        <ProgressStep label="4" description="Submit" secondaryLabel="Submit" />
       </ProgressIndicator>
 
       <Outlet />

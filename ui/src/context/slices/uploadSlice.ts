@@ -17,11 +17,24 @@ export interface UploadSliceActions {
     decrementStepIndex: () => void;
     incrementStepIndex: () => void;
     resetUploadSliceState: () => void;
+    setStepIndex: (value: UploadSliceState["uploadSlice"]["stepIndex"]) => void;
     setUploadSliceState: (upload: UploadSliceState) => void;
+    setColumnMapping: (
+      value: UploadSliceState["uploadSlice"]["columnMapping"],
+    ) => void;
+    setDetectedColumns: (
+      value: UploadSliceState["uploadSlice"]["detectedColumns"],
+    ) => void;
+    setFile: (value: UploadSliceState["uploadSlice"]["file"]) => void;
+    setTimeStamp: (value: UploadSliceState["uploadSlice"]["timeStamp"]) => void;
+    setUploadDate: (
+      value: UploadSliceState["uploadSlice"]["uploadDate"],
+    ) => void;
+    setUploadId: (value: UploadSliceState["uploadSlice"]["uploadId"]) => void;
   };
 }
 
-export interface UploadSlice extends UploadSliceState, UploadSliceActions {}
+export type UploadSlice = UploadSliceState & UploadSliceActions;
 
 export const initialUploadSliceState: UploadSliceState = {
   uploadSlice: {
@@ -52,13 +65,40 @@ export const createUploadSlice: StateCreator<
       set(state => {
         state.uploadSlice.stepIndex += 1;
       }),
-
     setUploadSliceState: (upload: UploadSliceState) =>
       set(state => {
         state.uploadSlice = {
           ...state.uploadSlice,
           ...upload.uploadSlice,
         };
+      }),
+    setUploadDate: uploadDate =>
+      set(state => {
+        state.uploadSlice.uploadDate = uploadDate;
+      }),
+    setFile: file =>
+      set(state => {
+        state.uploadSlice.file = file;
+      }),
+    setDetectedColumns: detectedColumns =>
+      set(state => {
+        state.uploadSlice.detectedColumns = detectedColumns;
+      }),
+    setUploadId: uploadId =>
+      set(state => {
+        state.uploadSlice.uploadId = uploadId;
+      }),
+    setStepIndex: stepIndex =>
+      set(state => {
+        state.uploadSlice.stepIndex = stepIndex;
+      }),
+    setTimeStamp: timeStamp =>
+      set(state => {
+        state.uploadSlice.timeStamp = timeStamp;
+      }),
+    setColumnMapping: columnMapping =>
+      set(state => {
+        state.uploadSlice.columnMapping = columnMapping;
       }),
     resetUploadSliceState: () =>
       set(state => {

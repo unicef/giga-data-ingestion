@@ -21,6 +21,7 @@ export default function Index() {
       incrementStepIndex,
       resetUploadSliceState,
       setUploadSliceState,
+      setDetectedColumns,
     },
   } = useStore();
 
@@ -32,12 +33,7 @@ export default function Index() {
     if (file) {
       parse(file, {
         complete: result => {
-          setUploadSliceState({
-            uploadSlice: {
-              ...uploadSlice,
-              detectedColumns: result.data[0] as string[],
-            },
-          });
+          setDetectedColumns(result.data[0] as string[]);
         },
         preview: 1,
       });

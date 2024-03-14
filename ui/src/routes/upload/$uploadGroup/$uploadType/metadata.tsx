@@ -46,9 +46,11 @@ export const Route = createFileRoute(
   component: Metadata,
   loader: () => {
     const {
-      uploadSlice: { file },
+      uploadSlice: { file, columnMapping },
+      uploadSliceActions: { setStepIndex },
     } = useStore.getState();
-    if (!file) {
+    if (!file || Object.values(columnMapping).filter(Boolean).length === 0) {
+      setStepIndex(1);
       throw redirect({ to: ".." });
     }
   },
@@ -62,7 +64,8 @@ function Metadata() {
     uploadSliceActions: {
       decrementStepIndex,
       incrementStepIndex,
-      setUploadSliceState,
+      setUploadDate,
+      setUploadId,
     },
   } = useStore();
   const navigate = useNavigate({ from: Route.fullPath });
@@ -138,14 +141,8 @@ function Metadata() {
 
       setIsUploading(false);
 
-      setUploadSliceState({
-        uploadSlice: {
-          ...uploadSlice,
-          uploadDate: uploadSlice.timeStamp,
-          uploadId: uploadId,
-        },
-      });
-
+      setUploadDate(uploadSlice.timeStamp);
+      setUploadId(uploadId);
       incrementStepIndex();
       void navigate({ to: "../success" });
     } catch {
@@ -194,7 +191,7 @@ function Metadata() {
 
   const GeolocationDataSourceSelect = () => (
     <Select
-      id="geolocatinDataSource"
+      id="geolocationDataSource"
       invalid={!!errors.geolocationDataSource}
       labelText="Geolocation Data Source"
       placeholder="Geolocation Data Source"
@@ -409,7 +406,7 @@ function Metadata() {
             <Button
               kind="secondary"
               as={Link}
-              to=".."
+              to="../column-mapping"
               onClick={decrementStepIndex}
               className="w-full"
               renderIcon={ArrowLeft}

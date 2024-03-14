@@ -42,9 +42,11 @@ export const Route = createFileRoute(
   loader: () => {
     const {
       uploadSlice: { file },
+      uploadSliceActions: { setStepIndex },
     } = useStore.getState();
 
     if (!file) {
+      setStepIndex(0);
       throw redirect({ to: ".." });
     }
   },
@@ -79,7 +81,6 @@ export default function ColumnMapping() {
   });
 
   const onSubmit: SubmitHandler<ISchoolData> = data => {
-    incrementStepIndex();
     const dataWithNullsReplaced = Object.fromEntries(
       Object.entries(data).map(([key, value]) => [
         key,
@@ -93,6 +94,8 @@ export default function ColumnMapping() {
         columnMapping: dataWithNullsReplaced,
       },
     });
+
+    incrementStepIndex();
     void navigate({ to: "../metadata" });
   };
 
