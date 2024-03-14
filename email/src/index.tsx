@@ -7,9 +7,15 @@ import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { secureHeaders } from "hono/secure-headers";
 
+import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
+import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
 import DataQualityReport from "./emails/dq-report";
 import InviteUser from "./emails/invite-user";
-import { DataQualityReportEmailProps } from "./types/dq-report";
+import {
+  DataQualityUploadSuccessProps,
+  DataQualityCheckSuccessProps,
+  DataQualityReportEmailProps,
+} from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
 
 if (process.env.SENTRY_DSN) {
@@ -27,7 +33,7 @@ const app = new Hono();
 app.use("*", secureHeaders());
 app.use(
   "/email/*",
-  bearerAuth({ token: process.env.EMAIL_RENDERER_BEARER_TOKEN ?? "" }),
+  bearerAuth({ token: process.env.EMAIL_RENDERER_BEARER_TOKEN ?? "" })
 );
 
 app.get("/", (ctx) => {
@@ -44,6 +50,32 @@ app.post("/email/invite-user", zValidator("json", InviteUserProps), (ctx) => {
 });
 
 app.post(
+  "/email/dq-report-upload-success",
+  zValidator("json", DataQualityUploadSuccessProps),
+  (ctx) => {
+    const json = ctx.req.valid("json") as DataQualityUploadSuccessProps;
+    const html = render(<DataQualityReportUploadSuccess {...json} />);
+    const text = render(<DataQualityReportUploadSuccess {...json} />, {
+      plainText: true,
+    });
+    return ctx.json({ html, text });
+  }
+);
+
+app.post(
+  "/email/dq-report-check-success",
+  zValidator("json", DataQualityCheckSuccessProps),
+  (ctx) => {
+    const json = ctx.req.valid("json") as DataQualityCheckSuccessProps;
+    const html = render(<DataQualityReportCheckSuccess {...json} />);
+    const text = render(<DataQualityReportCheckSuccess {...json} />, {
+      plainText: true,
+    });
+    return ctx.json({ html, text });
+  }
+);
+
+app.post(
   "/email/dq-report",
   zValidator("json", DataQualityReportEmailProps),
   (ctx) => {
@@ -53,7 +85,7 @@ app.post(
       plainText: true,
     });
     return ctx.json({ html, text });
-  },
+  }
 );
 
 const port = 3020;
