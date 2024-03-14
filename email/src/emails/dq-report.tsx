@@ -20,8 +20,6 @@ import { dqResultSummary } from "../constants/dq-result-summary";
 import { cn } from "../lib/utils";
 import ChecksWithError from "../components/ChecksWithError";
 
-import { getBase64Image } from "../utils/image";
-
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
 const DataQualityReport = ({

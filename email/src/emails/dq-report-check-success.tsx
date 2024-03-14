@@ -15,7 +15,6 @@ import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
 import { DataQualityCheckSuccessProps } from "../types/dq-report";
 
-import { getBase64Image } from "../utils/image";
 
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
