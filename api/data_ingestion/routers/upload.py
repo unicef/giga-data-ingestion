@@ -190,7 +190,7 @@ async def get_data_quality_check(
     if file_upload is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="File Upload ID does not exist/",
+            detail="File Upload ID does not exist",
         )
 
     if not is_privileged:
