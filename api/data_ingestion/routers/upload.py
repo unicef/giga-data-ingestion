@@ -1,10 +1,9 @@
-import asyncio
-import json
 import os
 from typing import Annotated
 
 import country_converter as coco
 import magic
+from azure.core.exceptions import HttpResponseError
 from fastapi import (
     APIRouter,
     Depends,
@@ -21,10 +20,13 @@ from pydantic import AwareDatetime, Field
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
 from data_ingestion.db import get_db
 from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.data_quality_checks import (
+    get_data_quality_summary,
+    get_first_five_error_rows_for_data_quality_check,
+)
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import FileUpload
 from data_ingestion.permissions.permissions import IsPrivileged
@@ -174,39 +176,41 @@ async def list_files():
 
 
 @router.get(
-    "/dq_check/{upload_id}",
+    "/data_quality_check/{upload_id}",
 )
-async def get_dq_check(upload_id: str):
-    file_name_prefix = f"raw/uploads_DEV/{upload_id}"
-    blob_list = storage_client.list_blobs(name_starts_with=file_name_prefix)
-    first_blob = next(blob_list, None)
-    if first_blob is None:
+async def get_data_quality_check(
+    upload_id: str,
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    user: User = Depends(azure_scheme),
+):
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found",
+            detail="File Upload ID does not exist/",
         )
 
-    blob = storage_client.get_blob_client(first_blob.name)
+    if not is_privileged:
+        if file_upload.uploader_id != user.sub:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to access details for this file.",
+            )
 
-    data = blob.download_blob().readall()
-    obj = json.loads(data.decode("utf-8"))
-    return obj
+    blob_properties, results = get_first_five_error_rows_for_data_quality_check(
+        file_upload.dq_report_path
+    )
+    dq_report_summary_dict = get_data_quality_summary(file_upload.dq_report_path)
 
-
-@router.get(
-    "/properties/{upload_id}",
-)
-async def get_file_properties(upload_id: str):
-    file_name_prefix = f"raw/uploads/{upload_id}"
-    blob_list = storage_client.list_blobs(name_starts_with=file_name_prefix)
-    first_blob = next(blob_list, None)
-
-    blob = storage_client.get_blob_client(first_blob.name)
-    data = blob.get_blob_properties()
-
-    res = {"name": first_blob.name, "creation_time": data.creation_time}
-
-    return res
+    return {
+        "name": blob_properties.name,
+        "creation_time": blob_properties.creation_time,
+        "dq_summary": dq_report_summary_dict,
+        "dq_failed_rows_first_five_rows": results,
+    }
 
 
 @router.get("", response_model=PagedResponseSchema[FileUploadSchema])
