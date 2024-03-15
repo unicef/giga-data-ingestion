@@ -26,7 +26,6 @@ from data_ingestion.constants import constants
 from data_ingestion.db import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
-from data_ingestion.mocks.upload_checks import get_upload_checks
 from data_ingestion.models import FileUpload
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
@@ -141,16 +140,6 @@ async def upload_file(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from err
 
     return file_upload
-
-
-@router.get("/column-checks")
-async def list_column_checks():
-    await asyncio.sleep(2)
-
-    # TODO replace with upload
-    upload_checks = get_upload_checks()
-
-    return upload_checks
 
 
 @router.get(
