@@ -46,6 +46,7 @@ export default {
         "giga-gray": "#9E9E9E",
         "giga-light-gray": "#F5F5F5",
         "giga-white": "#FFFFFF",
+        "carbon-datatable-grey": "#E0E0E0",
       },
     },
   },

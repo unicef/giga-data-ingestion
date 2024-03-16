@@ -85,7 +85,6 @@ const ConfirmToggleIngestionEnabledModal = ({
 
   const onSubmit = async () => {
     if (isIngestionActive) {
-      console.log("deactivating");
       await mutateAsync({
         id: schoolListId,
         enabled: false,
@@ -93,8 +92,6 @@ const ConfirmToggleIngestionEnabledModal = ({
     }
 
     if (!isIngestionActive) {
-      console.log("reactivating");
-
       await mutateAsync({
         id: schoolListId,
         enabled: true,

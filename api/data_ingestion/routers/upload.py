@@ -206,37 +206,6 @@ async def upload_file(
 
 
 @router.get(
-    "/files",
-)
-async def list_files():
-    blob_list = storage_client.list_blobs(name_starts_with="raw/uploads/")
-    files = []
-    for blob in blob_list:
-        parts = blob.name.replace("raw/uploads/", "").split("_")
-
-        if len(parts) == 4:
-            uid, country, dataset, _ = parts
-            source = None
-        else:
-            uid, country, dataset, source, _ = parts
-
-        file = {
-            "filename": blob.name,
-            "uid": uid,
-            "country": country,
-            "dataset": dataset,
-            "timestamp": blob.creation_time.isoformat(),
-        }
-
-        if source is not None:
-            file["source"] = source
-
-        files.append(file)
-
-    return files
-
-
-@router.get(
     "/data_quality_check/{upload_id}",
 )
 async def get_data_quality_check(
