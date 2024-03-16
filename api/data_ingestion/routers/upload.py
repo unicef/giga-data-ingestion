@@ -42,6 +42,67 @@ router = APIRouter(
 )
 
 
+@router.get("", response_model=PagedResponseSchema[FileUploadSchema])
+async def list_uploads(
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    db: AsyncSession = Depends(get_db),
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Field(ge=1, le=50)] = 10,
+    id_search: Annotated[
+        str,
+        Query(min_length=1, max_length=24, pattern=r"^\w+$"),
+    ] = None,
+):
+    query = select(FileUpload)
+    if not is_privileged:
+        query = query.where(FileUpload.uploader_id == user.sub)
+
+    if id_search:
+        query = query.where(func.starts_with(FileUpload.id, id_search))
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = await db.scalar(count_query)
+
+    items = await db.scalars(
+        query.limit(page_size)
+        .offset((page - 1) * page_size)
+        .order_by(desc(FileUpload.created))
+    )
+
+    return {
+        "data": items,
+        "page": page,
+        "page_size": page_size,
+        "total_count": total,
+    }
+
+
+@router.get("/{upload_id}", response_model=FileUploadSchema)
+async def get_upload(
+    upload_id: str,
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+    if not is_privileged:
+        if file_upload.uploader_id != user.sub:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to access details for this file.",
+            )
+
+    return file_upload
+
+
 @router.post("", response_model=FileUploadSchema)
 async def upload_file(
     response: Response,
@@ -210,40 +271,4 @@ async def get_data_quality_check(
         "creation_time": blob_properties.creation_time,
         "dq_summary": dq_report_summary_dict,
         "dq_failed_rows_first_five_rows": results,
-    }
-
-
-@router.get("", response_model=PagedResponseSchema[FileUploadSchema])
-async def list_uploads(
-    user: User = Depends(azure_scheme),
-    is_privileged: bool = Depends(IsPrivileged.raises(False)),
-    db: AsyncSession = Depends(get_db),
-    page: Annotated[int, Query(ge=1)] = 1,
-    page_size: Annotated[int, Field(ge=1, le=50)] = 10,
-    id_search: Annotated[
-        str,
-        Query(min_length=1, max_length=24, pattern=r"^\w+$"),
-    ] = None,
-):
-    query = select(FileUpload)
-    if not is_privileged:
-        query = query.where(FileUpload.uploader_id == user.sub)
-
-    if id_search:
-        query = query.where(func.starts_with(FileUpload.id, id_search))
-
-    count_query = select(func.count()).select_from(query.subquery())
-    total = await db.scalar(count_query)
-
-    items = await db.scalars(
-        query.limit(page_size)
-        .offset((page - 1) * page_size)
-        .order_by(desc(FileUpload.created))
-    )
-
-    return {
-        "data": items,
-        "page": page,
-        "page_size": page_size,
-        "total_count": total,
     }
