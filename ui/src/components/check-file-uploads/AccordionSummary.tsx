@@ -3,23 +3,23 @@ import { Tag } from "@carbon/react";
 
 interface AccordionSummaryProps {
   rows: number;
-  totalSuccessRows: number;
+  totalPassedAssertions: number;
   totalFailedAssertions: number;
   hasCriticalError: boolean;
 }
 const AccordionSummary = ({
   rows,
-  totalSuccessRows,
+  totalPassedAssertions,
   totalFailedAssertions,
 }: AccordionSummaryProps) => {
   return (
     <div className="flex h-12 items-center gap-4 border-b-2 border-gray-200">
-      <div className="bg-carbon-datatable-grey flex h-full items-center px-6 font-semibold">
+      <div className="flex h-full items-center bg-carbon-datatable-grey px-6 font-semibold">
         Data Quality Review ({rows} rows)
       </div>
       <div className="flex">
         <Tag className="flex w-auto gap-2 px-3 py-2" type="green">
-          <CheckmarkOutline className="align-middle" /> {totalSuccessRows}
+          <CheckmarkOutline className="align-middle" /> {totalPassedAssertions}
           {"      "}
           success rows
         </Tag>
