@@ -29,9 +29,9 @@ import {
 
 import {
   DataRelevanceEnum,
-  ISchoolData,
-  SchoolDataItem,
-  schoolData,
+  GeolocationSchema,
+  MasterSchemaItem,
+  geolocationSchemaData,
 } from "@/constants/school-data";
 import { useStore } from "@/context/store";
 
@@ -54,8 +54,6 @@ const headers: DataTableHeader[] = [
 ];
 
 function ColumnMapping() {
-
-
   const {
     apiIngestionSlice: { detectedColumns },
     apiIngestionSliceActions: {
@@ -71,12 +69,12 @@ function ColumnMapping() {
     handleSubmit,
     register,
     formState: { errors },
-  } = useForm<ISchoolData>({
+  } = useForm<GeolocationSchema>({
     mode: "onChange",
     reValidateMode: "onChange",
   });
 
-  const onSubmit: SubmitHandler<ISchoolData> = data => {
+  const onSubmit: SubmitHandler<GeolocationSchema> = data => {
     incrementStepIndex();
     const updatedData = Object.fromEntries(
       Object.entries(data).map(([key, value]) => [
@@ -91,7 +89,10 @@ function ColumnMapping() {
 
   const rows = useMemo(() => {
     return (
-      Object.entries(schoolData) as [keyof ISchoolData, SchoolDataItem][]
+      Object.entries(geolocationSchemaData) as [
+        keyof GeolocationSchema,
+        MasterSchemaItem,
+      ][]
     ).map(([key, schoolDataItem]) => {
       const { data_relevance, description } = schoolDataItem;
 
