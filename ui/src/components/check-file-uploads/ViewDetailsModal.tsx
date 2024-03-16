@@ -51,7 +51,7 @@ const ViewDetailsModal = ({
 
   return (
     <Modal
-      modalHeading="Create New Ingestion"
+      modalHeading={assertion}
       open={open}
       passiveModal
       primaryButtonText="Proceed"

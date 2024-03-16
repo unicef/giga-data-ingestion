@@ -1,10 +1,10 @@
 import { useState } from "react";
 
 import {
+  Button,
   DataTable,
   DataTableHeader,
-  DefinitionTooltip,
-  Link, // @ts-expect-error paginationNav has no typescript declaration yet
+  DefinitionTooltip, // @ts-expect-error paginationNav has no typescript declaration yet
   PaginationNav,
   Table,
   TableBody,
@@ -42,6 +42,13 @@ interface DataQualityChecksProps {
 }
 
 const ITEMS_PER_PAGE = 10;
+
+const INVALID_VALUES = [
+  {
+    name: "invalid",
+    errorMessage: "the values of these columns seem to be invalid",
+  },
+];
 const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
   const [page, setPage] = useState(0);
   const [selectedAssertion, setSelctedAssertion] = useState<string>("");
@@ -146,19 +153,22 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
           </div>
         ),
         actions: (
-          <Link
+          <Button
             className="cursor-pointer"
+            kind="ghost"
+            disabled={columnValue === "NO_COLUMN" || percent_passed === 100}
             onClick={() => {
-              const dfasdf = previewData[`${assertion}-${column}`];
+              const selectedPreviewData =
+                previewData[`${assertion}-${column}`] || INVALID_VALUES;
 
               setSelctedAssertion(assertion);
-              setSelectedPreviewData(dfasdf);
+              setSelectedPreviewData(selectedPreviewData);
               setIsModalOpen(true);
               setSelectedColumn(column);
             }}
           >
             View Details
-          </Link>
+          </Button>
         ),
       };
     });
