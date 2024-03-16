@@ -238,7 +238,7 @@ async def get_data_quality_check(
 
     return {
         "name": blob_properties.name,
-        "creation_time": blob_properties.creation_time,
+        "creation_time": blob_properties.creation_time.isoformat(),
         "dq_summary": dq_report_summary_dict,
         "dq_failed_rows_first_five_rows": results,
     }

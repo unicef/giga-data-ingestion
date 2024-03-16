@@ -84,7 +84,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
     .map(check => {
       const {
         assertion,
-        column,
+        column = "NO_COLUMN",
         description,
         count_failed,
         count_passed,
@@ -93,19 +93,22 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
         percent_passed,
       } = check;
 
+      const columnValue = column === "" ? "NO_COLUMN" : column;
+
+      const definition =
+        masterSchemaDataWithMissingFields[columnValue as keyof MasterSchema]
+          ?.description || "NO DESCRIPTION";
+
       return {
         id: `${assertion}-${column}`,
         column: (
           <div className="min-w-64">
             <DefinitionTooltip
               align="right"
-              definition={
-                masterSchemaDataWithMissingFields[column as keyof MasterSchema]
-                  .description
-              }
+              definition={definition}
               openOnHover
             >
-              {column}
+              {columnValue}
             </DefinitionTooltip>
           </div>
         ),
