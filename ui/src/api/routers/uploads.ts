@@ -27,12 +27,16 @@ export default function routes(axi: AxiosInstance) {
           formData.append(key, params[key] as string | File);
         }
       });
-
       return axi.post(`/upload`, formData, {
         params: {
           dataset: params.dataset,
         },
       });
+    },
+    download_data_quality_check: (
+      upload_id: string,
+    ): Promise<AxiosResponse<BlobPart>> => {
+      return axi.get(`upload/data_quality_check/${upload_id}/download`);
     },
   };
 }

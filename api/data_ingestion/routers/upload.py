@@ -19,6 +19,7 @@ from fastapi_azure_auth.user import User
 from pydantic import AwareDatetime, Field
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import StreamingResponse
 
 from data_ingestion.constants import constants
 from data_ingestion.db import get_db
@@ -241,3 +242,42 @@ async def get_data_quality_check(
         "dq_summary": dq_report_summary_dict,
         "dq_failed_rows_first_five_rows": results,
     }
+
+
+@router.get(
+    "/data_quality_check/{upload_id}/download",
+)
+async def download_data_quality_check(
+    upload_id: str,
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    user: User = Depends(azure_scheme),
+):
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if not is_privileged:
+        if file_upload.uploader_id != user.sub:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to access details for this file.",
+            )
+
+    blob_list = storage_client.list_blobs(name_starts_with=file_upload.dq_report_path)
+    first_blob = next(blob_list, None)
+
+    blob = storage_client.get_blob_client(first_blob.name)
+    stream = blob.download_blob()
+    headers = {"Content-Disposition": f"attachment; filename={first_blob.name}"}
+
+    return StreamingResponse(
+        stream.chunks(),
+        media_type="application/octet-stream",
+        headers=headers,
+    )
