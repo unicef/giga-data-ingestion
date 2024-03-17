@@ -54,8 +54,6 @@ const headers: DataTableHeader[] = [
 ];
 
 function ColumnMapping() {
-
-
   const {
     apiIngestionSlice: { detectedColumns },
     apiIngestionSliceActions: {

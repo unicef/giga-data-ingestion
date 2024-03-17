@@ -18,7 +18,7 @@ class Constants(BaseSettings):
         "application/vnd.ms-excel": [".xls"],
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
         "text/csv": [".csv"],
-        "application/csv": [".csv"]
+        "application/csv": [".csv"],
     }
 
     @computed_field
