@@ -5,7 +5,6 @@ trigger:
 
 pr:
   autoCancel: true
-  drafts: false
   paths:
     exclude:
       - docs
