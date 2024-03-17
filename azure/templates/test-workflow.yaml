@@ -1,6 +1,6 @@
 stages:
   - stage: PreCommit
-    displayName: Run PR checks
+    displayName: Run pre-commit
     jobs:
       - job: PreCommit
         displayName: Run pre-commit
