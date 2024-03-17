@@ -27,7 +27,7 @@ async def get_schema(name: str, db: Session = Depends(get_db)):
     # TODO: Determine how to dynamically pass table names with ORM
     res = db.execute(
         text(
-            f"SELECT * FROM schemas.{name} ORDER BY primary_key, is_nullable NULLS LAST"  # nosec: `name`s are limited to the list above
+            f"SELECT * FROM schemas.{name} ORDER BY primary_key, is_nullable NULLS LAST, name"  # nosec: `name`s are limited to the list above
         )
     )
-    return res.mappings().all()
+    return [m for m in res.mappings().all() if m["name"] != "school_id_giga"]
