@@ -20,6 +20,13 @@ class Constants(BaseSettings):
         "text/csv": [".csv"],
         "application/csv": [".csv"],
     }
+    ALLOWED_SCHEMA_NAMES: list[str] = [
+        "qos",
+        "school_master",
+        "school_reference",
+        "school_geolocation",
+        "school_coverage",
+    ]
 
     @computed_field
     @property

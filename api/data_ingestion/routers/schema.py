@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Security, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from data_ingestion.constants import constants
 from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.schemas.schema import Schema as MetaSchema
@@ -15,13 +16,7 @@ router = APIRouter(
 
 @router.get("/{name}", response_model=list[MetaSchema])
 async def get_schema(name: str, db: Session = Depends(get_db)):
-    if name not in [
-        "qos",
-        "school_master",
-        "school_reference",
-        "school_geolocation",
-        "school_coverage",
-    ]:
+    if name not in constants.ALLOWED_SCHEMA_NAMES:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     # TODO: Determine how to dynamically pass table names with ORM
