@@ -8,8 +8,16 @@ from starlette.middleware.sessions import SessionMiddleware
 from data_ingestion.constants import __version__
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
-from data_ingestion.routers import core, groups, qos, upload, users, utils, email
-
+from data_ingestion.routers import (
+    core,
+    email,
+    groups,
+    qos,
+    schema,
+    upload,
+    users,
+    utils,
+)
 from data_ingestion.settings import initialize_sentry, settings
 
 initialize_sentry()
@@ -56,6 +64,7 @@ app.include_router(users.router)
 app.include_router(groups.router)
 app.include_router(qos.router)
 app.include_router(utils.router)
+app.include_router(schema.router)
 
 
 if settings.IN_PRODUCTION:

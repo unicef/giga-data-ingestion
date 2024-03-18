@@ -15,6 +15,7 @@ import useGetToken from "@/hooks/useGetToken.ts";
 import externalRequestsRouter from "./routers/externalRequests.ts";
 import rolesRouter from "./routers/groups.ts";
 import qosRouter from "./routers/qos.ts";
+import schemaRouter from "./routers/schema.ts";
 import uploadsRouter from "./routers/uploads.ts";
 import usersRouter from "./routers/users.ts";
 
@@ -30,6 +31,7 @@ export const api = {
   groups: rolesRouter(axi),
   uploads: uploadsRouter(axi),
   qos: qosRouter(axi),
+  schema: schemaRouter(axi),
   externalRequests: externalRequestsRouter(),
 };
 

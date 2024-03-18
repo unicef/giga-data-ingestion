@@ -4,7 +4,7 @@ from datetime import datetime
 
 import yaml
 from data_ingestion import models
-from data_ingestion.db import get_db_context
+from data_ingestion.db.primary import get_db_context
 from data_ingestion.models import BaseModel
 from data_ingestion.settings import settings
 from loguru import logger

@@ -18,8 +18,15 @@ class Constants(BaseSettings):
         "application/vnd.ms-excel": [".xls"],
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
         "text/csv": [".csv"],
-        "application/csv": [".csv"]
+        "application/csv": [".csv"],
     }
+    ALLOWED_SCHEMA_NAMES: list[str] = [
+        "qos",
+        "school_master",
+        "school_reference",
+        "school_geolocation",
+        "school_coverage",
+    ]
 
     @computed_field
     @property
