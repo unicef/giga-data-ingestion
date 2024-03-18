@@ -12,9 +12,32 @@ const FILE_UPLOAD_SIZE_LIMIT = convertMegabytesToBytes(
 interface UploadFileProps {
   file: File | null;
   setFile: (file: File | null) => void;
-  setTimestamp: (timestamp: Date | null) => void;
+  setTimestamp?: (timestamp: Date | null) => void;
+  acceptType?: {
+    [key: string]: string[];
+  };
+  description?: string;
 }
-const UploadFile = ({ file, setFile, setTimestamp }: UploadFileProps) => {
+
+const DEFAULT_ACCEPT_TYPE = {
+  "application/json": [".json"],
+  "application/octet-stream": [".parquet"],
+  "application/vnd.ms-excel": [".xls"],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+    ".xlsx  ",
+  ],
+  "text/csv": [".csv"],
+};
+
+const DEFAULT_MESSAGE = "(.xlsx, .xls, .csv, .json, .parquet only, up to 10MB)";
+
+const UploadFile = ({
+  file,
+  setFile,
+  acceptType = DEFAULT_ACCEPT_TYPE,
+  description = DEFAULT_MESSAGE,
+  setTimestamp = () => {},
+}: UploadFileProps) => {
   const hasUploadedFile = file != null;
 
   function onDrop(files: File[]) {
@@ -28,15 +51,7 @@ const UploadFile = ({ file, setFile, setTimestamp }: UploadFileProps) => {
 
   return (
     <Dropzone
-      accept={{
-        "application/json": [".json"],
-        "application/octet-stream": [".parquet"],
-        "application/vnd.ms-excel": [".xls"],
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
-          ".xlsx  ",
-        ],
-        "text/csv": [".csv"],
-      }}
+      accept={acceptType}
       maxFiles={1}
       maxSize={FILE_UPLOAD_SIZE_LIMIT}
       multiple={false}
@@ -76,7 +91,7 @@ const UploadFile = ({ file, setFile, setTimestamp }: UploadFileProps) => {
             )}
           </div>
           <p className="text-gray-4 px-6 text-center text-xs opacity-25">
-            (.xlsx, .xls, .csv, .json, .parquet only, up to 10MB)
+            {description}
           </p>
         </div>
       )}

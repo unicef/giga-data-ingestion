@@ -9,11 +9,14 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 
+import { useStore } from "@/context/store.ts";
 import useGetToken from "@/hooks/useGetToken.ts";
-import { useStore } from "@/store.ts";
 
 import approvalRequestsRouter from "./routers/approvalRequests.ts";
+import externalRequestsRouter from "./routers/externalRequests.ts";
 import rolesRouter from "./routers/groups.ts";
+import qosRouter from "./routers/qos.ts";
+import schemaRouter from "./routers/schema.ts";
 import uploadsRouter from "./routers/uploads.ts";
 import usersRouter from "./routers/users.ts";
 
@@ -29,6 +32,9 @@ export const api = {
   groups: rolesRouter(axi),
   uploads: uploadsRouter(axi),
   approvalRequests: approvalRequestsRouter(axi),
+  qos: qosRouter(axi),
+  schema: schemaRouter(axi),
+  externalRequests: externalRequestsRouter(),
 };
 
 export function useApi() {
@@ -40,7 +46,10 @@ export function AxiosProvider(props: PropsWithChildren) {
   const isAuthenticated = useIsAuthenticated();
   const getToken = useGetToken();
 
-  const { setFullPageLoading } = useStore();
+  const {
+    appStateActions: { setFullPageLoading },
+  } = useStore();
+
   const reqInterceptId = useRef(
     axi.interceptors.request.use(
       requestFulFilledInterceptor,

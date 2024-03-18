@@ -23,4 +23,4 @@ stages:
       - BuildAndPushEmail
       - CreateConfig
     jobs:
-      - template: deploy.yaml
+      - template: helm-deploy.yaml

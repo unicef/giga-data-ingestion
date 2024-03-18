@@ -26,4 +26,6 @@ variables:
   postgresqlUsername: $(POSTGRESQL_USERNAME)
   postgresqlPassword: $(POSTGRESQL_PASSWORD)
   postgresqlDatabase: $(POSTGRESQL_DATABASE)
+  trinoUsername: $(TRINO_USERNAME)
+  trinoPassword: $(TRINO_PASSWORD)
   system.debug: true

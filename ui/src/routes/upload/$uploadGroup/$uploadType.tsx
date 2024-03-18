@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
-import { useStore } from "@/store.ts";
+import { useStore } from "@/context/store.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
   component: Layout,
@@ -31,12 +31,14 @@ function Layout() {
   const { uploadType } = Route.useParams();
   const title = uploadType.replace(/-/g, " ");
 
-  const { upload, resetUploadState } = useStore();
-  const { stepIndex } = upload;
+  const {
+    uploadSlice: { stepIndex },
+    uploadSliceActions: { resetUploadSliceState },
+  } = useStore();
 
   useEffect(() => {
-    return resetUploadState;
-  }, [resetUploadState]);
+    return resetUploadSliceState;
+  }, [resetUploadSliceState]);
 
   return (
     <Stack gap={10}>
@@ -51,21 +53,15 @@ function Layout() {
         <ProgressStep label="1" description="Upload" secondaryLabel="Upload" />
         <ProgressStep
           label="2"
+          description="Configure columns"
+          secondaryLabel="Configure columns"
+        />
+        <ProgressStep
+          label="3"
           description="Add metadata"
           secondaryLabel="Add metadata"
         />
-        {/* TODO: Add column mapping */}
-        {/*<ProgressStep*/}
-        {/*  label="3"*/}
-        {/*  description="Configure columns"*/}
-        {/*  secondaryLabel="Configure columns"*/}
-        {/*/>*/}
-        <ProgressStep
-          label="3"
-          // description="Data quality review & submit"
-          // secondaryLabel="Data quality review & submit"
-          secondaryLabel="Submit"
-        />
+        <ProgressStep label="4" description="Submit" secondaryLabel="Submit" />
       </ProgressIndicator>
 
       <Outlet />

@@ -6,20 +6,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import UploadBreadcrumbs from "@/components/upload/UploadBreadcrumbs.tsx";
 import UploadLanding from "@/components/upload/UploadLanding.tsx";
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
-import { useStore } from "@/store.ts";
+import { useStore } from "@/context/store";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
-  const { resetUploadState } = useStore();
-
+  const {
+    uploadSliceActions: { resetUploadSliceState: resetUploadSliceState },
+  } = useStore();
   useEffect(() => {
     return () => {
-      resetUploadState();
+      resetUploadSliceState();
     };
-  }, [resetUploadState]);
+  }, [resetUploadSliceState]);
 
   return (
     <AuthenticatedRBACView>

@@ -11,7 +11,22 @@ from data_ingestion.settings import settings
 class Constants(BaseSettings):
     UPLOAD_FILE_SIZE_LIMIT_MB: int | float = 10
     UPLOAD_PATH_PREFIX: str = "raw/uploads"
-    APPROVAL_REQUESTS_PATH_PREFIX: str = "raw/approval_requests"
+    API_INGESTION_SCHEMA_UPLOAD_PATH: str = "schemas/qos/school-connectivity"
+    VALID_UPLOAD_TYPES: dict[str, list[str]] = {
+        "application/json": [".json"],
+        "application/octet-stream": [".parquet"],
+        "application/vnd.ms-excel": [".xls"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+        "text/csv": [".csv"],
+        "application/csv": [".csv"],
+    }
+    ALLOWED_SCHEMA_NAMES: list[str] = [
+        "qos",
+        "school_master",
+        "school_reference",
+        "school_geolocation",
+        "school_coverage",
+    ]
 
     @computed_field
     @property

@@ -4,4 +4,4 @@ envFrom:
   - secretRef:
       name: giga-ingestion-portal-secrets
   - secretRef:
-      name: ""
+      name: oi-ingestionportal-secrets

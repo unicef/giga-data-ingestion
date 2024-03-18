@@ -2,7 +2,7 @@ import os.path
 from datetime import datetime
 
 from pydantic import UUID4, EmailStr
-from sqlalchemy import VARCHAR, DateTime, String, func
+from sqlalchemy import JSON, VARCHAR, DateTime, String, func
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -25,6 +25,9 @@ class FileUpload(BaseModel):
     dataset: Mapped[str] = mapped_column(nullable=False)
     source: Mapped[str] = mapped_column(nullable=True)
     original_filename: Mapped[str] = mapped_column(nullable=False)
+    column_to_schema_mapping: Mapped[dict] = mapped_column(
+        JSON, nullable=False, server_default="{}"
+    )
 
     @hybrid_property
     def upload_path(self) -> str:
@@ -36,4 +39,4 @@ class FileUpload(BaseModel):
 
         filename_elements.append(timestamp)
         filename = "_".join(filename_elements)
-        return f"{constants.UPLOAD_PATH_PREFIX}/{filename}{ext}"
+        return f"{constants.UPLOAD_PATH_PREFIX}/school-{self.dataset}/{filename}{ext}"
