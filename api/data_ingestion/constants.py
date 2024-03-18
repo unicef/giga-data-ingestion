@@ -9,6 +9,7 @@ from data_ingestion.settings import settings
 
 
 class Constants(BaseSettings):
+    APPROVAL_REQUESTS_PATH_PREFIX: str = "raw/approval_requests"
     UPLOAD_FILE_SIZE_LIMIT_MB: int | float = 10
     UPLOAD_PATH_PREFIX: str = "raw/uploads"
     API_INGESTION_SCHEMA_UPLOAD_PATH: str = "schemas/qos/school-connectivity"
