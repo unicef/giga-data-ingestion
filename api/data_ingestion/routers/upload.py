@@ -67,9 +67,9 @@ async def list_uploads(
     total = await db.scalar(count_query)
 
     items = await db.scalars(
-        query.limit(page_size)
+        query.order_by(desc(FileUpload.created))
+        .limit(page_size)
         .offset((page - 1) * page_size)
-        .order_by(desc(FileUpload.created))
     )
 
     return {
