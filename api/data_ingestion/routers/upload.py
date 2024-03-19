@@ -27,7 +27,7 @@ from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.data_quality_checks import (
     get_data_quality_summary,
-    get_first_five_error_rows_for_data_quality_check,
+    get_first_n_error_rows_for_data_quality_check,
 )
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import FileUpload
@@ -237,7 +237,7 @@ async def get_data_quality_check(
                 detail="You do not have permission to access details for this file.",
             )
 
-    blob_properties, results = get_first_five_error_rows_for_data_quality_check(
+    blob_properties, results = get_first_n_error_rows_for_data_quality_check(
         file_upload.dq_report_path
     )
     dq_report_summary_dict = get_data_quality_summary(file_upload.dq_report_path)

@@ -10,7 +10,7 @@ from fastapi import (
 )
 
 from data_ingestion.internal.storage import storage_client
-from data_ingestion.utils.data_quality import process_column
+from data_ingestion.utils.data_quality import process_n_columns
 
 
 def get_data_quality_summary(dq_report_path: str):
@@ -37,8 +37,9 @@ def get_data_quality_summary(dq_report_path: str):
     return dq_report_summary_dict
 
 
-def get_first_five_error_rows_for_data_quality_check(
+def get_first_n_error_rows_for_data_quality_check(
     dq_report_path: str,
+    rows_to_process: int = 5,
 ) -> tuple[BlobProperties, dict]:
     results = {}
 
@@ -59,7 +60,7 @@ def get_first_five_error_rows_for_data_quality_check(
         df = pd.read_csv(data_io)
 
         for column in df.columns:
-            column_result = process_column(column, df)
+            column_result = process_n_columns(column, df, rows_to_process)
             if column_result:
                 results.update(column_result)
 

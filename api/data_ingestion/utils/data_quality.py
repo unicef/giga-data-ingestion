@@ -1,4 +1,4 @@
-def process_column(column_name, df):
+def process_n_columns(column_name, df, rows: int):
     """
     Processes a DataFrame column for data quality checks.
 
@@ -30,7 +30,7 @@ def process_column(column_name, df):
         rows_with_error = []
 
         # Iterate over the first 5 rows and check if the value is 1
-        for _, row in df.head().iterrows():
+        for _, row in df.head(rows).iterrows():
             if row[column_name] == 1:
                 # Include only the data for the specific column if it matches
                 filtered_row = (
