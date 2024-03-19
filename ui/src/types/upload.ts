@@ -1,71 +1,62 @@
-export enum CheckStatusSeverity {
-  PASS = "success",
-  WARNING = "warning",
-  FAIL = "error",
-  NO_CHECK = "default",
-}
-
-export interface CheckStatus {
-  severity: CheckStatusSeverity;
-  message: string;
-}
-
-export interface UploadCheck {
-  key: number;
-  columnName: string;
-  expectedType: string;
-  expectedColumns: CheckStatus;
-  fillRate: CheckStatus;
-  acceptableValues: CheckStatus;
-  remarks: CheckStatus;
-}
-
-export interface UploadRouterContext {
-  file: File | null;
-  timestamp: Date | null;
-  uploadDate: string;
-  uploadId: string;
-}
-
-interface CheckResult {
+export interface Check {
   assertion: string;
+  column: string;
   description: string;
   count_failed: number;
   count_passed: number;
   count_overall: number;
   percent_failed: number;
   percent_passed: number;
-  rows_failed: string[];
 }
 
-interface UniqueValue {
-  name: string;
-  count: number;
-}
-
-export interface ColumnCheck {
-  assertion: string;
-  description: string;
-  data_type: string;
-  is_present: boolean;
-  is_correct_datatype: boolean;
-  null_values_count: number;
-  unique_values_count: number;
-  unique_values: UniqueValue[];
-  rows_failed: string[];
-}
-
-export interface DataQualityCheckResult {
+export interface DataQualityCheckSummary {
   summary: {
     rows: number;
     columns: number;
     timestamp: Date;
   };
-  column_checks: ColumnCheck[];
-  duplicate_rows_checks: CheckResult[];
-  geospatial_points_checks: CheckResult[];
+  format_validation_checks: Check[];
+  completeness_checks: Check[];
+  domain_checks: Check[];
+  range_checks: Check[];
+  duplicate_rows_checks: Check[];
+  geospatial_checks: Check[];
+  critical_error_check: Check[];
 }
 
+export interface DqFailedRowValues {
+  [key: string]: string | number | null;
+}
+
+export interface DqFailedRowsFirstFiveRows {
+  [checkName: string]: DqFailedRowValues[];
+}
+export interface DataQualityCheck {
+  name: string;
+  creation_time: string;
+  dq_summary: DataQualityCheckSummary;
+  dq_failed_rows_first_five_rows: DqFailedRowsFirstFiveRows;
+}
+
+export const initialDataQualityCheck: DataQualityCheck = {
+  name: "",
+  creation_time: new Date().toISOString(),
+  dq_summary: {
+    summary: {
+      rows: 0,
+      columns: 0,
+      timestamp: new Date(),
+    },
+    format_validation_checks: [],
+    completeness_checks: [],
+    domain_checks: [],
+    range_checks: [],
+    duplicate_rows_checks: [],
+    geospatial_checks: [],
+    critical_error_check: [],
+  },
+  dq_failed_rows_first_five_rows: {},
+};
 export interface UploadParams {
   column_to_schema_mapping: string;
   country: string;
@@ -85,6 +76,19 @@ export interface UploadParams {
   [key: string]: string | File | null | undefined;
 }
 
+export const initialUploadResponse: UploadResponse = {
+  id: "",
+  created: "",
+  uploader_id: "",
+  uploader_email: "",
+  dq_report_path: null,
+  country: "",
+  dataset: "",
+  source: null,
+  original_filename: "",
+  upload_path: "",
+  column_to_schema_mapping: "",
+};
 export interface UploadResponse {
   id: string;
   created: string;
