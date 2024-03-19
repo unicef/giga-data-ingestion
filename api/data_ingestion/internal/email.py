@@ -1,10 +1,10 @@
 from typing import Any
 
 import requests
-from azure.communication.email import EmailClient
 from loguru import logger
 from requests import HTTPError, JSONDecodeError
 
+from azure.communication.email import EmailClient
 from data_ingestion.schemas.email import (
     DataCheckSuccessRenderRequest,
     DqReportRenderRequest,

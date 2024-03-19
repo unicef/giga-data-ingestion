@@ -4,9 +4,6 @@ from datetime import timedelta
 from random import SystemRandom
 
 import yaml
-from faker import Faker
-from fastapi.encoders import jsonable_encoder
-
 from data_ingestion.models.ingest_api_qos import (
     AuthorizationTypeEnum,
     PaginationTypeEnum,
@@ -19,6 +16,8 @@ from data_ingestion.schemas.qos import (
     SchoolListSchema,
 )
 from data_ingestion.settings import settings
+from faker import Faker
+from fastapi.encoders import jsonable_encoder
 
 random = SystemRandom()
 random.seed(1)

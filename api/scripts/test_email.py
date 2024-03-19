@@ -1,9 +1,9 @@
 import requests
-from azure.communication.email import EmailClient
+from data_ingestion.settings import settings
 from loguru import logger
 from requests import HTTPError, JSONDecodeError
 
-from data_ingestion.settings import settings
+from azure.communication.email import EmailClient
 
 
 def main():

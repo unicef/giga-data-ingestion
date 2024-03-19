@@ -3,7 +3,6 @@ import random
 from typing import Annotated
 
 import magic
-from azure.core.exceptions import HttpResponseError
 from faker import Faker
 from fastapi import (
     APIRouter,
@@ -20,6 +19,7 @@ from sqlalchemy import delete, desc, exc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
+from azure.core.exceptions import HttpResponseError
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
