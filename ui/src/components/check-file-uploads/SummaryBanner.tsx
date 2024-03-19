@@ -6,6 +6,7 @@ import {
 } from "@carbon/icons-react";
 import { Link, Tag } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
+import { saveAs } from "file-saver";
 
 import { api } from "@/api";
 
@@ -58,14 +59,10 @@ const SummaryBanner = ({
         <Link
           className="cursor-pointer"
           onClick={async () => {
-            const x = await downloadDataQualityCheck.mutateAsync(uploadId);
+            const blob = await downloadDataQualityCheck.mutateAsync(uploadId);
 
-            if (x) {
-              const url = window.URL.createObjectURL(new Blob([x.data]));
-              const link = document.createElement("a");
-              link.href = url;
-
-              const contentDisposition = x.headers["content-disposition"];
+            if (blob) {
+              const contentDisposition = blob.headers["content-disposition"];
               const filenameMatch = contentDisposition.match(
                 /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
               );
@@ -74,9 +71,10 @@ const SummaryBanner = ({
                 filename = filenameMatch[1].replace(/['"]/g, "");
               }
 
-              link.setAttribute("download", filename);
-              document.body.appendChild(link);
-              link.click();
+              const file = new File([blob.data], filename, {
+                type: blob.data.type,
+              });
+              saveAs(file);
             }
           }}
         >

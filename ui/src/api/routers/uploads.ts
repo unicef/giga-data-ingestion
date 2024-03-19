@@ -35,8 +35,10 @@ export default function routes(axi: AxiosInstance) {
     },
     download_data_quality_check: (
       upload_id: string,
-    ): Promise<AxiosResponse<BlobPart>> => {
-      return axi.get(`upload/data_quality_check/${upload_id}/download`);
+    ): Promise<AxiosResponse<Blob>> => {
+      return axi.get(`upload/data_quality_check/${upload_id}/download`, {
+        responseType: "blob",
+      });
     },
   };
 }
