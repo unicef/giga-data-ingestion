@@ -98,7 +98,7 @@ async def get_upload(
     if not is_privileged:
         if file_upload.uploader_id != user.sub:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to access details for this file.",
             )
 
