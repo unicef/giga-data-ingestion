@@ -37,14 +37,8 @@ const UploadLazyImport = createFileRoute('/upload')()
 const IngestApiLazyImport = createFileRoute('/ingest-api')()
 const UploadIndexLazyImport = createFileRoute('/upload/')()
 const IngestApiIndexLazyImport = createFileRoute('/ingest-api/')()
-const CheckFileUploadsIndexLazyImport = createFileRoute(
-  '/check-file-uploads/',
-)()
 const UploadUploadIdIndexLazyImport = createFileRoute('/upload/$uploadId/')()
 const IngestApiAddIndexLazyImport = createFileRoute('/ingest-api/add/')()
-const CheckFileUploadsUploadIdIndexLazyImport = createFileRoute(
-  '/check-file-uploads/$uploadId/',
-)()
 const UploadUploadGroupUploadTypeIndexLazyImport = createFileRoute(
   '/upload/$uploadGroup/$uploadType/',
 )()
@@ -93,13 +87,6 @@ const IngestApiIndexLazyRoute = IngestApiIndexLazyImport.update({
   import('./routes/ingest-api/index.lazy').then((d) => d.Route),
 )
 
-const CheckFileUploadsIndexLazyRoute = CheckFileUploadsIndexLazyImport.update({
-  path: '/',
-  getParentRoute: () => CheckFileUploadsRoute,
-} as any).lazy(() =>
-  import('./routes/check-file-uploads/index.lazy').then((d) => d.Route),
-)
-
 const IngestApiEditRoute = IngestApiEditImport.update({
   path: '/edit',
   getParentRoute: () => IngestApiLazyRoute,
@@ -123,16 +110,6 @@ const IngestApiAddIndexLazyRoute = IngestApiAddIndexLazyImport.update({
 } as any).lazy(() =>
   import('./routes/ingest-api/add/index.lazy').then((d) => d.Route),
 )
-
-const CheckFileUploadsUploadIdIndexLazyRoute =
-  CheckFileUploadsUploadIdIndexLazyImport.update({
-    path: '/$uploadId/',
-    getParentRoute: () => CheckFileUploadsRoute,
-  } as any).lazy(() =>
-    import('./routes/check-file-uploads/$uploadId/index.lazy').then(
-      (d) => d.Route,
-    ),
-  )
 
 const UserManagementUserAddRoute = UserManagementUserAddImport.update({
   path: '/user/add',
@@ -256,10 +233,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiEditImport
       parentRoute: typeof IngestApiLazyImport
     }
-    '/check-file-uploads/': {
-      preLoaderRoute: typeof CheckFileUploadsIndexLazyImport
-      parentRoute: typeof CheckFileUploadsImport
-    }
     '/ingest-api/': {
       preLoaderRoute: typeof IngestApiIndexLazyImport
       parentRoute: typeof IngestApiLazyImport
@@ -283,10 +256,6 @@ declare module '@tanstack/react-router' {
     '/user-management/user/add': {
       preLoaderRoute: typeof UserManagementUserAddImport
       parentRoute: typeof UserManagementLazyImport
-    }
-    '/check-file-uploads/$uploadId/': {
-      preLoaderRoute: typeof CheckFileUploadsUploadIdIndexLazyImport
-      parentRoute: typeof CheckFileUploadsImport
     }
     '/ingest-api/add/': {
       preLoaderRoute: typeof IngestApiAddIndexLazyImport
@@ -343,10 +312,7 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
-  CheckFileUploadsRoute.addChildren([
-    CheckFileUploadsIndexLazyRoute,
-    CheckFileUploadsUploadIdIndexLazyRoute,
-  ]),
+  CheckFileUploadsRoute,
   IngestApiLazyRoute.addChildren([
     IngestApiAddRoute.addChildren([
       IngestApiAddColumnMappingRoute,

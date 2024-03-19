@@ -62,7 +62,7 @@ function UploadsTable() {
   const [pageSize, setPageSize] = useState(10);
 
   const { data: uploadsQuery, isLoading } = useQuery({
-    queryFn: () => api.uploads.list({ page, page_size: pageSize }),
+    queryFn: () => api.uploads.list_uploads({ page, page_size: pageSize }),
     queryKey: ["uploads", page, pageSize],
   });
 

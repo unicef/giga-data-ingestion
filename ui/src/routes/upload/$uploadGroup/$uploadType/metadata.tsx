@@ -25,6 +25,11 @@ import { useApi } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import ControlledDatepicker from "@/components/upload/ControlledDatepicker.tsx";
 import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
+import {
+  collectionDateHelperText,
+  dataOwnerHelperText,
+  schoolIdTypeHelperText,
+} from "@/constants/metadata";
 import { useStore } from "@/context/store";
 import useRoles from "@/hooks/useRoles.ts";
 import {
@@ -216,6 +221,7 @@ function Metadata() {
   const DataCollectionModalitySelect = () => (
     <Select
       id="dataCollectionModality"
+      helperText={collectionDateHelperText}
       invalid={!!errors.dataCollectionModality}
       labelText="Data Collection Modality"
       placeholder="Data Collection Modality"
@@ -275,6 +281,7 @@ function Metadata() {
   const DataOwnerSelect = () => (
     <Select
       id="dataowner"
+      helperText={dataOwnerHelperText}
       invalid={!!errors.dataOwner}
       labelText="Data Owner"
       placeholder="Data Owner"
@@ -329,6 +336,7 @@ function Metadata() {
   const SchoolIdTypeSelect = () => (
     <Select
       id="schoolIdType"
+      helperText={schoolIdTypeHelperText}
       invalid={!!errors.schoolIdType}
       labelText="School ID type"
       placeholder="School ID type"
@@ -370,8 +378,8 @@ function Metadata() {
             datePickerInputProps={{
               invalidText: "Select a date",
               id: "collectionDate",
-              labelText: "Date Collection Date",
-
+              labelText: "Data Collection Date",
+              helperText: collectionDateHelperText,
               placeholder: "yyyy-mm-dd",
             }}
           />

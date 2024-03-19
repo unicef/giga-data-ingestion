@@ -1,5 +1,3 @@
-import asyncio
-import json
 import os
 from typing import Annotated
 
@@ -20,14 +18,18 @@ from fastapi_azure_auth.user import User
 from pydantic import AwareDatetime, Field
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import StreamingResponse
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.data_quality_checks import (
+    get_data_quality_summary,
+    get_first_n_error_rows_for_data_quality_check,
+)
 from data_ingestion.internal.storage import storage_client
-from data_ingestion.mocks.upload_checks import get_upload_checks
 from data_ingestion.models import FileUpload
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
@@ -40,6 +42,67 @@ router = APIRouter(
     tags=["upload"],
     dependencies=[Security(azure_scheme)],
 )
+
+
+@router.get("", response_model=PagedResponseSchema[FileUploadSchema])
+async def list_uploads(
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    db: AsyncSession = Depends(get_db),
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Field(ge=1, le=50)] = 10,
+    id_search: Annotated[
+        str,
+        Query(min_length=1, max_length=24, pattern=r"^\w+$"),
+    ] = None,
+):
+    query = select(FileUpload)
+    if not is_privileged:
+        query = query.where(FileUpload.uploader_id == user.sub)
+
+    if id_search:
+        query = query.where(func.starts_with(FileUpload.id, id_search))
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total = await db.scalar(count_query)
+
+    items = await db.scalars(
+        query.order_by(desc(FileUpload.created))
+        .limit(page_size)
+        .offset((page - 1) * page_size)
+    )
+
+    return {
+        "data": items,
+        "page": page,
+        "page_size": page_size,
+        "total_count": total,
+    }
+
+
+@router.get("/{upload_id}", response_model=FileUploadSchema)
+async def get_upload(
+    upload_id: str,
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+    if not is_privileged:
+        if file_upload.uploader_id != user.sub:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to access details for this file.",
+            )
+
+    return file_upload
 
 
 @router.post("", response_model=FileUploadSchema)
@@ -149,114 +212,78 @@ async def upload_file(
     return file_upload
 
 
-@router.get("/column-checks")
-async def list_column_checks():
-    await asyncio.sleep(2)
-
-    # TODO replace with upload
-    upload_checks = get_upload_checks()
-
-    return upload_checks
-
-
 @router.get(
-    "/files",
+    "/data_quality_check/{upload_id}",
 )
-async def list_files():
-    blob_list = storage_client.list_blobs(name_starts_with="raw/uploads/")
-    files = []
-    for blob in blob_list:
-        parts = blob.name.replace("raw/uploads/", "").split("_")
+async def get_data_quality_check(
+    upload_id: str,
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    user: User = Depends(azure_scheme),
+):
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
 
-        if len(parts) == 4:
-            uid, country, dataset, _ = parts
-            source = None
-        else:
-            uid, country, dataset, source, _ = parts
-
-        file = {
-            "filename": blob.name,
-            "uid": uid,
-            "country": country,
-            "dataset": dataset,
-            "timestamp": blob.creation_time.isoformat(),
-        }
-
-        if source is not None:
-            file["source"] = source
-
-        files.append(file)
-
-    return files
-
-
-@router.get(
-    "/dq_check/{upload_id}",
-)
-async def get_dq_check(upload_id: str):
-    file_name_prefix = f"raw/uploads_DEV/{upload_id}"
-    blob_list = storage_client.list_blobs(name_starts_with=file_name_prefix)
-    first_blob = next(blob_list, None)
-    if first_blob is None:
+    if file_upload is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found",
+            detail="File Upload ID does not exist",
         )
 
-    blob = storage_client.get_blob_client(first_blob.name)
+    if not is_privileged:
+        if file_upload.uploader_id != user.sub:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to access details for this file.",
+            )
 
-    data = blob.download_blob().readall()
-    obj = json.loads(data.decode("utf-8"))
-    return obj
+    blob_properties, results = get_first_n_error_rows_for_data_quality_check(
+        file_upload.dq_report_path
+    )
+    dq_report_summary_dict = get_data_quality_summary(file_upload.dq_report_path)
+
+    return {
+        "name": blob_properties.name,
+        "creation_time": blob_properties.creation_time.isoformat(),
+        "dq_summary": dq_report_summary_dict,
+        "dq_failed_rows_first_five_rows": results,
+    }
 
 
 @router.get(
-    "/properties/{upload_id}",
+    "/data_quality_check/{upload_id}/download",
 )
-async def get_file_properties(upload_id: str):
-    file_name_prefix = f"raw/uploads/{upload_id}"
-    blob_list = storage_client.list_blobs(name_starts_with=file_name_prefix)
+async def download_data_quality_check(
+    upload_id: str,
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    user: User = Depends(azure_scheme),
+):
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if not is_privileged:
+        if file_upload.uploader_id != user.sub:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="You do not have permission to access details for this file.",
+            )
+
+    blob_list = storage_client.list_blobs(name_starts_with=file_upload.dq_report_path)
     first_blob = next(blob_list, None)
 
     blob = storage_client.get_blob_client(first_blob.name)
-    data = blob.get_blob_properties()
+    stream = blob.download_blob()
+    headers = {"Content-Disposition": f"attachment; filename={first_blob.name}"}
 
-    res = {"name": first_blob.name, "creation_time": data.creation_time}
-
-    return res
-
-
-@router.get("", response_model=PagedResponseSchema[FileUploadSchema])
-async def list_uploads(
-    user: User = Depends(azure_scheme),
-    is_privileged: bool = Depends(IsPrivileged.raises(False)),
-    db: AsyncSession = Depends(get_db),
-    page: Annotated[int, Query(ge=1)] = 1,
-    page_size: Annotated[int, Field(ge=1, le=50)] = 10,
-    id_search: Annotated[
-        str,
-        Query(min_length=1, max_length=24, pattern=r"^\w+$"),
-    ] = None,
-):
-    query = select(FileUpload)
-    if not is_privileged:
-        query = query.where(FileUpload.uploader_id == user.sub)
-
-    if id_search:
-        query = query.where(func.starts_with(FileUpload.id, id_search))
-
-    count_query = select(func.count()).select_from(query.subquery())
-    total = await db.scalar(count_query)
-
-    items = await db.scalars(
-        query.limit(page_size)
-        .offset((page - 1) * page_size)
-        .order_by(desc(FileUpload.created))
+    return StreamingResponse(
+        stream.chunks(),
+        media_type="application/octet-stream",
+        headers=headers,
     )
-
-    return {
-        "data": items,
-        "page": page,
-        "page_size": page_size,
-        "total_count": total,
-    }

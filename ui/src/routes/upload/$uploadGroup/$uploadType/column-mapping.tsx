@@ -28,10 +28,10 @@ import {
 } from "@tanstack/react-router";
 
 import {
+  CoverageSchema,
   DataRelevanceEnum,
-  ISchoolData,
-  SchoolDataItem,
-  schoolData,
+  MasterSchemaItem,
+  coverageSchemaData,
 } from "@/constants/school-data";
 import { useStore } from "@/context/store";
 
@@ -75,12 +75,12 @@ export default function ColumnMapping() {
     handleSubmit,
     register,
     formState: { errors },
-  } = useForm<ISchoolData>({
+  } = useForm<CoverageSchema>({
     mode: "onChange",
     reValidateMode: "onChange",
   });
 
-  const onSubmit: SubmitHandler<ISchoolData> = data => {
+  const onSubmit: SubmitHandler<CoverageSchema> = data => {
     const dataWithNullsReplaced = Object.fromEntries(
       Object.entries(data).map(([key, value]) => [
         key,
@@ -101,7 +101,10 @@ export default function ColumnMapping() {
 
   const rows = useMemo(() => {
     return (
-      Object.entries(schoolData) as [keyof ISchoolData, SchoolDataItem][]
+      Object.entries(coverageSchemaData) as [
+        keyof CoverageSchema,
+        MasterSchemaItem,
+      ][]
     ).map(([key, schoolDataItem]) => {
       const { data_relevance, description } = schoolDataItem;
 
