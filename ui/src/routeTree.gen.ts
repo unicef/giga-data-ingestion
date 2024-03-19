@@ -97,6 +97,11 @@ const IngestApiIndexLazyRoute = IngestApiIndexLazyImport.update({
   import('./routes/ingest-api/index.lazy').then((d) => d.Route),
 )
 
+const ApprovalRequestsIndexRoute = ApprovalRequestsIndexImport.update({
+  path: '/',
+  getParentRoute: () => ApprovalRequestsLazyRoute,
+} as any)
+
 const IngestApiEditRoute = IngestApiEditImport.update({
   path: '/edit',
   getParentRoute: () => IngestApiLazyRoute,
@@ -120,6 +125,12 @@ const IngestApiAddIndexLazyRoute = IngestApiAddIndexLazyImport.update({
 } as any).lazy(() =>
   import('./routes/ingest-api/add/index.lazy').then((d) => d.Route),
 )
+
+const ApprovalRequestsSubpathIndexRoute =
+  ApprovalRequestsSubpathIndexImport.update({
+    path: '/$subpath/',
+    getParentRoute: () => ApprovalRequestsLazyRoute,
+  } as any)
 
 const UserManagementUserAddRoute = UserManagementUserAddImport.update({
   path: '/user/add',
@@ -247,6 +258,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiEditImport
       parentRoute: typeof IngestApiLazyImport
     }
+    '/approval-requests/': {
+      preLoaderRoute: typeof ApprovalRequestsIndexImport
+      parentRoute: typeof ApprovalRequestsLazyImport
+    }
     '/ingest-api/': {
       preLoaderRoute: typeof IngestApiIndexLazyImport
       parentRoute: typeof IngestApiLazyImport
@@ -270,6 +285,10 @@ declare module '@tanstack/react-router' {
     '/user-management/user/add': {
       preLoaderRoute: typeof UserManagementUserAddImport
       parentRoute: typeof UserManagementLazyImport
+    }
+    '/approval-requests/$subpath/': {
+      preLoaderRoute: typeof ApprovalRequestsSubpathIndexImport
+      parentRoute: typeof ApprovalRequestsLazyImport
     }
     '/ingest-api/add/': {
       preLoaderRoute: typeof IngestApiAddIndexLazyImport
@@ -327,6 +346,10 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
   CheckFileUploadsRoute,
+  ApprovalRequestsLazyRoute.addChildren([
+    ApprovalRequestsIndexRoute,
+    ApprovalRequestsSubpathIndexRoute,
+  ]),
   IngestApiLazyRoute.addChildren([
     IngestApiAddRoute.addChildren([
       IngestApiAddColumnMappingRoute,
