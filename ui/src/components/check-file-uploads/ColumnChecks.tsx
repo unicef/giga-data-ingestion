@@ -79,15 +79,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
   };
 
   const rows = data
-    .sort((a, b) => {
-      if (a.column < b.column) {
-        return -1;
-      }
-      if (a.column > b.column) {
-        return 1;
-      }
-      return 0;
-    })
+    .sort((a, b) => a.column.localeCompare(b.column))
     .map(check => {
       const {
         assertion,
