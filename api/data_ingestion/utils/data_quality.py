@@ -1,21 +1,13 @@
-def process_n_columns(column_name, df, rows: int):
+import pandas as pd
+
+
+def process_n_columns(column_name: str, df: pd.DataFrame, rows: int) -> dict | None:
     """
-    Processes a DataFrame column for data quality checks.
+    :param column_name: The column to process.
+    :param df: The DataFrame.
+    :param rows: number of rows to process
 
-    Assumes column names in "dq_{assertion}-{column}" format, where
-    {assertion} is the check, and {column} is the target column. Returns None
-    if the column doesn't start with "dq_".
-
-    Checks the first 5 rows for errors (value = 1). Returns a dictionary with
-    "assertion-column" as the key and a list of error rows for that column as
-    the value. Only includes data for the column matching the "column" part.
-
-    Parameters:
-    - column_name (str): The column to process.
-    - df (pandas.DataFrame): The DataFrame.
-
-    Returns:
-    - dict or None: {"assertion-column": [first five error rows]} or None.
+    :return: {"assertion-column": [first five error rows]} or None.
     """
     parts = column_name.split("_", 1)
     if len(parts) > 1 and parts[0] == "dq":
