@@ -4,6 +4,7 @@ from typing import Annotated
 import country_converter as coco
 import magic
 from azure.core.exceptions import HttpResponseError
+from azure.storage.blob import ContentSettings
 from fastapi import (
     APIRouter,
     Depends,
@@ -22,7 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import StreamingResponse
 
 from data_ingestion.constants import constants
-from data_ingestion.db import get_db
+from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.data_quality_checks import (
     get_data_quality_summary,
@@ -160,7 +161,7 @@ async def upload_file(
 
     file_upload = FileUpload(
         uploader_id=user.sub,
-        uploader_email=user.claims.get("email", user.email),
+        uploader_email=user.email or user.claims.get("email"),
         country=country_code,
         dataset=dataset,
         source=source,
@@ -190,7 +191,12 @@ async def upload_file(
         if source is not None:
             metadata["source"] = source
 
-        client.upload_blob(await file.read(), metadata=metadata)
+        await file.seek(0)
+        client.upload_blob(
+            await file.read(),
+            metadata=metadata,
+            content_settings=ContentSettings(content_type=file_type),
+        )
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
         await db.execute(delete(FileUpload).where(FileUpload.id == file_upload.id))

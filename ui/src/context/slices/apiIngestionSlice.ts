@@ -26,9 +26,7 @@ export interface ApiIngestionSliceActions {
     resetApiIngestionState: () => void;
     resetSchoolConnectivityFormValues: () => void;
     resetSchoolListFormValues: () => void;
-    setColumnMapping: (
-      columnMapping: Record<string, string>,
-    ) => void;
+    setColumnMapping: (columnMapping: Record<string, string>) => void;
     setDetectedColumns: (detectedColumns: Array<string>) => void;
     setFile: (file: File | null) => void;
     setSchoolConnectivityFormValues: (
@@ -89,9 +87,7 @@ export const createApiIngestionSlice: StateCreator<
       set(state => {
         state.apiIngestionSlice.schoolList = initialSchoolListFormValues;
       }),
-    setColumnMapping: (
-      columnMapping: Record<string, string>,
-    ) =>
+    setColumnMapping: (columnMapping: Record<string, string>) =>
       set(state => {
         state.apiIngestionSlice.columnMapping = columnMapping;
       }),

@@ -1,13 +1,8 @@
 import Dropzone from "react-dropzone";
 
-
-
 import { Document, Upload } from "@carbon/icons-react";
 
-
-
 import { cn, convertMegabytesToBytes } from "@/lib/utils.ts";
-
 
 const FILE_UPLOAD_SIZE_LIMIT_MB = 10;
 const FILE_UPLOAD_SIZE_LIMIT = convertMegabytesToBytes(

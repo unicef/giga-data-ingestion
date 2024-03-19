@@ -1,18 +1,13 @@
 import { Dispatch, SetStateAction } from "react";
 
-
-
 import { Button } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
 import "@tanstack/react-query";
 import { isPlainObject } from "lodash";
 
-
-
 import { api } from "@/api";
 import { useStore } from "@/context/store";
 import { AuthorizationTypeEnum, RequestMethodEnum } from "@/types/qos";
-
 
 interface TestApiButtonProps {
   setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
@@ -254,7 +249,7 @@ const TestApiButton = ({
       if (authorizationType === NONE) {
         try {
           const { data: requestData } = await noAuthRequest({
-            method:"POST",
+            method: "POST",
             queryParams: jsonQueryParams,
             requestBody: jsonRequestBody,
             url: apiEndpoint,
