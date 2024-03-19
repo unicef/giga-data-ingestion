@@ -3,12 +3,13 @@ import sys
 from datetime import datetime
 
 import yaml
+from loguru import logger
+from sqlalchemy.dialects.postgresql import insert
+
 from data_ingestion import models
 from data_ingestion.db.primary import get_db_context
 from data_ingestion.models import BaseModel
 from data_ingestion.settings import settings
-from loguru import logger
-from sqlalchemy.dialects.postgresql import insert
 
 
 async def main(fixtures: list[str]):
