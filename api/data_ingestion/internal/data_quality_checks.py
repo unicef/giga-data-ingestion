@@ -30,9 +30,10 @@ def get_data_quality_summary(dq_report_path: str):
         dq_report_summary = blob_data.decode("utf-8")
         dq_report_summary_dict = json.loads(dq_report_summary)
     else:
+        logger.error("DQ report summary still does not exist")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="DQ report summary still does not exist",
+            detail="Not Found",
         )
 
     return dq_report_summary_dict
