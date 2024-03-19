@@ -8,6 +8,7 @@ from fastapi import (
     HTTPException,
     status,
 )
+from loguru import logger
 
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.utils.data_quality import process_n_columns
@@ -65,9 +66,10 @@ def get_first_n_error_rows_for_data_quality_check(
                 results.update(column_result)
 
     else:
+        logger.error("DQ report does not exist in azure storage")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="DQ report does not exist in azure storage",
+            detail="Not Found",
         )
 
     return blob_properties, results
