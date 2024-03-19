@@ -70,6 +70,10 @@ export interface MasterSchema {
   nearest_UMTS_id: MasterSchemaItem;
   nearest_GSM_id: MasterSchemaItem;
   is_school_open: MasterSchemaItem;
+  admin1_id_giga: MasterSchemaItem;
+  admin2_id_giga: MasterSchemaItem;
+  nearest_NR_distance: MasterSchemaItem;
+  nearest_NR_id: MasterSchemaItem;
 }
 
 export const masterSchemaData: MasterSchema = {
@@ -327,6 +331,22 @@ export const masterSchemaData: MasterSchema = {
     description: "Whether school is open or closed",
     data_relevance: DataRelevanceEnum.Optional,
   },
+  admin1_id_giga: {
+    description: "Admin level 1 ID",
+    data_relevance: DataRelevanceEnum.Required,
+  },
+  admin2_id_giga: {
+    description: "Admin level 2 ID",
+    data_relevance: DataRelevanceEnum.Required,
+  },
+  nearest_NR_distance: {
+    description: "The distance to the nearest NR tower",
+    data_relevance: DataRelevanceEnum.Optional,
+  },
+  nearest_NR_id: {
+    description: "The ID of the nearest NR tower",
+    data_relevance: DataRelevanceEnum.Optional,
+  },
 };
 
 export interface CoverageSchema
@@ -379,14 +399,8 @@ export const coverageSchemaData: CoverageSchema = {
   nearest_LTE_id: masterSchemaData.nearest_LTE_id,
   nearest_UMTS_id: masterSchemaData.nearest_UMTS_id,
   nearest_GSM_id: masterSchemaData.nearest_GSM_id,
-  nearest_NR_distance: {
-    description: "NO_DESCRIPTION",
-    data_relevance: DataRelevanceEnum.Optional,
-  },
-  nearest_NR_id: {
-    description: "NO_DESCRIPTION",
-    data_relevance: DataRelevanceEnum.Optional,
-  },
+  nearest_NR_distance: masterSchemaData.nearest_NR_distance,
+  nearest_NR_id: masterSchemaData.nearest_NR_id,
 };
 
 export interface GeolocationSchema
@@ -474,12 +488,6 @@ export const geolocationSchemaData: GeolocationSchema = {
     masterSchemaData.school_location_ingestion_timestamp,
   school_name: masterSchemaData.school_name,
   water_availability: masterSchemaData.water_availability,
-  admin1_id_giga: {
-    description: "NO_DESCRIPTION",
-    data_relevance: DataRelevanceEnum.Optional,
-  },
-  admin2_id_giga: {
-    description: "NO_DESCRIPTION",
-    data_relevance: DataRelevanceEnum.Optional,
-  },
+  admin1_id_giga: masterSchemaData.admin1_id_giga,
+  admin2_id_giga: masterSchemaData.admin1_id_giga,
 };

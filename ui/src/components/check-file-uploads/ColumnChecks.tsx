@@ -16,7 +16,6 @@ import {
 } from "@carbon/react";
 
 import { MasterSchema, masterSchemaData } from "@/constants/school-data";
-import { DataRelevanceEnum } from "@/constants/school-data";
 import {
   Check,
   DqFailedRowValues,
@@ -58,26 +57,6 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
   >([{}]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const masterSchemaDataWithMissingFields = {
-    ...masterSchemaData,
-    admin1_id_giga: {
-      description: "NO_DESCRIPTION",
-      data_relevance: DataRelevanceEnum.Optional,
-    },
-    admin2_id_giga: {
-      description: "NO_DESCRIPTION",
-      data_relevance: DataRelevanceEnum.Optional,
-    },
-    nearest_NR_distance: {
-      description: "NO_DESCRIPTION",
-      data_relevance: DataRelevanceEnum.Optional,
-    },
-    nearest_NR_id: {
-      description: "NO_DESCRIPTION",
-      data_relevance: DataRelevanceEnum.Optional,
-    },
-  };
-
   const rows = data
     .sort((a, b) => a.column.localeCompare(b.column))
     .map(check => {
@@ -95,8 +74,8 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
       const columnValue = column === "" ? "NO_COLUMN" : column;
 
       const definition =
-        masterSchemaDataWithMissingFields[columnValue as keyof MasterSchema]
-          ?.description || "NO DESCRIPTION";
+        masterSchemaData[columnValue as keyof MasterSchema]?.description ||
+        "NO DESCRIPTION";
 
       return {
         id: `${assertion}-${column}`,
