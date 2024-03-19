@@ -21,17 +21,11 @@ def process_n_columns(column_name: str, df: pd.DataFrame, rows: int) -> dict | N
         # Initialize the list for rows with errors
         rows_with_error = []
 
-        # Iterate over the first 5 rows and check if the value is 1
-        for _, row in df.head(rows).iterrows():
-            if row[column_name] == 1:
-                # Include only the data for the specific column if it matches
-                filtered_row = (
-                    {column_name_part: row[column_name_part]}
-                    if column_name_part in row
-                    else {}
-                )
-                if filtered_row:  # Add row if it contains the column data
-                    rows_with_error.append(filtered_row)
+        # Get first n cells with an error as well as their values
+        df_filtered = df[df[column_name] == 1].head(rows)
+        if column_name_part in df_filtered.columns:
+            df_filtered = df_filtered[[column_name_part]]
+        rows_with_error = df_filtered.to_dict("records")
 
         # Return the result as a single object with key-value pairs
         return {key: rows_with_error} if rows_with_error else None
