@@ -858,6 +858,10 @@
             <Item Key="client_id">{service:te}</Item>
             <Item Key="issuer_refresh_token_user_identity_claim_type">objectId</Item>
             <Item Key="SendTokenResponseBodyWithJsonNumbers">true</Item>
+            <Item Key="token_lifetime_secs">3600</Item>
+            <Item Key="id_token_lifetime_secs">3600</Item>
+            <Item Key="refresh_token_lifetime_secs">604800</Item>
+            <Item Key="rolling_refresh_token_lifetime_secs">604800</Item>
           </Metadata>
           <CryptographicKeys>
             <Key Id="issuer_secret" StorageReferenceId="B2C_1A_TokenSigningKeyContainer" />
