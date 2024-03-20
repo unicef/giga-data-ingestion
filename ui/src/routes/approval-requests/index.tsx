@@ -1,11 +1,17 @@
 import { ReactElement, useMemo } from "react";
 
-import { Button, DataTableHeader, Heading, Section } from "@carbon/react";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  Button,
+  DataTableHeader,
+  DataTableSkeleton,
+  Section,
+  TableContainer,
+} from "@carbon/react";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 
-import { api, queryClient } from "@/api";
+import { api } from "@/api";
 import DataTable from "@/components/common/DataTable.tsx";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { ApprovalRequestListing } from "@/types/approvalRequests.ts";
@@ -17,9 +23,6 @@ const listQueryOptions = queryOptions({
 
 export const Route = createFileRoute("/approval-requests/")({
   component: ApprovalRequests,
-  loader: () => {
-    return queryClient.ensureQueryData(listQueryOptions);
-  },
 });
 
 const columns: DataTableHeader[] = [
@@ -59,9 +62,9 @@ type ApprovalRequest = Record<
 > & { id: string; actions: ReactElement };
 
 function ApprovalRequests() {
-  const {
-    data: { data: approvalRequests },
-  } = useSuspenseQuery(listQueryOptions);
+  const { data, isFetching, isLoading } = useQuery(listQueryOptions);
+
+  const approvalRequests = useMemo(() => data?.data ?? [], [data]);
 
   const formattedApprovalRequests: ApprovalRequest[] = useMemo(
     () =>
@@ -91,11 +94,13 @@ function ApprovalRequests() {
 
   return (
     <Section className="container flex flex-col gap-4 py-6">
-      <Section>
-        <Heading>Approval Requests</Heading>
-      </Section>
-
-      <DataTable columns={columns} rows={formattedApprovalRequests} />
+      {isLoading || isFetching ? (
+        <DataTableSkeleton />
+      ) : (
+        <TableContainer title="Approval Requests">
+          <DataTable columns={columns} rows={formattedApprovalRequests} />
+        </TableContainer>
+      )}
     </Section>
   );
 }
