@@ -43,26 +43,37 @@ function ApproveRejectTable() {
     [data],
   );
 
-  const formattedData = useMemo(
-    () =>
-      data.slice((page - 1) * pageSize, page * pageSize).map(row =>
-        Object.fromEntries(
-          Object.entries(row).map(([key, value]) => [
-            key,
-            <div
-              className={cn({
-                "bg-giga-yellow": row._change_data === "update_preimage",
-                "bg-giga-green": row._change_data === "insert",
-                "bg-giga-red": row._change_data === "remove",
-              })}
-            >
-              <Markdown remarkPlugins={[remarkGfm]}>{`${value}`}</Markdown>
-            </div>,
-          ]),
-        ),
-      ),
-    [data, page, pageSize],
-  );
+  const formattedData = useMemo(() => {
+    const dataSlice = data.slice((page - 1) * pageSize, page * pageSize);
+
+    const x = dataSlice.map((row, index) => {
+      const rowWithId = { ...row, id: `${index}-${row.school_id_giga}` };
+
+      const entries = Object.entries(rowWithId).map(([key, value]) => {
+        if (key == "id") return [key, value];
+
+        return [
+          key,
+          <div
+            className={cn({
+              // "bg-giga-yellow": true,
+            })}
+          >
+            outerContent
+            <Markdown
+              remarkPlugins={[remarkGfm]}
+              components={markdownComponents}
+            >{`${value}`}</Markdown>
+            outerDiv
+          </div>,
+        ];
+      });
+
+      return Object.fromEntries(entries);
+    });
+
+    return x;
+  }, [data, page, pageSize]);
 
   function handlePaginationChange({
     pageSize,
