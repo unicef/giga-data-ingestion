@@ -1,23 +1,27 @@
+import json
 import urllib.parse
 from io import BytesIO
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from azure.core.exceptions import ResourceNotFoundError
-from azure.storage.blob import BlobProperties
 from country_converter import country_converter as coco
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 
+from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
+from azure.storage.blob import BlobProperties, ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
-from data_ingestion.schemas.approval_requests import ApprovalRequestListing
+from data_ingestion.schemas.approval_requests import (
+    ApprovalRequestListing,
+    UploadApprovedRowsRequest,
+)
 
 router = APIRouter(
     prefix="/api/approval-requests",
     tags=["approval-requests"],
-    # dependencies=[Security(azure_scheme)],
+    dependencies=[Security(azure_scheme)],
 )
 
 
@@ -109,4 +113,33 @@ async def get_approval_request(subpath: str, user=Depends(azure_scheme)):
 
         df = df[df["_change_type"] != "update_postimage"]
 
-    return df.to_dict(orient="records")
+
+@router.post("/upload", status_code=status.HTTP_201_CREATED)
+async def upload_approved_rows(
+    body: UploadApprovedRowsRequest,
+    user=Depends(azure_scheme),
+):
+    subpath = urllib.parse.unquote(body.subpath)
+    subpath = Path(subpath)
+    dataset = subpath.parent.name
+    country_iso3 = subpath.name.split("_")[0]
+    filename = subpath.name.split("_")[1].split(".")[0]
+
+    approve_filename = f"{country_iso3}_{dataset}_{filename}.json"
+    client = storage_client.get_blob_client(f"raw/uploads_DEV/mock/{approve_filename}")
+
+    try:
+        client.upload_blob(
+            json.dumps(body.approved_rows),
+            overwrite=True,
+            content_settings=ContentSettings(content_type="application/json"),
+        )
+
+    except HttpResponseError as err:
+        raise HTTPException(
+            detail=err.message, status_code=err.response.status_code
+        ) from err
+    except Exception as err:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        ) from err

@@ -11,3 +11,8 @@ class ApprovalRequestListing(BaseModel):
     rows_added: int
     rows_updated: int
     rows_deleted: int
+
+
+class UploadApprovedRowsRequest(BaseModel):
+    approved_rows: list[str]
+    subpath: str
