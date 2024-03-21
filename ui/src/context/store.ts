@@ -7,10 +7,14 @@ import {
   createApiIngestionSlice,
 } from "./slices/apiIngestionSlice";
 import { AppStateSlice, createAppStateSlice } from "./slices/appStateSlice";
+import {
+  ApproveRowSlice,
+  createApproveRowSlice,
+} from "./slices/approveRowSlice";
 import { UploadSlice, createUploadSlice } from "./slices/uploadSlice";
 
 export const useStore = create<
-  ApiIngestionSlice & AppStateSlice & UploadSlice
+  ApiIngestionSlice & AppStateSlice & ApproveRowSlice & UploadSlice
 >()(
   immer(
     devtools(
@@ -18,6 +22,7 @@ export const useStore = create<
         ...createApiIngestionSlice(...a),
         ...createAppStateSlice(...a),
         ...createUploadSlice(...a),
+        ...createApproveRowSlice(...a),
       }),
       {
         enabled: !import.meta.env.PROD,
