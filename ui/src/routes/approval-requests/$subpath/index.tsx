@@ -95,7 +95,7 @@ function ApproveRejectTable() {
   }, [data, page, pageSize]);
 
   const handleApproveRows = (rows: KeyValueObject[]) => {
-    const ids = rows.map(row => row.id ?? "NULL");
+    const ids = rows.map(row => row.school_id_giga ?? "NULL");
     setApprovedRows(ids);
     setHeaders(headers);
     setRows(formattedRows);

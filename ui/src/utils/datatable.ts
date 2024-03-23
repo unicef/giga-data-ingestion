@@ -9,7 +9,7 @@ export const transformToKeyValueObject = (
   return selectedRows.map(row => {
     const transformed: KeyValueObject = {};
     row.cells.forEach(cell => {
-      transformed[cell.id] =
+      transformed[cell.info.header] =
         cell.value !== undefined ? cell.value.toString() : null;
     });
     return transformed;
