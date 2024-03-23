@@ -14,5 +14,17 @@ export default function routes(axi: AxiosInstance) {
       const encodedSubpath = encodeURIComponent(subpath);
       return axi.get(`/approval-requests/${encodedSubpath}`);
     },
+    upload_approved_rows: ({
+      approved_rows,
+      subpath,
+    }: {
+      approved_rows: string[];
+      subpath: string;
+    }): Promise<AxiosResponse<null>> => {
+      return axi.post(`approval-requests/upload`, {
+        approved_rows: approved_rows,
+        subpath: subpath,
+      });
+    },
   };
 }
