@@ -1,5 +1,3 @@
-import { ComponentProps } from "react";
-
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
   Accordion,
@@ -22,19 +20,17 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { api } from "@/api";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
-import { getValueByHeader } from "@/utils/approve_row";
-
-import { TransformedRow } from ".";
+import { CarbonDataTableRow } from "@/types/datatable";
+import { KeyValueObject } from "@/types/datatable";
+import { getValueByHeader } from "@/utils/approval_requests";
 
 export const Route = createFileRoute("/approval-requests/$subpath/confirm")({
   component: Confirm,
 });
 
 interface ConfirmDataTablesProps {
-  rows: TransformedRow[];
+  rows: KeyValueObject[];
 }
-
-type CarbonDataTableRow = ComponentProps<typeof DataTable>["rows"];
 
 function Confirm() {
   const {

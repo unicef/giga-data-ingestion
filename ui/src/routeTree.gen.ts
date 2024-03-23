@@ -23,6 +23,7 @@ import { Route as UserManagementUserAddImport } from './routes/user-management/u
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
 import { Route as IngestApiAddSchoolConnectivityImport } from './routes/ingest-api/add/school-connectivity'
 import { Route as IngestApiAddColumnMappingImport } from './routes/ingest-api/add/column-mapping'
+import { Route as ApprovalRequestsSubpathConfirmImport } from './routes/approval-requests/$subpath/confirm'
 import { Route as UserManagementUserRevokeUserIdImport } from './routes/user-management/user/revoke.$userId'
 import { Route as UserManagementUserEnableUserIdImport } from './routes/user-management/user/enable.$userId'
 import { Route as UserManagementUserEditUserIdImport } from './routes/user-management/user/edit.$userId'
@@ -154,6 +155,12 @@ const IngestApiAddColumnMappingRoute = IngestApiAddColumnMappingImport.update({
   getParentRoute: () => IngestApiAddRoute,
 } as any)
 
+const ApprovalRequestsSubpathConfirmRoute =
+  ApprovalRequestsSubpathConfirmImport.update({
+    path: '/$subpath/confirm',
+    getParentRoute: () => ApprovalRequestsLazyRoute,
+  } as any)
+
 const UploadUploadGroupUploadTypeIndexLazyRoute =
   UploadUploadGroupUploadTypeIndexLazyImport.update({
     path: '/',
@@ -270,6 +277,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UploadIndexLazyImport
       parentRoute: typeof UploadLazyImport
     }
+    '/approval-requests/$subpath/confirm': {
+      preLoaderRoute: typeof ApprovalRequestsSubpathConfirmImport
+      parentRoute: typeof ApprovalRequestsLazyImport
+    }
     '/ingest-api/add/column-mapping': {
       preLoaderRoute: typeof IngestApiAddColumnMappingImport
       parentRoute: typeof IngestApiAddImport
@@ -348,6 +359,7 @@ export const routeTree = rootRoute.addChildren([
   CheckFileUploadsRoute,
   ApprovalRequestsLazyRoute.addChildren([
     ApprovalRequestsIndexRoute,
+    ApprovalRequestsSubpathConfirmRoute,
     ApprovalRequestsSubpathIndexRoute,
   ]),
   IngestApiLazyRoute.addChildren([
