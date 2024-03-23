@@ -85,8 +85,7 @@ async def get_approval_request(subpath: str, user=Depends(azure_scheme)):
 
     try:
         blob = storage_client.download_blob(
-            # f"{constants.APPROVAL_REQUESTS_PATH_PREFIX}/{subpath}"
-            "raw/approval_requests/school-geolocation/fake_Change.csv"
+            f"{constants.APPROVAL_REQUESTS_PATH_PREFIX}/{subpath}"
         )
     except ResourceNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
