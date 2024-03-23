@@ -69,9 +69,7 @@ function ApproveRejectTable() {
         }))
         .sort((a, b) =>
           a.key === "school_id_giga" ? -1 : b.key === "school_id_giga" ? 1 : 0,
-        )
-        .filter(header => header.key !== "_change_type"),
-
+        ),
     [data],
   );
 
