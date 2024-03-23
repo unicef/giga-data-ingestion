@@ -85,7 +85,8 @@ async def get_approval_request(subpath: str, user=Depends(azure_scheme)):
 
     try:
         blob = storage_client.download_blob(
-            f"{constants.APPROVAL_REQUESTS_PATH_PREFIX}/{subpath}"
+            # f"{constants.APPROVAL_REQUESTS_PATH_PREFIX}/{subpath}"
+            "raw/approval_requests/school-geolocation/fake_Change.csv"
         )
     except ResourceNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
@@ -104,14 +105,29 @@ async def get_approval_request(subpath: str, user=Depends(azure_scheme)):
             if i % 2 != 0:
                 continue
 
+            cols_left_of_preimage = df.columns.get_loc("_change_type")
+            is_all_null = bool(df.iloc[i, :cols_left_of_preimage].isnull().all())
+
+            if is_all_null is True:
+                df.at[i, "_change_type"] = "insert"
+                df.iloc[i, :cols_left_of_preimage] = df.iloc[
+                    i + 1, :cols_left_of_preimage
+                ].values
+                continue
+
             for col in updates.columns:
                 if col == "_change_type":
                     continue
 
                 if (old := getattr(row, col)) != (update := updates.at[i + 1, col]):
-                    df.at[i, col] = f"~~{old}~~ {update}"
+                    df.at[i, col] = {"old": old, "update": update}
 
         df = df[df["_change_type"] != "update_postimage"]
+
+    return {
+        "info": {"country": country, "dataset": dataset.title()},
+        "data": df.to_dict(orient="records"),
+    }
 
 
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
