@@ -94,7 +94,7 @@ async def get_approval_request(subpath: str, user=Depends(azure_scheme)):
         blob.readinto(buffer)
         buffer.seek(0)
         df = (
-            pd.read_csv(buffer, dtype="string").fillna(np.nan).replace([np.nan], [None])
+            pd.read_csv(buffer, dtype="object").fillna(np.nan).replace([np.nan], [None])
         )
         updates = df[
             (df["_change_type"] == "update_preimage")
