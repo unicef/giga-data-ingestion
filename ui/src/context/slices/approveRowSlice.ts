@@ -1,21 +1,21 @@
 import { DataTableHeader } from "@carbon/react";
 import { StateCreator } from "zustand";
 
-import { TransformedRow } from "@/routes/approval-requests/$subpath";
+import { KeyValueObject } from "@/types/datatable";
 
 interface ApproveRowSliceState {
   approveRowState: {
     approvedRowsList: string[];
     headers: DataTableHeader[];
-    rows: TransformedRow[];
+    rows: KeyValueObject[];
   };
 }
 
 interface ApproveRowSliceActions {
   approveRowActions: {
     setHeaders: (header: DataTableHeader[]) => void;
-    setRows: (row: TransformedRow[]) => void;
-    setApprovedRowsList: (approvedRows: string[]) => void;
+    setRows: (row: KeyValueObject[]) => void;
+    setApprovedRows: (approvedRows: string[]) => void;
     resetApproveRowState: () => void;
   };
 }
@@ -46,7 +46,7 @@ export const createApproveRowSlice: StateCreator<
         state.approveRowState.headers = [];
         state.approveRowState.rows = [];
       }),
-    setApprovedRowsList: (approvedRows: Array<string>) =>
+    setApprovedRows: (approvedRows: Array<string>) =>
       set(state => {
         state.approveRowState.approvedRowsList = approvedRows;
       }),
@@ -54,7 +54,7 @@ export const createApproveRowSlice: StateCreator<
       set(state => {
         state.approveRowState.headers = header;
       }),
-    setRows: (rows: TransformedRow[]) =>
+    setRows: (rows: KeyValueObject[]) =>
       set(state => {
         state.approveRowState.rows = rows;
       }),
