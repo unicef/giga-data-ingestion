@@ -62,14 +62,10 @@ function ApproveRejectTable() {
 
   const headers: DataTableHeader[] = useMemo(
     () =>
-      Object.keys(data[0])
-        .map(key => ({
-          key,
-          header: key,
-        }))
-        .sort((a, b) =>
-          a.key === "school_id_giga" ? -1 : b.key === "school_id_giga" ? 1 : 0,
-        ),
+      Object.keys(data[0]).map(key => ({
+        key,
+        header: key,
+      })),
     [data],
   );
 
@@ -82,10 +78,7 @@ function ApproveRejectTable() {
       const entries = Object.entries(rowWithId).map(([key, value]) => {
         if (key == "id") return [key, value];
 
-        return [
-          key,
-          value === null ? "NULL" : typeof value === "object" ? value : value,
-        ];
+        return [key, value === null ? "NULL" : value];
       });
 
       return Object.fromEntries(entries);

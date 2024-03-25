@@ -96,32 +96,21 @@ async def get_approval_request(subpath: str, user=Depends(azure_scheme)):
         df = (
             pd.read_csv(buffer, dtype="object").fillna(np.nan).replace([np.nan], [None])
         )
-        updates = df[
-            (df["_change_type"] == "update_preimage")
-            | (df["_change_type"] == "update_postimage")
-        ]
-        for i, row in updates.iterrows():
-            if i % 2 != 0:
+
+        for i, row in df.iterrows():
+            if df.at[i, "_change_type"] in ["update_postimage", "insert"]:
                 continue
 
-            cols_left_of_preimage = df.columns.get_loc("_change_type")
-            is_all_null = bool(df.iloc[i, :cols_left_of_preimage].isnull().all())
-
-            if is_all_null is True:
-                df.at[i, "_change_type"] = "insert"
-                df.iloc[i, :cols_left_of_preimage] = df.iloc[
-                    i + 1, :cols_left_of_preimage
-                ].values
-                continue
-
-            for col in updates.columns:
+            for col in df.columns:
                 if col == "_change_type":
                     continue
 
-                if (old := getattr(row, col)) != (update := updates.at[i + 1, col]):
+                if (old := getattr(row, col)) != (update := df.at[i + 1, col]):
                     df.at[i, col] = {"old": old, "update": update}
 
         df = df[df["_change_type"] != "update_postimage"]
+        cols = ["school_id_giga"] + [col for col in df if col != "school_id_giga"]
+        df = df.reindex(columns=cols)
 
     return {
         "info": {"country": country, "dataset": dataset.title()},
