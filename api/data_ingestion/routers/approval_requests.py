@@ -154,7 +154,3 @@ async def upload_approved_rows(
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
-    except Exception as err:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        ) from err
