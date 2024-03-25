@@ -18,6 +18,8 @@ import {
   TableSelectRow,
   TableToolbar,
 } from "@carbon/react";
+// @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
+import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
@@ -57,8 +59,8 @@ function ApproveRejectTable() {
     queryKey: ["approval-requests", subpath],
   });
 
-  const [page, _setPage] = useState(1);
-  const [pageSize, _setPageSize] = useState(10);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const headers: DataTableHeader[] = useMemo(
     () =>
@@ -224,6 +226,16 @@ function ApproveRejectTable() {
           );
         }}
       </DataTable>
+      <Pagination
+        onChange={({ pageSize, page }: { pageSize: number; page: number }) => {
+          setPage(page);
+          setPageSize(pageSize);
+        }}
+        page={1}
+        pageSize={pageSize}
+        pageSizes={[10, 25, 50]}
+        totalItems={data.length}
+      />
     </Section>
   );
 }
