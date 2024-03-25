@@ -13,6 +13,7 @@ from azure.storage.blob import BlobProperties, ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
+from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
     ApprovalRequestListing,
     UploadApprovedRowsRequest,
@@ -25,7 +26,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[ApprovalRequestListing])
+@router.get(
+    "",
+    response_model=list[ApprovalRequestListing],
+    dependencies=[Security(IsPrivileged())],
+)
 async def list_approval_requests(user=Depends(azure_scheme)):
     groups = [g.lower() for g in user.groups]
 
@@ -70,8 +75,14 @@ async def list_approval_requests(user=Depends(azure_scheme)):
     return body
 
 
-@router.get("/{subpath}")
-async def get_approval_request(subpath: str, user=Depends(azure_scheme)):
+@router.get(
+    "/{subpath}",
+    dependencies=[Security(IsPrivileged())],
+)
+async def get_approval_request(
+    subpath: str,
+    user=Depends(azure_scheme),
+):
     groups = [g.lower() for g in user.groups]
     subpath = urllib.parse.unquote(subpath)
     subpath = Path(subpath)
@@ -118,7 +129,11 @@ async def get_approval_request(subpath: str, user=Depends(azure_scheme)):
     }
 
 
-@router.post("/upload", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/upload",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Security(IsPrivileged())],
+)
 async def upload_approved_rows(
     body: UploadApprovedRowsRequest,
     user=Depends(azure_scheme),
