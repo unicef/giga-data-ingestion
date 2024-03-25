@@ -3,7 +3,7 @@ import { AxiosInstance, AxiosResponse } from "axios";
 import {
   ApprovalRequest,
   ApprovalRequestListing,
-} from "@/types/approval_requests";
+} from "@/types/approvalReqeuests";
 
 export default function routes(axi: AxiosInstance) {
   return {
