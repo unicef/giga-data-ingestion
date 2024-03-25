@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils.ts";
 import { CarbonDataTableRow } from "@/types/datatable";
 import { KeyValueObject } from "@/types/datatable";
 import { getValueByHeader } from "@/utils/approval_requests";
-import { transformToKeyValueObject } from "@/utils/datatable";
+import { transformSelectedRowsToKeyValArray } from "@/utils/datatable";
 
 export const Route = createFileRoute("/approval-requests/$subpath/")({
   component: ApproveRejectTable,
@@ -187,7 +187,7 @@ function ApproveRejectTable() {
                       renderIcon={Checkmark}
                       onClick={() => {
                         const keyValueObject =
-                          transformToKeyValueObject(selectedRows);
+                          transformSelectedRowsToKeyValArray(selectedRows);
                         handleApproveRows(keyValueObject);
                       }}
                     >
@@ -200,7 +200,7 @@ function ApproveRejectTable() {
                       renderIcon={QX}
                       onClick={() => {
                         const keyValueObject =
-                          transformToKeyValueObject(selectedRows);
+                          transformSelectedRowsToKeyValArray(selectedRows);
                         handleRejectRows(keyValueObject);
                       }}
                     >
