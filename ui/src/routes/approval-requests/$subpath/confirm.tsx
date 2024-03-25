@@ -34,7 +34,7 @@ interface ConfirmDataTablesProps {
 
 function Confirm() {
   const {
-    approveRowState: { headers, rows, approvedRowsList },
+    approveRowState: { headers, rows, approvedRowsList, rejectedRowsList },
   } = useStore();
   const { subpath } = Route.useParams();
 
@@ -49,8 +49,8 @@ function Confirm() {
     approvedRowsList.includes(obj.id as string),
   );
 
-  const rejectedRows = rows.filter(
-    obj => !approvedRowsList.includes(obj.id as string),
+  const rejectedRows = rows.filter(obj =>
+    rejectedRowsList.includes(obj.id as string),
   );
 
   const ConfirmDatatables = ({ rows }: ConfirmDataTablesProps) => {
@@ -116,21 +116,23 @@ function Confirm() {
 
   const handleSubmit = async () => {
     const approvedRowIds = approvedRows.map(row => row.id as string);
+    const rejectedRowIds = rejectedRows.map(row => row.id as string);
+
     await upload({
       approved_rows: approvedRowIds,
+      rejected_rows: rejectedRowIds,
       subpath: subpath,
     });
     navigate({ to: "/approval-requests" });
   };
 
-  const rejectedRowsLen = rows.length - approvedRows.length;
   return (
     <Section className="container py-6">
       <Accordion>
         <AccordionItem title={`Approved Rows (${approvedRows.length})`}>
           <ConfirmDatatables rows={approvedRows} />
         </AccordionItem>
-        <AccordionItem title={`Rejected Rows (${rejectedRowsLen})`}>
+        <AccordionItem title={`Rejected Rows (${rejectedRows.length})`}>
           <ConfirmDatatables rows={rejectedRows} />
         </AccordionItem>
       </Accordion>

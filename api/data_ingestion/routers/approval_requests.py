@@ -147,9 +147,14 @@ async def upload_approved_rows(
     approve_filename = f"{country_iso3}_{dataset}_{filename}.json"
     client = storage_client.get_blob_client(f"raw/uploads_DEV/mock/{approve_filename}")
 
+    processed_rows = {
+        "approved_rows": json.dumps(body.approved_rows),
+        "rejected_rows": json.dumps(body.rejected_rows),
+    }
+
     try:
         client.upload_blob(
-            json.dumps(body.approved_rows),
+            json.dumps(processed_rows),
             overwrite=True,
             content_settings=ContentSettings(content_type="application/json"),
         )

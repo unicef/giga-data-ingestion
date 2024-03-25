@@ -16,13 +16,16 @@ export default function routes(axi: AxiosInstance) {
     },
     upload_approved_rows: ({
       approved_rows,
+      rejected_rows,
       subpath,
     }: {
       approved_rows: string[];
+      rejected_rows: string[];
       subpath: string;
     }): Promise<AxiosResponse<null>> => {
       return axi.post(`approval-requests/upload`, {
         approved_rows: approved_rows,
+        rejected_rows: rejected_rows,
         subpath: subpath,
       });
     },
