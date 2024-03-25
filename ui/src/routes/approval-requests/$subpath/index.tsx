@@ -73,7 +73,7 @@ function ApproveRejectTable() {
     [data],
   );
 
-  const formattedRows = useMemo(() => {
+  const formattedRows = useMemo<KeyValueObject[]>(() => {
     const dataSlice = data.slice((page - 1) * pageSize, page * pageSize);
 
     const formattedData: KeyValueObject[] = dataSlice.map(row => {
