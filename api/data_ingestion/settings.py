@@ -52,6 +52,8 @@ class Settings(BaseSettings):
     WEB_APP_REDIRECT_URI: str
     MAILJET_API_KEY: str
     MAILJET_API_URL: str
+    MAILJET_SECRET_KEY: str
+    SENDER_EMAIL: str
     EMAIL_RENDERER_BEARER_TOKEN: str
     EMAIL_RENDERER_SERVICE_URL: AnyUrl
     EMAIL_TEST_RECIPIENTS: list[str]
