@@ -14,7 +14,7 @@ import { format } from "date-fns";
 import { api } from "@/api";
 import DataTable from "@/components/common/DataTable.tsx";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
-import { ApprovalRequestListing } from "@/types/approvalReqeuests";
+import { ApprovalRequestListing } from "@/types/approvalRequests";
 
 const listQueryOptions = queryOptions({
   queryKey: ["approval-requests"],
