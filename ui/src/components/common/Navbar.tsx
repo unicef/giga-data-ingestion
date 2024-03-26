@@ -56,6 +56,15 @@ export default function Navbar() {
           {isPrivileged && (
             <HeaderMenuItem
               as={Link}
+              to="/approval-requests"
+              isActive={location.pathname.startsWith("/approval-requests")}
+            >
+              Approval requests
+            </HeaderMenuItem>
+          )}
+          {isPrivileged && (
+            <HeaderMenuItem
+              as={Link}
               to="/user-management"
               isActive={location.pathname.startsWith("/user-management")}
             >

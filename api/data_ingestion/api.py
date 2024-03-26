@@ -9,6 +9,7 @@ from data_ingestion.constants import __version__
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
 from data_ingestion.routers import (
+    approval_requests,
     core,
     email,
     groups,
@@ -60,6 +61,7 @@ async def load_config():
 app.include_router(core.router)
 app.include_router(email.router)
 app.include_router(upload.router)
+app.include_router(approval_requests.router)
 app.include_router(users.router)
 app.include_router(groups.router)
 app.include_router(qos.router)

@@ -15,12 +15,15 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Route as rootRoute } from './routes/__root'
 import { Route as CheckFileUploadsImport } from './routes/check-file-uploads'
 import { Route as IndexImport } from './routes/index'
+import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
 import { Route as IngestApiEditImport } from './routes/ingest-api/edit'
 import { Route as IngestApiAddImport } from './routes/ingest-api/add'
+import { Route as ApprovalRequestsSubpathIndexImport } from './routes/approval-requests/$subpath/index'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
 import { Route as IngestApiAddSchoolConnectivityImport } from './routes/ingest-api/add/school-connectivity'
 import { Route as IngestApiAddColumnMappingImport } from './routes/ingest-api/add/column-mapping'
+import { Route as ApprovalRequestsSubpathConfirmImport } from './routes/approval-requests/$subpath/confirm'
 import { Route as UserManagementUserRevokeUserIdImport } from './routes/user-management/user/revoke.$userId'
 import { Route as UserManagementUserEnableUserIdImport } from './routes/user-management/user/enable.$userId'
 import { Route as UserManagementUserEditUserIdImport } from './routes/user-management/user/edit.$userId'
@@ -35,6 +38,7 @@ import { Route as IngestApiEditIngestionIdColumnMappingImport } from './routes/i
 const UserManagementLazyImport = createFileRoute('/user-management')()
 const UploadLazyImport = createFileRoute('/upload')()
 const IngestApiLazyImport = createFileRoute('/ingest-api')()
+const ApprovalRequestsLazyImport = createFileRoute('/approval-requests')()
 const UploadIndexLazyImport = createFileRoute('/upload/')()
 const IngestApiIndexLazyImport = createFileRoute('/ingest-api/')()
 const UploadUploadIdIndexLazyImport = createFileRoute('/upload/$uploadId/')()
@@ -65,6 +69,13 @@ const IngestApiLazyRoute = IngestApiLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/ingest-api.lazy').then((d) => d.Route))
 
+const ApprovalRequestsLazyRoute = ApprovalRequestsLazyImport.update({
+  path: '/approval-requests',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() =>
+  import('./routes/approval-requests.lazy').then((d) => d.Route),
+)
+
 const CheckFileUploadsRoute = CheckFileUploadsImport.update({
   path: '/check-file-uploads',
   getParentRoute: () => rootRoute,
@@ -86,6 +97,11 @@ const IngestApiIndexLazyRoute = IngestApiIndexLazyImport.update({
 } as any).lazy(() =>
   import('./routes/ingest-api/index.lazy').then((d) => d.Route),
 )
+
+const ApprovalRequestsIndexRoute = ApprovalRequestsIndexImport.update({
+  path: '/',
+  getParentRoute: () => ApprovalRequestsLazyRoute,
+} as any)
 
 const IngestApiEditRoute = IngestApiEditImport.update({
   path: '/edit',
@@ -111,6 +127,12 @@ const IngestApiAddIndexLazyRoute = IngestApiAddIndexLazyImport.update({
   import('./routes/ingest-api/add/index.lazy').then((d) => d.Route),
 )
 
+const ApprovalRequestsSubpathIndexRoute =
+  ApprovalRequestsSubpathIndexImport.update({
+    path: '/$subpath/',
+    getParentRoute: () => ApprovalRequestsLazyRoute,
+  } as any)
+
 const UserManagementUserAddRoute = UserManagementUserAddImport.update({
   path: '/user/add',
   getParentRoute: () => UserManagementLazyRoute,
@@ -132,6 +154,12 @@ const IngestApiAddColumnMappingRoute = IngestApiAddColumnMappingImport.update({
   path: '/column-mapping',
   getParentRoute: () => IngestApiAddRoute,
 } as any)
+
+const ApprovalRequestsSubpathConfirmRoute =
+  ApprovalRequestsSubpathConfirmImport.update({
+    path: '/$subpath/confirm',
+    getParentRoute: () => ApprovalRequestsLazyRoute,
+  } as any)
 
 const UploadUploadGroupUploadTypeIndexLazyRoute =
   UploadUploadGroupUploadTypeIndexLazyImport.update({
@@ -213,6 +241,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckFileUploadsImport
       parentRoute: typeof rootRoute
     }
+    '/approval-requests': {
+      preLoaderRoute: typeof ApprovalRequestsLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/ingest-api': {
       preLoaderRoute: typeof IngestApiLazyImport
       parentRoute: typeof rootRoute
@@ -233,6 +265,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiEditImport
       parentRoute: typeof IngestApiLazyImport
     }
+    '/approval-requests/': {
+      preLoaderRoute: typeof ApprovalRequestsIndexImport
+      parentRoute: typeof ApprovalRequestsLazyImport
+    }
     '/ingest-api/': {
       preLoaderRoute: typeof IngestApiIndexLazyImport
       parentRoute: typeof IngestApiLazyImport
@@ -240,6 +276,10 @@ declare module '@tanstack/react-router' {
     '/upload/': {
       preLoaderRoute: typeof UploadIndexLazyImport
       parentRoute: typeof UploadLazyImport
+    }
+    '/approval-requests/$subpath/confirm': {
+      preLoaderRoute: typeof ApprovalRequestsSubpathConfirmImport
+      parentRoute: typeof ApprovalRequestsLazyImport
     }
     '/ingest-api/add/column-mapping': {
       preLoaderRoute: typeof IngestApiAddColumnMappingImport
@@ -256,6 +296,10 @@ declare module '@tanstack/react-router' {
     '/user-management/user/add': {
       preLoaderRoute: typeof UserManagementUserAddImport
       parentRoute: typeof UserManagementLazyImport
+    }
+    '/approval-requests/$subpath/': {
+      preLoaderRoute: typeof ApprovalRequestsSubpathIndexImport
+      parentRoute: typeof ApprovalRequestsLazyImport
     }
     '/ingest-api/add/': {
       preLoaderRoute: typeof IngestApiAddIndexLazyImport
@@ -313,6 +357,11 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
   CheckFileUploadsRoute,
+  ApprovalRequestsLazyRoute.addChildren([
+    ApprovalRequestsIndexRoute,
+    ApprovalRequestsSubpathConfirmRoute,
+    ApprovalRequestsSubpathIndexRoute,
+  ]),
   IngestApiLazyRoute.addChildren([
     IngestApiAddRoute.addChildren([
       IngestApiAddColumnMappingRoute,

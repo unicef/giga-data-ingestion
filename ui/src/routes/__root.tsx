@@ -1,7 +1,9 @@
-import { PropsWithChildren, Suspense, useEffect } from "react";
+import { ComponentProps, PropsWithChildren, Suspense, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { useAccount, useMsal } from "@azure/msal-react";
+import { ProgressBar as CarbonProgressBar } from "@carbon/react";
+import { useIsFetching } from "@tanstack/react-query";
 import {
   Outlet,
   ScrollRestoration,
@@ -28,7 +30,14 @@ export const Route = createRootRoute({
   ),
 });
 
+function ProgressBar(props: Partial<ComponentProps<typeof CarbonProgressBar>>) {
+  // @ts-expect-error required props that are not actually required
+  return <CarbonProgressBar {...props} />;
+}
+
 function Base({ children }: PropsWithChildren) {
+  const isFetching = useIsFetching();
+
   return (
     <div className="flex h-screen min-h-screen flex-col">
       <Helmet>
@@ -44,6 +53,9 @@ function Base({ children }: PropsWithChildren) {
       </Helmet>
       <ScrollRestoration />
 
+      {isFetching ? (
+        <ProgressBar className="absolute bottom-0 w-screen" />
+      ) : null}
       <Navbar />
       <main className="flex-auto flex-row">{children}</main>
       <Footer />
