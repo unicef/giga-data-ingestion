@@ -144,21 +144,32 @@ async def upload_approved_rows(
     country_iso3 = subpath.name.split("_")[0]
     filename = subpath.name.split("_")[1].split(".")[0]
 
-    approve_filename = f"{country_iso3}_{dataset}_{filename}.json"
-    client = storage_client.get_blob_client(f"raw/uploads_DEV/mock/{approve_filename}")
+    filename = f"{country_iso3}_{dataset}_{filename}.json"
 
-    processed_rows = {
-        "approved_rows": json.dumps(body.approved_rows),
-        "rejected_rows": json.dumps(body.rejected_rows),
-    }
+    approve_location = (
+        f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
+        f"/{dataset}/approved-rows/{filename}"
+    )
+    reject_location = (
+        f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
+        f"/{dataset}/rejected-rows/{filename}"
+    )
+
+    approve_client = storage_client.get_blob_client(approve_location)
+    reject_client = storage_client.get_blob_client(reject_location)
 
     try:
-        client.upload_blob(
-            json.dumps(processed_rows),
+        approve_client.upload_blob(
+            json.dumps(body.approved_rows),
             overwrite=True,
             content_settings=ContentSettings(content_type="application/json"),
         )
 
+        reject_client.upload_blob(
+            json.dumps(body.rejected_rows),
+            overwrite=True,
+            content_settings=ContentSettings(content_type="application/json"),
+        )
     except HttpResponseError as err:
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
