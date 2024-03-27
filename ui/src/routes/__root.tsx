@@ -54,7 +54,7 @@ function Base({ children }: PropsWithChildren) {
       <ScrollRestoration />
 
       {isFetching ? (
-        <ProgressBar className="absolute bottom-0 w-screen" />
+        <ProgressBar className="fixed bottom-0 z-10 w-full" />
       ) : null}
       <Navbar />
       <main className="flex-auto flex-row">{children}</main>

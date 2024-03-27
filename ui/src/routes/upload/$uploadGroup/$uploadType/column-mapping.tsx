@@ -5,21 +5,15 @@ import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
-  DataTable,
   DataTableHeader,
+  DataTableSkeleton,
   DefinitionTooltip,
   Select,
   SelectItem,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableHeader,
-  TableRow,
   Tag,
 } from "@carbon/react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Link,
   createFileRoute,
@@ -27,18 +21,14 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 
-import {
-  CoverageSchema,
-  DataRelevanceEnum,
-  MasterSchemaItem,
-  coverageSchemaData,
-} from "@/constants/school-data";
+import { api } from "@/api";
+import DataTable from "@/components/common/DataTable.tsx";
 import { useStore } from "@/context/store";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/column-mapping",
 )({
-  component: ColumnMapping,
+  component: UploadColumnMapping,
   loader: () => {
     const {
       uploadSlice: { file },
@@ -52,18 +42,34 @@ export const Route = createFileRoute(
   },
 });
 
+type ColumnMapping = Record<
+  string,
+  {
+    file: string;
+    master: string;
+  }
+>;
+
 const headers: DataTableHeader[] = [
-  { key: "masterColumn", header: "Expected Columns" },
+  { key: "masterColumn", header: "Master Data Columns" },
   { key: "detectedColumns", header: "Detected Columns" },
 ];
 
-export default function ColumnMapping() {
+function UploadColumnMapping() {
+  const { uploadType } = Route.useParams();
+  const metaschemaName = `school_${uploadType}`;
+
+  const { data: schemaQuery, isLoading } = useQuery({
+    queryFn: () => api.schema.get(metaschemaName),
+    queryKey: ["schema", metaschemaName],
+  });
+
   const {
     uploadSlice,
     uploadSliceActions: {
       decrementStepIndex,
       incrementStepIndex,
-      setUploadSliceState,
+      setColumnMapping,
     },
   } = useStore();
 
@@ -75,82 +81,73 @@ export default function ColumnMapping() {
     handleSubmit,
     register,
     formState: { errors },
-  } = useForm<CoverageSchema>({
+  } = useForm<ColumnMapping>({
     mode: "onChange",
     reValidateMode: "onChange",
   });
 
-  const onSubmit: SubmitHandler<CoverageSchema> = data => {
+  const onSubmit: SubmitHandler<ColumnMapping> = data => {
+    console.log("data", data);
     const dataWithNullsReplaced = Object.fromEntries(
-      Object.entries(data).map(([key, value]) => [
-        key,
-        value === "" ? null : value,
-      ]),
+      Object.entries(data)
+        .filter(([, mapping]) => Boolean(mapping.master))
+        .map(([, mapping]) => [mapping.file, mapping.master]),
     );
-
-    setUploadSliceState({
-      uploadSlice: {
-        ...uploadSlice,
-        columnMapping: dataWithNullsReplaced,
-      },
-    });
-
+    setColumnMapping(dataWithNullsReplaced);
     incrementStepIndex();
     void navigate({ to: "../metadata" });
   };
 
   const rows = useMemo(() => {
-    return (
-      Object.entries(coverageSchemaData) as [
-        keyof CoverageSchema,
-        MasterSchemaItem,
-      ][]
-    ).map(([key, schoolDataItem]) => {
-      const { data_relevance, description } = schoolDataItem;
+    if (isLoading) return [];
 
-      return {
-        id: key,
-        masterColumn: (
-          <div className="flex items-center gap-4">
-            <DefinitionTooltip
-              align="right"
-              definition={description}
-              openOnHover
-            >
-              {key}
-              {data_relevance === DataRelevanceEnum.Required && (
-                <span className="text-giga-red">*</span>
-              )}
-              {data_relevance === DataRelevanceEnum.Important && (
-                <span className="text-purple-600">{" (!)"}</span>
-              )}
-            </DefinitionTooltip>
-          </div>
-        ),
-        detectedColumns: (
-          <div className="w-11/12 px-2 pb-2">
-            <Select
-              id={`${key}-mapping`}
-              invalid={key in errors}
-              labelText=""
-              {...register(key, {
-                required: data_relevance === DataRelevanceEnum.Required,
-              })}
-            >
-              <SelectItem text="" value="" />
-              {detectedColumns.map(detectedColumn => (
-                <SelectItem
-                  key={detectedColumn}
-                  text={detectedColumn}
-                  value={detectedColumn}
-                />
-              ))}
-            </Select>
-          </div>
-        ),
-      };
-    });
-  }, [errors, register, detectedColumns]);
+    const schema = schemaQuery?.data ?? [];
+
+    return schema.map(column => ({
+      id: column.id,
+      masterColumn: (
+        <div className="flex items-center gap-4">
+          <DefinitionTooltip
+            align="right"
+            definition={column.description}
+            openOnHover
+          >
+            <div className="flex items-center gap-1">
+              <div>{column.name}</div>
+              <div>
+                {!column.is_nullable ? (
+                  <span className="text-giga-red">*</span>
+                ) : column.is_important ? (
+                  <Warning className="text-purple-600" />
+                ) : null}
+              </div>
+            </div>
+          </DefinitionTooltip>
+        </div>
+      ),
+      detectedColumns: (
+        <div className="w-11/12 px-2 pb-2">
+          <Select
+            id={column.name}
+            invalid={column.name in errors}
+            labelText=""
+            {...register(column.name, {
+              required: !column.is_nullable,
+            })}
+          >
+            <SelectItem text="" value="" />
+            {detectedColumns.map(detectedColumn => (
+              <SelectItem
+                key={detectedColumn}
+                text={detectedColumn}
+                value={detectedColumn}
+              />
+            ))}
+          </Select>
+        </div>
+      ),
+    }));
+  }, [isLoading, schemaQuery?.data, errors, register, detectedColumns]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -168,39 +165,11 @@ export default function ColumnMapping() {
           </div>
         </section>
         <section className="w-3/4">
-          <DataTable headers={headers} rows={rows}>
-            {({
-              rows,
-              headers,
-              getHeaderProps,
-              getRowProps,
-              getTableProps,
-            }) => (
-              <TableContainer>
-                <Table {...getTableProps()}>
-                  <TableHead>
-                    <TableRow>
-                      {headers.map(header => (
-                        // @ts-expect-error onclick bad type https://github.com/carbon-design-system/carbon/issues/14831
-                        <TableHeader {...getHeaderProps({ header })}>
-                          {header.header}
-                        </TableHeader>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {rows.map(row => (
-                      <TableRow {...getRowProps({ row })}>
-                        {row.cells.map(cell => (
-                          <TableCell key={cell.id}>{cell.value}</TableCell>
-                        ))}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </DataTable>
+          {isLoading ? (
+            <DataTableSkeleton headers={headers} />
+          ) : (
+            <DataTable columns={headers} rows={rows} />
+          )}
         </section>
         <ButtonSet className="w-full">
           <Button

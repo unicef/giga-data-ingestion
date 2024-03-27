@@ -41,7 +41,7 @@ export function useApi() {
   return api;
 }
 
-export function AxiosProvider(props: PropsWithChildren) {
+export function AxiosProvider({ children }: PropsWithChildren) {
   const { inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
   const getToken = useGetToken();
@@ -105,7 +105,7 @@ export function AxiosProvider(props: PropsWithChildren) {
     };
   }, []);
 
-  return props.children;
+  return children;
 }
 
 export const queryClient = new QueryClient({

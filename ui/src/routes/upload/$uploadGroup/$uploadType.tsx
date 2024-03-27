@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 
 import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
+import { useQuery } from "@tanstack/react-query";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
+import { api } from "@/api";
 import { useStore } from "@/context/store.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
@@ -29,7 +31,13 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
 
 function Layout() {
   const { uploadType } = Route.useParams();
+  const metaschemaName = `school_${uploadType}`;
   const title = uploadType.replace(/-/g, " ");
+
+  useQuery({
+    queryFn: () => api.schema.get(metaschemaName),
+    queryKey: ["schema", metaschemaName],
+  });
 
   const {
     uploadSlice: { stepIndex },
