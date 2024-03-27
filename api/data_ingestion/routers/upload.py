@@ -207,7 +207,7 @@ async def upload_file(
     except Exception as err:
         await db.execute(delete(FileUpload).where(FileUpload.id == file_upload.id))
         await db.commit()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR) from err
+        raise err
 
     return file_upload
 
@@ -233,7 +233,7 @@ async def get_data_quality_check(
     if not is_privileged:
         if file_upload.uploader_id != user.sub:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to access details for this file.",
             )
 
@@ -271,7 +271,7 @@ async def download_data_quality_check(
     if not is_privileged:
         if file_upload.uploader_id != user.sub:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to access details for this file.",
             )
 
