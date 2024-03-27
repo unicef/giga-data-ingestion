@@ -9,6 +9,7 @@ export interface UploadSliceState {
     uploadDate: Date | null;
     uploadId: string;
     stepIndex: number;
+    source: string | null;
   };
 }
 
@@ -31,6 +32,7 @@ export interface UploadSliceActions {
       value: UploadSliceState["uploadSlice"]["uploadDate"],
     ) => void;
     setUploadId: (value: UploadSliceState["uploadSlice"]["uploadId"]) => void;
+    setSource: (value: UploadSliceState["uploadSlice"]["source"]) => void;
   };
 }
 
@@ -45,6 +47,7 @@ export const initialUploadSliceState: UploadSliceState = {
     timeStamp: null,
     uploadDate: null,
     uploadId: "",
+    source: null,
   },
 };
 
@@ -99,6 +102,10 @@ export const createUploadSlice: StateCreator<
     setColumnMapping: columnMapping =>
       set(state => {
         state.uploadSlice.columnMapping = columnMapping;
+      }),
+    setSource: source =>
+      set(state => {
+        state.uploadSlice.source = source;
       }),
     resetUploadSliceState: () =>
       set(state => {

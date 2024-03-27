@@ -9,7 +9,6 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 
-import { useStore } from "@/context/store.ts";
 import useGetToken from "@/hooks/useGetToken.ts";
 
 import approvalRequestsRouter from "./routers/approvalRequests.ts";
@@ -41,14 +40,10 @@ export function useApi() {
   return api;
 }
 
-export function AxiosProvider(props: PropsWithChildren) {
+export function AxiosProvider({ children }: PropsWithChildren) {
   const { inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
   const getToken = useGetToken();
-
-  const {
-    appStateActions: { setFullPageLoading },
-  } = useStore();
 
   const reqInterceptId = useRef(
     axi.interceptors.request.use(
@@ -63,17 +58,9 @@ export function AxiosProvider(props: PropsWithChildren) {
     ),
   );
 
-  async function requestFulFilledInterceptor(
-    config: InternalAxiosRequestConfig,
-  ) {
-    setFullPageLoading(true);
-
+  function requestFulFilledInterceptor(config: InternalAxiosRequestConfig) {
     if (isAuthenticated && inProgress === InteractionStatus.None) {
-      try {
-        await getToken();
-      } catch (error) {
-        return Promise.reject(error);
-      }
+      void getToken();
     }
 
     return Promise.resolve(config);
@@ -84,12 +71,10 @@ export function AxiosProvider(props: PropsWithChildren) {
   }
 
   function responseFulFilledInterceptor(response: AxiosResponse) {
-    setFullPageLoading(false);
     return response;
   }
 
   function responseRejectedInterceptor(error: AxiosError) {
-    setFullPageLoading(false);
     return Promise.reject(error);
   }
 
@@ -105,7 +90,7 @@ export function AxiosProvider(props: PropsWithChildren) {
     };
   }, []);
 
-  return props.children;
+  return children;
 }
 
 export const queryClient = new QueryClient({

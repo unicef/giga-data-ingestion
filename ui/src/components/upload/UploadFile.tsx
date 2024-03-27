@@ -1,8 +1,12 @@
+import { Dispatch, SetStateAction } from "react";
 import Dropzone from "react-dropzone";
 
 import { Document, Upload } from "@carbon/icons-react";
+import { parse } from "papaparse";
 
+import { useStore } from "@/context/store.ts";
 import { cn, convertMegabytesToBytes } from "@/lib/utils.ts";
+import { MetaSchema } from "@/types/schema.ts";
 
 const FILE_UPLOAD_SIZE_LIMIT_MB = 10;
 const FILE_UPLOAD_SIZE_LIMIT = convertMegabytesToBytes(
@@ -17,6 +21,8 @@ interface UploadFileProps {
     [key: string]: string[];
   };
   description?: string;
+  schema?: MetaSchema[];
+  setIsLoading?: Dispatch<SetStateAction<boolean>>;
 }
 
 const DEFAULT_ACCEPT_TYPE = {
@@ -37,16 +43,46 @@ const UploadFile = ({
   acceptType = DEFAULT_ACCEPT_TYPE,
   description = DEFAULT_MESSAGE,
   setTimestamp = () => {},
+  schema,
+  setIsLoading,
 }: UploadFileProps) => {
+  const {
+    uploadSliceActions: { setDetectedColumns, setColumnMapping },
+  } = useStore();
+
   const hasUploadedFile = file != null;
 
   function onDrop(files: File[]) {
     if (files.length === 0) return;
 
+    if (setIsLoading) setIsLoading(true);
     const file = files[0];
 
     setTimestamp(new Date());
     setFile(file);
+
+    parse(file, {
+      complete: result => {
+        const detectedColumns = result.data[0] as string[];
+        setDetectedColumns(detectedColumns);
+
+        if (schema) {
+          const autoColumnMapping: Record<string, string> = {};
+          schema.forEach(column => {
+            if (detectedColumns.includes(column.name)) {
+              autoColumnMapping[column.name] = column.name;
+            }
+          });
+          setColumnMapping(autoColumnMapping);
+        }
+
+        if (setIsLoading) setIsLoading(false);
+      },
+      error: () => {
+        if (setIsLoading) setIsLoading(false);
+      },
+      preview: 1,
+    });
   }
 
   return (

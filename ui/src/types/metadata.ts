@@ -6,9 +6,8 @@ export type MetadataFormValues = {
   dateModified: Date;
   description: string;
   domain: string;
-  geolocationDataSource: string;
+  geolocationDataSource?: string;
   piiClassification: string;
   schoolIdType: string;
   sensitivityLevel: string;
-  source: string;
 };

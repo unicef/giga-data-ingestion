@@ -27,6 +27,7 @@ import ControlledDatepicker from "@/components/upload/ControlledDatepicker.tsx";
 import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
 import {
   collectionDateHelperText,
+  collectionModalityHelperText,
   dataOwnerHelperText,
   schoolIdTypeHelperText,
 } from "@/constants/metadata";
@@ -40,7 +41,6 @@ import {
   piiOptions,
   schoolIdTypeOptions,
   sensitivityOptions,
-  sourceOptions,
 } from "@/mocks/metadataFormValues.tsx";
 import { MetadataFormValues } from "@/types/metadata.ts";
 import { capitalizeFirstLetter } from "@/utils/string.ts";
@@ -56,7 +56,7 @@ export const Route = createFileRoute(
     } = useStore.getState();
     if (!file || Object.values(columnMapping).filter(Boolean).length === 0) {
       setStepIndex(1);
-      throw redirect({ to: ".." });
+      throw redirect({ from: Route.fullPath, to: "../column-mapping" });
     }
   },
 });
@@ -75,7 +75,10 @@ function Metadata() {
   } = useStore();
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType } = Route.useParams();
+  const isCoverage = uploadType === "coverage";
+
   const { countryDatasets, isPrivileged } = useRoles();
+
   const userCountryNames = useMemo(
     () => countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [],
     [countryDatasets, uploadType],
@@ -121,13 +124,13 @@ function Metadata() {
     setIsUploading(true);
     setIsUploadError(false);
 
-    const columnToSchemaMapping = uploadSlice.columnMapping;
-    const correctedColumnToSchemaMapping = Object.fromEntries(
-      Object.entries(columnToSchemaMapping).map(([key, value]) => [value, key]),
+    const columnMapping = uploadSlice.columnMapping;
+    const correctedColumnMapping = Object.fromEntries(
+      Object.entries(columnMapping).map(([key, value]) => [value, key]),
     );
 
     const body = {
-      column_to_schema_mapping: JSON.stringify(correctedColumnToSchemaMapping),
+      column_to_schema_mapping: JSON.stringify(correctedColumnMapping),
       country: data.country,
       data_collection_date: new Date(data.dataCollectionDate).toISOString(),
       data_collection_modality: data.dataCollectionModality,
@@ -141,7 +144,7 @@ function Metadata() {
       pii_classification: data.piiClassification,
       school_id_type: data.schoolIdType,
       sensitivity_level: data.sensitivityLevel,
-      source: data.source,
+      source: uploadSlice.source,
     };
 
     try {
@@ -173,10 +176,10 @@ function Metadata() {
     >
       {sensitivityOptions.map(option => (
         <RadioButton
-          id={option.value}
-          key={option.value}
-          labelText={option.label}
-          value={option.value}
+          id={option}
+          key={option}
+          labelText={option}
+          value={option}
         />
       ))}
     </ControlledRadioGroup>
@@ -190,10 +193,10 @@ function Metadata() {
     >
       {piiOptions.map(option => (
         <RadioButton
-          id={option.value}
-          key={option.value}
-          labelText={option.label}
-          value={option.value}
+          id={option}
+          key={option}
+          labelText={option}
+          value={option}
         />
       ))}
     </ControlledRadioGroup>
@@ -209,11 +212,7 @@ function Metadata() {
     >
       <SelectItem value="" text="" />
       {geolocationDataSourceOptions.map(option => (
-        <SelectItem
-          key={option.value}
-          text={option.label}
-          value={option.value}
-        />
+        <SelectItem key={option} text={option} value={option} />
       ))}
     </Select>
   );
@@ -221,7 +220,7 @@ function Metadata() {
   const DataCollectionModalitySelect = () => (
     <Select
       id="dataCollectionModality"
-      helperText={collectionDateHelperText}
+      helperText={collectionModalityHelperText}
       invalid={!!errors.dataCollectionModality}
       labelText="Data Collection Modality"
       placeholder="Data Collection Modality"
@@ -230,11 +229,7 @@ function Metadata() {
       <SelectItem value="" text="" />
 
       {dataCollectionModalityOptions.map(option => (
-        <SelectItem
-          key={option.value}
-          text={option.label}
-          value={option.value}
-        />
+        <SelectItem key={option} text={option} value={option} />
       ))}
     </Select>
   );
@@ -250,30 +245,7 @@ function Metadata() {
       <SelectItem value="" text="" />
 
       {domainOptions.map(option => (
-        <SelectItem
-          key={option.value}
-          text={option.label}
-          value={option.value}
-        />
-      ))}
-    </Select>
-  );
-
-  const SourceSelect = () => (
-    <Select
-      id="source"
-      invalid={!!errors.source}
-      labelText="Source"
-      placeholder="Source"
-      {...register("source", { required: true })}
-    >
-      <SelectItem value="" text="" />
-      {sourceOptions.map(option => (
-        <SelectItem
-          key={option.value}
-          text={option.label}
-          value={option.value}
-        />
+        <SelectItem key={option} text={option} value={option} />
       ))}
     </Select>
   );
@@ -289,11 +261,7 @@ function Metadata() {
     >
       <SelectItem value="" text="" />
       {dataOwnerOptions.map(option => (
-        <SelectItem
-          key={option.value}
-          text={option.label}
-          value={option.value}
-        />
+        <SelectItem key={option} text={option} value={option} />
       ))}
     </Select>
   );
@@ -344,11 +312,7 @@ function Metadata() {
     >
       <SelectItem value="" text="" />
       {schoolIdTypeOptions.map(option => (
-        <SelectItem
-          key={option.value}
-          text={option.label}
-          value={option.value}
-        />
+        <SelectItem key={option} text={option} value={option} />
       ))}
     </Select>
   );
@@ -367,7 +331,7 @@ function Metadata() {
         <Stack gap={5}>
           <SensitivityRadio />
           <PIIRadio />
-          <GeolocationDataSourceSelect />
+          {!isCoverage && <GeolocationDataSourceSelect />}
           <DataCollectionModalitySelect />
           <ControlledDatepicker
             control={control}
@@ -397,7 +361,6 @@ function Metadata() {
               placeholder: "yyyy-mm-dd",
             }}
           />
-          {uploadType === "coverage" && <SourceSelect />}
           <DataOwnerSelect />
           <CountrySelect
             countryOptions={isPrivileged ? allCountryNames : userCountryNames}

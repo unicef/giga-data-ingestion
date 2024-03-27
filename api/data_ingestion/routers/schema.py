@@ -25,4 +25,16 @@ async def get_schema(name: str, db: Session = Depends(get_db)):
             f"SELECT * FROM schemas.{name} ORDER BY primary_key, is_nullable NULLS LAST, name"  # nosec: `name`s are limited to the list above
         )
     )
-    return [m for m in res.mappings().all() if m["name"] != "school_id_giga"]
+
+    schema = []
+    for mapping in res.mappings().all():
+        metaschema = MetaSchema(**mapping)
+        if metaschema.primary_key:
+            metaschema.is_nullable = True
+            schema.append(metaschema)
+            continue
+
+        if not metaschema.is_system_generated:
+            schema.append(metaschema)
+
+    return schema
