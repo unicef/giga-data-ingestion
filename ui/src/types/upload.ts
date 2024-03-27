@@ -68,7 +68,7 @@ export interface UploadParams {
   description: string;
   domain: string;
   file: File;
-  geolocation_data_source: string;
+  geolocation_data_source?: string;
   pii_classification: string;
   school_id_type: string;
   sensitivity_level: string;

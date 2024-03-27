@@ -56,7 +56,7 @@ export const Route = createFileRoute(
     } = useStore.getState();
     if (!file || Object.values(columnMapping).filter(Boolean).length === 0) {
       setStepIndex(1);
-      throw redirect({ to: "../column-mapping" });
+      throw redirect({ from: Route.fullPath, to: "../column-mapping" });
     }
   },
 });

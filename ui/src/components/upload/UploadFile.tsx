@@ -21,8 +21,8 @@ interface UploadFileProps {
     [key: string]: string[];
   };
   description?: string;
-  schema: MetaSchema[];
-  setIsLoading: Dispatch<SetStateAction<boolean>>;
+  schema?: MetaSchema[];
+  setIsLoading?: Dispatch<SetStateAction<boolean>>;
 }
 
 const DEFAULT_ACCEPT_TYPE = {
@@ -55,7 +55,7 @@ const UploadFile = ({
   function onDrop(files: File[]) {
     if (files.length === 0) return;
 
-    setIsLoading(true);
+    if (setIsLoading) setIsLoading(true);
     const file = files[0];
 
     setTimestamp(new Date());
@@ -66,18 +66,20 @@ const UploadFile = ({
         const detectedColumns = result.data[0] as string[];
         setDetectedColumns(detectedColumns);
 
-        const autoColumnMapping: Record<string, string> = {};
-        schema.forEach(column => {
-          if (detectedColumns.includes(column.name)) {
-            autoColumnMapping[column.name] = column.name;
-          }
-        });
-        setColumnMapping(autoColumnMapping);
+        if (schema) {
+          const autoColumnMapping: Record<string, string> = {};
+          schema.forEach(column => {
+            if (detectedColumns.includes(column.name)) {
+              autoColumnMapping[column.name] = column.name;
+            }
+          });
+          setColumnMapping(autoColumnMapping);
+        }
 
-        setIsLoading(false);
+        if (setIsLoading) setIsLoading(false);
       },
       error: () => {
-        setIsLoading(false);
+        if (setIsLoading) setIsLoading(false);
       },
       preview: 1,
     });
