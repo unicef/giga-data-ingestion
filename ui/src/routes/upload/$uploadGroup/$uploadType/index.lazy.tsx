@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import { Button, ButtonSet, SelectItem, Stack } from "@carbon/react";
+import { Button, ButtonSet, Loading, SelectItem, Stack } from "@carbon/react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
+import { api } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import UploadFile from "@/components/upload/UploadFile.tsx";
 import { useStore } from "@/context/store";
@@ -20,6 +23,8 @@ const validTypes = {
 export default function Index() {
   const { uploadType } = Route.useParams();
   const isCoverage = uploadType === "coverage";
+
+  const [isParsing, setIsParsing] = useState(false);
 
   const {
     uploadSlice,
@@ -43,12 +48,32 @@ export default function Index() {
 
   const source = watch("source");
 
+  const metaschemaName =
+    uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
+
+  const { data: schemaQuery, isFetching: isSchemaFetching } = useQuery({
+    queryFn: () => api.schema.get(metaschemaName),
+    queryKey: ["schema", metaschemaName],
+    enabled: isCoverage ? !!source : true,
+  });
+  const schema = schemaQuery?.data ?? [];
+
   const handleProceedToNextStep = () => {
     if (file) {
       setSource(source ?? null);
       incrementStepIndex();
     }
   };
+
+  const isProceedDisabled =
+    !hasUploadedFile ||
+    (isCoverage && !source) ||
+    isSchemaFetching ||
+    isParsing;
+  const isProceedLoading = isSchemaFetching || isParsing;
+  const uploadConditionalRender =
+    (!isCoverage && !isSchemaFetching) ||
+    (isCoverage && !!source && !isSchemaFetching);
 
   return (
     <Stack gap={10}>
@@ -71,7 +96,7 @@ export default function Index() {
         </Select>
       )}
 
-      {(!isCoverage || (isCoverage && !!source)) && (
+      {uploadConditionalRender && (
         <div className="w-1/4">
           <UploadFile
             acceptType={validTypes}
@@ -87,7 +112,8 @@ export default function Index() {
                 uploadSlice: { ...uploadSlice, timeStamp: timestamp },
               })
             }
-            source={source}
+            schema={schema}
+            setIsLoading={setIsParsing}
           />
         </div>
       )}
@@ -105,12 +131,16 @@ export default function Index() {
           Cancel
         </Button>
         <Button
-          disabled={!hasUploadedFile || (isCoverage && !source)}
+          disabled={isProceedDisabled}
           as={Link}
           to="./column-mapping"
           onClick={handleProceedToNextStep}
           className="w-full"
-          renderIcon={ArrowRight}
+          renderIcon={
+            isProceedLoading
+              ? props => <Loading small={true} withOverlay={false} {...props} />
+              : ArrowRight
+          }
           isExpressive
         >
           Proceed

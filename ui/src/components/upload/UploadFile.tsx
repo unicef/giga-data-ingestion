@@ -1,13 +1,12 @@
+import { Dispatch, SetStateAction } from "react";
 import Dropzone from "react-dropzone";
 
 import { Document, Upload } from "@carbon/icons-react";
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "@tanstack/react-router";
 import { parse } from "papaparse";
 
-import { api } from "@/api";
 import { useStore } from "@/context/store.ts";
 import { cn, convertMegabytesToBytes } from "@/lib/utils.ts";
+import { MetaSchema } from "@/types/schema.ts";
 
 const FILE_UPLOAD_SIZE_LIMIT_MB = 10;
 const FILE_UPLOAD_SIZE_LIMIT = convertMegabytesToBytes(
@@ -22,7 +21,8 @@ interface UploadFileProps {
     [key: string]: string[];
   };
   description?: string;
-  source?: string | null;
+  schema: MetaSchema[];
+  setIsLoading: Dispatch<SetStateAction<boolean>>;
 }
 
 const DEFAULT_ACCEPT_TYPE = {
@@ -43,29 +43,19 @@ const UploadFile = ({
   acceptType = DEFAULT_ACCEPT_TYPE,
   description = DEFAULT_MESSAGE,
   setTimestamp = () => {},
-  source,
+  schema,
+  setIsLoading,
 }: UploadFileProps) => {
   const {
     uploadSliceActions: { setDetectedColumns, setColumnMapping },
   } = useStore();
-
-  const { uploadType } = useParams({
-    from: "/upload/$uploadGroup/$uploadType",
-  });
-  const metaschemaName =
-    uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
-
-  const { data: schemaQuery } = useQuery({
-    queryFn: () => api.schema.get(metaschemaName),
-    queryKey: ["schema", metaschemaName],
-  });
-  const schema = schemaQuery?.data ?? [];
 
   const hasUploadedFile = file != null;
 
   function onDrop(files: File[]) {
     if (files.length === 0) return;
 
+    setIsLoading(true);
     const file = files[0];
 
     setTimestamp(new Date());
@@ -83,6 +73,11 @@ const UploadFile = ({
           }
         });
         setColumnMapping(autoColumnMapping);
+
+        setIsLoading(false);
+      },
+      error: () => {
+        setIsLoading(false);
       },
       preview: 1,
     });

@@ -75,7 +75,10 @@ function Metadata() {
   } = useStore();
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType } = Route.useParams();
+  const isCoverage = uploadType === "coverage";
+
   const { countryDatasets, isPrivileged } = useRoles();
+
   const userCountryNames = useMemo(
     () => countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [],
     [countryDatasets, uploadType],
@@ -328,7 +331,7 @@ function Metadata() {
         <Stack gap={5}>
           <SensitivityRadio />
           <PIIRadio />
-          <GeolocationDataSourceSelect />
+          {!isCoverage && <GeolocationDataSourceSelect />}
           <DataCollectionModalitySelect />
           <ControlledDatepicker
             control={control}
