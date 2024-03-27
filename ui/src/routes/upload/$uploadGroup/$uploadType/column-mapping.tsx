@@ -42,30 +42,14 @@ export const Route = createFileRoute(
   },
 });
 
-type ColumnMapping = Record<
-  string,
-  {
-    file: string;
-    master: string;
-  }
->;
-
 const headers: DataTableHeader[] = [
   { key: "masterColumn", header: "Master Data Columns" },
   { key: "detectedColumns", header: "Detected Columns" },
 ];
 
 function UploadColumnMapping() {
-  const { uploadType } = Route.useParams();
-  const metaschemaName = `school_${uploadType}`;
-
-  const { data: schemaQuery, isLoading } = useQuery({
-    queryFn: () => api.schema.get(metaschemaName),
-    queryKey: ["schema", metaschemaName],
-  });
-
   const {
-    uploadSlice,
+    uploadSlice: { detectedColumns, columnMapping, source },
     uploadSliceActions: {
       decrementStepIndex,
       incrementStepIndex,
@@ -73,7 +57,14 @@ function UploadColumnMapping() {
     },
   } = useStore();
 
-  const { detectedColumns } = uploadSlice;
+  const { uploadType } = Route.useParams();
+  const metaschemaName =
+    uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
+
+  const { data: schemaQuery, isLoading } = useQuery({
+    queryFn: () => api.schema.get(metaschemaName),
+    queryKey: ["schema", metaschemaName],
+  });
 
   const navigate = useNavigate({ from: Route.fullPath });
 
@@ -81,17 +72,17 @@ function UploadColumnMapping() {
     handleSubmit,
     register,
     formState: { errors },
-  } = useForm<ColumnMapping>({
+  } = useForm<Record<string, string>>({
     mode: "onChange",
     reValidateMode: "onChange",
+    defaultValues: columnMapping,
   });
 
-  const onSubmit: SubmitHandler<ColumnMapping> = data => {
-    console.log("data", data);
+  const onSubmit: SubmitHandler<Record<string, string>> = data => {
     const dataWithNullsReplaced = Object.fromEntries(
       Object.entries(data)
-        .filter(([, mapping]) => Boolean(mapping.master))
-        .map(([, mapping]) => [mapping.file, mapping.master]),
+        .filter(([, value]) => Boolean(value))
+        .map(([key, value]) => [value, key]),
     );
     setColumnMapping(dataWithNullsReplaced);
     incrementStepIndex();
@@ -107,11 +98,24 @@ function UploadColumnMapping() {
       id: column.id,
       masterColumn: (
         <div className="flex items-center gap-4">
-          <DefinitionTooltip
-            align="right"
-            definition={column.description}
-            openOnHover
-          >
+          {column.description ? (
+            <DefinitionTooltip
+              align="right"
+              definition={column.description}
+              openOnHover
+            >
+              <div className="flex items-center gap-1">
+                <div>{column.name}</div>
+                <div>
+                  {!column.is_nullable ? (
+                    <span className="text-giga-red">*</span>
+                  ) : column.is_important ? (
+                    <Warning className="text-purple-600" />
+                  ) : null}
+                </div>
+              </div>
+            </DefinitionTooltip>
+          ) : (
             <div className="flex items-center gap-1">
               <div>{column.name}</div>
               <div>
@@ -122,7 +126,7 @@ function UploadColumnMapping() {
                 ) : null}
               </div>
             </div>
-          </DefinitionTooltip>
+          )}
         </div>
       ),
       detectedColumns: (

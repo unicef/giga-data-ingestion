@@ -7,14 +7,12 @@ import { UploadSliceState } from "./uploadSlice";
 interface AppStateSliceState {
   appState: {
     user: User;
-    fullPageLoading: boolean;
   };
 }
 
 interface AppStateSliceActions {
   appStateActions: {
     setUser: (user: User) => void;
-    setFullPageLoading: (loading: boolean) => void;
   };
 }
 
@@ -29,7 +27,6 @@ const initialAppState: AppStateSliceState = {
       email: "",
       roles: [],
     },
-    fullPageLoading: true,
   },
 };
 
@@ -44,10 +41,6 @@ export const createAppStateSlice: StateCreator<
     setUser: (user: User) =>
       set(state => {
         state.appState.user = user;
-      }),
-    setFullPageLoading: (loading: boolean) =>
-      set(state => {
-        state.appState.fullPageLoading = loading;
       }),
   },
 });

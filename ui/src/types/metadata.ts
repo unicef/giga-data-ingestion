@@ -10,5 +10,4 @@ export type MetadataFormValues = {
   piiClassification: string;
   schoolIdType: string;
   sensitivityLevel: string;
-  source: string;
 };

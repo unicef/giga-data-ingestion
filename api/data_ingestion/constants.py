@@ -28,6 +28,8 @@ class Constants(BaseSettings):
         "school_reference",
         "school_geolocation",
         "school_coverage",
+        "coverage_itu",
+        "coverage_fb",
     ]
 
     @computed_field

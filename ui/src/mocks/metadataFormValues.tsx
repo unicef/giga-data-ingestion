@@ -1,28 +1,18 @@
-export const sensitivityOptions = [
-  { value: "sensitive", label: "Sensitive" },
-  { value: "notSensitive", label: "Not Sensitive" },
+export const sensitivityOptions = ["Sensitive", "Not Sensitive"];
+
+export const piiOptions = ["Contains PII", "Does not contain PII"];
+
+export const geolocationDataSourceOptions = ["OSM", "Government", "Other"];
+
+export const dataCollectionModalityOptions = ["Online", "Offline", "Other"];
+
+export const domainOptions = ["School", "Infrastructure", "Finance", "Other"];
+
+export const dataOwnerOptions = ["Gerlito Chagas"];
+
+export const schoolIdTypeOptions = ["EMIS", "Examination Board", "Other"];
+
+export const sourceOptions = [
+  { label: "ITU", value: "itu" },
+  { label: "Meta", value: "fb" },
 ];
-
-export const piiOptions = [
-  { value: "containsPii", label: "Contains PII" },
-  { value: "doesNotContainPii", label: "Does not contain PII" },
-];
-
-export const geolocationDataSourceOptions = [{ value: "olm", label: "OSM" }];
-
-export const dataCollectionModalityOptions = [
-  { value: "online", label: "Online" },
-  { value: "offline", label: "Offline" },
-];
-
-export const domainOptions = [
-  { value: "infrastructure", label: "Infrastructure" },
-];
-
-export const sourceOptions = [{ value: "itu", label: "ITU" }];
-
-export const dataOwnerOptions = [
-  { value: "gerlito-uuid", label: "Gerlito Chagas" },
-];
-
-export const schoolIdTypeOptions = [{ value: "emis", label: "EMIS" }];
