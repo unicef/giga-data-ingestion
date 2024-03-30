@@ -28,7 +28,7 @@ async def get_cache_list(key: str) -> list[str] | None:
     :return: The list of strings.
     """
     async with get_redis_context() as r:
-        string: str | None = await r.get(key)
+        string: bytes | None = await r.get(key)
         if string is None:
             return None
-        return string.split(" ")
+        return string.decode().split(" ")

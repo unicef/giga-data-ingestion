@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import column, literal, select, text
 from sqlalchemy.orm import Session
 
@@ -6,13 +6,12 @@ from data_ingestion.cache.keys import SCHEMAS_KEY
 from data_ingestion.cache.serde import get_cache_list, set_cache_list
 from data_ingestion.constants import constants
 from data_ingestion.db.trino import get_db
-from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.schemas.schema import Schema as MetaSchema
 
 router = APIRouter(
     prefix="/api/schema",
     tags=["schema"],
-    dependencies=[Security(azure_scheme)],
+    # dependencies=[Security(azure_scheme)],
 )
 
 
