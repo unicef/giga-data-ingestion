@@ -1,16 +1,22 @@
 import json
 import urllib.parse
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
 from country_converter import country_converter as coco
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
+from sqlalchemy import column, func, literal, select, text
+from sqlalchemy.orm import Session
+from sqlalchemy.sql.functions import count
 
 from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
-from azure.storage.blob import BlobProperties, ContentSettings
+from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
+from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.permissions.permissions import IsPrivileged
@@ -22,66 +28,91 @@ from data_ingestion.schemas.approval_requests import (
 router = APIRouter(
     prefix="/api/approval-requests",
     tags=["approval-requests"],
-    dependencies=[Security(azure_scheme)],
+    dependencies=[Security(IsPrivileged())],
 )
 
 
 @router.get(
     "",
     response_model=list[ApprovalRequestListing],
-    dependencies=[Security(IsPrivileged())],
 )
 async def list_approval_requests(
-    user=Depends(azure_scheme),
-    page: int = Query(),
-    count: int = Query(),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
 ):
-    groups = [g.lower() for g in user.groups]
+    res = db.execute(
+        select("*")
+        .select_from(text("information_schema.tables"))
+        .where(column("table_schema").like(literal("school%staging")))
+        .order_by(column("table_name"))
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    staging_tables = res.mappings().all()
 
     body: list[ApprovalRequestListing] = []
-    for blob in storage_client.list_blobs(constants.APPROVAL_REQUESTS_PATH_PREFIX):
-        blob: BlobProperties
-        path = Path(blob.name)
-        country_iso3 = path.name.split("_")[0]
-        if len(country_iso3) != 3:
-            continue
-
-        country = coco.convert(country_iso3, to="name_short")
-        dataset = path.parent.name.replace("-", " ").title()
-        country_dataset = f"{country}-{dataset}".lower()
-
-        if path.suffix == ".csv" and (
-            "admin" in groups or "super" in groups or country_dataset in groups
-        ):
-            with BytesIO() as buffer:
-                storage_client.download_blob(blob.name).readinto(buffer)
-                buffer.seek(0)
-                df = pd.read_csv(
-                    buffer, low_memory=True, usecols=["_change_type"], dtype="string"
-                )
-
-            body.append(
-                ApprovalRequestListing(
-                    country=country,
-                    country_iso3=country_iso3,
-                    dataset=dataset,
-                    subpath=blob.name.replace(
-                        f"{constants.APPROVAL_REQUESTS_PATH_PREFIX}/", ""
-                    ),
-                    last_modified=blob.last_modified,
-                    rows_count=df[df["_change_type"] != "update_postimage"].count(),
-                    rows_added=df[df["_change_type"] == "insert"].count(),
-                    rows_updated=df[df["_change_type"] == "update_preimage"].count(),
-                    rows_deleted=df[df["_change_type"] == "delete"].count(),
+    for table in staging_tables:
+        change_types_cte = (
+            select(column("_change_type")).select_from(
+                func.table(
+                    func.delta_lake.system.table_changes(
+                        literal(table["table_schema"]), literal(table["table_name"]), 0
+                    )
                 )
             )
+        ).cte("change_types")
+        timestamp_cte = (
+            select(column("timestamp"))
+            .select_from(
+                text(
+                    f'''delta_lake.{table['table_schema']}."{table['table_name']}$history"'''
+                )
+            )
+            .order_by(column("timestamp").desc())
+            .limit(1)
+        ).cte("timestamp")
+        res = db.execute(
+            select(
+                (select(count()).select_from(change_types_cte)).label("rows_count"),
+                (
+                    select(count())
+                    .select_from(change_types_cte)
+                    .where(column("_change_type") == literal("insert"))
+                ).label("rows_added"),
+                (
+                    select(count())
+                    .select_from(change_types_cte)
+                    .where(column("_change_type") == literal("update_preimage"))
+                ).label("rows_updated"),
+                (select(column("timestamp")).select_from(timestamp_cte)).label(
+                    "last_modified"
+                ),
+            )
+        )
+        stats = res.mappings().one()
+
+        country = coco.convert(table["table_name"], to="name_short")
+        dataset = table["table_schema"].replace("staging", "").replace("_", " ").title()
+        body.append(
+            ApprovalRequestListing(
+                country=country,
+                country_iso3=table["table_name"].upper(),
+                dataset=dataset,
+                subpath=f'{table["table_schema"]}/{table["table_name"]}',
+                last_modified=datetime.now().astimezone(ZoneInfo("UTC")),
+                rows_count=stats["rows_count"],
+                rows_added=stats["rows_added"],
+                rows_updated=stats["rows_updated"],
+                rows_deleted=0,
+            )
+        )
 
     return body
 
 
 @router.get(
     "/{subpath}",
-    dependencies=[Security(IsPrivileged())],
 )
 async def get_approval_request(
     subpath: str,
@@ -136,7 +167,6 @@ async def get_approval_request(
 @router.post(
     "/upload",
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Security(IsPrivileged())],
 )
 async def upload_approved_rows(
     body: UploadApprovedRowsRequest,
