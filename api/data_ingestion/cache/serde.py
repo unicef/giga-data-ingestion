@@ -32,3 +32,16 @@ async def get_cache_list(key: str) -> list[str] | None:
         if string is None:
             return None
         return string.decode().split(" ")
+
+
+async def set_cache_string(key: str, value: str | bytes) -> None:
+    async with get_redis_context() as r:
+        await r.set(key, value, ex=settings.REDIS_CACHE_DEFAULT_TTL_SECONDS)
+
+
+async def get_cache_string(key: str) -> str | None:
+    async with get_redis_context() as r:
+        string: bytes | None = await r.get(key)
+        if string is None:
+            return None
+        return string.decode()
