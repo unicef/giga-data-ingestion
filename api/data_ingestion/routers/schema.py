@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Security, status
-from sqlalchemy import text
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
+from sqlalchemy import column, literal, select, text
 from sqlalchemy.orm import Session
 
+from data_ingestion.cache.serde import get_cache_list, set_cache_list
 from data_ingestion.constants import constants
 from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
@@ -12,6 +13,26 @@ router = APIRouter(
     tags=["schema"],
     dependencies=[Security(azure_scheme)],
 )
+
+
+@router.get("", response_model=list[str])
+async def list_schemas(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    if (schemas := await get_cache_list("schemas")) is not None:
+        return schemas
+
+    res = db.execute(
+        select("*")
+        .select_from(text("information_schema.tables"))
+        .where(column("table_schema") == literal("schemas"))
+        .order_by(column("table_name"))
+    )
+    mappings = res.mappings().all()
+    schemas = [m["table_name"] for m in mappings]
+    background_tasks.add_task(set_cache_list, "schemas", schemas)
+    return schemas
 
 
 @router.get("/{name}", response_model=list[MetaSchema])

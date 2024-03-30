@@ -206,6 +206,11 @@ tasks:
     cmds:
       - task exec -- db psql -U {{.POSTGRESQL_USERNAME}} -d {{.POSTGRESQL_DATABASE}}
 
+  redis-cli:
+    desc: Open a redis-cli shell
+    cmds:
+      - task exec -- -it redis redis-cli --pass {{.REDIS_PASSWORD}}
+
   load-fixtures:
     desc: Install database fixtures
     cmds:

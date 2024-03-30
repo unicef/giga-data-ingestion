@@ -1,3 +1,4 @@
+from datetime import timedelta
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
@@ -5,7 +6,7 @@ from typing import Literal
 
 import sentry_sdk
 from loguru import logger
-from pydantic import AnyUrl, PostgresDsn, computed_field
+from pydantic import AnyUrl, PostgresDsn, RedisDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -59,6 +60,7 @@ class Settings(BaseSettings):
     EMAIL_TEST_RECIPIENTS: list[str]
     TRINO_USERNAME: str
     TRINO_PASSWORD: str
+    REDIS_PASSWORD: str
 
     # Optional envs
     PYTHON_ENV: Environment = Environment.PRODUCTION
@@ -74,6 +76,9 @@ class Settings(BaseSettings):
     TRINO_HOST: str = "trino"
     TRINO_PORT: int = 8080
     TRINO_CATALOG: str = "delta_lake"
+    REDIS_HOST: str = "redis"
+    REDIS_PORT: int = 6379
+    REDIS_CACHE_DEFAULT_TTL_SECONDS: int = int(timedelta(minutes=5).total_seconds())
 
     @computed_field
     @property
@@ -133,6 +138,19 @@ class Settings(BaseSettings):
             PostgresDsn.build(
                 scheme="postgresql+psycopg2",
                 **self.DATABASE_CONNECTION_DICT,
+            )
+        )
+
+    @computed_field
+    @property
+    def REDIS_URL(self) -> str:
+        return str(
+            RedisDsn.build(
+                scheme="redis",
+                password=self.REDIS_PASSWORD,
+                host=self.REDIS_HOST,
+                port=self.REDIS_PORT,
+                path="0",
             )
         )
 
