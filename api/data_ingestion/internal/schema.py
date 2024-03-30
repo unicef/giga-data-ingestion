@@ -1,18 +1,18 @@
 from fastapi import BackgroundTasks
 from sqlalchemy import column, literal, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from data_ingestion.cache.keys import SCHEMAS_KEY
 from data_ingestion.cache.serde import get_cache_list, set_cache_list
 
 
 async def get_schemas(
-    db: AsyncSession, background_tasks: BackgroundTasks
+    db: Session, background_tasks: BackgroundTasks
 ) -> list[str] | None:
     if (schemas := await get_cache_list(SCHEMAS_KEY)) is not None:
         return schemas
 
-    res = await db.execute(
+    res = db.execute(
         select("*")
         .select_from(text("information_schema.tables"))
         .where(column("table_schema") == literal("schemas"))

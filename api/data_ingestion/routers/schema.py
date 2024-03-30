@@ -2,7 +2,7 @@ import orjson
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import column, select, text
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from data_ingestion.cache.keys import get_schema_key
 from data_ingestion.cache.serde import get_cache_string, set_cache_string
@@ -20,7 +20,7 @@ router = APIRouter(
 
 @router.get("", response_model=list[str])
 async def list_schemas(
-    background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)
+    background_tasks: BackgroundTasks, db: Session = Depends(get_db)
 ):
     return await get_schemas(db, background_tasks)
 
@@ -29,7 +29,7 @@ async def list_schemas(
 async def get_schema(
     name: str,
     background_tasks: BackgroundTasks,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     schemas = await get_schemas(db, background_tasks)
     if name not in schemas:
@@ -38,7 +38,7 @@ async def get_schema(
     if (schema := await get_cache_string(get_schema_key(name))) is not None:
         return orjson.loads(schema)
 
-    res = await db.execute(
+    res = db.execute(
         select("*")
         .select_from(text(f"schemas.{name}"))
         .order_by(
