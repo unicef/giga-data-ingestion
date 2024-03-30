@@ -1,0 +1,11 @@
+master:
+  readinessProbe:
+    enabled: false
+  livenessProbe:
+    enabled: false
+
+replica:
+  readinessProbe:
+    enabled: false
+  livenessProbe:
+    enabled: false

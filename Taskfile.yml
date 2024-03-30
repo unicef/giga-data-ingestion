@@ -135,6 +135,12 @@ tasks:
         --values ./helm/pg-values.yaml
         --values ./helm/pg-values-override-local.yaml
       - >
+        helm upgrade --install redis bitnami/redis
+        --version 18.18.0
+        --namespace giga-data-ingestion
+        --values ./helm/redis-values.yaml
+        --values ./helm/redis-values-override-local.yaml
+      - >
         helm upgrade --install email-service ./helm/email-service
         --namespace giga-data-ingestion
         --set image.repository={{.EMAIL_SERVICE_IMAGE_REPOSITORY}}
@@ -158,6 +164,12 @@ tasks:
         --values ./helm/pg-values.yaml
         --values ./helm/pg-values-override-local.yaml
       - >
+        helm upgrade --install redis bitnami/redis
+        --version 18.18.0
+        --namespace giga-data-ingestion
+        --values ./helm/redis-values.yaml
+        --values ./helm/redis-values-override-local.yaml
+      - >
         helm upgrade --install email-service ./helm/email-service
         --namespace giga-data-ingestion
         --values ./helm/email-service.values-override-prd.yaml
@@ -175,9 +187,11 @@ tasks:
   helm-down:
     desc: Uninstall Helm chart
     dir: infra/helm
+    ignore_error: true
     cmds:
       - helm uninstall ingestion-portal --namespace giga-data-ingestion
       - helm uninstall email-service --namespace giga-data-ingestion
+      - helm uninstall redis --namespace giga-data-ingestion
       - helm uninstall postgres --namespace giga-data-ingestion
 
   helm-clean:
@@ -205,6 +219,11 @@ tasks:
     desc: Open a psql shell
     cmds:
       - task exec -- db psql -U {{.POSTGRESQL_USERNAME}} -d {{.POSTGRESQL_DATABASE}}
+
+  redis-cli:
+    desc: Open a redis-cli shell
+    cmds:
+      - task exec -- -it redis redis-cli --pass {{.REDIS_PASSWORD}}
 
   load-fixtures:
     desc: Install database fixtures

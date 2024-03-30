@@ -27,6 +27,17 @@ jobs:
                 valueFile: infra/helm/pg-values.yaml
 
             - task: HelmDeploy@0
+              displayName: Helm deploy Redis
+              inputs:
+                command: upgrade
+                chartType: Name
+                chartName: bitnami/redis
+                chartVersion: 18.18.0
+                releaseName: postgres
+                namespace: $(kubernetesNamespace)
+                valueFile: infra/helm/redis-values.yaml
+
+            - task: HelmDeploy@0
               displayName: Helm deploy email service
               condition: eq(variables.deployEnv, 'dev')
               inputs:

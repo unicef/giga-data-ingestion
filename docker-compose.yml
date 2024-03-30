@@ -5,6 +5,7 @@ networks:
 
 volumes:
   db-data:
+  cache-data:
 
 services:
   api:
@@ -21,6 +22,57 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-worker:
+    build: ./api
+    image: unicef/giga-data-ingestion/api
+    init: true
+    env_file: ./api/.env
+    restart: unless-stopped
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+        delay: 3s
+    command: [ "/app/celery-docker-entrypoint.dev.sh" ]
+    volumes:
+      - ./api:/app
+      - ./api/.venv-docker:/app/.venv
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  celery-beat:
+    build: ./api
+    image: unicef/giga-data-ingestion/api
+    init: true
+    env_file: ./api/.env
+    restart: unless-stopped
+    command: [ "/app/celery-beat-docker-entrypoint.dev.sh" ]
+    volumes:
+      - ./api:/app
+      - ./api/.venv-docker:/app/.venv
+
+  flower:
+    build: ./api
+    image: unicef/giga-data-ingestion/api
+    init: true
+    env_file: ./api/.env
+    restart: unless-stopped
+    environment:
+      FLOWER_UNAUTHENTICATED_API: true
+    command:
+      - /bin/sh
+      - -c
+      - exec poetry run celery -A data_ingestion.celery flower --port=5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./api:/app
+      - ./api/.venv-docker:/app/.venv
 
   ui:
     image: node:20-alpine
@@ -50,6 +102,20 @@ services:
       timeout: 5s
       start_period: 3s
 
+  redis:
+    image: bitnami/redis:7.2.4-debian-12-r10
+    restart: unless-stopped
+    env_file: ./api/.env
+    ports:
+      - "6379:6379"
+    volumes:
+      - cache-data:/bitnami/redis/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "--pass", "$REDIS_PASSWORD", "ping" ]
+      retries: 3
+      timeout: 5s
+      start_period: 3s
+  
   email-api:
     image: node:20-alpine
     restart: unless-stopped

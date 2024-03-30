@@ -87,3 +87,6 @@ envFrom:
       name: giga-ingestion-portal-configmap
   - secretRef:
       name: giga-ingestion-portal-secrets
+
+celeryWorker:
+  replicaCount: 2

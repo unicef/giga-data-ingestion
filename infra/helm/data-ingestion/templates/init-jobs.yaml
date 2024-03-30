@@ -59,3 +59,38 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ include "data-ingestion.fullname" . }}-init-wait-redis"
+  labels:
+    {{- include "data-ingestion.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  activeDeadlineSeconds: 300
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: "{{ include "data-ingestion.fullname" . }}-init-wait-redis"
+          image: bitnami/redis:7.2.4-debian-12-r10
+          command:
+            - /bin/sh
+            - -c
+            - >
+              until redis-cli
+              -h $REDIS_HOST
+              --pass $REDIS_PASSWORD
+              ping;
+              do echo waiting for redis;
+              sleep 2;
+              done;
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

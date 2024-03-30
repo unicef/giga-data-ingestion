@@ -1,10 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Security, status
-from sqlalchemy import text
+import orjson
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
+from fastapi.encoders import jsonable_encoder
+from sqlalchemy import column, select, text
 from sqlalchemy.orm import Session
 
-from data_ingestion.constants import constants
+from data_ingestion.cache.keys import get_schema_key
+from data_ingestion.cache.serde import get_cache_string, set_cache_string
 from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.schema import get_schemas
 from data_ingestion.schemas.schema import Schema as MetaSchema
 
 router = APIRouter(
@@ -14,15 +18,33 @@ router = APIRouter(
 )
 
 
+@router.get("", response_model=list[str])
+async def list_schemas(
+    background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+):
+    return await get_schemas(db, background_tasks)
+
+
 @router.get("/{name}", response_model=list[MetaSchema])
-async def get_schema(name: str, db: Session = Depends(get_db)):
-    if name not in constants.ALLOWED_SCHEMA_NAMES:
+async def get_schema(
+    name: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    schemas = await get_schemas(db, background_tasks)
+    if name not in schemas:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    # TODO: Determine how to dynamically pass table names with ORM
+    if (schema := await get_cache_string(get_schema_key(name))) is not None:
+        return orjson.loads(schema)
+
     res = db.execute(
-        text(
-            f"SELECT * FROM schemas.{name} ORDER BY primary_key, is_nullable NULLS LAST, name"  # nosec: `name`s are limited to the list above
+        select("*")
+        .select_from(text(f"schemas.{name}"))
+        .order_by(
+            column("primary_key"),
+            column("is_nullable").nulls_last(),
+            column("name"),
         )
     )
 
@@ -37,4 +59,7 @@ async def get_schema(name: str, db: Session = Depends(get_db)):
         if not metaschema.is_system_generated:
             schema.append(metaschema)
 
+    background_tasks.add_task(
+        set_cache_string, get_schema_key(name), orjson.dumps(jsonable_encoder(schema))
+    )
     return schema
