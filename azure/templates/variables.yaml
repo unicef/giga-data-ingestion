@@ -28,4 +28,5 @@ variables:
   postgresqlDatabase: $(POSTGRESQL_DATABASE)
   trinoUsername: $(TRINO_USERNAME)
   trinoPassword: $(TRINO_PASSWORD)
+  redisPassword: $(REDIS_PASSWORD)
   system.debug: true
