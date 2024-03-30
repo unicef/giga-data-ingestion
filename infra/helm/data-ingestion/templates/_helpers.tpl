@@ -50,6 +50,16 @@ app.kubernetes.io/name: {{ include "data-ingestion.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{- define "data-ingestion.celeryWorkerSelectorLabels" }}
+app.kubernetes.io/name: "{{ include "data-ingestion.name" . }}-celery-worker"
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{- define "data-ingestion.celeryBeatSelectorLabels" }}
+app.kubernetes.io/name: "{{ include "data-ingestion.name" . }}-celery-beat"
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
 {{/*
 Create the name of the service account to use
 */}}

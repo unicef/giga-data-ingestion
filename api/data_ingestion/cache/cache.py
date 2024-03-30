@@ -5,7 +5,7 @@ from loguru import logger
 
 from data_ingestion.settings import settings
 
-pool = redis.ConnectionPool.from_url(settings.REDIS_URL)
+pool = redis.ConnectionPool.from_url(settings.REDIS_CACHE_URL)
 
 
 async def get_redis_connection():

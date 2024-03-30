@@ -6,7 +6,7 @@ from data_ingestion.settings import settings
 
 celery = Celery(
     "data_ingestion",
-    broker=settings.REDIS_URL,
+    broker=settings.REDIS_QUEUE_URL,
     backend="rpc://",
     include=["data_ingestion.tasks"],
 )

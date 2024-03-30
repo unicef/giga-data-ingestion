@@ -143,14 +143,31 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
-    def REDIS_URL(self) -> str:
+    def REDIS_CONNECTION_DICT(self) -> dict:
+        return {
+            "scheme": "redis",
+            "password": self.REDIS_PASSWORD,
+            "host": self.REDIS_HOST,
+            "port": self.REDIS_PORT,
+        }
+
+    @computed_field
+    @property
+    def REDIS_CACHE_URL(self) -> str:
         return str(
             RedisDsn.build(
-                scheme="redis",
-                password=self.REDIS_PASSWORD,
-                host=self.REDIS_HOST,
-                port=self.REDIS_PORT,
+                **self.REDIS_CONNECTION_DICT,
                 path="0",
+            )
+        )
+
+    @computed_field
+    @property
+    def REDIS_QUEUE_URL(self) -> str:
+        return str(
+            RedisDsn.build(
+                **self.REDIS_CONNECTION_DICT,
+                path="1",
             )
         )
 
