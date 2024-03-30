@@ -2,6 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security
 from sqlalchemy import column, literal, select, text
 from sqlalchemy.orm import Session
 
+from data_ingestion.cache.keys import SCHEMAS_KEY
 from data_ingestion.cache.serde import get_cache_list, set_cache_list
 from data_ingestion.constants import constants
 from data_ingestion.db.trino import get_db
@@ -20,7 +21,7 @@ async def list_schemas(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    if (schemas := await get_cache_list("schemas")) is not None:
+    if (schemas := await get_cache_list(SCHEMAS_KEY)) is not None:
         return schemas
 
     res = db.execute(
@@ -31,7 +32,7 @@ async def list_schemas(
     )
     mappings = res.mappings().all()
     schemas = [m["table_name"] for m in mappings]
-    background_tasks.add_task(set_cache_list, "schemas", schemas)
+    background_tasks.add_task(set_cache_list, SCHEMAS_KEY, schemas)
     return schemas
 
 

@@ -1,0 +1,1 @@
+SCHEMAS_KEY = "schemas"
