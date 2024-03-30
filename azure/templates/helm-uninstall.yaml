@@ -21,6 +21,13 @@ jobs:
                 arguments: email-service --ignore-not-found
 
             - task: HelmDeploy@0
+              displayName: Helm uninstall Redis
+              inputs:
+                namespace: $(kubernetesNamespace)
+                command: uninstall
+                arguments: redis --ignore-not-found
+
+            - task: HelmDeploy@0
               displayName: Helm uninstall PostgreSQL
               inputs:
                 namespace: $(kubernetesNamespace)
