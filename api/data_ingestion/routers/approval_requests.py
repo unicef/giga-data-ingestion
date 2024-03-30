@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from country_converter import country_converter as coco
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 
 from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
 from azure.storage.blob import BlobProperties, ContentSettings
@@ -31,7 +31,11 @@ router = APIRouter(
     response_model=list[ApprovalRequestListing],
     dependencies=[Security(IsPrivileged())],
 )
-async def list_approval_requests(user=Depends(azure_scheme)):
+async def list_approval_requests(
+    user=Depends(azure_scheme),
+    page: int = Query(),
+    count: int = Query(),
+):
     groups = [g.lower() for g in user.groups]
 
     body: list[ApprovalRequestListing] = []
