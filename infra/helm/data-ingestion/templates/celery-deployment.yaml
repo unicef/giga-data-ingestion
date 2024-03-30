@@ -6,14 +6,8 @@ metadata:
     {{- include "data-ingestion.labels" . | nindent 4 }}
     app.kubernetes.io/part-of: {{ include "data-ingestion.name" . }}
     app.kubernetes.io/component: celery-worker
-  annotations:
-    helm.sh/hook: pre-install,pre-upgrade
-    helm.sh/hook-weight: "-3"
-    helm.sh/hook-delete-policy: before-hook-creation
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: {{ .Values.celeryWorker.replicaCount }}
   selector:
     matchLabels:
       {{- include "data-ingestion.celeryWorkerSelectorLabels" . | nindent 6 }}
@@ -82,14 +76,8 @@ metadata:
     {{- include "data-ingestion.labels" . | nindent 4 }}
     app.kubernetes.io/part-of: {{ include "data-ingestion.name" . }}
     app.kubernetes.io/component: celery-beat
-  annotations:
-    helm.sh/hook: pre-install,pre-upgrade
-    helm.sh/hook-weight: "-3"
-    helm.sh/hook-delete-policy: before-hook-creation
 spec:
-  {{- if not .Values.autoscaling.enabled }}
-  replicas: {{ .Values.replicaCount }}
-  {{- end }}
+  replicas: 1
   selector:
     matchLabels:
       {{- include "data-ingestion.celeryBeatSelectorLabels" . | nindent 6 }}
