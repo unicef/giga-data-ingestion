@@ -78,7 +78,7 @@ class Settings(BaseSettings):
     TRINO_CATALOG: str = "delta_lake"
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
-    REDIS_CACHE_DEFAULT_TTL_SECONDS: int = int(timedelta(minutes=15).total_seconds())
+    REDIS_CACHE_DEFAULT_TTL_SECONDS: int = int(timedelta(minutes=10).total_seconds())
 
     @computed_field
     @property
