@@ -14,6 +14,7 @@ celery = Celery(
 celery.conf.update(
     task_serializer="json",
     result_serializer="json",
+    broker_connection_retry_on_startup=True,
     enable_utc=True,
     beat_schedule={
         "update-schemas-list": {

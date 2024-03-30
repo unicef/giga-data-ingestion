@@ -1,8 +1,5 @@
-import asyncio
-
 import orjson
 from asgiref.sync import async_to_sync
-from fastapi.encoders import jsonable_encoder
 from sqlalchemy import column, literal, select, text
 
 from data_ingestion.cache.keys import SCHEMAS_KEY, get_schema_key
@@ -12,8 +9,7 @@ from data_ingestion.db.trino import get_db_context
 from data_ingestion.schemas.schema import Schema
 
 
-@celery.task(name="data_ingestion.tasks.update_schemas_list")
-def update_schemas_list():
+def get_schema_list() -> list[str]:
     with get_db_context() as db:
         res = db.execute(
             select("*")
@@ -23,14 +19,22 @@ def update_schemas_list():
         )
         mappings = res.mappings().all()
 
-    schemas = [m["table_name"] for m in mappings]
+    return [m["table_name"] for m in mappings]
+
+
+@celery.task(name="data_ingestion.tasks.update_schemas_list")
+def update_schemas_list():
+    schemas = get_schema_list()
     async_to_sync(set_cache_list)(SCHEMAS_KEY, schemas)
     return SCHEMAS_KEY, schemas
 
 
 @celery.task(name="data_ingestion.tasks.update_schemas")
 def update_schemas():
-    schema_names = asyncio.run(get_cache_list(SCHEMAS_KEY))
+    schema_names = async_to_sync(get_cache_list)(SCHEMAS_KEY)
+    if schema_names is None:
+        schema_names = get_schema_list()
+
     schemas = {}
     with get_db_context() as db:
         for name in schema_names:
@@ -61,7 +65,7 @@ def update_schemas():
     for name, schema in schemas.items():
         async_to_sync(set_cache_string)(
             get_schema_key(name),
-            orjson.dumps(jsonable_encoder(schema)),
+            orjson.dumps(schema),
         )
 
     return schemas

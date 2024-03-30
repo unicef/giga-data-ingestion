@@ -187,6 +187,7 @@ tasks:
   helm-down:
     desc: Uninstall Helm chart
     dir: infra/helm
+    ignore_error: true
     cmds:
       - helm uninstall ingestion-portal --namespace giga-data-ingestion
       - helm uninstall email-service --namespace giga-data-ingestion
