@@ -3,6 +3,8 @@ from typing import Annotated
 
 import country_converter as coco
 import magic
+from azure.core.exceptions import HttpResponseError
+from azure.storage.blob import ContentSettings
 from fastapi import (
     APIRouter,
     Depends,
@@ -20,8 +22,6 @@ from sqlalchemy import delete, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import StreamingResponse
 
-from azure.core.exceptions import HttpResponseError
-from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
@@ -236,12 +236,11 @@ async def get_data_quality_check(
             detail="File Upload ID does not exist",
         )
 
-    if not is_privileged:
-        if file_upload.uploader_id != user.sub:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have permission to access details for this file.",
-            )
+    if not is_privileged and file_upload.uploader_id != user.sub:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access details for this file.",
+        )
 
     blob_properties, results = get_first_n_error_rows_for_data_quality_check(
         file_upload.dq_report_path

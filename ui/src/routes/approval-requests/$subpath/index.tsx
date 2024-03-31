@@ -1,46 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { ArrowLeft, ArrowRight, Checkmark, QX } from "@carbon/icons-react";
-import {
-  Button,
-  ButtonSet,
-  DataTable,
-  DataTableHeader,
-  Section,
-  Table,
-  TableBatchAction,
-  TableBatchActions,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableSelectAll,
-  TableSelectRow,
-  TableToolbar,
-} from "@carbon/react";
-// @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
-import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
+import { Button, ButtonSet, DataTableHeader } from "@carbon/react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { api, queryClient } from "@/api";
+import { api } from "@/api";
+import CDFDataTable from "@/components/approval-requests/CDFDataTable.tsx";
 import { useStore } from "@/context/store";
-import { cn } from "@/lib/utils.ts";
-import { CarbonDataTableRow } from "@/types/datatable";
-import { KeyValueObject } from "@/types/datatable";
-import { getValueByHeader } from "@/utils/approval_requests";
-import { transformSelectedRowsToKeyValArray } from "@/utils/datatable";
+import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests.ts";
 
 export const Route = createFileRoute("/approval-requests/$subpath/")({
   component: ApproveRejectTable,
-  loader: ({ params: { subpath } }) => {
-    return queryClient.ensureQueryData({
-      queryFn: () => api.approvalRequests.get(subpath),
-      queryKey: ["approval-requests", subpath],
-    });
-  },
 });
 
 function ApproveRejectTable() {
@@ -59,70 +30,72 @@ function ApproveRejectTable() {
     },
     approveRowState: { approvedRowsList, rejectedRowsList },
   } = useStore();
-  const {
-    data: {
-      data: { info, data: approvalRequests },
-    },
-  } = useSuspenseQuery({
-    queryFn: () => api.approvalRequests.get(subpath),
-    queryKey: ["approval-requests", subpath],
-  });
 
-  const headers: DataTableHeader[] = useMemo(
+  const { data: approvalRequestsQuery, isLoading } = useQuery({
+    queryFn: () =>
+      api.approvalRequests.get(subpath, { page, page_size: pageSize }),
+    queryKey: ["approval-requests", subpath, page, pageSize],
+  });
+  const {
+    data: approvalRequests,
+    info,
+    total_count,
+  } = approvalRequestsQuery?.data ?? SENTINEL_APPROVAL_REQUEST;
+
+  const headers = useMemo<DataTableHeader[]>(() => {
+    let keys = Object.keys(approvalRequests[0] ?? { _change_type: "insert" });
+    const idIndex = keys.findIndex(key => key === "school_id_giga");
+    if (idIndex > -1) {
+      keys = [
+        "school_id_giga",
+        ...keys.slice(0, idIndex),
+        ...keys.slice(idIndex + 1),
+      ];
+    }
+    return keys.map(key => ({
+      key,
+      header: key,
+    }));
+  }, [approvalRequests]);
+
+  useEffect(() => resetApproveRowState(), [resetApproveRowState]);
+
+  const formattedRows = useMemo<Record<string, string | null>[]>(
     () =>
-      Object.keys(approvalRequests[0]).map(key => ({
-        key,
-        header: key,
+      approvalRequests.map(row => ({
+        ...row,
+        id: row.school_id_giga,
       })),
     [approvalRequests],
   );
 
-  useEffect(() => resetApproveRowState(), [resetApproveRowState]);
-
-  const formattedRows = useMemo<KeyValueObject[]>(() => {
-    const formattedData: KeyValueObject[] = approvalRequests.map(row => {
-      const rowWithId = { ...row, id: row.school_id_giga };
-
-      const entries = Object.entries(rowWithId).map(([key, value]) => {
-        if (key == "id") return [key, value];
-
-        return [key, value === null ? "NULL" : value];
-      });
-
-      return Object.fromEntries(entries);
-    });
-
-    return formattedData;
-  }, [approvalRequests]);
-
-  const unselectedRows = useMemo<KeyValueObject[]>(() => {
-    return formattedRows.filter(
-      approvalRequest =>
-        !approvedRowsList.includes(approvalRequest.school_id_giga ?? "") &&
-        !rejectedRowsList.includes(approvalRequest.school_id_giga ?? ""),
-    );
-  }, [formattedRows, approvedRowsList, rejectedRowsList]);
-
-  const unselectedRowSlice = useMemo<KeyValueObject[]>(() => {
-    return unselectedRows.slice((page - 1) * pageSize, page * pageSize);
-  }, [page, pageSize, unselectedRows]);
-
-  const handleApproveRows = (rows: KeyValueObject[]) => {
+  const handleApproveRows = (rows: Record<string, string | null>[]) => {
     const ids = rows.map(row => row.school_id_giga ?? "NULL");
     setApprovedRows([...approvedRowsList, ...ids]);
     setHeaders(headers);
     setRows(formattedRows);
   };
 
-  const handleRejectRows = (rows: KeyValueObject[]) => {
+  const handleRejectRows = (rows: Record<string, string | null>[]) => {
     const ids = rows.map(row => row.school_id_giga ?? "NULL");
     setRejectedRows([...rejectedRowsList, ...ids]);
     setHeaders(headers);
     setRows(formattedRows);
   };
 
+  const handlePaginationChange = ({
+    pageSize,
+    page,
+  }: {
+    pageSize: number;
+    page: number;
+  }) => {
+    setPage(page);
+    setPageSize(pageSize);
+  };
+
   const handleProceed = () => {
-    navigate({
+    void navigate({
       to: "/approval-requests/$subpath/confirm",
       params: {
         subpath: subpath,
@@ -132,163 +105,19 @@ function ApproveRejectTable() {
 
   return (
     <>
-      <Section className="container py-6">
-        <DataTable
-          headers={headers}
-          rows={unselectedRowSlice as CarbonDataTableRow}
-        >
-          {({
-            rows,
-            headers,
-            getHeaderProps,
-            getRowProps,
-            getSelectionProps,
-            getToolbarProps,
-            getBatchActionProps,
-            selectedRows,
-            getTableProps,
-            getTableContainerProps,
-            selectRow,
-          }) => {
-            const batchActionProps = {
-              ...getBatchActionProps({
-                onSelectAll: () => {
-                  rows.map(row => {
-                    if (!row.isSelected) {
-                      selectRow(row.id);
-                    }
-                  });
-                },
-              }),
-            };
-            return (
-              <TableContainer
-                title="Approve Rows"
-                description={
-                  <>
-                    <span>
-                      {info.country}-{info.dataset}
-                    </span>
-                    <br />
-                    <span>
-                      Select rows to approve or reject below. You may opt to
-                      review only a subset of the rows.
-                    </span>
-                  </>
-                }
-                {...getTableContainerProps()}
-              >
-                <TableToolbar {...getToolbarProps()}>
-                  <TableBatchActions {...batchActionProps}>
-                    <TableBatchAction
-                      tabIndex={
-                        batchActionProps.shouldShowBatchActions ? 0 : -1
-                      }
-                      renderIcon={Checkmark}
-                      onClick={() => {
-                        const keyValueObject =
-                          transformSelectedRowsToKeyValArray(selectedRows);
-                        handleApproveRows(keyValueObject);
-                      }}
-                    >
-                      Approve Rows
-                    </TableBatchAction>
-                    <TableBatchAction
-                      tabIndex={
-                        batchActionProps.shouldShowBatchActions ? 0 : -1
-                      }
-                      renderIcon={QX}
-                      onClick={() => {
-                        const keyValueObject =
-                          transformSelectedRowsToKeyValArray(selectedRows);
-                        handleRejectRows(keyValueObject);
-                      }}
-                    >
-                      Reject Rows
-                    </TableBatchAction>
-                  </TableBatchActions>
-                </TableToolbar>
-                <Table {...getTableProps()} aria-label="sample table">
-                  <TableHead>
-                    <TableRow>
-                      {/* @ts-expect-error inconsistencies within sub components https://github.com/carbon-design-system/carbon/issues/14831 */}
-                      <TableSelectAll {...getSelectionProps()} />
-                      {headers.map(header => (
-                        // @ts-expect-error onclick bad type https://github.com/carbon-design-system/carbon/issues/14831
-                        <TableHeader
-                          {...getHeaderProps({
-                            header,
-                          })}
-                        >
-                          {header.header}
-                        </TableHeader>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {rows.map(row => {
-                      const changeType = getValueByHeader(
-                        row.cells,
-                        "_change_type",
-                      );
-
-                      return (
-                        <TableRow
-                          className={cn({
-                            "bg-green-300": changeType === "insert",
-                            "bg-yellow-200": changeType === "update_preimage",
-                          })}
-                          {...getRowProps({
-                            row,
-                          })}
-                        >
-                          {/* @ts-expect-error radio buttons bad type  https://github.com/carbon-design-system/carbon/issues/14831 */}
-                          <TableSelectRow
-                            {...getSelectionProps({
-                              row,
-                            })}
-                          />
-                          {row.cells.map(cell => (
-                            <TableCell key={cell.id}>
-                              {typeof cell.value === "object" ? (
-                                <>
-                                  <p className="line-through">
-                                    {cell.value.old ?? "NULL"}
-                                  </p>
-                                  <p className="">
-                                    {cell.value.update ?? "NULL"}
-                                  </p>
-                                </>
-                              ) : (
-                                cell.value
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            );
-          }}
-        </DataTable>
-        <Pagination
-          onChange={({
-            pageSize,
-            page,
-          }: {
-            pageSize: number;
-            page: number;
-          }) => {
-            setPage(page);
-            setPageSize(pageSize);
-          }}
-          page={1}
-          pageSize={pageSize}
-          pageSizes={[10, 25, 50]}
-          totalItems={unselectedRows.length}
-        />
+      <CDFDataTable
+        headers={headers}
+        rows={formattedRows}
+        isLoading={isLoading}
+        handleApproveRows={handleApproveRows}
+        handleRejectRows={handleRejectRows}
+        handlePaginationChange={handlePaginationChange}
+        page={page}
+        pageSize={pageSize}
+        count={total_count}
+        info={info}
+      />
+      <div className="container">
         <ButtonSet className="w-full">
           <Button
             as={Link}
@@ -310,7 +139,7 @@ function ApproveRejectTable() {
             Proceed
           </Button>
         </ButtonSet>
-      </Section>
+      </div>
     </>
   );
 }

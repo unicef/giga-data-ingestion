@@ -171,9 +171,12 @@ async def get_approval_request(
                 df.at[i, col] = {"old": old, "update": update}
 
     total_count = int(df.at[0, "row_count"])
-    df = df[df["_change_type"] != "update_postimage"]
-    df = df.drop(
-        columns=["row_count", "signature", "_commit_version", "_commit_timestamp"]
+    df = (
+        df[df["_change_type"] != "update_postimage"]
+        .drop(
+            columns=["row_count", "signature", "_commit_version", "_commit_timestamp"]
+        )
+        .fillna("NULL")
     )
     return {
         "info": {"country": country, "dataset": dataset.title()},

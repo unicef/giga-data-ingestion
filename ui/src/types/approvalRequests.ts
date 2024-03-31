@@ -11,7 +11,7 @@ export interface ApprovalRequestListing {
   rows_deleted: number;
 }
 
-interface ApprovalRequestInfo {
+export interface ApprovalRequestInfo {
   country: string;
   dataset: string;
 }
@@ -22,5 +22,15 @@ export type ApprovalRequestData = Record<string, null> & {
 
 export type ApprovalRequest = {
   info: ApprovalRequestInfo;
+  total_count: number;
   data: ApprovalRequestData[];
+};
+
+export const SENTINEL_APPROVAL_REQUEST: ApprovalRequest = {
+  info: {
+    country: "",
+    dataset: "",
+  },
+  data: [],
+  total_count: 0,
 };
