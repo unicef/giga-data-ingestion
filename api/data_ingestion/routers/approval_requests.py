@@ -1,8 +1,6 @@
 import json
 import urllib.parse
-from datetime import datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 from country_converter import country_converter as coco
@@ -99,7 +97,7 @@ async def list_approval_requests(
                 country_iso3=table["table_name"].upper(),
                 dataset=dataset,
                 subpath=f'{table["table_schema"]}/{table["table_name"]}',
-                last_modified=datetime.now().astimezone(ZoneInfo("UTC")),
+                last_modified=stats["last_modified"],
                 rows_count=stats["rows_count"],
                 rows_added=stats["rows_added"],
                 rows_updated=stats["rows_updated"],
@@ -122,7 +120,10 @@ async def get_approval_request(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=50),
 ):
-    table_schema, table_name = urllib.parse.unquote(subpath).split("/")
+    if len(splits := urllib.parse.unquote(subpath).split("/")) != 2:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    table_schema, table_name = splits
     country = coco.convert(table_name, to="name_short")
     dataset = table_schema.replace("staging", "").replace("_", " ").title()
 
