@@ -1,4 +1,5 @@
 export interface ApprovalRequestListing {
+  id: string;
   country: string;
   country_iso3: string;
   dataset: string;

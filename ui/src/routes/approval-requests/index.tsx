@@ -5,7 +5,6 @@ import {
   DataTableHeader,
   DataTableSkeleton,
   Section,
-  TableContainer,
 } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
@@ -23,7 +22,7 @@ export const Route = createFileRoute("/approval-requests/")({
 
 const columns: DataTableHeader[] = [
   {
-    key: "id",
+    key: "country",
     header: "Country",
   },
   {
@@ -52,10 +51,10 @@ const columns: DataTableHeader[] = [
   },
 ];
 
-type ApprovalRequest = Record<
+type ApprovalRequestTableRow = Record<
   keyof ApprovalRequestListing,
   string | number | null | ReactElement
-> & { id: string; actions: ReactElement };
+>;
 
 function ApprovalRequests() {
   const [page, setPage] = useState(1);
@@ -78,11 +77,11 @@ function ApprovalRequests() {
   });
   const approvalRequests = data?.data ?? SENTINEL_PAGED_RESPONSE;
 
-  const formattedApprovalRequests = useMemo<ApprovalRequest[]>(
+  const formattedApprovalRequests = useMemo<ApprovalRequestTableRow[]>(
     () =>
       approvalRequests.data.map(request => ({
         ...request,
-        id: `${request.country} (${request.country_iso3})`,
+        country: `${request.country} (${request.country_iso3})`,
         actions: (
           <Button
             kind="ghost"
@@ -109,17 +108,16 @@ function ApprovalRequests() {
       {isLoading ? (
         <DataTableSkeleton headers={columns} />
       ) : (
-        <TableContainer title="Approval Requests">
-          <DataTable
-            columns={columns}
-            rows={formattedApprovalRequests}
-            isPaginated
-            count={approvalRequests.total_count}
-            handlePaginationChange={handlePaginationChange}
-            page={approvalRequests.page}
-            pageSize={approvalRequests.page_size}
-          />
-        </TableContainer>
+        <DataTable
+          title="Approval Requests"
+          columns={columns}
+          rows={formattedApprovalRequests}
+          isPaginated
+          count={approvalRequests.total_count}
+          handlePaginationChange={handlePaginationChange}
+          page={approvalRequests.page}
+          pageSize={approvalRequests.page_size}
+        />
       )}
     </Section>
   );

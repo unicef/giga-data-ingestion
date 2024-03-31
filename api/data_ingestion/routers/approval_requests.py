@@ -37,16 +37,24 @@ async def list_approval_requests(
     page_size: int = Query(default=10, ge=1, le=50),
     db: Session = Depends(get_db),
 ):
-    data_cte = select("*").select_from(text("information_schema.tables")).cte("tables")
+    data_cte = (
+        select("*")
+        .select_from(text("information_schema.tables"))
+        .where(column("table_schema").like(literal("school%staging")))
+        .cte("tables")
+    )
     res = db.execute(
         select("*", select(count()).select_from(data_cte).label("total_count"))
         .select_from(data_cte)
-        .where(column("table_schema").like(literal("school%staging")))
         .order_by(column("table_name"))
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
     staging_tables = res.mappings().all()
+    if len(staging_tables) == 0:
+        total_count = 0
+    else:
+        total_count = staging_tables[0]["total_count"]
 
     body: list[ApprovalRequestListing] = []
     for table in staging_tables:
@@ -93,6 +101,7 @@ async def list_approval_requests(
         dataset = table["table_schema"].replace("staging", "").replace("_", " ").title()
         body.append(
             ApprovalRequestListing(
+                id=f'{table["table_name"].upper()}-{dataset}',
                 country=country,
                 country_iso3=table["table_name"].upper(),
                 dataset=dataset,
@@ -109,7 +118,7 @@ async def list_approval_requests(
         "data": body,
         "page": 1,
         "page_size": 10,
-        "total_count": len(body),
+        "total_count": total_count,
     }
 
 
