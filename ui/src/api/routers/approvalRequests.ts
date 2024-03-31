@@ -1,5 +1,6 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
+import { PagedResponse, PaginationRequest } from "@/types/api.ts";
 import {
   ApprovalRequest,
   ApprovalRequestListing,
@@ -7,8 +8,12 @@ import {
 
 export default function routes(axi: AxiosInstance) {
   return {
-    list: (): Promise<AxiosResponse<ApprovalRequestListing[]>> => {
-      return axi.get("/approval-requests");
+    list: (
+      paginationRequest: PaginationRequest,
+    ): Promise<AxiosResponse<PagedResponse<ApprovalRequestListing>>> => {
+      return axi.get("/approval-requests", {
+        params: paginationRequest,
+      });
     },
     get: (subpath: string): Promise<AxiosResponse<ApprovalRequest>> => {
       const encodedSubpath = encodeURIComponent(subpath);

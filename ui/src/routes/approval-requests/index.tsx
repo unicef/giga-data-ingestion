@@ -1,4 +1,4 @@
-import { ReactElement, useMemo } from "react";
+import { ReactElement, useMemo, useState } from "react";
 
 import {
   Button,
@@ -7,19 +7,15 @@ import {
   Section,
   TableContainer,
 } from "@carbon/react";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 
 import { api } from "@/api";
 import DataTable from "@/components/common/DataTable.tsx";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
+import { SENTINEL_PAGED_RESPONSE } from "@/types/api.ts";
 import { ApprovalRequestListing } from "@/types/approvalRequests";
-
-const listQueryOptions = queryOptions({
-  queryKey: ["approval-requests"],
-  queryFn: api.approvalRequests.list,
-});
 
 export const Route = createFileRoute("/approval-requests/")({
   component: ApprovalRequests,
@@ -62,13 +58,29 @@ type ApprovalRequest = Record<
 > & { id: string; actions: ReactElement };
 
 function ApprovalRequests() {
-  const { data, isFetching, isLoading } = useQuery(listQueryOptions);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const approvalRequests = useMemo(() => data?.data ?? [], [data]);
+  function handlePaginationChange({
+    page,
+    pageSize,
+  }: {
+    page: number;
+    pageSize: number;
+  }) {
+    setPage(page);
+    setPageSize(pageSize);
+  }
 
-  const formattedApprovalRequests: ApprovalRequest[] = useMemo(
+  const { data, isLoading } = useQuery({
+    queryKey: ["approvalRequests", page, pageSize],
+    queryFn: () => api.approvalRequests.list({ page, page_size: pageSize }),
+  });
+  const approvalRequests = data?.data ?? SENTINEL_PAGED_RESPONSE;
+
+  const formattedApprovalRequests = useMemo<ApprovalRequest[]>(
     () =>
-      approvalRequests.map(request => ({
+      approvalRequests.data.map(request => ({
         ...request,
         id: `${request.country} (${request.country_iso3})`,
         actions: (
@@ -94,11 +106,19 @@ function ApprovalRequests() {
 
   return (
     <Section className="container flex flex-col gap-4 py-6">
-      {isLoading || isFetching ? (
-        <DataTableSkeleton />
+      {isLoading ? (
+        <DataTableSkeleton headers={columns} />
       ) : (
         <TableContainer title="Approval Requests">
-          <DataTable columns={columns} rows={formattedApprovalRequests} />
+          <DataTable
+            columns={columns}
+            rows={formattedApprovalRequests}
+            isPaginated
+            count={approvalRequests.total_count}
+            handlePaginationChange={handlePaginationChange}
+            page={approvalRequests.page}
+            pageSize={approvalRequests.page_size}
+          />
         </TableContainer>
       )}
     </Section>

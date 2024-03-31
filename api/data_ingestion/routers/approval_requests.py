@@ -21,6 +21,7 @@ from data_ingestion.schemas.approval_requests import (
     ApprovalRequestListing,
     UploadApprovedRowsRequest,
 )
+from data_ingestion.schemas.core import PagedResponseSchema
 
 router = APIRouter(
     prefix="/api/approval-requests",
@@ -31,16 +32,17 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=list[ApprovalRequestListing],
+    response_model=PagedResponseSchema[ApprovalRequestListing],
 )
 async def list_approval_requests(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=50),
     db: Session = Depends(get_db),
 ):
+    data_cte = select("*").select_from(text("information_schema.tables")).cte("tables")
     res = db.execute(
-        select("*")
-        .select_from(text("information_schema.tables"))
+        select("*", select(count()).select_from(data_cte).label("total_count"))
+        .select_from(data_cte)
         .where(column("table_schema").like(literal("school%staging")))
         .order_by(column("table_name"))
         .offset((page - 1) * page_size)
@@ -105,7 +107,12 @@ async def list_approval_requests(
             )
         )
 
-    return body
+    return {
+        "data": body,
+        "page": 1,
+        "page_size": 10,
+        "total_count": len(body),
+    }
 
 
 @router.get("/{subpath}")
