@@ -25,6 +25,8 @@ jobs:
                 releaseName: postgres
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/pg-values.yaml
+                ${{ if eq(variables.deployEnv, 'dev') }}:
+                  arguments: --set architecture=standalone
 
             - task: HelmDeploy@0
               displayName: Helm deploy Redis
@@ -36,44 +38,37 @@ jobs:
                 releaseName: postgres
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/redis-values.yaml
-                arguments: --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
+                ${{ if eq(variables.deployEnv, 'dev') }}:
+                  arguments: >
+                    --set architecture=standalone
+                    --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
+                ${{ else }}:
+                  arguments: --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
               displayName: Helm deploy email service
-              condition: eq(variables.deployEnv, 'dev')
               inputs:
                 command: upgrade
                 chartType: FilePath
                 chartPath: "$(Build.SourcesDirectory)/infra/helm/email-service"
                 releaseName: email-service
                 namespace: $(kubernetesNamespace)
-                arguments: >
-                  --values infra/helm/data-ingestion.values-override.yaml
-                  --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
-                  --set image.tag="$(Build.SourceVersion)"
-                  --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
-                  --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
-
-            - task: HelmDeploy@0
-              displayName: Helm deploy production-config email service
-              condition: or(eq(variables.deployEnv, 'stg'), eq(variables.deployEnv, 'prd'))
-              inputs:
-                command: upgrade
-                chartType: FilePath
-                chartPath: "$(Build.SourcesDirectory)/infra/helm/email-service"
-                releaseName: email-service
-                namespace: $(kubernetesNamespace)
-                valueFile: infra/helm/email-service.values-override-prd.yaml
-                arguments: >
-                  --values infra/helm/data-ingestion.values-override.yaml
-                  --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
-                  --set image.tag="$(Build.SourceVersion)"
-                  --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
-                  --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
+                ${{ if or(eq(variables.deployEnv, 'stg'), eq(variables.deployEnv, 'prd')) }}:
+                  arguments: >
+                    --values infra/helm/email-service.values-override.yaml
+                    --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
+                    --set image.tag="$(Build.SourceVersion)"
+                    --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
+                    --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
+                ${{ else }}:
+                  arguments: >
+                    --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
+                    --set image.tag="$(Build.SourceVersion)"
+                    --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
+                    --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
               displayName: Helm deploy Ingestion Portal
-              condition: eq(variables.deployEnv, 'dev')
               inputs:
                 command: upgrade
                 chartType: FilePath
@@ -81,33 +76,24 @@ jobs:
                 releaseName: ingestion-portal
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/data-ingestion.values-override.yaml
-                arguments: >
-                  --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
-                  --set image.tag="$(Build.SourceVersion)"
-                  --set ingress.enabled=true
-                  --set ingress.hosts[0].host="io-dataingestion-$(deployEnv).unitst.org"
-                  --set ingress.hosts[0].paths[0].path="/"
-                  --set ingress.hosts[0].paths[0].pathType=Prefix
-                  --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
-                  --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
-
-            - task: HelmDeploy@0
-              displayName: Helm deploy production-config Ingestion Portal
-              condition: or(eq(variables.deployEnv, 'stg'), eq(variables.deployEnv, 'prd'))
-              inputs:
-                command: upgrade
-                chartType: FilePath
-                chartPath: "$(Build.SourcesDirectory)/infra/helm/data-ingestion"
-                releaseName: ingestion-portal
-                namespace: $(kubernetesNamespace)
-                valueFile: infra/helm/data-ingestion.values-override.yaml
-                arguments: >
-                  --values infra/helm/data-ingestion.values-override-prd.yaml
-                  --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
-                  --set image.tag="$(Build.SourceVersion)"
-                  --set ingress.enabled=true
-                  --set ingress.hosts[0].host="io-dataingestion-$(deployEnv).unitst.org"
-                  --set ingress.hosts[0].paths[0].path="/"
-                  --set ingress.hosts[0].paths[0].pathType=Prefix
-                  --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
-                  --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
+                ${{ if or(eq(variables.deployEnv, 'stg'), eq(variables.deployEnv, 'prd')) }}:
+                  arguments: >
+                    --values infra/helm/data-ingestion.values-override-prd.yaml
+                    --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
+                    --set image.tag="$(Build.SourceVersion)"
+                    --set ingress.enabled=true
+                    --set ingress.hosts[0].host="io-dataingestion-$(deployEnv).unitst.org"
+                    --set ingress.hosts[0].paths[0].path="/"
+                    --set ingress.hosts[0].paths[0].pathType=Prefix
+                    --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
+                    --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
+                ${{ else }}:
+                  arguments: >
+                    --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
+                    --set image.tag="$(Build.SourceVersion)"
+                    --set ingress.enabled=true
+                    --set ingress.hosts[0].host="io-dataingestion-$(deployEnv).unitst.org"
+                    --set ingress.hosts[0].paths[0].path="/"
+                    --set ingress.hosts[0].paths[0].pathType=Prefix
+                    --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
+                    --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
