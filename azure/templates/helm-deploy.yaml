@@ -48,7 +48,7 @@ jobs:
                 chartType: Name
                 chartName: bitnami/redis
                 chartVersion: 18.18.0
-                releaseName: postgres
+                releaseName: redis
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/redis-values.yaml
                 arguments: >
@@ -63,7 +63,7 @@ jobs:
                 chartType: Name
                 chartName: bitnami/redis
                 chartVersion: 18.18.0
-                releaseName: postgres
+                releaseName: redis
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/redis-values.yaml
                 arguments: --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
@@ -77,6 +77,7 @@ jobs:
                 chartPath: "$(Build.SourcesDirectory)/infra/helm/email-service"
                 releaseName: email-service
                 namespace: $(kubernetesNamespace)
+                valueFile: infra/helm/data-ingestion.values-override.yaml
                 arguments: >
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
                   --set image.tag="$(Build.SourceVersion)"
@@ -92,6 +93,7 @@ jobs:
                 chartPath: "$(Build.SourcesDirectory)/infra/helm/email-service"
                 releaseName: email-service
                 namespace: $(kubernetesNamespace)
+                valueFile: infra/helm/data-ingestion.values-override.yaml
                 arguments: >
                   --values infra/helm/email-service.values-override.yaml
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
