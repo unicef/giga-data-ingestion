@@ -25,7 +25,7 @@ jobs:
                 releaseName: postgres
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/pg-values.yaml
-                ${{ if eq(variables.deployEnv, 'dev') }}:
+                ${{ if eq(variables['deployEnv'], 'dev') }}:
                   arguments: --set architecture=standalone
 
             - task: HelmDeploy@0
@@ -38,7 +38,7 @@ jobs:
                 releaseName: postgres
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/redis-values.yaml
-                ${{ if eq(variables.deployEnv, 'dev') }}:
+                ${{ if eq(variables['deployEnv'], 'dev') }}:
                   arguments: >
                     --set architecture=standalone
                     --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
@@ -53,7 +53,7 @@ jobs:
                 chartPath: "$(Build.SourcesDirectory)/infra/helm/email-service"
                 releaseName: email-service
                 namespace: $(kubernetesNamespace)
-                ${{ if or(eq(variables.deployEnv, 'stg'), eq(variables.deployEnv, 'prd')) }}:
+                ${{ if or(eq(variables['deployEnv'], 'stg'), eq(variables['deployEnv'], 'prd')) }}:
                   arguments: >
                     --values infra/helm/email-service.values-override.yaml
                     --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
@@ -76,7 +76,7 @@ jobs:
                 releaseName: ingestion-portal
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/data-ingestion.values-override.yaml
-                ${{ if or(eq(variables.deployEnv, 'stg'), eq(variables.deployEnv, 'prd')) }}:
+                ${{ if or(eq(variables['deployEnv'], 'stg'), eq(variables['deployEnv'], 'prd')) }}:
                   arguments: >
                     --values infra/helm/data-ingestion.values-override-prd.yaml
                     --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
