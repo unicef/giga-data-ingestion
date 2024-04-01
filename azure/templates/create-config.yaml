@@ -10,12 +10,23 @@ jobs:
 
             - task: Kubernetes@1
               displayName: Create configmap
+              condition: eq(variables.deployEnv, 'dev')
               inputs:
                 namespace: $(kubernetesNamespace)
                 configurationType: configuration
                 command: apply
                 useConfigurationFile: true
                 configuration: $(Build.SourcesDirectory)/infra/k8s/configmap.yaml
+
+            - task: Kubernetes@1
+              displayName: Create production configmap
+              condition: not(eq(variables.deployEnv, 'dev'))
+              inputs:
+                namespace: $(kubernetesNamespace)
+                configurationType: configuration
+                command: apply
+                useConfigurationFile: true
+                configuration: $(Build.SourcesDirectory)/infra/k8s/configmap-prd.yaml
 
             - task: Kubernetes@1
               displayName: Create secret
