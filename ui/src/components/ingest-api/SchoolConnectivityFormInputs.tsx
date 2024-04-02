@@ -460,6 +460,59 @@ export function SchoolConnectivityFormInputs({
     />
   );
 
+  const DateKeyInput = () => (
+    <TextInput
+      id="date_key"
+      invalid={!!errors.date_key}
+      labelText="Date key"
+      {...register("date_key")}
+    />
+  );
+
+  const DateFormatInput = () => (
+    <TextInput
+      id="date_format"
+      invalid={!!errors.date_format}
+      labelText="Date Format"
+      {...register("date_format")}
+    />
+  );
+
+  const SendDateInSelect = () => (
+    <Select
+      id="send_date_in"
+      invalid={!!errors.page_send_query_in}
+      labelText="Send date in"
+      {...register("send_date_in", { required: true })}
+    >
+      {Object.keys(SendQueryInEnum)
+        .filter(val => val !== SendQueryInEnum.NONE)
+        .map(send_query_in => (
+          <SelectItem
+            key={send_query_in}
+            text={send_query_in.replace(/_/g, " ")}
+            value={send_query_in}
+          />
+        ))}
+    </Select>
+  );
+  const ResponseDateKeyInput = () => (
+    <TextInput
+      id="response_date_key"
+      invalid={!!errors.response_date_key}
+      labelText="Response date key"
+      {...register("response_date_key")}
+    />
+  );
+  const ResponseDateFormatInput = () => (
+    <TextInput
+      id="response_date_format"
+      invalid={!!errors.response_date_format}
+      labelText="Response date format"
+      {...register("response_date_format")}
+    />
+  );
+
   const IngestionDetailsSection = () => (
     <section className="flex flex-col gap-6">
       <header className="text-2xl">Ingestion Details</header>
@@ -485,13 +538,16 @@ export function SchoolConnectivityFormInputs({
   const IngestionParametersSection = () => (
     <section className="flex flex-col gap-6">
       <header className="text-2xl">Ingestion Parameters</header>
-
       <PaginationTypeSelect />
       {watchPaginationType === PAGE_NUMBER && <PaginationPageNumberInputs />}
       {watchPaginationType === LIMIT_OFFSET && <PaginationLimitOffsetInputs />}
       <PageSendQueryInSelect />
       <SchoolIdSendQueryInSelect />
-
+      <DateKeyInput />
+      <DateFormatInput />
+      <SendDateInSelect />
+      <ResponseDateKeyInput />
+      <ResponseDateFormatInput />
       <FrequencySelect />
       {hasFileUpload && (
         <>
@@ -507,7 +563,6 @@ export function SchoolConnectivityFormInputs({
           />
         </>
       )}
-
       <IngestionEnabledToggle />
     </section>
   );
