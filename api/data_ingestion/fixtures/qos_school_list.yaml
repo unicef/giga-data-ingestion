@@ -2,72 +2,72 @@
     api_auth_api_key: X-API-KEY
     api_auth_api_value: JEdXaWQ3bGEqQkBhIXJQMQ==
     api_endpoint: http://rhodes.com/
-    authorization_type: BEARER_TOKEN
+    authorization_type: API_KEY
     basic_auth_password: '*!f9gsyRxPt26yOu'
     basic_auth_username: lperry
     bearer_auth_bearer_token: XkZLUGpRV3kjJGV5OEgwUA==
-    column_to_schema_mapping: '{"giga_school_id": "school_id_giga", "latitude": "latitude",
-      "lng": "longitude", "school_name": "school_name", "download_speed": "speed_download",
-      "upload_speed": "speed_upload", "RoundtripTime": "roundtrip_time"}'
-    data_key: results
-    date_created: '2024-01-10T18:03:43.704035'
-    date_last_ingested: '2024-01-12T14:36:43.704035'
-    date_last_successfully_ingested: '2024-01-14T17:53:43.704035'
-    date_modified: '2024-01-12T03:03:43.704035'
+    column_to_schema_mapping: '{"school_giga_id": "school_id_giga", "lat": "latitude",
+      "latitude": "longitude", "school_name": "school_name", "DownloadSpeed": "speed_download",
+      "UploadSpeed": "speed_upload", "rtt": "roundtrip_time"}'
+    data_key: data
+    date_created: '2024-01-13T10:12:16.988126'
+    date_last_ingested: '2024-01-14T23:05:16.988126'
+    date_last_successfully_ingested: '2024-01-15T19:56:16.988126'
+    date_modified: '2024-01-14T11:12:16.988126'
     enabled: true
     error_message: 'HTTP Error 500: Weight official learn especially nature whatever.'
     name: UGN4525-FAKE
-    page_number_key: page
-    page_offset_key: page_offset
-    page_send_query_in: QUERY_PARAMETERS
-    page_size_key: page_size
-    page_starts_with: 36
-    pagination_type: LIMIT_OFFSET
+    page_number_key: page_number
+    page_offset_key: offset
+    page_send_query_in: NONE
+    page_size_key: size
+    page_starts_with: 40
+    pagination_type: NONE
     query_parameters: '{"school_id": "db610487-c89d-411b-a239-7bc701762741", "country_id":
       "QUMQADwcTDkAzsrCGFxb", "page": 3761}'
     request_body: '{"school_id": "959f3a51-8cfe-4cd1-ad5d-b79ba2a7ae1f", "country_id":
       "jeCSWbXdTxNonPjpinXI"}'
-    request_method: POST
+    request_method: GET
     school_id_key: school_id
     school_id_send_query_in: BODY
-    size: 37
+    size: 5
     user_email: bmontoya@example.org
     user_id: 090b20bb-257e-4454-a5b6-75cd0492c4f5
   id: c2ce6f44-7ed4-457b-9e2f-eb89414c343c
   model: SchoolList
 - fields:
-    api_auth_api_key: X-API-Key
+    api_auth_api_key: X-Api-Key
     api_auth_api_value: KzhibE9KaCkzJF5edEErVA==
     api_endpoint: https://www.dean.com/
-    authorization_type: NONE
+    authorization_type: API_KEY
     basic_auth_password: VOv9P@XH8+p$V_Jn
     basic_auth_username: cameronwilliams
     bearer_auth_bearer_token: M2lXMkZEOXFXdyNfciojXg==
-    column_to_schema_mapping: '{"giga_school_id": "school_id_giga", "lat": "latitude",
-      "latitude": "longitude", "name": "school_name", "download_speed": "speed_download",
-      "UploadSpeed": "speed_upload", "rtt": "roundtrip_time"}'
+    column_to_schema_mapping: '{"school_id_giga": "school_id_giga", "LATITUDE": "latitude",
+      "lng": "longitude", "name": "school_name", "download_speed": "speed_download",
+      "upload_speed": "speed_upload", "RoundtripTime": "roundtrip_time"}'
     data_key: data
-    date_created: '2024-02-22T04:12:33.828429'
-    date_last_ingested: '2024-02-26T03:36:33.828429'
-    date_last_successfully_ingested: '2024-02-25T07:07:33.828429'
-    date_modified: '2024-02-23T11:12:33.828429'
+    date_created: '2024-03-07T11:21:57.156169'
+    date_last_ingested: '2024-03-10T16:31:57.156169'
+    date_last_successfully_ingested: '2024-03-11T16:24:57.156169'
+    date_modified: '2024-03-08T19:21:57.156169'
     enabled: true
     error_message: 'HTTP Error 500: Nearly not weight half far move boy.'
     name: TC2647-FAKE
-    page_number_key: page_number
-    page_offset_key: offset
-    page_send_query_in: NONE
+    page_number_key: pageNumber
+    page_offset_key: page_offset
+    page_send_query_in: BODY
     page_size_key: size
-    page_starts_with: 28
-    pagination_type: LIMIT_OFFSET
+    page_starts_with: 5
+    pagination_type: NONE
     query_parameters: '{"school_id": "c979cb06-1b94-4cfc-86f5-7327e5920673", "country_id":
       "cpFavQPjOEixJiRwYPCQ", "page": 9014}'
     request_body: '{"school_id": "50806f01-7a1d-456c-b62c-228e40df7c9a", "country_id":
       "fHcaZpFxqdVYYflGYCJI"}'
     request_method: POST
-    school_id_key: school_id
-    school_id_send_query_in: QUERY_PARAMETERS
-    size: 17
+    school_id_key: schoolId
+    school_id_send_query_in: NONE
+    size: 38
     user_email: jacob94@example.org
     user_id: 9c842b6a-8b52-4b4f-99d7-b4035596dfde
   id: d50e0097-8b71-49cd-ad39-eb43ad9cedde
@@ -76,35 +76,35 @@
     api_auth_api_key: X-Api-Key
     api_auth_api_value: IXVFTTEqQUNQQDErX3FBZQ==
     api_endpoint: https://www.evans.com/
-    authorization_type: NONE
+    authorization_type: BEARER_TOKEN
     basic_auth_password: '%xlSI3LH!7@ZyU%E'
     basic_auth_username: halladrian
     bearer_auth_bearer_token: dXVaNEJRdWVDKGY1eDR1aQ==
-    column_to_schema_mapping: '{"school_giga_id": "school_id_giga", "LATITUDE": "latitude",
-      "latitude": "longitude", "school_name": "school_name", "downloadSpeed": "speed_download",
-      "UploadSpeed": "speed_upload", "ping": "roundtrip_time"}'
-    data_key: result
-    date_created: '2024-02-12T00:35:27.678377'
-    date_last_ingested: '2024-02-14T04:26:27.678377'
-    date_last_successfully_ingested: '2024-02-16T11:02:27.678377'
-    date_modified: '2024-02-13T13:35:27.678377'
+    column_to_schema_mapping: '{"giga_school_id": "school_id_giga", "lat": "latitude",
+      "lon": "longitude", "school_name": "school_name", "DownloadSpeed": "speed_download",
+      "upload_speed": "speed_upload", "RoundtripTime": "roundtrip_time"}'
+    data_key: data
+    date_created: '2024-02-23T12:59:10.047785'
+    date_last_ingested: '2024-02-27T12:43:10.047785'
+    date_last_successfully_ingested: '2024-02-28T08:50:10.047785'
+    date_modified: '2024-02-26T00:59:10.047785'
     enabled: true
     error_message: 'HTTP Error 500: Support he red say organization.'
     name: JI435-FAKE
-    page_number_key: pageNumber
-    page_offset_key: offset
-    page_send_query_in: QUERY_PARAMETERS
-    page_size_key: pageSize
-    page_starts_with: 8
+    page_number_key: page_number
+    page_offset_key: pageOffset
+    page_send_query_in: NONE
+    page_size_key: size
+    page_starts_with: 25
     pagination_type: LIMIT_OFFSET
     query_parameters: '{"school_id": "9b29b54b-e587-4d21-9f8c-e97adb34fa8d", "country_id":
       "XDjnlDNcJLsAiLcZQGnV", "page": 2279}'
     request_body: '{"school_id": "d788c7cc-9ded-44fd-8698-06eaf81f5c80", "country_id":
       "YJeSmSWUuVwGzlwBVIot"}'
-    request_method: GET
-    school_id_key: schoolID
+    request_method: POST
+    school_id_key: school_id
     school_id_send_query_in: NONE
-    size: 8
+    size: 33
     user_email: joshuawillis@example.com
     user_id: ca84ebca-7247-4add-aefb-a2aed5153664
   id: 66daa365-3e67-426c-8eea-590b05373b76
@@ -117,32 +117,31 @@
     basic_auth_password: Zf8f2uWQve$eAi2Q
     basic_auth_username: phuerta
     bearer_auth_bearer_token: SV9Zdmo0aW1XRDdlcVNVYQ==
-    column_to_schema_mapping: '{"giga_school_id": "school_id_giga", "lat": "latitude",
+    column_to_schema_mapping: '{"school_id_giga": "school_id_giga", "latitude": "latitude",
       "Longitude": "longitude", "school_name": "school_name", "downloadSpeed": "speed_download",
-      "UploadSpeed": "speed_upload", "RTT": "roundtrip_time"}'
+      "upload_speed": "speed_upload", "ping": "roundtrip_time"}'
     data_key: result
-    date_created: '2024-03-03T12:16:46.578882'
-    date_last_ingested: '2024-03-06T10:37:46.578882'
-    date_last_successfully_ingested: '2024-03-05T21:35:46.578882'
-    date_modified: '2024-03-03T22:16:46.578882'
+    date_created: '2024-03-20T15:25:02.807543'
+    date_last_ingested: '2024-03-22T06:32:02.807543'
+    date_last_successfully_ingested: '2024-03-22T21:29:02.807543'
+    date_modified: '2024-03-22T00:25:02.807543'
     enabled: true
-    error_message: 'HTTP Error 500: Better opportunity attorney attack kind clearly
-      report.'
+    error_message: null
     name: TNT742-FAKE
-    page_number_key: pageNumber
-    page_offset_key: pageOffset
-    page_send_query_in: QUERY_PARAMETERS
-    page_size_key: size
-    page_starts_with: 40
+    page_number_key: page
+    page_offset_key: page_offset
+    page_send_query_in: BODY
+    page_size_key: page_size
+    page_starts_with: 29
     pagination_type: NONE
     query_parameters: '{"school_id": "66e47927-17d2-49ad-b0c1-2c6029606598", "country_id":
       "HopBmrdKVIyCcpMZCsMu", "page": 6548}'
     request_body: '{"school_id": "427005f6-ca2e-4611-bbce-c85d2c1ffacc", "country_id":
       "TrlYKRbUGqwNOjGiYxVL"}'
     request_method: GET
-    school_id_key: schoolId
-    school_id_send_query_in: BODY
-    size: 40
+    school_id_key: school_id
+    school_id_send_query_in: NONE
+    size: 31
     user_email: carlos36@example.com
     user_id: f48fe7d3-1997-48f3-adb9-24d87e0b6723
   id: db0f0126-6b82-4d5c-bda5-ad525b616e42
@@ -155,31 +154,31 @@
     basic_auth_password: r3+M@_b%%)Motf%o
     basic_auth_username: leevictor
     bearer_auth_bearer_token: Ykc0eFo1Z3YjRFdUUVZFSQ==
-    column_to_schema_mapping: '{"school_id_giga": "school_id_giga", "Latitude": "latitude",
-      "long": "longitude", "name": "school_name", "downloadSpeed": "speed_download",
+    column_to_schema_mapping: '{"school_giga_id": "school_id_giga", "Latitude": "latitude",
+      "long": "longitude", "school_name": "school_name", "download_speed": "speed_download",
       "UploadSpeed": "speed_upload", "RoundtripTime": "roundtrip_time"}'
-    data_key: results
-    date_created: '2024-01-14T13:20:15.348406'
-    date_last_ingested: '2024-01-17T08:28:15.348406'
-    date_last_successfully_ingested: '2024-01-18T09:38:15.348406'
-    date_modified: '2024-01-15T20:20:15.348406'
+    data_key: data
+    date_created: '2024-01-18T06:29:36.153546'
+    date_last_ingested: '2024-01-21T00:05:36.153546'
+    date_last_successfully_ingested: '2024-01-22T18:35:36.153546'
+    date_modified: '2024-01-20T19:29:36.153546'
     enabled: false
     error_message: null
     name: TZ6321-FAKE
-    page_number_key: page
-    page_offset_key: page_offset
-    page_send_query_in: QUERY_PARAMETERS
+    page_number_key: pageNumber
+    page_offset_key: pageOffset
+    page_send_query_in: NONE
     page_size_key: size
-    page_starts_with: 27
+    page_starts_with: 20
     pagination_type: NONE
     query_parameters: '{"school_id": "e9901243-175a-4163-a31a-7b190d8509db", "country_id":
       "QytZcBxguKTbBePebtMq", "page": 2130}'
     request_body: '{"school_id": "ce9244cb-6153-4f71-8b69-15c142a305d5", "country_id":
       "gJeRAkVAuUzgQBDREBbY"}'
-    request_method: GET
-    school_id_key: school_id
-    school_id_send_query_in: NONE
-    size: 50
+    request_method: POST
+    school_id_key: schoolId
+    school_id_send_query_in: BODY
+    size: 20
     user_email: robert55@example.com
     user_id: 852571d4-bf9e-495c-bfad-326153461eb3
   id: aeecb544-3770-44cf-809f-025ee38d62a7
