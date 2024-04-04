@@ -15,6 +15,8 @@ import {
 import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
 import { MasterDataReleaseNotificationProps } from "../types/master-data-release-notification";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
 export const MasterDataReleaseNotification = ({
@@ -47,22 +49,7 @@ export const MasterDataReleaseNotification = ({
         <Preview>{previewText}</Preview>
         <Body className=" bg-white my-auto mx-auto font-sans px-2">
           <Container className="border border-solid border-giga-light-gray rounded my-10 mx-auto p-5 max-w-md">
-            <Row className="bg-primary">
-              <Column style={{ width: 40 }}>
-                <Img
-                  className="p-4"
-                  width={40}
-                  height={40}
-                  src="https://storage.googleapis.com/giga-test-app-static-assets/GIGA_logo.png"
-                />
-              </Column>
-              <Column>
-                <Text className="text-white text-2xl">
-                  <span className="font-light">giga</span>
-                  <span className="font-bold">sync</span>
-                </Text>
-              </Column>
-            </Row>
+            <Header />
 
             <div className="p-6 mx-auto">
               <Text className="text-black text-sm leading-6">
@@ -99,12 +86,13 @@ export const MasterDataReleaseNotification = ({
                 </Button>
               </Section>
 
-              <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
-              <Text className="text-giga-gray text-xs leading-6]">
-                Master data updated at <strong>{updateDate}</strong>. This
-                notification is sent automatically because you are assigned to
-                the relevant country.
-              </Text>
+              <Footer>
+                <>
+                  Master data updated at <strong>{updateDate}</strong>. This
+                  notification is sent automatically because you are assigned to
+                  the relevant country.
+                </>
+              </Footer>
             </div>
           </Container>
         </Body>
