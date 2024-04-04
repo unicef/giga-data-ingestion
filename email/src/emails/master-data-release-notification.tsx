@@ -4,7 +4,6 @@ import {
   Column,
   Container,
   Head,
-  Heading,
   Hr,
   Html,
   Img,
@@ -19,12 +18,15 @@ import { MasterDataReleaseNotificationProps } from "../types/master-data-release
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
 export const MasterDataReleaseNotification = ({
-  rows,
-  columns,
+  added,
+  modified,
   country,
   updateDate,
+  name,
+  version,
+  rows,
 }: MasterDataReleaseNotificationProps) => {
-  const previewText = "Successful file upload";
+  const previewText = `Master data update for ${country}`;
 
   return (
     <Html>
@@ -43,53 +45,66 @@ export const MasterDataReleaseNotification = ({
           />
         </Head>
         <Preview>{previewText}</Preview>
-        <Body className=" bg-white px-2 font-sans">
-          <Container className="border-gray-4  max-w-[1024] border border-solid ">
-            <Section>
-              <Row>
-                <Column>IMAGE</Column>
-                <Column>Giga</Column>
-                <Column>Sync</Column>
-              </Row>
-            </Section>
-            <Text className="bg-primary text-white text-2xl p-4 m-0 flex">
-              <Img
-                className="w-10 h-10 pr-4 text-black"
-                src="https://storage.googleapis.com/giga-test-app-static-assets/GIGA_logo.png"
-              />
-              <span className="font-light">giga</span>
-              <span className="font-bold">sync</span>
-            </Text>
+        <Body className=" bg-white my-auto mx-auto font-sans px-2">
+          <Container className="border border-solid border-giga-light-gray rounded my-10 mx-auto p-5 max-w-md">
+            <Row className="bg-primary">
+              <Column style={{ width: 40 }}>
+                <Img
+                  className="p-4"
+                  width={40}
+                  height={40}
+                  src="https://storage.googleapis.com/giga-test-app-static-assets/GIGA_logo.png"
+                />
+              </Column>
+              <Column>
+                <Text className="text-white text-2xl">
+                  <span className="font-light">giga</span>
+                  <span className="font-bold">sync</span>
+                </Text>
+              </Column>
+            </Row>
 
             <div className="p-6 mx-auto">
-              <Heading className="mx-0 my-[30px] p-0 text-2xl font-normal text-giga-green">
-                <strong>Updates for country</strong>
-              </Heading>
-              <Text>
-                Columns updated <strong>{columns}</strong>
+              <Text className="text-black text-sm leading-6">
+                Hello {name},
               </Text>
-              <Text>
-                Rows updated <strong>{rows}</strong>
+              <Text className="text-black text-sm leading-6">
+                The master data for <strong>{country}</strong> has been updated
+                with the following details:
               </Text>
-              <Text>
-                Master data updated at <strong>{updateDate}</strong>
+              <ul>
+                <li>
+                  Version: <strong>{version}</strong>
+                </li>
+                <li>
+                  <strong>{modified}</strong> rows updated
+                </li>
+                <li>
+                  <strong>{added}</strong> rows added
+                </li>
+                <li className="pt-4">
+                  <strong>{rows}</strong> total rows in dataset
+                </li>
+              </ul>
+              <Text className="text-black text-sm leading-6">
+                To view the changes, please click the button below.
               </Text>
 
-              <Hr className="border-gray-4 mx-0 my-6 w-full border border-solid" />
-              <Text className="text-gray-4 text-xs">
-                Your file has been successfully uploaded. After a round of
-                checks, your filewill be merged into Giga. You may view the
-                checks performed on the Giga Portal.
-              </Text>
-
-              <Section className="my-8 ">
+              <Section className="text-center my-8 ">
                 <Button
-                  className="bg-primary px-6 py-4  font-semibold text-white no-underline"
+                  className="bg-primary px-5 py-3 text-sm rounded font-semibold text-white no-underline text-center"
                   href={`${baseUrl}/check-file-uploads/[SOME_UPDATE_ID]`}
                 >
-                  View Complete Report of the actual country
+                  View Report
                 </Button>
               </Section>
+
+              <Hr className="border border-solid border-[#eaeaea] my-[26px] mx-0 w-full" />
+              <Text className="text-giga-gray text-xs leading-6]">
+                Master data updated at <strong>{updateDate}</strong>. This
+                notification is sent automatically because you are assigned to
+                the relevant country.
+              </Text>
             </div>
           </Container>
         </Body>
@@ -99,12 +114,15 @@ export const MasterDataReleaseNotification = ({
 };
 
 MasterDataReleaseNotification.PreviewProps = {
-  columns: 50,
+  added: 10,
   country: "Benin",
-  rows: 60,
+  modified: 20,
+  name: "Alan Turing",
   updateDate: new Date().toLocaleString(undefined, {
     timeZoneName: "short",
   }),
+  version: "1.0.0",
+  rows: 30,
 } as MasterDataReleaseNotificationProps;
 
 export default MasterDataReleaseNotification;

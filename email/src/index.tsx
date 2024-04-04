@@ -10,6 +10,7 @@ import { secureHeaders } from "hono/secure-headers";
 import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
 import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
 import DataQualityReport from "./emails/dq-report";
+import MasterDataReleaseNotification from "./emails/master-data-release-notification";
 import InviteUser from "./emails/invite-user";
 import {
   DataQualityUploadSuccessProps,
@@ -17,6 +18,7 @@ import {
   DataQualityReportEmailProps,
 } from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
+import { MasterDataReleaseNotificationProps } from "./types/master-data-release-notification";
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -82,6 +84,19 @@ app.post(
     const json = ctx.req.valid("json") as DataQualityReportEmailProps;
     const html = render(<DataQualityReport {...json} />);
     const text = render(<DataQualityReport {...json} />, {
+      plainText: true,
+    });
+    return ctx.json({ html, text });
+  }
+);
+
+app.post(
+  "/email/master-data-release-notification",
+  zValidator("json", MasterDataReleaseNotificationProps),
+  (ctx) => {
+    const json = ctx.req.valid("json") as MasterDataReleaseNotificationProps;
+    const html = render(<MasterDataReleaseNotification {...json} />);
+    const text = render(<MasterDataReleaseNotification {...json} />, {
       plainText: true,
     });
     return ctx.json({ html, text });

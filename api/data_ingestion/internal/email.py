@@ -9,6 +9,7 @@ from data_ingestion.schemas.email import (
     DataCheckSuccessRenderRequest,
     DqReportRenderRequest,
     EmailRenderRequest,
+    MasterDataReleaseNotificationRenderRequest,
     UploadSuccessRenderRequest,
 )
 from data_ingestion.schemas.invitation import InviteEmailRenderRequest
@@ -98,4 +99,17 @@ def send_dq_report_email(body: EmailRenderRequest[DqReportRenderRequest]):
         json=json_dump,
         recepient=body.email,
         subject="DQ summary report",
+    )
+
+
+def send_master_data_release_notification(
+    body: EmailRenderRequest[MasterDataReleaseNotificationRenderRequest],
+):
+    json_dump = body.props.model_dump()
+    json_dump["updateDate"] = json_dump["updateDate"].isoformat()
+    send_email_base(
+        endpoint="email/master-data-release-notification",
+        json=json_dump,
+        recepient=body.email,
+        subject="Master Data Update Notification",
     )
