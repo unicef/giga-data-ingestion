@@ -92,9 +92,7 @@ function UploadColumnMapping() {
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
     const dataWithNullsReplaced: ConfigureColumnsForm = {
       mapping: Object.fromEntries(
-        Object.entries(data)
-          .filter(([, value]) => Boolean(value))
-          .map(([key, value]) => [value, key]),
+        Object.entries(data.mapping).filter(([, value]) => Boolean(value)),
       ),
       license: Object.fromEntries(
         Object.entries(data.license).filter(([, value]) => Boolean(value)),
