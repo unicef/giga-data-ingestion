@@ -30,6 +30,7 @@ from data_ingestion.internal.data_quality_checks import (
     get_first_n_error_rows_for_data_quality_check,
 )
 from data_ingestion.internal.storage import storage_client
+from data_ingestion.internal.users import UsersApi
 from data_ingestion.models import FileUpload
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
@@ -109,6 +110,7 @@ async def get_upload(
 async def upload_file(
     response: Response,
     column_to_schema_mapping: Annotated[str, Form()],
+    column_license: Annotated[str, Form()],
     country: Annotated[str, Form()],
     data_collection_date: Annotated[AwareDatetime, Form()],
     data_collection_modality: Annotated[str, Form()],
@@ -158,15 +160,19 @@ async def upload_file(
         )
 
     country_code = coco.convert(country, to="ISO3")
+    email = user.email or user.claims.get("email")
+    if email is None:
+        email = (await UsersApi.get_user(user.sub)).mail
 
     file_upload = FileUpload(
         uploader_id=user.sub,
-        uploader_email=user.email or user.claims.get("email"),
+        uploader_email=email,
         country=country_code,
         dataset=dataset,
         source=source,
         original_filename=file.filename,
         column_to_schema_mapping=column_to_schema_mapping,
+        column_license=column_license,
     )
     db.add(file_upload)
     await db.commit()
