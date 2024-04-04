@@ -135,19 +135,6 @@ class UsersApi:
                     )
                 elif len(user.other_mails) > 0:
                     user.mail = user.other_mails[0]
-                elif len(user.identities) > 0:
-                    identity = next(
-                        (
-                            ident
-                            for ident in user.identities
-                            if ident.sign_in_type == "emailAddress"
-                        ),
-                        None,
-                    )
-                    if identity is None:
-                        user.mail = user.user_principal_name
-                    else:
-                        user.mail = identity.issuer_assigned_id
                 else:
                     user.mail = user.user_principal_name
             return user

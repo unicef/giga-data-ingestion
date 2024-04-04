@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
@@ -23,7 +24,6 @@ import {
 import { api } from "@/api";
 import DataTable from "@/components/common/DataTable.tsx";
 import { useStore } from "@/context/store";
-import { licenseOptions } from "@/mocks/metadataFormValues.tsx";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/column-mapping",
@@ -45,13 +45,7 @@ export const Route = createFileRoute(
 const headers: DataTableHeader[] = [
   { key: "masterColumn", header: "Master Data Columns" },
   { key: "detectedColumns", header: "Detected Columns" },
-  { key: "license", header: "License" },
 ];
-
-interface ConfigureColumnsForm {
-  mapping: Record<string, string>;
-  license: Record<string, string>;
-}
 
 function UploadColumnMapping() {
   const {
@@ -60,7 +54,6 @@ function UploadColumnMapping() {
       decrementStepIndex,
       incrementStepIndex,
       setColumnMapping,
-      setColumnLicense,
     },
   } = useStore();
 
@@ -79,57 +72,38 @@ function UploadColumnMapping() {
     handleSubmit,
     register,
     formState: { errors },
-    watch,
-  } = useForm<ConfigureColumnsForm>({
+  } = useForm<Record<string, string>>({
     mode: "onChange",
     reValidateMode: "onChange",
-    defaultValues: {
-      mapping: columnMapping,
-      license: {},
-    },
+    defaultValues: columnMapping,
   });
 
-  const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
-    const dataWithNullsReplaced: ConfigureColumnsForm = {
-      mapping: Object.fromEntries(
-        Object.entries(data.mapping).filter(([, value]) => Boolean(value)),
-      ),
-      license: Object.fromEntries(
-        Object.entries(data.license).filter(([, value]) => Boolean(value)),
-      ),
-    };
-    setColumnMapping(dataWithNullsReplaced.mapping);
-    setColumnLicense(dataWithNullsReplaced.license);
+  const onSubmit: SubmitHandler<Record<string, string>> = data => {
+    const dataWithNullsReplaced = Object.fromEntries(
+      Object.entries(data)
+        .filter(([, value]) => Boolean(value))
+        .map(([key, value]) => [value, key]),
+    );
+    setColumnMapping(dataWithNullsReplaced);
     incrementStepIndex();
     void navigate({ to: "../metadata" });
   };
 
-  const schema = schemaQuery?.data ?? [];
+  const rows = useMemo(() => {
+    if (isLoading) return [];
 
-  const rows = isLoading
-    ? []
-    : schema.map(column => ({
-        id: column.id,
-        masterColumn: (
-          <div className="flex items-center gap-4">
-            {column.description ? (
-              <DefinitionTooltip
-                align="right"
-                definition={column.description}
-                openOnHover
-              >
-                <div className="flex items-center gap-1">
-                  <div>{column.name}</div>
-                  <div>
-                    {!column.is_nullable ? (
-                      <span className="text-giga-red">*</span>
-                    ) : column.is_important ? (
-                      <Warning className="text-purple-600" />
-                    ) : null}
-                  </div>
-                </div>
-              </DefinitionTooltip>
-            ) : (
+    const schema = schemaQuery?.data ?? [];
+
+    return schema.map(column => ({
+      id: column.id,
+      masterColumn: (
+        <div className="flex items-center gap-4">
+          {column.description ? (
+            <DefinitionTooltip
+              align="right"
+              definition={column.description}
+              openOnHover
+            >
               <div className="flex items-center gap-1">
                 <div>{column.name}</div>
                 <div>
@@ -140,51 +114,44 @@ function UploadColumnMapping() {
                   ) : null}
                 </div>
               </div>
-            )}
-          </div>
-        ),
-        detectedColumns: (
-          <div className="w-11/12 px-2 pb-2">
-            <Select
-              id={`mapping.${column.name}`}
-              invalid={column.name in (errors.mapping ?? {})}
-              labelText=""
-              {...register(`mapping.${column.name}`, {
-                required: !column.is_nullable,
-              })}
-            >
-              <SelectItem text="" value="" />
-              {detectedColumns.map(detectedColumn => (
-                <SelectItem
-                  key={detectedColumn}
-                  text={detectedColumn}
-                  value={detectedColumn}
-                />
-              ))}
-            </Select>
-          </div>
-        ),
-        license: (
-          <div className="w-full">
-            <Select
-              id={`license.${column.name}`}
-              invalid={column.name in (errors.license ?? {})}
-              labelText=""
-              {...register(`license.${column.name}`, {
-                validate: (value, formValues) =>
-                  !!value && !!formValues.mapping[column.name],
-                disabled: !watch(`mapping.${column.name}`),
-                deps: [`mapping.${column.name}`],
-              })}
-            >
-              <SelectItem text="" value="" />
-              {licenseOptions.map(license => (
-                <SelectItem key={license} text={license} value={license} />
-              ))}
-            </Select>
-          </div>
-        ),
-      }));
+            </DefinitionTooltip>
+          ) : (
+            <div className="flex items-center gap-1">
+              <div>{column.name}</div>
+              <div>
+                {!column.is_nullable ? (
+                  <span className="text-giga-red">*</span>
+                ) : column.is_important ? (
+                  <Warning className="text-purple-600" />
+                ) : null}
+              </div>
+            </div>
+          )}
+        </div>
+      ),
+      detectedColumns: (
+        <div className="w-11/12 px-2 pb-2">
+          <Select
+            id={column.name}
+            invalid={column.name in errors}
+            labelText=""
+            {...register(column.name, {
+              required: !column.is_nullable,
+            })}
+          >
+            <SelectItem text="" value="" />
+            {detectedColumns.map(detectedColumn => (
+              <SelectItem
+                key={detectedColumn}
+                text={detectedColumn}
+                value={detectedColumn}
+              />
+            ))}
+          </Select>
+        </div>
+      ),
+    }));
+  }, [isLoading, schemaQuery?.data, errors, register, detectedColumns]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -195,7 +162,8 @@ function UploadColumnMapping() {
             <Tag type="red">*Required</Tag>
             <Tag type="purple">
               <div className="flex align-middle">
-                <Warning /> Important
+                <Warning />
+                Important
               </div>
             </Tag>
           </div>
