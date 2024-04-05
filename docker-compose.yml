@@ -77,6 +77,9 @@ services:
   ui:
     image: node:20-alpine
     restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      VITE_COMMIT_SHA: ${COMMIT_SHA}
     env_file: ./ui/.env
     working_dir: /app
     ports:

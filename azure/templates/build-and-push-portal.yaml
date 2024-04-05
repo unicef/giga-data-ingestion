@@ -28,6 +28,8 @@ jobs:
                   --build-arg "VITE_AZURE_SUSI_AUTH_POLICY_NAME=$(azureAdSusiPolicyName)"
                   --build-arg "VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME=$(azureAdPasswordResetPolicyName)"
                   --build-arg "VITE_DATAHUB_URL=https://io-datahub-$(deployEnv).unitst.org"
+                  --build-arg "VITE_COMMIT_SHA=$(Build.SourceVersion)"
+                  --build-arg "VITE_DEPLOY_ENV=$(deployEnv)"
                 tags: |
                   $(Build.SourceVersion)
 
