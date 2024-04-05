@@ -24,7 +24,6 @@ export const MasterDataReleaseNotification = ({
   modified,
   country,
   updateDate,
-  name,
   version,
   rows,
 }: MasterDataReleaseNotificationProps) => {
@@ -52,9 +51,6 @@ export const MasterDataReleaseNotification = ({
             <Header />
 
             <div className="p-6 mx-auto">
-              <Text className="text-black text-sm leading-6">
-                Hello {name},
-              </Text>
               <Text className="text-black text-sm leading-6">
                 The master data for <strong>{country}</strong> has been updated
                 with the following details:
@@ -105,7 +101,6 @@ MasterDataReleaseNotification.PreviewProps = {
   added: 10,
   country: "Benin",
   modified: 20,
-  name: "Alan Turing",
   updateDate: new Date().toLocaleString(undefined, {
     timeZoneName: "short",
   }),
