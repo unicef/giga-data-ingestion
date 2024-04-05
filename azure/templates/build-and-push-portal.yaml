@@ -21,7 +21,7 @@ jobs:
                 repository: giga-ingestion-portal
                 dockerfile: $(Build.SourcesDirectory)/Dockerfile.prod
                 arguments: >
-                  --build-arg "VITE_SENTRY_DSN=$(viteSentryDsn)"
+                  --build-arg "VITE_SENTRY_DSN=$(sentryDsn)"
                   --build-arg "VITE_AZURE_CLIENT_ID=$(azureAdClientId)"
                   --build-arg "VITE_AZURE_TENANT_ID=$(azureAdTenantId)"
                   --build-arg "VITE_AZURE_TENANT_NAME=$(azureAdTenantName)"

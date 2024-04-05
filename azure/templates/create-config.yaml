@@ -67,7 +67,6 @@ jobs:
                     POSTGRESQL_PASSWORD: "$(postgresqlPassword)"
                     POSTGRESQL_DATABASE: "$(postgresqlDatabase)"
                     COMMIT_SHA: "$(Build.SourceVersion)"
-                    NODE_SENTRY_DSN: "$(nodeSentryDsn)"
                     TRINO_USERNAME: "$(trinoUsername)"
                     TRINO_PASSWORD: ""
                     TRINO_HOST: "trino.ictd-ooi-trino-$(deployEnv).svc.cluster.local"

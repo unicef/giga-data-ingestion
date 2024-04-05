@@ -20,8 +20,6 @@ variables:
   emailRendererBearerToken: $(EMAIL_RENDERER_BEARER_TOKEN)
   emailTestRecipients: $(EMAIL_TEST_RECIPIENTS)
   sentryDsn: $(SENTRY_DSN)
-  viteSentryDsn: $(VITE_SENTRY_DSN)
-  nodeSentryDsn: $(NODE_SENTRY_DSN)
   deployEnv: $(DEPLOY_ENV)
   postgresqlUsername: $(POSTGRESQL_USERNAME)
   postgresqlPassword: $(POSTGRESQL_PASSWORD)
