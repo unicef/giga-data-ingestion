@@ -3,6 +3,7 @@ import { StateCreator } from "zustand";
 export interface UploadSliceState {
   uploadSlice: {
     columnMapping: Record<string, string>;
+    columnLicense: Record<string, string>;
     detectedColumns: string[];
     file: File | null;
     timeStamp: Date | null;
@@ -23,6 +24,9 @@ export interface UploadSliceActions {
     setColumnMapping: (
       value: UploadSliceState["uploadSlice"]["columnMapping"],
     ) => void;
+    setColumnLicense: (
+      value: UploadSliceState["uploadSlice"]["columnLicense"],
+    ) => void;
     setDetectedColumns: (
       value: UploadSliceState["uploadSlice"]["detectedColumns"],
     ) => void;
@@ -41,6 +45,7 @@ export type UploadSlice = UploadSliceState & UploadSliceActions;
 export const initialUploadSliceState: UploadSliceState = {
   uploadSlice: {
     columnMapping: {},
+    columnLicense: {},
     detectedColumns: [],
     file: null,
     stepIndex: 0,
@@ -102,6 +107,10 @@ export const createUploadSlice: StateCreator<
     setColumnMapping: columnMapping =>
       set(state => {
         state.uploadSlice.columnMapping = columnMapping;
+      }),
+    setColumnLicense: columnLicense =>
+      set(state => {
+        state.uploadSlice.columnLicense = columnLicense;
       }),
     setSource: source =>
       set(state => {

@@ -6,6 +6,7 @@ import { ProfilingIntegration } from "@sentry/profiling-node";
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { secureHeaders } from "hono/secure-headers";
+import { hostname } from "os";
 
 import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
 import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
@@ -18,11 +19,15 @@ import {
 } from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
 
-if (process.env.SENTRY_DSN) {
+if (process.env.SENTRY_DSN && process.env.NODE_ENV !== "development") {
   Sentry.init({
     dsn: process.env.NODE_SENTRY_DSN,
     environment: process.env.DEPLOY_ENV ?? "local",
+    serverName: `ingestion-portal-email-${process.env.DEPLOY_ENV}@${hostname()}`,
     integrations: [new ProfilingIntegration()],
+    release: `github.com/unicef/giga-data-ingestion:${process.env.COMMIT_SHA}`,
+    sampleRate: 1.0,
+    enableTracing: true,
     tracesSampleRate: 1.0,
     profilesSampleRate: 1.0,
   });
@@ -33,7 +38,7 @@ const app = new Hono();
 app.use("*", secureHeaders());
 app.use(
   "/email/*",
-  bearerAuth({ token: process.env.EMAIL_RENDERER_BEARER_TOKEN ?? "" })
+  bearerAuth({ token: process.env.EMAIL_RENDERER_BEARER_TOKEN ?? "" }),
 );
 
 app.get("/", (ctx) => {
@@ -59,7 +64,7 @@ app.post(
       plainText: true,
     });
     return ctx.json({ html, text });
-  }
+  },
 );
 
 app.post(
@@ -72,7 +77,7 @@ app.post(
       plainText: true,
     });
     return ctx.json({ html, text });
-  }
+  },
 );
 
 app.post(
@@ -85,7 +90,7 @@ app.post(
       plainText: true,
     });
     return ctx.json({ html, text });
-  }
+  },
 );
 
 const port = 3020;
