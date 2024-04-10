@@ -118,8 +118,8 @@ class SchoolConnectivity(ApiConfiguration):
 
     date_key: Mapped[str] = mapped_column(nullable=True, default=None)
     date_format: Mapped[str] = mapped_column(nullable=True, default=None)
-    send_date_in: Mapped[str] = mapped_column(
-        nullable=True,
+    send_date_in: Mapped[SendDateInEnum] = mapped_column(nullable=True, default=None)
+    response_date_key: Mapped[str] = mapped_column(nullable=False, default="")
+    response_date_format: Mapped[str] = mapped_column(
+        nullable=False, default="%Y-%m-%d"
     )
-    response_date_key: Mapped[str] = mapped_column(nullable=False)
-    response_date_format: Mapped[str] = mapped_column(nullable=False, default=None)
