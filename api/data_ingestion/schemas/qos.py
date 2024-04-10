@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from fastapi import Form
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
 
 from data_ingestion.models.ingest_api_qos import (
     AuthorizationTypeEnum,
@@ -10,6 +10,7 @@ from data_ingestion.models.ingest_api_qos import (
     RequestMethodEnum,
     SendQueryInEnum,
 )
+from data_ingestion.utils.string import is_valid_format_code
 
 
 class ApiConfiguration(BaseModel):
@@ -53,6 +54,20 @@ class SchoolConnectivitySchema(ApiConfiguration):
     send_date_in: str
     response_date_key: str
     response_date_format: str
+
+    @model_validator(mode="after")
+    def validate_date_format(self):
+        if self.date_key is not None:
+            if self.date_format is None:
+                raise ValueError(
+                    "date_format should be NOT NULL if date key is NOT NULL"
+                )
+            if self.send_date_in is None:
+                raise ValueError(
+                    "send_date_in should be NOT NULL if date key is NOT NULL"
+                )
+            if is_valid_format_code(self.date_format) is False:
+                raise ValueError("date_format is invalid")
 
 
 class SchoolListSchema(ApiConfiguration):

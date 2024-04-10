@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import EmailStr
 from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from .base import BaseModel
@@ -123,25 +123,3 @@ class SchoolConnectivity(ApiConfiguration):
     )
     response_date_key: Mapped[str] = mapped_column(nullable=False)
     response_date_format: Mapped[str] = mapped_column(nullable=False, default=None)
-
-    @validates("date_key", "date_format", "send_date_in")
-    def validate_date_format(self, key, field):
-        print(f"key: {key}")
-        if key == "date_format" and self.date_key is not None:
-            if field is None:
-                raise AssertionError(
-                    "date_format should be NOT NULL if date key is NOT NULL"
-                )
-
-            try:
-                datetime.now().strftime(field)
-            except ValueError:
-                raise AssertionError("Invalid date format") from ValueError
-
-        if key == "send_date_in" and self.date_key is not None:
-            if field is None:
-                raise AssertionError(
-                    "send_date_in should be NOT NULL if date key is NOT NULL"
-                )
-
-        return field
