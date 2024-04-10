@@ -46,6 +46,7 @@ jobs:
                 releaseName: postgres
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/pg-values.yaml
+                arguments: --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
               displayName: Helm deploy Redis
