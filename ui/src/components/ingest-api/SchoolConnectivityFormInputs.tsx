@@ -19,6 +19,7 @@ import {
   SchoolConnectivityFormValues,
   SendQueryInEnum,
 } from "@/types/qos";
+import { validateDatetimeFormat } from "@/utils/string";
 
 import ControllerNumberInputSchoolConnectivity from "../upload/ControllerNumberInputSchoolConnectivity";
 
@@ -469,14 +470,29 @@ export function SchoolConnectivityFormInputs({
     />
   );
 
-  const DateFormatInput = () => (
-    <TextInput
-      id="date_format"
-      invalid={!!errors.date_format}
-      labelText="Date Format"
-      {...register("date_format")}
-    />
-  );
+  const DateFormatInput = () => {
+    const message =
+      "Can only accept valid python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or timestamp or ISO8601 string constant";
+    return (
+      <TextInput
+        helperText={message}
+        id="date_format"
+        invalid={!!errors.date_format}
+        invalidText={message}
+        labelText="Date Format"
+        {...register("date_format", {
+          required: true,
+          validate: value => {
+            if (value === null) return false;
+
+            if (value === "timestamp" || value === "ISO8601") return true;
+            else if (validateDatetimeFormat(value)) return true;
+            else return false;
+          },
+        })}
+      />
+    );
+  };
 
   const SendDateInSelect = () => (
     <Select
