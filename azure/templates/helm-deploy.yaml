@@ -46,6 +46,7 @@ jobs:
                 releaseName: postgres
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/pg-values.yaml
+                arguments: --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
               displayName: Helm deploy Redis
@@ -102,7 +103,7 @@ jobs:
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/data-ingestion.values-override.yaml
                 arguments: >
-                  --values infra/helm/email-service.values-override.yaml
+                  --values infra/helm/data-ingestion.values-override-prd.yaml
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
                   --set image.tag="$(Build.SourceVersion)"
                   --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
