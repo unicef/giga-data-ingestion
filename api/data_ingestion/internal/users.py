@@ -47,6 +47,7 @@ class UsersApi:
                 "identities",
             ],
             orderby=["displayName", "mail", "userPrincipalName"],
+            top=999,
         )
     )
     user_request_config = (
@@ -107,7 +108,7 @@ class UsersApi:
                     request_configuration=cls.user_request_config
                 )
 
-            return users_out
+            return sorted(users_out, key=lambda u: u.mail)
         except ODataError as err:
             logger.error(err.error.message)
             raise HTTPException(
