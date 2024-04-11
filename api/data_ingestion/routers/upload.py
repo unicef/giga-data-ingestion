@@ -96,12 +96,12 @@ async def get_upload(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="File Upload ID does not exist",
         )
-    if not is_privileged:
-        if file_upload.uploader_id != user.sub:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You do not have permission to access details for this file.",
-            )
+
+    if not is_privileged and file_upload.uploader_id != user.sub:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access details for this file.",
+        )
 
     return file_upload
 

@@ -1,9 +1,7 @@
 import os
-import random
 from typing import Annotated
 
 import magic
-from faker import Faker
 from fastapi import (
     APIRouter,
     Depends,
@@ -40,103 +38,9 @@ router = APIRouter(
     dependencies=[Security(azure_scheme)],
 )
 
-fake = Faker()
-Faker.seed(1)
-
-
-@router.post("/create_dummy_ingestion")
-async def create_dummy_ingestion(
-    response: Response,
-    number: int,
-    db: AsyncSession = Depends(get_db),
-):
-    for _ in range(number):
-        school_list = SchoolList(
-            api_auth_api_key=f"api_key_{number}",
-            api_auth_api_value=f"api_value_{number}",
-            api_endpoint=fake.url(),
-            authorization_type=random.choice(["BEARER_TOKEN", "BASIC_AUTH", "API_KEY"]),
-            basic_auth_password="authpassword",
-            basic_auth_username="authyuser",
-            bearer_auth_bearer_token="bearertoken",
-            data_key="datakey",
-            enabled=fake.boolean(chance_of_getting_true=70),
-            page_number_key="asdasd",
-            page_offset_key="asdfasdf",
-            page_size_key="1qdweqew",
-            page_starts_with=123,
-            pagination_type=random.choice(["PAGE_NUMBER", "LIMIT_OFFSET"]),
-            query_parameters="sometihing",
-            request_body=fake.json(
-                data_columns={
-                    "Spec": "@1.0.1",
-                    "ID": "pyint",
-                    "Details": {"Name": "name", "Address": "address"},
-                },
-                num_rows=2,
-            ),
-            request_method=random.choice(["GET", "POST"]),
-            school_id_key="adsasdasd",
-            send_query_in=random.choice(["QUERY_PARAMETERS", "BODY"]),
-            size=23,
-            user_email=fake.ascii_safe_email(),
-            user_id="useriddd",
-            name=fake.name(),
-            column_to_schema_mapping=fake.json(
-                data_columns={
-                    "Spec": "@1.0.1",
-                    "ID": "pyint",
-                    "Details": {"Name": "name", "Address": "address"},
-                },
-                num_rows=2,
-            ),
-        )
-        db.add(school_list)
-        await db.commit()
-
-        school_connectivity = SchoolConnectivity(
-            api_auth_api_key=f"api_key_{number}",
-            api_auth_api_value=f"api_value_{number}",
-            api_endpoint=fake.url(),
-            authorization_type=random.choice(["BEARER_TOKEN", "BASIC_AUTH", "API_KEY"]),
-            basic_auth_password="authpassword",
-            basic_auth_username="authyuser",
-            bearer_auth_bearer_token="bearertoken",
-            data_key="datakey",
-            enabled=fake.boolean(chance_of_getting_true=70),
-            page_number_key="asdasd",
-            page_offset_key="asdfasdf",
-            page_size_key="1qdweqew",
-            page_starts_with=random.choice([0, 1]),
-            pagination_type=random.choice(["PAGE_NUMBER", "LIMIT_OFFSET"]),
-            query_parameters="sometihing",
-            request_body=fake.json(
-                data_columns={
-                    "Spec": "@1.0.1",
-                    "ID": "pyint",
-                    "Details": {"Name": "name", "Address": "address"},
-                },
-                num_rows=2,
-            ),
-            request_method=random.choice(["GET", "POST"]),
-            school_id_key="adsasdasd",
-            send_query_in=random.choice(["QUERY_PARAMETERS", "BODY"]),
-            size=23,
-            user_email=fake.ascii_safe_email(),
-            user_id="useriddd",
-            ingestion_frequency_minutes=50,
-            schema_url=fake.url(),
-            school_list_id=school_list.id,
-        )
-
-        db.add(school_connectivity)
-        await db.commit()
-        response.status_code = status.HTTP_201_CREATED
-
 
 @router.get("/school_list", response_model=PagedResponseSchema[SchoolListSchema])
 async def list_school_lists(
-    response: Response,
     db: AsyncSession = Depends(get_db),
     count: Annotated[int, Field(ge=1, le=50)] = 10,
     page: Annotated[int, Query(ge=1)] = 1,
@@ -169,7 +73,6 @@ async def list_school_lists(
 
 @router.get("/school_list/{id}", response_model=SchoolListSchema)
 async def get_school_list(
-    response: Response,
     id: str,
     db: AsyncSession = Depends(get_db),
 ):
@@ -233,7 +136,6 @@ async def update_school_list_error_message(
     status_code=status.HTTP_200_OK,
 )
 async def get_school_connectivity(
-    response: Response,
     id: str,
     db: AsyncSession = Depends(get_db),
 ):
@@ -341,7 +243,6 @@ async def create_api_ingestion(
 
 @router.patch("/api_ingestion/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_api_ingestion(
-    response: Response,
     data: EditApiIngestionRequest,
     id: str,
     db: AsyncSession = Depends(get_db),
