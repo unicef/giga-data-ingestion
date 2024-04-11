@@ -5,7 +5,7 @@ def is_valid_format_code(format_string: str) -> bool:
     allowed_format_codes = ["%Y", "%m", "%d", "%H", "%M", "%S", "%z"]
     allowed_separators = ["/", "-", "_", ".", "+", ":", " "]
 
-    special_formats = ["timestamp", "ISO8601"]
+    special_formats = ["timestamp", "unix"]
 
     if format_string in special_formats:
         return True

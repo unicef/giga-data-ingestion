@@ -60,11 +60,11 @@ class SchoolConnectivitySchema(ApiConfiguration):
         if self.date_key is not None:
             if self.date_format is None:
                 raise ValueError(
-                    "date_format should be NOT NULL if date key is NOT NULL"
+                    "date_format should also be provided when date_key is provided"
                 )
             if self.send_date_in is None:
                 raise ValueError(
-                    "send_date_in should be NOT NULL if date key is NOT NULL"
+                    "send_date_in should also be provided when date_key is provided"
                 )
             if is_valid_format_code(self.date_format) is False:
                 raise ValueError("date_format is invalid")
