@@ -68,6 +68,7 @@ class SchoolConnectivitySchema(ApiConfiguration):
                 )
             if is_valid_format_code(self.date_format) is False:
                 raise ValueError("date_format is invalid")
+        return self
 
 
 class SchoolListSchema(ApiConfiguration):
