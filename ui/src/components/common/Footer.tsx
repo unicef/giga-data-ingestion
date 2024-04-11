@@ -117,8 +117,8 @@ export default function Footer() {
         <div>For more information: Giga Sync or tweet us @Gigaglobal</div>
         <div className="text-sm">
           Share your thoughts and suggestions with us on our{" "}
-          <Link href="https://github.com/unicef/giga-data-ingestion/issues">
-            github issues page
+          <Link href="https://github.com/unicef/giga-data-ingestion/issues/new">
+            GitHub issues page
           </Link>
           .
         </div>
