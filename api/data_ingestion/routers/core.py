@@ -1,11 +1,7 @@
-import json
 from http import HTTPStatus
 
 from fastapi import APIRouter, status
 from fastapi.openapi.models import Response
-from loguru import logger
-
-from data_ingestion.settings import settings
 
 router = APIRouter(tags=["core"])
 
@@ -19,5 +15,4 @@ router = APIRouter(tags=["core"])
     },
 )
 async def api_health_check():
-    logger.info(json.dumps(settings.model_dump(mode="json"), indent=2))
     return {"status": "ok"}
