@@ -43,6 +43,7 @@ import {
   sensitivityOptions,
 } from "@/mocks/metadataFormValues.tsx";
 import { MetadataFormValues } from "@/types/metadata.ts";
+import { UploadParams } from "@/types/upload.ts";
 import { capitalizeFirstLetter } from "@/utils/string.ts";
 
 export const Route = createFileRoute(
@@ -108,7 +109,7 @@ function Metadata() {
     return [
       ...new Set(
         allGroupNames
-          .map(name => name.split("-"))
+          .map(name => name.split("-School"))
           .filter(split => split.length > 1)
           .map(split => split[0]),
       ),
@@ -129,8 +130,9 @@ function Metadata() {
       Object.entries(columnMapping).map(([key, value]) => [value, key]),
     );
 
-    const body = {
+    const body: UploadParams = {
       column_to_schema_mapping: JSON.stringify(correctedColumnMapping),
+      column_license: JSON.stringify(uploadSlice.columnLicense),
       country: data.country,
       data_collection_date: new Date(data.dataCollectionDate).toISOString(),
       data_collection_modality: data.dataCollectionModality,

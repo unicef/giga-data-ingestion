@@ -14,13 +14,12 @@ from data_ingestion.schemas.email import (
 router = APIRouter(
     prefix="/api/email",
     tags=["email"],
-    dependencies=[Security(azure_scheme)],
+    dependencies=[Security(azure_scheme), Security(IsPrivileged())],
 )
 
 
 @router.post(
     "/dq-report-upload-success",
-    dependencies=[Security(IsPrivileged())],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def send_upload_success_email(
@@ -43,7 +42,6 @@ async def send_upload_success_email(
 
 @router.post(
     "/dq-report-check-success",
-    dependencies=[Security(IsPrivileged())],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def send_check_success_email(
@@ -63,7 +61,6 @@ async def send_check_success_email(
 
 @router.post(
     "/dq-report",
-    dependencies=[Security(IsPrivileged())],
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def send_dq_report_email(

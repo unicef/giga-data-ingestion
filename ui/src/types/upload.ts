@@ -57,8 +57,10 @@ export const initialDataQualityCheck: DataQualityCheck = {
   },
   dq_failed_rows_first_five_rows: {},
 };
+
 export interface UploadParams {
   column_to_schema_mapping: string;
+  column_license: string;
   country: string;
   data_collection_date: string;
   data_collection_modality: string;
@@ -88,7 +90,9 @@ export const initialUploadResponse: UploadResponse = {
   original_filename: "",
   upload_path: "",
   column_to_schema_mapping: "",
+  column_license: "",
 };
+
 export interface UploadResponse {
   id: string;
   created: string;
@@ -101,4 +105,5 @@ export interface UploadResponse {
   original_filename: string;
   upload_path: string;
   column_to_schema_mapping: string;
+  column_license: string;
 }

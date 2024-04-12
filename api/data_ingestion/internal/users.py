@@ -47,6 +47,7 @@ class UsersApi:
                 "identities",
             ],
             orderby=["displayName", "mail", "userPrincipalName"],
+            top=999,
         )
     )
     user_request_config = (
@@ -107,7 +108,7 @@ class UsersApi:
                     request_configuration=cls.user_request_config
                 )
 
-            return users_out
+            return sorted(users_out, key=lambda u: u.mail)
         except ODataError as err:
             logger.error(err.error.message)
             raise HTTPException(
@@ -135,6 +136,19 @@ class UsersApi:
                     )
                 elif len(user.other_mails) > 0:
                     user.mail = user.other_mails[0]
+                elif len(user.identities) > 0:
+                    identity = next(
+                        (
+                            ident
+                            for ident in user.identities
+                            if ident.sign_in_type == "emailAddress"
+                        ),
+                        None,
+                    )
+                    if identity is None:
+                        user.mail = user.user_principal_name
+                    else:
+                        user.mail = identity.issuer_assigned_id
                 else:
                     user.mail = user.user_principal_name
             return user

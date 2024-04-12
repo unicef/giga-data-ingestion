@@ -22,14 +22,21 @@ import App from "@/app.tsx";
 import { msalInstance } from "@/lib/auth.ts";
 import "@/styles/index.scss";
 
-if (import.meta.env.SENTRY_DSN) {
+if (import.meta.env.SENTRY_DSN && import.meta.env.PROD) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
     integrations: [
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration({ maskAllText: false, blockAllMedia: false }),
     ],
+    sampleRate: 1.0,
+    enableTracing: true,
     tracesSampleRate: 1.0,
+    profilesSampleRate: 1.0,
+    environment: import.meta.env.VITE_DEPLOY_ENV,
+    release: `github.com/unicef/giga-data-ingestion:${
+      import.meta.env.VITE_COMMIT_SHA
+    }`,
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
   });

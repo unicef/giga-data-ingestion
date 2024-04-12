@@ -16,3 +16,5 @@ export const sourceOptions = [
   { label: "ITU", value: "itu" },
   { label: "Meta", value: "fb" },
 ];
+
+export const licenseOptions = ["Giga Analysis", "CC-BY-4.0"];

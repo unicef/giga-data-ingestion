@@ -1,22 +1,14 @@
-import countries from "@/constants/countries";
-
 export function filterCountries(groups: string[]): string[] {
-  return groups.filter(group => {
-    return countries.some(country =>
-      group.split("-")[0].startsWith(country.name),
-    );
-  });
+  return groups.filter(group => group.split("-School").length > 1);
 }
 
 export function filterCountryDatasetFromGroup(
   groups: string[],
   dataset: string,
 ): string[] {
-  const countryGroups = groups.filter(group => {
-    return countries.some(country => {
-      return group.split("-")[0].trim() === country.name;
-    });
-  });
+  const countryGroups = groups.filter(
+    group => group.split("-School").length > 1,
+  );
 
   const countryDatasets = countryGroups.filter(group => {
     return group.endsWith(`${dataset}`);
@@ -26,18 +18,13 @@ export function filterCountryDatasetFromGroup(
 }
 
 export function filterRoles(groups: string[]): string[] {
-  return groups.filter(group => {
-    return !countries.some(country =>
-      group.split("-")[0].startsWith(country.name),
-    );
-  });
+  return groups.filter(group => group.split("-").length < 2);
 }
 
 export const matchNamesWithIds = (
   names: string[],
   data: { id: string; name: string }[],
 ): { name: string; id: string | undefined }[] => {
-  console.debug(names, data);
   return names.map(name => {
     const matchingData = data.find(d => d.name === name);
     return { name, id: matchingData?.id };
