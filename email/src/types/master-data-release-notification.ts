@@ -5,7 +5,7 @@ export interface MasterDataReleaseNotificationProps {
   country: string;
   modified: number;
   updateDate: string;
-  version: string;
+  version: number;
   rows: number;
 }
 
@@ -14,6 +14,6 @@ export const MasterDataReleaseNotificationProps = z.object({
   country: z.string(),
   modified: z.number(),
   updateDate: z.string(),
-  version: z.string(),
+  version: z.number(),
   rows: z.number(),
 });

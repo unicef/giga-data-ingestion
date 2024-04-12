@@ -38,5 +38,5 @@ class MasterDataReleaseNotificationRenderRequest(BaseModel):
     country: str
     modified: int
     updateDate: datetime
-    version: str
+    version: int
     rows: int
