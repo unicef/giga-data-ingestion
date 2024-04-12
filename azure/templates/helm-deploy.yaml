@@ -9,13 +9,6 @@ jobs:
             - checkout: self
 
             - task: HelmDeploy@0
-              displayName: Helm uninstall PostgreSQL
-              inputs:
-                namespace: $(kubernetesNamespace)
-                command: uninstall
-                arguments: postgres --ignore-not-found
-
-            - task: HelmDeploy@0
               displayName: Add Bitnami Helm repo
               inputs:
                 command: repo
@@ -33,7 +26,9 @@ jobs:
                 releaseName: postgres
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/pg-values.yaml
-                arguments: --set architecture=standalone
+                arguments: >
+                  --set architecture=standalone
+                  --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
               displayName: Helm deploy production-config PostgreSQL

@@ -29,6 +29,7 @@ class GroupsApi:
         GroupsRequestBuilder.GroupsRequestBuilderGetQueryParameters(
             select=["id", "description", "displayName"],
             filter="securityEnabled eq true",
+            top=999,
         )
     )
     group_request_config = (

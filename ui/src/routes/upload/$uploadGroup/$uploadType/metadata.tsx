@@ -109,7 +109,7 @@ function Metadata() {
     return [
       ...new Set(
         allGroupNames
-          .map(name => name.split("-"))
+          .map(name => name.split("-School"))
           .filter(split => split.length > 1)
           .map(split => split[0]),
       ),

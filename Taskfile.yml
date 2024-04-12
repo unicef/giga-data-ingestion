@@ -163,18 +163,22 @@ tasks:
         --namespace giga-data-ingestion
         --values ./helm/pg-values.yaml
         --values ./helm/pg-values-override-local.yaml
+        --set auth.existingSecret=giga-ingestion-portal-secrets
       - >
         helm upgrade --install redis bitnami/redis
         --version 18.18.0
         --namespace giga-data-ingestion
         --values ./helm/redis-values.yaml
         --values ./helm/redis-values-override-local.yaml
+        --set auth.existingSecret=giga-ingestion-portal-secrets
       - >
         helm upgrade --install email-service ./helm/email-service
         --namespace giga-data-ingestion
         --values ./helm/email-service.values-override-prd.yaml
         --set image.repository={{.EMAIL_SERVICE_IMAGE_REPOSITORY}}
         --set image.tag={{.COMMIT_SHA}}
+        --set envFrom[0].configMapRef.name=giga-ingestion-portal-configmap
+        --set envFrom[1].secretRef.name=giga-ingestion-portal-secrets
       - >
         helm upgrade --install ingestion-portal ./helm/data-ingestion
         --namespace giga-data-ingestion
@@ -183,6 +187,8 @@ tasks:
         --set image.repository={{.INGESTION_PORTAL_IMAGE_REPOSITORY}}
         --set image.tag={{.COMMIT_SHA}}
         --set ingress.hosts[0].host={{.INGESTION_PORTAL_INGRESS_HOST}}
+        --set envFrom[0].configMapRef.name=giga-ingestion-portal-configmap
+        --set envFrom[1].secretRef.name=giga-ingestion-portal-secrets
 
   helm-down:
     desc: Uninstall Helm chart
