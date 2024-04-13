@@ -1,4 +1,4 @@
-import { ReactElement, useMemo, useState } from "react";
+import { ReactElement, useMemo } from "react";
 
 import { useMsal } from "@azure/msal-react";
 import {
@@ -26,7 +26,7 @@ import {
   Tag,
 } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { GraphUser } from "@/types/user.ts";
@@ -58,10 +58,22 @@ interface TableGraphUser extends GraphUser {
 }
 
 function UsersTable() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const { page: currentPage, page_size: pageSize } = useSearch({
+    from: "/user-management",
+  });
+  const navigate = useNavigate({ from: "/user-management" });
 
   const { accounts } = useMsal();
+
+  const handlePaginationChange = ({
+    pageSize,
+    page,
+  }: {
+    pageSize: number;
+    page: number;
+  }) => {
+    void navigate({ to: "./", search: () => ({ page, page_size: pageSize }) });
+  };
 
   const {
     data: usersQuery,
@@ -191,16 +203,7 @@ function UsersTable() {
             </TableBody>
           </Table>
           <Pagination
-            onChange={({
-              pageSize,
-              page,
-            }: {
-              pageSize: number;
-              page: number;
-            }) => {
-              setCurrentPage(page);
-              setPageSize(pageSize);
-            }}
+            onChange={handlePaginationChange}
             page={currentPage}
             pageSize={pageSize}
             pageSizes={[10, 25, 50]}
