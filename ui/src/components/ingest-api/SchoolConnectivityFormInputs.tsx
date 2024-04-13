@@ -19,7 +19,6 @@ import {
   SchoolConnectivityFormValues,
   SendQueryInEnum,
 } from "@/types/qos";
-import { validateDatetimeFormat } from "@/utils/string";
 
 import ControllerNumberInputSchoolConnectivity from "../upload/ControllerNumberInputSchoolConnectivity";
 
@@ -461,133 +460,128 @@ export function SchoolConnectivityFormInputs({
     />
   );
 
-  const DateKeyInput = () => (
-    <TextInput
-      id="date_key"
-      invalid={!!errors.date_key}
-      labelText="Date key"
-      {...register("date_key")}
-    />
-  );
+  // const DateKeyInput = () => (
+  //   <TextInput
+  //     id="date_key"
+  //     invalid={!!errors.date_key}
+  //     labelText="OLDDATEKEYDate key"
+  //     {...register("date_key")}
+  //   />
+  // );
 
-  const DateFormatInput = () => {
-    const message =
-      "Can only accept valid python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or timestamp or ISO8601 string constant";
-    return (
-      <TextInput
-        helperText={message}
-        id="date_format"
-        invalid={!!errors.date_format}
-        invalidText={message}
-        labelText="Date Format"
-        {...register("date_format", {
-          required: true,
-          validate: value => {
-            if (value === null) return false;
+  // const DateFormatInput = () => {
+  //   const message =
+  //     "Can only accept valid python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or timestamp or ISO8601 string constant";
+  //   return (
+  //     <TextInput
+  //       disabled={dateKeyIsEmpty}
+  //       helperText={message}
+  //       id="date_format"
+  //       invalid={!!errors.date_format}
+  //       invalidText={message}
+  //       labelText="Date Format"
+  //       {...register("date_format", {
+  //         validate: value => {
+  //           // if (value === null) return false;
 
-            if (value === "timestamp" || value === "ISO8601") return true;
-            else if (validateDatetimeFormat(value)) return true;
-            else return false;
-          },
-        })}
-      />
-    );
-  };
+  //           // if (value === "timestamp" || value === "ISO8601") return true;
+  //           // else if (validateDatetimeFormat(value)) return true;
+  //           // else return false;
+  //           console.log("HEllo world");
+  //           console.log(value);
+  //           if (value === null || value === "")
+  //             if (dateKey === null || dateKey === "") return true;
+  //             else {
+  //               return false;
+  //             }
+  //         },
+  //       })}
+  //     />
+  //   );
+  // };
 
-  const SendDateInSelect = () => (
-    <Select
-      id="send_date_in"
-      invalid={!!errors.page_send_query_in}
-      labelText="Send date in"
-      {...register("send_date_in", { required: true })}
-    >
-      {Object.keys(SendQueryInEnum)
-        .filter(val => val !== SendQueryInEnum.NONE)
-        .map(send_query_in => (
-          <SelectItem
-            key={send_query_in}
-            text={send_query_in.replace(/_/g, " ")}
-            value={send_query_in}
-          />
-        ))}
-    </Select>
-  );
-  const ResponseDateKeyInput = () => (
-    <TextInput
-      id="response_date_key"
-      invalid={!!errors.response_date_key}
-      labelText="Response date key"
-      {...register("response_date_key")}
-    />
-  );
-  const ResponseDateFormatInput = () => (
-    <TextInput
-      id="response_date_format"
-      invalid={!!errors.response_date_format}
-      labelText="Response date format"
-      {...register("response_date_format")}
-    />
-  );
-
-  const IngestionDetailsSection = () => (
-    <section className="flex flex-col gap-6">
-      <header className="text-2xl">Ingestion Details</header>
-      <SchoolIdKeyTextInput />
-    </section>
-  );
-
-  const IngestionSourceSection = () => (
-    <section className="flex flex-col gap-6">
-      <header className="text-2xl">Ingestion Source</header>
-      <DataKeyTextInput />
-      <RequestMethodSelect />
-      <ApiEndpointTextInput />
-      <AuthTypeSelect />
-      {watchAuthType === API_KEY && <AuthApiKeyInputs />}
-      {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
-      {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
-      <SendQueryInQueryParametersInputs />
-      {watchRequestMethod === POST && <SendQueryInBodyInputs />}
-    </section>
-  );
-
-  const IngestionParametersSection = () => (
-    <section className="flex flex-col gap-6">
-      <header className="text-2xl">Ingestion Parameters</header>
-      <PaginationTypeSelect />
-      {watchPaginationType === PAGE_NUMBER && <PaginationPageNumberInputs />}
-      {watchPaginationType === LIMIT_OFFSET && <PaginationLimitOffsetInputs />}
-      <PageSendQueryInSelect />
-      <SchoolIdSendQueryInSelect />
-      <DateKeyInput />
-      <DateFormatInput />
-      <SendDateInSelect />
-      <ResponseDateKeyInput />
-      <ResponseDateFormatInput />
-      <FrequencySelect />
-      {hasFileUpload && (
-        <>
-          <header className="text-lg">CSV Schema</header>
-
-          <UploadFile
-            acceptType={{
-              "text/csv": [".csv"],
-            }}
-            description="CSV only"
-            file={file}
-            setFile={file => setFile(file)}
-          />
-        </>
-      )}
-      <IngestionEnabledToggle />
-    </section>
-  );
+  // const SendDateInSelect = () => (
+  //   <Select
+  //     id="send_date_in"
+  //     disabled={dateKeyIsEmpty}
+  //     invalid={!!errors.page_send_query_in}
+  //     labelText="Send date in"
+  //     {...register("send_date_in", { required: true })}
+  //   >
+  //     {Object.keys(SendQueryInEnum)
+  //       .filter(val => val !== SendQueryInEnum.NONE)
+  //       .map(send_query_in => (
+  //         <SelectItem
+  //           key={send_query_in}
+  //           text={send_query_in.replace(/_/g, " ")}
+  //           value={send_query_in}
+  //         />
+  //       ))}
+  //   </Select>
+  // );
+  // const ResponseDateKeyInput = () => (
+  //   <TextInput
+  //     id="response_date_key"
+  //     invalid={!!errors.response_date_key}
+  //     invalidText="Required"
+  //     labelText="Response date key"
+  //     {...register("response_date_key", { required: true })}
+  //   />
+  // );
+  // const ResponseDateFormatInput = () => (
+  //   <TextInput
+  //     id="response_date_format"
+  //     invalid={!!errors.response_date_format}
+  //     invalidText="Required"
+  //     labelText="Response date format"
+  //     {...register("response_date_format", { required: true })}
+  //   />
+  // );
 
   return (
     <>
-      <IngestionDetailsSection />
-      <IngestionSourceSection />
-      <IngestionParametersSection />
+      <section className="flex flex-col gap-6">
+        <header className="text-2xl">Ingestion Details</header>
+        <SchoolIdKeyTextInput />
+      </section>
+      <section className="flex flex-col gap-6">
+        <header className="text-2xl">Ingestion Source</header>
+        <DataKeyTextInput />
+        <RequestMethodSelect />
+        <ApiEndpointTextInput />
+        <AuthTypeSelect />
+        {watchAuthType === API_KEY && <AuthApiKeyInputs />}
+        {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
+        {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
+        <SendQueryInQueryParametersInputs />
+        {watchRequestMethod === POST && <SendQueryInBodyInputs />}
+      </section>
+      <section className="flex flex-col gap-6">
+        <header className="text-2xl">Ingestion Parameters</header>
+        <PaginationTypeSelect />
+        {watchPaginationType === PAGE_NUMBER && <PaginationPageNumberInputs />}
+        {watchPaginationType === LIMIT_OFFSET && (
+          <PaginationLimitOffsetInputs />
+        )}
+        <PageSendQueryInSelect />
+        <SchoolIdSendQueryInSelect />
+        <FrequencySelect />
+        {hasFileUpload && (
+          <>
+            <header className="text-lg">CSV Schema</header>
+
+            <UploadFile
+              acceptType={{
+                "text/csv": [".csv"],
+              }}
+              description="CSV only"
+              file={file}
+              setFile={file => setFile(file)}
+            />
+          </>
+        )}
+        <IngestionEnabledToggle />
+      </section>
     </>
   );
 }
