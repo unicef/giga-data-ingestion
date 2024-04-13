@@ -84,6 +84,8 @@ const TestApiButton = ({
 
       if (Array.isArray(responseData)) {
         setIsValidDatakey(true);
+        setIsValidResponse(true);
+        setIsResponseError(false);
         setResponsePreview(responseData);
         setDetectedColumns(Object.keys(responseData[0]));
       }
