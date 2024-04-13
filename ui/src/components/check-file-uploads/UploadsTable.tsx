@@ -1,4 +1,4 @@
-import { ReactElement, useMemo, useState } from "react";
+import { ReactElement, useMemo } from "react";
 
 import {
   Button,
@@ -16,15 +16,11 @@ import {
   Tag,
 } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { format } from "date-fns";
 
 import { api } from "@/api";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
 import { PagedResponse } from "@/types/api.ts";
 import { UploadResponse } from "@/types/upload.ts";
 
@@ -61,19 +57,19 @@ type TableUpload = Record<
 > & { id: string };
 
 function UploadsTable() {
-  const [page, setPage] = useState(DEFAULT_PAGE_NUMBER);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const { page, page_size } = useSearch({ from: "/upload/" });
+  const navigate = useNavigate({ from: "/upload/" });
 
   const { data: uploadsQuery, isLoading } = useSuspenseQuery({
-    queryFn: () => api.uploads.list_uploads({ page, page_size: pageSize }),
-    queryKey: ["uploads", page, pageSize],
+    queryFn: () => api.uploads.list_uploads({ page, page_size }),
+    queryKey: ["uploads", page, page_size],
   });
 
   const renderUploads = useMemo<PagedResponse<TableUpload>>(() => {
     const uploads = uploadsQuery?.data ?? {
       data: [],
       page,
-      page_size: pageSize,
+      page_size,
       total_count: 0,
     };
 
@@ -112,7 +108,7 @@ function UploadsTable() {
     });
 
     return _renderUploads;
-  }, [page, pageSize, uploadsQuery?.data]);
+  }, [page, page_size, uploadsQuery?.data]);
 
   function handlePaginationChange({
     pageSize,
@@ -121,8 +117,7 @@ function UploadsTable() {
     pageSize: number;
     page: number;
   }) {
-    setPage(page);
-    setPageSize(pageSize);
+    void navigate({ to: "./", search: () => ({ page, page_size: pageSize }) });
   }
 
   return isLoading ? (
@@ -154,7 +149,7 @@ function UploadsTable() {
           </Table>
           <Pagination
             page={page}
-            pageSize={pageSize}
+            pageSize={page_size}
             pageSizes={[10, 25, 50]}
             totalItems={renderUploads.total_count}
             onChange={handlePaginationChange}
