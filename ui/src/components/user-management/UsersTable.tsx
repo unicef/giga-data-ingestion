@@ -25,7 +25,7 @@ import {
   TableToolbarContent,
   Tag,
 } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { api } from "@/api";
@@ -68,7 +68,7 @@ function UsersTable() {
     isLoading,
     refetch: refetchUsers,
     isRefetching,
-  } = useQuery({
+  } = useSuspenseQuery({
     queryKey: ["users"],
     queryFn: api.users.list,
   });

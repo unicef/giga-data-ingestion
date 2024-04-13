@@ -1,11 +1,14 @@
 import { Heading, Section, Stack } from "@carbon/react";
-import { Outlet, createLazyFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 
+import { listUsersQueryOptions } from "@/api/queryOptions.ts";
 import UsersTable from "@/components/user-management/UsersTable.tsx";
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
 
-export const Route = createLazyFileRoute("/user-management")({
+export const Route = createFileRoute("/user-management")({
   component: UserManagement,
+  loader: ({ context: { queryClient } }) =>
+    queryClient.ensureQueryData(listUsersQueryOptions),
 });
 
 function UserManagement() {

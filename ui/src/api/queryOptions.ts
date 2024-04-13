@@ -14,3 +14,17 @@ export const uploadsQueryOptions = queryOptions({
     }),
   queryKey: ["uploads", DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE],
 });
+
+export const listUsersQueryOptions = queryOptions({
+  queryKey: ["users"],
+  queryFn: api.users.list,
+});
+
+export const listApiIngestionsQueryOptions = queryOptions({
+  queryKey: ["school_list", DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE],
+  queryFn: () =>
+    api.qos.list_school_list({
+      count: DEFAULT_PAGE_SIZE,
+      page: DEFAULT_PAGE_NUMBER,
+    }),
+});

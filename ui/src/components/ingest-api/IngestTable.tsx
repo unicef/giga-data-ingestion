@@ -18,11 +18,15 @@ import {
   TableToolbarContent,
   Toggle,
 } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { api } from "@/api";
-import { HEADERS, ITEMS_PER_PAGE } from "@/constants/ingest-api";
+import { HEADERS } from "@/constants/ingest-api";
+import {
+  DEFAULT_PAGE_NUMBER,
+  DEFAULT_PAGE_SIZE,
+} from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 
 import StatusIndicator from "../upload/StatusIndicator";
@@ -34,8 +38,8 @@ export type LoadingStates = {
 };
 
 function IngestTable() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE_NUMBER);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({});
   const [selectedIngestionName, setSelectedIngestionName] =
     useState<string>("");
@@ -45,7 +49,8 @@ function IngestTable() {
 
   const [isOpenConfirmModal, setIsOpenConfirmModal] = useState<boolean>(false);
   const [isOpenInfoModal, setIsOpenInfoModal] = useState<boolean>(false);
-  const [infoModalErrorMessage, setInfoModalErrorMesage] = useState<string>("");
+  const [infoModalErrorMessage, setInfoModalErrorMessage] =
+    useState<string>("");
   const [selectedIngestionLastModified, setSelectedIngestionLastModified] =
     useState<Date>(new Date());
 
@@ -58,11 +63,11 @@ function IngestTable() {
     isLoading: isSchoolListLoading,
     refetch: refetchSchoolList,
     isRefetching: isSchoolListRefetching,
-  } = useQuery({
-    queryKey: ["school_list", currentPage],
+  } = useSuspenseQuery({
+    queryKey: ["school_list", currentPage, pageSize],
     queryFn: () =>
       api.qos.list_school_list({
-        count: ITEMS_PER_PAGE,
+        count: pageSize,
         page: currentPage,
       }),
   });
@@ -95,7 +100,7 @@ function IngestTable() {
             onClick={() => {
               if (schoolList.error_message) {
                 setSelectedIngestionLastModified(schoolList.date_last_ingested);
-                setInfoModalErrorMesage(schoolList.error_message);
+                setInfoModalErrorMessage(schoolList.error_message);
                 setSelectedIngestionName(schoolList.name);
                 setIsOpenInfoModal(true);
               }
