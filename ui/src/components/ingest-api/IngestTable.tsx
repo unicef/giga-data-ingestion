@@ -19,14 +19,10 @@ import {
   Toggle,
 } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { HEADERS } from "@/constants/ingest-api";
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 
 import StatusIndicator from "../upload/StatusIndicator";
@@ -38,8 +34,11 @@ export type LoadingStates = {
 };
 
 function IngestTable() {
-  const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE_NUMBER);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const { page: currentPage, page_size: pageSize } = useSearch({
+    from: "/ingest-api/",
+  });
+  const navigate = useNavigate({ from: "/ingest-api/" });
+
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({});
   const [selectedIngestionName, setSelectedIngestionName] =
     useState<string>("");
@@ -147,6 +146,22 @@ function IngestTable() {
     });
   }, [schoolListData, loadingStates]);
 
+  const handlePaginationChange = ({
+    pageSize,
+    page,
+  }: {
+    pageSize: number;
+    page: number;
+  }) => {
+    void navigate({
+      to: "./",
+      search: () => ({
+        page,
+        page_size: pageSize,
+      }),
+    });
+  };
+
   if (isSchoolListLoading) return <DataTableSkeleton headers={HEADERS} />;
 
   return (
@@ -202,16 +217,7 @@ function IngestTable() {
               pageSize={pageSize}
               pageSizes={[10, 25, 50]}
               totalItems={schoolListQuery?.data.total_count}
-              onChange={({
-                pageSize,
-                page,
-              }: {
-                pageSize: number;
-                page: number;
-              }) => {
-                setCurrentPage(page);
-                setPageSize(pageSize);
-              }}
+              onChange={handlePaginationChange}
             />
           </TableContainer>
         )}
