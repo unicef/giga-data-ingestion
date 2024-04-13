@@ -21,6 +21,7 @@ import { Route as IngestApiIndexImport } from './routes/ingest-api/index'
 import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
 import { Route as IngestApiEditImport } from './routes/ingest-api/edit'
 import { Route as IngestApiAddImport } from './routes/ingest-api/add'
+import { Route as UploadUploadIdIndexImport } from './routes/upload/$uploadId/index'
 import { Route as ApprovalRequestsSubpathIndexImport } from './routes/approval-requests/$subpath/index'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
@@ -41,7 +42,6 @@ import { Route as IngestApiEditIngestionIdColumnMappingImport } from './routes/i
 const UploadLazyImport = createFileRoute('/upload')()
 const IngestApiLazyImport = createFileRoute('/ingest-api')()
 const ApprovalRequestsLazyImport = createFileRoute('/approval-requests')()
-const UploadUploadIdIndexLazyImport = createFileRoute('/upload/$uploadId/')()
 const IngestApiAddIndexLazyImport = createFileRoute('/ingest-api/add/')()
 const UploadUploadGroupUploadTypeIndexLazyImport = createFileRoute(
   '/upload/$uploadGroup/$uploadType/',
@@ -109,19 +109,17 @@ const IngestApiAddRoute = IngestApiAddImport.update({
   getParentRoute: () => IngestApiLazyRoute,
 } as any)
 
-const UploadUploadIdIndexLazyRoute = UploadUploadIdIndexLazyImport.update({
-  path: '/$uploadId/',
-  getParentRoute: () => UploadLazyRoute,
-} as any).lazy(() =>
-  import('./routes/upload/$uploadId/index.lazy').then((d) => d.Route),
-)
-
 const IngestApiAddIndexLazyRoute = IngestApiAddIndexLazyImport.update({
   path: '/',
   getParentRoute: () => IngestApiAddRoute,
 } as any).lazy(() =>
   import('./routes/ingest-api/add/index.lazy').then((d) => d.Route),
 )
+
+const UploadUploadIdIndexRoute = UploadUploadIdIndexImport.update({
+  path: '/$uploadId/',
+  getParentRoute: () => UploadLazyRoute,
+} as any)
 
 const ApprovalRequestsSubpathIndexRoute =
   ApprovalRequestsSubpathIndexImport.update({
@@ -297,13 +295,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApprovalRequestsSubpathIndexImport
       parentRoute: typeof ApprovalRequestsLazyImport
     }
+    '/upload/$uploadId/': {
+      preLoaderRoute: typeof UploadUploadIdIndexImport
+      parentRoute: typeof UploadLazyImport
+    }
     '/ingest-api/add/': {
       preLoaderRoute: typeof IngestApiAddIndexLazyImport
       parentRoute: typeof IngestApiAddImport
-    }
-    '/upload/$uploadId/': {
-      preLoaderRoute: typeof UploadUploadIdIndexLazyImport
-      parentRoute: typeof UploadLazyImport
     }
     '/ingest-api/edit/$ingestionId/column-mapping': {
       preLoaderRoute: typeof IngestApiEditIngestionIdColumnMappingImport
@@ -385,7 +383,7 @@ export const routeTree = rootRoute.addChildren([
       UploadUploadGroupUploadTypeSuccessRoute,
       UploadUploadGroupUploadTypeIndexLazyRoute,
     ]),
-    UploadUploadIdIndexLazyRoute,
+    UploadUploadIdIndexRoute,
   ]),
 ])
 

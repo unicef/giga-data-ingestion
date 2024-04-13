@@ -5,7 +5,6 @@ import UploadLanding from "@/components/upload/UploadLanding.tsx";
 
 export const Route = createFileRoute("/upload/")({
   component: UploadLanding,
-
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(uploadsQueryOptions),
 });
