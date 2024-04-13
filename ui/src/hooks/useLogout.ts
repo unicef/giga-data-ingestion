@@ -16,7 +16,14 @@ function useLogout() {
       ...logoutRequest,
       account,
     });
-    await navigate({ from: location.pathname, to: "/" });
+    await navigate({
+      from: location.pathname,
+      to: "/",
+      search: {
+        page: 1,
+        page_size: 10,
+      },
+    });
   }, [account, instance, location.pathname, navigate]);
 }
 

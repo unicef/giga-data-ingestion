@@ -16,7 +16,7 @@ import {
   Tag,
 } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 
 import { api } from "@/api";
@@ -56,20 +56,33 @@ type TableUpload = Record<
   ReactElement | string | number | null
 > & { id: string };
 
-function UploadsTable() {
-  const { page, page_size } = useSearch({ from: "/upload/" });
-  const navigate = useNavigate({ from: "/upload/" });
+interface UploadsTableProps {
+  page: number;
+  pageSize: number;
+  handlePaginationChange: ({
+    page,
+    pageSize,
+  }: {
+    page: number;
+    pageSize: number;
+  }) => void;
+}
 
+function UploadsTable({
+  page,
+  pageSize,
+  handlePaginationChange,
+}: UploadsTableProps) {
   const { data: uploadsQuery, isLoading } = useSuspenseQuery({
-    queryFn: () => api.uploads.list_uploads({ page, page_size }),
-    queryKey: ["uploads", page, page_size],
+    queryFn: () => api.uploads.list_uploads({ page, page_size: pageSize }),
+    queryKey: ["uploads", page, pageSize],
   });
 
   const renderUploads = useMemo<PagedResponse<TableUpload>>(() => {
     const uploads = uploadsQuery?.data ?? {
       data: [],
       page,
-      page_size,
+      page_size: pageSize,
       total_count: 0,
     };
 
@@ -108,17 +121,7 @@ function UploadsTable() {
     });
 
     return _renderUploads;
-  }, [page, page_size, uploadsQuery?.data]);
-
-  function handlePaginationChange({
-    pageSize,
-    page,
-  }: {
-    pageSize: number;
-    page: number;
-  }) {
-    void navigate({ to: "./", search: () => ({ page, page_size: pageSize }) });
-  }
+  }, [page, pageSize, uploadsQuery?.data]);
 
   return isLoading ? (
     <DataTableSkeleton headers={columns} />
@@ -149,7 +152,7 @@ function UploadsTable() {
           </Table>
           <Pagination
             page={page}
-            pageSize={page_size}
+            pageSize={pageSize}
             pageSizes={[10, 25, 50]}
             totalItems={renderUploads.total_count}
             onChange={handlePaginationChange}

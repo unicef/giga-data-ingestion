@@ -4,7 +4,19 @@ import { Link } from "@tanstack/react-router";
 
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
 
-function UploadLanding() {
+interface UploadLandingProps {
+  page: number;
+  pageSize: number;
+  handlePaginationChange: ({
+    page,
+    pageSize,
+  }: {
+    page: number;
+    pageSize: number;
+  }) => void;
+}
+
+function UploadLanding(props: UploadLandingProps) {
   return (
     <Section>
       <Section>
@@ -67,7 +79,7 @@ function UploadLanding() {
             </Grid>
           </Stack>
 
-          <UploadsTable />
+          <UploadsTable {...props} />
         </Stack>
       </Section>
     </Section>

@@ -59,7 +59,10 @@ export function AxiosProvider({ children }: PropsWithChildren) {
   async function requestFulFilledInterceptor(
     config: InternalAxiosRequestConfig,
   ) {
-    if (isAuthenticated && inProgress === InteractionStatus.None) {
+    console.log("isAuthenticated", isAuthenticated);
+    console.log("inProgress", inProgress);
+
+    if (!isAuthenticated && inProgress === InteractionStatus.Startup) {
       const { accessToken } = await getToken();
       config.headers["Authorization"] = `Bearer ${accessToken}`;
       return Promise.resolve(config);
@@ -77,10 +80,13 @@ export function AxiosProvider({ children }: PropsWithChildren) {
   }
 
   async function responseRejectedInterceptor(error: AxiosError) {
-    const originalRequest = error.config!;
-    const { status } = error.response!;
+    const originalRequest = error.config;
 
-    if (status === 401) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      inProgress !== InteractionStatus.None
+    ) {
       try {
         const { accessToken } = await getToken();
 
@@ -101,7 +107,7 @@ export function AxiosProvider({ children }: PropsWithChildren) {
       }
     }
 
-    return Promise.reject(error);
+    return error;
   }
 
   useEffect(() => {
