@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
+import { api } from "@/api";
 import {
   DEFAULT_PAGE_NUMBER,
   DEFAULT_PAGE_SIZE,
@@ -16,9 +17,10 @@ const doRedirect = redirect({
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
   component: Layout,
-  loader: ({ params }) => {
-    const { uploadGroup, uploadType } = params;
-
+  loader: ({
+    params: { uploadGroup, uploadType },
+    context: { queryClient },
+  }) => {
     if (!["school-data", "other"].includes(uploadGroup)) {
       throw doRedirect;
     }
@@ -32,6 +34,13 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
 
     if (uploadGroup === "other" && uploadType !== "unstructured") {
       throw doRedirect;
+    }
+
+    if (uploadType === "geolocation") {
+      return queryClient.ensureQueryData({
+        queryFn: () => api.schema.get(`school_${uploadType}`),
+        queryKey: ["schema", `school_${uploadType}`],
+      });
     }
   },
 });
