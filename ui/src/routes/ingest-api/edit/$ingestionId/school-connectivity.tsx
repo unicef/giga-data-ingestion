@@ -8,7 +8,7 @@ import { Button, ButtonSet, Tag } from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
-import { api, queryClient } from "@/api";
+import { api } from "@/api";
 import ConfirmEditIngestionModal from "@/components/ingest-api/ConfirmEditIngestionModal";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs";
@@ -19,7 +19,7 @@ export const Route = createFileRoute(
   "/ingest-api/edit/$ingestionId/school-connectivity",
 )({
   component: SchoolConnectivity,
-  loader: async ({ params: { ingestionId } }) => {
+  loader: async ({ params: { ingestionId }, context: { queryClient } }) => {
     const options = queryOptions({
       queryKey: ["school_connectivity", ingestionId],
       queryFn: () => api.qos.get_school_connectivity(ingestionId),

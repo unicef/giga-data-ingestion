@@ -17,7 +17,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 
-import { api, queryClient } from "@/api";
+import { api } from "@/api";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
 import { useStore } from "@/context/store";
@@ -25,7 +25,7 @@ import { SchoolListFormValues } from "@/types/qos";
 
 export const Route = createFileRoute("/ingest-api/edit/$ingestionId/")({
   component: EditIngestion,
-  loader: async ({ params: { ingestionId } }) => {
+  loader: async ({ params: { ingestionId }, context: { queryClient } }) => {
     const options = queryOptions({
       queryKey: ["school_list", ingestionId],
       queryFn: () => api.qos.get_school_list(ingestionId),

@@ -24,7 +24,7 @@ import {
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { api, queryClient } from "@/api";
+import { api } from "@/api";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
 import { CarbonDataTableRow } from "@/types/datatable";
@@ -34,7 +34,7 @@ import { transformSelectedRowsToKeyValArray } from "@/utils/datatable";
 
 export const Route = createFileRoute("/approval-requests/$subpath/")({
   component: ApproveRejectTable,
-  loader: ({ params: { subpath } }) => {
+  loader: ({ params: { subpath }, context: { queryClient } }) => {
     return queryClient.ensureQueryData({
       queryFn: () => api.approvalRequests.get(subpath),
       queryKey: ["approval-requests", subpath],
