@@ -4,14 +4,13 @@ import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { listUsersQueryOptions } from "@/api/queryOptions.ts";
 import UsersTable from "@/components/user-management/UsersTable.tsx";
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
-import { PaginationSearchParams } from "@/types/pagination.ts";
+import { validateSearchParams } from "@/utils/pagination.ts";
 
 export const Route = createFileRoute("/user-management")({
   component: UserManagement,
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(listUsersQueryOptions),
-  validateSearch: (search: Record<string, unknown>): PaginationSearchParams =>
-    PaginationSearchParams.parse(search),
+  validateSearch: validateSearchParams,
 });
 
 function UserManagement() {

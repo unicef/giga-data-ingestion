@@ -72,7 +72,7 @@ function UsersTable() {
     pageSize: number;
     page: number;
   }) => {
-    void navigate({ to: "./", search: () => ({ page, page_size: pageSize }) });
+    void navigate({ to: ".", search: () => ({ page, page_size: pageSize }) });
   };
 
   const {

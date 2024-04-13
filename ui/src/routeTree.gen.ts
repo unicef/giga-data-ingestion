@@ -14,7 +14,6 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as UserManagementImport } from './routes/user-management'
-import { Route as CheckFileUploadsImport } from './routes/check-file-uploads'
 import { Route as IndexImport } from './routes/index'
 import { Route as UploadIndexImport } from './routes/upload/index'
 import { Route as IngestApiIndexImport } from './routes/ingest-api/index'
@@ -71,11 +70,6 @@ const ApprovalRequestsLazyRoute = ApprovalRequestsLazyImport.update({
 
 const UserManagementRoute = UserManagementImport.update({
   path: '/user-management',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const CheckFileUploadsRoute = CheckFileUploadsImport.update({
-  path: '/check-file-uploads',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -231,10 +225,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
-    '/check-file-uploads': {
-      preLoaderRoute: typeof CheckFileUploadsImport
-      parentRoute: typeof rootRoute
-    }
     '/user-management': {
       preLoaderRoute: typeof UserManagementImport
       parentRoute: typeof rootRoute
@@ -350,7 +340,6 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
-  CheckFileUploadsRoute,
   UserManagementRoute.addChildren([
     UserManagementUserAddRoute,
     UserManagementUserEditUserIdRoute,
