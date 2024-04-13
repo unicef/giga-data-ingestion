@@ -12,6 +12,7 @@ import {
   Stack,
   Tag,
 } from "@carbon/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import {
   Link,
@@ -19,6 +20,7 @@ import {
   redirect,
   useNavigate,
 } from "@tanstack/react-router";
+import { z } from "zod";
 
 import { api } from "@/api";
 import DataTable from "@/components/common/DataTable.tsx";
@@ -48,10 +50,12 @@ const headers: DataTableHeader[] = [
   { key: "license", header: "License" },
 ];
 
-interface ConfigureColumnsForm {
-  mapping: Record<string, string>;
-  license: Record<string, string>;
-}
+const ConfigureColumnsForm = z.object({
+  mapping: z.record(z.string()),
+  license: z.record(z.string()),
+});
+
+type ConfigureColumnsForm = z.infer<typeof ConfigureColumnsForm>;
 
 function UploadColumnMapping() {
   const {
@@ -87,6 +91,7 @@ function UploadColumnMapping() {
       mapping: columnMapping,
       license: {},
     },
+    resolver: zodResolver(ConfigureColumnsForm),
   });
 
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {

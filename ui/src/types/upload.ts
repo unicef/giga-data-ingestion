@@ -62,18 +62,8 @@ export interface UploadParams {
   column_to_schema_mapping: string;
   column_license: string;
   country: string;
-  data_collection_date: string;
-  data_collection_modality: string;
-  data_owner: string;
   dataset: string;
-  date_modified: string;
-  description: string;
-  domain: string;
   file: File;
-  geolocation_data_source?: string;
-  pii_classification: string;
-  school_id_type: string;
-  sensitivity_level: string;
   source?: string | null;
   [key: string]: string | File | null | undefined;
 }

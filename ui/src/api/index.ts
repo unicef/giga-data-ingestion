@@ -59,9 +59,6 @@ export function AxiosProvider({ children }: PropsWithChildren) {
   async function requestFulFilledInterceptor(
     config: InternalAxiosRequestConfig,
   ) {
-    console.log("isAuthenticated", isAuthenticated);
-    console.log("inProgress", inProgress);
-
     if (!isAuthenticated && inProgress === InteractionStatus.Startup) {
       const { accessToken } = await getToken();
       config.headers["Authorization"] = `Bearer ${accessToken}`;

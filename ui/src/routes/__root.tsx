@@ -13,11 +13,11 @@ import gigaLogo from "@/assets/GIGA_logo.png";
 import homeBg from "@/assets/home-bg.jpg";
 import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
-import NotFound from "@/components/utils/NotFound.tsx";
 import {
   TanStackQueryDevTools,
   TanStackRouterDevtools,
-} from "@/components/utils/TanStackDevTools.tsx";
+} from "@/components/utils/DevTools.tsx";
+import NotFound from "@/components/utils/NotFound.tsx";
 import { useStore } from "@/context/store";
 import useGetToken from "@/hooks/useGetToken.ts";
 import useLogout from "@/hooks/useLogout.ts";

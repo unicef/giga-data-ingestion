@@ -15,3 +15,11 @@ export const TanStackQueryDevTools = import.meta.env.PROD
         default: res.ReactQueryDevtools,
       })),
     );
+
+export const ReactHookFormDevTools = import.meta.env.PROD
+  ? () => null
+  : lazy(() =>
+      import("@hookform/devtools").then(res => ({
+        default: res.DevTool,
+      })),
+    );

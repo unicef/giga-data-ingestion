@@ -1,3 +1,5 @@
+import { ZodType } from "zod";
+
 export type MetadataFormValues = {
   dataCollectionDate: Date;
   country: string;
@@ -11,3 +13,22 @@ export type MetadataFormValues = {
   schoolIdType: string;
   sensitivityLevel: string;
 };
+
+export type MetadataFormMapping =
+  | {
+      name: string;
+      label: string;
+      helperText: string;
+      required: boolean;
+      type: "text" | "year" | "month-year";
+      validator: ZodType;
+    }
+  | {
+      name: string;
+      label: string;
+      helperText: string;
+      required: boolean;
+      type: "enum";
+      enum: readonly string[];
+      validator: ZodType;
+    };

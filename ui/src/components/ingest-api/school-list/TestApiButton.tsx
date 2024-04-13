@@ -3,7 +3,7 @@ import { Dispatch, SetStateAction } from "react";
 import { Button } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
 import "@tanstack/react-query";
-import { isPlainObject } from "lodash";
+import { isPlainObject } from "lodash-es";
 
 import { api } from "@/api";
 import { useStore } from "@/context/store";
