@@ -20,7 +20,7 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { api, queryClient } from "@/api";
+import { api } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import ToastNotification from "@/components/user-management/ToastNotification.tsx";
 import countries from "@/constants/countries.ts";
@@ -37,7 +37,7 @@ import {
 
 export const Route = createFileRoute("/user-management/user/edit/$userId")({
   component: EditUser,
-  loader: ({ params: { userId } }) => {
+  loader: ({ params: { userId }, context: { queryClient } }) => {
     const userQueryOptions = queryOptions({
       queryKey: ["user", userId],
       queryFn: () => api.users.get(userId),
