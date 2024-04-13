@@ -15,12 +15,16 @@ import {
   TableRow,
   Tag,
 } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 
 import { api } from "@/api";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
+import {
+  DEFAULT_PAGE_NUMBER,
+  DEFAULT_PAGE_SIZE,
+} from "@/constants/pagination.ts";
 import { PagedResponse } from "@/types/api.ts";
 import { UploadResponse } from "@/types/upload.ts";
 
@@ -57,10 +61,10 @@ type TableUpload = Record<
 > & { id: string };
 
 function UploadsTable() {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(DEFAULT_PAGE_NUMBER);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
-  const { data: uploadsQuery, isLoading } = useQuery({
+  const { data: uploadsQuery, isLoading } = useSuspenseQuery({
     queryFn: () => api.uploads.list_uploads({ page, page_size: pageSize }),
     queryKey: ["uploads", page, pageSize],
   });

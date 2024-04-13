@@ -15,6 +15,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Route as rootRoute } from './routes/__root'
 import { Route as CheckFileUploadsImport } from './routes/check-file-uploads'
 import { Route as IndexImport } from './routes/index'
+import { Route as UploadIndexImport } from './routes/upload/index'
 import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
 import { Route as IngestApiEditImport } from './routes/ingest-api/edit'
 import { Route as IngestApiAddImport } from './routes/ingest-api/add'
@@ -39,7 +40,6 @@ const UserManagementLazyImport = createFileRoute('/user-management')()
 const UploadLazyImport = createFileRoute('/upload')()
 const IngestApiLazyImport = createFileRoute('/ingest-api')()
 const ApprovalRequestsLazyImport = createFileRoute('/approval-requests')()
-const UploadIndexLazyImport = createFileRoute('/upload/')()
 const IngestApiIndexLazyImport = createFileRoute('/ingest-api/')()
 const UploadUploadIdIndexLazyImport = createFileRoute('/upload/$uploadId/')()
 const IngestApiAddIndexLazyImport = createFileRoute('/ingest-api/add/')()
@@ -86,17 +86,17 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const UploadIndexLazyRoute = UploadIndexLazyImport.update({
-  path: '/',
-  getParentRoute: () => UploadLazyRoute,
-} as any).lazy(() => import('./routes/upload/index.lazy').then((d) => d.Route))
-
 const IngestApiIndexLazyRoute = IngestApiIndexLazyImport.update({
   path: '/',
   getParentRoute: () => IngestApiLazyRoute,
 } as any).lazy(() =>
   import('./routes/ingest-api/index.lazy').then((d) => d.Route),
 )
+
+const UploadIndexRoute = UploadIndexImport.update({
+  path: '/',
+  getParentRoute: () => UploadLazyRoute,
+} as any)
 
 const ApprovalRequestsIndexRoute = ApprovalRequestsIndexImport.update({
   path: '/',
@@ -269,13 +269,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApprovalRequestsIndexImport
       parentRoute: typeof ApprovalRequestsLazyImport
     }
+    '/upload/': {
+      preLoaderRoute: typeof UploadIndexImport
+      parentRoute: typeof UploadLazyImport
+    }
     '/ingest-api/': {
       preLoaderRoute: typeof IngestApiIndexLazyImport
       parentRoute: typeof IngestApiLazyImport
-    }
-    '/upload/': {
-      preLoaderRoute: typeof UploadIndexLazyImport
-      parentRoute: typeof UploadLazyImport
     }
     '/approval-requests/$subpath/confirm': {
       preLoaderRoute: typeof ApprovalRequestsSubpathConfirmImport
@@ -376,7 +376,7 @@ export const routeTree = rootRoute.addChildren([
     IngestApiIndexLazyRoute,
   ]),
   UploadLazyRoute.addChildren([
-    UploadIndexLazyRoute,
+    UploadIndexRoute,
     UploadUploadGroupUploadTypeRoute.addChildren([
       UploadUploadGroupUploadTypeColumnMappingRoute,
       UploadUploadGroupUploadTypeMetadataRoute,

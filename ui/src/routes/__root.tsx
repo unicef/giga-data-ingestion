@@ -2,10 +2,11 @@ import { PropsWithChildren, Suspense, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { useAccount, useMsal } from "@azure/msal-react";
+import { QueryClient } from "@tanstack/react-query";
 import {
   Outlet,
   ScrollRestoration,
-  createRootRoute,
+  createRootRouteWithContext,
 } from "@tanstack/react-router";
 
 import gigaLogo from "@/assets/GIGA_logo.png";
@@ -13,13 +14,20 @@ import homeBg from "@/assets/home-bg.jpg";
 import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
 import NotFound from "@/components/utils/NotFound.tsx";
-import TanStackRouterDevtools from "@/components/utils/TanStackRouterDevTools.tsx";
+import {
+  TanStackQueryDevTools,
+  TanStackRouterDevtools,
+} from "@/components/utils/TanStackDevTools.tsx";
 import { useStore } from "@/context/store";
 import useGetToken from "@/hooks/useGetToken.ts";
 import useLogout from "@/hooks/useLogout.ts";
 import info from "@/info.json";
 
-export const Route = createRootRoute({
+interface RouteContext {
+  queryClient: QueryClient;
+}
+
+export const Route = createRootRouteWithContext<RouteContext>()({
   component: Layout,
   notFoundComponent: () => (
     <Base>
@@ -48,8 +56,9 @@ function Base({ children }: PropsWithChildren) {
       <main className="flex-auto flex-row">{children}</main>
       <Footer />
 
-      <Suspense>
+      <Suspense fallback={null}>
         <TanStackRouterDevtools initialIsOpen={false} />
+        <TanStackQueryDevTools initialIsOpen={false} />
       </Suspense>
     </div>
   );
