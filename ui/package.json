@@ -19,11 +19,11 @@
     "last 2 versions"
   ],
   "dependencies": {
-    "@azure/msal-browser": "^3.2.0",
-    "@azure/msal-react": "^2.0.4",
-    "@carbon/icons-react": "^11.34.1",
-    "@carbon/react": "^1.48.1",
-    "@carbon/themes": "^11.29.1",
+    "@azure/msal-browser": "^3.13.0",
+    "@azure/msal-react": "^2.0.15",
+    "@carbon/icons-react": "^11.39.0",
+    "@carbon/react": "^1.55.0",
+    "@carbon/themes": "^11.34.0",
     "@fontsource/open-sans": "^5.0.12",
     "@sentry/react": "^7.80.1",
     "@tanstack/react-query": "^5.8.7",

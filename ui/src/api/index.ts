@@ -38,10 +38,6 @@ export const api = {
   utils: utilsRouter(axi),
 };
 
-export function useApi() {
-  return api;
-}
-
 export function AxiosProvider({ children }: PropsWithChildren) {
   const { inProgress } = useMsal();
   const isAuthenticated = useIsAuthenticated();
@@ -60,9 +56,13 @@ export function AxiosProvider({ children }: PropsWithChildren) {
     ),
   );
 
-  function requestFulFilledInterceptor(config: InternalAxiosRequestConfig) {
+  async function requestFulFilledInterceptor(
+    config: InternalAxiosRequestConfig,
+  ) {
     if (isAuthenticated && inProgress === InteractionStatus.None) {
-      void getToken();
+      const { accessToken } = await getToken();
+      config.headers["Authorization"] = `Bearer ${accessToken}`;
+      return Promise.resolve(config);
     }
 
     return Promise.resolve(config);
@@ -76,7 +76,31 @@ export function AxiosProvider({ children }: PropsWithChildren) {
     return response;
   }
 
-  function responseRejectedInterceptor(error: AxiosError) {
+  async function responseRejectedInterceptor(error: AxiosError) {
+    const originalRequest = error.config!;
+    const { status } = error.response!;
+
+    if (status === 401) {
+      try {
+        const { accessToken } = await getToken();
+
+        try {
+          const res = await axi.request({
+            ...originalRequest,
+            headers: {
+              ...originalRequest.headers,
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+          return Promise.resolve(res);
+        } catch (e) {
+          return Promise.reject(e);
+        }
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+
     return Promise.reject(error);
   }
 
@@ -98,6 +122,8 @@ export function AxiosProvider({ children }: PropsWithChildren) {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
       placeholderData: keepPreviousData,
     },
   },

@@ -5,6 +5,7 @@ import {
   DataTable,
   DataTableHeader,
   DataTableSkeleton,
+  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -14,8 +15,6 @@ import {
   TableRow,
   Tag,
 } from "@carbon/react";
-// @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
-import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";

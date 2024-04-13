@@ -6,6 +6,7 @@ import {
   Link as CarbonLink,
   DataTable,
   DataTableSkeleton,
+  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -17,12 +18,10 @@ import {
   TableToolbarContent,
   Toggle,
 } from "@carbon/react";
-// @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
-import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
-import { useApi } from "@/api";
+import { api } from "@/api";
 import { HEADERS, ITEMS_PER_PAGE } from "@/constants/ingest-api";
 import { useStore } from "@/context/store";
 
@@ -49,7 +48,6 @@ function IngestTable() {
   const [infoModalErrorMessage, setInfoModalErrorMesage] = useState<string>("");
   const [selectedIngestionLastModified, setSelectedIngestionLastModified] =
     useState<Date>(new Date());
-  const api = useApi();
 
   const {
     apiIngestionSliceActions: { resetApiIngestionState: resetState },

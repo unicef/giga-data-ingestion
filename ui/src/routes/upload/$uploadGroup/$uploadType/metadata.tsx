@@ -21,7 +21,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 
-import { useApi } from "@/api";
+import { api } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import ControlledDatepicker from "@/components/upload/ControlledDatepicker.tsx";
 import ControlledRadioGroup from "@/components/upload/ControlledRadioGroup";
@@ -63,8 +63,6 @@ export const Route = createFileRoute(
 });
 
 function Metadata() {
-  const api = useApi();
-
   const {
     uploadSlice,
     uploadSliceActions: {

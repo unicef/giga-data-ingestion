@@ -20,7 +20,7 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { api, queryClient, useApi } from "@/api";
+import { api, queryClient } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import ToastNotification from "@/components/user-management/ToastNotification.tsx";
 import countries from "@/constants/countries.ts";
@@ -82,7 +82,6 @@ function EditUser() {
     group => group.display_name,
   );
 
-  const api = useApi();
   const [swapModal, setSwapModal] = useState<boolean>(false);
 
   const { data: groupsData } = useQuery({
