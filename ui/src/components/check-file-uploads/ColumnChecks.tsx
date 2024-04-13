@@ -4,7 +4,7 @@ import {
   Button,
   DataTable,
   DataTableHeader,
-  DefinitionTooltip, // @ts-expect-error paginationNav has no typescript declaration yet
+  DefinitionTooltip,
   PaginationNav,
   Table,
   TableBody,

@@ -6,6 +6,7 @@ import {
   ButtonSet,
   DataTable,
   DataTableHeader,
+  Pagination,
   Section,
   Table,
   TableBatchAction,
@@ -20,8 +21,6 @@ import {
   TableSelectRow,
   TableToolbar,
 } from "@carbon/react";
-// @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
-import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
