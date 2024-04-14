@@ -8,7 +8,7 @@
     bearer_auth_bearer_token: XkZLUGpRV3kjJGV5OEgwUA==
     data_key: data
     date_created: '2024-01-13T10:12:16.988126'
-    date_format: data
+    date_format: timestamp
     date_key: results
     date_last_ingested: '2024-01-14T23:05:16.988126'
     date_last_successfully_ingested: '2024-01-15T19:56:16.988126'
@@ -27,7 +27,7 @@
     request_body: '{"school_id": "959f3a51-8cfe-4cd1-ad5d-b79ba2a7ae1f", "country_id":
       "jeCSWbXdTxNonPjpinXI"}'
     request_method: GET
-    response_date_format: result
+    response_date_format: timestamp
     response_date_key: result
     schema_url: https://morris.biz/
     school_id_key: school_id
@@ -47,7 +47,7 @@
     bearer_auth_bearer_token: M2lXMkZEOXFXdyNfciojXg==
     data_key: data
     date_created: '2024-03-07T11:21:57.156169'
-    date_format: results
+    date_format: timestamp
     date_key: data
     date_last_ingested: '2024-03-10T16:31:57.156169'
     date_last_successfully_ingested: '2024-03-11T16:24:57.156169'
@@ -66,7 +66,7 @@
     request_body: '{"school_id": "50806f01-7a1d-456c-b62c-228e40df7c9a", "country_id":
       "fHcaZpFxqdVYYflGYCJI"}'
     request_method: POST
-    response_date_format: results
+    response_date_format: timestamp
     response_date_key: result
     schema_url: https://www.clark.com/
     school_id_key: schoolId
@@ -86,7 +86,7 @@
     bearer_auth_bearer_token: dXVaNEJRdWVDKGY1eDR1aQ==
     data_key: data
     date_created: '2024-02-23T12:59:10.047785'
-    date_format: results
+    date_format: timestamp
     date_key: data
     date_last_ingested: '2024-02-27T12:43:10.047785'
     date_last_successfully_ingested: '2024-02-28T08:50:10.047785'
@@ -105,7 +105,7 @@
     request_body: '{"school_id": "d788c7cc-9ded-44fd-8698-06eaf81f5c80", "country_id":
       "YJeSmSWUuVwGzlwBVIot"}'
     request_method: POST
-    response_date_format: data
+    response_date_format: timestamp
     response_date_key: result
     schema_url: http://www.gonzales.org/
     school_id_key: school_id
@@ -125,7 +125,7 @@
     bearer_auth_bearer_token: SV9Zdmo0aW1XRDdlcVNVYQ==
     data_key: result
     date_created: '2024-03-20T15:25:02.807543'
-    date_format: data
+    date_format: timestamp
     date_key: results
     date_last_ingested: '2024-03-22T06:32:02.807543'
     date_last_successfully_ingested: '2024-03-22T21:29:02.807543'
@@ -144,7 +144,7 @@
     request_body: '{"school_id": "427005f6-ca2e-4611-bbce-c85d2c1ffacc", "country_id":
       "TrlYKRbUGqwNOjGiYxVL"}'
     request_method: GET
-    response_date_format: results
+    response_date_format: timestamp
     response_date_key: result
     schema_url: https://martin.info/
     school_id_key: school_id
@@ -164,7 +164,7 @@
     bearer_auth_bearer_token: Ykc0eFo1Z3YjRFdUUVZFSQ==
     data_key: data
     date_created: '2024-01-18T06:29:36.153546'
-    date_format: results
+    date_format: timestamp
     date_key: result
     date_last_ingested: '2024-01-21T00:05:36.153546'
     date_last_successfully_ingested: '2024-01-22T18:35:36.153546'
@@ -183,7 +183,7 @@
     request_body: '{"school_id": "ce9244cb-6153-4f71-8b69-15c142a305d5", "country_id":
       "gJeRAkVAuUzgQBDREBbY"}'
     request_method: POST
-    response_date_format: result
+    response_date_format: timestamp
     response_date_key: data
     schema_url: https://www.wood.com/
     school_id_key: schoolId
