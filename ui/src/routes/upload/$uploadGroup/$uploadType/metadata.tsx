@@ -18,7 +18,7 @@ import {
   Stack,
 } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
   createFileRoute,
@@ -47,15 +47,21 @@ export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/metadata",
 )({
   component: Metadata,
-  loader: () => {
+  loader: ({ context: { queryClient } }) => {
     const {
       uploadSlice: { file, columnMapping },
       uploadSliceActions: { setStepIndex },
     } = useStore.getState();
+
     if (!file || Object.values(columnMapping).filter(Boolean).length === 0) {
       setStepIndex(1);
       throw redirect({ from: Route.fullPath, to: "../column-mapping" });
     }
+
+    return queryClient.ensureQueryData({
+      queryKey: ["groups"],
+      queryFn: api.groups.list,
+    });
   },
 });
 
@@ -156,7 +162,7 @@ function Metadata() {
     mutationFn: api.uploads.upload,
   });
 
-  const { data: allGroupsQuery, isLoading } = useQuery({
+  const { data: allGroupsQuery, isLoading } = useSuspenseQuery({
     queryKey: ["groups"],
     queryFn: api.groups.list,
   });

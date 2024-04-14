@@ -5,7 +5,7 @@ import {
   UseFormRegisterReturn,
 } from "react-hook-form";
 
-import { SelectItem } from "@carbon/react";
+import { SelectItem, TextInputSkeleton } from "@carbon/react";
 import { z } from "zod";
 
 import { Select } from "@/components/forms/Select.tsx";
@@ -37,14 +37,7 @@ export function CountrySelect({
   errors,
 }: CountrySelectProps) {
   return isLoading ? (
-    <Select
-      disabled
-      id="country"
-      labelText="Loading..."
-      placeholder="Loading..."
-    >
-      <SelectItem text="Loading..." value="" />
-    </Select>
+    <TextInputSkeleton />
   ) : (
     <Select
       id="country"
@@ -66,10 +59,18 @@ interface BaseInputProps {
   formItem: MetadataFormMapping;
   errors: FieldErrors;
   register: UseFormRegisterReturn;
+  loading?: boolean;
 }
 
-export function FreeTextInput({ formItem, errors, register }: BaseInputProps) {
-  return (
+export function FreeTextInput({
+  formItem,
+  errors,
+  register,
+  loading = false,
+}: BaseInputProps) {
+  return loading ? (
+    <TextInputSkeleton />
+  ) : (
     <TextInput
       id={formItem.name}
       labelText={formItem.label}
