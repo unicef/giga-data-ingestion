@@ -54,15 +54,14 @@ function AddIngestion() {
   const {
     control,
     formState,
-    getValues,
     handleSubmit,
     register,
     resetField,
     trigger,
     watch,
   } = useForm<SchoolListFormValues>({
-    mode: "onBlur",
-    reValidateMode: "onBlur",
+    mode: "onChange",
+    reValidateMode: "onChange",
     defaultValues: {
       api_auth_api_key: null,
       api_auth_api_value: null,
@@ -87,17 +86,6 @@ function AddIngestion() {
   const watchRequestMethod = watch("request_method");
 
   const hasError = Object.keys(errors).length > 0;
-  const apiEndpoint = getValues("api_endpoint");
-  const apiKeyName = getValues("api_auth_api_key");
-  const apiKeyValue = getValues("api_auth_api_value");
-  const authorizationType = getValues("authorization_type");
-  const basicAuthPassword = getValues("basic_auth_password");
-  const basicAuthUserName = getValues("basic_auth_username");
-  const bearerAuthBearerToken = getValues("bearer_auth_bearer_token");
-  const dataKey = getValues("data_key");
-  const queryParams = getValues("query_parameters");
-  const requestBody = getValues("request_body");
-  const requestMethod = getValues("request_method");
 
   useEffect(() => {
     resetField("api_auth_api_key");
@@ -152,27 +140,6 @@ function AddIngestion() {
     isUsersRefetching,
   };
 
-  const gettedFormValues = {
-    apiEndpoint,
-    apiKeyName,
-    apiKeyValue,
-    authorizationType,
-    basicAuthPassword,
-    basicAuthUserName,
-    bearerAuthBearerToken,
-    dataKey,
-    queryParams,
-    requestBody,
-    requestMethod,
-  };
-
-  const useFormHookReturnValues = {
-    control,
-    errors,
-    register,
-    trigger,
-  };
-
   if (isUsersLoading) return <IngestFormSkeleton />;
 
   return (
@@ -187,17 +154,17 @@ function AddIngestion() {
         <div className="flex w-full space-x-10 ">
           <section className="flex w-full flex-col gap-4">
             <SchoolListFormInputs
+              control={control}
               errors={errors}
               errorStates={errorStates}
               fetchingStates={fetchingStates}
-              gettedFormValues={gettedFormValues}
               hasError={hasError}
-              useFormHookReturnValues={useFormHookReturnValues}
+              register={register}
+              trigger={trigger}
               users={users}
-              watchAuthType={watchAuthType}
-              watchPaginationType={watchPaginationType}
-              watchRequestMethod={watchRequestMethod}
+              watch={watch}
             />
+
             <ButtonSet className="w-full">
               <Button
                 as={Link}

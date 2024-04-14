@@ -85,8 +85,8 @@ function SchoolConnectivity() {
     defaultValues: {
       ...schoolConnectivityFormDefaultValues,
     },
-    mode: "onBlur",
-    reValidateMode: "onBlur",
+    mode: "onChange",
+    reValidateMode: "onChange",
   });
 
   const { errors, isValid } = formState;
@@ -142,13 +142,6 @@ function SchoolConnectivity() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex w-full space-x-10 ">
           <section className="flex w-full flex-col gap-4">
-            <div
-              onClick={() => {
-                setOpen(true);
-              }}
-            >
-              ENABLE SUBMIT
-            </div>
             <SchoolConnectivityFormInputs
               clearErrors={clearErrors}
               control={control}
@@ -179,11 +172,11 @@ function SchoolConnectivity() {
               <Button
                 className="w-full"
                 disabled={
-                  !isValidResponse ||
+                  !isValid ||
                   !isValidDatakey ||
-                  isResponseError ||
+                  !isValidResponse ||
                   !isValidResponseDateFormat ||
-                  !isValid
+                  isResponseError
                 }
                 isExpressive
                 renderIcon={ArrowRight}

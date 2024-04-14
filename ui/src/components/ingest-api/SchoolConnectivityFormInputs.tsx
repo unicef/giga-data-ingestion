@@ -149,25 +149,6 @@ export function SchoolConnectivityFormInputs({
     }
   };
 
-  const DataKeyTextInput = () => (
-    <TextInput
-      id="data_key"
-      helperText="The key in the JSON response that will contain the data to be ingested"
-      invalid={!!errors.data_key}
-      labelText="Data key"
-      {...register("data_key")}
-    />
-  );
-
-  const SchoolIdKeyTextInput = () => (
-    <TextInput
-      id="school_id_key"
-      invalid={!!errors.school_id_key}
-      labelText="School ID key"
-      {...register("school_id_key", { required: true })}
-    />
-  );
-
   const RequestMethodSelect = () => (
     <Select
       id="request_method"
@@ -183,46 +164,6 @@ export function SchoolConnectivityFormInputs({
         />
       ))}
     </Select>
-  );
-
-  const ApiEndpointTextInput = () => (
-    <div className="flex items-end">
-      <TextInput
-        id="api_endpoint"
-        invalid={!!errors.api_endpoint}
-        labelText="API Endpoint"
-        placeholder="https://example.com/api/ingest"
-        {...register("api_endpoint", { required: true })}
-      />
-      <div className="bottom-px">
-        <TestApiButton
-          apiEndpoint={watch("api_endpoint")}
-          apiKeyName={watch("api_auth_api_key")}
-          apiKeyValue={watch("api_auth_api_value")}
-          authorizationType={watch("authorization_type")}
-          basicAuthPassword={watch("basic_auth_password")}
-          basicAuthUserName={watch("basic_auth_username")}
-          bearerAuthBearerToken={watch("bearer_auth_bearer_token")}
-          dataKey={watch("data_key")}
-          dateFormat={watch("date_format")}
-          queryParams={watch("query_parameters")}
-          requestBody={watch("request_body")}
-          requestMethod={watch("request_method")}
-          responseDateFormat={watch("response_date_format")}
-          responseDateKey={watch("response_date_key")}
-          sendDateIn={watch("send_date_in")}
-          setIsResponseError={setIsResponseError}
-          setIsValidDatakey={setIsValidDataKey}
-          setIsValidResponse={setIsValidResponse}
-          setResponsePreview={setResponsePreview}
-          handleCustomValidation={handleCustomValidation}
-          handleTriggerValidation={() => {
-            trigger();
-            return Object.keys(errors).length;
-          }}
-        />
-      </div>
-    </div>
   );
 
   const AuthTypeSelect = () => (
@@ -257,72 +198,6 @@ export function SchoolConnectivityFormInputs({
         />
       ))}
     </Select>
-  );
-
-  const PaginationLimitOffsetInputs = () => (
-    <>
-      <ControllerNumberInputSchoolConnectivity
-        control={control}
-        name="size"
-        numberInputProps={{
-          id: "size",
-          label: <span>Records per page</span>,
-          min: 0,
-        }}
-      />
-      <TextInput
-        id="page_size_key"
-        invalid={!!errors.page_size_key}
-        labelText="Page size key"
-        placeholder="Input page size key"
-        {...register("page_size_key", { required: true })}
-      />
-      <TextInput
-        id="page_offset_key"
-        invalid={!!errors.page_offset_key}
-        labelText="Page Offset key"
-        placeholder="Input Page Offset key"
-        {...register("page_offset_key", { required: true })}
-      />
-    </>
-  );
-
-  const PaginationPageNumberInputs = () => (
-    <>
-      <ControllerNumberInputSchoolConnectivity
-        control={control}
-        name="size"
-        numberInputProps={{
-          id: "size",
-          label: <span>Records per page</span>,
-          min: 0,
-        }}
-      />
-      <TextInput
-        id="page_size_key"
-        invalid={!!errors.page_size_key}
-        labelText="Page size key"
-        placeholder="Input page size key"
-        {...register("page_size_key", { required: true })}
-      />
-      <TextInput
-        id="page_number_key"
-        invalid={!!errors.page_number_key}
-        labelText="Page number key"
-        placeholder="Input page number key"
-        {...register("page_number_key", { required: true })}
-      />
-
-      <Select
-        id="page_starts_with"
-        invalid={!!errors.page_starts_with}
-        labelText="Page Starts with"
-        {...register("page_starts_with", { required: true })}
-      >
-        <SelectItem key="0" text="0" value={0} />
-        <SelectItem key="1" text="1" value={1} />
-      </Select>
-    </>
   );
 
   const PageSendQueryInSelect = () => (
@@ -403,13 +278,60 @@ export function SchoolConnectivityFormInputs({
     <>
       <section className="flex flex-col gap-6">
         <header className="text-2xl">Ingestion Details</header>
-        <SchoolIdKeyTextInput />
+        <TextInput
+          id="school_id_key"
+          invalid={!!errors.school_id_key}
+          labelText="School ID key"
+          {...register("school_id_key", { required: true })}
+        />
       </section>
       <section className="flex flex-col gap-6">
         <header className="text-2xl">Ingestion Source</header>
-        <DataKeyTextInput />
+        <TextInput
+          id="data_key"
+          helperText="The key in the JSON response that will contain the data to be ingested"
+          invalid={!!errors.data_key}
+          labelText="Data key"
+          {...register("data_key")}
+        />
         <RequestMethodSelect />
-        <ApiEndpointTextInput />
+        <div className="flex items-end">
+          <TextInput
+            id="api_endpoint"
+            invalid={!!errors.api_endpoint}
+            labelText="API Endpoint"
+            placeholder="https://example.com/api/ingest"
+            {...register("api_endpoint", { required: true })}
+          />
+          <div className="bottom-px">
+            <TestApiButton
+              apiEndpoint={watch("api_endpoint")}
+              apiKeyName={watch("api_auth_api_key")}
+              apiKeyValue={watch("api_auth_api_value")}
+              authorizationType={watch("authorization_type")}
+              basicAuthPassword={watch("basic_auth_password")}
+              basicAuthUserName={watch("basic_auth_username")}
+              bearerAuthBearerToken={watch("bearer_auth_bearer_token")}
+              dataKey={watch("data_key")}
+              dateFormat={watch("date_format")}
+              queryParams={watch("query_parameters")}
+              requestBody={watch("request_body")}
+              requestMethod={watch("request_method")}
+              responseDateFormat={watch("response_date_format")}
+              responseDateKey={watch("response_date_key")}
+              sendDateIn={watch("send_date_in")}
+              setIsResponseError={setIsResponseError}
+              setIsValidDatakey={setIsValidDataKey}
+              setIsValidResponse={setIsValidResponse}
+              setResponsePreview={setResponsePreview}
+              handleCustomValidation={handleCustomValidation}
+              handleTriggerValidation={() => {
+                trigger();
+                return Object.keys(errors).length;
+              }}
+            />
+          </div>
+        </div>
         <AuthTypeSelect />
         {watch("authorization_type") === API_KEY && (
           <>
@@ -496,8 +418,8 @@ export function SchoolConnectivityFormInputs({
             }
             invalidText={
               errors.request_body?.type === "required"
-                ? errors.request_body?.message
-                : "Required"
+                ? "Required"
+                : errors.request_body?.message
             }
             labelText="Request body"
             placeholder="Input request body"
@@ -515,10 +437,68 @@ export function SchoolConnectivityFormInputs({
         <header className="text-2xl">Ingestion Parameters</header>
         <PaginationTypeSelect />
         {watch("pagination_type") === PAGE_NUMBER && (
-          <PaginationPageNumberInputs />
+          <>
+            <ControllerNumberInputSchoolConnectivity
+              control={control}
+              name="size"
+              numberInputProps={{
+                id: "size",
+                label: <span>Records per page</span>,
+                min: 0,
+              }}
+            />
+            <TextInput
+              id="page_size_key"
+              invalid={!!errors.page_size_key}
+              labelText="Page size key"
+              placeholder="Input page size key"
+              {...register("page_size_key", { required: true })}
+            />
+            <TextInput
+              id="page_number_key"
+              invalid={!!errors.page_number_key}
+              labelText="Page number key"
+              placeholder="Input page number key"
+              {...register("page_number_key", { required: true })}
+            />
+
+            <Select
+              id="page_starts_with"
+              invalid={!!errors.page_starts_with}
+              labelText="Page Starts with"
+              {...register("page_starts_with", { required: true })}
+            >
+              <SelectItem key="0" text="0" value={0} />
+              <SelectItem key="1" text="1" value={1} />
+            </Select>
+          </>
         )}
         {watch("pagination_type") === LIMIT_OFFSET && (
-          <PaginationLimitOffsetInputs />
+          <>
+            <ControllerNumberInputSchoolConnectivity
+              control={control}
+              name="size"
+              numberInputProps={{
+                id: "size",
+                label: <span>Records per page</span>,
+                min: 0,
+              }}
+            />
+            <TextInput
+              id="page_size_key"
+              invalid={!!errors.page_size_key}
+              labelText="Page size key"
+              placeholder="Input page size key"
+              {...register("page_size_key", { required: true })}
+            />
+            <TextInput
+              id="page_offset_key"
+              invalid={!!errors.page_offset_key}
+              labelText="Page Offset key"
+              placeholder="Input Page Offset key"
+              {...register("page_offset_key", { required: true })}
+            />
+          </>
         )}
         <PageSendQueryInSelect />
         <SchoolIdSendQueryInSelect />
@@ -560,7 +540,11 @@ export function SchoolConnectivityFormInputs({
         <TextInput
           id="response_date_format"
           invalid={!!errors.response_date_format}
-          invalidText="Required"
+          invalidText={
+            errors.response_date_format?.type === "valueError"
+              ? errors.request_body?.message
+              : "Required"
+          }
           labelText="Response date format"
           {...register("response_date_format", { required: true })}
         />
