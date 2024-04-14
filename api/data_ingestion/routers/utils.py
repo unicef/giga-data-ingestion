@@ -1,10 +1,12 @@
 import json
+from datetime import datetime
 from json import JSONDecodeError
 
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
 
 from data_ingestion.schemas.core import B2CPolicyGroupRequest, B2CPolicyGroupResponse
+from data_ingestion.schemas.util import IsValidDateTimeFormat
 
 router = APIRouter(prefix="/api/utils", tags=["utils"])
 
@@ -24,3 +26,15 @@ def parse_group_display_names(body: B2CPolicyGroupRequest):
     out = B2CPolicyGroupResponse(value=ret)
     logger.info(f"{out.model_dump()=}")
     return out
+
+
+@router.post("/is_valid_datetime_format_code")
+def is_valid_datetime_format_code(body: IsValidDateTimeFormat) -> bool:
+    datetime_str = body.datetime_str
+    format_code = body.format_code
+
+    try:
+        datetime.strptime(datetime_str, format_code)
+        return True
+    except ValueError:
+        return False
