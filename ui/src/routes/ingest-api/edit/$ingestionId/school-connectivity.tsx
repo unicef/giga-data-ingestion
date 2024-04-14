@@ -34,8 +34,10 @@ export const Route = createFileRoute(
 function SchoolConnectivity() {
   ``;
   const [isResponseError, setIsResponseError] = useState<boolean>(false);
-  const [isValidDatakey, setIsValidDatakey] = useState<boolean>(false);
+  const [isValidDatakey, setIsValidDataKey] = useState<boolean>(false);
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
+  const [isValidResponseDateFormat, setIsValidResponseDateFormat] =
+    useState<boolean>(false);
   const [open, setOpen] = useState<boolean>(false);
   const [responsePreview, setResponsePreview] = useState<string | string[]>("");
 
@@ -69,14 +71,16 @@ function SchoolConnectivity() {
   } = schoolConnectivityQuery;
 
   const {
+    clearErrors,
     control,
     formState,
-    getValues,
     handleSubmit,
     register,
     resetField,
-    watch,
+    setError,
+    setValue,
     trigger,
+    watch,
   } = useForm<SchoolConnectivityFormValues>({
     defaultValues: {
       ...schoolConnectivityFormDefaultValues,
@@ -85,23 +89,9 @@ function SchoolConnectivity() {
     reValidateMode: "onBlur",
   });
 
-  const { errors } = formState;
+  const { errors, isValid } = formState;
   const watchAuthType = watch("authorization_type");
   const watchPaginationType = watch("pagination_type");
-  const watchRequestMethod = watch("request_method");
-
-  const hasError = Object.keys(errors).length > 0;
-  const authorizationType = getValues("authorization_type");
-  const queryParams = getValues("query_parameters");
-  const requestBody = getValues("request_body");
-  const requestMethod = getValues("request_method");
-  const dataKey = getValues("data_key");
-  const apiKeyName = getValues("api_auth_api_key");
-  const apiKeyValue = getValues("api_auth_api_value");
-  const basicAuthUserName = getValues("basic_auth_username");
-  const basicAuthPassword = getValues("basic_auth_password");
-  const apiEndpoint = getValues("api_endpoint");
-  const bearerAuthBearerToken = getValues("bearer_auth_bearer_token");
 
   useEffect(() => {
     resetField("api_auth_api_key");
@@ -137,32 +127,11 @@ function SchoolConnectivity() {
 
   const errorStates = {
     setIsResponseError,
-    setIsValidDatakey,
+    setIsValidDataKey,
     setIsValidResponse,
     setResponsePreview,
+    setIsValidResponseDateFormat,
   };
-
-  const gettedFormValues = {
-    apiEndpoint,
-    apiKeyName,
-    apiKeyValue,
-    authorizationType,
-    basicAuthPassword,
-    basicAuthUserName,
-    bearerAuthBearerToken,
-    dataKey,
-    queryParams,
-    requestBody,
-    requestMethod,
-  };
-
-  const useFormHookReturnValues = {
-    control,
-    errors,
-    register,
-    trigger,
-  };
-
   return (
     <section className="container py-6">
       <header className="gap-2">
@@ -181,14 +150,16 @@ function SchoolConnectivity() {
               ENABLE SUBMIT
             </div>
             <SchoolConnectivityFormInputs
+              clearErrors={clearErrors}
+              control={control}
+              errors={errors}
               errorStates={errorStates}
-              gettedFormValues={gettedFormValues}
               hasFileUpload={false}
-              hasError={hasError}
-              watchAuthType={watchAuthType}
-              watchPaginationType={watchPaginationType}
-              watchRequestMethod={watchRequestMethod}
-              useFormHookReturnValues={useFormHookReturnValues}
+              register={register}
+              setError={setError}
+              setValue={setValue}
+              trigger={trigger}
+              watch={watch}
             />
             <ButtonSet className="w-full">
               <Button
@@ -208,7 +179,11 @@ function SchoolConnectivity() {
               <Button
                 className="w-full"
                 disabled={
-                  !isValidResponse || !isValidDatakey || isResponseError
+                  !isValidResponse ||
+                  !isValidDatakey ||
+                  isResponseError ||
+                  !isValidResponseDateFormat ||
+                  !isValid
                 }
                 isExpressive
                 renderIcon={ArrowRight}

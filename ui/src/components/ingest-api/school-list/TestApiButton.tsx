@@ -11,7 +11,6 @@ import { AuthorizationTypeEnum, RequestMethodEnum } from "@/types/qos";
 
 interface TestApiButtonProps {
   setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
-  hasError: boolean;
   setIsValidResponse: Dispatch<SetStateAction<boolean>>;
   setIsResponseError: Dispatch<SetStateAction<boolean>>;
   setIsValidDatakey: Dispatch<SetStateAction<boolean>>;
@@ -30,7 +29,6 @@ interface TestApiButtonProps {
 }
 
 const TestApiButton = ({
-  hasError,
   setIsValidResponse,
   setIsResponseError,
   setResponsePreview,
@@ -129,10 +127,6 @@ const TestApiButton = ({
 
   const handleOnClick = async () => {
     handleTriggerValidation();
-
-    if (hasError) {
-      return;
-    }
 
     if (requestMethod === GET && queryParams) {
       const jsonQueryParams = JSON.parse(queryParams);

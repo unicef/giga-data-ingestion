@@ -25,8 +25,10 @@ export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
 
 function SchoolConnectivity() {
   const [isResponseError, setIsResponseError] = useState<boolean>(false);
-  const [isValidDatakey, setIsValidDatakey] = useState<boolean>(false);
+  const [isValidDatakey, setIsValidDataKey] = useState<boolean>(false);
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
+  const [isValidResponseDateFormat, setIsValidResponseDateFormat] =
+    useState<boolean>(false);
   const [open, setOpen] = useState<boolean>(false);
   const [responsePreview, setResponsePreview] = useState<string | string[]>("");
 
@@ -42,11 +44,14 @@ function SchoolConnectivity() {
   const hasUploadedFile = file != null;
 
   const {
+    clearErrors,
     control,
     formState,
     handleSubmit,
     register,
     resetField,
+    setError,
+    setValue,
     trigger,
     watch,
   } = useForm<SchoolConnectivityFormValues>({
@@ -70,7 +75,7 @@ function SchoolConnectivity() {
     reValidateMode: "onChange",
   });
 
-  const { errors } = formState;
+  const { errors, isValid } = formState;
   const watchAuthType = watch("authorization_type");
   const watchPaginationType = watch("pagination_type");
 
@@ -108,8 +113,9 @@ function SchoolConnectivity() {
 
   const errorStates = {
     setIsResponseError,
-    setIsValidDatakey,
+    setIsValidDataKey,
     setIsValidResponse,
+    setIsValidResponseDateFormat,
     setResponsePreview,
   };
 
@@ -124,10 +130,13 @@ function SchoolConnectivity() {
         <div className="flex w-full space-x-10 ">
           <section className="flex w-full flex-col gap-4">
             <SchoolConnectivityFormInputs
+              clearErrors={clearErrors}
               control={control}
               errors={errors}
               errorStates={errorStates}
               register={register}
+              setError={setError}
+              setValue={setValue}
               trigger={trigger}
               watch={watch}
             />
@@ -150,10 +159,12 @@ function SchoolConnectivity() {
               <Button
                 className="w-full"
                 disabled={
-                  !isValidResponse ||
+                  !hasUploadedFile ||
+                  !isValid ||
                   !isValidDatakey ||
-                  isResponseError ||
-                  !hasUploadedFile
+                  !isValidResponse ||
+                  !isValidResponseDateFormat ||
+                  isResponseError
                 }
                 isExpressive
                 renderIcon={ArrowRight}

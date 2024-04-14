@@ -187,15 +187,16 @@ function AddIngestion() {
         <div className="flex w-full space-x-10 ">
           <section className="flex w-full flex-col gap-4">
             <SchoolListFormInputs
+              errors={errors}
               errorStates={errorStates}
               fetchingStates={fetchingStates}
               gettedFormValues={gettedFormValues}
               hasError={hasError}
+              useFormHookReturnValues={useFormHookReturnValues}
               users={users}
               watchAuthType={watchAuthType}
               watchPaginationType={watchPaginationType}
               watchRequestMethod={watchRequestMethod}
-              useFormHookReturnValues={useFormHookReturnValues}
             />
             <ButtonSet className="w-full">
               <Button

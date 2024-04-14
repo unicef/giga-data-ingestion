@@ -2,15 +2,19 @@ import { Dispatch, SetStateAction } from "react";
 import {
   Control,
   FieldErrors,
+  UseFormClearErrors,
   UseFormRegister,
+  UseFormSetError,
+  UseFormSetValue,
   UseFormTrigger,
   UseFormWatch,
 } from "react-hook-form";
 
 import { SelectItem, TextArea, TextInput, Toggle } from "@carbon/react";
+import { useMutation } from "@tanstack/react-query";
 
+import { api } from "@/api";
 import { Select } from "@/components/forms/Select";
-import TestApiButton from "@/components/ingest-api/TestApiButton";
 import UploadFile from "@/components/upload/UploadFile.tsx";
 import { useStore } from "@/context/store";
 import {
@@ -20,22 +24,28 @@ import {
   SchoolConnectivityFormValues,
   SendQueryInEnum,
 } from "@/types/qos";
+import { validateDatetimeFormat } from "@/utils/string";
 
 import ControllerNumberInputSchoolConnectivity from "../upload/ControllerNumberInputSchoolConnectivity";
+import TestApiButton from "./school-connectivity/TestApiButton";
 
 interface ErrorStates {
   setIsResponseError: Dispatch<SetStateAction<boolean>>;
-  setIsValidDatakey: Dispatch<SetStateAction<boolean>>;
+  setIsValidDataKey: Dispatch<SetStateAction<boolean>>;
   setIsValidResponse: Dispatch<SetStateAction<boolean>>;
   setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
+  setIsValidResponseDateFormat: Dispatch<SetStateAction<boolean>>;
 }
 
 interface SchoolConnectivityFormInputsProps {
+  clearErrors: UseFormClearErrors<SchoolConnectivityFormValues>;
   control: Control<SchoolConnectivityFormValues>;
   errors: FieldErrors<SchoolConnectivityFormValues>;
   errorStates: ErrorStates;
   hasFileUpload?: boolean;
   register: UseFormRegister<SchoolConnectivityFormValues>;
+  setError: UseFormSetError<SchoolConnectivityFormValues>;
+  setValue: UseFormSetValue<SchoolConnectivityFormValues>;
   trigger: UseFormTrigger<SchoolConnectivityFormValues>;
   watch: UseFormWatch<SchoolConnectivityFormValues>;
 }
@@ -45,27 +55,99 @@ const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
 const { POST } = RequestMethodEnum;
 
 export function SchoolConnectivityFormInputs({
-  errorStates,
-  watch,
+  clearErrors,
   control,
   errors,
+  errorStates,
   register,
+  setError,
+  setValue,
   trigger,
+  watch,
   hasFileUpload = true,
 }: SchoolConnectivityFormInputsProps) {
   const {
     setIsResponseError,
-    setIsValidDatakey,
+    setIsValidDataKey,
     setIsValidResponse,
     setResponsePreview,
+    setIsValidResponseDateFormat,
   } = errorStates;
-
-  const hasError = Object.keys(errors).length > 0;
 
   const {
     apiIngestionSlice: { file },
     apiIngestionSliceActions: { setFile },
   } = useStore();
+
+  const { mutateAsync: isValidDatetimeFormatCodeRequest } = useMutation({
+    mutationKey: ["is_valid_datetime_format_code"],
+    mutationFn: api.utils.isValidDateTimeFormatCodeRequest,
+  });
+
+  const handleValidateIsValidJson = (value: string | null) => {
+    if (!value) return false;
+
+    try {
+      JSON.parse(value);
+      return true;
+    } catch (e) {
+      if (e instanceof Error) {
+        return e.message;
+      } else {
+        return "An unexpected error occured during JSON parsing.";
+      }
+    }
+  };
+
+  const handleIsValidDateFormat = (value: string | null) => {
+    if (watch("date_key") === "") return true;
+    if (!value)
+      return 'Can only accept valid python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or "timestamp" or "ISO8601" string constant';
+
+    if (value === "timestamp" || value === "ISO8601") return true;
+    else if (validateDatetimeFormat(value)) return true;
+    else
+      return 'Can only accept valid python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or "timestamp" or "ISO8601" string constant';
+  };
+
+  const handleDateKeyOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    if (value === "") {
+      clearErrors("date_format");
+      setValue("date_format", "");
+      setValue("send_date_in", SendQueryInEnum.NONE);
+    }
+
+    if (value !== "") {
+      if (watch("send_date_in") === SendQueryInEnum.NONE) {
+        setValue("send_date_in", SendQueryInEnum.BODY);
+      }
+    }
+  };
+
+  // eslint-disable-next-line
+  const handleCustomValidation = async (responseData: any) => {
+    const responseDateKeyValue =
+      responseData[0][watch("response_date_key") ?? ""];
+
+    const isValid = await isValidDatetimeFormatCodeRequest({
+      datetime_str: responseDateKeyValue,
+      format_code: watch("response_date_format") ?? "",
+    });
+
+    if (isValid.data) {
+      setIsValidResponseDateFormat(true);
+    } else {
+      setIsValidResponseDateFormat(false);
+      setError("response_date_format", {
+        type: "valueError",
+        message: `value in ${watch(
+          "response_date_key",
+        )} does not match response date format`,
+      });
+    }
+  };
 
   const DataKeyTextInput = () => (
     <TextInput
@@ -122,15 +204,22 @@ export function SchoolConnectivityFormInputs({
           basicAuthUserName={watch("basic_auth_username")}
           bearerAuthBearerToken={watch("bearer_auth_bearer_token")}
           dataKey={watch("data_key")}
-          requestBody={watch("request_body")}
+          dateFormat={watch("date_format")}
           queryParams={watch("query_parameters")}
+          requestBody={watch("request_body")}
           requestMethod={watch("request_method")}
-          hasError={hasError}
-          handleTriggerValidation={() => trigger()}
+          responseDateFormat={watch("response_date_format")}
+          responseDateKey={watch("response_date_key")}
+          sendDateIn={watch("send_date_in")}
           setIsResponseError={setIsResponseError}
-          setIsValidDatakey={setIsValidDatakey}
+          setIsValidDatakey={setIsValidDataKey}
           setIsValidResponse={setIsValidResponse}
           setResponsePreview={setResponsePreview}
+          handleCustomValidation={handleCustomValidation}
+          handleTriggerValidation={() => {
+            trigger();
+            return Object.keys(errors).length;
+          }}
         />
       </div>
     </div>
@@ -291,99 +380,24 @@ export function SchoolConnectivityFormInputs({
     />
   );
 
-  // const DateKeyInput = () => (
-  //   <TextInput
-  //     id="date_key"
-  //     invalid={!!errors.date_key}
-  //     labelText="OLDDATEKEYDate key"
-  //     {...register("date_key")}
-  //   />
-  // );
-
-  // const DateFormatInput = () => {
-  //   const message =
-  //     "Can only accept valid python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or timestamp or ISO8601 string constant";
-  //   return (
-  //     <TextInput
-  //       disabled={dateKeyIsEmpty}
-  //       helperText={message}
-  //       id="date_format"
-  //       invalid={!!errors.date_format}
-  //       invalidText={message}
-  //       labelText="Date Format"
-  //       {...register("date_format", {
-  //         validate: value => {
-  //           // if (value === null) return false;
-
-  //           // if (value === "timestamp" || value === "ISO8601") return true;
-  //           // else if (validateDatetimeFormat(value)) return true;
-  //           // else return false;
-  //           console.log("HEllo world");
-  //           console.log(value);
-  //           if (value === null || value === "")
-  //             if (dateKey === null || dateKey === "") return true;
-  //             else {
-  //               return false;
-  //             }
-  //         },
-  //       })}
-  //     />
-  //   );
-  // };
-
-  // const SendDateInSelect = () => (
-  //   <Select
-  //     id="send_date_in"
-  //     disabled={dateKeyIsEmpty}
-  //     invalid={!!errors.page_send_query_in}
-  //     labelText="Send date in"
-  //     {...register("send_date_in", { required: true })}
-  //   >
-  //     {Object.keys(SendQueryInEnum)
-  //       .filter(val => val !== SendQueryInEnum.NONE)
-  //       .map(send_query_in => (
-  //         <SelectItem
-  //           key={send_query_in}
-  //           text={send_query_in.replace(/_/g, " ")}
-  //           value={send_query_in}
-  //         />
-  //       ))}
-  //   </Select>
-  // );
-  // const ResponseDateKeyInput = () => (
-  //   <TextInput
-  //     id="response_date_key"
-  //     invalid={!!errors.response_date_key}
-  //     invalidText="Required"
-  //     labelText="Response date key"
-  //     {...register("response_date_key", { required: true })}
-  //   />
-  // );
-  // const ResponseDateFormatInput = () => (
-  //   <TextInput
-  //     id="response_date_format"
-  //     invalid={!!errors.response_date_format}
-  //     invalidText="Required"
-  //     labelText="Response date format"
-  //     {...register("response_date_format", { required: true })}
-  //   />
-  // );
-
-  const handleValidateIsValidJson = (value: string | null) => {
-    if (!value) return false;
-
-    try {
-      JSON.parse(value);
-      return true;
-    } catch (e) {
-      if (e instanceof Error) {
-        console.log("setting error");
-        return e.message;
-      } else {
-        return "An unexpected error occured during JSON parsing.";
-      }
-    }
-  };
+  const SendDateInSelect = () => (
+    <Select
+      id="send_date_in"
+      disabled={watch("date_key") === ""}
+      invalid={!!errors.send_date_in}
+      labelText="Send date in"
+      {...register("send_date_in", { required: true })}
+    >
+      {Object.keys(SendQueryInEnum).map(send_query_in => (
+        <SelectItem
+          disabled={send_query_in === SendQueryInEnum.NONE}
+          key={send_query_in}
+          text={send_query_in.replace(/_/g, " ")}
+          value={send_query_in}
+        />
+      ))}
+    </Select>
+  );
 
   return (
     <>
@@ -482,8 +496,8 @@ export function SchoolConnectivityFormInputs({
             }
             invalidText={
               errors.request_body?.type === "required"
-                ? 'Use empty object "{}" for empty request body parameters'
-                : errors.request_body?.message
+                ? errors.request_body?.message
+                : "Required"
             }
             labelText="Request body"
             placeholder="Input request body"
@@ -508,6 +522,48 @@ export function SchoolConnectivityFormInputs({
         )}
         <PageSendQueryInSelect />
         <SchoolIdSendQueryInSelect />
+        <TextInput
+          id="date_key"
+          invalid={!!errors.date_key}
+          labelText="Date key"
+          {...register("date_key", {
+            onChange: handleDateKeyOnChange,
+          })}
+        />
+        <TextInput
+          disabled={watch("date_key") === ""}
+          helperText={
+            "Can only accept valid python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or timestamp or ISO8601 string constant"
+          }
+          id="date_format"
+          invalid={!!errors.date_format}
+          invalidText={errors.date_format?.message}
+          labelText="Date Format"
+          {...register("date_format", {
+            validate: {
+              isValidDateFormat: handleIsValidDateFormat,
+            },
+          })}
+        />
+        {watch("date_key") !== "" && <SendDateInSelect />}
+        <TextInput
+          id="response_date_key"
+          invalid={!!errors.response_date_key}
+          invalidText={
+            errors.request_body?.type === "valueError"
+              ? 'Use empty object "{}" for empty request body parameters'
+              : errors.request_body?.message
+          }
+          labelText="Response date key"
+          {...register("response_date_key", { required: true })}
+        />
+        <TextInput
+          id="response_date_format"
+          invalid={!!errors.response_date_format}
+          invalidText="Required"
+          labelText="Response date format"
+          {...register("response_date_format", { required: true })}
+        />
         <FrequencySelect />
         {hasFileUpload && (
           <>

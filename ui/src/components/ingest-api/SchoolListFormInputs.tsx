@@ -9,7 +9,6 @@ import {
 import { SelectItem, TextArea, TextInput } from "@carbon/react";
 
 import { Select } from "@/components/forms/Select";
-import TestApiButton from "@/components/ingest-api/TestApiButton";
 import ControllerNumberInputSchoolList from "@/components/upload/ControllerNumberInputSchoolList";
 import {
   AuthorizationTypeEnum,
@@ -19,6 +18,8 @@ import {
   SendQueryInEnum,
 } from "@/types/qos";
 import { GraphUser } from "@/types/user";
+
+import TestApiButton from "./school-list/TestApiButton";
 
 interface ErrorStates {
   setIsResponseError: Dispatch<SetStateAction<boolean>>;
@@ -48,21 +49,21 @@ interface GetValuesProps {
 
 interface UseFormHookReturnValues {
   control: Control<SchoolListFormValues>;
-  errors: FieldErrors<SchoolListFormValues>;
   register: UseFormRegister<SchoolListFormValues>;
   trigger: UseFormTrigger<SchoolListFormValues>;
 }
 
 interface SchoolListFormInputsProps {
+  errors: FieldErrors<SchoolListFormValues>;
   errorStates: ErrorStates;
   fetchingStates: FetchingStates;
   gettedFormValues: GetValuesProps;
   hasError: boolean;
+  useFormHookReturnValues: UseFormHookReturnValues;
   users: GraphUser[];
   watchAuthType: AuthorizationTypeEnum;
   watchPaginationType: PaginationTypeEnum;
   watchRequestMethod: RequestMethodEnum;
-  useFormHookReturnValues: UseFormHookReturnValues;
 }
 
 const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
@@ -70,15 +71,15 @@ const { LIMIT_OFFSET, PAGE_NUMBER } = PaginationTypeEnum;
 const { POST } = RequestMethodEnum;
 
 export function SchoolListFormInputs({
+  errors,
   errorStates,
   fetchingStates,
   gettedFormValues,
-  hasError,
+  useFormHookReturnValues,
   users,
   watchAuthType,
   watchPaginationType,
   watchRequestMethod,
-  useFormHookReturnValues,
 }: SchoolListFormInputsProps) {
   const [queryParameterError, setQueryParameterError] = useState<string>("");
   const [requestBodyError, setRequestBodyError] = useState<string>("");
@@ -106,7 +107,7 @@ export function SchoolListFormInputs({
     requestMethod,
   } = gettedFormValues;
 
-  const { control, errors, register, trigger } = useFormHookReturnValues;
+  const { control, register, trigger } = useFormHookReturnValues;
 
   const NameTextInput = () => (
     <TextInput
@@ -187,14 +188,13 @@ export function SchoolListFormInputs({
         <div className="bottom-px">
           <TestApiButton
             apiEndpoint={apiEndpoint}
-            authorizationType={authorizationType}
             apiKeyName={apiKeyName}
             apiKeyValue={apiKeyValue}
+            authorizationType={authorizationType}
             basicAuthPassword={basicAuthPassword}
             basicAuthUserName={basicAuthUserName}
             bearerAuthBearerToken={bearerAuthBearerToken}
             dataKey={dataKey}
-            hasError={hasError}
             queryParams={queryParams}
             requestBody={requestBody}
             requestMethod={requestMethod}
@@ -202,7 +202,10 @@ export function SchoolListFormInputs({
             setIsValidDatakey={setIsValidDatakey}
             setIsValidResponse={setIsValidResponse}
             setResponsePreview={setResponsePreview}
-            handleTriggerValidation={() => trigger()}
+            handleTriggerValidation={() => {
+              trigger();
+              return Object.keys(errors).length;
+            }}
           />
         </div>
       </div>
