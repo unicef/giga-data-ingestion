@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { Column, Grid, Stack } from "@carbon/react";
+import { Stack } from "@carbon/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { uploadsQueryOptions } from "@/api/queryOptions.ts";
@@ -38,23 +38,27 @@ function Index() {
     page: number;
     pageSize: number;
   }) {
-    void navigate({ to: ".", search: () => ({ page, page_size: pageSize }) });
+    void navigate({
+      to: ".",
+      search: () => ({
+        page,
+        page_size: pageSize,
+      }),
+    });
   }
 
   return (
     <AuthenticatedRBACView>
-      <Grid>
-        <Column lg={16} className="py-6">
-          <Stack gap={6}>
-            <UploadBreadcrumbs />
-            <UploadLanding
-              page={page}
-              pageSize={page_size}
-              handlePaginationChange={handlePaginationChange}
-            />
-          </Stack>
-        </Column>
-      </Grid>
+      <div className="container py-6">
+        <Stack gap={6}>
+          <UploadBreadcrumbs />
+          <UploadLanding
+            page={page}
+            pageSize={page_size}
+            handlePaginationChange={handlePaginationChange}
+          />
+        </Stack>
+      </div>
     </AuthenticatedRBACView>
   );
 }

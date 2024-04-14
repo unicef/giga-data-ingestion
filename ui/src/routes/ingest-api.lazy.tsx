@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-import { Column, Grid, Stack } from "@carbon/react";
+import { Stack } from "@carbon/react";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
@@ -23,14 +23,12 @@ function IngestApiLayout() {
 
   return (
     <AuthenticatedRBACView>
-      <Grid>
-        <Column lg={16} className="py-6">
-          <Stack gap={6}>
-            {/* TODO: Ingest Breadcrumbs */}
-            <Outlet />
-          </Stack>
-        </Column>
-      </Grid>
+      <div className="container py-6">
+        <Stack gap={6}>
+          {/* TODO: Ingest Breadcrumbs */}
+          <Outlet />
+        </Stack>
+      </div>
     </AuthenticatedRBACView>
   );
 }
