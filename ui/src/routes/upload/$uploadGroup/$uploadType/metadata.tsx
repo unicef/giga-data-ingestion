@@ -21,7 +21,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Link,
-  createFileRoute, // redirect,
+  createFileRoute,
+  redirect,
   useNavigate,
 } from "@tanstack/react-router";
 
@@ -53,8 +54,7 @@ export const Route = createFileRoute(
     } = useStore.getState();
     if (!file || Object.values(columnMapping).filter(Boolean).length === 0) {
       setStepIndex(1);
-      // TODO: Put this back
-      // throw redirect({ from: Route.fullPath, to: "../column-mapping" });
+      throw redirect({ from: Route.fullPath, to: "../column-mapping" });
     }
   },
 });
