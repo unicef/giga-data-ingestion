@@ -1,4 +1,6 @@
 import { parse } from "papaparse";
+import * as XLSX from "xlsx";
+import { utils as xlsxUtils } from "xlsx";
 
 import { AcceptedFileTypes } from "@/constants/upload.ts";
 import { MetaSchema } from "@/types/schema.ts";
@@ -23,9 +25,15 @@ export class HeaderDetector {
   public detect() {
     switch (this.options.type) {
       case AcceptedFileTypes.CSV:
-        return this.csv();
+        this.csv();
+        return;
       case AcceptedFileTypes.JSON:
-        return this.json();
+        this.json();
+        return;
+      case AcceptedFileTypes.EXCEL:
+      case AcceptedFileTypes.EXCEL_LEGACY:
+        this.excel();
+        return;
       default:
       // do nothing
     }
@@ -35,6 +43,7 @@ export class HeaderDetector {
     const { options } = this;
 
     options.setDetectedColumns(detectedColumns);
+    console.log("Detected columns:", detectedColumns);
 
     if (options.schema) {
       const autoColumnMapping: Record<string, string> = {};
@@ -69,6 +78,7 @@ export class HeaderDetector {
   private json() {
     const { options } = this;
 
+    // TODO: Use alternative streaming implementation to avoid loading the entire file into memory
     const reader = new FileReader();
 
     reader.onload = e => {
@@ -80,24 +90,58 @@ export class HeaderDetector {
         if (!Array.isArray(data)) {
           const message = "JSON top-level entity is not an array";
           options.setError(message);
-          throw new Error(message);
+          return;
         }
         if (data.length === 0) {
           const message = "Data is empty";
           options.setError(message);
-          throw new Error(message);
+          return;
         }
 
         const detectedColumns = Object.keys(data[0]);
         this.commonProcess(detectedColumns);
       } catch (e) {
         console.error(e);
-        options.setError(String(e));
+        options.setError("A parsing error occurred. Please try again.");
       }
     };
 
     reader.onerror = console.error;
 
     reader.readAsText(options.file);
+  }
+
+  private excel() {
+    const { options } = this;
+    let workbook: XLSX.WorkBook;
+
+    options.file
+      .arrayBuffer()
+      .then(buf => {
+        try {
+          workbook = XLSX.read(buf);
+        } catch (e) {
+          options.setError("A parsing error occurred. Please try again.");
+          console.error(e);
+          return;
+        }
+
+        const firstSheet = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[firstSheet];
+        const data = xlsxUtils.sheet_to_json(sheet);
+        if (data.length === 0) {
+          options.setError("First sheet is empty");
+          return;
+        }
+
+        const detectedColumns = Object.keys(
+          data[0] as Record<string, unknown>[],
+        );
+        this.commonProcess(detectedColumns);
+      })
+      .catch(e => {
+        console.error(e);
+        options.setError("A parsing error occurred. Please try again.");
+      });
   }
 }

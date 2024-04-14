@@ -26,7 +26,9 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
 
 const validTypes = {
   "text/csv": AcceptedFileTypes.CSV,
-  "application/json": AcceptedFileTypes.JSON,
+  "application/vnd.ms-excel": AcceptedFileTypes.EXCEL_LEGACY,
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+    AcceptedFileTypes.EXCEL,
 };
 
 export default function Index() {
