@@ -229,13 +229,13 @@ function Metadata() {
         </p>
 
         <Form className="" onSubmit={handleSubmit(onSubmit)}>
-          <Stack gap={5}>
+          <Stack gap={8}>
             {Object.entries(metadataMapping).map(([group, formItems]) => (
               <Stack gap={5} key={group}>
                 <Section>
                   <Heading>{group}</Heading>
                   <FormGroup legendText="">
-                    <Stack gap={5}>
+                    <Stack gap={6}>
                       {formItems.map(formItem =>
                         formItem.name === "country" ? (
                           <CountrySelect

@@ -1,6 +1,7 @@
 import { ComponentProps, PropsWithChildren } from "react";
 
 import {
+  FileUploaderDropContainer as CarbonFileUploaderDropContainer,
   HeaderName as CarbonHeaderName,
   HeaderNavigation as CarbonHeaderNavigation,
 } from "@carbon/react";
@@ -22,4 +23,14 @@ export function HeaderNavigation({
   ...props
 }: HeaderNavigationProps) {
   return <CarbonHeaderNavigation {...props}>{children}</CarbonHeaderNavigation>;
+}
+
+type FileUploaderDropContainerProps = Partial<
+  ComponentProps<typeof CarbonFileUploaderDropContainer>
+>;
+
+export function FileUploaderDropContainer(
+  props: FileUploaderDropContainerProps,
+) {
+  return <CarbonFileUploaderDropContainer {...props} />;
 }

@@ -9,31 +9,31 @@ const unicefFoundingYear = 1945;
 
 const modalityCollectionOptions = [
   "",
-  "online",
-  "phone",
-  "written",
-  "in-person",
-  "others",
-  "unknown",
+  "Online",
+  "Phone",
+  "Written",
+  "In-person",
+  "Others",
+  "Unknown",
 ] as const;
 
 const frequencyCollectionOptions = [
   "",
-  "more than once a year",
-  "once a year",
-  "every two years",
-  "in more than two years",
+  "More than once a year",
+  "Once a year",
+  "Every two years",
+  "In more than two years",
 ] as const;
 
 const schoolIdTypeOptions = [
   "",
   "EMIS",
-  "examination code",
-  "others",
-  "unknown",
+  "Examination code",
+  "Others",
+  "Unknown",
 ] as const;
 
-const yesNoUnknownOptions = ["", "yes", "no", "unknown"] as const;
+const yesNoUnknownOptions = ["", "Yes", "No", "Unknown"] as const;
 
 const requiredFieldErrorMessage = "This field is required";
 
@@ -45,6 +45,15 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
       name: "country",
       label: "Country",
       helperText: "",
+      type: "text",
+      required: true,
+      validator: z.string().min(1, { message: requiredFieldErrorMessage }),
+    },
+    {
+      name: "description",
+      label: "Description",
+      helperText:
+        "Description of the upload (e.g. change notes, additional context)",
       type: "text",
       required: true,
       validator: z.string().min(1, { message: requiredFieldErrorMessage }),
