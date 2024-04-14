@@ -44,12 +44,11 @@ function SchoolConnectivity() {
   const {
     control,
     formState,
-    getValues,
     handleSubmit,
     register,
     resetField,
-    watch,
     trigger,
+    watch,
   } = useForm<SchoolConnectivityFormValues>({
     defaultValues: {
       api_auth_api_key: null,
@@ -67,27 +66,13 @@ function SchoolConnectivity() {
       request_body: "",
       size: null,
     },
-    mode: "onBlur",
-    reValidateMode: "onBlur",
+    mode: "onChange",
+    reValidateMode: "onChange",
   });
 
   const { errors } = formState;
   const watchAuthType = watch("authorization_type");
   const watchPaginationType = watch("pagination_type");
-  const watchRequestMethod = watch("request_method");
-
-  const hasError = Object.keys(errors).length > 0;
-  const authorizationType = getValues("authorization_type");
-  const queryParams = getValues("query_parameters");
-  const requestBody = getValues("request_body");
-  const requestMethod = getValues("request_method");
-  const dataKey = getValues("data_key");
-  const apiKeyName = getValues("api_auth_api_key");
-  const apiKeyValue = getValues("api_auth_api_value");
-  const basicAuthUserName = getValues("basic_auth_username");
-  const basicAuthPassword = getValues("basic_auth_password");
-  const apiEndpoint = getValues("api_endpoint");
-  const bearerAuthBearerToken = getValues("bearer_auth_bearer_token");
 
   useEffect(() => {
     resetField("api_auth_api_key");
@@ -114,6 +99,7 @@ function SchoolConnectivity() {
       // form has errors, don't submit
       return;
     }
+    resetSchoolConnectivityFormValues();
     setSchoolConnectivityFormValues(data);
     setOpen(true);
   };
@@ -127,27 +113,6 @@ function SchoolConnectivity() {
     setResponsePreview,
   };
 
-  const gettedFormValues = {
-    apiEndpoint,
-    apiKeyName,
-    apiKeyValue,
-    authorizationType,
-    basicAuthPassword,
-    basicAuthUserName,
-    bearerAuthBearerToken,
-    dataKey,
-    queryParams,
-    requestBody,
-    requestMethod,
-  };
-
-  const useFormHookReturnValues = {
-    control,
-    errors,
-    register,
-    trigger,
-  };
-
   return (
     <Section className="container py-6">
       <header className="gap-2">
@@ -159,14 +124,14 @@ function SchoolConnectivity() {
         <div className="flex w-full space-x-10 ">
           <section className="flex w-full flex-col gap-4">
             <SchoolConnectivityFormInputs
+              control={control}
+              errors={errors}
               errorStates={errorStates}
-              gettedFormValues={gettedFormValues}
-              hasError={hasError}
-              watchAuthType={watchAuthType}
-              watchPaginationType={watchPaginationType}
-              watchRequestMethod={watchRequestMethod}
-              useFormHookReturnValues={useFormHookReturnValues}
+              register={register}
+              trigger={trigger}
+              watch={watch}
             />
+
             <ButtonSet className="w-full">
               <Button
                 as={Link}

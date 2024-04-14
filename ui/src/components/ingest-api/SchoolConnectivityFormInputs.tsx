@@ -1,9 +1,10 @@
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 import {
   Control,
   FieldErrors,
   UseFormRegister,
   UseFormTrigger,
+  UseFormWatch,
 } from "react-hook-form";
 
 import { SelectItem, TextArea, TextInput, Toggle } from "@carbon/react";
@@ -29,36 +30,14 @@ interface ErrorStates {
   setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
 }
 
-interface GetValuesProps {
-  apiEndpoint: string;
-  apiKeyName: string | null;
-  apiKeyValue: string | null;
-  authorizationType: AuthorizationTypeEnum;
-  basicAuthPassword: string | null;
-  basicAuthUserName: string | null;
-  bearerAuthBearerToken: string | null;
-  dataKey: string;
-  queryParams: string | null;
-  requestBody: string | null;
-  requestMethod: RequestMethodEnum;
-}
-
-interface UseFormHookReturnValues {
+interface SchoolConnectivityFormInputsProps {
   control: Control<SchoolConnectivityFormValues>;
   errors: FieldErrors<SchoolConnectivityFormValues>;
+  errorStates: ErrorStates;
+  hasFileUpload?: boolean;
   register: UseFormRegister<SchoolConnectivityFormValues>;
   trigger: UseFormTrigger<SchoolConnectivityFormValues>;
-}
-
-interface SchoolConnectivityFormInputsProps {
-  errorStates: ErrorStates;
-  gettedFormValues: GetValuesProps;
-  hasError: boolean;
-  watchAuthType: AuthorizationTypeEnum;
-  watchPaginationType: PaginationTypeEnum;
-  watchRequestMethod: RequestMethodEnum;
-  useFormHookReturnValues: UseFormHookReturnValues;
-  hasFileUpload?: boolean;
+  watch: UseFormWatch<SchoolConnectivityFormValues>;
 }
 
 const { API_KEY, BASIC_AUTH, BEARER_TOKEN } = AuthorizationTypeEnum;
@@ -67,17 +46,13 @@ const { POST } = RequestMethodEnum;
 
 export function SchoolConnectivityFormInputs({
   errorStates,
-  gettedFormValues,
-  hasError,
-  watchAuthType,
-  watchPaginationType,
-  watchRequestMethod,
-  useFormHookReturnValues,
+  watch,
+  control,
+  errors,
+  register,
+  trigger,
   hasFileUpload = true,
 }: SchoolConnectivityFormInputsProps) {
-  const [queryParameterError, setQueryParameterError] = useState<string>("");
-  const [requestBodyError, setRequestBodyError] = useState<string>("");
-
   const {
     setIsResponseError,
     setIsValidDatakey,
@@ -85,21 +60,7 @@ export function SchoolConnectivityFormInputs({
     setResponsePreview,
   } = errorStates;
 
-  const {
-    apiEndpoint,
-    apiKeyName,
-    apiKeyValue,
-    authorizationType,
-    basicAuthPassword,
-    basicAuthUserName,
-    bearerAuthBearerToken,
-    dataKey,
-    queryParams,
-    requestBody,
-    requestMethod,
-  } = gettedFormValues;
-
-  const { control, errors, register, trigger } = useFormHookReturnValues;
+  const hasError = Object.keys(errors).length > 0;
 
   const {
     apiIngestionSlice: { file },
@@ -153,23 +114,23 @@ export function SchoolConnectivityFormInputs({
       />
       <div className="bottom-px">
         <TestApiButton
-          apiEndpoint={apiEndpoint}
-          authorizationType={authorizationType}
-          apiKeyName={apiKeyName}
-          apiKeyValue={apiKeyValue}
-          basicAuthPassword={basicAuthPassword}
-          basicAuthUserName={basicAuthUserName}
-          bearerAuthBearerToken={bearerAuthBearerToken}
-          dataKey={dataKey}
+          apiEndpoint={watch("api_endpoint")}
+          apiKeyName={watch("api_auth_api_key")}
+          apiKeyValue={watch("api_auth_api_value")}
+          authorizationType={watch("authorization_type")}
+          basicAuthPassword={watch("basic_auth_password")}
+          basicAuthUserName={watch("basic_auth_username")}
+          bearerAuthBearerToken={watch("bearer_auth_bearer_token")}
+          dataKey={watch("data_key")}
+          requestBody={watch("request_body")}
+          queryParams={watch("query_parameters")}
+          requestMethod={watch("request_method")}
           hasError={hasError}
-          queryParams={queryParams}
-          requestBody={requestBody}
-          requestMethod={requestMethod}
+          handleTriggerValidation={() => trigger()}
           setIsResponseError={setIsResponseError}
           setIsValidDatakey={setIsValidDatakey}
           setIsValidResponse={setIsValidResponse}
           setResponsePreview={setResponsePreview}
-          handleTriggerValidation={() => trigger()}
         />
       </div>
     </div>
@@ -190,67 +151,6 @@ export function SchoolConnectivityFormInputs({
         />
       ))}
     </Select>
-  );
-
-  const AuthApiKeyInputs = () => (
-    <>
-      <TextInput
-        id="api_auth_api_key"
-        invalid={!!errors.api_auth_api_key}
-        labelText="api response key"
-        placeholder="Input Authentication Credentials"
-        {...register("api_auth_api_key", { required: true })}
-      />
-      {/*
-      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="api_auth_api_value"
-        invalid={!!errors.api_auth_api_value}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("api_auth_api_value", { required: true })}
-      />
-    </>
-  );
-
-  const AuthBasicInputs = () => (
-    <>
-      <TextInput
-        id="basic_auth_username"
-        invalid={!!errors.basic_auth_username}
-        labelText="api response key"
-        placeholder="Input Authentication Credentials"
-        {...register("basic_auth_username", { required: true })}
-      />
-      {/*
-      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="basic_auth_password"
-        invalid={!!errors.basic_auth_password}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("basic_auth_password", { required: true })}
-      />
-    </>
-  );
-
-  const AuthBearerInputs = () => (
-    <>
-      {/*
-      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
-      <TextInput.PasswordInput
-        autoComplete="on"
-        id="bearer_auth_bearer_token"
-        invalid={!!errors.bearer_auth_bearer_token}
-        labelText="Authentication Credentials"
-        placeholder="Input Authentication Credentials"
-        {...register("bearer_auth_bearer_token", {
-          required: true,
-        })}
-      />
-    </>
   );
 
   const PaginationTypeSelect = () => (
@@ -370,75 +270,6 @@ export function SchoolConnectivityFormInputs({
     </Select>
   );
 
-  const SendQueryInQueryParametersInputs = () => (
-    <TextArea
-      id="query_parameters"
-      invalid={
-        errors.query_parameters?.type === "required" ||
-        errors.query_parameters?.type === "validate"
-      }
-      invalidText={queryParameterError}
-      labelText="Query parameters"
-      placeholder="Input query parameters"
-      {...register("query_parameters", {
-        required: true,
-        validate: value => {
-          if (!value) return true;
-
-          try {
-            JSON.parse(value);
-            return true;
-          } catch (e) {
-            if (e instanceof Error) {
-              setQueryParameterError(e.message);
-            } else {
-              setQueryParameterError(
-                "An unexpected error occured during JSON parsing.",
-              );
-            }
-
-            return false;
-          }
-        },
-      })}
-    />
-  );
-
-  const SendQueryInBodyInputs = () => (
-    <TextArea
-      id="request_body"
-      invalid={
-        errors.request_body?.type === "required" ||
-        errors.request_body?.type === "validate"
-      }
-      invalidText={requestBodyError}
-      labelText="Request body"
-      placeholder="Input request body"
-      rows={10}
-      {...register("request_body", {
-        required: true,
-        validate: value => {
-          if (!value) return true;
-
-          try {
-            JSON.parse(value);
-            return true;
-          } catch (e) {
-            if (e instanceof Error) {
-              setRequestBodyError(e.message);
-            } else {
-              setRequestBodyError(
-                "An unexpected error occurred during JSON parsing.",
-              );
-            }
-
-            return false;
-          }
-        },
-      })}
-    />
-  );
-
   const FrequencySelect = () => (
     <ControllerNumberInputSchoolConnectivity
       control={control}
@@ -538,6 +369,22 @@ export function SchoolConnectivityFormInputs({
   //   />
   // );
 
+  const handleValidateIsValidJson = (value: string | null) => {
+    if (!value) return false;
+
+    try {
+      JSON.parse(value);
+      return true;
+    } catch (e) {
+      if (e instanceof Error) {
+        console.log("setting error");
+        return e.message;
+      } else {
+        return "An unexpected error occured during JSON parsing.";
+      }
+    }
+  };
+
   return (
     <>
       <section className="flex flex-col gap-6">
@@ -550,17 +397,113 @@ export function SchoolConnectivityFormInputs({
         <RequestMethodSelect />
         <ApiEndpointTextInput />
         <AuthTypeSelect />
-        {watchAuthType === API_KEY && <AuthApiKeyInputs />}
-        {watchAuthType === BASIC_AUTH && <AuthBasicInputs />}
-        {watchAuthType === BEARER_TOKEN && <AuthBearerInputs />}
-        <SendQueryInQueryParametersInputs />
-        {watchRequestMethod === POST && <SendQueryInBodyInputs />}
+        {watch("authorization_type") === API_KEY && (
+          <>
+            <TextInput
+              id="api_auth_api_key"
+              invalid={!!errors.api_auth_api_key}
+              labelText="api response key"
+              placeholder="Input Authentication Credentials"
+              {...register("api_auth_api_key", { required: true })}
+            />
+            {/*
+      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
+            <TextInput.PasswordInput
+              autoComplete="on"
+              id="api_auth_api_value"
+              invalid={!!errors.api_auth_api_value}
+              labelText="Authentication Credentials"
+              placeholder="Input Authentication Credentials"
+              {...register("api_auth_api_value", { required: true })}
+            />
+          </>
+        )}
+        {watch("authorization_type") === BASIC_AUTH && (
+          <>
+            <TextInput
+              id="basic_auth_username"
+              invalid={!!errors.basic_auth_username}
+              labelText="api response key"
+              placeholder="Input Authentication Credentials"
+              {...register("basic_auth_username", { required: true })}
+            />
+            {/*
+      //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}
+            <TextInput.PasswordInput
+              autoComplete="on"
+              id="basic_auth_password"
+              invalid={!!errors.basic_auth_password}
+              labelText="Authentication Credentials"
+              placeholder="Input Authentication Credentials"
+              {...register("basic_auth_password", { required: true })}
+            />
+          </>
+        )}
+        {watch("authorization_type") === BEARER_TOKEN && (
+          //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder
+          <TextInput.PasswordInput
+            autoComplete="on"
+            id="bearer_auth_bearer_token"
+            invalid={!!errors.bearer_auth_bearer_token}
+            labelText="Authentication Credentials"
+            placeholder="Input Authentication Credentials"
+            {...register("bearer_auth_bearer_token", {
+              required: true,
+            })}
+          />
+        )}
+        <TextArea
+          id="query_parameters"
+          invalid={
+            errors.query_parameters?.type === "required" ||
+            errors.query_parameters?.type === "isValidJson"
+          }
+          invalidText={
+            errors.query_parameters?.type === "required"
+              ? 'Use empty object "{}" for empty query parameters'
+              : errors.query_parameters?.message
+          }
+          labelText="Query parameters"
+          placeholder="Input query parameters"
+          {...register("query_parameters", {
+            required: true,
+            validate: {
+              isValidJson: handleValidateIsValidJson,
+            },
+          })}
+        />
+
+        {watch("request_method") === POST && (
+          <TextArea
+            id="request_body"
+            invalid={
+              errors.request_body?.type === "required" ||
+              errors.request_body?.type === "isValidJson"
+            }
+            invalidText={
+              errors.request_body?.type === "required"
+                ? 'Use empty object "{}" for empty request body parameters'
+                : errors.request_body?.message
+            }
+            labelText="Request body"
+            placeholder="Input request body"
+            rows={10}
+            {...register("request_body", {
+              required: true,
+              validate: {
+                isValidJson: handleValidateIsValidJson,
+              },
+            })}
+          />
+        )}
       </section>
       <section className="flex flex-col gap-6">
         <header className="text-2xl">Ingestion Parameters</header>
         <PaginationTypeSelect />
-        {watchPaginationType === PAGE_NUMBER && <PaginationPageNumberInputs />}
-        {watchPaginationType === LIMIT_OFFSET && (
+        {watch("pagination_type") === PAGE_NUMBER && (
+          <PaginationPageNumberInputs />
+        )}
+        {watch("pagination_type") === LIMIT_OFFSET && (
           <PaginationLimitOffsetInputs />
         )}
         <PageSendQueryInSelect />
