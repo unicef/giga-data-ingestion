@@ -65,7 +65,7 @@ export interface UploadParams {
   dataset: string;
   file: File;
   source?: string | null;
-  [key: string]: string | File | null | undefined;
+  metadata: string;
 }
 
 export const initialUploadResponse: UploadResponse = {

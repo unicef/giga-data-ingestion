@@ -1,4 +1,5 @@
-import { SubmitHandler, useForm } from "react-hook-form";
+import { Suspense } from "react";
+import { Control, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
 import {
@@ -12,7 +13,6 @@ import {
   Stack,
   Tag,
 } from "@carbon/react";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import {
   Link,
@@ -20,10 +20,10 @@ import {
   redirect,
   useNavigate,
 } from "@tanstack/react-router";
-import { z } from "zod";
 
 import { api } from "@/api";
 import DataTable from "@/components/common/DataTable.tsx";
+import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { useStore } from "@/context/store";
 import { licenseOptions } from "@/mocks/metadataFormValues.tsx";
 
@@ -50,12 +50,10 @@ const headers: DataTableHeader[] = [
   { key: "license", header: "License" },
 ];
 
-const ConfigureColumnsForm = z.object({
-  mapping: z.record(z.string()),
-  license: z.record(z.string()),
-});
-
-type ConfigureColumnsForm = z.infer<typeof ConfigureColumnsForm>;
+interface ConfigureColumnsForm {
+  mapping: Record<string, string>;
+  license: Record<string, string>;
+}
 
 function UploadColumnMapping() {
   const {
@@ -82,6 +80,7 @@ function UploadColumnMapping() {
   const {
     handleSubmit,
     register,
+    control,
     formState: { errors },
     watch,
   } = useForm<ConfigureColumnsForm>({
@@ -91,7 +90,6 @@ function UploadColumnMapping() {
       mapping: columnMapping,
       license: {},
     },
-    resolver: zodResolver(ConfigureColumnsForm),
   });
 
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
@@ -212,6 +210,10 @@ function UploadColumnMapping() {
             <DataTable columns={headers} rows={rows} />
           )}
         </section>
+        <Suspense>
+          <ReactHookFormDevTools control={control as unknown as Control} />
+        </Suspense>
+
         <ButtonSet className="w-full">
           <Button
             as={Link}

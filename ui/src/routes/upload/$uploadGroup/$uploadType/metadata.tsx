@@ -183,16 +183,30 @@ function Metadata() {
     setIsUploading(true);
     setIsUploadError(false);
 
+    const metadata = { ...data };
+    const country = metadata.country;
+    delete metadata.country;
+
     const columnMapping = uploadSlice.columnMapping;
     const correctedColumnMapping = Object.fromEntries(
       Object.entries(columnMapping).map(([key, value]) => [value, key]),
     );
 
+    Object.keys(metadata).forEach(key => {
+      if (key === "next_school_data_collection") {
+        metadata[key] = `${metadata[key].month ?? ""} ${
+          metadata[key].year ?? ""
+        }`.trim();
+      }
+
+      if (metadata[key] === "") metadata[key] = null;
+    });
+
     const body: UploadParams = {
-      ...data,
+      metadata: JSON.stringify(metadata),
+      country,
       column_to_schema_mapping: JSON.stringify(correctedColumnMapping),
       column_license: JSON.stringify(uploadSlice.columnLicense),
-      country: data.country,
       dataset: uploadType,
       file: uploadSlice.file!,
       source: uploadSlice.source,

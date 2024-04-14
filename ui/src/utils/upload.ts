@@ -43,7 +43,6 @@ export class HeaderDetector {
     const { options } = this;
 
     options.setDetectedColumns(detectedColumns);
-    console.log("Detected columns:", detectedColumns);
 
     if (options.schema) {
       const autoColumnMapping: Record<string, string> = {};
