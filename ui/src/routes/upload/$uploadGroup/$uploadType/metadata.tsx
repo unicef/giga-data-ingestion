@@ -171,6 +171,7 @@ function Metadata() {
       ),
     ];
   }, [allGroupsQuery?.data]);
+  const countryOptions = isPrivileged ? allCountryNames : userCountryNames;
 
   const onSubmit: SubmitHandler<MetadataForm> = async data => {
     if (Object.keys(errors).length > 0) {
@@ -237,9 +238,7 @@ function Metadata() {
                       {formItems.map(formItem =>
                         formItem.name === "country" ? (
                           <CountrySelect
-                            countryOptions={
-                              isPrivileged ? allCountryNames : userCountryNames
-                            }
+                            countryOptions={countryOptions}
                             isLoading={isLoading}
                             errors={errors}
                             register={register("country", { required: true })}

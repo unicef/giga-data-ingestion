@@ -8,6 +8,7 @@ const thisYear = new Date().getFullYear();
 const unicefFoundingYear = 1945;
 
 const modalityCollectionOptions = [
+  "",
   "online",
   "phone",
   "written",
@@ -17,6 +18,7 @@ const modalityCollectionOptions = [
 ] as const;
 
 const frequencyCollectionOptions = [
+  "",
   "more than once a year",
   "once a year",
   "every two years",
@@ -24,13 +26,14 @@ const frequencyCollectionOptions = [
 ] as const;
 
 const schoolIdTypeOptions = [
+  "",
   "EMIS",
   "examination code",
   "others",
   "unknown",
 ] as const;
 
-const yesNoUnknownOptions = ["yes", "no", "unknown"] as const;
+const yesNoUnknownOptions = ["", "yes", "no", "unknown"] as const;
 
 const requiredFieldErrorMessage = "This field is required";
 
@@ -80,10 +83,13 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
       helperText: "When was the data collected (month/year)?",
       type: "year",
       required: true,
-      validator: z.coerce
-        .number()
-        .min(unicefFoundingYear, notInRangeErrorMessage)
-        .max(thisYear, notInRangeErrorMessage),
+      validator: z.union([
+        z.string().max(0),
+        z.coerce
+          .number()
+          .min(unicefFoundingYear, notInRangeErrorMessage)
+          .max(thisYear, notInRangeErrorMessage),
+      ]),
     },
     {
       name: "modality_of_data_collection",
@@ -93,7 +99,7 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
       type: "enum",
       enum: modalityCollectionOptions,
       required: false,
-      validator: z.enum(modalityCollectionOptions).nullable(),
+      validator: z.enum(modalityCollectionOptions).optional(),
     },
     {
       name: "school_ids_type",
@@ -103,7 +109,7 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
       type: "enum",
       enum: schoolIdTypeOptions,
       required: false,
-      validator: z.enum(schoolIdTypeOptions).nullable(),
+      validator: z.enum(schoolIdTypeOptions).optional(),
     },
     {
       name: "data_quality_issues",
@@ -116,7 +122,7 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
       `,
       type: "text",
       required: false,
-      validator: z.string().nullable(),
+      validator: z.string().optional(),
     },
   ],
   "Background information on school data collection practices in the country": [
@@ -127,7 +133,7 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
       type: "enum",
       enum: frequencyCollectionOptions,
       required: false,
-      validator: z.enum(frequencyCollectionOptions).nullable(),
+      validator: z.enum(frequencyCollectionOptions).optional(),
     },
     {
       name: "next_school_data_collection",
@@ -137,18 +143,21 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
       required: false,
       validator: z
         .object({
-          month: z.string().min(1),
-          year: z.coerce
-            .number()
-            .min(unicefFoundingYear, notInRangeErrorMessage)
-            .max(thisYear, notInRangeErrorMessage),
+          month: z.string(),
+          year: z.union([
+            z.string().max(0),
+            z.coerce
+              .number()
+              .min(unicefFoundingYear, notInRangeErrorMessage)
+              .max(thisYear, notInRangeErrorMessage),
+          ]),
         })
-        .nullable()
+        .optional()
         .refine(
           data =>
             [data?.year, data?.month].every(Boolean) ||
             [data?.year, data?.month].every(el => !el),
-          { message: "Both month and year must be provided" },
+          "Both month and year must be provided",
         ),
     },
     {
@@ -159,7 +168,7 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
       type: "enum",
       enum: yesNoUnknownOptions,
       required: false,
-      validator: z.enum(yesNoUnknownOptions).nullable(),
+      validator: z.enum(yesNoUnknownOptions).optional(),
     },
     {
       name: "school_contacts",
@@ -169,15 +178,21 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
       type: "enum",
       enum: yesNoUnknownOptions,
       required: false,
-      validator: z.enum(yesNoUnknownOptions).nullable(),
+      validator: z.enum(yesNoUnknownOptions).optional(),
     },
   ],
 };
 
-export const yearList = Array(thisYear - unicefFoundingYear + 1)
-  .fill(thisYear)
-  .map((el, i) => `${el - i}`);
+export const yearList = [
+  "",
+  ...Array(thisYear - unicefFoundingYear + 1)
+    .fill(thisYear)
+    .map((el, i) => `${el - i}`),
+];
 
-export const monthList = Array(12)
-  .fill(0)
-  .map((_, i) => format(`${thisYear}-${i + 1}-01`, "MMMM"));
+export const monthList = [
+  "",
+  ...Array(12)
+    .fill(0)
+    .map((_, i) => format(`${thisYear}-${i + 1}-01`, "MMMM")),
+];

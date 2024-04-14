@@ -101,7 +101,6 @@ export function SelectFromEnum({
       invalidText={errors[formItem.name]?.message as string}
       {...register}
     >
-      <SelectItem text="" value="" />
       {formItem.enum.map(el => (
         <SelectItem key={el} text={el} value={el} />
       ))}
@@ -125,21 +124,23 @@ export function SelectFromArray({
   options,
   hideExtras = false,
 }: SelectFromArrayProps) {
+  const invalidText = (
+    subpath
+      ? (errors[formItem.name] as Record<string, FieldError>)?.[subpath]
+          ?.message ??
+        (errors[formItem.name] as Record<string, FieldError>)?.root?.message
+      : errors[formItem.name]?.message
+  ) as string;
+
   return (
     <Select
       id={subpath ? `${formItem.name}.${subpath}` : formItem.name}
       labelText={labelOverride ?? formItem.label}
       helperText={hideExtras ? "" : formItem.helperText}
       invalid={formItem.name in errors}
-      invalidText={
-        (subpath
-          ? (errors[formItem.name] as Record<string, FieldError>)?.[subpath]
-              ?.message
-          : errors[formItem.name]?.message) as string
-      }
+      invalidText={invalidText}
       {...register}
     >
-      <SelectItem text="" value="" />
       {options.map(option => (
         <SelectItem key={option} text={option} value={option} />
       ))}
