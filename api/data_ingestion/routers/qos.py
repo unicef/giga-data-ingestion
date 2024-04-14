@@ -79,6 +79,7 @@ async def get_school_list(
     base_query = (
         select(SchoolList)
         .where(func.starts_with(SchoolList.id, id))
+        .options(joinedload(SchoolList.school_connectivity))
         .order_by(desc(SchoolList.date_created))
     )
 
