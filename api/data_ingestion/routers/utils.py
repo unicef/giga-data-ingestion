@@ -2,16 +2,24 @@ import json
 from datetime import datetime
 from json import JSONDecodeError
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Security, status
 from loguru import logger
 
+from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import B2CPolicyGroupRequest, B2CPolicyGroupResponse
 from data_ingestion.schemas.util import IsValidDateTimeFormat, ResponseWithDateKeyBody
 
-router = APIRouter(prefix="/api/utils", tags=["utils"])
+router = APIRouter(
+    prefix="/api/utils", tags=["utils"], dependencies=[Security(azure_scheme)]
+)
 
 
-@router.post("/parse-group-displayname", response_model=B2CPolicyGroupResponse)
+@router.post(
+    "/parse-group-displayname",
+    response_model=B2CPolicyGroupResponse,
+    dependencies=[Security(IsPrivileged())],
+)
 def parse_group_display_names(body: B2CPolicyGroupRequest):
     logger.info(f"{body.model_dump()=}")
     try:
@@ -28,7 +36,7 @@ def parse_group_display_names(body: B2CPolicyGroupRequest):
     return out
 
 
-@router.post("/is_valid_datetime_format_code")
+@router.post("/is_valid_datetime_format_code", dependencies=[Security(IsPrivileged())])
 def is_valid_datetime_format_code(body: IsValidDateTimeFormat) -> bool:
     datetime_str = body.datetime_str
     format_code = body.format_code
@@ -41,7 +49,7 @@ def is_valid_datetime_format_code(body: IsValidDateTimeFormat) -> bool:
 
 
 # simulates nic.br/GetMeasurementsByDayOfYear
-@router.post("/test/response_with_date_key")
+@router.post("/test/response_with_date_key", dependencies=[Security(IsPrivileged())])
 async def response_with_date_key(body: ResponseWithDateKeyBody):
     day_of_year = body.dayofyear
 
