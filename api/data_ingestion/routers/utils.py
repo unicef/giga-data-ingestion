@@ -15,11 +15,7 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "/parse-group-displayname",
-    response_model=B2CPolicyGroupResponse,
-    dependencies=[Security(IsPrivileged())],
-)
+@router.post("/parse-group-displayname", response_model=B2CPolicyGroupResponse)
 def parse_group_display_names(body: B2CPolicyGroupRequest):
     logger.info(f"{body.model_dump()=}")
     try:
