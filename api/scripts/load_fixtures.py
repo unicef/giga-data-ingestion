@@ -32,7 +32,12 @@ async def main(fixtures: list[str]):
 
         for d in data:
             for k, v in d["fields"].items():
-                if k.startswith("date_"):
+                if k in [
+                    "date_created",
+                    "date_modified",
+                    "date_last_ingested",
+                    "date_last_successfully_ingested",
+                ]:
                     d["fields"][k] = datetime.fromisoformat(v)
 
         async with get_db_context() as session:
