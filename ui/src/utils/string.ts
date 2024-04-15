@@ -99,3 +99,19 @@ export function parseDqResultFilename(str: string): {
 
   return { uid, warnings, errors, extension };
 }
+
+export function validateDatetimeFormat(str: string): boolean {
+  // %Y %m %d %H %M %S %z
+  const validFormatSpecifiers = `(%Y|%m|%d|%H|%M|%S|%z)`;
+
+  // "/"" "-"" "_" "." ":" and " "(space)
+  const validSeparators = `[\\/\\-_.+: ]?`;
+
+  const fullPattern = `^${validFormatSpecifiers}(${validSeparators}${validFormatSpecifiers})*$`;
+
+  const matchesFullPattern = new RegExp(fullPattern).test(str);
+
+  if (matchesFullPattern || str === "timestamp" || str === "ISO8601")
+    return true;
+  else return false;
+}

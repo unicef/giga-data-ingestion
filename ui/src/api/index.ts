@@ -18,6 +18,7 @@ import qosRouter from "./routers/qos.ts";
 import schemaRouter from "./routers/schema.ts";
 import uploadsRouter from "./routers/uploads.ts";
 import usersRouter from "./routers/users.ts";
+import utilsRouter from "./routers/utils.ts";
 
 const baseURL = "/api";
 
@@ -34,6 +35,7 @@ export const api = {
   qos: qosRouter(axi),
   schema: schemaRouter(axi),
   externalRequests: externalRequestsRouter(),
+  utils: utilsRouter(axi),
 };
 
 export function useApi() {

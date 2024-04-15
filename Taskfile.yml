@@ -231,6 +231,11 @@ tasks:
     cmds:
       - task exec -- -it redis redis-cli --pass {{.REDIS_PASSWORD}}
 
+  generate-qos-fixtures:
+    desc: Generate QoS fixtures
+    cmds:
+      - task exec -- api poetry run python -m scripts.generate_qos_fixtures
+
   load-fixtures:
     desc: Install database fixtures
     cmds:

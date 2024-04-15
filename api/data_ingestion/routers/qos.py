@@ -79,6 +79,7 @@ async def get_school_list(
     base_query = (
         select(SchoolList)
         .where(func.starts_with(SchoolList.id, id))
+        .options(joinedload(SchoolList.school_connectivity))
         .order_by(desc(SchoolList.date_created))
     )
 
@@ -166,9 +167,7 @@ async def create_api_ingestion(
             detail="File size exceeds 10 MB limit",
         )
 
-    valid_types = {
-        "text/csv": [".csv"],
-    }
+    valid_types = {"text/csv": [".csv"], "application/csv": [".csv"]}
 
     file_content = await file.read(2048)
     file_type = magic.from_buffer(file_content, mime=True)
