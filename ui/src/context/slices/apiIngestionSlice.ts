@@ -3,7 +3,7 @@ import { StateCreator } from "zustand";
 
 import {
   SchoolConnectivityFormValues,
-  SchoolListFormValues,
+  SchoolListFormSchema,
   initialSchoolConnectivityFormValues,
   initialSchoolListFormValues,
 } from "@/types/qos";
@@ -12,7 +12,7 @@ export interface ApiIngestionSliceState {
   apiIngestionSlice: {
     columnMapping: Record<string, string>;
     detectedColumns: string[];
-    schoolList: SchoolListFormValues;
+    schoolList: SchoolListFormSchema;
     schoolConnectivity: SchoolConnectivityFormValues;
     stepIndex: number;
     file: File | null;
@@ -32,7 +32,7 @@ export interface ApiIngestionSliceActions {
     setSchoolConnectivityFormValues: (
       formValues: SchoolConnectivityFormValues,
     ) => void;
-    setSchoolListFormValues: (formValues: SchoolListFormValues) => void;
+    setSchoolListFormValues: (formValues: SchoolListFormSchema) => void;
   };
 }
 
@@ -105,7 +105,7 @@ export const createApiIngestionSlice: StateCreator<
       set(state => {
         state.apiIngestionSlice.schoolConnectivity = formValues;
       }),
-    setSchoolListFormValues: (formValues: SchoolListFormValues) =>
+    setSchoolListFormValues: (formValues: SchoolListFormSchema) =>
       set(state => {
         state.apiIngestionSlice.schoolList = formValues;
       }),

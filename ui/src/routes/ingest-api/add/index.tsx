@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, Section, Tag } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
   Outlet,
@@ -17,16 +18,23 @@ import { api } from "@/api";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
 import { useStore } from "@/context/store";
-import { SchoolListFormValues } from "@/types/qos";
+import { SchoolListFormSchema } from "@/types/qos";
+
+const listUsersQueryOptions = queryOptions({
+  queryKey: ["users"],
+  queryFn: api.users.list,
+});
 
 export const Route = createFileRoute("/ingest-api/add/")({
   component: AddIngestion,
+  loader: ({ context: { queryClient } }) =>
+    queryClient.ensureQueryData(listUsersQueryOptions),
 });
 
 function AddIngestion() {
   const [responsePreview, setResponsePreview] = useState<string | string[]>("");
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
-  const [isValidDatakey, setIsValidDatakey] = useState<boolean>(false);
+  const [isValidDataKey, setIsValidDataKey] = useState<boolean>(false);
   const [isResponseError, setIsResponseError] = useState<boolean>(false);
 
   const {
@@ -44,31 +52,21 @@ function AddIngestion() {
     isRefetching: isUsersRefetching,
     isFetching: isUsersFetching,
     isLoading: isUsersLoading,
-  } = useQuery({
-    queryKey: ["users"],
-    queryFn: api.users.list,
-  });
+  } = useSuspenseQuery(listUsersQueryOptions);
 
   const users = usersQuery?.data ?? [];
 
-  const {
-    control,
-    formState,
-    handleSubmit,
-    register,
-    resetField,
-    trigger,
-    watch,
-  } = useForm<SchoolListFormValues>({
-    mode: "onChange",
-    reValidateMode: "onChange",
+  const hookForm = useForm<SchoolListFormSchema>({
+    mode: "onSubmit",
+    reValidateMode: "onBlur",
+    resolver: zodResolver(SchoolListFormSchema),
     defaultValues: {
       api_auth_api_key: null,
       api_auth_api_value: null,
       basic_auth_password: null,
       basic_auth_username: null,
       bearer_auth_bearer_token: null,
-      data_key: "",
+      data_key: null,
       name: "",
       page_number_key: null,
       page_offset_key: null,
@@ -79,40 +77,16 @@ function AddIngestion() {
       size: null,
     },
   });
-
-  const { errors } = formState;
-  const watchAuthType = watch("authorization_type");
-  const watchPaginationType = watch("pagination_type");
-  const watchRequestMethod = watch("request_method");
+  const {
+    formState: { errors },
+    handleSubmit,
+  } = hookForm;
 
   const hasError = Object.keys(errors).length > 0;
 
-  useEffect(() => {
-    resetField("api_auth_api_key");
-    resetField("api_auth_api_value");
-    resetField("basic_auth_username");
-    resetField("basic_auth_password");
-    resetField("bearer_auth_bearer_token");
+  const onSubmit: SubmitHandler<SchoolListFormSchema> = async data => {
+    console.log(errors);
 
-    setResponsePreview("");
-    setIsValidResponse(false);
-    setIsValidDatakey(false);
-    setIsResponseError(false);
-  }, [watchAuthType, resetField]);
-
-  useEffect(() => {
-    resetField("page_number_key");
-    resetField("page_offset_key");
-    resetField("page_starts_with");
-    resetField("size");
-  }, [watchPaginationType, resetField]);
-
-  useEffect(() => {
-    resetField("query_parameters");
-    resetField("request_body");
-  }, [watchRequestMethod, resetField]);
-
-  const onSubmit: SubmitHandler<SchoolListFormValues> = async data => {
     if (Object.keys(errors).length > 0) {
       // form has errors, don't submit
       return;
@@ -126,11 +100,11 @@ function AddIngestion() {
     void navigate({ to: "./column-mapping" });
   };
 
-  const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
+  const prettyResponse = JSON.stringify(responsePreview, undefined, 2);
 
   const errorStates = {
     setIsResponseError,
-    setIsValidDatakey,
+    setIsValidDataKey,
     setIsValidResponse,
     setResponsePreview,
   };
@@ -151,18 +125,14 @@ function AddIngestion() {
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex w-full space-x-10 ">
-          <section className="flex w-full flex-col gap-4">
+        <div className="flex gap-10">
+          <div className="flex w-full flex-col gap-4">
             <SchoolListFormInputs
-              control={control}
-              errors={errors}
+              hookForm={hookForm}
               errorStates={errorStates}
               fetchingStates={fetchingStates}
               hasError={hasError}
-              register={register}
-              trigger={trigger}
               users={users}
-              watch={watch}
             />
 
             <ButtonSet className="w-full">
@@ -180,7 +150,7 @@ function AddIngestion() {
               <Button
                 className="w-full"
                 disabled={
-                  !isValidResponse || !isValidDatakey || isResponseError
+                  !isValidResponse || !isValidDataKey || isResponseError
                 }
                 isExpressive
                 renderIcon={ArrowRight}
@@ -189,24 +159,21 @@ function AddIngestion() {
                 Proceed
               </Button>
             </ButtonSet>
-          </section>
-          <aside className="flex  w-full flex-col">
-            <div className="grow basis-0 overflow-y-auto">
-              {isResponseError && (
-                <Tag type="red">Invalid Output from api request</Tag>
-              )}
-              {responsePreview === "invalid" && (
-                <Tag type="blue">Invalid Datakey</Tag>
-              )}
-              <SyntaxHighlighter
-                customStyle={{ height: "100%" }}
-                language="json"
-                style={docco}
-              >
-                {responsePreview === "" ? "Preview" : prettyResponse}
-              </SyntaxHighlighter>
-            </div>
-          </aside>
+          </div>
+          <div className="h-[95vh] w-full">
+            {isResponseError && (
+              <Tag type="red">Invalid Output from API request</Tag>
+            )}
+            {!isValidDataKey && <Tag type="red">Invalid Data Key</Tag>}
+            <SyntaxHighlighter
+              customStyle={{ height: "100%" }}
+              showLineNumbers
+              language="json"
+              style={docco}
+            >
+              {responsePreview === "" ? "" : prettyResponse}
+            </SyntaxHighlighter>
+          </div>
         </div>
       </form>
       <Outlet />
