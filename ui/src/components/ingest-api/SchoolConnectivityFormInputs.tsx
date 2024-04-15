@@ -126,10 +126,12 @@ export function SchoolConnectivityFormInputs({
     }
   };
 
-  // eslint-disable-next-line
-  const handleCustomValidation = async (responseData: any) => {
-    const responseDateKeyValue =
-      responseData[0][watch("response_date_key") ?? ""];
+  const handleCustomValidation = async (
+    responseData: Record<string, unknown>[],
+  ) => {
+    const responseDateKeyValue = responseData[0][
+      watch("response_date_key") ?? ""
+    ] as string;
 
     const isValid = await isValidDatetimeFormatCodeRequest({
       datetime_str: responseDateKeyValue,
