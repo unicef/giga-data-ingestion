@@ -8,7 +8,7 @@ from loguru import logger
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import B2CPolicyGroupRequest, B2CPolicyGroupResponse
-from data_ingestion.schemas.util import IsValidDateTimeFormat, ResponseWithDateKeyBody
+from data_ingestion.schemas.util import ResponseWithDateKeyBody, ValidDateTimeFormat
 
 router = APIRouter(
     prefix="/api/utils", tags=["utils"], dependencies=[Security(azure_scheme)]
@@ -37,7 +37,7 @@ def parse_group_display_names(body: B2CPolicyGroupRequest):
 
 
 @router.post("/is_valid_datetime_format_code", dependencies=[Security(IsPrivileged())])
-def is_valid_datetime_format_code(body: IsValidDateTimeFormat) -> bool:
+def is_valid_datetime_format_code(body: ValidDateTimeFormat) -> bool:
     datetime_str = body.datetime_str
     format_code = body.format_code
 

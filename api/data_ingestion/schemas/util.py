@@ -5,6 +5,6 @@ class ResponseWithDateKeyBody(BaseModel):
     dayofyear: str
 
 
-class IsValidDateTimeFormat(BaseModel):
+class ValidDateTimeFormat(BaseModel):
     datetime_str: str
     format_code: str
