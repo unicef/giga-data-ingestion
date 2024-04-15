@@ -91,6 +91,8 @@ export default function Index() {
     (!isCoverage && !isSchemaFetching) ||
     (isCoverage && !!source && !isSchemaFetching)
   );
+  const shouldShowSkeleton =
+    (!isCoverage && isSchemaLoading) || (isCoverage && !!source);
 
   function handleOnAddFiles(addedFiles: File[]) {
     const file = addedFiles.at(0) ?? null;
@@ -141,7 +143,9 @@ export default function Index() {
       )}
 
       {isSchemaLoading ? (
-        <SkeletonPlaceholder />
+        shouldShowSkeleton ? (
+          <SkeletonPlaceholder />
+        ) : null
       ) : (
         <div className="w-1/4">
           <FileUploaderDropContainer
