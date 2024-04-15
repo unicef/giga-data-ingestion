@@ -102,12 +102,12 @@ export function SchoolConnectivityFormInputs({
   const handleIsValidDateFormat = (value: string | null) => {
     if (watch("date_key") === "") return true;
     if (!value)
-      return 'Can only accept valid python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or "timestamp" or "ISO8601" string constant';
+      return 'Can only accept valid Python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or "timestamp" or "ISO8601" string constant';
 
     if (value === "timestamp" || value === "ISO8601") return true;
     else if (validateDatetimeFormat(value)) return true;
     else
-      return 'Can only accept valid python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or "timestamp" or "ISO8601" string constant';
+      return 'Can only accept valid Python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or "timestamp" or "ISO8601" string constant';
   };
 
   const handleDateKeyOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -338,7 +338,7 @@ export function SchoolConnectivityFormInputs({
             <TextInput
               id="api_auth_api_key"
               invalid={!!errors.api_auth_api_key}
-              labelText="api response key"
+              labelText="Api authorization key"
               placeholder="Input Authentication Credentials"
               {...register("api_auth_api_key", { required: true })}
             />
@@ -513,7 +513,7 @@ export function SchoolConnectivityFormInputs({
         <TextInput
           disabled={watch("date_key") === ""}
           helperText={
-            "Can only accept valid python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or timestamp or ISO8601 string constant"
+            "Can only accept valid Python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or timestamp or ISO8601 string constant"
           }
           id="date_format"
           invalid={!!errors.date_format}
