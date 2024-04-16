@@ -18,7 +18,7 @@ import { api } from "@/api";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
 import { useStore } from "@/context/store";
-import { SchoolListFormSchema } from "@/types/qos";
+import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
 
 const listUsersQueryOptions = queryOptions({
   queryKey: ["users"],
@@ -34,10 +34,11 @@ export const Route = createFileRoute("/ingest-api/add/")({
 function AddIngestion() {
   const [responsePreview, setResponsePreview] = useState<string | string[]>("");
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
-  const [isValidDataKey, setIsValidDataKey] = useState<boolean>(false);
+  const [isValidDataKey, setIsValidDataKey] = useState<boolean>(true);
   const [isResponseError, setIsResponseError] = useState<boolean>(false);
 
   const {
+    apiIngestionSlice: { schoolList },
     apiIngestionSliceActions: {
       setSchoolListFormValues,
       incrementStepIndex,
@@ -60,22 +61,7 @@ function AddIngestion() {
     mode: "onSubmit",
     reValidateMode: "onBlur",
     resolver: zodResolver(SchoolListFormSchema),
-    defaultValues: {
-      api_auth_api_key: null,
-      api_auth_api_value: null,
-      basic_auth_password: null,
-      basic_auth_username: null,
-      bearer_auth_bearer_token: null,
-      data_key: null,
-      name: "",
-      page_number_key: null,
-      page_offset_key: null,
-      page_size_key: "",
-      page_starts_with: null,
-      query_parameters: null,
-      request_body: null,
-      size: null,
-    },
+    defaultValues: schoolList,
   });
   const {
     formState: { errors },
@@ -85,8 +71,6 @@ function AddIngestion() {
   const hasError = Object.keys(errors).length > 0;
 
   const onSubmit: SubmitHandler<SchoolListFormSchema> = async data => {
-    console.log(errors);
-
     if (Object.keys(errors).length > 0) {
       // form has errors, don't submit
       return;
@@ -127,6 +111,12 @@ function AddIngestion() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex gap-10">
           <div className="flex w-full flex-col gap-4">
+            <p>
+              Enter the details for a school listing API. The API must be tested
+              and should return a success response with valid parameters before
+              you can proceed.
+            </p>
+
             <SchoolListFormInputs
               hookForm={hookForm}
               errorStates={errorStates}

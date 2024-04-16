@@ -1,16 +1,18 @@
-// import apiIngestion slice
 import { StateCreator } from "zustand";
 
 import {
-  SchoolConnectivityFormValues,
+  ConfigureColumnsForm,
   SchoolListFormSchema,
+} from "@/forms/ingestApi.ts";
+import {
+  SchoolConnectivityFormValues,
   initialSchoolConnectivityFormValues,
   initialSchoolListFormValues,
 } from "@/types/qos";
 
 export interface ApiIngestionSliceState {
   apiIngestionSlice: {
-    columnMapping: Record<string, string>;
+    columnMapping: ConfigureColumnsForm;
     detectedColumns: string[];
     schoolList: SchoolListFormSchema;
     schoolConnectivity: SchoolConnectivityFormValues;
@@ -18,6 +20,7 @@ export interface ApiIngestionSliceState {
     file: File | null;
   };
 }
+
 export interface ApiIngestionSliceActions {
   apiIngestionSliceActions: {
     decrementStepIndex: () => void;
@@ -26,13 +29,19 @@ export interface ApiIngestionSliceActions {
     resetApiIngestionState: () => void;
     resetSchoolConnectivityFormValues: () => void;
     resetSchoolListFormValues: () => void;
-    setColumnMapping: (columnMapping: Record<string, string>) => void;
-    setDetectedColumns: (detectedColumns: Array<string>) => void;
+    setColumnMapping: (
+      columnMapping: ApiIngestionSliceState["apiIngestionSlice"]["columnMapping"],
+    ) => void;
+    setDetectedColumns: (
+      detectedColumns: ApiIngestionSliceState["apiIngestionSlice"]["detectedColumns"],
+    ) => void;
     setFile: (file: File | null) => void;
     setSchoolConnectivityFormValues: (
-      formValues: SchoolConnectivityFormValues,
+      formValues: ApiIngestionSliceState["apiIngestionSlice"]["schoolConnectivity"],
     ) => void;
-    setSchoolListFormValues: (formValues: SchoolListFormSchema) => void;
+    setSchoolListFormValues: (
+      formValues: ApiIngestionSliceState["apiIngestionSlice"]["schoolList"],
+    ) => void;
   };
 }
 
@@ -87,11 +96,11 @@ export const createApiIngestionSlice: StateCreator<
       set(state => {
         state.apiIngestionSlice.schoolList = initialSchoolListFormValues;
       }),
-    setColumnMapping: (columnMapping: Record<string, string>) =>
+    setColumnMapping: columnMapping =>
       set(state => {
         state.apiIngestionSlice.columnMapping = columnMapping;
       }),
-    setDetectedColumns: (detectedColumns: Array<string>) =>
+    setDetectedColumns: detectedColumns =>
       set(state => {
         state.apiIngestionSlice.detectedColumns = detectedColumns;
       }),
@@ -99,9 +108,7 @@ export const createApiIngestionSlice: StateCreator<
       set(state => {
         state.apiIngestionSlice.file = file;
       }),
-    setSchoolConnectivityFormValues: (
-      formValues: SchoolConnectivityFormValues,
-    ) =>
+    setSchoolConnectivityFormValues: formValues =>
       set(state => {
         state.apiIngestionSlice.schoolConnectivity = formValues;
       }),

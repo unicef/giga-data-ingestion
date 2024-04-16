@@ -20,6 +20,7 @@ import {
   TableRow,
   Tag,
 } from "@carbon/react";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
   createFileRoute,
@@ -27,17 +28,18 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 
-import {
-  DataRelevanceEnum,
-  GeolocationSchema,
-  MasterSchemaItem,
-  geolocationSchemaData,
-} from "@/constants/school-data";
+import { api } from "@/api";
 import { useStore } from "@/context/store";
+import { ConfigureColumnsForm } from "@/forms/ingestApi.ts";
+
+const schemaQueryOptions = queryOptions({
+  queryFn: () => api.schema.get("school_geolocation"),
+  queryKey: ["schema", "school_geolocation"],
+});
 
 export const Route = createFileRoute("/ingest-api/add/column-mapping")({
   component: ColumnMapping,
-  loader: () => {
+  loader: ({ context: { queryClient } }) => {
     const {
       apiIngestionSlice: {
         schoolList: { api_endpoint },
@@ -45,6 +47,8 @@ export const Route = createFileRoute("/ingest-api/add/column-mapping")({
     } = useStore.getState();
 
     if (api_endpoint === "") throw redirect({ to: ".." });
+
+    return queryClient.ensureQueryData(schemaQueryOptions);
   },
 });
 
@@ -55,7 +59,7 @@ const headers: DataTableHeader[] = [
 
 function ColumnMapping() {
   const {
-    apiIngestionSlice: { detectedColumns },
+    apiIngestionSlice: { detectedColumns, columnMapping },
     apiIngestionSliceActions: {
       incrementStepIndex,
       decrementStepIndex,
@@ -66,63 +70,57 @@ function ColumnMapping() {
   const navigate = useNavigate({ from: Route.fullPath });
 
   const {
+    data: { data: schema },
+  } = useSuspenseQuery(schemaQueryOptions);
+
+  const {
     handleSubmit,
     register,
     formState: { errors },
-  } = useForm<GeolocationSchema>({
+  } = useForm<ConfigureColumnsForm>({
     mode: "onChange",
     reValidateMode: "onChange",
+    defaultValues: columnMapping,
   });
 
-  const onSubmit: SubmitHandler<GeolocationSchema> = data => {
+  const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
     incrementStepIndex();
-    const updatedData = Object.fromEntries(
-      Object.entries(data).map(([key, value]) => [
-        key,
-        value === "" ? null : value,
-      ]),
-    );
-
-    setColumnMapping(updatedData);
+    setColumnMapping(data);
     void navigate({ to: "../school-connectivity" });
   };
 
   const rows = useMemo(() => {
-    return (
-      Object.entries(geolocationSchemaData) as [
-        keyof GeolocationSchema,
-        MasterSchemaItem,
-      ][]
-    ).map(([key, schoolDataItem]) => {
-      const { data_relevance, description } = schoolDataItem;
-
+    return schema.map(column => {
       return {
-        id: key,
+        id: column.id,
         masterColumn: (
           <div className="flex items-center gap-4">
             <DefinitionTooltip
               align="right"
-              definition={description}
+              definition={column.description}
               openOnHover
             >
-              {key}
-              {data_relevance === DataRelevanceEnum.Required && (
-                <span className="text-giga-red">*</span>
-              )}
-              {data_relevance === DataRelevanceEnum.Important && (
-                <span className="text-purple-600">{" (!)"}</span>
-              )}
+              <div className="flex items-center gap-1">
+                <div>{column.name}</div>
+                <div>
+                  {!column.is_nullable ? (
+                    <span className="text-giga-red">*</span>
+                  ) : column.is_important ? (
+                    <Warning className="text-purple-600" />
+                  ) : null}
+                </div>
+              </div>
             </DefinitionTooltip>
           </div>
         ),
         detectedColumns: (
           <div className="w-11/12 px-2 pb-2">
             <Select
-              id={`${key}-mapping`}
-              invalid={key in errors}
+              id={column.name}
+              invalid={column.name in errors}
               labelText=""
-              {...register(key, {
-                required: data_relevance === DataRelevanceEnum.Required,
+              {...register(column.name, {
+                required: !column.is_nullable,
               })}
             >
               <SelectItem text="" value="" />
@@ -138,7 +136,7 @@ function ColumnMapping() {
         ),
       };
     });
-  }, [errors, register, detectedColumns]);
+  }, [schema, errors, register, detectedColumns]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

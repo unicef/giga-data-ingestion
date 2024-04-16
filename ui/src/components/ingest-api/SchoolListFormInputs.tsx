@@ -10,13 +10,13 @@ import {
   TextInputWithAction,
 } from "@/components/ingest-api/school-list/SchoolListInputs.tsx";
 import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
+import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
 import { useTestApi } from "@/hooks/useTestApi.ts";
 import { IngestApiFormMapping } from "@/types/ingestApi.ts";
 import {
   AuthorizationTypeEnum,
   PaginationTypeEnum,
   RequestMethodEnum,
-  SchoolListFormSchema,
   SendQueryInEnum,
 } from "@/types/qos";
 import { GraphUser } from "@/types/user";
@@ -106,9 +106,15 @@ export function SchoolListFormInputs({
                 "request_method",
                 "api_endpoint",
                 "authorization_type",
+                "query_parameters",
+                "request_body",
               ]))
             )
               return;
+
+            setIsValidDataKey(true);
+            setIsValidResponse(true);
+            setIsResponseError(false);
 
             await testApi({
               setIsValidResponse,

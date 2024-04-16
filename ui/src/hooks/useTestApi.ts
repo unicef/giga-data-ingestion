@@ -5,7 +5,8 @@ import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { isPlainObject } from "lodash-es";
 
 import { useStore } from "@/context/store";
-import { AuthorizationTypeEnum, SchoolListFormSchema } from "@/types/qos";
+import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
+import { AuthorizationTypeEnum } from "@/types/qos";
 
 interface TestApiOptions {
   setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
