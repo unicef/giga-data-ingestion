@@ -1,6 +1,7 @@
 from typing import Any
 
 import requests
+from fastapi.encoders import jsonable_encoder
 from loguru import logger
 from requests import HTTPError, JSONDecodeError
 
@@ -105,8 +106,7 @@ def send_dq_report_email(body: EmailRenderRequest[DqReportRenderRequest]):
 def send_master_data_release_notification(
     body: EmailRenderRequest[MasterDataReleaseNotificationRenderRequest],
 ):
-    json_dump = body.props.model_dump()
-    json_dump["updateDate"] = json_dump["updateDate"].isoformat()
+    json_dump = jsonable_encoder(body.props.model_dump())
     send_email_base(
         endpoint="email/master-data-release-notification",
         json=json_dump,
