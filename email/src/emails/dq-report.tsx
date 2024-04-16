@@ -7,6 +7,7 @@ import {
   Preview,
   Html,
   Text,
+  Link,
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
@@ -16,44 +17,48 @@ import CheckWithError from "../components/CheckWithError";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import DqReportHeading from "../components/DqReportHeading";
+import { isSummaryCheck } from "../utils/dq-report";
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
-
 const DataQualityReport = ({
   dataQualityCheck,
   dataset,
   uploadDate,
   uploadId,
 }: DataQualityReportEmailProps) => {
-  const {
-    completeness_checks,
-    critical_error_check,
-    domain_checks,
-    duplicate_rows_checks,
-    format_validation_checks,
-    geospatial_checks,
-    range_checks,
-    summary: { columns, rows, timestamp },
-  } = dataQualityCheck;
-
-  const hasCriticalError = critical_error_check[0].percent_failed > 0;
+  const hasCriticalError = Boolean(
+    dataQualityCheck["critical_error_check"]?.[0]?.percent_failed > 0
+  );
 
   const title = hasCriticalError
     ? "Data Check Error: Action Required!"
     : "Data Check Warnings: Action Required!";
 
-  const checks = [
-    { check: critical_error_check, title: "Critical Error Checks" },
-    { check: format_validation_checks, title: "Format Validation Checks" },
-    { check: completeness_checks, title: "Completeness Checks" },
-    { check: domain_checks, title: "Domain Checks" },
-    { check: range_checks, title: "Range Checks" },
-    { check: duplicate_rows_checks, title: "Duplicate Rows Checks" },
-    { check: geospatial_checks, title: "Geospatial Checks" },
-  ];
-
-  const Checks = checks.map(({ check, title }) => (
-    <CheckWithError checks={check} title={title} />
-  ));
+  const checks = Object.keys(dataQualityCheck)
+    .filter((key) => {
+      if (key === "summary") return false;
+      if (key === "critical_error_check") return false;
+      return true;
+    })
+    .map((key) => {
+      const check = dataQualityCheck[key];
+      if (isSummaryCheck(check)) {
+        return (
+          <>
+            <Text className="my-1">
+              Checks performed at <strong>{check.timestamp}</strong>
+            </Text>
+            <Text className="my-1">
+              Total rows: <strong>{check.rows}</strong>
+            </Text>
+            <Text className="my-1">
+              Total columns: <strong>{check.columns}</strong>
+            </Text>
+          </>
+        );
+      } else {
+        return <CheckWithError checks={check} title={key} />;
+      }
+    });
 
   return (
     <Html>
@@ -89,18 +94,8 @@ const DataQualityReport = ({
               <Text className="my-1">
                 File Uploaded at <strong>{uploadDate}</strong>
               </Text>
-              <Text className="my-1">
-                Checks performed at <strong>{timestamp}</strong>
-              </Text>
-              <Text className="my-1">
-                Total rows: <strong>{rows}</strong>
-              </Text>
-              <Text className="my-1">
-                Total columns: <strong>{columns}</strong>
-              </Text>
 
-              <Section className="py-4">{Checks}</Section>
-
+              <Section className="py-4">{checks}</Section>
               <Section className="text-center my-8 ">
                 <Button
                   className="bg-primary px-5 py-3 text-sm rounded font-semibold text-white no-underline text-center"
@@ -109,9 +104,17 @@ const DataQualityReport = ({
                   View Complete Report
                 </Button>
               </Section>
-
               <Footer>
-                <>View the complete report on the Upload Portal</>
+                <Text className="text-[#666666] text-[12px] leading-[24px]">
+                  This is an auto-generated email. Please do not reply. For
+                  inquiries, you may submit a ticket{" "}
+                  <Link
+                    href={`https://github.com/unicef/giga-data-ingestion/issues/new`}
+                    className="text-blue"
+                  >
+                    here
+                  </Link>
+                </Text>
               </Footer>
             </div>
           </Container>
