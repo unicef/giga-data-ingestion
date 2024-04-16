@@ -1,5 +1,4 @@
 import json
-import math
 import urllib.parse
 from datetime import datetime
 from io import BytesIO
@@ -143,7 +142,7 @@ async def upload_approved_rows(
     posix_path = Path(urllib.parse.unquote(body.subpath))
     dataset = posix_path.parent.name
     country_iso3 = posix_path.name.split("_")[0]
-    timestamp = math.floor(datetime.now().timestamp())
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
     filename = f"{country_iso3}_{dataset}_{timestamp}.json"
 
