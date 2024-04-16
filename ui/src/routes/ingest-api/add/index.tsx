@@ -34,7 +34,7 @@ export const Route = createFileRoute("/ingest-api/add/")({
 function AddIngestion() {
   const [responsePreview, setResponsePreview] = useState<string | string[]>("");
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
-  const [isValidDataKey, setIsValidDataKey] = useState<boolean>(true);
+  const [isValidDataKey, setIsValidDataKey] = useState<boolean>(false);
   const [isResponseError, setIsResponseError] = useState<boolean>(false);
 
   const {
@@ -49,13 +49,11 @@ function AddIngestion() {
   const navigate = useNavigate({ from: Route.fullPath });
 
   const {
-    data: usersQuery,
+    data: { data: users },
     isRefetching: isUsersRefetching,
     isFetching: isUsersFetching,
     isLoading: isUsersLoading,
   } = useSuspenseQuery(listUsersQueryOptions);
-
-  const users = usersQuery?.data ?? [];
 
   const hookForm = useForm<SchoolListFormSchema>({
     mode: "onSubmit",

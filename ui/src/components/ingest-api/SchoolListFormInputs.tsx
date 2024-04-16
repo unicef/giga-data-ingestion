@@ -112,10 +112,6 @@ export function SchoolListFormInputs({
             )
               return;
 
-            setIsValidDataKey(true);
-            setIsValidResponse(true);
-            setIsResponseError(false);
-
             await testApi({
               setIsValidResponse,
               setIsResponseError,
