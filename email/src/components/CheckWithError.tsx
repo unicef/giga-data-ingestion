@@ -1,17 +1,17 @@
 import { Check } from "../types/data-quality-checks";
 import { getChecksWithFailures } from "../utils/dq-report";
 import { Hr, Section } from "@react-email/components";
-interface ChecksWithErrorProps {
+interface CheckWithErrorProps {
   checks: Check[];
   title: string;
 }
 
-const ChecksWithError = ({ checks, title }: ChecksWithErrorProps) => {
+const CheckWithError = ({ checks, title }: CheckWithErrorProps) => {
   const failedChecks = getChecksWithFailures(checks);
   return (
     <Section>
       <span className="text-2xl px-2">{title}</span>
-      <Hr className="border-gray-6 mx-0 w-full border border-solid opacity-20" />
+      <Hr className="border border-solid border-giga-light-gray my-2 mx-0 w-full" />
       <ul className=" list-decimal gap-4 px-20">
         {failedChecks.map((check) => (
           <li>
@@ -51,4 +51,4 @@ const ChecksWithError = ({ checks, title }: ChecksWithErrorProps) => {
   );
 };
 
-export default ChecksWithError;
+export default CheckWithError;
