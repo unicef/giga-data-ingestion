@@ -9,5 +9,5 @@ export const getChecksWithFailures = (checks: Check[]) => {
 export function isSummaryCheck(
   obj: Check[] | SummaryCheck
 ): obj is SummaryCheck {
-  return (obj as SummaryCheck).columns !== undefined;
+  return (obj as SummaryCheck).columns != undefined;
 }
