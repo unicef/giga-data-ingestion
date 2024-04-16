@@ -81,7 +81,7 @@ export const DataQualityReportCheckSuccess = ({
               <Footer>
                 <>
                   Your file successfully completed data checks. You may view the
-                  checks performed on the Giga Portal.
+                  checks performed on Giga Sync.
                 </>
               </Footer>
             </div>

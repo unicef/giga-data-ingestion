@@ -71,8 +71,9 @@ export const DataQualityReportUploadSuccess = ({
               <Footer>
                 <>
                   Your file has been successfully uploaded. After a round of
-                  checks, your file will be merged into Giga. You may view the
-                  checks performed on the Giga Portal.
+                  checks, your file will undergo a review process before being
+                  merged into the Master dataset. You may view the checks
+                  performed on Giga Sync.
                 </>
               </Footer>
             </div>

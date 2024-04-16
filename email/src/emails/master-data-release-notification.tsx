@@ -52,7 +52,7 @@ export const MasterDataReleaseNotification = ({
 
             <div className="p-6 mx-auto">
               <Text className="text-black text-sm leading-6">
-                The master data for <strong>{country}</strong> has been updated
+                The School Master data for <strong>{country}</strong> has been updated
                 with the following details:
               </Text>
               <ul>
@@ -84,7 +84,7 @@ export const MasterDataReleaseNotification = ({
 
               <Footer>
                 <>
-                  Master data updated at <strong>{updateDate}</strong>. This
+                  School Master data updated at <strong>{updateDate}</strong>. This
                   notification is sent automatically because you are assigned to
                   the relevant country.
                 </>
@@ -104,7 +104,7 @@ MasterDataReleaseNotification.PreviewProps = {
   updateDate: new Date().toLocaleString(undefined, {
     timeZoneName: "short",
   }),
-  version: "1.0.0",
+  version: 1,
   rows: 30,
 } as MasterDataReleaseNotificationProps;
 
