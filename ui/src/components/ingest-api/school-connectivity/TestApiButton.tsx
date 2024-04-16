@@ -17,7 +17,7 @@ interface TestApiButtonProps {
   setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
   setIsValidResponse: Dispatch<SetStateAction<boolean>>;
   setIsResponseError: Dispatch<SetStateAction<boolean>>;
-  setIsValidDatakey: Dispatch<SetStateAction<boolean>>;
+  setIsValidDataKey: Dispatch<SetStateAction<boolean>>;
   authorizationType: AuthorizationTypeEnum;
   dataKey: string;
   apiKeyName: string | null;
@@ -43,7 +43,7 @@ const TestApiButton = ({
   setIsValidResponse,
   setIsResponseError,
   setResponsePreview,
-  setIsValidDatakey,
+  setIsValidDataKey,
   authorizationType,
   dataKey,
   apiKeyName,
@@ -88,7 +88,7 @@ const TestApiButton = ({
   });
 
   // eslint-disable-next-line
-  const handleValidationTry = async (responseData: any) => {
+  const handleValidationTry = (responseData: any) => {
     if (dateKey !== "") {
       if (handleCustomValidation) handleCustomValidation(responseData);
     }
@@ -96,11 +96,11 @@ const TestApiButton = ({
     if (dataKey === "") {
       if (!Array.isArray(responseData)) {
         setResponsePreview("invalid");
-        setIsValidDatakey(false);
+        setIsValidDataKey(false);
       }
 
       if (Array.isArray(responseData)) {
-        setIsValidDatakey(true);
+        setIsValidDataKey(true);
         setIsValidResponse(true);
         setIsResponseError(false);
         setResponsePreview(responseData);
@@ -124,12 +124,12 @@ const TestApiButton = ({
         if (isValidDatakey) {
           setDetectedColumns(Object.keys(responseData[dataKey][0]));
           setResponsePreview(responseData);
-          setIsValidDatakey(true);
+          setIsValidDataKey(true);
           return;
         }
 
         if (!isValidDatakey) {
-          setIsValidDatakey(false);
+          setIsValidDataKey(false);
           setResponsePreview("invalid");
           return;
         }
@@ -140,7 +140,7 @@ const TestApiButton = ({
   const handleValidationCatch = () => {
     setResponsePreview("invalid");
     setIsResponseError(true);
-    setIsValidDatakey(false);
+    setIsValidDataKey(false);
     setIsValidResponse(false);
   };
 

@@ -4,7 +4,7 @@ import { Modal } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
 import { AxiosResponse } from "axios";
 
-import { queryClient, useApi } from "@/api";
+import { api, queryClient } from "@/api";
 import { PagedSchoolListResponse } from "@/types/qos";
 
 import { LoadingStates } from "./IngestTable";
@@ -28,8 +28,6 @@ const ConfirmToggleIngestionEnabledModal = ({
   setLoadingStates,
   setOpen,
 }: ConfirmEnableIngestionModalProps) => {
-  const api = useApi();
-
   const { mutateAsync, isPending } = useMutation({
     mutationFn: api.qos.update_school_list_status,
     onMutate: async (schoolIdStatus: { id: string; enabled: boolean }) => {

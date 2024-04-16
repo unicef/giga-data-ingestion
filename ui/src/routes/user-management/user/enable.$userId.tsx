@@ -4,11 +4,11 @@ import { InlineNotification, Modal, ToastNotification } from "@carbon/react";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { api, queryClient } from "@/api";
+import { api } from "@/api";
 
 export const Route = createFileRoute("/user-management/user/enable/$userId")({
   component: EnableUser,
-  loader: ({ params: { userId } }) => {
+  loader: ({ params: { userId }, context: { queryClient } }) => {
     return queryClient.ensureQueryData({
       queryKey: ["user", userId],
       queryFn: () => api.users.get(userId),

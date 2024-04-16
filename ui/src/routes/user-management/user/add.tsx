@@ -21,7 +21,7 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
-import { api, queryClient } from "@/api";
+import { api } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import countries from "@/constants/countries.ts";
 import { GraphGroup } from "@/types/group.ts";
@@ -35,17 +35,14 @@ import {
 
 export const Route = createFileRoute("/user-management/user/add")({
   component: AddUser,
-  loader: Loader,
+  loader: ({ context: { queryClient } }) =>
+    queryClient.ensureQueryData(groupsQueryOptions),
 });
 
 const groupsQueryOptions = queryOptions({
   queryKey: ["groups"],
   queryFn: api.groups.list,
 });
-
-function Loader() {
-  return queryClient.ensureQueryData(groupsQueryOptions);
-}
 
 type CountryDataset = {
   country: string;

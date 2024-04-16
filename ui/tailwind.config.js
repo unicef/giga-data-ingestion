@@ -5,12 +5,16 @@ import { fontFamily, fontSize } from "tailwindcss/defaultTheme";
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
+    screens: {
+      "sm": "20rem",
+      "md": "42rem",
+      "lg": "66rem",
+      "xl": "82rem",
+      "2xl": "99rem",
+    },
     container: {
       center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      padding: 0,
     },
     extend: {
       fontSize: {

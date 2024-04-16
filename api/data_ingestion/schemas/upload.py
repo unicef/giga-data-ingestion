@@ -1,5 +1,7 @@
+from dataclasses import dataclass
 from datetime import datetime
 
+from fastapi import Form, UploadFile
 from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr
 
 
@@ -13,8 +15,19 @@ class FileUpload(BaseModel):
     dataset: str
     source: str | None
     original_filename: str
-    column_to_schema_mapping: str
-    column_license: str
+    column_to_schema_mapping: dict[str, str]
+    column_license: dict[str, str]
     upload_path: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+@dataclass
+class FileUploadRequest:
+    file: UploadFile = Form(...)
+    column_to_schema_mapping: str = Form(...)
+    column_license: str = Form(...)
+    country: str = Form(...)
+    dataset: str = Form(...)
+    metadata: str = Form(...)
+    source: str | None = Form(None)
