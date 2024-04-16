@@ -23,7 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { useApi } from "@/api";
-import { HEADERS, ITEMS_PER_PAGE } from "@/constants/ingest-api";
+import { HEADERS } from "@/constants/ingest-api";
 import { useStore } from "@/context/store";
 
 import StatusIndicator from "../upload/StatusIndicator";
@@ -61,10 +61,10 @@ function IngestTable() {
     refetch: refetchSchoolList,
     isRefetching: isSchoolListRefetching,
   } = useQuery({
-    queryKey: ["school_list", currentPage],
+    queryKey: ["school_list", currentPage, pageSize],
     queryFn: () =>
       api.qos.list_school_list({
-        count: ITEMS_PER_PAGE,
+        count: pageSize,
         page: currentPage,
       }),
   });
@@ -144,6 +144,17 @@ function IngestTable() {
     });
   }, [schoolListData, loadingStates]);
 
+  const handleChangePageSize = ({
+    pageSize,
+    page,
+  }: {
+    pageSize: number;
+    page: number;
+  }) => {
+    setCurrentPage(page);
+    setPageSize(pageSize);
+  };
+
   if (isSchoolListLoading) return <DataTableSkeleton headers={HEADERS} />;
 
   return (
@@ -199,16 +210,7 @@ function IngestTable() {
               pageSize={pageSize}
               pageSizes={[10, 25, 50]}
               totalItems={schoolListQuery?.data.total_count}
-              onChange={({
-                pageSize,
-                page,
-              }: {
-                pageSize: number;
-                page: number;
-              }) => {
-                setCurrentPage(page);
-                setPageSize(pageSize);
-              }}
+              onChange={handleChangePageSize}
             />
           </TableContainer>
         )}
