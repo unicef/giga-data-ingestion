@@ -7,6 +7,7 @@ import {
   Preview,
   Html,
   Text,
+  Link,
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
@@ -104,7 +105,16 @@ const DataQualityReport = ({
                 </Button>
               </Section>
               <Footer>
-                <>View the complete report on the Upload Portal</>
+                <Text className="text-[#666666] text-[12px] leading-[24px]">
+                  This is an auto-generated email. Please do not reply. For
+                  inquiries, you may submit a ticket{" "}
+                  <Link
+                    href={`https://github.com/unicef/giga-data-ingestion/issues/new`}
+                    className="text-blue"
+                  >
+                    here
+                  </Link>
+                </Text>
               </Footer>
             </div>
           </Container>
