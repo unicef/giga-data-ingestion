@@ -8,6 +8,7 @@ export interface Check {
   description: string;
   percent_failed: number;
   percent_passed: number;
+  dq_remarks?: string;
 }
 const Check = z.object({
   assertion: z.string(),
