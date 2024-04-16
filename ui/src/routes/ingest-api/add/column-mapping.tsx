@@ -21,12 +21,7 @@ import {
   Tag,
 } from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import {
-  Link,
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { useStore } from "@/context/store";
@@ -40,14 +35,6 @@ const schemaQueryOptions = queryOptions({
 export const Route = createFileRoute("/ingest-api/add/column-mapping")({
   component: ColumnMapping,
   loader: ({ context: { queryClient } }) => {
-    const {
-      apiIngestionSlice: {
-        schoolList: { api_endpoint },
-      },
-    } = useStore.getState();
-
-    if (api_endpoint === "") throw redirect({ to: ".." });
-
     return queryClient.ensureQueryData(schemaQueryOptions);
   },
 });

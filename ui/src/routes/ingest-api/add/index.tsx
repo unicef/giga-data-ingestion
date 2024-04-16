@@ -25,10 +25,19 @@ const listUsersQueryOptions = queryOptions({
   queryFn: api.users.list,
 });
 
+const schemaQueryOptions = queryOptions({
+  queryFn: () => api.schema.get("school_geolocation"),
+  queryKey: ["schema", "school_geolocation"],
+});
+
 export const Route = createFileRoute("/ingest-api/add/")({
   component: AddIngestion,
-  loader: ({ context: { queryClient } }) =>
-    queryClient.ensureQueryData(listUsersQueryOptions),
+  loader: ({ context: { queryClient } }) => {
+    return Promise.all([
+      queryClient.ensureQueryData(schemaQueryOptions),
+      queryClient.ensureQueryData(listUsersQueryOptions),
+    ]);
+  },
 });
 
 function AddIngestion() {
@@ -38,9 +47,10 @@ function AddIngestion() {
   const [isResponseError, setIsResponseError] = useState<boolean>(false);
 
   const {
-    apiIngestionSlice: { schoolList },
+    apiIngestionSlice: { schoolList, detectedColumns },
     apiIngestionSliceActions: {
       setSchoolListFormValues,
+      setColumnMapping,
       incrementStepIndex,
       resetApiIngestionState,
     },
@@ -55,18 +65,20 @@ function AddIngestion() {
     isLoading: isUsersLoading,
   } = useSuspenseQuery(listUsersQueryOptions);
 
+  const {
+    data: { data: schema },
+  } = useSuspenseQuery(schemaQueryOptions);
+
   const hookForm = useForm<SchoolListFormSchema>({
     mode: "onSubmit",
     reValidateMode: "onBlur",
-    resolver: zodResolver(SchoolListFormSchema),
+    resolver: zodResolver(SchoolListFormSchema, { async: true }),
     defaultValues: schoolList,
   });
   const {
     formState: { errors },
     handleSubmit,
   } = hookForm;
-
-  const hasError = Object.keys(errors).length > 0;
 
   const onSubmit: SubmitHandler<SchoolListFormSchema> = async data => {
     if (Object.keys(errors).length > 0) {
@@ -77,7 +89,15 @@ function AddIngestion() {
     const user = users.find(user => user.id === data.user_id);
     const dataWithUserEmail = { ...data, user_email: user?.mail ?? "" };
 
+    const autoColumnMapping: Record<string, string> = {};
+    schema.forEach(column => {
+      if (detectedColumns.includes(column.name)) {
+        autoColumnMapping[column.name] = column.name;
+      }
+    });
+
     setSchoolListFormValues(dataWithUserEmail);
+    setColumnMapping(autoColumnMapping);
     incrementStepIndex();
     void navigate({ to: "./column-mapping" });
   };
@@ -96,9 +116,9 @@ function AddIngestion() {
     isUsersRefetching,
   };
 
-  if (isUsersLoading) return <IngestFormSkeleton />;
-
-  return (
+  return isUsersLoading ? (
+    <IngestFormSkeleton />
+  ) : (
     <Section className="container py-6">
       <header className="gap-2">
         <p className="my-0 py-1 text-2xl">
@@ -119,7 +139,6 @@ function AddIngestion() {
               hookForm={hookForm}
               errorStates={errorStates}
               fetchingStates={fetchingStates}
-              hasError={hasError}
               users={users}
             />
 

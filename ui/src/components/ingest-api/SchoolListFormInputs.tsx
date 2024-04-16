@@ -1,15 +1,7 @@
-import { Dispatch, Fragment, SetStateAction, Suspense, useMemo } from "react";
-import { Control, FieldValues, UseFormReturn } from "react-hook-form";
+import { Dispatch, SetStateAction, useMemo } from "react";
+import { UseFormReturn } from "react-hook-form";
 
-import {
-  CodeInput,
-  FreeTextInput,
-  PasswordInput,
-  SelectFromArray,
-  SelectFromEnum,
-  TextInputWithAction,
-} from "@/components/ingest-api/school-list/SchoolListInputs.tsx";
-import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
+import IngestApiFormInputs from "@/components/ingest-api/IngestApiFormInputs.tsx";
 import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
 import { useTestApi } from "@/hooks/useTestApi.ts";
 import { IngestApiFormMapping } from "@/types/ingestApi.ts";
@@ -37,21 +29,13 @@ interface SchoolListFormInputsProps {
   hookForm: UseFormReturn<SchoolListFormSchema>;
   errorStates: ErrorStates;
   fetchingStates: FetchingStates;
-  hasError: boolean;
   users: GraphUser[];
 }
 
 export function SchoolListFormInputs({
   errorStates,
   users,
-  hookForm: {
-    control,
-    register,
-    watch,
-    trigger,
-    resetField,
-    formState: { errors },
-  },
+  hookForm,
 }: SchoolListFormInputsProps) {
   const {
     setIsResponseError,
@@ -60,7 +44,9 @@ export function SchoolListFormInputs({
     setResponsePreview,
   } = errorStates;
 
-  const { testApi, isLoading } = useTestApi();
+  const { watch, trigger, resetField } = hookForm;
+
+  const { testApi, isLoading } = useTestApi<SchoolListFormSchema>();
 
   const schoolListFormMapping = useMemo<
     Record<string, IngestApiFormMapping<SchoolListFormSchema>[]>
@@ -77,7 +63,8 @@ export function SchoolListFormInputs({
         {
           name: "user_id",
           label: "Owner",
-          type: "select",
+          type: "select-user",
+          options: users,
           required: true,
           helperText:
             "Who will be the designated point person responsible for this ingestion?",
@@ -100,6 +87,7 @@ export function SchoolListFormInputs({
           name: "api_endpoint",
           label: "API Endpoint",
           type: "text-action",
+          isActionLoading: isLoading,
           action: async () => {
             if (
               !(await trigger([
@@ -212,14 +200,15 @@ export function SchoolListFormInputs({
           type: "text",
           required: false,
           helperText:
-            "The key in the JSON response that contains the data to be ingested",
+            "If the API response is a flat list, leave this blank. If the API response is an object, specify the key that contains a homogeneous array of records to be ingested",
         },
         {
           name: "school_id_key",
           label: "School ID key",
           type: "text",
           required: true,
-          helperText: "",
+          helperText:
+            "If the API requires a school ID parameter, specify the name of the record where this ID should be sent",
         },
         {
           name: "school_id_send_query_in",
@@ -227,7 +216,7 @@ export function SchoolListFormInputs({
           type: "enum",
           enum: Object.values(SendQueryInEnum),
           required: true,
-          helperText: "",
+          helperText: "Specify where to add the school ID record",
         },
         {
           name: "pagination_type",
@@ -260,7 +249,7 @@ export function SchoolListFormInputs({
           label: "Page size key",
           type: "text",
           required: false,
-          helperText: "",
+          helperText: "The name of the key that specifies the page size",
           dependsOnName: "pagination_type",
           dependsOnValue: [
             PaginationTypeEnum.LIMIT_OFFSET,
@@ -272,7 +261,7 @@ export function SchoolListFormInputs({
           label: "Page offset key",
           type: "text",
           required: false,
-          helperText: "",
+          helperText: "The name of the key that specifies the page offset",
           dependsOnName: "pagination_type",
           dependsOnValue: [PaginationTypeEnum.LIMIT_OFFSET],
         },
@@ -281,7 +270,7 @@ export function SchoolListFormInputs({
           label: "Page number key",
           type: "text",
           required: false,
-          helperText: "",
+          helperText: "The name of the key that specifies the page number",
           dependsOnName: "pagination_type",
           dependsOnValue: [PaginationTypeEnum.PAGE_NUMBER],
         },
@@ -290,7 +279,8 @@ export function SchoolListFormInputs({
           label: "Page starts with",
           type: "text",
           required: false,
-          helperText: "",
+          helperText:
+            "Whether the page numbering should start at 0 or 1, or another number",
           dependsOnName: "pagination_type",
           dependsOnValue: [PaginationTypeEnum.PAGE_NUMBER],
         },
@@ -300,7 +290,7 @@ export function SchoolListFormInputs({
           type: "enum",
           enum: Object.values(SendQueryInEnum),
           required: false,
-          helperText: "",
+          helperText: "Specify where to insert the pagination parameters",
           dependsOnName: "pagination_type",
           dependsOnValue: [
             PaginationTypeEnum.PAGE_NUMBER,
@@ -310,6 +300,7 @@ export function SchoolListFormInputs({
       ],
     }),
     [
+      isLoading,
       resetField,
       setIsResponseError,
       setIsValidDataKey,
@@ -322,104 +313,10 @@ export function SchoolListFormInputs({
   );
 
   return (
-    <>
-      {Object.entries(schoolListFormMapping).map(([group, formItems]) => (
-        <section className="flex flex-col gap-6" key={group}>
-          <header className="text-2xl">{group}</header>
-          {formItems.map(mapping => {
-            const checkDependencies =
-              mapping.dependsOnName != null && mapping.dependsOnValue != null
-                ? mapping.dependsOnValue.includes(
-                    watch(mapping.dependsOnName) as string,
-                  )
-                : true;
-
-            return (
-              <Fragment key={mapping.name}>
-                {mapping.type === "text" ? (
-                  checkDependencies && (
-                    <FreeTextInput
-                      mapping={mapping}
-                      register={register(mapping.name, {
-                        required: mapping.required,
-                        onChange: mapping.onChange,
-                      })}
-                      errors={errors}
-                    />
-                  )
-                ) : mapping.type === "select" ? (
-                  <SelectFromArray
-                    options={users}
-                    getOptionText={user =>
-                      user.display_name
-                        ? `${user.display_name} (${user.mail})`
-                        : user.mail
-                    }
-                    mapping={mapping}
-                    errors={errors}
-                    register={register(mapping.name, {
-                      required: mapping.required,
-                      onChange: mapping.onChange,
-                    })}
-                  />
-                ) : mapping.type === "enum" ? (
-                  <SelectFromEnum
-                    mapping={mapping}
-                    errors={errors}
-                    register={register(mapping.name, {
-                      required: mapping.required,
-                      onChange: mapping.onChange,
-                    })}
-                  />
-                ) : mapping.type === "text-action" ? (
-                  <TextInputWithAction
-                    onAction={mapping.action}
-                    actionLabel="Test"
-                    isActionLoading={isLoading}
-                    mapping={mapping}
-                    errors={errors}
-                    register={register(mapping.name, {
-                      required: mapping.required,
-                      onChange: mapping.onChange,
-                    })}
-                  />
-                ) : mapping.type === "password" ? (
-                  checkDependencies && (
-                    <PasswordInput
-                      mapping={mapping}
-                      register={register(mapping.name, {
-                        required: mapping.required,
-                        onChange: mapping.onChange,
-                      })}
-                      errors={errors}
-                    />
-                  )
-                ) : mapping.type === "code" ? (
-                  checkDependencies && (
-                    <CodeInput
-                      mapping={mapping}
-                      register={register(mapping.name, {
-                        required: mapping.required,
-                        onChange: mapping.onChange,
-                      })}
-                      errors={errors}
-                    />
-                  )
-                ) : null}
-              </Fragment>
-            );
-          })}
-        </section>
-      ))}
-
-      <Suspense>
-        <ReactHookFormDevTools
-          control={
-            control as unknown as Control<FieldValues, SchoolListFormSchema>
-          }
-        />
-      </Suspense>
-    </>
+    <IngestApiFormInputs
+      hookForm={hookForm}
+      formMappings={schoolListFormMapping}
+    />
   );
 }
 

@@ -1,28 +1,27 @@
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
-import { UseFormWatch } from "react-hook-form";
+import { FieldValues, UseFormWatch } from "react-hook-form";
 
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { isPlainObject } from "lodash-es";
 
 import { useStore } from "@/context/store";
-import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
 import { AuthorizationTypeEnum } from "@/types/qos";
 
-interface TestApiOptions {
+interface TestApiOptions<T extends FieldValues> {
   setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
   setIsValidResponse: Dispatch<SetStateAction<boolean>>;
   setIsResponseError: Dispatch<SetStateAction<boolean>>;
   setIsValidDataKey: Dispatch<SetStateAction<boolean>>;
-  watch: UseFormWatch<SchoolListFormSchema>;
+  watch: UseFormWatch<T>;
 }
 
-export function useTestApi() {
+export function useTestApi<T extends FieldValues>() {
   const {
     apiIngestionSliceActions: { setDetectedColumns },
   } = useStore();
   const [isLoading, setIsLoading] = useState(false);
 
-  async function testApi(options: TestApiOptions) {
+  async function testApi(options: TestApiOptions<T>) {
     const {
       setIsValidResponse,
       setIsResponseError,

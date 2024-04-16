@@ -74,34 +74,11 @@ export function CodeInput<MappingType>({
   );
 }
 
-type SelectFromArrayProps<OptionsType, MappingType> =
-  BaseInputProps<MappingType> &
-    (
-      | {
-          options: string[];
-          getOptionText?: undefined;
-        }
-      | {
-          options: OptionsType[];
-          getOptionText: (option: OptionsType) => string;
-        }
-    );
-
-export function SelectFromArray<OptionsType, MappingType>({
+export function SelectFromArray<MappingType>({
   mapping,
   errors,
   register,
-  options,
-  getOptionText,
-}: SelectFromArrayProps<OptionsType, MappingType>) {
-  let opts: string[];
-
-  if (getOptionText == null) {
-    opts = options;
-  } else {
-    opts = options.map(getOptionText);
-  }
-
+}: BaseInputProps<MappingType>) {
   return (
     <Select
       id={mapping.name}
@@ -112,9 +89,19 @@ export function SelectFromArray<OptionsType, MappingType>({
       {...register}
     >
       <SelectItem text="" value="" />
-      {opts.map(option => (
-        <SelectItem key={option} text={option} value={option} />
-      ))}
+      {mapping.type === "select-user"
+        ? mapping.options.map(user => (
+            <SelectItem
+              key={user.id}
+              text={`${user.display_name} (${user.mail})`}
+              value={user.id}
+            />
+          ))
+        : mapping.type === "select"
+        ? mapping.options.map(option => (
+            <Select id={option} key={option} value={option} />
+          ))
+        : null}
     </Select>
   );
 }

@@ -2,20 +2,19 @@ import { StateCreator } from "zustand";
 
 import {
   ConfigureColumnsForm,
+  SchoolConnectivityFormSchema,
   SchoolListFormSchema,
+  schoolConnectivityFormInitialValues,
+  schoolListFormInitialValues,
 } from "@/forms/ingestApi.ts";
-import {
-  SchoolConnectivityFormValues,
-  initialSchoolConnectivityFormValues,
-  initialSchoolListFormValues,
-} from "@/types/qos";
+import { initialSchoolConnectivityFormValues } from "@/types/qos";
 
 export interface ApiIngestionSliceState {
   apiIngestionSlice: {
     columnMapping: ConfigureColumnsForm;
     detectedColumns: string[];
     schoolList: SchoolListFormSchema;
-    schoolConnectivity: SchoolConnectivityFormValues;
+    schoolConnectivity: SchoolConnectivityFormSchema;
     stepIndex: number;
     file: File | null;
   };
@@ -25,6 +24,9 @@ export interface ApiIngestionSliceActions {
   apiIngestionSliceActions: {
     decrementStepIndex: () => void;
     incrementStepIndex: () => void;
+    setStepIndex: (
+      stepIndex: ApiIngestionSliceState["apiIngestionSlice"]["stepIndex"],
+    ) => void;
     resetColumnMapping: () => void;
     resetApiIngestionState: () => void;
     resetSchoolConnectivityFormValues: () => void;
@@ -53,8 +55,8 @@ export const initialApiIngestionSliceState: ApiIngestionSliceState = {
   apiIngestionSlice: {
     columnMapping: {},
     detectedColumns: [],
-    schoolList: initialSchoolListFormValues,
-    schoolConnectivity: initialSchoolConnectivityFormValues,
+    schoolList: schoolListFormInitialValues,
+    schoolConnectivity: schoolConnectivityFormInitialValues,
     stepIndex: 0,
     file: null,
   },
@@ -77,6 +79,10 @@ export const createApiIngestionSlice: StateCreator<
       set(state => {
         state.apiIngestionSlice.stepIndex += 1;
       }),
+    setStepIndex: stepIndex =>
+      set(state => {
+        state.apiIngestionSlice.stepIndex = stepIndex;
+      }),
     resetColumnMapping: () =>
       set(state => {
         state.apiIngestionSlice.columnMapping = {};
@@ -94,7 +100,7 @@ export const createApiIngestionSlice: StateCreator<
       }),
     resetSchoolListFormValues: () =>
       set(state => {
-        state.apiIngestionSlice.schoolList = initialSchoolListFormValues;
+        state.apiIngestionSlice.schoolList = schoolListFormInitialValues;
       }),
     setColumnMapping: columnMapping =>
       set(state => {

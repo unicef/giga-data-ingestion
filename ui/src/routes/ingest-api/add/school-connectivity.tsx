@@ -5,21 +5,22 @@ import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, Section, Tag } from "@carbon/react";
-import { Link, createFileRoute, redirect } from "@tanstack/react-router";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, createFileRoute } from "@tanstack/react-router";
 
 import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
 import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs";
 import { useStore } from "@/context/store";
-import { SchoolConnectivityFormValues } from "@/types/qos";
+import { SchoolConnectivityFormSchema } from "@/forms/ingestApi.ts";
 
 export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
   component: SchoolConnectivity,
   loader: () => {
-    const {
-      schoolList: { api_endpoint },
-    } = useStore.getState().apiIngestionSlice;
-
-    if (api_endpoint === "") throw redirect({ to: ".." });
+    // const {
+    //   schoolList: { api_endpoint },
+    // } = useStore.getState().apiIngestionSlice;
+    //
+    // if (api_endpoint === "") throw redirect({ to: ".." });
   },
 });
 
@@ -33,7 +34,7 @@ function SchoolConnectivity() {
   const [responsePreview, setResponsePreview] = useState<string | string[]>("");
 
   const {
-    apiIngestionSlice: { file },
+    apiIngestionSlice: { file, schoolConnectivity },
     apiIngestionSliceActions: {
       decrementStepIndex,
       resetSchoolConnectivityFormValues,
@@ -43,37 +44,13 @@ function SchoolConnectivity() {
 
   const hasUploadedFile = file != null;
 
-  const {
-    clearErrors,
-    control,
-    formState,
-    handleSubmit,
-    register,
-    resetField,
-    setError,
-    setValue,
-    trigger,
-    watch,
-  } = useForm<SchoolConnectivityFormValues>({
-    defaultValues: {
-      api_auth_api_key: null,
-      api_auth_api_value: null,
-      basic_auth_password: null,
-      basic_auth_username: null,
-      bearer_auth_bearer_token: null,
-      data_key: "",
-      enabled: false,
-      page_number_key: null,
-      page_offset_key: null,
-      page_size_key: null,
-      page_starts_with: null,
-      query_parameters: "",
-      request_body: "",
-      size: null,
-    },
+  const hookForm = useForm<SchoolConnectivityFormSchema>({
     mode: "onChange",
     reValidateMode: "onChange",
+    resolver: zodResolver(SchoolConnectivityFormSchema, { async: true }),
+    defaultValues: schoolConnectivity,
   });
+  const { formState, handleSubmit, resetField, watch } = hookForm;
 
   const { errors, isValid } = formState;
   const watchAuthType = watch("authorization_type");
@@ -99,7 +76,7 @@ function SchoolConnectivity() {
     resetField("request_body");
   }, [resetField]);
 
-  const onSubmit: SubmitHandler<SchoolConnectivityFormValues> = async data => {
+  const onSubmit: SubmitHandler<SchoolConnectivityFormSchema> = async data => {
     if (Object.keys(errors).length > 0) {
       // form has errors, don't submit
       return;
@@ -130,15 +107,8 @@ function SchoolConnectivity() {
         <div className="flex w-full space-x-10 ">
           <section className="flex w-full flex-col gap-4">
             <SchoolConnectivityFormInputs
-              clearErrors={clearErrors}
-              control={control}
-              errors={errors}
+              hookForm={hookForm}
               errorStates={errorStates}
-              register={register}
-              setError={setError}
-              setValue={setValue}
-              trigger={trigger}
-              watch={watch}
             />
 
             <ButtonSet className="w-full">
