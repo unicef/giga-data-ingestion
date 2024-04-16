@@ -31,3 +31,12 @@ class DqReportRenderRequest(BaseModel):
     dataQualityCheck: DataQualityCheck
     uploadDate: datetime
     uploadId: str
+
+
+class MasterDataReleaseNotificationRenderRequest(BaseModel):
+    added: int
+    country: str
+    modified: int
+    updateDate: datetime
+    version: int
+    rows: int

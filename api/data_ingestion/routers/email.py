@@ -7,6 +7,7 @@ from data_ingestion.schemas.email import (
     DataCheckSuccessRenderRequest,
     DqReportRenderRequest,
     EmailRenderRequest,
+    MasterDataReleaseNotificationRenderRequest,
     UploadSuccessRenderRequest,
 )
 
@@ -71,6 +72,25 @@ async def send_dq_report_email(
     background_tasks.add_task(
         email.send_dq_report_email,
         EmailRenderRequest[DqReportRenderRequest](
+            email=body.email,
+            props=props,
+        ),
+    )
+
+
+@router.post(
+    "/master-data-release-notification",
+    dependencies=[Security(IsPrivileged())],
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def send_master_data_release_notification(
+    body: EmailRenderRequest[MasterDataReleaseNotificationRenderRequest],
+    background_tasks: BackgroundTasks,
+):
+    props = MasterDataReleaseNotificationRenderRequest(**body.model_dump()["props"])
+    background_tasks.add_task(
+        email.send_master_data_release_notification,
+        EmailRenderRequest[MasterDataReleaseNotificationRenderRequest](
             email=body.email,
             props=props,
         ),

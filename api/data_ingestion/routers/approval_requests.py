@@ -1,5 +1,6 @@
 import json
 import urllib.parse
+from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
@@ -138,13 +139,12 @@ async def upload_approved_rows(
     body: UploadApprovedRowsRequest,
     user=Depends(azure_scheme),
 ):
-    subpath = urllib.parse.unquote(body.subpath)
-    subpath = Path(subpath)
-    dataset = subpath.parent.name
-    country_iso3 = subpath.name.split("_")[0]
-    filename = subpath.name.split("_")[1].split(".")[0]
+    posix_path = Path(urllib.parse.unquote(body.subpath))
+    dataset = posix_path.parent.name
+    country_iso3 = posix_path.name.split("_")[0]
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    filename = f"{country_iso3}_{dataset}_{filename}.json"
+    filename = f"{country_iso3}_{dataset}_{timestamp}.json"
 
     approve_location = (
         f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
