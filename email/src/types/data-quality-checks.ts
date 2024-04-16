@@ -8,6 +8,7 @@ export interface Check {
   description: string;
   percent_failed: number;
   percent_passed: number;
+  dq_remarks?: string;
 }
 const Check = z.object({
   assertion: z.string(),
@@ -20,7 +21,7 @@ const Check = z.object({
   percent_passed: z.number(),
 });
 
-interface SummaryCheck {
+export interface SummaryCheck {
   columns: number;
   rows: number;
   timestamp: string;
@@ -33,23 +34,15 @@ const SummaryCheck = z.object({
 });
 
 export interface DataQualityCheck {
-  completeness_checks: Check[];
-  critical_error_check: Check[];
-  domain_checks: Check[];
-  duplicate_rows_checks: Check[];
-  format_validation_checks: Check[];
-  geospatial_checks: Check[];
-  range_checks: Check[];
-  summary: SummaryCheck;
+  [key: string]: Check[] | SummaryCheck;
+  critical_error_check?: Check[];
+  summary?: SummaryCheck;
 }
 
-export const DataQualityCheck = z.object({
-  completeness_checks: z.array(Check),
-  critical_error_check: z.array(Check),
-  domain_checks: z.array(Check),
-  duplicate_rows_checks: z.array(Check),
-  format_validation_checks: z.array(Check),
-  geospatial_checks: z.array(Check),
-  range_checks: z.array(Check),
-  summary: SummaryCheck,
-});
+export const DataQualityCheck = z
+  .record(z.union([z.array(Check), SummaryCheck]))
+  .and(
+    z.object({
+      summary: z.optional(SummaryCheck),
+    })
+  );

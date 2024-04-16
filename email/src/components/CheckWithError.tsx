@@ -8,6 +8,9 @@ interface CheckWithErrorProps {
 
 const CheckWithError = ({ checks, title }: CheckWithErrorProps) => {
   const failedChecks = getChecksWithFailures(checks);
+
+  if (!failedChecks.length) return null;
+
   return (
     <Section>
       <span className="text-2xl px-2">{title}</span>
