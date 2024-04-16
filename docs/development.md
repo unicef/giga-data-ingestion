@@ -73,16 +73,31 @@ pre-commit install
 
 ### Pre-requisites
 
-``` @TODO: Fill with pre-reqs such as access to Cloud Platform, Bitwarden Collection, Github etc ```
+`@TODO: Fill with pre-reqs such as access to Cloud Platform, Bitwarden Collection, Github etc`
 
 ### Cloning and Installation
 
-``` @TODO: Fill with set-up/installation guide. Feel free to subdivide to sections or multiple MD files through mkdocs.yml ```
+`@TODO: Fill with set-up/installation guide. Feel free to subdivide to sections or multiple MD files through mkdocs.yml`
 
 ### Environment Setup
 
-``` @TODO: Fill with instructions for exporting local env variables. Distinguish variables being used in local vs dev vs prod ```
+`@TODO: Fill with instructions for exporting local env variables. Distinguish variables being used in local vs dev vs prod`
 
 ### Running the Application
 
-``` @TODO: Fill with steps on running the app locally. Feel free to subdivide to sections or multiple MD files through mkdocs.yml ```
+`@TODO: Fill with steps on running the app locally. Feel free to subdivide to sections or multiple MD files through mkdocs.yml`
+
+
+
+
+#### Common Issues
+
+
+###### Updating the schema
+When making changes to the models you will need to also update the fixtures:
+
+0. `[Only do this if running step 1 does not work]`. You might need to manually add in temporary values to the fixtures you updated. [sample fixtures file](api/data_ingestion/fixtures/qos_school_list.yaml). If you updated the migrations and are spinning up a new database, the container will continuously try to load up the old fixtures file which will cause it to continuously error.
+1. Update the actual fixtures file [sample fixture file](api/scripts/generate_qos_fixtures.py)
+2. Run `task load-fixtures -- [YOUR_FIXTURE_NAME]`
+
+###### [Adding non nullable columns to existing table](https://stackoverflow.com/questions/33705697/alembic-integrityerror-column-contains-null-values-when-adding-non-nullable)

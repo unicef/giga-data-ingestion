@@ -97,6 +97,13 @@ def main(number: int = 5):
             "ingestion_frequency_minutes": random.choice([15, 30, 45, 60]),
             "schema_url": fake.url(),
             "school_list_id": school_list_id,
+            "date_key": random.choice(["data", "results", "result"]),
+            "date_format": random.choice(["timestamp", "unix"]),
+            "send_date_in": SendQueryInEnum[
+                random.choice([s.name for s in SendQueryInEnum if s.name != "NONE"])
+            ],
+            "response_date_key": random.choice(["data", "results", "result"]),
+            "response_date_format": random.choice(["timestamp", "unix"]),
         }
 
         school_connectivity = SchoolConnectivitySchema(
