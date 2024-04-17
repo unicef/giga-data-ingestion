@@ -20,33 +20,6 @@ export function SchoolConnectivityFormInputs({
 }: SchoolConnectivityFormInputsProps) {
   const { resetField } = hookForm;
 
-  // const handleIsValidDateFormat = (value: string | null) => {
-  //   if (watch("date_key") === "") return true;
-  //   if (!value)
-  //     return 'Can only accept valid Python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or "timestamp" or "ISO8601" string constant';
-  //
-  //   if (value === "timestamp" || value === "ISO8601") return true;
-  //   else if (validateDatetimeFormat(value)) return true;
-  //   else
-  //     return 'Can only accept valid Python datetime formats e.g.: %Y-%m-%d %H:%M:%S  or "timestamp" or "ISO8601" string constant';
-  // };
-  //
-  // const handleDateKeyOnChange = (e: ChangeEvent<HTMLInputElement>) => {
-  //   const value = e.target.value;
-  //
-  //   if (value === "") {
-  //     clearErrors("date_format");
-  //     setValue("date_format", "");
-  //     setValue("send_date_in", SendQueryInEnum.NONE);
-  //   }
-  //
-  //   if (value !== "") {
-  //     if (watch("send_date_in") === SendQueryInEnum.NONE) {
-  //       setValue("send_date_in", SendQueryInEnum.BODY);
-  //     }
-  //   }
-  // };
-  //
   // const handleCustomValidation = async (
   //   responseData: Record<string, unknown>[],
   // ) => {
@@ -414,6 +387,10 @@ export function SchoolConnectivityFormInputs({
           required: false,
           helperText:
             "If the API requires a date parameter, specify the name of the record where this date should be sent.",
+          onChange: () => {
+            resetField("date_format");
+            resetField("send_date_in");
+          },
         },
         {
           name: "date_format",

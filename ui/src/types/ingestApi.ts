@@ -9,6 +9,9 @@ export type IngestApiFormMapping<T> = {
   onChange?: (...args: unknown[]) => void;
   dependsOnName?: Extract<keyof T, string>;
   dependsOnValue?: string[] | true;
+  customValidation?:
+    | ((value: T[keyof T]) => boolean | string)
+    | Record<string, (value: T[keyof T]) => boolean | string>;
 } & (
   | {
       type: "text" | "code" | "number" | "password" | "toggle";

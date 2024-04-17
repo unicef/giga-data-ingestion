@@ -39,7 +39,9 @@ export const Route = createFileRoute("/ingest-api/add/")({
 });
 
 function AddIngestion() {
-  const [responsePreview, setResponsePreview] = useState<string | string[]>("");
+  const [responsePreview, setResponsePreview] = useState<
+    Record<string, unknown> | Record<string, unknown>[] | string
+  >("");
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
   const [isValidDataKey, setIsValidDataKey] = useState<boolean>(false);
   const [isResponseError, setIsResponseError] = useState<boolean>(false);
@@ -159,6 +161,7 @@ function AddIngestion() {
                   if (!(await trigger())) return;
 
                   await testApi({
+                    apiType: "schoolList",
                     setIsValidResponse,
                     setIsResponseError,
                     setResponsePreview,

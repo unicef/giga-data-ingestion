@@ -32,7 +32,9 @@ function SchoolConnectivity() {
   const [isValidResponseDateFormat, setIsValidResponseDateFormat] =
     useState<boolean>(false);
   const [open, setOpen] = useState<boolean>(false);
-  const [responsePreview, setResponsePreview] = useState<string | string[]>("");
+  const [responsePreview, setResponsePreview] = useState<
+    Record<string, unknown> | Record<string, unknown>[] | string
+  >("");
 
   const {
     apiIngestionSlice: { file, schoolConnectivity },
@@ -150,6 +152,7 @@ function SchoolConnectivity() {
                   if (!(await trigger())) return;
 
                   await testApi({
+                    apiType: "schoolConnectivity",
                     setIsValidResponse,
                     setIsResponseError,
                     setResponsePreview,
@@ -174,6 +177,9 @@ function SchoolConnectivity() {
             )}
             {responsePreview === "invalid" && (
               <Tag type="red">Invalid Data Key</Tag>
+            )}
+            {!isValidResponseDateFormat && (
+              <Tag type="red">Response date format mismatch</Tag>
             )}
             <SyntaxHighlighter
               customStyle={{ height: "100%" }}

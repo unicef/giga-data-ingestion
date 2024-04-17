@@ -4,6 +4,7 @@ import { UseFormWatch } from "react-hook-form";
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { isPlainObject } from "lodash-es";
 
+import { api } from "@/api";
 import { useStore } from "@/context/store";
 import {
   SchoolConnectivityFormSchema,
@@ -15,16 +16,24 @@ import {
   SendQueryInEnum,
 } from "@/types/qos";
 
-interface TestApiOptions {
-  setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
+type TestApiOptions = {
+  setResponsePreview: Dispatch<
+    SetStateAction<Record<string, unknown> | Record<string, unknown>[] | string>
+  >;
   setIsValidResponse: Dispatch<SetStateAction<boolean>>;
   setIsResponseError: Dispatch<SetStateAction<boolean>>;
   setIsValidDataKey: Dispatch<SetStateAction<boolean>>;
-  setIsValidResponseDateFormat?: Dispatch<SetStateAction<boolean>>;
-  watch:
-    | UseFormWatch<SchoolListFormSchema>
-    | UseFormWatch<SchoolConnectivityFormSchema>;
-}
+} & (
+  | {
+      apiType: "schoolList";
+      watch: UseFormWatch<SchoolListFormSchema>;
+    }
+  | {
+      apiType: "schoolConnectivity";
+      watch: UseFormWatch<SchoolConnectivityFormSchema>;
+      setIsValidResponseDateFormat: Dispatch<SetStateAction<boolean>>;
+    }
+);
 
 export function useTestApi() {
   const {
@@ -38,6 +47,7 @@ export function useTestApi() {
       setIsResponseError,
       setResponsePreview,
       setIsValidDataKey,
+      apiType,
       watch,
     } = options;
 
@@ -62,9 +72,21 @@ export function useTestApi() {
       size,
     } = watch();
 
+    let response_date_format: string | undefined;
+    let response_date_key: string | undefined;
+    let setIsValidResponseDateFormat: Extract<
+      TestApiOptions,
+      { apiType: "schoolConnectivity" }
+    >["setIsValidResponseDateFormat"];
+
+    if (apiType === "schoolConnectivity") {
+      response_date_key = watch("response_date_key");
+      response_date_format = watch("response_date_format");
+    }
+
     const handleValidationTry =
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (responseData: any) => {
+      async (responseData: any) => {
         setResponsePreview(responseData);
 
         if (data_key === "" || data_key == null) {
@@ -75,6 +97,20 @@ export function useTestApi() {
             setDetectedColumns(Object.keys(responseData[0]));
           } else {
             setIsValidDataKey(false);
+          }
+
+          if (apiType === "schoolConnectivity") {
+            const responseDateKeyValue = responseData[0][
+              response_date_key ?? ""
+            ] as string;
+
+            const { data: isValid } =
+              await api.utils.isValidDateTimeFormatCodeRequest({
+                datetime_str: responseDateKeyValue,
+                format_code: response_date_format ?? "",
+              });
+
+            setIsValidResponseDateFormat(isValid);
           }
         } else {
           if (!Array.isArray(responseData)) {
