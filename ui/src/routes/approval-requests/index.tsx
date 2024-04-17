@@ -7,7 +7,7 @@ import {
   Section,
   TableContainer,
 } from "@carbon/react";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 
@@ -23,6 +23,8 @@ const listQueryOptions = queryOptions({
 
 export const Route = createFileRoute("/approval-requests/")({
   component: ApprovalRequests,
+  loader: ({ context: { queryClient } }) =>
+    queryClient.ensureQueryData(listQueryOptions),
 });
 
 const columns: DataTableHeader[] = [
@@ -62,7 +64,7 @@ type ApprovalRequest = Record<
 > & { id: string; actions: ReactElement };
 
 function ApprovalRequests() {
-  const { data, isFetching, isLoading } = useQuery(listQueryOptions);
+  const { data, isFetching, isLoading } = useSuspenseQuery(listQueryOptions);
 
   const approvalRequests = useMemo(() => data?.data ?? [], [data]);
 

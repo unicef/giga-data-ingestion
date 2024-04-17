@@ -240,7 +240,7 @@ export function SchoolListFormInputs({
               requestBody={watch("request_body")}
               requestMethod={watch("request_method")}
               setIsResponseError={setIsResponseError}
-              setIsValidDatakey={setIsValidDatakey}
+              setIsValidDataKey={setIsValidDatakey}
               setIsValidResponse={setIsValidResponse}
               setResponsePreview={setResponsePreview}
               handleTriggerValidation={() => {

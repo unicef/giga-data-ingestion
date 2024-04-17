@@ -48,7 +48,10 @@ function Login() {
 
       <div className="grid grid-cols-4 gap-4">
         {cards.map(card => (
-          <div className="flex flex-col gap-4 bg-giga-light-gray p-4 text-black hover:bg-giga-light-gray hover:text-black">
+          <div
+            key={card.title}
+            className="flex flex-col gap-4 bg-giga-light-gray p-4 text-black hover:bg-giga-light-gray hover:text-black"
+          >
             <div className="text-2xl font-semibold">{card.title}</div>
             <div>{card.description}</div>
             <DocumentAdd size={60} className="text-giga-dark-gray" />
@@ -69,7 +72,13 @@ function Login() {
         </Button>
         <div>
           Login lorem ipsum{" "}
-          <Link to="/">
+          <Link
+            to="/"
+            search={{
+              page: 1,
+              page_size: 10,
+            }}
+          >
             <u>Dolor sit Amet</u>
           </Link>
         </div>

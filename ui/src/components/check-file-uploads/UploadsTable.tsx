@@ -1,10 +1,11 @@
-import { ReactElement, useMemo, useState } from "react";
+import { ReactElement, useMemo } from "react";
 
 import {
   Button,
   DataTable,
   DataTableHeader,
   DataTableSkeleton,
+  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -14,9 +15,7 @@ import {
   TableRow,
   Tag,
 } from "@carbon/react";
-// @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
-import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 
@@ -57,11 +56,24 @@ type TableUpload = Record<
   ReactElement | string | number | null
 > & { id: string };
 
-function UploadsTable() {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+interface UploadsTableProps {
+  page: number;
+  pageSize: number;
+  handlePaginationChange: ({
+    page,
+    pageSize,
+  }: {
+    page: number;
+    pageSize: number;
+  }) => void;
+}
 
-  const { data: uploadsQuery, isLoading } = useQuery({
+function UploadsTable({
+  page,
+  pageSize,
+  handlePaginationChange,
+}: UploadsTableProps) {
+  const { data: uploadsQuery, isLoading } = useSuspenseQuery({
     queryFn: () => api.uploads.list_uploads({ page, page_size: pageSize }),
     queryKey: ["uploads", page, pageSize],
   });
@@ -110,17 +122,6 @@ function UploadsTable() {
 
     return _renderUploads;
   }, [page, pageSize, uploadsQuery?.data]);
-
-  function handlePaginationChange({
-    pageSize,
-    page,
-  }: {
-    pageSize: number;
-    page: number;
-  }) {
-    setPage(page);
-    setPageSize(pageSize);
-  }
 
   return isLoading ? (
     <DataTableSkeleton headers={columns} />

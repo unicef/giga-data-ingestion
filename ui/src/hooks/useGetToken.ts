@@ -13,6 +13,7 @@ function useGetToken() {
     axi.defaults.headers.common[
       "Authorization"
     ] = `Bearer ${result.accessToken}`;
+    return result;
   }, [instance]);
 }
 

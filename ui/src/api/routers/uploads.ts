@@ -22,15 +22,14 @@ export default function routes(axi: AxiosInstance) {
     },
     upload: (params: UploadParams): Promise<AxiosResponse<UploadResponse>> => {
       const formData = new FormData();
-      Object.keys(params).forEach(key => {
-        if (params[key] !== null && params[key] !== undefined) {
-          formData.append(key, params[key] as string | File);
+      Object.entries(params).forEach(([key, value]) => {
+        if (value != null) {
+          formData.append(key, value);
         }
       });
-      return axi.post(`/upload`, formData, {
-        params: {
-          dataset: params.dataset,
-        },
+
+      return axi.post("/upload", formData, {
+        params: { dataset: params.dataset },
       });
     },
     download_data_quality_check: (

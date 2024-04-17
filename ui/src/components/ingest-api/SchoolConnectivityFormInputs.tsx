@@ -323,7 +323,7 @@ export function SchoolConnectivityFormInputs({
               responseDateKey={watch("response_date_key")}
               sendDateIn={watch("send_date_in")}
               setIsResponseError={setIsResponseError}
-              setIsValidDatakey={setIsValidDataKey}
+              setIsValidDataKey={setIsValidDataKey}
               setIsValidResponse={setIsValidResponse}
               setResponsePreview={setResponsePreview}
               handleCustomValidation={handleCustomValidation}

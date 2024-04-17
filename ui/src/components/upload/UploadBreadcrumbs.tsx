@@ -3,6 +3,11 @@ import { useCallback } from "react";
 import { Breadcrumb, BreadcrumbItem } from "@carbon/react";
 import { Link, useParams, useRouterState } from "@tanstack/react-router";
 
+import {
+  DEFAULT_PAGE_NUMBER,
+  DEFAULT_PAGE_SIZE,
+} from "@/constants/pagination.ts";
+
 export default function UploadBreadcrumbs() {
   const {
     location: { pathname },
@@ -17,6 +22,7 @@ export default function UploadBreadcrumbs() {
       label: string;
       path?: string;
       params?: Record<string, string>;
+      search?: Record<string, unknown>;
     }[] = [{ label: "File uploads", path: "/upload" }];
 
     if (uploadGroup && uploadType) {
@@ -25,6 +31,7 @@ export default function UploadBreadcrumbs() {
           {
             label: uploadGroup.split("-").join(" "),
             path: "/upload",
+            search: { page: DEFAULT_PAGE_NUMBER, page_size: DEFAULT_PAGE_SIZE },
           },
           {
             label:
@@ -76,7 +83,11 @@ export default function UploadBreadcrumbs() {
       {breadcrumbItems.map((item, index) => (
         <BreadcrumbItem key={item.label} className="capitalize">
           {item.path && index + 1 < breadcrumbItems.length ? (
-            <Link to={item.path} params={item.params ?? {}}>
+            <Link
+              to={item.path}
+              params={item.params ?? {}}
+              search={item.search ?? {}}
+            >
               {item.label}
             </Link>
           ) : (

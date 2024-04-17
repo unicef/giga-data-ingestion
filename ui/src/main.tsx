@@ -15,7 +15,6 @@ import "@fontsource/open-sans/600.css";
 import "@fontsource/open-sans/700.css";
 import * as Sentry from "@sentry/react";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import { AxiosProvider, queryClient } from "@/api";
 import App from "@/app.tsx";
@@ -65,7 +64,6 @@ msalInstance
               <HelmetProvider>
                 <App />
               </HelmetProvider>
-              <ReactQueryDevtools initialIsOpen={false} />
             </QueryClientProvider>
           </AxiosProvider>
         </MsalProvider>

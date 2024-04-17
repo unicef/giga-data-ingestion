@@ -6,6 +6,7 @@ import {
   Link as CarbonLink,
   DataTable,
   DataTableSkeleton,
+  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -17,13 +18,11 @@ import {
   TableToolbarContent,
   Toggle,
 } from "@carbon/react";
-// @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
-import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 
-import { useApi } from "@/api";
-import { HEADERS, ITEMS_PER_PAGE } from "@/constants/ingest-api";
+import { api } from "@/api";
+import { HEADERS } from "@/constants/ingest-api";
 import { useStore } from "@/context/store";
 
 import StatusIndicator from "../upload/StatusIndicator";
@@ -35,8 +34,11 @@ export type LoadingStates = {
 };
 
 function IngestTable() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const { page: currentPage, page_size: pageSize } = useSearch({
+    from: "/ingest-api/",
+  });
+  const navigate = useNavigate({ from: "/ingest-api/" });
+
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({});
   const [selectedIngestionName, setSelectedIngestionName] =
     useState<string>("");
@@ -46,10 +48,10 @@ function IngestTable() {
 
   const [isOpenConfirmModal, setIsOpenConfirmModal] = useState<boolean>(false);
   const [isOpenInfoModal, setIsOpenInfoModal] = useState<boolean>(false);
-  const [infoModalErrorMessage, setInfoModalErrorMesage] = useState<string>("");
+  const [infoModalErrorMessage, setInfoModalErrorMessage] =
+    useState<string>("");
   const [selectedIngestionLastModified, setSelectedIngestionLastModified] =
     useState<Date>(new Date());
-  const api = useApi();
 
   const {
     apiIngestionSliceActions: { resetApiIngestionState: resetState },
@@ -60,11 +62,11 @@ function IngestTable() {
     isLoading: isSchoolListLoading,
     refetch: refetchSchoolList,
     isRefetching: isSchoolListRefetching,
-  } = useQuery({
-    queryKey: ["school_list", currentPage],
+  } = useSuspenseQuery({
+    queryKey: ["school_list", currentPage, pageSize],
     queryFn: () =>
       api.qos.list_school_list({
-        count: ITEMS_PER_PAGE,
+        count: pageSize,
         page: currentPage,
       }),
   });
@@ -97,7 +99,7 @@ function IngestTable() {
             onClick={() => {
               if (schoolList.error_message) {
                 setSelectedIngestionLastModified(schoolList.date_last_ingested);
-                setInfoModalErrorMesage(schoolList.error_message);
+                setInfoModalErrorMessage(schoolList.error_message);
                 setSelectedIngestionName(schoolList.name);
                 setIsOpenInfoModal(true);
               }
@@ -143,6 +145,22 @@ function IngestTable() {
       };
     });
   }, [schoolListData, loadingStates]);
+
+  const handlePaginationChange = ({
+    pageSize,
+    page,
+  }: {
+    pageSize: number;
+    page: number;
+  }) => {
+    void navigate({
+      to: "./",
+      search: () => ({
+        page,
+        page_size: pageSize,
+      }),
+    });
+  };
 
   if (isSchoolListLoading) return <DataTableSkeleton headers={HEADERS} />;
 
@@ -199,16 +217,7 @@ function IngestTable() {
               pageSize={pageSize}
               pageSizes={[10, 25, 50]}
               totalItems={schoolListQuery?.data.total_count}
-              onChange={({
-                pageSize,
-                page,
-              }: {
-                pageSize: number;
-                page: number;
-              }) => {
-                setCurrentPage(page);
-                setPageSize(pageSize);
-              }}
+              onChange={handlePaginationChange}
             />
           </TableContainer>
         )}

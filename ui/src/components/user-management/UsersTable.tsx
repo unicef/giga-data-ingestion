@@ -1,4 +1,4 @@
-import { ReactElement, useMemo, useState } from "react";
+import { ReactElement, useMemo } from "react";
 
 import { useMsal } from "@azure/msal-react";
 import {
@@ -13,6 +13,7 @@ import {
   DataTable,
   DataTableHeader,
   DataTableSkeleton,
+  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -24,12 +25,10 @@ import {
   TableToolbarContent,
   Tag,
 } from "@carbon/react";
-// @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
-import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 
-import { useApi } from "@/api";
+import { api } from "@/api";
 import { GraphUser } from "@/types/user.ts";
 
 const columns: DataTableHeader[] = [
@@ -59,18 +58,29 @@ interface TableGraphUser extends GraphUser {
 }
 
 function UsersTable() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const { page: currentPage, page_size: pageSize } = useSearch({
+    from: "/user-management",
+  });
+  const navigate = useNavigate({ from: "/user-management" });
 
-  const api = useApi();
   const { accounts } = useMsal();
+
+  const handlePaginationChange = ({
+    pageSize,
+    page,
+  }: {
+    pageSize: number;
+    page: number;
+  }) => {
+    void navigate({ to: ".", search: () => ({ page, page_size: pageSize }) });
+  };
 
   const {
     data: usersQuery,
     isLoading,
     refetch: refetchUsers,
     isRefetching,
-  } = useQuery({
+  } = useSuspenseQuery({
     queryKey: ["users"],
     queryFn: api.users.list,
   });
@@ -193,16 +203,7 @@ function UsersTable() {
             </TableBody>
           </Table>
           <Pagination
-            onChange={({
-              pageSize,
-              page,
-            }: {
-              pageSize: number;
-              page: number;
-            }) => {
-              setCurrentPage(page);
-              setPageSize(pageSize);
-            }}
+            onChange={handlePaginationChange}
             page={currentPage}
             pageSize={pageSize}
             pageSizes={[10, 25, 50]}
