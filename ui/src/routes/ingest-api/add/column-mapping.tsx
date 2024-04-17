@@ -82,11 +82,24 @@ function ColumnMapping() {
         id: column.id,
         masterColumn: (
           <div className="flex items-center gap-4">
-            <DefinitionTooltip
-              align="right"
-              definition={column.description}
-              openOnHover
-            >
+            {column.description ? (
+              <DefinitionTooltip
+                align="right"
+                definition={column.description}
+                openOnHover
+              >
+                <div className="flex items-center gap-1">
+                  <div>{column.name}</div>
+                  <div>
+                    {!column.is_nullable ? (
+                      <span className="text-giga-red">*</span>
+                    ) : column.is_important ? (
+                      <Warning className="text-purple-600" />
+                    ) : null}
+                  </div>
+                </div>
+              </DefinitionTooltip>
+            ) : (
               <div className="flex items-center gap-1">
                 <div>{column.name}</div>
                 <div>
@@ -97,7 +110,7 @@ function ColumnMapping() {
                   ) : null}
                 </div>
               </div>
-            </DefinitionTooltip>
+            )}
           </div>
         ),
         detectedColumns: (

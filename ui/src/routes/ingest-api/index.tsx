@@ -2,6 +2,7 @@ import { Heading, Section, Stack } from "@carbon/react";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import { listApiIngestionsQueryOptions } from "@/api/queryOptions.ts";
+import { PendingComponent } from "@/components/common/PendingComponent";
 import IngestTable from "@/components/ingest-api/IngestTable";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/ingest-api/")({
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(listApiIngestionsQueryOptions),
   validateSearch: validateSearchParams,
+  pendingComponent: PendingComponent,
 });
 
 function IngestApi() {

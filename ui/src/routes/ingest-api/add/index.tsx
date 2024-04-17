@@ -15,15 +15,12 @@ import {
 } from "@tanstack/react-router";
 
 import { api } from "@/api";
+import { listUsersQueryOptions } from "@/api/queryOptions.ts";
+import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
 import { useStore } from "@/context/store";
 import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
-
-const listUsersQueryOptions = queryOptions({
-  queryKey: ["users"],
-  queryFn: api.users.list,
-});
 
 const schemaQueryOptions = queryOptions({
   queryFn: () => api.schema.get("school_geolocation"),
@@ -38,6 +35,7 @@ export const Route = createFileRoute("/ingest-api/add/")({
       queryClient.ensureQueryData(listUsersQueryOptions),
     ]);
   },
+  pendingComponent: PendingComponent,
 });
 
 function AddIngestion() {

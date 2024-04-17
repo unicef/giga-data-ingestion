@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { api } from "@/api";
 import { listApprovalRequestQueryOptions } from "@/api/queryOptions";
 import DataTable from "@/components/common/DataTable.tsx";
+import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { useStore } from "@/context/store";
 import { SENTINEL_PAGED_RESPONSE } from "@/types/api.ts";
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/approval-requests/")({
   component: ApprovalRequests,
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(listApprovalRequestQueryOptions),
+  pendingComponent: PendingComponent,
 });
 
 const columns: DataTableHeader[] = [
@@ -60,7 +62,7 @@ const columns: DataTableHeader[] = [
 type ApprovalRequestTableRow = Record<
   keyof ApprovalRequestListing,
   string | number | null | boolean | ReactElement
->;
+> & { id: string; actions: ReactElement };
 
 function ApprovalRequests() {
   const [page, setPage] = useState<number>(1);

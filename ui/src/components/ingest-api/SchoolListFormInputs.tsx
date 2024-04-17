@@ -89,16 +89,7 @@ export function SchoolListFormInputs({
           type: "text-action",
           isActionLoading: isLoading,
           action: async () => {
-            if (
-              !(await trigger([
-                "request_method",
-                "api_endpoint",
-                "authorization_type",
-                "query_parameters",
-                "request_body",
-              ]))
-            )
-              return;
+            if (!(await trigger())) return;
 
             await testApi({
               setIsValidResponse,
@@ -200,7 +191,7 @@ export function SchoolListFormInputs({
           type: "text",
           required: false,
           helperText:
-            "If the API response is a flat list, leave this blank. If the API response is an object, specify the key that contains a homogeneous array of records to be ingested",
+            "If the API response is a flat list, leave this blank. If the API response is an object, specify the key that contains a homogeneous array of records to be ingested.",
         },
         {
           name: "school_id_key",
@@ -208,7 +199,7 @@ export function SchoolListFormInputs({
           type: "text",
           required: true,
           helperText:
-            "If the API requires a school ID parameter, specify the name of the record where this ID should be sent",
+            "If the API requires a school ID parameter, specify the name of the record where this ID should be sent.",
         },
         {
           name: "school_id_send_query_in",
@@ -216,7 +207,7 @@ export function SchoolListFormInputs({
           type: "enum",
           enum: Object.values(SendQueryInEnum),
           required: true,
-          helperText: "Specify where to add the school ID record",
+          helperText: "Specify where to add the school ID record.",
         },
         {
           name: "pagination_type",
@@ -233,11 +224,30 @@ export function SchoolListFormInputs({
           },
         },
         {
-          name: "size",
-          label: "Records per page",
+          name: "page_number_key",
+          label: "Page number key",
           type: "text",
           required: false,
-          helperText: "",
+          helperText: "The name of the key that specifies the page number.",
+          dependsOnName: "pagination_type",
+          dependsOnValue: [PaginationTypeEnum.PAGE_NUMBER],
+        },
+        {
+          name: "page_starts_with",
+          label: "Page starts with",
+          type: "text",
+          required: false,
+          helperText:
+            "Whether the page numbering should start at 0 or 1, or another number. This will also be used as the test value for page number.",
+          dependsOnName: "pagination_type",
+          dependsOnValue: [PaginationTypeEnum.PAGE_NUMBER],
+        },
+        {
+          name: "page_size_key",
+          label: "Page size key",
+          type: "text",
+          required: false,
+          helperText: "The name of the key that specifies the page size.",
           dependsOnName: "pagination_type",
           dependsOnValue: [
             PaginationTypeEnum.LIMIT_OFFSET,
@@ -245,11 +255,11 @@ export function SchoolListFormInputs({
           ],
         },
         {
-          name: "page_size_key",
-          label: "Page size key",
+          name: "size",
+          label: "Page size",
           type: "text",
           required: false,
-          helperText: "The name of the key that specifies the page size",
+          helperText: "",
           dependsOnName: "pagination_type",
           dependsOnValue: [
             PaginationTypeEnum.LIMIT_OFFSET,
@@ -261,28 +271,9 @@ export function SchoolListFormInputs({
           label: "Page offset key",
           type: "text",
           required: false,
-          helperText: "The name of the key that specifies the page offset",
+          helperText: "The name of the key that specifies the page offset.",
           dependsOnName: "pagination_type",
           dependsOnValue: [PaginationTypeEnum.LIMIT_OFFSET],
-        },
-        {
-          name: "page_number_key",
-          label: "Page number key",
-          type: "text",
-          required: false,
-          helperText: "The name of the key that specifies the page number",
-          dependsOnName: "pagination_type",
-          dependsOnValue: [PaginationTypeEnum.PAGE_NUMBER],
-        },
-        {
-          name: "page_starts_with",
-          label: "Page starts with",
-          type: "text",
-          required: false,
-          helperText:
-            "Whether the page numbering should start at 0 or 1, or another number",
-          dependsOnName: "pagination_type",
-          dependsOnValue: [PaginationTypeEnum.PAGE_NUMBER],
         },
         {
           name: "page_send_query_in",
@@ -290,7 +281,7 @@ export function SchoolListFormInputs({
           type: "enum",
           enum: Object.values(SendQueryInEnum),
           required: false,
-          helperText: "Specify where to insert the pagination parameters",
+          helperText: "Specify where to insert the pagination parameters.",
           dependsOnName: "pagination_type",
           dependsOnValue: [
             PaginationTypeEnum.PAGE_NUMBER,

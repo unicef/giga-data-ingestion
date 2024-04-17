@@ -23,14 +23,14 @@ export const CommonApiIngestionFormSchema = z.object({
   page_offset_key: z.string().nullable(),
   page_send_query_in: z.nativeEnum(SendQueryInEnum),
   page_size_key: z.string().nullable(),
-  page_starts_with: z.number().int().nullable(),
+  page_starts_with: z.coerce.number().int().nullable(),
   pagination_type: z.nativeEnum(PaginationTypeEnum),
   query_parameters: z.union([zu.stringToJSON().nullable(), z.string().max(0)]),
   request_body: zu.stringToJSON().nullable(),
   request_method: z.nativeEnum(RequestMethodEnum),
   school_id_key: z.string(),
   school_id_send_query_in: z.nativeEnum(SendQueryInEnum),
-  size: z.number().int().nullable(),
+  size: z.coerce.number().int().nullable(),
 });
 
 export type CommonApiIngestionFormSchema = z.infer<
