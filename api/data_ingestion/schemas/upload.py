@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+import orjson
 from fastapi import Form, UploadFile
-from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr
+from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr, field_validator
 
 
 class FileUpload(BaseModel):
@@ -20,6 +21,18 @@ class FileUpload(BaseModel):
     upload_path: str
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("column_to_schema_mapping", mode="before")
+    def validate_column_to_schema_mapping(self, v: str | dict[str, str]):
+        if isinstance(v, str):
+            return orjson.loads(v)
+        return v
+
+    @field_validator("column_license", mode="before")
+    def validate_column_license(self, v: str | dict[str, str]):
+        if isinstance(v, str):
+            return orjson.loads(v)
+        return v
 
 
 @dataclass
