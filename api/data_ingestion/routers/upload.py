@@ -169,7 +169,7 @@ async def upload_file(
 
     try:
         metadata = {
-            **orjson.loads(form.metadata),
+            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
             "country": form.country,
         }
 
