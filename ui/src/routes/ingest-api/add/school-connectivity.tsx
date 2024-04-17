@@ -45,7 +45,7 @@ function SchoolConnectivity() {
   const hasUploadedFile = file != null;
 
   const hookForm = useForm<SchoolConnectivityFormSchema>({
-    mode: "onChange",
+    mode: "onSubmit",
     reValidateMode: "onChange",
     resolver: zodResolver(SchoolConnectivityFormSchema, { async: true }),
     defaultValues: schoolConnectivity,
@@ -104,8 +104,8 @@ function SchoolConnectivity() {
         </p>
       </header>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex w-full space-x-10 ">
-          <section className="flex w-full flex-col gap-4">
+        <div className="flex gap-10">
+          <div className="flex w-full flex-col gap-4">
             <SchoolConnectivityFormInputs
               hookForm={hookForm}
               errorStates={errorStates}
@@ -143,23 +143,23 @@ function SchoolConnectivity() {
                 Proceed
               </Button>
             </ButtonSet>
-          </section>
-          <aside className="flex w-full flex-col ">
-            <div className="grow basis-0 overflow-y-auto">
-              {isResponseError && (
-                <Tag type="red">Invalid Output from api request</Tag>
-              )}
-              {responsePreview === "invalid" && (
-                <Tag type="blue">Invalid Datakey</Tag>
-              )}
-              <SyntaxHighlighter
-                customStyle={{ height: "100%" }}
-                language="json"
-                style={docco}
-              >
-                {responsePreview === "" ? "Preview" : prettyResponse}
-              </SyntaxHighlighter>
-            </div>
+          </div>
+          <aside className="h-[95vh] w-full">
+            <p>Preview</p>
+            {isResponseError && (
+              <Tag type="red">Invalid Output from API request</Tag>
+            )}
+            {responsePreview === "invalid" && (
+              <Tag type="red">Invalid Data Key</Tag>
+            )}
+            <SyntaxHighlighter
+              customStyle={{ height: "100%" }}
+              showLineNumbers
+              language="json"
+              style={docco}
+            >
+              {responsePreview === "" ? "" : prettyResponse}
+            </SyntaxHighlighter>
           </aside>
         </div>
       </form>

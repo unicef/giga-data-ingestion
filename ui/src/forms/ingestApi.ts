@@ -211,7 +211,7 @@ export const schoolListFormInitialValues: SchoolListFormSchema = {
 export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
   {
     enabled: z.boolean().default(true),
-    ingestion_frequency_minutes: z.number().int().min(5),
+    ingestion_frequency_minutes: z.coerce.number().int().min(5),
     date_key: z.string().nullable(),
     date_format: z.string().nullable(),
     send_date_in: z.string().nullable(),

@@ -46,7 +46,7 @@ export function SchoolListFormInputs({
 
   const { watch, trigger, resetField } = hookForm;
 
-  const { testApi, isLoading } = useTestApi<SchoolListFormSchema>();
+  const { testApi, isLoading } = useTestApi();
 
   const schoolListFormMapping = useMemo<
     Record<string, IngestApiFormMapping<SchoolListFormSchema>[]>
@@ -299,12 +299,14 @@ export function SchoolListFormInputs({
       setResponsePreview,
       testApi,
       trigger,
+      users,
       watch,
     ],
   );
 
   return (
     <IngestApiFormInputs
+      // @ts-expect-error incorrect type inference
       hookForm={hookForm}
       formMappings={schoolListFormMapping}
     />

@@ -165,7 +165,8 @@ function AddIngestion() {
               </Button>
             </ButtonSet>
           </div>
-          <div className="h-[95vh] w-full">
+          <aside className="h-[95vh] w-full">
+            <p>Preview</p>
             {isResponseError && (
               <Tag type="red">Invalid Output from API request</Tag>
             )}
@@ -178,7 +179,7 @@ function AddIngestion() {
             >
               {responsePreview === "" ? "" : prettyResponse}
             </SyntaxHighlighter>
-          </div>
+          </aside>
         </div>
       </form>
       <Outlet />

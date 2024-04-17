@@ -38,7 +38,7 @@ export function SchoolConnectivityFormInputs({
 
   const { watch, resetField, trigger } = hookForm;
 
-  const { testApi, isLoading } = useTestApi<SchoolConnectivityFormSchema>();
+  const { testApi, isLoading } = useTestApi();
 
   // const { mutateAsync: isValidDatetimeFormatCodeRequest } = useMutation({
   //   mutationKey: ["is_valid_datetime_format_code"],
@@ -500,7 +500,7 @@ export function SchoolConnectivityFormInputs({
         {
           name: "ingestion_frequency_minutes",
           label: "Frequency",
-          type: "text",
+          type: "number",
           required: false,
           helperText:
             "Ingestion frequency in minutes. Minimum value is 5 minutes.",
@@ -530,6 +530,7 @@ export function SchoolConnectivityFormInputs({
 
   return (
     <IngestApiFormInputs
+      // @ts-expect-error incorrect type inference
       hookForm={hookForm}
       formMappings={schoolConnectivityFormMapping}
     />

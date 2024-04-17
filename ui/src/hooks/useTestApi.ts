@@ -20,7 +20,9 @@ interface TestApiOptions {
   setIsValidResponse: Dispatch<SetStateAction<boolean>>;
   setIsResponseError: Dispatch<SetStateAction<boolean>>;
   setIsValidDataKey: Dispatch<SetStateAction<boolean>>;
-  watch: UseFormWatch<SchoolListFormSchema | SchoolConnectivityFormSchema>;
+  watch:
+    | UseFormWatch<SchoolListFormSchema>
+    | UseFormWatch<SchoolConnectivityFormSchema>;
 }
 
 export function useTestApi() {
