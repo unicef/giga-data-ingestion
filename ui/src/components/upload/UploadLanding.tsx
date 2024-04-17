@@ -1,10 +1,22 @@
 import { Add } from "@carbon/icons-react";
-import { Button, Column, Grid, Heading, Section, Stack } from "@carbon/react";
+import { Button, Heading, Section, Stack } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
 
-function UploadLanding() {
+interface UploadLandingProps {
+  page: number;
+  pageSize: number;
+  handlePaginationChange: ({
+    page,
+    pageSize,
+  }: {
+    page: number;
+    pageSize: number;
+  }) => void;
+}
+
+function UploadLanding(props: UploadLandingProps) {
   return (
     <Section>
       <Section>
@@ -17,37 +29,33 @@ function UploadLanding() {
               enim ad minim veniam, quis nostrud exercitation ullamco laboris
               nisi ut aliquip ex ea commodo consequat.
             </p>
-            <Grid>
-              <Column lg={4}>
-                <Button
-                  as={Link}
-                  to="/upload/$uploadGroup/$uploadType"
-                  params={{
-                    uploadGroup: "school-data",
-                    uploadType: "geolocation",
-                  }}
-                  className="w-full"
-                  size="xl"
-                  renderIcon={Add}
-                >
-                  School geolocation
-                </Button>
-              </Column>
-              <Column lg={4}>
-                <Button
-                  as={Link}
-                  to="/upload/$uploadGroup/$uploadType"
-                  params={{
-                    uploadGroup: "school-data",
-                    uploadType: "coverage",
-                  }}
-                  className="w-full"
-                  size="xl"
-                  renderIcon={Add}
-                >
-                  School coverage
-                </Button>
-              </Column>
+            <div className="grid grid-cols-4">
+              <Button
+                as={Link}
+                to="/upload/$uploadGroup/$uploadType"
+                params={{
+                  uploadGroup: "school-data",
+                  uploadType: "geolocation",
+                }}
+                className="w-full"
+                size="xl"
+                renderIcon={Add}
+              >
+                School geolocation
+              </Button>
+              <Button
+                as={Link}
+                to="/upload/$uploadGroup/$uploadType"
+                params={{
+                  uploadGroup: "school-data",
+                  uploadType: "coverage",
+                }}
+                className="w-full"
+                size="xl"
+                renderIcon={Add}
+              >
+                School coverage
+              </Button>
               {/* TODO: Scope this out */}
               {/*<Column lg={4}>*/}
               {/*  <Button*/}
@@ -64,10 +72,10 @@ function UploadLanding() {
               {/*    Unstructured dataset*/}
               {/*  </Button>*/}
               {/*</Column>*/}
-            </Grid>
+            </div>
           </Stack>
 
-          <UploadsTable />
+          <UploadsTable {...props} />
         </Stack>
       </Section>
     </Section>

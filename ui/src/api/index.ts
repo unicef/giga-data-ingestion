@@ -18,6 +18,7 @@ import qosRouter from "./routers/qos.ts";
 import schemaRouter from "./routers/schema.ts";
 import uploadsRouter from "./routers/uploads.ts";
 import usersRouter from "./routers/users.ts";
+import utilsRouter from "./routers/utils.ts";
 
 const baseURL = "/api";
 
@@ -34,11 +35,8 @@ export const api = {
   qos: qosRouter(axi),
   schema: schemaRouter(axi),
   externalRequests: externalRequestsRouter(),
+  utils: utilsRouter(axi),
 };
-
-export function useApi() {
-  return api;
-}
 
 export function AxiosProvider({ children }: PropsWithChildren) {
   const { inProgress } = useMsal();
@@ -58,9 +56,13 @@ export function AxiosProvider({ children }: PropsWithChildren) {
     ),
   );
 
-  function requestFulFilledInterceptor(config: InternalAxiosRequestConfig) {
-    if (isAuthenticated && inProgress === InteractionStatus.None) {
-      void getToken();
+  async function requestFulFilledInterceptor(
+    config: InternalAxiosRequestConfig,
+  ) {
+    if (!isAuthenticated && inProgress === InteractionStatus.Startup) {
+      const { accessToken } = await getToken();
+      config.headers["Authorization"] = `Bearer ${accessToken}`;
+      return Promise.resolve(config);
     }
 
     return Promise.resolve(config);
@@ -74,8 +76,35 @@ export function AxiosProvider({ children }: PropsWithChildren) {
     return response;
   }
 
-  function responseRejectedInterceptor(error: AxiosError) {
-    return Promise.reject(error);
+  async function responseRejectedInterceptor(error: AxiosError) {
+    const originalRequest = error.config;
+
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      inProgress !== InteractionStatus.None
+    ) {
+      try {
+        const { accessToken } = await getToken();
+
+        try {
+          const res = await axi.request({
+            ...originalRequest,
+            headers: {
+              ...originalRequest.headers,
+              Authorization: `Bearer ${accessToken}`,
+            },
+          });
+          return Promise.resolve(res);
+        } catch (e) {
+          return Promise.reject(e);
+        }
+      } catch (e) {
+        return Promise.reject(e);
+      }
+    }
+
+    return error;
   }
 
   useEffect(() => {
@@ -96,6 +125,8 @@ export function AxiosProvider({ children }: PropsWithChildren) {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: true,
       placeholderData: keepPreviousData,
     },
   },

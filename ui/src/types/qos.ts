@@ -115,6 +115,11 @@ export interface SchoolListFormValues extends ApiIngestionFormValues {
 
 export interface SchoolConnectivityFormValues extends ApiIngestionFormValues {
   ingestion_frequency_minutes: number;
+  date_key: string | null;
+  date_format: string | null;
+  send_date_in: string | null;
+  response_date_key: string | null;
+  response_date_format: string | null;
 }
 
 export const initialApiIngestionFormValues: ApiIngestionFormValues = {
@@ -153,7 +158,13 @@ export const initialSchoolListFormValues: SchoolListFormValues = {
 export const initialSchoolConnectivityFormValues: SchoolConnectivityFormValues =
   {
     ...initialApiIngestionFormValues,
+
     ingestion_frequency_minutes: 5,
+    date_key: null,
+    date_format: null,
+    send_date_in: SendQueryInEnum.QUERY_PARAMETERS,
+    response_date_key: null,
+    response_date_format: null,
   };
 
 export interface CreateSchoolListRequest extends SchoolListFormValues {}

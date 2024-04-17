@@ -11,15 +11,20 @@ function useLogout() {
   const { location } = useRouterState();
   const navigate = useNavigate();
 
-  const logout = useCallback(async () => {
+  return useCallback(async () => {
     await instance.logout({
       ...logoutRequest,
       account,
     });
-    await navigate({ from: location.pathname, to: "/" });
+    await navigate({
+      from: location.pathname,
+      to: "/",
+      search: {
+        page: 1,
+        page_size: 10,
+      },
+    });
   }, [account, instance, location.pathname, navigate]);
-
-  return logout;
 }
 
 export default useLogout;

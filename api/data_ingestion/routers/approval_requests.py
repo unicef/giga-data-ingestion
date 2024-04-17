@@ -1,5 +1,6 @@
 import json
 import urllib.parse
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -13,6 +14,7 @@ from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.trino import get_db
+from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
@@ -189,14 +191,16 @@ async def get_approval_request(
     "/upload",
     status_code=status.HTTP_201_CREATED,
 )
-async def upload_approved_rows(body: UploadApprovedRowsRequest):
-    subpath = urllib.parse.unquote(body.subpath)
-    subpath = Path(subpath)
-    dataset = subpath.parent.name
-    country_iso3 = subpath.name.split("_")[0]
-    filename = subpath.name.split("_")[1].split(".")[0]
+async def upload_approved_rows(
+    body: UploadApprovedRowsRequest,
+    user=Depends(azure_scheme),
+):
+    posix_path = Path(urllib.parse.unquote(body.subpath))
+    dataset = posix_path.parent.name
+    country_iso3 = posix_path.name.split("_")[0]
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    filename = f"{country_iso3}_{dataset}_{filename}.json"
+    filename = f"{country_iso3}_{dataset}_{timestamp}.json"
 
     approve_location = (
         f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"

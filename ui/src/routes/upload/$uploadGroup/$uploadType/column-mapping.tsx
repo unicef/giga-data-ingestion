@@ -1,4 +1,5 @@
-import { SubmitHandler, useForm } from "react-hook-form";
+import { Suspense } from "react";
+import { Control, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
 import {
@@ -22,6 +23,7 @@ import {
 
 import { api } from "@/api";
 import DataTable from "@/components/common/DataTable.tsx";
+import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { useStore } from "@/context/store";
 import { licenseOptions } from "@/mocks/metadataFormValues.tsx";
 
@@ -78,6 +80,7 @@ function UploadColumnMapping() {
   const {
     handleSubmit,
     register,
+    control,
     formState: { errors },
     watch,
   } = useForm<ConfigureColumnsForm>({
@@ -207,6 +210,10 @@ function UploadColumnMapping() {
             <DataTable columns={headers} rows={rows} />
           )}
         </section>
+        <Suspense>
+          <ReactHookFormDevTools control={control as unknown as Control} />
+        </Suspense>
+
         <ButtonSet className="w-full">
           <Button
             as={Link}

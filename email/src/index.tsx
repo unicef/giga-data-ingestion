@@ -11,6 +11,7 @@ import { hostname } from "os";
 import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
 import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
 import DataQualityReport from "./emails/dq-report";
+import MasterDataReleaseNotification from "./emails/master-data-release-notification";
 import InviteUser from "./emails/invite-user";
 import {
   DataQualityUploadSuccessProps,
@@ -18,6 +19,7 @@ import {
   DataQualityReportEmailProps,
 } from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
+import { MasterDataReleaseNotificationProps } from "./types/master-data-release-notification";
 
 if (process.env.SENTRY_DSN && process.env.NODE_ENV !== "development") {
   Sentry.init({
@@ -91,6 +93,19 @@ app.post(
     });
     return ctx.json({ html, text });
   },
+);
+
+app.post(
+  "/email/master-data-release-notification",
+  zValidator("json", MasterDataReleaseNotificationProps),
+  (ctx) => {
+    const json = ctx.req.valid("json") as MasterDataReleaseNotificationProps;
+    const html = render(<MasterDataReleaseNotification {...json} />);
+    const text = render(<MasterDataReleaseNotification {...json} />, {
+      plainText: true,
+    });
+    return ctx.json({ html, text });
+  }
 );
 
 const port = 3020;

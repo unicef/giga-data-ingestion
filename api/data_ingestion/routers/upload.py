@@ -3,25 +3,24 @@ from typing import Annotated
 
 import country_converter as coco
 import magic
-from azure.core.exceptions import HttpResponseError
-from azure.storage.blob import ContentSettings
+import orjson
 from fastapi import (
     APIRouter,
     Depends,
-    Form,
     HTTPException,
     Query,
     Response,
     Security,
-    UploadFile,
     status,
 )
 from fastapi_azure_auth.user import User
-from pydantic import AwareDatetime, Field
-from sqlalchemy import delete, desc, func, select
+from pydantic import Field
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import StreamingResponse
 
+from azure.core.exceptions import HttpResponseError
+from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
@@ -36,6 +35,7 @@ from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
+    FileUploadRequest,
 )
 
 router = APIRouter(
@@ -68,7 +68,7 @@ async def list_uploads(
     total = await db.scalar(count_query)
 
     items = await db.scalars(
-        query.order_by(desc(FileUpload.created))
+        query.order_by(FileUpload.created.desc())
         .limit(page_size)
         .offset((page - 1) * page_size)
     )
@@ -109,28 +109,16 @@ async def get_upload(
 @router.post("", response_model=FileUploadSchema)
 async def upload_file(
     response: Response,
-    column_to_schema_mapping: Annotated[str, Form()],
-    column_license: Annotated[str, Form()],
-    country: Annotated[str, Form()],
-    data_collection_date: Annotated[AwareDatetime, Form()],
-    data_collection_modality: Annotated[str, Form()],
-    data_owner: Annotated[str, Form()],
     dataset: str,
-    date_modified: Annotated[AwareDatetime, Form()],
-    description: Annotated[str, Form()],
-    domain: Annotated[str, Form()],
-    file: UploadFile,
-    pii_classification: Annotated[str, Form()],
-    school_id_type: Annotated[str, Form()],
-    sensitivity_level: Annotated[str, Form()],
-    geolocation_data_source: Annotated[str | None, Form()] = None,
-    source: str | None = Form(None),
+    form: FileUploadRequest = Depends(),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(azure_scheme),
     is_privileged: bool = Depends(IsPrivileged.raises(False)),
 ):
+    file = form.file
+
     if not is_privileged:
-        country_dataset = f"{country}-School {dataset.capitalize()}"
+        country_dataset = f"{form.country}-School {dataset.capitalize()}"
         if country_dataset not in user.groups:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -159,7 +147,7 @@ async def upload_file(
             detail="File extension does not match file type.",
         )
 
-    country_code = coco.convert(country, to="ISO3")
+    country_code = coco.convert(form.country, to="ISO3")
     email = user.email or user.claims.get("email")
     if email is None:
         email = (await UsersApi.get_user(user.sub)).mail
@@ -169,10 +157,10 @@ async def upload_file(
         uploader_email=email,
         country=country_code,
         dataset=dataset,
-        source=source,
+        source=form.source,
         original_filename=file.filename,
-        column_to_schema_mapping=column_to_schema_mapping,
-        column_license=column_license,
+        column_to_schema_mapping=orjson.loads(form.column_to_schema_mapping),
+        column_license=orjson.loads(form.column_license),
     )
     db.add(file_upload)
     await db.commit()
@@ -181,21 +169,12 @@ async def upload_file(
 
     try:
         metadata = {
-            "sensitivity_level": sensitivity_level,
-            "pii_classification": pii_classification,
-            "geolocation_data_source": geolocation_data_source,
-            "data_collection_date": data_collection_date.isoformat(),
-            "data_collection_modality": data_collection_modality,
-            "domain": domain,
-            "date_modified": date_modified.isoformat(),
-            "data_owner": data_owner,
-            "country": country,
-            "school_id_type": school_id_type,
-            "description_file_update": description,
+            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            "country": form.country,
         }
 
-        if source is not None:
-            metadata["source"] = source
+        if form.source is not None:
+            metadata["source"] = form.source
 
         await file.seek(0)
         client.upload_blob(

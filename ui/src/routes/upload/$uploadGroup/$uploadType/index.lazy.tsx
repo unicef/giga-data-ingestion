@@ -2,22 +2,33 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import { Button, ButtonSet, Loading, SelectItem, Stack } from "@carbon/react";
+import {
+  Button,
+  ButtonSet,
+  SelectItem,
+  SkeletonPlaceholder,
+  Stack,
+} from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { api } from "@/api";
+import { FileUploaderDropContainer } from "@/components/common/CarbonOverrides.tsx";
 import { Select } from "@/components/forms/Select.tsx";
-import UploadFile from "@/components/upload/UploadFile.tsx";
+import { AcceptedFileTypes } from "@/constants/upload.ts";
 import { useStore } from "@/context/store";
 import { sourceOptions } from "@/mocks/metadataFormValues.tsx";
+import { HeaderDetector } from "@/utils/upload.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
   component: Index,
 });
 
 const validTypes = {
-  "text/csv": [".csv"],
+  "text/csv": AcceptedFileTypes.CSV,
+  "application/vnd.ms-excel": AcceptedFileTypes.EXCEL_LEGACY,
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+    AcceptedFileTypes.EXCEL,
 };
 
 export default function Index() {
@@ -26,6 +37,9 @@ export default function Index() {
 
   const [isParsing, setIsParsing] = useState(false);
 
+  const [parsingError, setParsingError] = useState("");
+  const hasParsingError = !!parsingError;
+
   const {
     uploadSlice,
     uploadSliceActions: {
@@ -33,6 +47,8 @@ export default function Index() {
       resetUploadSliceState,
       setUploadSliceState,
       setSource,
+      setDetectedColumns,
+      setColumnMapping,
     },
   } = useStore();
   const { file, source: storeSource } = uploadSlice;
@@ -69,11 +85,41 @@ export default function Index() {
     !hasUploadedFile ||
     (isCoverage && !source) ||
     isSchemaFetching ||
-    isParsing;
-  const isProceedLoading = isSchemaFetching || isParsing;
-  const uploadConditionalRender =
+    isParsing ||
+    hasParsingError;
+  const isSchemaLoading = !(
     (!isCoverage && !isSchemaFetching) ||
-    (isCoverage && !!source && !isSchemaFetching);
+    (isCoverage && !!source && !isSchemaFetching)
+  );
+  const shouldShowSkeleton =
+    (!isCoverage && isSchemaLoading) || (isCoverage && !!source);
+
+  function handleOnAddFiles(addedFiles: File[]) {
+    const file = addedFiles.at(0) ?? null;
+    if (!file) return;
+
+    setParsingError("");
+    setIsParsing(true);
+
+    const detector = new HeaderDetector({
+      file,
+      schema,
+      setIsLoading: setIsParsing,
+      setError: setParsingError,
+      setColumnMapping,
+      setDetectedColumns,
+      type: validTypes[file.type as keyof typeof validTypes],
+    });
+    detector.detect();
+
+    setUploadSliceState({
+      uploadSlice: {
+        ...uploadSlice,
+        file: file,
+        timeStamp: new Date(),
+      },
+    });
+  }
 
   return (
     <Stack gap={10}>
@@ -96,25 +142,24 @@ export default function Index() {
         </Select>
       )}
 
-      {uploadConditionalRender && (
+      {isSchemaLoading ? (
+        shouldShowSkeleton ? (
+          <SkeletonPlaceholder />
+        ) : null
+      ) : (
         <div className="w-1/4">
-          <UploadFile
-            acceptType={validTypes}
-            description="CSV only, up to 10 MB"
-            file={file}
-            setFile={file =>
-              setUploadSliceState({
-                uploadSlice: { ...uploadSlice, file: file },
-              })
+          <FileUploaderDropContainer
+            accept={Object.keys(validTypes)}
+            name="file"
+            labelText={
+              hasUploadedFile ? file.name : "Click or drag a file to upload"
             }
-            setTimestamp={timestamp =>
-              setUploadSliceState({
-                uploadSlice: { ...uploadSlice, timeStamp: timestamp },
-              })
+            onAddFiles={(_, { addedFiles }: { addedFiles: File[] }) =>
+              handleOnAddFiles(addedFiles)
             }
-            schema={schema}
-            setIsLoading={setIsParsing}
           />
+          <p>File formats: {Object.values(validTypes).join(", ")} up to 10MB</p>
+          {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
         </div>
       )}
 
@@ -136,11 +181,7 @@ export default function Index() {
           to="./column-mapping"
           onClick={handleProceedToNextStep}
           className="w-full"
-          renderIcon={
-            isProceedLoading
-              ? props => <Loading small={true} withOverlay={false} {...props} />
-              : ArrowRight
-          }
+          renderIcon={ArrowRight}
           isExpressive
         >
           Proceed

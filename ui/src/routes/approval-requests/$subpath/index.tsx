@@ -1,17 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, DataTableHeader } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
-import CDFDataTable from "@/components/approval-requests/CDFDataTable.tsx";
+import { listApprovalRequestQueryOptions } from "@/api/queryOptions";
+import CDFDataTable from "@/components/approval-requests/CDFDataTable";
 import { useStore } from "@/context/store";
 import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests.ts";
 
 export const Route = createFileRoute("/approval-requests/$subpath/")({
   component: ApproveRejectTable,
+  loader: ({ context: { queryClient } }) => {
+    return queryClient.ensureQueryData(listApprovalRequestQueryOptions);
+  },
 });
 
 function ApproveRejectTable() {
@@ -20,18 +24,17 @@ function ApproveRejectTable() {
 
   const { subpath } = Route.useParams();
   const navigate = useNavigate({ from: Route.fullPath });
+
   const {
     approveRowActions: {
-      setHeaders,
-      setRows,
       setApprovedRows,
+      setHeaders,
       setRejectedRows,
-      resetApproveRowState,
+      setRows,
     },
     approveRowState: { approvedRowsList, rejectedRowsList },
   } = useStore();
-
-  const { data: approvalRequestsQuery, isLoading } = useQuery({
+  const { data: approvalRequestsQuery } = useSuspenseQuery({
     queryFn: () =>
       api.approvalRequests.get(subpath, { page, page_size: pageSize }),
     queryKey: ["approval-requests", subpath, page, pageSize],
@@ -57,8 +60,6 @@ function ApproveRejectTable() {
       header: key,
     }));
   }, [approvalRequests]);
-
-  useEffect(() => resetApproveRowState(), [resetApproveRowState]);
 
   const formattedRows = useMemo<Record<string, string | null>[]>(
     () =>
@@ -108,7 +109,6 @@ function ApproveRejectTable() {
       <CDFDataTable
         headers={headers}
         rows={formattedRows}
-        isLoading={isLoading}
         handleApproveRows={handleApproveRows}
         handleRejectRows={handleRejectRows}
         handlePaginationChange={handlePaginationChange}

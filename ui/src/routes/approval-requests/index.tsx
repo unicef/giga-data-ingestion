@@ -6,11 +6,12 @@ import {
   DataTableSkeleton,
   Section,
 } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 
 import { api } from "@/api";
+import { listApprovalRequestQueryOptions } from "@/api/queryOptions";
 import DataTable from "@/components/common/DataTable.tsx";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { SENTINEL_PAGED_RESPONSE } from "@/types/api.ts";
@@ -18,6 +19,8 @@ import { ApprovalRequestListing } from "@/types/approvalRequests";
 
 export const Route = createFileRoute("/approval-requests/")({
   component: ApprovalRequests,
+  loader: ({ context: { queryClient } }) =>
+    queryClient.ensureQueryData(listApprovalRequestQueryOptions),
 });
 
 const columns: DataTableHeader[] = [
@@ -71,7 +74,7 @@ function ApprovalRequests() {
     setPageSize(pageSize);
   }
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useSuspenseQuery({
     queryKey: ["approvalRequests", page, pageSize],
     queryFn: () => api.approvalRequests.list({ page, page_size: pageSize }),
   });

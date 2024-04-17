@@ -2,6 +2,7 @@ import { ComponentProps } from "react";
 
 import {
   DataTable as CarbonDataTable,
+  Pagination,
   Table,
   TableBody,
   TableCell,
@@ -10,8 +11,6 @@ import {
   TableHeader,
   TableRow,
 } from "@carbon/react";
-// @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
-import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
 
 interface _DataTableProps extends ComponentProps<typeof CarbonDataTable> {
   columns: ComponentProps<typeof CarbonDataTable>["headers"];

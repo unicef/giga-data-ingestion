@@ -19,7 +19,6 @@ import {
   TableToolbar,
 } from "@carbon/react";
 import { DataTable as CarbonDataTable } from "@carbon/react/lib/components/DataTable";
-// @ts-expect-error missing types https://github.com/carbon-design-system/carbon/issues/14831
 import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
 
 import { cn } from "@/lib/utils.ts";

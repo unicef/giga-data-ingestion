@@ -7,7 +7,7 @@ import {
   Heading,
   Section,
 } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { api } from "@/api";
@@ -15,12 +15,27 @@ import DataCheckItem from "@/components/check-file-uploads/DataCheckItem";
 import SummaryBanner from "@/components/check-file-uploads/SummaryBanner";
 import SummaryChecks from "@/components/check-file-uploads/SummaryChecks";
 import UploadCheckSkeleton from "@/components/check-file-uploads/UploadCheckSkeleton";
-import { UploadResponse, initialUploadResponse } from "@/types/upload";
-import { DataQualityCheck, initialDataQualityCheck } from "@/types/upload";
+import {
+  DataQualityCheck,
+  UploadResponse,
+  initialDataQualityCheck,
+  initialUploadResponse,
+} from "@/types/upload";
 import { sumAsertions } from "@/utils/data_quality";
 
 export const Route = createFileRoute("/upload/$uploadId/")({
   component: Index,
+  loader: ({ context: { queryClient }, params: { uploadId } }) =>
+    Promise.all([
+      queryClient.ensureQueryData({
+        queryKey: ["dq_check", uploadId],
+        queryFn: () => api.uploads.get_data_quality_check(uploadId),
+      }),
+      queryClient.ensureQueryData({
+        queryKey: ["upload", uploadId],
+        queryFn: () => api.uploads.get_upload(uploadId),
+      }),
+    ]),
 });
 
 function Index() {
@@ -30,12 +45,9 @@ function Index() {
     data: dqResultQuery,
     isLoading: dqResultIsLoading,
     isFetching: dqResultIsFetching,
-  } = useQuery({
+  } = useSuspenseQuery({
     queryKey: ["dq_check", uploadId],
-    queryFn: () => {
-      const data = api.uploads.get_data_quality_check(uploadId);
-      return data;
-    },
+    queryFn: () => api.uploads.get_data_quality_check(uploadId),
   });
 
   const dqResultData = useMemo<DataQualityCheck>(
@@ -45,9 +57,9 @@ function Index() {
 
   const {
     data: uploadQuery,
-    isLoading: uploadisLoading,
+    isLoading: uploadIsLoading,
     isFetching: uploadIsFetching,
-  } = useQuery({
+  } = useSuspenseQuery({
     queryKey: ["upload", uploadId],
     queryFn: () => api.uploads.get_upload(uploadId),
   });
@@ -60,7 +72,7 @@ function Index() {
   if (
     dqResultIsLoading ||
     dqResultIsFetching ||
-    uploadisLoading ||
+    uploadIsLoading ||
     uploadIsFetching
   )
     return <UploadCheckSkeleton />;

@@ -1,11 +1,15 @@
 import { Heading, Section, Stack } from "@carbon/react";
-import { createLazyFileRoute } from "@tanstack/react-router";
-import { Outlet } from "@tanstack/react-router";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 
+import { listApiIngestionsQueryOptions } from "@/api/queryOptions.ts";
 import IngestTable from "@/components/ingest-api/IngestTable";
+import { validateSearchParams } from "@/utils/pagination.ts";
 
-export const Route = createLazyFileRoute("/ingest-api/")({
+export const Route = createFileRoute("/ingest-api/")({
   component: IngestApi,
+  loader: ({ context: { queryClient } }) =>
+    queryClient.ensureQueryData(listApiIngestionsQueryOptions),
+  validateSearch: validateSearchParams,
 });
 
 function IngestApi() {

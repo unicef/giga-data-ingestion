@@ -33,6 +33,11 @@ class SendQueryInEnum(enum.Enum):
     NONE = "NONE"
 
 
+class SendDateInEnum(enum.Enum):
+    BODY = "BODY"
+    QUERY_PARAMETERS = "QUERY_PARAMETERS"
+
+
 class ApiConfiguration(BaseModel):
     __abstract__ = True
 
@@ -109,4 +114,12 @@ class SchoolConnectivity(ApiConfiguration):
     school_list_id: Mapped[str] = mapped_column(ForeignKey("qos_school_list.id"))
     school_list: Mapped["SchoolList"] = relationship(
         "SchoolList", back_populates="school_connectivity"
+    )
+
+    date_key: Mapped[str] = mapped_column(nullable=True, default=None)
+    date_format: Mapped[str] = mapped_column(nullable=True, default=None)
+    send_date_in: Mapped[SendDateInEnum] = mapped_column(nullable=True, default=None)
+    response_date_key: Mapped[str] = mapped_column(nullable=False, default="")
+    response_date_format: Mapped[str] = mapped_column(
+        nullable=False, default="%Y-%m-%d"
     )
