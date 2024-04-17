@@ -49,9 +49,9 @@ class SchoolConnectivitySchema(ApiConfiguration):
     ingestion_frequency_minutes: int
     schema_url: str
     school_list_id: str
-    date_key: str
-    date_format: str
-    send_date_in: str
+    date_key: str | None
+    date_format: str | None
+    send_date_in: str | None
     response_date_key: str
     response_date_format: str
 
