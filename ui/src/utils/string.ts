@@ -111,7 +111,5 @@ export function validateDatetimeFormat(str: string): boolean {
 
   const matchesFullPattern = new RegExp(fullPattern).test(str);
 
-  if (matchesFullPattern || str === "timestamp" || str === "ISO8601")
-    return true;
-  else return false;
+  return matchesFullPattern || str === "timestamp" || str === "ISO8601";
 }

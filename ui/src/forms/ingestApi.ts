@@ -25,10 +25,10 @@ export const CommonApiIngestionFormSchema = z.object({
   page_size_key: z.string().nullable(),
   page_starts_with: z.coerce.number().int().nullable(),
   pagination_type: z.nativeEnum(PaginationTypeEnum),
-  query_parameters: z.union([zu.stringToJSON().nullable(), z.string().max(0)]),
-  request_body: zu.stringToJSON().nullable(),
+  query_parameters: z.union([zu.stringToJSON(), z.string().max(0)]).nullable(),
+  request_body: z.union([zu.stringToJSON(), z.string().max(0)]).nullable(),
   request_method: z.nativeEnum(RequestMethodEnum),
-  school_id_key: z.string(),
+  school_id_key: z.string().min(1),
   school_id_send_query_in: z.nativeEnum(SendQueryInEnum),
   size: z.coerce.number().int().nullable(),
 });
@@ -213,13 +213,34 @@ export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
     enabled: z.boolean().default(true),
     ingestion_frequency_minutes: z.coerce.number().int().min(5),
     date_key: z.string().nullable(),
-    date_format: z.string().nullable(),
+    date_format: z
+      .union([
+        z.enum(["timestamp", "ISO8601"]),
+        z
+          .string()
+          .regex(
+            new RegExp(
+              "^(%Y|%m|%d|%H|%M|%S|%z)([\\/\\-_.+: ]?(%Y|%m|%d|%H|%M|%S|%z))?$",
+            ),
+          ),
+      ])
+      .nullable(),
     send_date_in: z.string().nullable(),
-    response_date_key: z.string().nullable(),
-    response_date_format: z.string().nullable(),
+    response_date_key: z.string().min(1),
+    response_date_format: z.string().min(1),
   },
 )
-  .superRefine(commonSuperRefine)
+  .superRefine((arg, ctx) => {
+    commonSuperRefine(arg, ctx);
+
+    if (arg.date_key && !arg.date_format) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Date format must be specified when date key is provided.",
+        path: ["date_format"],
+      });
+    }
+  })
   .transform(arg => ({
     ...arg,
     query_parameters: arg.query_parameters
@@ -251,8 +272,8 @@ export const schoolConnectivityFormInitialValues: SchoolConnectivityFormSchema =
 
     date_key: null,
     date_format: null,
-    response_date_key: null,
-    response_date_format: null,
+    response_date_key: "",
+    response_date_format: "",
     send_date_in: SendQueryInEnum.NONE,
 
     pagination_type: PaginationTypeEnum.NONE,

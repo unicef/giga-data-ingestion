@@ -28,12 +28,24 @@ export function FreeTextInput<MappingType>({
   return (
     <TextInput
       id={mapping.name}
-      labelText={mapping.label}
+      labelText={
+        <>
+          {mapping.label}
+          {mapping.required && <sup className="text-giga-red">*</sup>}
+        </>
+      }
+      placeholder={mapping.placeholder}
       helperText={
         <span className="whitespace-pre-line">{mapping.helperText}</span>
       }
       invalid={mapping.name in errors}
-      invalidText={errors[mapping.name]?.message as string}
+      invalidText={
+        <span className="whitespace-pre-line">
+          {errors[mapping.name]?.message as string}
+          <br />
+          {mapping.helperText}
+        </span>
+      }
       {...register}
     />
   );
@@ -48,9 +60,20 @@ export function PasswordInput<MappingType>({
     //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}//
     <CarbonTextInput.PasswordInput
       id={mapping.name}
-      labelText={mapping.label}
+      labelText={
+        <>
+          {mapping.label}
+          {mapping.required && <sup className="text-giga-red">*</sup>}
+        </>
+      }
       invalid={mapping.name in errors}
-      invalidText={errors[mapping.name]?.message as string}
+      invalidText={
+        <span className="whitespace-pre-line">
+          {errors[mapping.name]?.message as string}
+          <br />
+          {mapping.helperText}
+        </span>
+      }
       {...register}
     />
   );
@@ -64,12 +87,23 @@ export function CodeInput<MappingType>({
   return (
     <TextArea
       id={mapping.name}
-      labelText={mapping.label}
+      labelText={
+        <>
+          {mapping.label}
+          {mapping.required && <sup className="text-giga-red">*</sup>}
+        </>
+      }
       helperText={
         <span className="whitespace-pre-line">{mapping.helperText}</span>
       }
       invalid={mapping.name in errors}
-      invalidText={errors[mapping.name]?.message as string}
+      invalidText={
+        <span className="whitespace-pre-line">
+          {errors[mapping.name]?.message as string}
+          <br />
+          {mapping.helperText}
+        </span>
+      }
       placeholder={mapping.placeholder}
       {...register}
     />
@@ -84,10 +118,21 @@ export function SelectFromArray<MappingType>({
   return (
     <Select
       id={mapping.name}
-      labelText={mapping.label}
+      labelText={
+        <>
+          {mapping.label}
+          {mapping.required && <sup className="text-giga-red">*</sup>}
+        </>
+      }
       helperText={mapping.helperText}
       invalid={mapping.name in errors}
-      invalidText={errors[mapping.name]?.message as string}
+      invalidText={
+        <span className="whitespace-pre-line">
+          {errors[mapping.name]?.message as string}
+          <br />
+          {mapping.helperText}
+        </span>
+      }
       {...register}
     >
       <SelectItem text="" value="" />
@@ -120,10 +165,21 @@ export function SelectFromEnum<MappingType>({
   return (
     <Select
       id={mapping.name}
-      labelText={mapping.label}
+      labelText={
+        <>
+          {mapping.label}
+          {mapping.required && <sup className="text-giga-red">*</sup>}
+        </>
+      }
       helperText={mapping.helperText}
       invalid={mapping.name in errors}
-      invalidText={errors[mapping.name]?.message as string}
+      invalidText={
+        <span className="whitespace-pre-line">
+          {errors[mapping.name]?.message as string}
+          <br />
+          {mapping.helperText}
+        </span>
+      }
       {...register}
     >
       <SelectItem text="" value="" />
@@ -150,13 +206,24 @@ export function TextInputWithAction<MappingType>({
   isActionLoading = false,
 }: TextInputWithActionProps<MappingType>) {
   return (
-    <div className="flex items-end">
+    <div className="flex items-start">
       <TextInput
         id={mapping.name}
-        labelText={mapping.label}
+        labelText={
+          <>
+            {mapping.label}
+            {mapping.required && <sup className="text-giga-red">*</sup>}
+          </>
+        }
         placeholder={mapping.placeholder}
         invalid={mapping.name in errors}
-        invalidText={errors[mapping.name]?.message as string}
+        invalidText={
+          <span className="whitespace-pre-line">
+            {errors[mapping.name]?.message as string}
+            <br />
+            {mapping.helperText}
+          </span>
+        }
         {...register}
       />
       <div>
@@ -193,8 +260,19 @@ export function NumberInput<MappingType>({
     <CarbonNumberInput
       id={mapping.name}
       invalid={mapping.name in errors}
-      invalidText={errors[mapping.name]?.message as string}
-      label={mapping.label}
+      invalidText={
+        <span className="whitespace-pre-line">
+          {errors[mapping.name]?.message as string}
+          <br />
+          {mapping.helperText}
+        </span>
+      }
+      label={
+        <>
+          {mapping.label}
+          {mapping.required && <sup className="text-giga-red">*</sup>}
+        </>
+      }
       helperText={mapping.helperText}
       {...register}
       min={

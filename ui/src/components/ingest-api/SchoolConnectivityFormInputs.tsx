@@ -1,9 +1,8 @@
-import { Dispatch, SetStateAction, useMemo } from "react";
+import { useMemo } from "react";
 import { UseFormReturn } from "react-hook-form";
 
 import IngestApiFormInputs from "@/components/ingest-api/IngestApiFormInputs.tsx";
 import { SchoolConnectivityFormSchema } from "@/forms/ingestApi.ts";
-import { useTestApi } from "@/hooks/useTestApi.ts";
 import { IngestApiFormMapping } from "@/types/ingestApi.ts";
 import {
   AuthorizationTypeEnum,
@@ -12,54 +11,15 @@ import {
   SendQueryInEnum,
 } from "@/types/qos";
 
-interface ErrorStates {
-  setIsResponseError: Dispatch<SetStateAction<boolean>>;
-  setIsValidDataKey: Dispatch<SetStateAction<boolean>>;
-  setIsValidResponse: Dispatch<SetStateAction<boolean>>;
-  setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
-  setIsValidResponseDateFormat: Dispatch<SetStateAction<boolean>>;
-}
-
 interface SchoolConnectivityFormInputsProps {
   hookForm: UseFormReturn<SchoolConnectivityFormSchema>;
-  errorStates: ErrorStates;
 }
 
 export function SchoolConnectivityFormInputs({
   hookForm,
-  errorStates,
 }: SchoolConnectivityFormInputsProps) {
-  const {
-    setIsResponseError,
-    setIsValidDataKey,
-    setIsValidResponse,
-    setResponsePreview,
-  } = errorStates;
+  const { resetField } = hookForm;
 
-  const { watch, resetField, trigger } = hookForm;
-
-  const { testApi, isLoading } = useTestApi();
-
-  // const { mutateAsync: isValidDatetimeFormatCodeRequest } = useMutation({
-  //   mutationKey: ["is_valid_datetime_format_code"],
-  //   mutationFn: api.utils.isValidDateTimeFormatCodeRequest,
-  // });
-
-  // const handleValidateIsValidJson = (value: string | null) => {
-  //   if (!value) return false;
-  //
-  //   try {
-  //     JSON.parse(value);
-  //     return true;
-  //   } catch (e) {
-  //     if (e instanceof Error) {
-  //       return e.message;
-  //     } else {
-  //       return "An unexpected error occured during JSON parsing.";
-  //     }
-  //   }
-  // };
-  //
   // const handleIsValidDateFormat = (value: string | null) => {
   //   if (watch("date_key") === "") return true;
   //   if (!value)
@@ -257,19 +217,7 @@ export function SchoolConnectivityFormInputs({
         {
           name: "api_endpoint",
           label: "API Endpoint",
-          type: "text-action",
-          isActionLoading: isLoading,
-          action: async () => {
-            if (!(await trigger())) return;
-
-            await testApi({
-              setIsValidResponse,
-              setIsResponseError,
-              setResponsePreview,
-              watch,
-              setIsValidDataKey,
-            });
-          },
+          type: "text",
           required: true,
           helperText: "",
           placeholder: "https://example.com/api/ingest",
@@ -477,12 +425,14 @@ export function SchoolConnectivityFormInputs({
           - "timestamp" for Unix epoch timestamps (in milliseconds)
           - "ISO8601" for ISO timestamps, e.g. 2024-01-01T03:14:00Z
           `,
+          dependsOnName: "date_key",
+          dependsOnValue: true,
         },
         {
           name: "response_date_key",
           label: "Response date key",
           type: "text",
-          required: false,
+          required: true,
           helperText:
             "The key in the API response body that contains the timestamp.",
         },
@@ -490,7 +440,7 @@ export function SchoolConnectivityFormInputs({
           name: "response_date_format",
           label: "Response date format",
           type: "text",
-          required: false,
+          required: true,
           helperText: `Specify the date format of the response timestamp using one of the following:
           - A valid Python datetime format string, e.g. %Y-%m-%d %H:%M:%S
           - "timestamp" for Unix epoch timestamps (in milliseconds)
@@ -501,7 +451,7 @@ export function SchoolConnectivityFormInputs({
           name: "ingestion_frequency_minutes",
           label: "Frequency",
           type: "number",
-          required: false,
+          required: true,
           helperText:
             "Ingestion frequency in minutes. Minimum value is 5 minutes.",
         },
@@ -515,17 +465,7 @@ export function SchoolConnectivityFormInputs({
         },
       ],
     }),
-    [
-      isLoading,
-      resetField,
-      setIsResponseError,
-      setIsValidDataKey,
-      setIsValidResponse,
-      setResponsePreview,
-      testApi,
-      trigger,
-      watch,
-    ],
+    [resetField],
   );
 
   return (

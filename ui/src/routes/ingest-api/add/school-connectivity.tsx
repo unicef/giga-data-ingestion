@@ -4,7 +4,7 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import { Button, ButtonSet, Section, Tag } from "@carbon/react";
+import { Button, ButtonSet, Loading, Section, Tag } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
@@ -12,6 +12,7 @@ import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestio
 import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs";
 import { useStore } from "@/context/store";
 import { SchoolConnectivityFormSchema } from "@/forms/ingestApi.ts";
+import { useTestApi } from "@/hooks/useTestApi.ts";
 
 export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
   component: SchoolConnectivity,
@@ -42,17 +43,24 @@ function SchoolConnectivity() {
     },
   } = useStore();
 
+  const { testApi, isLoading } = useTestApi();
+
   const hasUploadedFile = file != null;
 
   const hookForm = useForm<SchoolConnectivityFormSchema>({
     mode: "onSubmit",
-    reValidateMode: "onChange",
+    reValidateMode: "onBlur",
     resolver: zodResolver(SchoolConnectivityFormSchema, { async: true }),
     defaultValues: schoolConnectivity,
   });
-  const { formState, handleSubmit, resetField, watch } = hookForm;
+  const {
+    formState: { errors, isValid },
+    handleSubmit,
+    resetField,
+    trigger,
+    watch,
+  } = hookForm;
 
-  const { errors, isValid } = formState;
   const watchAuthType = watch("authorization_type");
   const watchPaginationType = watch("pagination_type");
 
@@ -88,14 +96,6 @@ function SchoolConnectivity() {
 
   const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
 
-  const errorStates = {
-    setIsResponseError,
-    setIsValidDataKey,
-    setIsValidResponse,
-    setIsValidResponseDateFormat,
-    setResponsePreview,
-  };
-
   return (
     <Section className="container py-6">
       <header className="gap-2">
@@ -104,12 +104,9 @@ function SchoolConnectivity() {
         </p>
       </header>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex gap-10">
+        <div className="grid grid-cols-2 gap-10">
           <div className="flex w-full flex-col gap-4">
-            <SchoolConnectivityFormInputs
-              hookForm={hookForm}
-              errorStates={errorStates}
-            />
+            <SchoolConnectivityFormInputs hookForm={hookForm} />
 
             <ButtonSet className="w-full">
               <Button
@@ -144,8 +141,34 @@ function SchoolConnectivity() {
               </Button>
             </ButtonSet>
           </div>
-          <aside className="h-[95vh] w-full">
-            <p>Preview</p>
+          <aside className="sticky top-0 h-[90vh] w-full">
+            <div className="flex items-center justify-between">
+              <p>Preview</p>
+              <Button
+                size="md"
+                onClick={async () => {
+                  if (!(await trigger())) return;
+
+                  await testApi({
+                    setIsValidResponse,
+                    setIsResponseError,
+                    setResponsePreview,
+                    watch,
+                    setIsValidDataKey,
+                    setIsValidResponseDateFormat,
+                  });
+                }}
+                renderIcon={props =>
+                  isLoading ? (
+                    <Loading small={true} withOverlay={false} {...props} />
+                  ) : null
+                }
+                disabled={isLoading}
+                isExpressive
+              >
+                Test
+              </Button>
+            </div>
             {isResponseError && (
               <Tag type="red">Invalid Output from API request</Tag>
             )}

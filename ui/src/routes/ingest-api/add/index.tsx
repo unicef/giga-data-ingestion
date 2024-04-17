@@ -4,7 +4,7 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import { Button, ButtonSet, Section, Tag } from "@carbon/react";
+import { Button, ButtonSet, Loading, Section, Tag } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -16,11 +16,11 @@ import {
 
 import { api } from "@/api";
 import { listUsersQueryOptions } from "@/api/queryOptions.ts";
-import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
 import { useStore } from "@/context/store";
 import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
+import { useTestApi } from "@/hooks/useTestApi.ts";
 
 const schemaQueryOptions = queryOptions({
   queryFn: () => api.schema.get("school_geolocation"),
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/ingest-api/add/")({
       queryClient.ensureQueryData(listUsersQueryOptions),
     ]);
   },
-  pendingComponent: PendingComponent,
+  pendingComponent: IngestFormSkeleton,
 });
 
 function AddIngestion() {
@@ -54,12 +54,12 @@ function AddIngestion() {
     },
   } = useStore();
 
+  const { testApi, isLoading } = useTestApi();
+
   const navigate = useNavigate({ from: Route.fullPath });
 
   const {
     data: { data: users },
-    isRefetching: isUsersRefetching,
-    isFetching: isUsersFetching,
     isLoading: isUsersLoading,
   } = useSuspenseQuery(listUsersQueryOptions);
 
@@ -76,6 +76,8 @@ function AddIngestion() {
   const {
     formState: { errors },
     handleSubmit,
+    watch,
+    trigger,
   } = hookForm;
 
   const onSubmit: SubmitHandler<SchoolListFormSchema> = async data => {
@@ -102,18 +104,6 @@ function AddIngestion() {
 
   const prettyResponse = JSON.stringify(responsePreview, undefined, 2);
 
-  const errorStates = {
-    setIsResponseError,
-    setIsValidDataKey,
-    setIsValidResponse,
-    setResponsePreview,
-  };
-
-  const fetchingStates = {
-    isUsersFetching,
-    isUsersRefetching,
-  };
-
   return isUsersLoading ? (
     <IngestFormSkeleton />
   ) : (
@@ -125,7 +115,7 @@ function AddIngestion() {
       </header>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex gap-10">
+        <div className="grid grid-cols-2 gap-10">
           <div className="flex w-full flex-col gap-4">
             <p>
               Enter the details for a school listing API. The API must be tested
@@ -133,12 +123,7 @@ function AddIngestion() {
               you can proceed.
             </p>
 
-            <SchoolListFormInputs
-              hookForm={hookForm}
-              errorStates={errorStates}
-              fetchingStates={fetchingStates}
-              users={users}
-            />
+            <SchoolListFormInputs hookForm={hookForm} users={users} />
 
             <ButtonSet className="w-full">
               <Button
@@ -165,8 +150,33 @@ function AddIngestion() {
               </Button>
             </ButtonSet>
           </div>
-          <aside className="h-[95vh] w-full">
-            <p>Preview</p>
+          <aside className="sticky top-0 h-[90vh] w-full">
+            <div className="flex items-center justify-between">
+              <p>Preview</p>
+              <Button
+                size="md"
+                onClick={async () => {
+                  if (!(await trigger())) return;
+
+                  await testApi({
+                    setIsValidResponse,
+                    setIsResponseError,
+                    setResponsePreview,
+                    watch,
+                    setIsValidDataKey,
+                  });
+                }}
+                renderIcon={props =>
+                  isLoading ? (
+                    <Loading small={true} withOverlay={false} {...props} />
+                  ) : null
+                }
+                disabled={isLoading}
+                isExpressive
+              >
+                Test
+              </Button>
+            </div>
             {isResponseError && (
               <Tag type="red">Invalid Output from API request</Tag>
             )}

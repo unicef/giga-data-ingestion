@@ -1,9 +1,8 @@
-import { Dispatch, SetStateAction, useMemo } from "react";
+import { useMemo } from "react";
 import { UseFormReturn } from "react-hook-form";
 
 import IngestApiFormInputs from "@/components/ingest-api/IngestApiFormInputs.tsx";
 import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
-import { useTestApi } from "@/hooks/useTestApi.ts";
 import { IngestApiFormMapping } from "@/types/ingestApi.ts";
 import {
   AuthorizationTypeEnum,
@@ -13,40 +12,16 @@ import {
 } from "@/types/qos";
 import { GraphUser } from "@/types/user";
 
-interface ErrorStates {
-  setIsResponseError: Dispatch<SetStateAction<boolean>>;
-  setIsValidDataKey: Dispatch<SetStateAction<boolean>>;
-  setIsValidResponse: Dispatch<SetStateAction<boolean>>;
-  setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
-}
-
-interface FetchingStates {
-  isUsersRefetching: boolean;
-  isUsersFetching: boolean;
-}
-
 interface SchoolListFormInputsProps {
   hookForm: UseFormReturn<SchoolListFormSchema>;
-  errorStates: ErrorStates;
-  fetchingStates: FetchingStates;
   users: GraphUser[];
 }
 
 export function SchoolListFormInputs({
-  errorStates,
   users,
   hookForm,
 }: SchoolListFormInputsProps) {
-  const {
-    setIsResponseError,
-    setIsValidDataKey,
-    setIsValidResponse,
-    setResponsePreview,
-  } = errorStates;
-
-  const { watch, trigger, resetField } = hookForm;
-
-  const { testApi, isLoading } = useTestApi();
+  const { resetField } = hookForm;
 
   const schoolListFormMapping = useMemo<
     Record<string, IngestApiFormMapping<SchoolListFormSchema>[]>
@@ -86,19 +61,7 @@ export function SchoolListFormInputs({
         {
           name: "api_endpoint",
           label: "API Endpoint",
-          type: "text-action",
-          isActionLoading: isLoading,
-          action: async () => {
-            if (!(await trigger())) return;
-
-            await testApi({
-              setIsValidResponse,
-              setIsResponseError,
-              setResponsePreview,
-              watch,
-              setIsValidDataKey,
-            });
-          },
+          type: "text",
           required: true,
           helperText: "",
           placeholder: "https://example.com/api/ingest",
@@ -199,7 +162,7 @@ export function SchoolListFormInputs({
           type: "text",
           required: true,
           helperText:
-            "If the API requires a school ID parameter, specify the name of the record where this ID should be sent.",
+            "Specify the name of the key in the API response that contains the school ID.",
         },
         {
           name: "school_id_send_query_in",
@@ -207,7 +170,8 @@ export function SchoolListFormInputs({
           type: "enum",
           enum: Object.values(SendQueryInEnum),
           required: true,
-          helperText: "Specify where to add the school ID record.",
+          helperText:
+            "If the corresponding school connectivity API for this school listing requires the school ID as a parameter, specify where to insert the school ID.",
         },
         {
           name: "pagination_type",
@@ -290,18 +254,7 @@ export function SchoolListFormInputs({
         },
       ],
     }),
-    [
-      isLoading,
-      resetField,
-      setIsResponseError,
-      setIsValidDataKey,
-      setIsValidResponse,
-      setResponsePreview,
-      testApi,
-      trigger,
-      users,
-      watch,
-    ],
+    [resetField, users],
   );
 
   return (

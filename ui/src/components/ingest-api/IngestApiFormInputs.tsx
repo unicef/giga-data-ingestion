@@ -1,4 +1,4 @@
-import { Fragment, Suspense } from "react";
+import { Suspense } from "react";
 import { Control, FieldValues, UseFormReturn } from "react-hook-form";
 
 import {
@@ -27,15 +27,131 @@ interface IngestApiFormInputsProps {
   >;
 }
 
-export function IngestApiFormInputs({
-  hookForm: {
-    control,
+interface FormItemProps {
+  hookForm: UseFormReturn<SchoolListFormSchema | SchoolConnectivityFormSchema>;
+  mapping:
+    | IngestApiFormMapping<SchoolListFormSchema>
+    | IngestApiFormMapping<SchoolConnectivityFormSchema>;
+}
+
+function FormItem({ mapping, hookForm }: FormItemProps) {
+  const {
     register,
-    watch,
     formState: { errors },
-  },
+  } = hookForm;
+
+  switch (mapping.type) {
+    case "text": {
+      return (
+        <FreeTextInput
+          mapping={mapping}
+          register={register(mapping.name, {
+            required: mapping.required,
+            onChange: mapping.onChange,
+          })}
+          errors={errors}
+        />
+      );
+    }
+    case "number": {
+      return (
+        <NumberInput
+          mapping={mapping}
+          errors={errors}
+          register={register(mapping.name, {
+            required: mapping.required,
+            valueAsNumber: true,
+          })}
+        />
+      );
+    }
+    case "select":
+    case "select-user": {
+      return (
+        <SelectFromArray
+          mapping={mapping}
+          errors={errors}
+          register={register(mapping.name, {
+            required: mapping.required,
+            onChange: mapping.onChange,
+          })}
+        />
+      );
+    }
+    case "enum": {
+      return (
+        <SelectFromEnum
+          mapping={mapping}
+          errors={errors}
+          register={register(mapping.name, {
+            required: mapping.required,
+            onChange: mapping.onChange,
+          })}
+        />
+      );
+    }
+    case "text-action": {
+      return (
+        <TextInputWithAction
+          onAction={mapping.action}
+          actionLabel="Test"
+          isActionLoading={mapping.isActionLoading}
+          mapping={mapping}
+          errors={errors}
+          register={register(mapping.name, {
+            required: mapping.required,
+            onChange: mapping.onChange,
+          })}
+        />
+      );
+    }
+    case "password": {
+      return (
+        <PasswordInput
+          mapping={mapping}
+          register={register(mapping.name, {
+            required: mapping.required,
+            onChange: mapping.onChange,
+          })}
+          errors={errors}
+        />
+      );
+    }
+    case "code": {
+      return (
+        <CodeInput
+          mapping={mapping}
+          register={register(mapping.name, {
+            required: mapping.required,
+            onChange: mapping.onChange,
+          })}
+          errors={errors}
+        />
+      );
+    }
+    case "toggle": {
+      return (
+        <Switch
+          mapping={mapping}
+          errors={errors}
+          register={register(mapping.name, {
+            required: mapping.required,
+          })}
+        />
+      );
+    }
+    default: {
+      return null;
+    }
+  }
+}
+
+export function IngestApiFormInputs({
+  hookForm,
   formMappings,
 }: IngestApiFormInputsProps) {
+  const { control, watch } = hookForm;
+
   return (
     <>
       {Object.entries(formMappings).map(([group, formItems]) => (
@@ -50,8 +166,7 @@ export function IngestApiFormInputs({
                       | SchoolConnectivityFormSchema
                     ),
                   )
-                : mapping.dependsOnName != null &&
-                  mapping.dependsOnValue != null
+                : mapping.dependsOnValue != null
                 ? mapping.dependsOnValue.includes(
                     watch(
                       mapping.dependsOnName as keyof (
@@ -64,83 +179,11 @@ export function IngestApiFormInputs({
 
             return (
               checkDependencies && (
-                <Fragment key={mapping.name}>
-                  {mapping.type === "text" ? (
-                    <FreeTextInput
-                      mapping={mapping}
-                      register={register(mapping.name, {
-                        required: mapping.required,
-                        onChange: mapping.onChange,
-                      })}
-                      errors={errors}
-                    />
-                  ) : mapping.type === "number" ? (
-                    <NumberInput
-                      mapping={mapping}
-                      errors={errors}
-                      register={register(mapping.name, {
-                        required: mapping.required,
-                        valueAsNumber: true,
-                      })}
-                    />
-                  ) : ["select", "select-user"].includes(mapping.type) ? (
-                    <SelectFromArray
-                      mapping={mapping}
-                      errors={errors}
-                      register={register(mapping.name, {
-                        required: mapping.required,
-                        onChange: mapping.onChange,
-                      })}
-                    />
-                  ) : mapping.type === "enum" ? (
-                    <SelectFromEnum
-                      mapping={mapping}
-                      errors={errors}
-                      register={register(mapping.name, {
-                        required: mapping.required,
-                        onChange: mapping.onChange,
-                      })}
-                    />
-                  ) : mapping.type === "text-action" ? (
-                    <TextInputWithAction
-                      onAction={mapping.action}
-                      actionLabel="Test"
-                      isActionLoading={mapping.isActionLoading}
-                      mapping={mapping}
-                      errors={errors}
-                      register={register(mapping.name, {
-                        required: mapping.required,
-                        onChange: mapping.onChange,
-                      })}
-                    />
-                  ) : mapping.type === "password" ? (
-                    <PasswordInput
-                      mapping={mapping}
-                      register={register(mapping.name, {
-                        required: mapping.required,
-                        onChange: mapping.onChange,
-                      })}
-                      errors={errors}
-                    />
-                  ) : mapping.type === "code" ? (
-                    <CodeInput
-                      mapping={mapping}
-                      register={register(mapping.name, {
-                        required: mapping.required,
-                        onChange: mapping.onChange,
-                      })}
-                      errors={errors}
-                    />
-                  ) : mapping.type === "toggle" ? (
-                    <Switch
-                      mapping={mapping}
-                      errors={errors}
-                      register={register(mapping.name, {
-                        required: mapping.required,
-                      })}
-                    />
-                  ) : null}
-                </Fragment>
+                <FormItem
+                  hookForm={hookForm}
+                  mapping={mapping}
+                  key={mapping.name}
+                />
               )
             );
           })}

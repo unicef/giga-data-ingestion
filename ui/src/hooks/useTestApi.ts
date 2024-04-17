@@ -20,6 +20,7 @@ interface TestApiOptions {
   setIsValidResponse: Dispatch<SetStateAction<boolean>>;
   setIsResponseError: Dispatch<SetStateAction<boolean>>;
   setIsValidDataKey: Dispatch<SetStateAction<boolean>>;
+  setIsValidResponseDateFormat?: Dispatch<SetStateAction<boolean>>;
   watch:
     | UseFormWatch<SchoolListFormSchema>
     | UseFormWatch<SchoolConnectivityFormSchema>;
