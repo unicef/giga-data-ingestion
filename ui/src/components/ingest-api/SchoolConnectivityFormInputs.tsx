@@ -260,16 +260,7 @@ export function SchoolConnectivityFormInputs({
           type: "text-action",
           isActionLoading: isLoading,
           action: async () => {
-            if (
-              !(await trigger([
-                "request_method",
-                "api_endpoint",
-                "authorization_type",
-                "query_parameters",
-                "request_body",
-              ]))
-            )
-              return;
+            if (!(await trigger())) return;
 
             await testApi({
               setIsValidResponse,
@@ -371,7 +362,7 @@ export function SchoolConnectivityFormInputs({
           type: "text",
           required: false,
           helperText:
-            "If the API response is a flat list, leave this blank. If the API response is an object, specify the key that contains a homogeneous array of records to be ingested",
+            "If the API response is a flat list, leave this blank. If the API response is an object, specify the key that contains a homogeneous array of records to be ingested.",
         },
         {
           name: "school_id_key",
@@ -379,7 +370,7 @@ export function SchoolConnectivityFormInputs({
           type: "text",
           required: true,
           helperText:
-            "If the API requires a school ID parameter, specify the name of the record where this ID should be sent",
+            "If the API requires a school ID parameter, specify the name of the record where this ID should be sent.",
         },
         {
           name: "school_id_send_query_in",
@@ -387,7 +378,7 @@ export function SchoolConnectivityFormInputs({
           type: "enum",
           enum: Object.values(SendQueryInEnum),
           required: true,
-          helperText: "Specify where to add the school ID record",
+          helperText: "Specify where to add the school ID record.",
         },
         {
           name: "pagination_type",
@@ -404,11 +395,30 @@ export function SchoolConnectivityFormInputs({
           },
         },
         {
-          name: "size",
-          label: "Records per page",
+          name: "page_number_key",
+          label: "Page number key",
           type: "text",
           required: false,
-          helperText: "",
+          helperText: "The name of the key that specifies the page number.",
+          dependsOnName: "pagination_type",
+          dependsOnValue: [PaginationTypeEnum.PAGE_NUMBER],
+        },
+        {
+          name: "page_starts_with",
+          label: "Page starts with",
+          type: "text",
+          required: false,
+          helperText:
+            "Whether the page numbering should start at 0 or 1, or another number. This will also be used as the test value for page number.",
+          dependsOnName: "pagination_type",
+          dependsOnValue: [PaginationTypeEnum.PAGE_NUMBER],
+        },
+        {
+          name: "page_size_key",
+          label: "Page size key",
+          type: "text",
+          required: false,
+          helperText: "The name of the key that specifies the page size.",
           dependsOnName: "pagination_type",
           dependsOnValue: [
             PaginationTypeEnum.LIMIT_OFFSET,
@@ -416,11 +426,11 @@ export function SchoolConnectivityFormInputs({
           ],
         },
         {
-          name: "page_size_key",
-          label: "Page size key",
+          name: "size",
+          label: "Page size",
           type: "text",
           required: false,
-          helperText: "The name of the key that specifies the page size",
+          helperText: "",
           dependsOnName: "pagination_type",
           dependsOnValue: [
             PaginationTypeEnum.LIMIT_OFFSET,
@@ -432,28 +442,9 @@ export function SchoolConnectivityFormInputs({
           label: "Page offset key",
           type: "text",
           required: false,
-          helperText: "The name of the key that specifies the page offset",
+          helperText: "The name of the key that specifies the page offset.",
           dependsOnName: "pagination_type",
           dependsOnValue: [PaginationTypeEnum.LIMIT_OFFSET],
-        },
-        {
-          name: "page_number_key",
-          label: "Page number key",
-          type: "text",
-          required: false,
-          helperText: "The name of the key that specifies the page number",
-          dependsOnName: "pagination_type",
-          dependsOnValue: [PaginationTypeEnum.PAGE_NUMBER],
-        },
-        {
-          name: "page_starts_with",
-          label: "Page starts with",
-          type: "text",
-          required: false,
-          helperText:
-            "Whether the page numbering should start at 0 or 1, or another number",
-          dependsOnName: "pagination_type",
-          dependsOnValue: [PaginationTypeEnum.PAGE_NUMBER],
         },
         {
           name: "page_send_query_in",
@@ -461,12 +452,66 @@ export function SchoolConnectivityFormInputs({
           type: "enum",
           enum: Object.values(SendQueryInEnum),
           required: false,
-          helperText: "Specify where to insert the pagination parameters",
+          helperText: "Specify where to insert the pagination parameters.",
           dependsOnName: "pagination_type",
           dependsOnValue: [
             PaginationTypeEnum.PAGE_NUMBER,
             PaginationTypeEnum.LIMIT_OFFSET,
           ],
+        },
+        {
+          name: "date_key",
+          label: "Request date key",
+          type: "text",
+          required: false,
+          helperText:
+            "If the API requires a date parameter, specify the name of the record where this date should be sent.",
+        },
+        {
+          name: "date_format",
+          label: "Request date format",
+          type: "text",
+          required: false,
+          helperText: `If the API requires a date parameter, specify the date format using one of the following:
+          - A valid Python datetime format string, e.g. %Y-%m-%d %H:%M:%S
+          - "timestamp" for Unix epoch timestamps (in milliseconds)
+          - "ISO8601" for ISO timestamps, e.g. 2024-01-01T03:14:00Z
+          `,
+        },
+        {
+          name: "response_date_key",
+          label: "Response date key",
+          type: "text",
+          required: false,
+          helperText:
+            "The key in the API response body that contains the timestamp.",
+        },
+        {
+          name: "response_date_format",
+          label: "Response date format",
+          type: "text",
+          required: false,
+          helperText: `Specify the date format of the response timestamp using one of the following:
+          - A valid Python datetime format string, e.g. %Y-%m-%d %H:%M:%S
+          - "timestamp" for Unix epoch timestamps (in milliseconds)
+          - "ISO8601" for ISO timestamps, e.g. 2024-01-01T03:14:00Z
+          `,
+        },
+        {
+          name: "ingestion_frequency_minutes",
+          label: "Frequency",
+          type: "text",
+          required: false,
+          helperText:
+            "Ingestion frequency in minutes. Minimum value is 5 minutes.",
+        },
+        {
+          name: "enabled",
+          label:
+            "Whether to create the ingestion in an enabled state. You can change this later in the Ingestions listing.",
+          type: "toggle",
+          required: true,
+          helperText: "",
         },
       ],
     }),

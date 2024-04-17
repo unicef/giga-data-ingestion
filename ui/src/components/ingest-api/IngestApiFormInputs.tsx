@@ -4,9 +4,11 @@ import { Control, FieldValues, UseFormReturn } from "react-hook-form";
 import {
   CodeInput,
   FreeTextInput,
+  NumberInput,
   PasswordInput,
   SelectFromArray,
   SelectFromEnum,
+  Switch,
   TextInputWithAction,
 } from "@/components/ingest-api/IngestApiInputs.tsx";
 import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
@@ -33,7 +35,10 @@ export function IngestApiFormInputs<T extends FieldValues>({
           <header className="text-2xl">{group}</header>
           {formItems.map(mapping => {
             const checkDependencies =
-              mapping.dependsOnName != null && mapping.dependsOnValue != null
+              mapping.dependsOnValue === true
+                ? !!watch(mapping.dependsOnName)
+                : mapping.dependsOnName != null &&
+                  mapping.dependsOnValue != null
                 ? mapping.dependsOnValue.includes(watch(mapping.dependsOnName))
                 : true;
 
@@ -48,6 +53,17 @@ export function IngestApiFormInputs<T extends FieldValues>({
                         onChange: mapping.onChange,
                       })}
                       errors={errors}
+                    />
+                  )
+                ) : mapping.type === "number" ? (
+                  checkDependencies && (
+                    <NumberInput
+                      mapping={mapping}
+                      errors={errors}
+                      register={register(mapping.name, {
+                        required: mapping.required,
+                        valueAsNumber: true,
+                      })}
                     />
                   )
                 ) : ["select", "select-user"].includes(mapping.type) ? (
@@ -100,6 +116,16 @@ export function IngestApiFormInputs<T extends FieldValues>({
                         onChange: mapping.onChange,
                       })}
                       errors={errors}
+                    />
+                  )
+                ) : mapping.type === "toggle" ? (
+                  checkDependencies && (
+                    <Switch
+                      mapping={mapping}
+                      errors={errors}
+                      register={register(mapping.name, {
+                        required: mapping.required,
+                      })}
                     />
                   )
                 ) : null}

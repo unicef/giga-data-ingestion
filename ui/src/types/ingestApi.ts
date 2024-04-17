@@ -6,10 +6,10 @@ export type IngestApiFormMapping<T> =
       label: string;
       helperText: string;
       required: boolean;
-      type: "text" | "code" | "number" | "password";
+      type: "text" | "code" | "number" | "password" | "toggle";
       placeholder?: string;
       dependsOnName?: Extract<keyof T, string>;
-      dependsOnValue?: string[];
+      dependsOnValue?: string[] | true;
       onChange?: (...args: unknown[]) => void;
     }
   | {
@@ -21,7 +21,7 @@ export type IngestApiFormMapping<T> =
       options: string[];
       placeholder?: string;
       dependsOnName?: Extract<keyof T, string>;
-      dependsOnValue?: string[];
+      dependsOnValue?: string[] | true;
       onChange?: (...args: unknown[]) => void;
     }
   | {
@@ -33,7 +33,7 @@ export type IngestApiFormMapping<T> =
       options: GraphUser[];
       placeholder?: string;
       dependsOnName?: Extract<keyof T, string>;
-      dependsOnValue?: string[];
+      dependsOnValue?: string[] | true;
       onChange?: (...args: unknown[]) => void;
     }
   | {
@@ -46,7 +46,7 @@ export type IngestApiFormMapping<T> =
       isActionLoading: boolean;
       placeholder?: string;
       dependsOnName?: Extract<keyof T, string>;
-      dependsOnValue?: string[];
+      dependsOnValue?: string[] | true;
       onChange?: (...args: unknown[]) => void;
     }
   | {
@@ -58,6 +58,6 @@ export type IngestApiFormMapping<T> =
       enum: readonly string[];
       placeholder?: string;
       dependsOnName?: Extract<keyof T, string>;
-      dependsOnValue?: string[];
+      dependsOnValue?: string[] | true;
       onChange?: () => void;
     };

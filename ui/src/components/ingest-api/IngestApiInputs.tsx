@@ -2,10 +2,12 @@ import { FieldErrors, UseFormRegisterReturn } from "react-hook-form";
 
 import {
   Button,
+  NumberInput as CarbonNumberInput,
   TextInput as CarbonTextInput,
   Loading,
   SelectItem,
   TextArea,
+  Toggle,
 } from "@carbon/react";
 
 import { Select } from "@/components/forms/Select.tsx";
@@ -172,5 +174,39 @@ export function TextInputWithAction<MappingType>({
         </Button>
       </div>
     </div>
+  );
+}
+
+export function Switch<MappingType>({
+  mapping,
+  register,
+}: BaseInputProps<MappingType>) {
+  return <Toggle id={mapping.name} labelText={mapping.label} {...register} />;
+}
+
+export function NumberInput<MappingType>({
+  mapping,
+  errors,
+  register,
+}: BaseInputProps<MappingType>) {
+  return (
+    <CarbonNumberInput
+      id={mapping.name}
+      invalid={mapping.name in errors}
+      invalidText={errors[mapping.name]?.message as string}
+      label={mapping.label}
+      helperText={mapping.helperText}
+      {...register}
+      min={
+        typeof register.min === "string"
+          ? parseInt(register.min, 10)
+          : register.min
+      }
+      max={
+        typeof register.max === "string"
+          ? parseInt(register.max, 10)
+          : register.max
+      }
+    />
   );
 }
