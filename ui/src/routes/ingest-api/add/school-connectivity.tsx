@@ -54,6 +54,8 @@ function SchoolConnectivity() {
     reValidateMode: "onBlur",
     resolver: zodResolver(SchoolConnectivityFormSchema, { async: true }),
     defaultValues: schoolConnectivity,
+    shouldFocusError: true,
+    shouldUnregister: true,
   });
   const {
     formState: { errors, isValid },

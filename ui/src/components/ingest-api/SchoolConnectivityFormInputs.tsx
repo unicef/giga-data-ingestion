@@ -18,8 +18,6 @@ interface SchoolConnectivityFormInputsProps {
 export function SchoolConnectivityFormInputs({
   hookForm,
 }: SchoolConnectivityFormInputsProps) {
-  const { resetField } = hookForm;
-
   // const handleCustomValidation = async (
   //   responseData: Record<string, unknown>[],
   // ) => {
@@ -182,10 +180,6 @@ export function SchoolConnectivityFormInputs({
           required: true,
           helperText: "",
           label: "Request Method",
-          onChange: () => {
-            resetField("query_parameters");
-            resetField("request_body");
-          },
         },
         {
           name: "api_endpoint",
@@ -202,13 +196,6 @@ export function SchoolConnectivityFormInputs({
           enum: Object.values(AuthorizationTypeEnum),
           required: true,
           helperText: "",
-          onChange: () => {
-            resetField("api_auth_api_key");
-            resetField("api_auth_api_value");
-            resetField("basic_auth_username");
-            resetField("basic_auth_password");
-            resetField("bearer_auth_bearer_token");
-          },
         },
         {
           name: "api_auth_api_key",
@@ -308,12 +295,6 @@ export function SchoolConnectivityFormInputs({
           enum: Object.values(PaginationTypeEnum),
           required: false,
           helperText: "",
-          onChange: () => {
-            resetField("page_number_key");
-            resetField("page_offset_key");
-            resetField("page_starts_with");
-            resetField("size");
-          },
         },
         {
           name: "page_number_key",
@@ -387,10 +368,6 @@ export function SchoolConnectivityFormInputs({
           required: false,
           helperText:
             "If the API requires a date parameter, specify the name of the record where this date should be sent.",
-          onChange: () => {
-            resetField("date_format");
-            resetField("send_date_in");
-          },
         },
         {
           name: "date_format",
@@ -442,7 +419,7 @@ export function SchoolConnectivityFormInputs({
         },
       ],
     }),
-    [resetField],
+    [],
   );
 
   return (

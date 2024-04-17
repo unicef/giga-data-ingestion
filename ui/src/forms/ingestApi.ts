@@ -75,7 +75,6 @@ function commonSuperRefine(
     }
     case AuthorizationTypeEnum.BASIC_AUTH: {
       if (!val.basic_auth_username) {
-        console.log("HI", val.basic_auth_username, !val.basic_auth_username);
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Username is required when Authorization Type is BASIC AUTH",

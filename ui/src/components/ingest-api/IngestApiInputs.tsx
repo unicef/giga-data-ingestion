@@ -60,6 +60,7 @@ export function PasswordInput<MappingType>({
     //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}//
     <CarbonTextInput.PasswordInput
       id={mapping.name}
+      autoComplete="off"
       labelText={
         <>
           {mapping.label}

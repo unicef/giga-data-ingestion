@@ -74,6 +74,8 @@ function AddIngestion() {
     reValidateMode: "onBlur",
     resolver: zodResolver(SchoolListFormSchema, { async: true }),
     defaultValues: schoolList,
+    shouldFocusError: true,
+    shouldUnregister: true,
   });
   const {
     formState: { errors },

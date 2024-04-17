@@ -21,8 +21,6 @@ export function SchoolListFormInputs({
   users,
   hookForm,
 }: SchoolListFormInputsProps) {
-  const { resetField } = hookForm;
-
   const schoolListFormMapping = useMemo<
     Record<string, IngestApiFormMapping<SchoolListFormSchema>[]>
   >(
@@ -53,10 +51,6 @@ export function SchoolListFormInputs({
           required: true,
           helperText: "",
           label: "Request Method",
-          onChange: () => {
-            resetField("query_parameters");
-            resetField("request_body");
-          },
         },
         {
           name: "api_endpoint",
@@ -73,13 +67,6 @@ export function SchoolListFormInputs({
           enum: Object.values(AuthorizationTypeEnum),
           required: true,
           helperText: "",
-          onChange: () => {
-            resetField("api_auth_api_key");
-            resetField("api_auth_api_value");
-            resetField("basic_auth_username");
-            resetField("basic_auth_password");
-            resetField("bearer_auth_bearer_token");
-          },
         },
         {
           name: "api_auth_api_key",
@@ -180,12 +167,6 @@ export function SchoolListFormInputs({
           enum: Object.values(PaginationTypeEnum),
           required: false,
           helperText: "",
-          onChange: () => {
-            resetField("page_number_key");
-            resetField("page_offset_key");
-            resetField("page_starts_with");
-            resetField("size");
-          },
         },
         {
           name: "page_number_key",
@@ -254,7 +235,7 @@ export function SchoolListFormInputs({
         },
       ],
     }),
-    [resetField, users],
+    [users],
   );
 
   return (
