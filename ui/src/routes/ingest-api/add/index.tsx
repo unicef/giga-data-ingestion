@@ -1,5 +1,10 @@
-import { useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { Suspense, memo, useCallback, useMemo, useState } from "react";
+import {
+  FormProvider,
+  SubmitHandler,
+  useForm,
+  useFormState,
+} from "react-hook-form";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
@@ -18,6 +23,7 @@ import { api } from "@/api";
 import { listUsersQueryOptions } from "@/api/queryOptions.ts";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
+import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { useStore } from "@/context/store";
 import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
 import { useTestApi } from "@/hooks/useTestApi.ts";
@@ -37,6 +43,24 @@ export const Route = createFileRoute("/ingest-api/add/")({
   },
   pendingComponent: IngestFormSkeleton,
 });
+
+function ApiPreview({ preview }: { preview: string }) {
+  return (
+    <SyntaxHighlighter
+      customStyle={{ height: "100%" }}
+      showLineNumbers
+      language="json"
+      style={docco}
+    >
+      {preview}
+    </SyntaxHighlighter>
+  );
+}
+
+const MemoizedApiPreview = memo(
+  ApiPreview,
+  (prev, next) => prev.preview === next.preview,
+);
 
 function AddIngestion() {
   const [responsePreview, setResponsePreview] = useState<
@@ -72,17 +96,16 @@ function AddIngestion() {
   const hookForm = useForm<SchoolListFormSchema>({
     mode: "onSubmit",
     reValidateMode: "onBlur",
-    resolver: zodResolver(SchoolListFormSchema, { async: true }),
+    resolver: zodResolver(
+      SchoolListFormSchema,
+      { async: true },
+      { mode: "async" },
+    ),
     defaultValues: schoolList,
     shouldFocusError: true,
-    shouldUnregister: true,
   });
-  const {
-    formState: { errors },
-    handleSubmit,
-    watch,
-    trigger,
-  } = hookForm;
+  const { handleSubmit, trigger, control, getValues } = hookForm;
+  const { errors } = useFormState({ control });
 
   const onSubmit: SubmitHandler<SchoolListFormSchema> = async data => {
     if (Object.keys(errors).length > 0) {
@@ -106,7 +129,23 @@ function AddIngestion() {
     void navigate({ to: "./column-mapping" });
   };
 
-  const prettyResponse = JSON.stringify(responsePreview, undefined, 2);
+  const handleClickTest = useCallback(async () => {
+    if (!(await trigger())) return;
+
+    await testApi({
+      apiType: "schoolList",
+      setIsValidResponse,
+      setIsResponseError,
+      setResponsePreview,
+      getValues,
+      setIsValidDataKey,
+    });
+  }, [testApi, trigger, getValues]);
+
+  const prettyResponse = useMemo(
+    () => JSON.stringify(responsePreview, undefined, 2),
+    [responsePreview],
+  );
 
   return isUsersLoading ? (
     <IngestFormSkeleton />
@@ -118,86 +157,79 @@ function AddIngestion() {
         </p>
       </header>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-2 gap-10">
-          <div className="flex w-full flex-col gap-4">
-            <p>
-              Enter the details for a school listing API. The API must be tested
-              and should return a success response with valid parameters before
-              you can proceed.
-            </p>
+      <div className="grid grid-cols-2 gap-10">
+        <div>
+          <p>
+            Enter the details for a school listing API. The API must be tested
+            and should return a success response with valid parameters before
+            you can proceed.
+          </p>
+          <FormProvider {...hookForm}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="flex w-full flex-col gap-4">
+                <SchoolListFormInputs users={users} />
 
-            <SchoolListFormInputs hookForm={hookForm} users={users} />
-
-            <ButtonSet className="w-full">
-              <Button
-                as={Link}
-                className="w-full"
-                isExpressive
-                kind="secondary"
-                renderIcon={ArrowLeft}
-                to="/ingest-api"
-                onClick={resetApiIngestionState}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="w-full"
-                disabled={
-                  !isValidResponse || !isValidDataKey || isResponseError
-                }
-                isExpressive
-                renderIcon={ArrowRight}
-                type="submit"
-              >
-                Proceed
-              </Button>
-            </ButtonSet>
-          </div>
-          <aside className="sticky top-0 h-[90vh] w-full">
-            <div className="flex items-center justify-between">
-              <p>Preview</p>
-              <Button
-                size="md"
-                onClick={async () => {
-                  if (!(await trigger())) return;
-
-                  await testApi({
-                    apiType: "schoolList",
-                    setIsValidResponse,
-                    setIsResponseError,
-                    setResponsePreview,
-                    watch,
-                    setIsValidDataKey,
-                  });
-                }}
-                renderIcon={props =>
-                  isLoading ? (
-                    <Loading small={true} withOverlay={false} {...props} />
-                  ) : null
-                }
-                disabled={isLoading}
-                isExpressive
-              >
-                Test
-              </Button>
-            </div>
-            {isResponseError && (
-              <Tag type="red">Invalid Output from API request</Tag>
-            )}
-            {!isValidDataKey && <Tag type="red">Invalid Data Key</Tag>}
-            <SyntaxHighlighter
-              customStyle={{ height: "100%" }}
-              showLineNumbers
-              language="json"
-              style={docco}
-            >
-              {responsePreview === "" ? "" : prettyResponse}
-            </SyntaxHighlighter>
-          </aside>
+                <ButtonSet className="w-full">
+                  <Button
+                    as={Link}
+                    className="w-full"
+                    isExpressive
+                    kind="secondary"
+                    renderIcon={ArrowLeft}
+                    to="/ingest-api"
+                    onClick={resetApiIngestionState}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="w-full"
+                    disabled={
+                      !isValidResponse || !isValidDataKey || isResponseError
+                    }
+                    isExpressive
+                    renderIcon={ArrowRight}
+                    type="submit"
+                  >
+                    Proceed
+                  </Button>
+                </ButtonSet>
+              </div>
+            </form>
+          </FormProvider>
         </div>
-      </form>
+        <aside className="sticky top-0 h-[90vh] w-full">
+          <div className="flex items-center justify-between">
+            <p>Preview</p>
+            <Button
+              size="md"
+              onClick={handleClickTest}
+              renderIcon={props =>
+                isLoading ? (
+                  <Loading small={true} withOverlay={false} {...props} />
+                ) : null
+              }
+              disabled={isLoading}
+              isExpressive
+            >
+              Test
+            </Button>
+          </div>
+          {isResponseError && (
+            <Tag type="red">Invalid Output from API request</Tag>
+          )}
+          {!isValidDataKey && <Tag type="red">Invalid Data Key</Tag>}
+          <MemoizedApiPreview
+            preview={responsePreview === "" ? "" : prettyResponse}
+          />
+        </aside>
+      </div>
       <Outlet />
+      <Suspense>
+        <ReactHookFormDevTools
+          // @ts-expect-error incorrect type inference
+          control={control}
+        />
+      </Suspense>
     </Section>
   );
 }

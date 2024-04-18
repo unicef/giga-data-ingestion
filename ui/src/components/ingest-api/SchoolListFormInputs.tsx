@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { UseFormReturn } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 
 import IngestApiFormInputs from "@/components/ingest-api/IngestApiFormInputs.tsx";
 import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
@@ -13,14 +13,12 @@ import {
 import { GraphUser } from "@/types/user";
 
 interface SchoolListFormInputsProps {
-  hookForm: UseFormReturn<SchoolListFormSchema>;
   users: GraphUser[];
 }
 
-export function SchoolListFormInputs({
-  users,
-  hookForm,
-}: SchoolListFormInputsProps) {
+export function SchoolListFormInputs({ users }: SchoolListFormInputsProps) {
+  const { resetField } = useFormContext<SchoolListFormSchema>();
+
   const schoolListFormMapping = useMemo<
     Record<string, IngestApiFormMapping<SchoolListFormSchema>[]>
   >(
@@ -51,6 +49,10 @@ export function SchoolListFormInputs({
           required: true,
           helperText: "",
           label: "Request Method",
+          onChange: () => {
+            resetField("request_body");
+            resetField("query_parameters");
+          },
         },
         {
           name: "api_endpoint",
@@ -67,6 +69,13 @@ export function SchoolListFormInputs({
           enum: Object.values(AuthorizationTypeEnum),
           required: true,
           helperText: "",
+          onChange: () => {
+            resetField("api_auth_api_key");
+            resetField("api_auth_api_value");
+            resetField("basic_auth_username");
+            resetField("basic_auth_password");
+            resetField("bearer_auth_bearer_token");
+          },
         },
         {
           name: "api_auth_api_key",
@@ -167,6 +176,14 @@ export function SchoolListFormInputs({
           enum: Object.values(PaginationTypeEnum),
           required: false,
           helperText: "",
+          onChange: () => {
+            resetField("page_number_key");
+            resetField("page_starts_with");
+            resetField("page_size_key");
+            resetField("size");
+            resetField("page_offset_key");
+            resetField("page_send_query_in");
+          },
         },
         {
           name: "page_number_key",
@@ -235,16 +252,10 @@ export function SchoolListFormInputs({
         },
       ],
     }),
-    [users],
+    [resetField, users],
   );
 
-  return (
-    <IngestApiFormInputs
-      // @ts-expect-error incorrect type inference
-      hookForm={hookForm}
-      formMappings={schoolListFormMapping}
-    />
-  );
+  return <IngestApiFormInputs formMappings={schoolListFormMapping} />;
 }
 
 export default SchoolListFormInputs;

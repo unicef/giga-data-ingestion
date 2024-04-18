@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
-import { UseFormWatch } from "react-hook-form";
+import { UseFormGetValues } from "react-hook-form";
 
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { isPlainObject } from "lodash-es";
@@ -26,11 +26,11 @@ type TestApiOptions = {
 } & (
   | {
       apiType: "schoolList";
-      watch: UseFormWatch<SchoolListFormSchema>;
+      getValues: UseFormGetValues<SchoolListFormSchema>;
     }
   | {
       apiType: "schoolConnectivity";
-      watch: UseFormWatch<SchoolConnectivityFormSchema>;
+      getValues: UseFormGetValues<SchoolConnectivityFormSchema>;
       setIsValidResponseDateFormat: Dispatch<SetStateAction<boolean>>;
     }
 );
@@ -48,7 +48,7 @@ export function useTestApi() {
       setResponsePreview,
       setIsValidDataKey,
       apiType,
-      watch,
+      getValues,
     } = options;
 
     const {
@@ -70,7 +70,7 @@ export function useTestApi() {
       page_number_key,
       page_send_query_in,
       size,
-    } = watch();
+    } = getValues();
 
     let response_date_format: string | undefined;
     let response_date_key: string | undefined;
@@ -80,8 +80,8 @@ export function useTestApi() {
     >["setIsValidResponseDateFormat"];
 
     if (apiType === "schoolConnectivity") {
-      response_date_key = watch("response_date_key");
-      response_date_format = watch("response_date_format");
+      response_date_key = getValues("response_date_key");
+      response_date_format = getValues("response_date_format");
     }
 
     const handleValidationTry =
@@ -233,7 +233,7 @@ export function useTestApi() {
     try {
       setIsLoading(true);
       const res = await axios(requestConfig);
-      handleValidationTry(res.data);
+      await handleValidationTry(res.data);
     } catch (e) {
       handleValidationCatch(e);
     } finally {

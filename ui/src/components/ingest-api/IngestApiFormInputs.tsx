@@ -1,5 +1,4 @@
-import { Suspense } from "react";
-import { Control, FieldValues, UseFormReturn } from "react-hook-form";
+import { useFormContext, useFormState } from "react-hook-form";
 
 import {
   CodeInput,
@@ -11,7 +10,6 @@ import {
   Switch,
   TextInputWithAction,
 } from "@/components/ingest-api/IngestApiInputs.tsx";
-import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import {
   SchoolConnectivityFormSchema,
   SchoolListFormSchema,
@@ -19,7 +17,6 @@ import {
 import { IngestApiFormMapping } from "@/types/ingestApi.ts";
 
 interface IngestApiFormInputsProps {
-  hookForm: UseFormReturn<SchoolListFormSchema | SchoolConnectivityFormSchema>;
   formMappings: Record<
     string,
     | IngestApiFormMapping<SchoolListFormSchema>[]
@@ -28,17 +25,16 @@ interface IngestApiFormInputsProps {
 }
 
 interface FormItemProps {
-  hookForm: UseFormReturn<SchoolListFormSchema | SchoolConnectivityFormSchema>;
   mapping:
     | IngestApiFormMapping<SchoolListFormSchema>
     | IngestApiFormMapping<SchoolConnectivityFormSchema>;
 }
 
-function FormItem({ mapping, hookForm }: FormItemProps) {
-  const {
-    register,
-    formState: { errors },
-  } = hookForm;
+function FormItem({ mapping }: FormItemProps) {
+  const { register, control } = useFormContext<
+    SchoolListFormSchema | SchoolConnectivityFormSchema
+  >();
+  const { errors } = useFormState({ control });
 
   switch (mapping.type) {
     case "text": {
@@ -147,10 +143,11 @@ function FormItem({ mapping, hookForm }: FormItemProps) {
 }
 
 export function IngestApiFormInputs({
-  hookForm,
   formMappings,
 }: IngestApiFormInputsProps) {
-  const { control, watch } = hookForm;
+  const { watch } = useFormContext<
+    SchoolListFormSchema | SchoolConnectivityFormSchema
+  >();
 
   return (
     <>
@@ -179,27 +176,12 @@ export function IngestApiFormInputs({
 
             return (
               checkDependencies && (
-                <FormItem
-                  hookForm={hookForm}
-                  mapping={mapping}
-                  key={mapping.name}
-                />
+                <FormItem mapping={mapping} key={mapping.name} />
               )
             );
           })}
         </section>
       ))}
-
-      <Suspense>
-        <ReactHookFormDevTools
-          control={
-            control as unknown as Control<
-              FieldValues,
-              SchoolListFormSchema | SchoolConnectivityFormSchema
-            >
-          }
-        />
-      </Suspense>
     </>
   );
 }
