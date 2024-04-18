@@ -73,5 +73,5 @@ stages:
             workingDirectory: /tmp
             displayName: Extract Trivy
 
-          - script: /tmp/trivy image giga-ingestion-portal:$(Build.SourceVersion)
+          - script: /tmp/trivy image --exit-code 1 giga-ingestion-portal:$(Build.SourceVersion)
             displayName: Scan image for vulnerabilities
