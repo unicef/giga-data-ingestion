@@ -27,4 +27,6 @@ variables:
   trinoUsername: $(TRINO_USERNAME)
   trinoPassword: $(TRINO_PASSWORD)
   redisPassword: $(REDIS_PASSWORD)
+  ingressHost: $(INGRESS_HOST)
+  datahubIngressHost: $(DATAHUB_INGRESS_HOST)
   system.debug: true
