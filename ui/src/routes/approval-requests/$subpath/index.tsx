@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import { Button, ButtonSet, DataTableHeader } from "@carbon/react";
+import { Button, ButtonSet, DataTableHeader, Modal } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
@@ -23,6 +23,7 @@ export const Route = createFileRoute("/approval-requests/$subpath/")({
 function ApproveRejectTable() {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
+  const [isOpen, setOpen] = useState<boolean>(false);
 
   const { subpath } = Route.useParams();
   const navigate = useNavigate({ from: Route.fullPath });
@@ -33,6 +34,7 @@ function ApproveRejectTable() {
       setHeaders,
       setRejectedRows,
       setRows,
+      resetApproveRowState,
     },
     approveRowState: { approvedRowsList, rejectedRowsList },
   } = useStore();
@@ -71,18 +73,24 @@ function ApproveRejectTable() {
     [approvalRequests],
   );
 
+  const unselectedRows = useMemo<Record<string, string | null>[]>(() => {
+    return formattedRows.filter(
+      approvalRequest =>
+        !approvedRowsList.includes(approvalRequest.school_id_giga ?? "") &&
+        !rejectedRowsList.includes(approvalRequest.school_id_giga ?? ""),
+    );
+  }, [formattedRows, approvedRowsList, rejectedRowsList]);
+
   const handleApproveRows = (rows: Record<string, string | null>[]) => {
     const ids = rows.map(row => row.school_id_giga ?? "NULL");
     setApprovedRows([...approvedRowsList, ...ids]);
     setHeaders(headers);
-    setRows(formattedRows);
   };
 
   const handleRejectRows = (rows: Record<string, string | null>[]) => {
     const ids = rows.map(row => row.school_id_giga ?? "NULL");
     setRejectedRows([...rejectedRowsList, ...ids]);
     setHeaders(headers);
-    setRows(formattedRows);
   };
 
   const handlePaginationChange = ({
@@ -96,7 +104,21 @@ function ApproveRejectTable() {
     setPageSize(pageSize);
   };
 
+  const handleSubmit = () => {
+    if (unselectedRows.length > 0) {
+      setOpen(true);
+    } else {
+      handleProceed();
+    }
+  };
   const handleProceed = () => {
+    const unselectedRowsIds = unselectedRows.map(
+      row => row.school_id_giga ?? "NULL",
+    );
+
+    setRejectedRows([...rejectedRowsList, ...unselectedRowsIds]);
+    setRows(formattedRows);
+
     void navigate({
       to: "/approval-requests/$subpath/confirm",
       params: {
@@ -109,7 +131,7 @@ function ApproveRejectTable() {
     <>
       <CDFDataTable
         headers={headers}
-        rows={formattedRows}
+        rows={unselectedRows}
         handleApproveRows={handleApproveRows}
         handleRejectRows={handleRejectRows}
         handlePaginationChange={handlePaginationChange}
@@ -127,6 +149,7 @@ function ApproveRejectTable() {
             kind="secondary"
             renderIcon={ArrowLeft}
             to=".."
+            onClick={() => resetApproveRowState()}
           >
             Cancel
           </Button>
@@ -135,12 +158,23 @@ function ApproveRejectTable() {
             isExpressive
             renderIcon={ArrowRight}
             type="submit"
-            onClick={handleProceed}
+            onClick={handleSubmit}
           >
             Proceed
           </Button>
         </ButtonSet>
       </div>
+      <Modal
+        modalHeading="Confirm Selection"
+        open={isOpen}
+        primaryButtonText="Proceed"
+        secondaryButtonText="Cancel"
+        onRequestClose={() => setOpen(false)}
+        onRequestSubmit={handleProceed}
+      >
+        You have {unselectedRows.length} unselected rows. These rows will be
+        automatically rejected. Are you sure?
+      </Modal>
     </>
   );
 }
