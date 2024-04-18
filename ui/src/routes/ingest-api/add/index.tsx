@@ -81,7 +81,7 @@ function AddIngestion() {
     handleSubmit,
     trigger,
     control,
-    getValues,
+    watch,
     formState: { errors },
   } = hookForm;
 
@@ -115,10 +115,10 @@ function AddIngestion() {
       setIsValidResponse,
       setIsResponseError,
       setResponsePreview,
-      getValues,
+      watch,
       setIsValidDataKey,
     });
-  }, [testApi, trigger, getValues]);
+  }, [testApi, trigger, watch]);
 
   const prettyResponse = useMemo(
     () => JSON.stringify(responsePreview, undefined, 2),

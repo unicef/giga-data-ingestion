@@ -61,7 +61,7 @@ function SchoolConnectivity() {
     formState: { errors, isValid },
     handleSubmit,
     trigger,
-    getValues,
+    watch,
     control,
   } = hookForm;
 
@@ -83,11 +83,11 @@ function SchoolConnectivity() {
       setIsValidResponse,
       setIsResponseError,
       setResponsePreview,
-      getValues,
+      watch,
       setIsValidDataKey,
       setIsValidResponseDateFormat,
     });
-  }, [getValues, testApi, trigger]);
+  }, [watch, testApi, trigger]);
 
   const prettyResponse = useMemo(
     () => JSON.stringify(responsePreview, undefined, 2),

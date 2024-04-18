@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
-import { UseFormGetValues } from "react-hook-form";
+import { UseFormWatch } from "react-hook-form";
 
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { isPlainObject } from "lodash-es";
@@ -26,11 +26,11 @@ type TestApiOptions = {
 } & (
   | {
       apiType: "schoolList";
-      getValues: UseFormGetValues<SchoolListFormSchema>;
+      watch: UseFormWatch<SchoolListFormSchema>;
     }
   | {
       apiType: "schoolConnectivity";
-      getValues: UseFormGetValues<SchoolConnectivityFormSchema>;
+      watch: UseFormWatch<SchoolConnectivityFormSchema>;
       setIsValidResponseDateFormat: Dispatch<SetStateAction<boolean>>;
     }
 );
@@ -48,7 +48,7 @@ export function useTestApi() {
       setResponsePreview,
       setIsValidDataKey,
       apiType,
-      getValues,
+      watch,
     } = options;
 
     const {
@@ -70,7 +70,7 @@ export function useTestApi() {
       page_number_key,
       page_send_query_in,
       size,
-    } = getValues();
+    } = watch();
 
     let response_date_format: string | undefined;
     let response_date_key: string | undefined;
@@ -80,8 +80,8 @@ export function useTestApi() {
     >["setIsValidResponseDateFormat"];
 
     if (apiType === "schoolConnectivity") {
-      response_date_key = getValues("response_date_key");
-      response_date_format = getValues("response_date_format");
+      response_date_key = watch("response_date_key");
+      response_date_format = watch("response_date_format");
     }
 
     const handleValidationTry =
@@ -94,7 +94,8 @@ export function useTestApi() {
             setIsValidDataKey(true);
             setIsValidResponse(true);
             setIsResponseError(false);
-            setDetectedColumns(Object.keys(responseData[0]));
+            if (apiType === "schoolList")
+              setDetectedColumns(Object.keys(responseData[0]));
           } else {
             setIsValidDataKey(false);
           }
@@ -126,7 +127,8 @@ export function useTestApi() {
             setIsValidResponse(true);
 
             if (isValidDataKey) {
-              setDetectedColumns(Object.keys(responseData[data_key][0]));
+              if (apiType === "schoolList")
+                setDetectedColumns(Object.keys(responseData[data_key][0]));
               setIsValidDataKey(true);
               return;
             }
