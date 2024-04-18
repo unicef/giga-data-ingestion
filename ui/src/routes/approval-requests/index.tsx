@@ -1,35 +1,32 @@
-import { ReactElement, useMemo } from "react";
+import { ReactElement, useMemo, useState } from "react";
 
 import {
   Button,
   DataTableHeader,
   DataTableSkeleton,
   Section,
-  TableContainer,
 } from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 
 import { api } from "@/api";
+import { listApprovalRequestQueryOptions } from "@/api/queryOptions";
 import DataTable from "@/components/common/DataTable.tsx";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
+import { useStore } from "@/context/store";
+import { SENTINEL_PAGED_RESPONSE } from "@/types/api.ts";
 import { ApprovalRequestListing } from "@/types/approvalRequests";
-
-const listQueryOptions = queryOptions({
-  queryKey: ["approval-requests"],
-  queryFn: api.approvalRequests.list,
-});
 
 export const Route = createFileRoute("/approval-requests/")({
   component: ApprovalRequests,
   loader: ({ context: { queryClient } }) =>
-    queryClient.ensureQueryData(listQueryOptions),
+    queryClient.ensureQueryData(listApprovalRequestQueryOptions),
 });
 
 const columns: DataTableHeader[] = [
   {
-    key: "id",
+    key: "country",
     header: "Country",
   },
   {
@@ -58,21 +55,48 @@ const columns: DataTableHeader[] = [
   },
 ];
 
-type ApprovalRequest = Record<
+type ApprovalRequestTableRow = Record<
   keyof ApprovalRequestListing,
   string | number | null | ReactElement
-> & { id: string; actions: ReactElement };
+>;
 
 function ApprovalRequests() {
-  const { data, isFetching, isLoading } = useSuspenseQuery(listQueryOptions);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
 
-  const approvalRequests = useMemo(() => data?.data ?? [], [data]);
+  const {
+    approveRowActions: { resetApproveRowState },
+  } = useStore();
 
-  const formattedApprovalRequests: ApprovalRequest[] = useMemo(
+  function handlePaginationChange({
+    page,
+    pageSize,
+  }: {
+    page: number;
+    pageSize: number;
+  }) {
+    setPage(page);
+    setPageSize(pageSize);
+  }
+
+  const { data, isLoading } = useSuspenseQuery(
+    queryOptions({
+      queryKey: ["approval-requests", page, pageSize],
+      queryFn: () =>
+        api.approvalRequests.list({
+          page: page,
+          page_size: pageSize,
+        }),
+    }),
+  );
+
+  const approvalRequests = data?.data ?? SENTINEL_PAGED_RESPONSE;
+
+  const formattedApprovalRequests = useMemo<ApprovalRequestTableRow[]>(
     () =>
-      approvalRequests.map(request => ({
+      approvalRequests.data.map(request => ({
         ...request,
-        id: `${request.country} (${request.country_iso3})`,
+        country: `${request.country} (${request.country_iso3})`,
         actions: (
           <Button
             kind="ghost"
@@ -82,6 +106,7 @@ function ApprovalRequests() {
             params={{
               subpath: encodeURIComponent(request.subpath),
             }}
+            onClick={() => resetApproveRowState()}
           >
             Approve Rows
           </Button>
@@ -91,17 +116,24 @@ function ApprovalRequests() {
           DEFAULT_DATETIME_FORMAT,
         ),
       })),
-    [approvalRequests],
+    [approvalRequests, resetApproveRowState],
   );
 
   return (
     <Section className="container flex flex-col gap-4 py-6">
-      {isLoading || isFetching ? (
-        <DataTableSkeleton />
+      {isLoading ? (
+        <DataTableSkeleton headers={columns} />
       ) : (
-        <TableContainer title="Approval Requests">
-          <DataTable columns={columns} rows={formattedApprovalRequests} />
-        </TableContainer>
+        <DataTable
+          title="Approval Requests"
+          columns={columns}
+          rows={formattedApprovalRequests}
+          isPaginated
+          count={approvalRequests.total_count}
+          handlePaginationChange={handlePaginationChange}
+          page={approvalRequests.page}
+          pageSize={approvalRequests.page_size}
+        />
       )}
     </Section>
   );

@@ -1,17 +1,19 @@
 import json
 import urllib.parse
 from datetime import datetime
-from io import BytesIO
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 from country_converter import country_converter as coco
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
+from sqlalchemy import column, func, literal, select, text
+from sqlalchemy.orm import Session
+from sqlalchemy.sql.functions import count
 
-from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
-from azure.storage.blob import BlobProperties, ContentSettings
+from azure.core.exceptions import HttpResponseError
+from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
+from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.permissions.permissions import IsPrivileged
@@ -19,113 +21,168 @@ from data_ingestion.schemas.approval_requests import (
     ApprovalRequestListing,
     UploadApprovedRowsRequest,
 )
+from data_ingestion.schemas.core import PagedResponseSchema
 
 router = APIRouter(
     prefix="/api/approval-requests",
     tags=["approval-requests"],
-    dependencies=[Security(azure_scheme)],
+    dependencies=[Security(IsPrivileged())],
 )
 
 
 @router.get(
     "",
-    response_model=list[ApprovalRequestListing],
-    dependencies=[Security(IsPrivileged())],
+    response_model=PagedResponseSchema[ApprovalRequestListing],
 )
-async def list_approval_requests(user=Depends(azure_scheme)):
-    groups = [g.lower() for g in user.groups]
+async def list_approval_requests(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=50),
+    db: Session = Depends(get_db),
+):
+    data_cte = (
+        select("*")
+        .select_from(text("information_schema.tables"))
+        .where(column("table_schema").like(literal("school%staging")))
+        .cte("tables")
+    )
+    res = db.execute(
+        select("*", select(count()).select_from(data_cte).label("total_count"))
+        .select_from(data_cte)
+        .order_by(column("table_name"))
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    staging_tables = res.mappings().all()
+    if len(staging_tables) == 0:
+        total_count = 0
+    else:
+        total_count = staging_tables[0]["total_count"]
 
     body: list[ApprovalRequestListing] = []
-    for blob in storage_client.list_blobs(constants.APPROVAL_REQUESTS_PATH_PREFIX):
-        blob: BlobProperties
-        path = Path(blob.name)
-        country_iso3 = path.name.split("_")[0]
-        if len(country_iso3) != 3:
-            continue
-
-        country = coco.convert(country_iso3, to="name_short")
-        dataset = path.parent.name.replace("-", " ").title()
-        country_dataset = f"{country}-{dataset}".lower()
-
-        if path.suffix == ".csv" and (
-            "admin" in groups or "super" in groups or country_dataset in groups
-        ):
-            with BytesIO() as buffer:
-                storage_client.download_blob(blob.name).readinto(buffer)
-                buffer.seek(0)
-                df = pd.read_csv(
-                    buffer, low_memory=True, usecols=["_change_type"], dtype="string"
-                )
-
-            body.append(
-                ApprovalRequestListing(
-                    country=country,
-                    country_iso3=country_iso3,
-                    dataset=dataset,
-                    subpath=blob.name.replace(
-                        f"{constants.APPROVAL_REQUESTS_PATH_PREFIX}/", ""
-                    ),
-                    last_modified=blob.last_modified,
-                    rows_count=df[df["_change_type"] != "update_postimage"].count(),
-                    rows_added=df[df["_change_type"] == "insert"].count(),
-                    rows_updated=df[df["_change_type"] == "update_preimage"].count(),
-                    rows_deleted=df[df["_change_type"] == "delete"].count(),
+    for table in staging_tables:
+        change_types_cte = (
+            select(column("_change_type")).select_from(
+                func.table(
+                    func.delta_lake.system.table_changes(
+                        literal(table["table_schema"]), literal(table["table_name"]), 0
+                    )
                 )
             )
-
-    return body
-
-
-@router.get(
-    "/{subpath}",
-    dependencies=[Security(IsPrivileged())],
-)
-async def get_approval_request(
-    subpath: str,
-    user=Depends(azure_scheme),
-):
-    groups = [g.lower() for g in user.groups]
-    subpath = urllib.parse.unquote(subpath)
-    subpath = Path(subpath)
-    dataset = subpath.parent.name.replace("-", " ")
-    country_iso3 = subpath.name.split("_")[0]
-    country = coco.convert(country_iso3, to="name_short")
-    country_dataset = f"{country}-{dataset}".lower()
-
-    if not ("admin" in groups or "super" in groups or country_dataset in groups):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    try:
-        blob = storage_client.download_blob(
-            f"{constants.APPROVAL_REQUESTS_PATH_PREFIX}/{subpath}"
+        ).cte("change_types")
+        timestamp_cte = (
+            select(column("timestamp"))
+            .select_from(
+                text(
+                    f'''delta_lake.{table['table_schema']}."{table['table_name']}$history"'''
+                )
+            )
+            .order_by(column("timestamp").desc())
+            .limit(1)
+        ).cte("timestamp")
+        res = db.execute(
+            select(
+                (select(count()).select_from(change_types_cte)).label("rows_count"),
+                (
+                    select(count())
+                    .select_from(change_types_cte)
+                    .where(column("_change_type") == literal("insert"))
+                ).label("rows_added"),
+                (
+                    select(count())
+                    .select_from(change_types_cte)
+                    .where(column("_change_type") == literal("update_preimage"))
+                ).label("rows_updated"),
+                (select(column("timestamp")).select_from(timestamp_cte)).label(
+                    "last_modified"
+                ),
+            )
         )
-    except ResourceNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND) from exc
+        stats = res.mappings().one()
 
-    with BytesIO() as buffer:
-        blob.readinto(buffer)
-        buffer.seek(0)
-        df = (
-            pd.read_csv(buffer, dtype="object").fillna(np.nan).replace([np.nan], [None])
+        country = coco.convert(table["table_name"], to="name_short")
+        dataset = table["table_schema"].replace("staging", "").replace("_", " ").title()
+        body.append(
+            ApprovalRequestListing(
+                id=f'{table["table_name"].upper()}-{dataset}',
+                country=country,
+                country_iso3=table["table_name"].upper(),
+                dataset=dataset,
+                subpath=f'{table["table_schema"]}/{table["table_name"]}',
+                last_modified=stats["last_modified"],
+                rows_count=stats["rows_count"],
+                rows_added=stats["rows_added"],
+                rows_updated=stats["rows_updated"],
+                rows_deleted=0,
+            )
         )
-
-        for i, row in df.iterrows():
-            if df.at[i, "_change_type"] in ["update_postimage", "insert"]:
-                continue
-
-            for col in df.columns:
-                if col == "_change_type":
-                    continue
-
-                if (old := getattr(row, col)) != (update := df.at[i + 1, col]):
-                    df.at[i, col] = {"old": old, "update": update}
-
-        df = df[df["_change_type"] != "update_postimage"]
-        cols = ["school_id_giga"] + [col for col in df if col != "school_id_giga"]
-        df = df.reindex(columns=cols)
 
     return {
+        "data": body,
+        "page": 1,
+        "page_size": 10,
+        "total_count": total_count,
+    }
+
+
+@router.get("/{subpath}")
+async def get_approval_request(
+    subpath: str,
+    db: Session = Depends(get_db),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=50),
+):
+    if len(splits := urllib.parse.unquote(subpath).split("/")) != 2:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    table_schema, table_name = splits
+    country = coco.convert(table_name, to="name_short")
+    dataset = table_schema.replace("staging", "").replace("_", " ").title()
+
+    data_cte = (
+        select("*")
+        .select_from(
+            func.table(
+                func.delta_lake.system.table_changes(
+                    literal(table_schema), literal(table_name), 0
+                )
+            )
+        )
+        .cte("changes")
+    )
+    cdf = (
+        db.execute(
+            select("*", select(count()).select_from(data_cte).label("row_count"))
+            .select_from(data_cte)
+            .order_by(column("school_id_giga"), column("_change_type").desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        .mappings()
+        .all()
+    )
+
+    for i, row in (df := pd.DataFrame(cdf)).iterrows():
+        if row["_change_type"] in ["update_postimage", "insert"]:
+            continue
+
+        for col in df.columns:
+            if col == "_change_type":
+                continue
+
+            if (old := getattr(row, col)) != (update := df.at[i + 1, col]):
+                df.at[i, col] = {"old": old, "update": update}
+
+    total_count = int(df.at[0, "row_count"])
+    df = (
+        df[df["_change_type"] != "update_postimage"]
+        .drop(
+            columns=["row_count", "signature", "_commit_version", "_commit_timestamp"]
+        )
+        .fillna("NULL")
+    )
+    return {
         "info": {"country": country, "dataset": dataset.title()},
+        "total_count": total_count,
         "data": df.to_dict(orient="records"),
     }
 
@@ -133,43 +190,36 @@ async def get_approval_request(
 @router.post(
     "/upload",
     status_code=status.HTTP_201_CREATED,
-    dependencies=[Security(IsPrivileged())],
 )
 async def upload_approved_rows(
     body: UploadApprovedRowsRequest,
     user=Depends(azure_scheme),
 ):
     posix_path = Path(urllib.parse.unquote(body.subpath))
-    dataset = posix_path.parent.name
+    dataset = posix_path.parent.name.replace("_staging", "").replace("_", "-")
     country_iso3 = posix_path.name.split("_")[0]
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    filename = f"{country_iso3}_{dataset}_{timestamp}.json"
+    filename = f"{country_iso3}_{timestamp}.json"
 
     approve_location = (
         f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
-        f"/{dataset}/approved-rows/{filename}"
-    )
-    reject_location = (
-        f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
-        f"/{dataset}/rejected-rows/{filename}"
+        f"/approved-row-ids/{dataset}/{filename}"
     )
 
     approve_client = storage_client.get_blob_client(approve_location)
-    reject_client = storage_client.get_blob_client(reject_location)
-
     try:
         approve_client.upload_blob(
-            json.dumps(body.approved_rows),
+            json.dumps(
+                {
+                    "approved_rows": body.approved_rows,
+                    "rejected_rows": body.rejected_rows,
+                }
+            ),
             overwrite=True,
             content_settings=ContentSettings(content_type="application/json"),
         )
 
-        reject_client.upload_blob(
-            json.dumps(body.rejected_rows),
-            overwrite=True,
-            content_settings=ContentSettings(content_type="application/json"),
-        )
     except HttpResponseError as err:
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code

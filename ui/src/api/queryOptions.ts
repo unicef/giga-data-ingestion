@@ -28,3 +28,12 @@ export const listApiIngestionsQueryOptions = queryOptions({
       page: DEFAULT_PAGE_NUMBER,
     }),
 });
+
+export const listApprovalRequestQueryOptions = queryOptions({
+  queryKey: ["approval-requests", DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE],
+  queryFn: () =>
+    api.approvalRequests.list({
+      page: DEFAULT_PAGE_NUMBER,
+      page_size: DEFAULT_PAGE_SIZE,
+    }),
+});
