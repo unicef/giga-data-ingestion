@@ -13,19 +13,13 @@ import { TextInput } from "@/components/forms/TextInput.tsx";
 import { metadataMapping, monthList, yearList } from "@/constants/metadata.ts";
 import { MetadataFormMapping } from "@/types/metadata.ts";
 
-export const MetadataForm = z
-  .object({
-    ...Object.fromEntries(
-      Object.values(metadataMapping)
-        .flat()
-        .map(item => [item.name, item.validator]),
-    ),
-  })
-  .transform(data =>
-    Object.fromEntries(
-      Object.entries(data).map(([key, val]) => [key, String(val)]),
-    ),
-  );
+export const MetadataForm = z.object({
+  ...Object.fromEntries(
+    Object.values(metadataMapping)
+      .flat()
+      .map(item => [item.name, item.validator]),
+  ),
+});
 
 export type MetadataForm = z.infer<typeof MetadataForm>;
 
