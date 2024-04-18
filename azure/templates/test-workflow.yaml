@@ -65,11 +65,11 @@ stages:
               tags: |
                 $(Build.SourceVersion)
 
-          - script: curl -LO https://url.to/trivy.tar.gz
+          - script: curl -LO https://github.com/aquasecurity/trivy/releases/download/v0.50.1/trivy_0.50.1_Linux-64bit.tar.gz
             workingDirectory: /tmp
             displayName: Download Trivy
 
-          - script: tar -xzf trivy.tar.gz
+          - script: tar -xzf trivy_0.50.1_Linux-64bit.tar.gz
             workingDirectory: /tmp
             displayName: Extract Trivy
 
