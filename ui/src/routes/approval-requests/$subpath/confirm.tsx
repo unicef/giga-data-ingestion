@@ -35,6 +35,7 @@ interface ConfirmDataTablesProps {
 function Confirm() {
   const {
     approveRowState: { headers, rows, approvedRowsList, rejectedRowsList },
+    approveRowActions: { resetApproveRowState },
   } = useStore();
   const { subpath } = Route.useParams();
 
@@ -151,6 +152,7 @@ function Confirm() {
           kind="secondary"
           renderIcon={ArrowLeft}
           to=".."
+          onClick={() => resetApproveRowState()}
         >
           Cancel
         </Button>

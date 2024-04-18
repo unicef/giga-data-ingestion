@@ -16,6 +16,7 @@ interface _DataTableProps extends ComponentProps<typeof CarbonDataTable> {
   columns: ComponentProps<typeof CarbonDataTable>["headers"];
   rows: ComponentProps<typeof CarbonDataTable>["rows"];
   size?: ComponentProps<typeof CarbonDataTable>["size"];
+  title?: string;
 }
 
 export type DataTableProps = _DataTableProps &
@@ -47,6 +48,7 @@ function DataTable({
   rows,
   size,
   count,
+  title = "",
   isPaginated = false,
   pageSize,
   page,
@@ -55,7 +57,7 @@ function DataTable({
   return (
     <CarbonDataTable headers={columns} rows={rows} size={size}>
       {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
-        <TableContainer>
+        <TableContainer title={title}>
           <Table {...getTableProps()}>
             <TableHead>
               <TableRow>
