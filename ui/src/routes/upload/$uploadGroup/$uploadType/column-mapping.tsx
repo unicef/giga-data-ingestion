@@ -84,7 +84,7 @@ function UploadColumnMapping() {
     formState: { errors },
     watch,
   } = useForm<ConfigureColumnsForm>({
-    mode: "onChange",
+    mode: "onSubmit",
     reValidateMode: "onChange",
     defaultValues: {
       mapping: columnMapping,
