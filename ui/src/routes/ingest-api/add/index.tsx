@@ -1,12 +1,5 @@
-import { Suspense, memo, useCallback, useMemo, useState } from "react";
-import {
-  FormProvider,
-  SubmitHandler,
-  useForm,
-  useFormState,
-} from "react-hook-form";
-import SyntaxHighlighter from "react-syntax-highlighter";
-import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { Suspense, useCallback, useMemo, useState } from "react";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, Loading, Section, Tag } from "@carbon/react";
@@ -21,6 +14,7 @@ import {
 
 import { api } from "@/api";
 import { listUsersQueryOptions } from "@/api/queryOptions.ts";
+import { MemoizedApiPreview } from "@/components/ingest-api/ApiPreview.tsx";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
 import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
@@ -43,24 +37,6 @@ export const Route = createFileRoute("/ingest-api/add/")({
   },
   pendingComponent: IngestFormSkeleton,
 });
-
-function ApiPreview({ preview }: { preview: string }) {
-  return (
-    <SyntaxHighlighter
-      customStyle={{ height: "100%" }}
-      showLineNumbers
-      language="json"
-      style={docco}
-    >
-      {preview}
-    </SyntaxHighlighter>
-  );
-}
-
-const MemoizedApiPreview = memo(
-  ApiPreview,
-  (prev, next) => prev.preview === next.preview,
-);
 
 function AddIngestion() {
   const [responsePreview, setResponsePreview] = useState<
@@ -95,7 +71,7 @@ function AddIngestion() {
 
   const hookForm = useForm<SchoolListFormSchema>({
     mode: "onSubmit",
-    reValidateMode: "onBlur",
+    reValidateMode: "onChange",
     resolver: zodResolver(
       SchoolListFormSchema,
       { async: true },
@@ -104,8 +80,14 @@ function AddIngestion() {
     defaultValues: schoolList,
     shouldFocusError: true,
   });
-  const { handleSubmit, trigger, control, getValues } = hookForm;
-  const { errors } = useFormState({ control });
+
+  const {
+    handleSubmit,
+    trigger,
+    control,
+    getValues,
+    formState: { errors },
+  } = hookForm;
 
   const onSubmit: SubmitHandler<SchoolListFormSchema> = async data => {
     if (Object.keys(errors).length > 0) {
@@ -197,7 +179,7 @@ function AddIngestion() {
             </form>
           </FormProvider>
         </div>
-        <aside className="sticky top-0 h-[90vh] w-full">
+        <aside className="h-[90vh] w-full">
           <div className="flex items-center justify-between">
             <p>Preview</p>
             <Button

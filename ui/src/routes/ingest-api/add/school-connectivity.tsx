@@ -1,15 +1,15 @@
-import { useEffect, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import SyntaxHighlighter from "react-syntax-highlighter";
-import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, Loading, Section, Tag } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
+import { MemoizedApiPreview } from "@/components/ingest-api/ApiPreview.tsx";
 import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
 import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs";
+import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { useStore } from "@/context/store";
 import { SchoolConnectivityFormSchema } from "@/forms/ingestApi.ts";
 import { useTestApi } from "@/hooks/useTestApi.ts";
@@ -17,6 +17,7 @@ import { useTestApi } from "@/hooks/useTestApi.ts";
 export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
   component: SchoolConnectivity,
   loader: () => {
+    // TODO: put this back
     // const {
     //   schoolList: { api_endpoint },
     // } = useStore.getState().apiIngestionSlice;
@@ -51,11 +52,10 @@ function SchoolConnectivity() {
 
   const hookForm = useForm<SchoolConnectivityFormSchema>({
     mode: "onSubmit",
-    reValidateMode: "onBlur",
+    reValidateMode: "onChange",
     resolver: zodResolver(SchoolConnectivityFormSchema, { async: true }),
     defaultValues: schoolConnectivity,
     shouldFocusError: true,
-    shouldUnregister: true,
   });
   const {
     formState: { errors, isValid },
@@ -63,6 +63,8 @@ function SchoolConnectivity() {
     resetField,
     trigger,
     watch,
+    getValues,
+    control,
   } = hookForm;
 
   const watchAuthType = watch("authorization_type");
@@ -98,7 +100,32 @@ function SchoolConnectivity() {
     setOpen(true);
   };
 
-  const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
+  const handleClickTest = useCallback(async () => {
+    if (!(await trigger())) return;
+
+    await testApi({
+      apiType: "schoolConnectivity",
+      setIsValidResponse,
+      setIsResponseError,
+      setResponsePreview,
+      getValues,
+      setIsValidDataKey,
+      setIsValidResponseDateFormat,
+    });
+  }, [getValues, testApi, trigger]);
+
+  const prettyResponse = useMemo(
+    () => JSON.stringify(responsePreview, undefined, 2),
+    [responsePreview],
+  );
+
+  const isSubmitDisabled =
+    !hasUploadedFile ||
+    !isValid ||
+    !isValidDatakey ||
+    !isValidResponse ||
+    !isValidResponseDateFormat ||
+    isResponseError;
 
   return (
     <Section className="container py-6">
@@ -107,94 +134,79 @@ function SchoolConnectivity() {
           Step 3: Configure school connectivity API
         </p>
       </header>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-2 gap-10">
-          <div className="flex w-full flex-col gap-4">
-            <SchoolConnectivityFormInputs hookForm={hookForm} />
 
-            <ButtonSet className="w-full">
-              <Button
-                as={Link}
-                className="w-full"
-                isExpressive
-                kind="secondary"
-                renderIcon={ArrowLeft}
-                to="/ingest-api/add/column-mapping"
-                onClick={() => {
-                  decrementStepIndex();
-                  resetSchoolConnectivityFormValues();
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="w-full"
-                disabled={
-                  !hasUploadedFile ||
-                  !isValid ||
-                  !isValidDatakey ||
-                  !isValidResponse ||
-                  !isValidResponseDateFormat ||
-                  isResponseError
-                }
-                isExpressive
-                renderIcon={ArrowRight}
-                type="submit"
-              >
-                Proceed
-              </Button>
-            </ButtonSet>
-          </div>
-          <aside className="sticky top-0 h-[90vh] w-full">
-            <div className="flex items-center justify-between">
-              <p>Preview</p>
-              <Button
-                size="md"
-                onClick={async () => {
-                  if (!(await trigger())) return;
+      <div className="grid grid-cols-2 gap-10">
+        <div className="flex w-full flex-col gap-4">
+          <FormProvider {...hookForm}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <SchoolConnectivityFormInputs hookForm={hookForm} />
 
-                  await testApi({
-                    apiType: "schoolConnectivity",
-                    setIsValidResponse,
-                    setIsResponseError,
-                    setResponsePreview,
-                    watch,
-                    setIsValidDataKey,
-                    setIsValidResponseDateFormat,
-                  });
-                }}
-                renderIcon={props =>
-                  isLoading ? (
-                    <Loading small={true} withOverlay={false} {...props} />
-                  ) : null
-                }
-                disabled={isLoading}
-                isExpressive
-              >
-                Test
-              </Button>
-            </div>
-            {isResponseError && (
-              <Tag type="red">Invalid Output from API request</Tag>
-            )}
-            {responsePreview === "invalid" && (
-              <Tag type="red">Invalid Data Key</Tag>
-            )}
-            {!isValidResponseDateFormat && (
-              <Tag type="red">Response date format mismatch</Tag>
-            )}
-            <SyntaxHighlighter
-              customStyle={{ height: "100%" }}
-              showLineNumbers
-              language="json"
-              style={docco}
-            >
-              {responsePreview === "" ? "" : prettyResponse}
-            </SyntaxHighlighter>
-          </aside>
+              <ButtonSet className="w-full">
+                <Button
+                  as={Link}
+                  className="w-full"
+                  isExpressive
+                  kind="secondary"
+                  renderIcon={ArrowLeft}
+                  to="/ingest-api/add/column-mapping"
+                  onClick={() => {
+                    decrementStepIndex();
+                    resetSchoolConnectivityFormValues();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="w-full"
+                  disabled={isSubmitDisabled}
+                  isExpressive
+                  renderIcon={ArrowRight}
+                  type="submit"
+                >
+                  Proceed
+                </Button>
+              </ButtonSet>
+            </form>
+          </FormProvider>
         </div>
-      </form>
+        <aside className="h-[90vh] w-full">
+          <div className="flex items-center justify-between">
+            <p>Preview</p>
+            <Button
+              size="md"
+              onClick={handleClickTest}
+              renderIcon={props =>
+                isLoading ? (
+                  <Loading small={true} withOverlay={false} {...props} />
+                ) : null
+              }
+              disabled={isLoading}
+              isExpressive
+            >
+              Test
+            </Button>
+          </div>
+          {isResponseError && (
+            <Tag type="red">Invalid Output from API request</Tag>
+          )}
+          {responsePreview === "invalid" && (
+            <Tag type="red">Invalid Data Key</Tag>
+          )}
+          {!isValidResponseDateFormat && (
+            <Tag type="red">Response date format mismatch</Tag>
+          )}
+          <MemoizedApiPreview
+            preview={responsePreview === "" ? "" : prettyResponse}
+          />
+        </aside>
+      </div>
       <ConfirmAddIngestionModal open={open} setOpen={setOpen} />
+      <Suspense>
+        <ReactHookFormDevTools
+          // @ts-expect-error incorrect type inference
+          control={control}
+        />
+      </Suspense>
     </Section>
   );
 }
