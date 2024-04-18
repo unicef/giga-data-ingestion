@@ -12,7 +12,11 @@ from data_ingestion.schemas.util import ResponseWithDateKeyBody, ValidDateTimeFo
 router = APIRouter(prefix="/api/utils", tags=["utils"])
 
 
-@router.post("/parse-group-displayname", response_model=B2CPolicyGroupResponse)
+@router.post(
+    "/parse-group-displayname",
+    response_model=B2CPolicyGroupResponse,
+    include_in_schema=False,
+)
 def parse_group_display_names(body: B2CPolicyGroupRequest):
     logger.info(f"{body.model_dump()=}")
     try:
