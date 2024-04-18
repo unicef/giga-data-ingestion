@@ -196,36 +196,30 @@ async def upload_approved_rows(
     user=Depends(azure_scheme),
 ):
     posix_path = Path(urllib.parse.unquote(body.subpath))
-    dataset = posix_path.parent.name
+    dataset = posix_path.parent.name.replace("_staging", "").replace("_", "-")
     country_iso3 = posix_path.name.split("_")[0]
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
-    filename = f"{country_iso3}_{dataset}_{timestamp}.json"
+    filename = f"{country_iso3}_{timestamp}.json"
 
     approve_location = (
         f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
-        f"/{dataset}/approved-rows/{filename}"
-    )
-    reject_location = (
-        f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
-        f"/{dataset}/rejected-rows/{filename}"
+        f"/approved-row-ids/{dataset}/{filename}"
     )
 
     approve_client = storage_client.get_blob_client(approve_location)
-    reject_client = storage_client.get_blob_client(reject_location)
-
     try:
         approve_client.upload_blob(
-            json.dumps(body.approved_rows),
+            json.dumps(
+                {
+                    "approved_rows": body.approved_rows,
+                    "rejected_rows": body.rejected_rows,
+                }
+            ),
             overwrite=True,
             content_settings=ContentSettings(content_type="application/json"),
         )
 
-        reject_client.upload_blob(
-            json.dumps(body.rejected_rows),
-            overwrite=True,
-            content_settings=ContentSettings(content_type="application/json"),
-        )
     except HttpResponseError as err:
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
