@@ -178,7 +178,10 @@ export function SelectFromArray<MappingType>({
           {mapping.helperText}
         </span>
       }
-      {...register}
+      {...register(name, {
+        required: mapping.required,
+        onChange: mapping.onChange,
+      })}
     >
       <SelectItem text="" value="" />
       {mapping.type === "select-user"
@@ -233,7 +236,10 @@ export function SelectFromEnum<MappingType>({
           {mapping.helperText}
         </span>
       }
-      {...register}
+      {...register(name, {
+        required: mapping.required,
+        onChange: mapping.onChange,
+      })}
     >
       <SelectItem text="" value="" />
       {mapping.enum.map(el => (
@@ -285,7 +291,10 @@ export function TextInputWithAction<MappingType>({
             {mapping.helperText}
           </span>
         }
-        {...register}
+        {...register(name, {
+          required: mapping.required,
+          onChange: mapping.onChange,
+        })}
       />
       <div>
         <Button
@@ -315,7 +324,16 @@ export function Switch<MappingType>({
     | SchoolConnectivityFormSchema
   );
 
-  return <Toggle id={name} labelText={mapping.label} {...register} />;
+  return (
+    <Toggle
+      id={name}
+      labelText={mapping.label}
+      {...register(name, {
+        required: mapping.required,
+        onChange: mapping.onChange,
+      })}
+    />
+  );
 }
 
 export function NumberInput<MappingType>({
@@ -330,6 +348,11 @@ export function NumberInput<MappingType>({
     | SchoolListFormSchema
     | SchoolConnectivityFormSchema
   );
+
+  const registerReturn = register(name, {
+    required: mapping.required,
+    onChange: mapping.onChange,
+  });
 
   return (
     <CarbonNumberInput
@@ -349,7 +372,17 @@ export function NumberInput<MappingType>({
         </>
       }
       helperText={mapping.helperText}
-      {...register}
+      {...registerReturn}
+      min={
+        typeof registerReturn.min === "string"
+          ? parseInt(registerReturn.min, 10)
+          : registerReturn.min
+      }
+      max={
+        typeof registerReturn.max === "string"
+          ? parseInt(registerReturn.max, 10)
+          : registerReturn.max
+      }
     />
   );
 }

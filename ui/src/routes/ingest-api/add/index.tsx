@@ -72,11 +72,7 @@ function AddIngestion() {
   const hookForm = useForm<SchoolListFormSchema>({
     mode: "onSubmit",
     reValidateMode: "onChange",
-    resolver: zodResolver(
-      SchoolListFormSchema,
-      { async: true },
-      { mode: "async" },
-    ),
+    resolver: zodResolver(SchoolListFormSchema),
     defaultValues: schoolList,
     shouldFocusError: true,
   });

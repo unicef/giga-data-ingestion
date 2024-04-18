@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
@@ -53,42 +53,17 @@ function SchoolConnectivity() {
   const hookForm = useForm<SchoolConnectivityFormSchema>({
     mode: "onSubmit",
     reValidateMode: "onChange",
-    resolver: zodResolver(SchoolConnectivityFormSchema, { async: true }),
+    resolver: zodResolver(SchoolConnectivityFormSchema),
     defaultValues: schoolConnectivity,
     shouldFocusError: true,
   });
   const {
     formState: { errors, isValid },
     handleSubmit,
-    resetField,
     trigger,
-    watch,
     getValues,
     control,
   } = hookForm;
-
-  const watchAuthType = watch("authorization_type");
-  const watchPaginationType = watch("pagination_type");
-
-  useEffect(() => {
-    resetField("api_auth_api_key");
-    resetField("api_auth_api_value");
-    resetField("basic_auth_username");
-    resetField("basic_auth_password");
-    resetField("bearer_auth_bearer_token");
-  }, [watchAuthType, resetField]);
-
-  useEffect(() => {
-    resetField("page_number_key");
-    resetField("page_offset_key");
-    resetField("page_starts_with");
-    resetField("size");
-  }, [watchPaginationType, resetField]);
-
-  useEffect(() => {
-    resetField("query_parameters");
-    resetField("request_body");
-  }, [resetField]);
 
   const onSubmit: SubmitHandler<SchoolConnectivityFormSchema> = async data => {
     if (Object.keys(errors).length > 0) {
