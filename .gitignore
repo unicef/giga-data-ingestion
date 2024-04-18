@@ -5,3 +5,4 @@ secrets.yaml
 
 node_modules/
 .venv/
+.pre-commit-trivy-cache/

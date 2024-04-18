@@ -39,3 +39,39 @@ stages:
           - script: npm run build
             workingDirectory: ui
             displayName: Build UI
+
+  - stage: VulnerabilityScan
+    displayName: Scan for vulnerabilities
+    dependsOn: [ ]
+    jobs:
+      - job: VulnerabilityScan
+        displayName: Scan for vulnerabilities
+        steps:
+          - task: Docker@2
+            inputs:
+              command: build
+              repository: giga-ingestion-portal
+              dockerfile: Dockerfile.prod
+              arguments: >
+                --build-arg "VITE_SENTRY_DSN=$(sentryDsn)"
+                --build-arg "VITE_AZURE_CLIENT_ID=$(azureAdClientId)"
+                --build-arg "VITE_AZURE_TENANT_ID=$(azureAdTenantId)"
+                --build-arg "VITE_AZURE_TENANT_NAME=$(azureAdTenantName)"
+                --build-arg "VITE_AZURE_SUSI_AUTH_POLICY_NAME=$(azureAdSusiPolicyName)"
+                --build-arg "VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME=$(azureAdPasswordResetPolicyName)"
+                --build-arg "VITE_DATAHUB_URL=https://io-datahub-$(deployEnv).unitst.org"
+                --build-arg "VITE_COMMIT_SHA=$(Build.SourceVersion)"
+                --build-arg "VITE_DEPLOY_ENV=$(deployEnv)"
+              tags: |
+                $(Build.SourceVersion)
+
+          - script: curl -LO https://url.to/trivy.tar.gz
+            workingDirectory: /tmp
+            displayName: Download Trivy
+
+          - script: tar -xzf trivy.tar.gz
+            workingDirectory: /tmp
+            displayName: Extract Trivy
+
+          - script: /tmp/trivy image giga-ingestion-portal:$(Build.SourceVersion)
+            displayName: Scan image for vulnerabilities
