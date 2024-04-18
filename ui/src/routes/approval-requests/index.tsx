@@ -14,6 +14,7 @@ import { api } from "@/api";
 import { listApprovalRequestQueryOptions } from "@/api/queryOptions";
 import DataTable from "@/components/common/DataTable.tsx";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
+import { useStore } from "@/context/store";
 import { SENTINEL_PAGED_RESPONSE } from "@/types/api.ts";
 import { ApprovalRequestListing } from "@/types/approvalRequests";
 
@@ -63,6 +64,10 @@ function ApprovalRequests() {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
+  const {
+    approveRowActions: { resetApproveRowState },
+  } = useStore();
+
   function handlePaginationChange({
     page,
     pageSize,
@@ -101,6 +106,7 @@ function ApprovalRequests() {
             params={{
               subpath: encodeURIComponent(request.subpath),
             }}
+            onClick={() => resetApproveRowState()}
           >
             Approve Rows
           </Button>
@@ -110,7 +116,7 @@ function ApprovalRequests() {
           DEFAULT_DATETIME_FORMAT,
         ),
       })),
-    [approvalRequests],
+    [approvalRequests, resetApproveRowState],
   );
 
   return (
