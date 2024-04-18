@@ -56,22 +56,19 @@ function UploadLanding(props: UploadLandingProps) {
               >
                 School coverage
               </Button>
-              {/* TODO: Scope this out */}
-              {/*<Column lg={4}>*/}
-              {/*  <Button*/}
-              {/*    as={Link}*/}
-              {/*    to="/upload/$uploadGroup/$uploadType"*/}
-              {/*    params={{*/}
-              {/*      uploadGroup: "other",*/}
-              {/*      uploadType: "unstructured",*/}
-              {/*    }}*/}
-              {/*    className="w-full"*/}
-              {/*    size="xl"*/}
-              {/*    renderIcon={Add}*/}
-              {/*  >*/}
-              {/*    Unstructured dataset*/}
-              {/*  </Button>*/}
-              {/*</Column>*/}
+              <Button
+                as={Link}
+                to="/upload/$uploadGroup/$uploadType"
+                params={{
+                  uploadGroup: "other",
+                  uploadType: "unstructured",
+                }}
+                className="w-full"
+                size="xl"
+                renderIcon={Add}
+              >
+                Unstructured Dataset
+              </Button>
             </div>
           </Stack>
 

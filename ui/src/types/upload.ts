@@ -68,6 +68,13 @@ export interface UploadParams {
   metadata: string;
 }
 
+export interface UploadUnstructuredParams {
+  country: string;
+  file: File;
+  source?: string | null;
+  metadata: string;
+}
+
 export const initialUploadResponse: UploadResponse = {
   id: "",
   created: "",

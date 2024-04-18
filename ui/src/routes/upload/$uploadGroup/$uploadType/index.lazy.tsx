@@ -34,6 +34,7 @@ const validTypes = {
 export default function Index() {
   const { uploadType } = Route.useParams();
   const isCoverage = uploadType === "coverage";
+  const isUnstructured = uploadType === "unstructured";
 
   const [isParsing, setIsParsing] = useState(false);
 
@@ -70,7 +71,7 @@ export default function Index() {
   const { data: schemaQuery, isFetching: isSchemaFetching } = useQuery({
     queryFn: () => api.schema.get(metaschemaName),
     queryKey: ["schema", metaschemaName],
-    enabled: isCoverage ? !!source : true,
+    enabled: isCoverage ? !!source && !isUnstructured : true,
   });
   const schema = schemaQuery?.data ?? [];
 
@@ -178,7 +179,7 @@ export default function Index() {
         <Button
           disabled={isProceedDisabled}
           as={Link}
-          to="./column-mapping"
+          to={isUnstructured ? "./metadata" : "./column-mapping"}
           onClick={handleProceedToNextStep}
           className="w-full"
           renderIcon={ArrowRight}

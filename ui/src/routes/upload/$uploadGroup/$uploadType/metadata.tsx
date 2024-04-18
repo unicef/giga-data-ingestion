@@ -47,13 +47,21 @@ export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/metadata",
 )({
   component: Metadata,
-  loader: ({ context: { queryClient } }) => {
+  loader: ({
+    context: { queryClient },
+    params: { uploadGroup, uploadType },
+  }) => {
     const {
       uploadSlice: { file, columnMapping },
       uploadSliceActions: { setStepIndex },
     } = useStore.getState();
 
-    if (!file || Object.values(columnMapping).filter(Boolean).length === 0) {
+    if (uploadGroup === "other" && uploadType === "unstructured") {
+      setStepIndex(1);
+    } else if (
+      !file ||
+      Object.values(columnMapping).filter(Boolean).length === 0
+    ) {
       setStepIndex(1);
       throw redirect({ from: Route.fullPath, to: "../column-mapping" });
     }
@@ -135,7 +143,10 @@ function Metadata() {
     },
   } = useStore();
   const navigate = useNavigate({ from: Route.fullPath });
-  const { uploadType } = Route.useParams();
+  const { uploadType, uploadGroup } = Route.useParams();
+
+  const isUnstructured =
+    uploadGroup === "other" && uploadType === "unstructured";
 
   const { countryDatasets, isPrivileged } = useRoles();
 
@@ -160,6 +171,10 @@ function Metadata() {
 
   const uploadFile = useMutation({
     mutationFn: api.uploads.upload,
+  });
+
+  const uploadUnstructuredFile = useMutation({
+    mutationFn: api.uploads.upload_unstructured,
   });
 
   const { data: allGroupsQuery, isLoading } = useSuspenseQuery({
@@ -219,15 +234,21 @@ function Metadata() {
     };
 
     try {
-      const {
-        data: { id: uploadId },
-      } = await uploadFile.mutateAsync(body);
+      if (isUnstructured) {
+        await uploadUnstructuredFile.mutateAsync(body);
+        setIsUploading(false);
+        setUploadDate(uploadSlice.timeStamp);
+        incrementStepIndex();
+      } else {
+        const {
+          data: { id: uploadId },
+        } = await uploadFile.mutateAsync(body);
+        setIsUploading(false);
+        setUploadId(uploadId);
+        setUploadDate(uploadSlice.timeStamp);
+        incrementStepIndex();
+      }
 
-      setIsUploading(false);
-
-      setUploadDate(uploadSlice.timeStamp);
-      setUploadId(uploadId);
-      incrementStepIndex();
       void navigate({ to: "../success" });
     } catch {
       console.error(
@@ -247,7 +268,6 @@ function Metadata() {
           Please check if any information about the dataset is meant to be
           updated.
         </p>
-
         <Form className="" onSubmit={handleSubmit(onSubmit)}>
           <Stack gap={8}>
             {Object.entries(metadataMapping).map(([group, formItems]) => (
@@ -282,7 +302,7 @@ function Metadata() {
               <Button
                 kind="secondary"
                 as={Link}
-                to="../column-mapping"
+                to={isUnstructured ? ".." : "../column-mapping"}
                 onClick={decrementStepIndex}
                 className="w-full"
                 renderIcon={ArrowLeft}
