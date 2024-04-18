@@ -55,7 +55,7 @@ jobs:
                     AZURE_TENANT_NAME: "$(azureAdTenantName)"
                     AZURE_AUTH_POLICY_NAME: "$(azureAdSusiPolicyName)"
                     AZURE_REDIRECT_URI: "$(azureAdRedirectUri)"
-                    WEB_APP_REDIRECT_URI: "https://io-dataingestion-$(deployEnv).unitst.org"
+                    WEB_APP_REDIRECT_URI: "https://$(ingressHost)"
                     AZURE_EMAIL_CONNECTION_STRING: "$(azureEmailConnectionString)"
                     AZURE_EMAIL_SENDER: "$(azureEmailSender)"
                     AZURE_SAS_TOKEN: "$(azureSasToken)"
