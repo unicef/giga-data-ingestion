@@ -139,33 +139,35 @@ function SchoolConnectivity() {
         <div className="flex w-full flex-col gap-4">
           <FormProvider {...hookForm}>
             <form onSubmit={handleSubmit(onSubmit)}>
-              <SchoolConnectivityFormInputs hookForm={hookForm} />
+              <div className="flex w-full flex-col gap-4">
+                <SchoolConnectivityFormInputs />
 
-              <ButtonSet className="w-full">
-                <Button
-                  as={Link}
-                  className="w-full"
-                  isExpressive
-                  kind="secondary"
-                  renderIcon={ArrowLeft}
-                  to="/ingest-api/add/column-mapping"
-                  onClick={() => {
-                    decrementStepIndex();
-                    resetSchoolConnectivityFormValues();
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="w-full"
-                  disabled={isSubmitDisabled}
-                  isExpressive
-                  renderIcon={ArrowRight}
-                  type="submit"
-                >
-                  Proceed
-                </Button>
-              </ButtonSet>
+                <ButtonSet className="w-full">
+                  <Button
+                    as={Link}
+                    className="w-full"
+                    isExpressive
+                    kind="secondary"
+                    renderIcon={ArrowLeft}
+                    to="/ingest-api/add/column-mapping"
+                    onClick={() => {
+                      decrementStepIndex();
+                      resetSchoolConnectivityFormValues();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="w-full"
+                    disabled={isSubmitDisabled}
+                    isExpressive
+                    renderIcon={ArrowRight}
+                    type="submit"
+                  >
+                    Proceed
+                  </Button>
+                </ButtonSet>
+              </div>
             </form>
           </FormProvider>
         </div>

@@ -1,4 +1,4 @@
-import { FieldErrors, UseFormRegisterReturn } from "react-hook-form";
+import { UseFormReturn } from "react-hook-form";
 
 import {
   Button,
@@ -12,22 +12,33 @@ import {
 
 import { Select } from "@/components/forms/Select.tsx";
 import { TextInput } from "@/components/forms/TextInput.tsx";
+import {
+  SchoolConnectivityFormSchema,
+  SchoolListFormSchema,
+} from "@/forms/ingestApi.ts";
 import { IngestApiFormMapping } from "@/types/ingestApi.ts";
 
 interface BaseInputProps<MappingType> {
   mapping: IngestApiFormMapping<MappingType>;
-  errors: FieldErrors;
-  register: UseFormRegisterReturn;
+  hookForm: UseFormReturn<SchoolListFormSchema | SchoolConnectivityFormSchema>;
 }
 
 export function FreeTextInput<MappingType>({
   mapping,
-  errors,
-  register,
+  hookForm,
 }: BaseInputProps<MappingType>) {
+  const {
+    register,
+    formState: { errors },
+  } = hookForm;
+  const name = mapping.name as keyof (
+    | SchoolListFormSchema
+    | SchoolConnectivityFormSchema
+  );
+
   return (
     <TextInput
-      id={mapping.name}
+      id={name}
       labelText={
         <>
           {mapping.label}
@@ -38,28 +49,39 @@ export function FreeTextInput<MappingType>({
       helperText={
         <span className="whitespace-pre-line">{mapping.helperText}</span>
       }
-      invalid={mapping.name in errors}
+      invalid={name in errors}
       invalidText={
         <span className="whitespace-pre-line">
-          {errors[mapping.name]?.message as string}
+          {errors[name]?.message as string}
           <br />
           {mapping.helperText}
         </span>
       }
-      {...register}
+      {...register(name, {
+        required: mapping.required,
+        onChange: mapping.onChange,
+      })}
     />
   );
 }
 
 export function PasswordInput<MappingType>({
   mapping,
-  errors,
-  register,
+  hookForm,
 }: BaseInputProps<MappingType>) {
+  const {
+    register,
+    formState: { errors },
+  } = hookForm;
+  const name = mapping.name as keyof (
+    | SchoolListFormSchema
+    | SchoolConnectivityFormSchema
+  );
+
   return (
     //@ts-expect-error missing types - password input is defined in export file but is still not inside its own /component folder */}//
     <CarbonTextInput.PasswordInput
-      id={mapping.name}
+      id={name}
       autoComplete="off"
       labelText={
         <>
@@ -67,27 +89,38 @@ export function PasswordInput<MappingType>({
           {mapping.required && <sup className="text-giga-red">*</sup>}
         </>
       }
-      invalid={mapping.name in errors}
+      invalid={name in errors}
       invalidText={
         <span className="whitespace-pre-line">
-          {errors[mapping.name]?.message as string}
+          {errors[name]?.message as string}
           <br />
           {mapping.helperText}
         </span>
       }
-      {...register}
+      {...register(name, {
+        required: mapping.required,
+        onChange: mapping.onChange,
+      })}
     />
   );
 }
 
 export function CodeInput<MappingType>({
   mapping,
-  errors,
-  register,
+  hookForm,
 }: BaseInputProps<MappingType>) {
+  const {
+    register,
+    formState: { errors },
+  } = hookForm;
+  const name = mapping.name as keyof (
+    | SchoolListFormSchema
+    | SchoolConnectivityFormSchema
+  );
+
   return (
     <TextArea
-      id={mapping.name}
+      id={name}
       labelText={
         <>
           {mapping.label}
@@ -97,28 +130,39 @@ export function CodeInput<MappingType>({
       helperText={
         <span className="whitespace-pre-line">{mapping.helperText}</span>
       }
-      invalid={mapping.name in errors}
+      invalid={name in errors}
       invalidText={
         <span className="whitespace-pre-line">
-          {errors[mapping.name]?.message as string}
+          {errors[name]?.message as string}
           <br />
           {mapping.helperText}
         </span>
       }
       placeholder={mapping.placeholder}
-      {...register}
+      {...register(name, {
+        required: mapping.required,
+        onChange: mapping.onChange,
+      })}
     />
   );
 }
 
 export function SelectFromArray<MappingType>({
   mapping,
-  errors,
-  register,
+  hookForm,
 }: BaseInputProps<MappingType>) {
+  const {
+    register,
+    formState: { errors },
+  } = hookForm;
+  const name = mapping.name as keyof (
+    | SchoolListFormSchema
+    | SchoolConnectivityFormSchema
+  );
+
   return (
     <Select
-      id={mapping.name}
+      id={name}
       labelText={
         <>
           {mapping.label}
@@ -126,10 +170,10 @@ export function SelectFromArray<MappingType>({
         </>
       }
       helperText={mapping.helperText}
-      invalid={mapping.name in errors}
+      invalid={name in errors}
       invalidText={
         <span className="whitespace-pre-line">
-          {errors[mapping.name]?.message as string}
+          {errors[name]?.message as string}
           <br />
           {mapping.helperText}
         </span>
@@ -160,12 +204,20 @@ interface SelectFromEnumProps<MappingType> extends BaseInputProps<MappingType> {
 
 export function SelectFromEnum<MappingType>({
   mapping,
-  errors,
-  register,
+  hookForm,
 }: SelectFromEnumProps<MappingType>) {
+  const {
+    register,
+    formState: { errors },
+  } = hookForm;
+  const name = mapping.name as keyof (
+    | SchoolListFormSchema
+    | SchoolConnectivityFormSchema
+  );
+
   return (
     <Select
-      id={mapping.name}
+      id={name}
       labelText={
         <>
           {mapping.label}
@@ -173,10 +225,10 @@ export function SelectFromEnum<MappingType>({
         </>
       }
       helperText={mapping.helperText}
-      invalid={mapping.name in errors}
+      invalid={name in errors}
       invalidText={
         <span className="whitespace-pre-line">
-          {errors[mapping.name]?.message as string}
+          {errors[name]?.message as string}
           <br />
           {mapping.helperText}
         </span>
@@ -200,16 +252,24 @@ interface TextInputWithActionProps<MappingType>
 
 export function TextInputWithAction<MappingType>({
   mapping,
-  errors,
-  register,
+  hookForm,
   onAction,
   actionLabel,
   isActionLoading = false,
 }: TextInputWithActionProps<MappingType>) {
+  const {
+    register,
+    formState: { errors },
+  } = hookForm;
+  const name = mapping.name as keyof (
+    | SchoolListFormSchema
+    | SchoolConnectivityFormSchema
+  );
+
   return (
     <div className="flex items-start">
       <TextInput
-        id={mapping.name}
+        id={name}
         labelText={
           <>
             {mapping.label}
@@ -217,10 +277,10 @@ export function TextInputWithAction<MappingType>({
           </>
         }
         placeholder={mapping.placeholder}
-        invalid={mapping.name in errors}
+        invalid={name in errors}
         invalidText={
           <span className="whitespace-pre-line">
-            {errors[mapping.name]?.message as string}
+            {errors[name]?.message as string}
             <br />
             {mapping.helperText}
           </span>
@@ -247,23 +307,37 @@ export function TextInputWithAction<MappingType>({
 
 export function Switch<MappingType>({
   mapping,
-  register,
+  hookForm,
 }: BaseInputProps<MappingType>) {
-  return <Toggle id={mapping.name} labelText={mapping.label} {...register} />;
+  const { register } = hookForm;
+  const name = mapping.name as keyof (
+    | SchoolListFormSchema
+    | SchoolConnectivityFormSchema
+  );
+
+  return <Toggle id={name} labelText={mapping.label} {...register} />;
 }
 
 export function NumberInput<MappingType>({
   mapping,
-  errors,
-  register,
+  hookForm,
 }: BaseInputProps<MappingType>) {
+  const {
+    register,
+    formState: { errors },
+  } = hookForm;
+  const name = mapping.name as keyof (
+    | SchoolListFormSchema
+    | SchoolConnectivityFormSchema
+  );
+
   return (
     <CarbonNumberInput
-      id={mapping.name}
-      invalid={mapping.name in errors}
+      id={name}
+      invalid={name in errors}
       invalidText={
         <span className="whitespace-pre-line">
-          {errors[mapping.name]?.message as string}
+          {errors[name]?.message as string}
           <br />
           {mapping.helperText}
         </span>
@@ -276,16 +350,6 @@ export function NumberInput<MappingType>({
       }
       helperText={mapping.helperText}
       {...register}
-      min={
-        typeof register.min === "string"
-          ? parseInt(register.min, 10)
-          : register.min
-      }
-      max={
-        typeof register.max === "string"
-          ? parseInt(register.max, 10)
-          : register.max
-      }
     />
   );
 }

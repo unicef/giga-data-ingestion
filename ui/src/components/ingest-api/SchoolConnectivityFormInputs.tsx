@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { UseFormReturn } from "react-hook-form";
 
 import IngestApiFormInputs from "@/components/ingest-api/IngestApiFormInputs.tsx";
 import { SchoolConnectivityFormSchema } from "@/forms/ingestApi.ts";
@@ -11,13 +10,7 @@ import {
   SendQueryInEnum,
 } from "@/types/qos";
 
-interface SchoolConnectivityFormInputsProps {
-  hookForm: UseFormReturn<SchoolConnectivityFormSchema>;
-}
-
-export function SchoolConnectivityFormInputs({
-  hookForm,
-}: SchoolConnectivityFormInputsProps) {
+export function SchoolConnectivityFormInputs() {
   // const handleCustomValidation = async (
   //   responseData: Record<string, unknown>[],
   // ) => {
@@ -422,13 +415,7 @@ export function SchoolConnectivityFormInputs({
     [],
   );
 
-  return (
-    <IngestApiFormInputs
-      // @ts-expect-error incorrect type inference
-      hookForm={hookForm}
-      formMappings={schoolConnectivityFormMapping}
-    />
-  );
+  return <IngestApiFormInputs formMappings={schoolConnectivityFormMapping} />;
 
   // return (
   //   <>

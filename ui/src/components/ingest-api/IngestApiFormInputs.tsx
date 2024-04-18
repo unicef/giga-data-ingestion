@@ -1,4 +1,4 @@
-import { useFormContext, useFormState } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 
 import {
   CodeInput,
@@ -31,60 +31,23 @@ interface FormItemProps {
 }
 
 function FormItem({ mapping }: FormItemProps) {
-  const { register, control } = useFormContext<
+  const hookForm = useFormContext<
     SchoolListFormSchema | SchoolConnectivityFormSchema
   >();
-  const { errors } = useFormState({ control });
 
   switch (mapping.type) {
     case "text": {
-      return (
-        <FreeTextInput
-          mapping={mapping}
-          register={register(mapping.name, {
-            required: mapping.required,
-            onChange: mapping.onChange,
-          })}
-          errors={errors}
-        />
-      );
+      return <FreeTextInput mapping={mapping} hookForm={hookForm} />;
     }
     case "number": {
-      return (
-        <NumberInput
-          mapping={mapping}
-          errors={errors}
-          register={register(mapping.name, {
-            required: mapping.required,
-            valueAsNumber: true,
-          })}
-        />
-      );
+      return <NumberInput mapping={mapping} hookForm={hookForm} />;
     }
     case "select":
     case "select-user": {
-      return (
-        <SelectFromArray
-          mapping={mapping}
-          errors={errors}
-          register={register(mapping.name, {
-            required: mapping.required,
-            onChange: mapping.onChange,
-          })}
-        />
-      );
+      return <SelectFromArray mapping={mapping} hookForm={hookForm} />;
     }
     case "enum": {
-      return (
-        <SelectFromEnum
-          mapping={mapping}
-          errors={errors}
-          register={register(mapping.name, {
-            required: mapping.required,
-            onChange: mapping.onChange,
-          })}
-        />
-      );
+      return <SelectFromEnum mapping={mapping} hookForm={hookForm} />;
     }
     case "text-action": {
       return (
@@ -93,48 +56,18 @@ function FormItem({ mapping }: FormItemProps) {
           actionLabel="Test"
           isActionLoading={mapping.isActionLoading}
           mapping={mapping}
-          errors={errors}
-          register={register(mapping.name, {
-            required: mapping.required,
-            onChange: mapping.onChange,
-          })}
+          hookForm={hookForm}
         />
       );
     }
     case "password": {
-      return (
-        <PasswordInput
-          mapping={mapping}
-          register={register(mapping.name, {
-            required: mapping.required,
-            onChange: mapping.onChange,
-          })}
-          errors={errors}
-        />
-      );
+      return <PasswordInput mapping={mapping} hookForm={hookForm} />;
     }
     case "code": {
-      return (
-        <CodeInput
-          mapping={mapping}
-          register={register(mapping.name, {
-            required: mapping.required,
-            onChange: mapping.onChange,
-          })}
-          errors={errors}
-        />
-      );
+      return <CodeInput mapping={mapping} hookForm={hookForm} />;
     }
     case "toggle": {
-      return (
-        <Switch
-          mapping={mapping}
-          errors={errors}
-          register={register(mapping.name, {
-            required: mapping.required,
-          })}
-        />
-      );
+      return <Switch mapping={mapping} hookForm={hookForm} />;
     }
     default: {
       return null;
