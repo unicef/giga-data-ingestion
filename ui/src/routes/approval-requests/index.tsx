@@ -6,7 +6,7 @@ import {
   DataTableSkeleton,
   Section,
 } from "@carbon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
 
@@ -60,8 +60,8 @@ type ApprovalRequestTableRow = Record<
 >;
 
 function ApprovalRequests() {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
 
   function handlePaginationChange({
     page,
@@ -74,10 +74,17 @@ function ApprovalRequests() {
     setPageSize(pageSize);
   }
 
-  const { data, isLoading } = useSuspenseQuery({
-    queryKey: ["approvalRequests", page, pageSize],
-    queryFn: () => api.approvalRequests.list({ page, page_size: pageSize }),
-  });
+  const { data, isLoading } = useSuspenseQuery(
+    queryOptions({
+      queryKey: ["approval-requests", page, pageSize],
+      queryFn: () =>
+        api.approvalRequests.list({
+          page: page,
+          page_size: pageSize,
+        }),
+    }),
+  );
+
   const approvalRequests = data?.data ?? SENTINEL_PAGED_RESPONSE;
 
   const formattedApprovalRequests = useMemo<ApprovalRequestTableRow[]>(
