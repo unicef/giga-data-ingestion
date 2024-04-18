@@ -6,21 +6,23 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
-import { listApprovalRequestQueryOptions } from "@/api/queryOptions";
 import CDFDataTable from "@/components/approval-requests/CDFDataTable";
 import { useStore } from "@/context/store";
-import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests.ts";
+import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests";
 
 export const Route = createFileRoute("/approval-requests/$subpath/")({
   component: ApproveRejectTable,
-  loader: ({ context: { queryClient } }) => {
-    return queryClient.ensureQueryData(listApprovalRequestQueryOptions);
+  loader: ({ params: { subpath }, context: { queryClient } }) => {
+    return queryClient.ensureQueryData({
+      queryFn: () => api.approvalRequests.get(subpath),
+      queryKey: ["approval-requests", subpath],
+    });
   },
 });
 
 function ApproveRejectTable() {
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
 
   const { subpath } = Route.useParams();
   const navigate = useNavigate({ from: Route.fullPath });
@@ -35,9 +37,8 @@ function ApproveRejectTable() {
     approveRowState: { approvedRowsList, rejectedRowsList },
   } = useStore();
   const { data: approvalRequestsQuery } = useSuspenseQuery({
-    queryFn: () =>
-      api.approvalRequests.get(subpath, { page, page_size: pageSize }),
-    queryKey: ["approval-requests", subpath, page, pageSize],
+    queryFn: () => api.approvalRequests.get(subpath),
+    queryKey: ["approval-requests", subpath],
   });
   const {
     data: approvalRequests,
