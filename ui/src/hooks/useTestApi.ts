@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import { UseFormWatch } from "react-hook-form";
 
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
+import { isMatch, parseISO } from "date-fns";
 import { isPlainObject } from "lodash-es";
 
 import { api } from "@/api";
@@ -82,6 +83,7 @@ export function useTestApi() {
     if (apiType === "schoolConnectivity") {
       response_date_key = watch("response_date_key");
       response_date_format = watch("response_date_format");
+      setIsValidResponseDateFormat = options.setIsValidResponseDateFormat;
     }
 
     const handleValidationTry =
@@ -130,12 +132,30 @@ export function useTestApi() {
               if (apiType === "schoolList")
                 setDetectedColumns(Object.keys(responseData[data_key][0]));
               setIsValidDataKey(true);
-              return;
+            } else {
+              setIsValidDataKey(false);
             }
 
-            if (!isValidDataKey) {
-              setIsValidDataKey(false);
-              return;
+            if (apiType === "schoolConnectivity") {
+              const responseDateKeyValue = responseData[data_key][0][
+                response_date_key ?? ""
+              ] as string;
+
+              if (response_date_format === "timestamp") {
+                setIsValidResponseDateFormat(
+                  isMatch("t", responseDateKeyValue),
+                );
+              } else if (response_date_format === "ISO8601") {
+                setIsValidResponseDateFormat(!!parseISO(responseDateKeyValue));
+              } else {
+                const { data: isValid } =
+                  await api.utils.isValidDateTimeFormatCodeRequest({
+                    datetime_str: responseDateKeyValue,
+                    format_code: response_date_format ?? "",
+                  });
+
+                setIsValidResponseDateFormat(isValid);
+              }
             }
           }
         }
