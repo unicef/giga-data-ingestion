@@ -1,23 +1,39 @@
 import { useMemo, useState } from "react";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import { Button, ButtonSet, DataTableHeader, Modal } from "@carbon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  Button,
+  ButtonSet,
+  DataTableHeader,
+  DataTableSkeleton,
+  Modal,
+  Section,
+} from "@carbon/react";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import CDFDataTable from "@/components/approval-requests/CDFDataTable";
+import { HEADERS } from "@/constants/ingest-api";
 import { useStore } from "@/context/store";
 import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests";
 
 export const Route = createFileRoute("/approval-requests/$subpath/")({
   component: ApproveRejectTable,
   loader: ({ params: { subpath }, context: { queryClient } }) => {
-    return queryClient.ensureQueryData({
-      queryFn: () => api.approvalRequests.get(subpath),
-      queryKey: ["approval-requests", subpath],
-    });
+    return queryClient.ensureQueryData(
+      queryOptions({
+        queryFn: () =>
+          api.approvalRequests.get(subpath, { page: 1, page_size: 10 }),
+        queryKey: ["approval-requests", subpath, 1, 10],
+      }),
+    );
   },
+  pendingComponent: () => (
+    <Section className="container py-6">
+      <DataTableSkeleton headers={HEADERS} />
+    </Section>
+  ),
 });
 
 function ApproveRejectTable() {
@@ -38,10 +54,13 @@ function ApproveRejectTable() {
     },
     approveRowState: { approvedRowsList, rejectedRowsList },
   } = useStore();
-  const { data: approvalRequestsQuery } = useSuspenseQuery({
-    queryFn: () => api.approvalRequests.get(subpath),
-    queryKey: ["approval-requests", subpath],
-  });
+  const { data: approvalRequestsQuery } = useSuspenseQuery(
+    queryOptions({
+      queryFn: () =>
+        api.approvalRequests.get(subpath, { page: page, page_size: pageSize }),
+      queryKey: ["approval-requests", subpath, page, pageSize],
+    }),
+  );
   const {
     data: approvalRequests,
     info,
