@@ -1,6 +1,6 @@
 import json
+import time
 import urllib.parse
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -197,10 +197,10 @@ async def upload_approved_rows(
 ):
     posix_path = Path(urllib.parse.unquote(body.subpath))
     dataset = posix_path.parent.name.replace("_staging", "").replace("_", "-")
-    country_iso3 = posix_path.name.split("_")[0]
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    country_iso3 = posix_path.name.split("_")[0].upper()
+    timestamp = int(time.time())
 
-    filename = f"{country_iso3}_{timestamp}.json"
+    filename = f"{country_iso3}_{dataset}_{timestamp}.json"
 
     approve_location = (
         f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
@@ -211,10 +211,7 @@ async def upload_approved_rows(
     try:
         approve_client.upload_blob(
             json.dumps(
-                {
-                    "approved_rows": body.approved_rows,
-                    "rejected_rows": body.rejected_rows,
-                }
+                body.approved_rows,
             ),
             overwrite=True,
             content_settings=ContentSettings(content_type="application/json"),
