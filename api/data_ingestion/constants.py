@@ -22,6 +22,13 @@ class Constants(BaseSettings):
         "text/csv": [".csv"],
         "application/csv": [".csv"],
     }
+    VALID_UNSTRUCTURED_UPLOAD_TYPES: dict[str, list[str]] = {
+        "image/jpeg": [".jpeg", ".jpg"],
+        "image/png": [".png"],
+        "image/bmp": [".bmp"],
+        "image/gif": [".gif"],
+        "image/tiff": [".tif", ".tiff"],
+    }
     ALLOWED_SCHEMA_NAMES: list[str] = [
         "qos",
         "school_master",

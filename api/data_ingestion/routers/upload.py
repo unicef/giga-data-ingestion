@@ -225,13 +225,13 @@ async def upload_unstructured(
     file_type = magic.from_buffer(file_content, mime=True)
     file_extension = os.path.splitext(file.filename)[1]
 
-    if file_type not in constants.VALID_UPLOAD_TYPES:
+    if file_type not in constants.VALID_UNSTRUCTURED_UPLOAD_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid file type.",
         )
 
-    if file_extension not in constants.VALID_UPLOAD_TYPES[file_type]:
+    if file_extension not in constants.VALID_UNSTRUCTURED_UPLOAD_TYPES[file_type]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File extension does not match file type.",
