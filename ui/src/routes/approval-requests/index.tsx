@@ -1,9 +1,11 @@
 import { ReactElement, useMemo, useState } from "react";
 
+import { CheckmarkFilled } from "@carbon/icons-react";
 import {
   Button,
   DataTableHeader,
   DataTableSkeleton,
+  Loading,
   Section,
 } from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
@@ -57,7 +59,7 @@ const columns: DataTableHeader[] = [
 
 type ApprovalRequestTableRow = Record<
   keyof ApprovalRequestListing,
-  string | number | null | ReactElement
+  string | number | null | boolean | ReactElement
 >;
 
 function ApprovalRequests() {
@@ -79,7 +81,7 @@ function ApprovalRequests() {
     setPageSize(pageSize);
   }
 
-  const { data, isLoading } = useSuspenseQuery(
+  const { data, isLoading, isFetching, isRefetching } = useSuspenseQuery(
     queryOptions({
       queryKey: ["approval-requests", page, pageSize],
       queryFn: () =>
@@ -99,10 +101,18 @@ function ApprovalRequests() {
         country: `${request.country} (${request.country_iso3})`,
         actions: (
           <Button
-            kind="ghost"
+            disabled={!request.enabled || isFetching || isRefetching}
+            kind="tertiary"
             size="sm"
             as={Link}
             to="./$subpath"
+            renderIcon={
+              isFetching || isRefetching
+                ? props => (
+                    <Loading small={true} withOverlay={false} {...props} />
+                  )
+                : CheckmarkFilled
+            }
             params={{
               subpath: encodeURIComponent(request.subpath),
             }}
@@ -116,7 +126,7 @@ function ApprovalRequests() {
           DEFAULT_DATETIME_FORMAT,
         ),
       })),
-    [approvalRequests, resetApproveRowState],
+    [approvalRequests, resetApproveRowState, isFetching, isRefetching],
   );
 
   return (

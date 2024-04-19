@@ -9,6 +9,7 @@ export interface ApprovalRequestListing {
   rows_added: number;
   rows_updated: number;
   rows_deleted: number;
+  enabled: boolean;
 }
 
 export interface ApprovalRequestInfo {
