@@ -211,10 +211,7 @@ async def upload_approved_rows(
     try:
         approve_client.upload_blob(
             json.dumps(
-                {
-                    "approved_rows": body.approved_rows,
-                    "rejected_rows": body.rejected_rows,
-                }
+                body.approved_rows,
             ),
             overwrite=True,
             content_settings=ContentSettings(content_type="application/json"),
