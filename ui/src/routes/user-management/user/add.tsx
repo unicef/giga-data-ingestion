@@ -27,6 +27,7 @@ import countries from "@/constants/countries.ts";
 import { GraphGroup } from "@/types/group.ts";
 import { CreateUserRequest } from "@/types/user.ts";
 import { filterRoles, matchNamesWithIds } from "@/utils/group.ts";
+import { validateSearchParams } from "@/utils/pagination.ts";
 import {
   getUniqueDatasets,
   pluralizeCountries,
@@ -37,6 +38,7 @@ export const Route = createFileRoute("/user-management/user/add")({
   component: AddUser,
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(groupsQueryOptions),
+  validateSearch: validateSearchParams,
 });
 
 const groupsQueryOptions = queryOptions({
@@ -72,6 +74,7 @@ const initialCountryDataset: CountryDataset = {
 
 function AddUser() {
   const navigate = useNavigate({ from: Route.fullPath });
+  const { page, page_size } = Route.useSearch();
   const [swapModal, setSwapModal] = useState<boolean>(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [showErrorNotification, setShowErrorNotification] = useState(false);
@@ -135,7 +138,14 @@ function AddUser() {
 
   const handleModalCancel = async (modalName: "AddModal" | "ConfirmModal") => {
     setSwapModal(false);
-    if (modalName === "AddModal") await navigate({ to: "../.." });
+    if (modalName === "AddModal")
+      await navigate({
+        to: "../..",
+        search: {
+          page,
+          page_size,
+        },
+      });
   };
 
   const handleAddCountryDataset = () => {
@@ -200,7 +210,7 @@ function AddUser() {
       setShowSuccessNotification(true);
       reset();
       setSwapModal(false);
-      await navigate({ to: "../.." });
+      await navigate({ to: "../..", search: { page, page_size } });
     } catch (err) {
       console.error(err);
       setShowErrorNotification(true);

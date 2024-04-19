@@ -124,6 +124,7 @@ function UsersTable() {
               as={Link}
               to="./user/edit/$userId"
               params={{ userId: originalUser.id }}
+              search={{ page: currentPage, page_size: pageSize }}
             >
               Edit
             </Button>
@@ -137,6 +138,7 @@ function UsersTable() {
                 as={Link}
                 to="./user/revoke/$userId"
                 params={{ userId: originalUser.id }}
+                search={{ page: currentPage, page_size: pageSize }}
               >
                 Revoke
               </Button>
@@ -149,6 +151,7 @@ function UsersTable() {
                 as={Link}
                 to="./user/enable/$userId"
                 params={{ userId: originalUser.id }}
+                search={{ page: currentPage, page_size: pageSize }}
               >
                 Enable
               </Button>
@@ -176,7 +179,15 @@ function UsersTable() {
                 onClick={async () => await refetchUsers()}
                 disabled={isRefetching}
               />
-              <Button renderIcon={Add} as={Link} to="./user/add">
+              <Button
+                renderIcon={Add}
+                as={Link}
+                to="./user/add"
+                search={{
+                  page: currentPage,
+                  page_size: pageSize,
+                }}
+              >
                 Add User
               </Button>
             </TableToolbarContent>

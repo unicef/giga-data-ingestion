@@ -175,9 +175,7 @@ async def get_approval_request(
     total_count = int(df.at[0, "row_count"])
     df = (
         df[df["_change_type"] != "update_postimage"]
-        .drop(
-            columns=["row_count", "signature", "_commit_version", "_commit_timestamp"]
-        )
+        .drop(columns=["row_count", "signature"])
         .fillna("NULL")
     )
     return {
