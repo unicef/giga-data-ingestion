@@ -29,6 +29,7 @@ import {
   filterRoles,
   matchNamesWithIds,
 } from "@/utils/group.ts";
+import { validateSearchParams } from "@/utils/pagination.ts";
 import {
   getUniqueDatasets,
   pluralizeCountries,
@@ -44,6 +45,7 @@ export const Route = createFileRoute("/user-management/user/edit/$userId")({
     });
     return queryClient.ensureQueryData(userQueryOptions);
   },
+  validateSearch: validateSearchParams,
 });
 
 type CountryDataset = {
@@ -62,6 +64,7 @@ interface EditUserInputs {
 function EditUser() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { userId } = Route.useParams();
+  const { page, page_size } = Route.useSearch();
   const {
     data: { data: initialValues },
   } = useSuspenseQuery({
@@ -165,7 +168,8 @@ function EditUser() {
   };
 
   const handleModalCancel = async (modalName: "EditModal" | "ConfirmModal") => {
-    if (modalName == "EditModal") await navigate({ to: "../../.." });
+    if (modalName == "EditModal")
+      await navigate({ to: "../../..", search: { page, page_size } });
     setSwapModal(false);
   };
 
@@ -301,7 +305,7 @@ function EditUser() {
       setShowEditUserSuccessNotification(true);
       reset();
       setSwapModal(false);
-      await navigate({ to: "../../.." });
+      await navigate({ to: "../../..", search: { page, page_size } });
     } catch (err) {
       console.error(err);
       setShowEditUserErrorNotification(true);
