@@ -209,7 +209,7 @@ async def upload_unstructured(
     file = form.file
 
     if not is_privileged:
-        if not any(group.split("-")[0] == form.country for group in user.groups):
+        if not any(group.rsplit("-")[0] == form.country for group in user.groups):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User does not have permissions on this dataset",
