@@ -15,7 +15,10 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { api } from "@/api";
 import { FileUploaderDropContainer } from "@/components/common/CarbonOverrides.tsx";
 import { Select } from "@/components/forms/Select.tsx";
-import { AcceptedFileTypes } from "@/constants/upload.ts";
+import {
+  AcceptedFileTypes,
+  AcceptedUnstructuredFileTypes,
+} from "@/constants/upload.ts";
 import { useStore } from "@/context/store";
 import { sourceOptions } from "@/mocks/metadataFormValues.tsx";
 import { HeaderDetector } from "@/utils/upload.ts";
@@ -24,23 +27,41 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
   component: Index,
 });
 
-const validTypes = {
+const validStructuredTypes = {
   "text/csv": AcceptedFileTypes.CSV,
   "application/vnd.ms-excel": AcceptedFileTypes.EXCEL_LEGACY,
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
     AcceptedFileTypes.EXCEL,
 };
 
+const validUnstructuredTypes = {
+  "image/bmp": AcceptedUnstructuredFileTypes.BMP,
+  "image/gif": AcceptedUnstructuredFileTypes.GIF,
+  "image/jpeg": [
+    AcceptedUnstructuredFileTypes.JPEG,
+    AcceptedUnstructuredFileTypes.JPG,
+  ],
+  "image/png": AcceptedUnstructuredFileTypes.PNG,
+  "image/tiff": [
+    AcceptedUnstructuredFileTypes.TIF,
+    AcceptedUnstructuredFileTypes.TIFF,
+  ],
+};
+
 export default function Index() {
-  const { uploadType } = Route.useParams();
+  const { uploadType, uploadGroup } = Route.useParams();
   const isCoverage = uploadType === "coverage";
-  const isUnstructured = uploadType === "unstructured";
 
   const [isParsing, setIsParsing] = useState(false);
 
   const [parsingError, setParsingError] = useState("");
   const hasParsingError = !!parsingError;
+  const isUnstructured =
+    uploadGroup === "other" && uploadType === "unstructured";
 
+  const validTypes = isUnstructured
+    ? validUnstructuredTypes
+    : validStructuredTypes;
   const {
     uploadSlice,
     uploadSliceActions: {
@@ -105,7 +126,7 @@ export default function Index() {
     const detector = new HeaderDetector({
       file,
       schema,
-      setIsLoading: setIsParsing,
+      setIsParsing: setIsParsing,
       setError: setParsingError,
       setColumnMapping,
       setDetectedColumns,
