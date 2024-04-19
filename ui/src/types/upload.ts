@@ -7,21 +7,18 @@ export interface Check {
   count_overall: number;
   percent_failed: number;
   percent_passed: number;
+  dq_remarks: string;
+}
+
+interface Summary {
+  rows: number;
+  columns: number;
+  timestamp: Date;
 }
 
 export interface DataQualityCheckSummary {
-  summary: {
-    rows: number;
-    columns: number;
-    timestamp: Date;
-  };
-  format_validation_checks: Check[];
-  completeness_checks: Check[];
-  domain_checks: Check[];
-  range_checks: Check[];
-  duplicate_rows_checks: Check[];
-  geospatial_checks: Check[];
-  critical_error_check: Check[];
+  [key: string]: Check[] | Summary;
+  summary: Summary;
 }
 
 export interface DqFailedRowValues {
