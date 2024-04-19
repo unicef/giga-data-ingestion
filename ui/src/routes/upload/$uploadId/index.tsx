@@ -15,6 +15,7 @@ import DataCheckItem from "@/components/check-file-uploads/DataCheckItem";
 import SummaryBanner from "@/components/check-file-uploads/SummaryBanner";
 import SummaryChecks from "@/components/check-file-uploads/SummaryChecks";
 import UploadCheckSkeleton from "@/components/check-file-uploads/UploadCheckSkeleton";
+import { Check } from "@/types/upload";
 import {
   DataQualityCheck,
   UploadResponse,
@@ -78,37 +79,33 @@ function Index() {
     return <UploadCheckSkeleton />;
 
   const {
-    dq_summary: {
-      format_validation_checks,
-      completeness_checks,
-      domain_checks,
-      range_checks,
-      duplicate_rows_checks,
-      geospatial_checks,
-    },
-  } = dqResultData;
+    summary: _,
+    critical_error_check = [],
+    ...checks
+  } = dqResultData.dq_summary;
+
+  const typedChecks = Object.keys(checks).map(key => checks[key] as Check[]);
 
   const { passed: totalPassedAssertions, failed: totalFailedAssertions } =
-    sumAsertions([
-      format_validation_checks,
-      completeness_checks,
-      domain_checks,
-      range_checks,
-      duplicate_rows_checks,
-      geospatial_checks,
-    ]);
+    sumAsertions(typedChecks);
 
-  const totalAssertions = [
-    ...format_validation_checks,
-    ...completeness_checks,
-    ...domain_checks,
-    ...range_checks,
-    ...duplicate_rows_checks,
-    ...geospatial_checks,
-  ].length;
+  const totalAssertions = typedChecks.flat().length;
 
   const hasCriticalError =
-    dqResultData.dq_summary.critical_error_check[0].percent_passed != 100;
+    (critical_error_check as Check[]).length > 0 &&
+    (critical_error_check as Check[])[0].percent_passed != 100;
+
+  const dataCheckItems = Object.keys(checks).map(key => {
+    const check = checks[key] as Check[];
+    return (
+      <DataCheckItem
+        data={check}
+        previewData={dqResultData.dq_failed_rows_first_five_rows}
+        title={key}
+        uploadId={uploadId}
+      />
+    );
+  });
 
   return (
     <div className="flex flex-col gap-8">
@@ -148,47 +145,7 @@ function Index() {
                 </div>
               </AccordionItem>
 
-              <DataCheckItem
-                data={format_validation_checks}
-                previewData={dqResultData.dq_failed_rows_first_five_rows}
-                title="Format Validation Checks"
-                uploadId={uploadId}
-              />
-
-              <DataCheckItem
-                data={completeness_checks}
-                previewData={dqResultData.dq_failed_rows_first_five_rows}
-                title="Completeness Checks"
-                uploadId={uploadId}
-              />
-
-              <DataCheckItem
-                data={domain_checks}
-                previewData={dqResultData.dq_failed_rows_first_five_rows}
-                title="Domain Checks"
-                uploadId={uploadId}
-              />
-
-              <DataCheckItem
-                data={range_checks}
-                previewData={dqResultData.dq_failed_rows_first_five_rows}
-                title="Range Checks"
-                uploadId={uploadId}
-              />
-
-              <DataCheckItem
-                data={duplicate_rows_checks}
-                previewData={dqResultData.dq_failed_rows_first_five_rows}
-                title="Duplicate Rows Checks"
-                uploadId={uploadId}
-              />
-
-              <DataCheckItem
-                data={geospatial_checks}
-                previewData={dqResultData.dq_failed_rows_first_five_rows}
-                title="Geospatial Checks"
-                uploadId={uploadId}
-              />
+              {dataCheckItems}
             </Accordion>
             <div className="flex flex-col gap-4 pt-4">
               <p>
