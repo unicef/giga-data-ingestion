@@ -32,7 +32,7 @@ export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
 
 function SchoolConnectivity() {
   const [isResponseError, setIsResponseError] = useState<boolean>(false);
-  const [isValidDatakey, setIsValidDataKey] = useState<boolean>(false);
+  const [isValidDataKey, setIsValidDataKey] = useState<boolean>(false);
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
   const [isValidResponseDateFormat, setIsValidResponseDateFormat] =
     useState<boolean>(false);
@@ -42,7 +42,10 @@ function SchoolConnectivity() {
   >("");
 
   const {
-    apiIngestionSlice: { file, schoolConnectivity },
+    apiIngestionSlice: {
+      // file,
+      schoolConnectivity,
+    },
     apiIngestionSliceActions: {
       decrementStepIndex,
       resetSchoolConnectivityFormValues,
@@ -52,7 +55,7 @@ function SchoolConnectivity() {
 
   const { testApi, isLoading } = useTestApi();
 
-  const hasUploadedFile = file != null;
+  // const hasUploadedFile = file != null;
 
   const hookForm = useForm<SchoolConnectivityFormSchema>({
     mode: "onSubmit",
@@ -62,7 +65,7 @@ function SchoolConnectivity() {
     shouldFocusError: true,
   });
   const {
-    formState: { errors, isValid },
+    formState: { errors },
     handleSubmit,
     getValues,
     control,
@@ -125,9 +128,8 @@ function SchoolConnectivity() {
   );
 
   const isSubmitDisabled =
-    !hasUploadedFile ||
-    !isValid ||
-    !isValidDatakey ||
+    // !hasUploadedFile ||
+    !isValidDataKey ||
     !isValidResponse ||
     !isValidResponseDateFormat ||
     isResponseError;
