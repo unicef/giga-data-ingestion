@@ -245,10 +245,9 @@ async def upload_approved_rows(
             )
             .values(enabled=False)
         )
-        test = await primary_db.execute(update_query)
-        test2 = await primary_db.commit()
-        print(test)
-        print(test2)
+        await primary_db.execute(update_query)
+        await primary_db.commit()
+
     except HttpResponseError as err:
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
