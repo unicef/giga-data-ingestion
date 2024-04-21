@@ -11,6 +11,7 @@ import {
   createFileRoute,
   useNavigate,
 } from "@tanstack/react-router";
+import { ZodError } from "zod";
 
 import { api } from "@/api";
 import { listUsersQueryOptions } from "@/api/queryOptions.ts";
@@ -19,7 +20,7 @@ import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
 import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { useStore } from "@/context/store";
-import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
+import { SchoolListFormSchema, TestApiSchema } from "@/forms/ingestApi.ts";
 import { useTestApi } from "@/hooks/useTestApi.ts";
 
 const schemaQueryOptions = queryOptions({
@@ -71,18 +72,19 @@ function AddIngestion() {
 
   const hookForm = useForm<SchoolListFormSchema>({
     mode: "onSubmit",
-    reValidateMode: "onChange",
-    resolver: zodResolver(SchoolListFormSchema),
+    reValidateMode: "onBlur",
+    resolver: zodResolver(SchoolListFormSchema, { async: true }),
     defaultValues: schoolList,
     shouldFocusError: true,
   });
 
   const {
     handleSubmit,
-    trigger,
     control,
-    watch,
     formState: { errors },
+    setError,
+    getValues,
+    clearErrors,
   } = hookForm;
 
   const onSubmit: SubmitHandler<SchoolListFormSchema> = async data => {
@@ -108,17 +110,43 @@ function AddIngestion() {
   };
 
   const handleClickTest = useCallback(async () => {
-    if (!(await trigger())) return;
+    clearErrors();
+
+    const excludedFields: (keyof SchoolListFormSchema)[] = [
+      "name",
+      "user_id",
+      "school_id_key",
+      "school_id_send_query_in",
+    ];
+    const currentForm = Object.fromEntries(
+      Object.entries(getValues()).filter(
+        ([key]) => !excludedFields.includes(key as keyof SchoolListFormSchema),
+      ),
+    );
+
+    try {
+      await TestApiSchema.parseAsync(currentForm);
+    } catch (error) {
+      console.error(error);
+      if (error instanceof ZodError) {
+        for (const e of error.errors) {
+          setError(e.path.join(".") as keyof SchoolListFormSchema, {
+            message: e.message,
+          });
+        }
+      }
+      return;
+    }
 
     await testApi({
       apiType: "schoolList",
+      getValues,
       setIsValidResponse,
       setIsResponseError,
       setResponsePreview,
-      watch,
       setIsValidDataKey,
     });
-  }, [testApi, trigger, watch]);
+  }, [clearErrors, getValues, setError, testApi]);
 
   const prettyResponse = useMemo(
     () => JSON.stringify(responsePreview, undefined, 2),

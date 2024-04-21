@@ -4,6 +4,7 @@ import { zu } from "zod_utilz";
 import {
   validateAuthType,
   validatePaginationType,
+  validateSchoolId,
 } from "@/forms/validators.ts";
 import {
   AuthorizationTypeEnum,
@@ -14,62 +15,71 @@ import {
 
 const requiredFieldErrorMessage = "This field is required";
 
-export const CommonApiIngestionFormSchema = z.object({
-  api_auth_api_key: z.string().nullable(),
-  api_auth_api_value: z.string().nullable(),
-  api_endpoint: z.string().url(),
-  authorization_type: z.nativeEnum(AuthorizationTypeEnum),
-  basic_auth_password: z.string().nullable(),
-  basic_auth_username: z.string().nullable(),
-  bearer_auth_bearer_token: z.string().nullable(),
-  data_key: z.string().nullable(),
-  page_number_key: z.string().nullable(),
-  page_offset_key: z.string().nullable(),
-  page_send_query_in: z.nativeEnum(SendQueryInEnum),
-  page_size_key: z.string().nullable(),
-  page_starts_with: z.coerce.number().int().nullable(),
-  pagination_type: z.nativeEnum(PaginationTypeEnum),
-  query_parameters: z.union([zu.stringToJSON(), z.string().max(0)]).nullable(),
-  request_body: z.union([zu.stringToJSON(), z.string().max(0)]).nullable(),
-  request_method: z.nativeEnum(RequestMethodEnum),
-  school_id_key: z.string().min(1),
-  school_id_send_query_in: z.nativeEnum(SendQueryInEnum),
-  size: z.coerce.number().int().nullable(),
-});
-
-export type CommonApiIngestionFormSchema = z.infer<
-  typeof CommonApiIngestionFormSchema
->;
-
 function commonSuperRefine(
   val: CommonApiIngestionFormSchema,
   ctx: z.RefinementCtx,
 ) {
   validateAuthType(val, ctx);
   validatePaginationType(val, ctx);
-
-  if (!!val.school_id_key && !val.school_id_send_query_in) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message:
-        "School ID Send Query In is required when School ID Key is provided",
-      path: ["school_id_send_query_in"],
-    });
-  }
+  validateSchoolId(val, ctx);
 }
+
+const TestApiRawSchema = z.object({
+  request_method: z.nativeEnum(RequestMethodEnum),
+  api_endpoint: z.string().url(),
+  request_body: z
+    .union([
+      zu.stringToJSON().transform(arg => JSON.stringify(arg)),
+      z.string().max(0),
+    ])
+    .nullable(),
+  query_parameters: z
+    .union([
+      zu.stringToJSON().transform(arg => JSON.stringify(arg)),
+      z.string().max(0),
+    ])
+    .nullable(),
+
+  authorization_type: z.nativeEnum(AuthorizationTypeEnum),
+  api_auth_api_key: z.string().nullable(),
+  api_auth_api_value: z.string().nullable(),
+  basic_auth_password: z.string().nullable(),
+  basic_auth_username: z.string().nullable(),
+  bearer_auth_bearer_token: z.string().nullable(),
+
+  data_key: z.string().nullable(),
+  school_id_key: z.string().min(1).optional(),
+  school_id_send_query_in: z.nativeEnum(SendQueryInEnum).optional(),
+
+  pagination_type: z.nativeEnum(PaginationTypeEnum),
+  page_number_key: z.string().nullable(),
+  page_offset_key: z.string().nullable(),
+  page_send_query_in: z.nativeEnum(SendQueryInEnum),
+  page_size_key: z.string().nullable(),
+  page_starts_with: z.coerce.number().int().nullable(),
+  size: z.coerce.number().int().nullable(),
+});
+
+export const TestApiSchema = TestApiRawSchema.superRefine((val, ctx) => {
+  validateAuthType(val, ctx);
+  validatePaginationType(val, ctx);
+});
+
+export type TestApiSchema = z.infer<typeof TestApiSchema>;
+
+export const CommonApiIngestionFormSchema = TestApiRawSchema.extend({
+  school_id_key: z.string().min(1),
+  school_id_send_query_in: z.nativeEnum(SendQueryInEnum),
+});
+
+export type CommonApiIngestionFormSchema = z.infer<
+  typeof CommonApiIngestionFormSchema
+>;
 
 export const SchoolListFormSchema = CommonApiIngestionFormSchema.extend({
   name: z.string().min(1, requiredFieldErrorMessage),
   user_id: z.string().min(1, requiredFieldErrorMessage),
-})
-  .superRefine(commonSuperRefine)
-  .transform(arg => ({
-    ...arg,
-    query_parameters: arg.query_parameters
-      ? JSON.stringify(arg.query_parameters)
-      : null,
-    request_body: arg.request_body ? JSON.stringify(arg.request_body) : null,
-  }));
+}).superRefine(commonSuperRefine);
 
 export type SchoolListFormSchema = z.infer<typeof SchoolListFormSchema>;
 
@@ -111,9 +121,7 @@ export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
         z
           .string()
           .regex(
-            new RegExp(
-              "^(%Y|%m|%d|%H|%M|%S|%z)([\\/\\-_.+: ]?(%Y|%m|%d|%H|%M|%S|%z))?$",
-            ),
+            /^(%Y|%m|%d|%H|%M|%S|%z)([\\/\\-_.+: ]?(%Y|%m|%d|%H|%M|%S|%z))?$/,
           ),
       ])
       .nullable(),
@@ -121,25 +129,17 @@ export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
     response_date_key: z.string().min(1),
     response_date_format: z.string().min(1),
   },
-)
-  .superRefine((arg, ctx) => {
-    commonSuperRefine(arg, ctx);
+).superRefine((arg, ctx) => {
+  commonSuperRefine(arg, ctx);
 
-    if (arg.date_key && !arg.date_format) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Date format must be specified when date key is provided.",
-        path: ["date_format"],
-      });
-    }
-  })
-  .transform(arg => ({
-    ...arg,
-    query_parameters: arg.query_parameters
-      ? JSON.stringify(arg.query_parameters)
-      : null,
-    request_body: arg.request_body ? JSON.stringify(arg.request_body) : null,
-  }));
+  if (arg.date_key && !arg.date_format) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Date format must be specified when date key is provided.",
+      path: ["date_format"],
+    });
+  }
+});
 
 export type SchoolConnectivityFormSchema = z.infer<
   typeof SchoolConnectivityFormSchema

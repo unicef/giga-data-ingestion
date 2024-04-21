@@ -1,10 +1,13 @@
 import { z } from "zod";
 
-import { CommonApiIngestionFormSchema } from "@/forms/ingestApi.ts";
+import {
+  CommonApiIngestionFormSchema,
+  TestApiSchema,
+} from "@/forms/ingestApi.ts";
 import { AuthorizationTypeEnum, PaginationTypeEnum } from "@/types/qos.ts";
 
 export function validateAuthType(
-  val: CommonApiIngestionFormSchema,
+  val: TestApiSchema | CommonApiIngestionFormSchema,
   ctx: z.RefinementCtx,
 ) {
   switch (val.authorization_type) {
@@ -60,7 +63,7 @@ export function validateAuthType(
 }
 
 export function validatePaginationType(
-  val: CommonApiIngestionFormSchema,
+  val: TestApiSchema | CommonApiIngestionFormSchema,
   ctx: z.RefinementCtx,
 ) {
   switch (val.pagination_type) {
@@ -124,5 +127,19 @@ export function validatePaginationType(
       }
       break;
     }
+  }
+}
+
+export function validateSchoolId(
+  val: TestApiSchema | CommonApiIngestionFormSchema,
+  ctx: z.RefinementCtx,
+) {
+  if (!!val.school_id_key && !val.school_id_send_query_in) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "School ID Send Query In is required when School ID Key is provided",
+      path: ["school_id_send_query_in"],
+    });
   }
 }
