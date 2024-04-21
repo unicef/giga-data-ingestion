@@ -1,0 +1,3000 @@
+- fields:
+    country: AFG
+    dataset: School Geolocation
+    enabled: false
+  id: cd613e30-d8f1-4adf-91b7-584a2265b1f5
+  model: ApprovalRequest
+- fields:
+    country: AFG
+    dataset: School Coverage
+    enabled: false
+  id: 78e51061-7311-48a3-82ce-6f447ed4d57b
+  model: ApprovalRequest
+- fields:
+    country: ALA
+    dataset: School Geolocation
+    enabled: false
+  id: e4b06ce6-0741-47a8-bce4-2c8218072e8c
+  model: ApprovalRequest
+- fields:
+    country: ALA
+    dataset: School Coverage
+    enabled: false
+  id: b2221a58-008a-45a6-8464-7159c324c985
+  model: ApprovalRequest
+- fields:
+    country: ALB
+    dataset: School Geolocation
+    enabled: false
+  id: 1a2b8f1f-f1fd-42a2-9755-d4c13a902931
+  model: ApprovalRequest
+- fields:
+    country: ALB
+    dataset: School Coverage
+    enabled: false
+  id: 025b413f-8a9a-421e-a648-a7dd06839eb9
+  model: ApprovalRequest
+- fields:
+    country: DZA
+    dataset: School Geolocation
+    enabled: false
+  id: b9d179e0-6c0f-44f5-b813-0c4237730edf
+  model: ApprovalRequest
+- fields:
+    country: DZA
+    dataset: School Coverage
+    enabled: false
+  id: 8d88348a-7eed-4d14-b06d-3fef701966a0
+  model: ApprovalRequest
+- fields:
+    country: ASM
+    dataset: School Geolocation
+    enabled: false
+  id: f3c64af7-75a8-4294-82cd-789a380208a9
+  model: ApprovalRequest
+- fields:
+    country: ASM
+    dataset: School Coverage
+    enabled: false
+  id: ec148cb4-8e73-4a47-aa90-a8f0d66b829e
+  model: ApprovalRequest
+- fields:
+    country: AND
+    dataset: School Geolocation
+    enabled: false
+  id: 4be03db0-dc25-44bd-b940-67edfe175330
+  model: ApprovalRequest
+- fields:
+    country: AND
+    dataset: School Coverage
+    enabled: false
+  id: 803468b6-b610-49f7-b927-0f4eb8b333a8
+  model: ApprovalRequest
+- fields:
+    country: AGO
+    dataset: School Geolocation
+    enabled: false
+  id: 3099fdf5-ab99-454a-a901-e35cd47d380d
+  model: ApprovalRequest
+- fields:
+    country: AGO
+    dataset: School Coverage
+    enabled: false
+  id: f0dfb4a5-d8a0-44df-bfd6-3116e1ea24c4
+  model: ApprovalRequest
+- fields:
+    country: AIA
+    dataset: School Geolocation
+    enabled: false
+  id: be6521cc-3e24-44e3-baf0-27bc08d6af57
+  model: ApprovalRequest
+- fields:
+    country: AIA
+    dataset: School Coverage
+    enabled: false
+  id: e1fab9d7-8c7e-434f-9dfb-d3d12c4a3698
+  model: ApprovalRequest
+- fields:
+    country: ATA
+    dataset: School Geolocation
+    enabled: false
+  id: a9ec0806-705f-4a16-9622-bd795fec898f
+  model: ApprovalRequest
+- fields:
+    country: ATA
+    dataset: School Coverage
+    enabled: false
+  id: 5eda92d8-64ac-4db9-9707-107e855c3844
+  model: ApprovalRequest
+- fields:
+    country: ATG
+    dataset: School Geolocation
+    enabled: false
+  id: d92a4aa2-b410-493c-8efb-c8d60b21fbac
+  model: ApprovalRequest
+- fields:
+    country: ATG
+    dataset: School Coverage
+    enabled: false
+  id: 2b28fef0-2b9c-414e-a5ac-06d864c2f2e3
+  model: ApprovalRequest
+- fields:
+    country: ARG
+    dataset: School Geolocation
+    enabled: false
+  id: eb8ac8ce-8a24-4e6b-b313-8131c541013d
+  model: ApprovalRequest
+- fields:
+    country: ARG
+    dataset: School Coverage
+    enabled: false
+  id: d8f33418-f3d4-4711-9804-f92283868a29
+  model: ApprovalRequest
+- fields:
+    country: ARM
+    dataset: School Geolocation
+    enabled: false
+  id: 9be3cecb-8c49-4c68-a8c2-4d4244ef7feb
+  model: ApprovalRequest
+- fields:
+    country: ARM
+    dataset: School Coverage
+    enabled: false
+  id: f463b337-d20b-4d59-9b61-0487c89da11b
+  model: ApprovalRequest
+- fields:
+    country: ABW
+    dataset: School Geolocation
+    enabled: false
+  id: c7038069-84c8-4999-a116-7d8fcf23cae8
+  model: ApprovalRequest
+- fields:
+    country: ABW
+    dataset: School Coverage
+    enabled: false
+  id: 5d5f576c-deb8-4c4c-bb29-7d0b0e5e18ba
+  model: ApprovalRequest
+- fields:
+    country: AUS
+    dataset: School Geolocation
+    enabled: false
+  id: d037cdff-7c24-4d49-a9d4-95dd81355c53
+  model: ApprovalRequest
+- fields:
+    country: AUS
+    dataset: School Coverage
+    enabled: false
+  id: c9546b43-9f9d-4129-8a44-9ebe89d9bf02
+  model: ApprovalRequest
+- fields:
+    country: AUT
+    dataset: School Geolocation
+    enabled: false
+  id: a2a7ae1f-3ac7-452c-8df8-440407295e42
+  model: ApprovalRequest
+- fields:
+    country: AUT
+    dataset: School Coverage
+    enabled: false
+  id: 8d103ed3-cc66-4e97-9773-308cdc6b13ab
+  model: ApprovalRequest
+- fields:
+    country: AZE
+    dataset: School Geolocation
+    enabled: false
+  id: f18dd1ee-d77c-46c0-884f-3dd6415af341
+  model: ApprovalRequest
+- fields:
+    country: AZE
+    dataset: School Coverage
+    enabled: false
+  id: c10faa40-03ba-43db-b3f7-ba8e0445d656
+  model: ApprovalRequest
+- fields:
+    country: BHS
+    dataset: School Geolocation
+    enabled: false
+  id: 2f429ce5-9ff3-478f-8c1b-0c3e1c07724e
+  model: ApprovalRequest
+- fields:
+    country: BHS
+    dataset: School Coverage
+    enabled: false
+  id: f3b37f32-8702-46c4-8155-d7ef28dd37eb
+  model: ApprovalRequest
+- fields:
+    country: BHR
+    dataset: School Geolocation
+    enabled: false
+  id: b3df44a4-7467-437a-8b63-e0efb62ac1fe
+  model: ApprovalRequest
+- fields:
+    country: BHR
+    dataset: School Coverage
+    enabled: false
+  id: 57e54acc-62f5-480c-8fdf-8e1a060cea63
+  model: ApprovalRequest
+- fields:
+    country: BGD
+    dataset: School Geolocation
+    enabled: false
+  id: baeb41a5-e65a-4149-80e2-a20a1bd7ce73
+  model: ApprovalRequest
+- fields:
+    country: BGD
+    dataset: School Coverage
+    enabled: false
+  id: f9bddea5-d129-42e4-ae80-fa489b0bca16
+  model: ApprovalRequest
+- fields:
+    country: BRB
+    dataset: School Geolocation
+    enabled: false
+  id: f5bb9188-b805-49e9-890b-20bb257e8454
+  model: ApprovalRequest
+- fields:
+    country: BRB
+    dataset: School Coverage
+    enabled: false
+  id: d50e0097-8b71-49cd-ad39-eb43ad9cedde
+  model: ApprovalRequest
+- fields:
+    country: BLR
+    dataset: School Geolocation
+    enabled: false
+  id: 736a947a-843f-4da7-b1ee-daffcc3d5506
+  model: ApprovalRequest
+- fields:
+    country: BLR
+    dataset: School Coverage
+    enabled: false
+  id: cdaaac43-936a-440c-acc6-6a576518093d
+  model: ApprovalRequest
+- fields:
+    country: BEL
+    dataset: School Geolocation
+    enabled: false
+  id: 202cc828-4c71-4095-bcc9-9ae80f0c8a89
+  model: ApprovalRequest
+- fields:
+    country: BEL
+    dataset: School Coverage
+    enabled: false
+  id: 1391f9b9-dbc7-49b0-921b-28004e6f5a94
+  model: ApprovalRequest
+- fields:
+    country: BLZ
+    dataset: School Geolocation
+    enabled: false
+  id: 909ff497-6a8a-43ef-a880-4790be6c6fe9
+  model: ApprovalRequest
+- fields:
+    country: BLZ
+    dataset: School Coverage
+    enabled: false
+  id: 973082d6-09b4-45d2-99bc-1d97e0f3a7ef
+  model: ApprovalRequest
+- fields:
+    country: BEN
+    dataset: School Geolocation
+    enabled: false
+  id: d3f21dcc-2be8-4b46-b5fa-6dd891fde85c
+  model: ApprovalRequest
+- fields:
+    country: BEN
+    dataset: School Coverage
+    enabled: false
+  id: 0994940e-8245-4cc8-9f7a-7dafb43adc4f
+  model: ApprovalRequest
+- fields:
+    country: BMU
+    dataset: School Geolocation
+    enabled: false
+  id: e585552f-ac95-4ab5-92c9-357d34accd78
+  model: ApprovalRequest
+- fields:
+    country: BMU
+    dataset: School Coverage
+    enabled: false
+  id: 63db01fc-aa7c-414b-b01d-bf291abb8ba3
+  model: ApprovalRequest
+- fields:
+    country: BTN
+    dataset: School Geolocation
+    enabled: false
+  id: 66fec086-df22-4650-9cb4-71a55349da48
+  model: ApprovalRequest
+- fields:
+    country: BTN
+    dataset: School Coverage
+    enabled: false
+  id: cfa6cf3e-53e6-4093-9b87-872d336b1a45
+  model: ApprovalRequest
+- fields:
+    country: BOL
+    dataset: School Geolocation
+    enabled: false
+  id: 443baac5-3689-4eeb-ade2-b33b56cef8ec
+  model: ApprovalRequest
+- fields:
+    country: BOL
+    dataset: School Coverage
+    enabled: false
+  id: ea190b2a-5806-4a9d-8c31-406deea3d685
+  model: ApprovalRequest
+- fields:
+    country: BES
+    dataset: School Geolocation
+    enabled: false
+  id: 88534206-fc4a-447e-8498-72c67c081bb7
+  model: ApprovalRequest
+- fields:
+    country: BES
+    dataset: School Coverage
+    enabled: false
+  id: 2aa3300b-2b71-4343-a20d-672b15ad9a9d
+  model: ApprovalRequest
+- fields:
+    country: BIH
+    dataset: School Geolocation
+    enabled: false
+  id: 8181e84d-99a7-4924-950d-40ddc2557035
+  model: ApprovalRequest
+- fields:
+    country: BIH
+    dataset: School Coverage
+    enabled: false
+  id: 3c35612e-4a8d-45d8-9d29-6588571ceeee
+  model: ApprovalRequest
+- fields:
+    country: BWA
+    dataset: School Geolocation
+    enabled: false
+  id: 7d2186d3-e323-4e54-b711-5c02f44d7e40
+  model: ApprovalRequest
+- fields:
+    country: BWA
+    dataset: School Coverage
+    enabled: false
+  id: 6816de06-0a04-4f48-921b-18a91ab1c42f
+  model: ApprovalRequest
+- fields:
+    country: BVT
+    dataset: School Geolocation
+    enabled: false
+  id: 20012170-d418-47af-a5b7-501ac9c1ffef
+  model: ApprovalRequest
+- fields:
+    country: BVT
+    dataset: School Coverage
+    enabled: false
+  id: 139f7110-60c7-4494-ad19-2da3c82ad589
+  model: ApprovalRequest
+- fields:
+    country: BRA
+    dataset: School Geolocation
+    enabled: false
+  id: 5d698c8b-4448-4030-b3c6-68b114ed2049
+  model: ApprovalRequest
+- fields:
+    country: BRA
+    dataset: School Coverage
+    enabled: false
+  id: e5920673-7530-4db7-9d43-d1ffecd1345e
+  model: ApprovalRequest
+- fields:
+    country: IOT
+    dataset: School Geolocation
+    enabled: false
+  id: 9d19ee45-032b-4328-8bb5-7b5cd3e89d32
+  model: ApprovalRequest
+- fields:
+    country: IOT
+    dataset: School Coverage
+    enabled: false
+  id: ca357568-e293-4bf1-937c-99611d775b7c
+  model: ApprovalRequest
+- fields:
+    country: VGB
+    dataset: School Geolocation
+    enabled: false
+  id: 297a21d7-6bc7-4bf5-9638-0ed6fcf7f49d
+  model: ApprovalRequest
+- fields:
+    country: VGB
+    dataset: School Coverage
+    enabled: false
+  id: d85328b6-be77-4448-a8b0-9a933dcdb856
+  model: ApprovalRequest
+- fields:
+    country: BRN
+    dataset: School Geolocation
+    enabled: false
+  id: 8afd2973-f863-4958-8e75-f4ba60d6c766
+  model: ApprovalRequest
+- fields:
+    country: BRN
+    dataset: School Coverage
+    enabled: false
+  id: 50806f01-7a1d-456c-b62c-228e40df7c9a
+  model: ApprovalRequest
+- fields:
+    country: BGR
+    dataset: School Geolocation
+    enabled: false
+  id: c96fa758-02b0-47f8-86fa-adb10a248cff
+  model: ApprovalRequest
+- fields:
+    country: BGR
+    dataset: School Coverage
+    enabled: false
+  id: 642a357c-7329-42f4-91fb-fcc798b8da9f
+  model: ApprovalRequest
+- fields:
+    country: BFA
+    dataset: School Geolocation
+    enabled: false
+  id: 99f86c8d-f845-4ed9-913d-d1a6e9d40f2b
+  model: ApprovalRequest
+- fields:
+    country: BFA
+    dataset: School Coverage
+    enabled: false
+  id: c725bd97-9e28-4761-88fe-a5d73716e7ea
+  model: ApprovalRequest
+- fields:
+    country: BDI
+    dataset: School Geolocation
+    enabled: false
+  id: 5b177a38-a96d-4b2c-b80b-25d9b02d3504
+  model: ApprovalRequest
+- fields:
+    country: BDI
+    dataset: School Coverage
+    enabled: false
+  id: 5c47577b-3f12-468e-b2ff-d03d4eac98d6
+  model: ApprovalRequest
+- fields:
+    country: CPV
+    dataset: School Geolocation
+    enabled: false
+  id: 172a4012-72a9-48a4-80d7-6560fbbe9381
+  model: ApprovalRequest
+- fields:
+    country: CPV
+    dataset: School Coverage
+    enabled: false
+  id: f772f8ea-63f6-46e0-ba38-9b09f0d3fa5c
+  model: ApprovalRequest
+- fields:
+    country: KHM
+    dataset: School Geolocation
+    enabled: false
+  id: 9439c746-d8dd-42ef-8af0-78b051158de5
+  model: ApprovalRequest
+- fields:
+    country: KHM
+    dataset: School Coverage
+    enabled: false
+  id: 9c842b6a-8b52-4b4f-99d7-b4035596dfde
+  model: ApprovalRequest
+- fields:
+    country: CMR
+    dataset: School Geolocation
+    enabled: false
+  id: ceea590b-0537-4b76-b85c-1b333ebebe3e
+  model: ApprovalRequest
+- fields:
+    country: CMR
+    dataset: School Coverage
+    enabled: false
+  id: baaad651-1227-432f-9e18-27478d1bc13a
+  model: ApprovalRequest
+- fields:
+    country: CAN
+    dataset: School Geolocation
+    enabled: false
+  id: 5bf3f74d-cacc-4ec8-802f-c22a4a7347fa
+  model: ApprovalRequest
+- fields:
+    country: CAN
+    dataset: School Coverage
+    enabled: false
+  id: c71a5b11-805d-406a-99d6-d73b2778507c
+  model: ApprovalRequest
+- fields:
+    country: CYM
+    dataset: School Geolocation
+    enabled: false
+  id: 2df810b9-2c59-4859-aa4d-a822f3009a5c
+  model: ApprovalRequest
+- fields:
+    country: CYM
+    dataset: School Coverage
+    enabled: false
+  id: 4e3d4d0f-51dd-4d5c-9d94-6658d2511c38
+  model: ApprovalRequest
+- fields:
+    country: CAF
+    dataset: School Geolocation
+    enabled: false
+  id: 20552f5f-4b22-40a4-9a15-a311eb5af9f9
+  model: ApprovalRequest
+- fields:
+    country: CAF
+    dataset: School Coverage
+    enabled: false
+  id: c79d4440-0821-4b65-b8fe-2f4be91553a9
+  model: ApprovalRequest
+- fields:
+    country: TCD
+    dataset: School Geolocation
+    enabled: false
+  id: 8d8e3b13-e83b-4ab1-ac15-3076cdc98666
+  model: ApprovalRequest
+- fields:
+    country: TCD
+    dataset: School Coverage
+    enabled: false
+  id: 4c867062-2d9b-4ebf-b497-553cb0894f5a
+  model: ApprovalRequest
+- fields:
+    country: CHL
+    dataset: School Geolocation
+    enabled: false
+  id: 3f4ed95a-aaf3-4c2f-9cb2-84f8b6febc3a
+  model: ApprovalRequest
+- fields:
+    country: CHL
+    dataset: School Coverage
+    enabled: false
+  id: 6e1fb6ad-cee9-44fd-b25a-9a5bf6a07500
+  model: ApprovalRequest
+- fields:
+    country: CHN
+    dataset: School Geolocation
+    enabled: false
+  id: 02c8261b-740c-4a65-89be-4b4bd9ee50e2
+  model: ApprovalRequest
+- fields:
+    country: CHN
+    dataset: School Coverage
+    enabled: false
+  id: cb06718c-063f-42b6-bc5c-483d420a4323
+  model: ApprovalRequest
+- fields:
+    country: CXR
+    dataset: School Geolocation
+    enabled: false
+  id: b11379a2-0ff4-4f65-84d7-59889213147b
+  model: ApprovalRequest
+- fields:
+    country: CXR
+    dataset: School Coverage
+    enabled: false
+  id: fbb41d14-4255-4a33-a374-75e120087497
+  model: ApprovalRequest
+- fields:
+    country: CCK
+    dataset: School Geolocation
+    enabled: false
+  id: 16d8e80e-9cc9-40d3-ac13-9c1966ad51fd
+  model: ApprovalRequest
+- fields:
+    country: CCK
+    dataset: School Coverage
+    enabled: false
+  id: e49df6bb-803a-4506-9136-bf628758ff4d
+  model: ApprovalRequest
+- fields:
+    country: COL
+    dataset: School Geolocation
+    enabled: false
+  id: 39c97ab1-bb3e-480f-a39c-c4b2afbf5310
+  model: ApprovalRequest
+- fields:
+    country: COL
+    dataset: School Coverage
+    enabled: false
+  id: b67d153d-399d-4b3c-b4df-c9a57a946602
+  model: ApprovalRequest
+- fields:
+    country: COM
+    dataset: School Geolocation
+    enabled: false
+  id: a745ba6d-eaee-419b-ba6c-ac4ae82d2fef
+  model: ApprovalRequest
+- fields:
+    country: COM
+    dataset: School Coverage
+    enabled: false
+  id: c360b3b7-1251-410b-abee-35210c56a92d
+  model: ApprovalRequest
+- fields:
+    country: COG
+    dataset: School Geolocation
+    enabled: false
+  id: cadff918-c41a-46d9-82fa-4d7a28d2e08e
+  model: ApprovalRequest
+- fields:
+    country: COG
+    dataset: School Coverage
+    enabled: false
+  id: 8d64b3ad-d957-4b6b-8cb0-5ec1b14b69dc
+  model: ApprovalRequest
+- fields:
+    country: COK
+    dataset: School Geolocation
+    enabled: false
+  id: 15c0cdd5-9836-404c-b6fb-b6edbc85e5de
+  model: ApprovalRequest
+- fields:
+    country: COK
+    dataset: School Coverage
+    enabled: false
+  id: 60900772-923c-4e5d-8392-4f05f5c7b9aa
+  model: ApprovalRequest
+- fields:
+    country: CRI
+    dataset: School Geolocation
+    enabled: false
+  id: b8378d82-91cb-4386-b112-cfd037b5dbac
+  model: ApprovalRequest
+- fields:
+    country: CRI
+    dataset: School Coverage
+    enabled: false
+  id: a310a849-b797-4b28-a4c3-71cfae7fba11
+  model: ApprovalRequest
+- fields:
+    country: CIV
+    dataset: School Geolocation
+    enabled: false
+  id: fe8b2b79-bada-4947-8b52-30ed2a30363b
+  model: ApprovalRequest
+- fields:
+    country: CIV
+    dataset: School Coverage
+    enabled: false
+  id: 19de2ded-a0e2-4045-8153-bbc7ced5669f
+  model: ApprovalRequest
+- fields:
+    country: HRV
+    dataset: School Geolocation
+    enabled: false
+  id: f81f5c80-239d-4599-b98d-dc84f59dc887
+  model: ApprovalRequest
+- fields:
+    country: HRV
+    dataset: School Coverage
+    enabled: false
+  id: 14fe7ebc-b34d-4c74-afc6-ee6fa8e33c94
+  model: ApprovalRequest
+- fields:
+    country: CUB
+    dataset: School Geolocation
+    enabled: false
+  id: f0a3a668-61e1-480d-99db-30aff8a10e70
+  model: ApprovalRequest
+- fields:
+    country: CUB
+    dataset: School Coverage
+    enabled: false
+  id: 70293815-5351-42c1-a8fb-46b52a2d551f
+  model: ApprovalRequest
+- fields:
+    country: CUW
+    dataset: School Geolocation
+    enabled: false
+  id: 6e671698-1e83-4596-b646-9fabf59cd100
+  model: ApprovalRequest
+- fields:
+    country: CUW
+    dataset: School Coverage
+    enabled: false
+  id: 47158a7e-4ba4-4898-a917-2a051e3b25e5
+  model: ApprovalRequest
+- fields:
+    country: CYP
+    dataset: School Geolocation
+    enabled: false
+  id: 8742ced2-3099-44e2-b5b5-b9340106bb05
+  model: ApprovalRequest
+- fields:
+    country: CYP
+    dataset: School Coverage
+    enabled: false
+  id: 3e036333-9b0a-4817-b91c-85fda0a59518
+  model: ApprovalRequest
+- fields:
+    country: CZE
+    dataset: School Geolocation
+    enabled: false
+  id: 335082dc-8ad6-41c4-a5fe-3a1848e772ba
+  model: ApprovalRequest
+- fields:
+    country: CZE
+    dataset: School Coverage
+    enabled: false
+  id: 72470add-aefb-42ae-9515-36644039d142
+  model: ApprovalRequest
+- fields:
+    country: DNK
+    dataset: School Geolocation
+    enabled: false
+  id: 5b616e42-8b9d-43d4-ab00-b570f93ee7cc
+  model: ApprovalRequest
+- fields:
+    country: DNK
+    dataset: School Coverage
+    enabled: false
+  id: e1018cc5-920f-4663-b57d-6f2ec4e199a1
+  model: ApprovalRequest
+- fields:
+    country: DJI
+    dataset: School Geolocation
+    enabled: false
+  id: 062ebc92-cebb-498a-a76d-b5ef1baf02cf
+  model: ApprovalRequest
+- fields:
+    country: DJI
+    dataset: School Coverage
+    enabled: false
+  id: ac859f8f-f706-4832-8be1-b2488b97ef45
+  model: ApprovalRequest
+- fields:
+    country: DMA
+    dataset: School Geolocation
+    enabled: false
+  id: 5fac971a-8018-4844-933f-3b0a22f7d343
+  model: ApprovalRequest
+- fields:
+    country: DMA
+    dataset: School Coverage
+    enabled: false
+  id: c234472f-5b58-496a-ad61-1a3e80c6bcbd
+  model: ApprovalRequest
+- fields:
+    country: DOM
+    dataset: School Geolocation
+    enabled: false
+  id: 59a78b13-7315-4969-b7cc-ba58713b831b
+  model: ApprovalRequest
+- fields:
+    country: DOM
+    dataset: School Coverage
+    enabled: false
+  id: 92484194-aef4-459c-bb2b-92c3c87868fa
+  model: ApprovalRequest
+- fields:
+    country: COD
+    dataset: School Geolocation
+    enabled: false
+  id: 8e903fd9-3433-460c-a1e4-06a660a7a7b7
+  model: ApprovalRequest
+- fields:
+    country: COD
+    dataset: School Coverage
+    enabled: false
+  id: bd1296cd-e1b4-4960-b8e7-df9b992149e8
+  model: ApprovalRequest
+- fields:
+    country: ECU
+    dataset: School Geolocation
+    enabled: false
+  id: 99d026a7-762a-4ba5-ac5d-f2c7fcad3888
+  model: ApprovalRequest
+- fields:
+    country: ECU
+    dataset: School Coverage
+    enabled: false
+  id: fcd26dad-fcd2-4f1e-b64e-172fbea01ca0
+  model: ApprovalRequest
+- fields:
+    country: EGY
+    dataset: School Geolocation
+    enabled: false
+  id: 32864238-87ec-4e86-ab39-20349eba8775
+  model: ApprovalRequest
+- fields:
+    country: EGY
+    dataset: School Coverage
+    enabled: false
+  id: f86668c1-6d05-4818-9450-085b63a029a5
+  model: ApprovalRequest
+- fields:
+    country: SLV
+    dataset: School Geolocation
+    enabled: false
+  id: b312ad6f-bbdc-45a2-b977-edf4959d133d
+  model: ApprovalRequest
+- fields:
+    country: SLV
+    dataset: School Coverage
+    enabled: false
+  id: 3f64c50c-beea-4c97-bcd5-8c0f7e21b8aa
+  model: ApprovalRequest
+- fields:
+    country: GNQ
+    dataset: School Geolocation
+    enabled: false
+  id: b8a61715-6831-45a8-8551-98c0a1326797
+  model: ApprovalRequest
+- fields:
+    country: GNQ
+    dataset: School Coverage
+    enabled: false
+  id: 452fac9a-c850-420a-a5b6-99ecefe6f675
+  model: ApprovalRequest
+- fields:
+    country: ERI
+    dataset: School Geolocation
+    enabled: false
+  id: 0297c0d6-9aff-456c-86ad-0327d0b93207
+  model: ApprovalRequest
+- fields:
+    country: ERI
+    dataset: School Coverage
+    enabled: false
+  id: af5e490b-dfba-4afa-a940-776cb540cce4
+  model: ApprovalRequest
+- fields:
+    country: EST
+    dataset: School Geolocation
+    enabled: false
+  id: 2b6c5763-7c0b-43ee-8264-d159d53dde5e
+  model: ApprovalRequest
+- fields:
+    country: EST
+    dataset: School Coverage
+    enabled: false
+  id: 9733ef95-bea7-4879-993f-d24d82a1c54c
+  model: ApprovalRequest
+- fields:
+    country: SWZ
+    dataset: School Geolocation
+    enabled: false
+  id: 2a04ff67-050d-458c-b146-99bda826e5f1
+  model: ApprovalRequest
+- fields:
+    country: SWZ
+    dataset: School Coverage
+    enabled: false
+  id: a2cf179f-66e4-4927-97d2-59adb0c12c60
+  model: ApprovalRequest
+- fields:
+    country: ETH
+    dataset: School Geolocation
+    enabled: false
+  id: 3cbb5615-352c-4f80-8731-16f03579c67e
+  model: ApprovalRequest
+- fields:
+    country: ETH
+    dataset: School Coverage
+    enabled: false
+  id: e90c0722-d4a7-4958-b2fe-7205132ba600
+  model: ApprovalRequest
+- fields:
+    country: FRO
+    dataset: School Geolocation
+    enabled: false
+  id: 0cbbeab0-bc9a-4e0c-8ec2-361582f2e770
+  model: ApprovalRequest
+- fields:
+    country: FRO
+    dataset: School Coverage
+    enabled: false
+  id: 8e65e4cf-d0a4-40da-bf11-dc91b6a3ce92
+  model: ApprovalRequest
+- fields:
+    country: FLK
+    dataset: School Geolocation
+    enabled: false
+  id: 6653c3b7-8fa0-4fa2-a47e-c1543b6bd0a4
+  model: ApprovalRequest
+- fields:
+    country: FLK
+    dataset: School Coverage
+    enabled: false
+  id: b74f3410-5463-452d-9c43-4723dde138d8
+  model: ApprovalRequest
+- fields:
+    country: FJI
+    dataset: School Geolocation
+    enabled: false
+  id: a92cd2de-d802-4b08-be85-b0a9b4e9a806
+  model: ApprovalRequest
+- fields:
+    country: FJI
+    dataset: School Coverage
+    enabled: false
+  id: ed9140c0-5108-4deb-a710-b0e79f5904a6
+  model: ApprovalRequest
+- fields:
+    country: FIN
+    dataset: School Geolocation
+    enabled: false
+  id: 1291f006-309d-47ed-84e3-2dbdc910c201
+  model: ApprovalRequest
+- fields:
+    country: FIN
+    dataset: School Coverage
+    enabled: false
+  id: 94d8cd47-718e-4baf-9442-f362f919cb32
+  model: ApprovalRequest
+- fields:
+    country: FRA
+    dataset: School Geolocation
+    enabled: false
+  id: 759aaeee-4311-42a4-b20a-b3059b33d947
+  model: ApprovalRequest
+- fields:
+    country: FRA
+    dataset: School Coverage
+    enabled: false
+  id: 70d07eba-b73b-4062-a4d4-ad86235a63d5
+  model: ApprovalRequest
+- fields:
+    country: GUF
+    dataset: School Geolocation
+    enabled: false
+  id: 34c8d03a-b7d9-465c-9da7-7d913d90fd27
+  model: ApprovalRequest
+- fields:
+    country: GUF
+    dataset: School Coverage
+    enabled: false
+  id: 524550a4-65a2-4e8a-ba45-48f21b3c137b
+  model: ApprovalRequest
+- fields:
+    country: PYF
+    dataset: School Geolocation
+    enabled: false
+  id: cf39efd7-0e2a-4641-8b83-da502fcf9616
+  model: ApprovalRequest
+- fields:
+    country: PYF
+    dataset: School Coverage
+    enabled: false
+  id: 7e94f5ab-08e2-4ad3-aeec-b544377054cf
+  model: ApprovalRequest
+- fields:
+    country: ATF
+    dataset: School Geolocation
+    enabled: false
+  id: 7139bed1-9cf9-4bc1-a31e-1292f6d0ac1d
+  model: ApprovalRequest
+- fields:
+    country: ATF
+    dataset: School Coverage
+    enabled: false
+  id: 2c354a1b-b150-478d-9cfd-717d1e39a54c
+  model: ApprovalRequest
+- fields:
+    country: GAB
+    dataset: School Geolocation
+    enabled: false
+  id: c02823ec-60bd-4dce-b327-01337eb9d1c8
+  model: ApprovalRequest
+- fields:
+    country: GAB
+    dataset: School Coverage
+    enabled: false
+  id: 8c09786b-766b-4e3c-889c-baffd1f559af
+  model: ApprovalRequest
+- fields:
+    country: GMB
+    dataset: School Geolocation
+    enabled: false
+  id: 7f0fad3b-5482-409f-8204-1769b705fbf3
+  model: ApprovalRequest
+- fields:
+    country: GMB
+    dataset: School Coverage
+    enabled: false
+  id: 03f20791-0bd4-4091-942f-ab55fe909103
+  model: ApprovalRequest
+- fields:
+    country: GEO
+    dataset: School Geolocation
+    enabled: false
+  id: d910ddd7-6215-4679-a38a-59aa51cfa14e
+  model: ApprovalRequest
+- fields:
+    country: GEO
+    dataset: School Coverage
+    enabled: false
+  id: d3005630-e149-4837-a8fa-361a6661b877
+  model: ApprovalRequest
+- fields:
+    country: DEU
+    dataset: School Geolocation
+    enabled: false
+  id: 63243e53-03e2-47c4-87cc-0424e9e6ed7c
+  model: ApprovalRequest
+- fields:
+    country: DEU
+    dataset: School Coverage
+    enabled: false
+  id: 4111329a-6126-4fdd-9093-11ed0e9f654f
+  model: ApprovalRequest
+- fields:
+    country: GHA
+    dataset: School Geolocation
+    enabled: false
+  id: 03b27030-e7f5-44f3-8dab-b96dd708f3a0
+  model: ApprovalRequest
+- fields:
+    country: GHA
+    dataset: School Coverage
+    enabled: false
+  id: eef20845-0af5-48d2-a101-3eefd733230a
+  model: ApprovalRequest
+- fields:
+    country: GIB
+    dataset: School Geolocation
+    enabled: false
+  id: 7fe9da20-0712-4b2f-b0ab-1c2e174e3f4b
+  model: ApprovalRequest
+- fields:
+    country: GIB
+    dataset: School Coverage
+    enabled: false
+  id: 312218d0-d87a-4bff-912f-f4bfafd03fb9
+  model: ApprovalRequest
+- fields:
+    country: GRC
+    dataset: School Geolocation
+    enabled: false
+  id: 42850da8-f837-4d93-8499-e3afa18d58b8
+  model: ApprovalRequest
+- fields:
+    country: GRC
+    dataset: School Coverage
+    enabled: false
+  id: c9b8056f-ef67-49e9-9682-40ef0f683985
+  model: ApprovalRequest
+- fields:
+    country: GRL
+    dataset: School Geolocation
+    enabled: false
+  id: a36cf2b9-8f6d-4aaa-b2b3-d2229af865df
+  model: ApprovalRequest
+- fields:
+    country: GRL
+    dataset: School Coverage
+    enabled: false
+  id: 89c08e1c-69a3-4e9a-8c03-54be5a6d1efc
+  model: ApprovalRequest
+- fields:
+    country: GRD
+    dataset: School Geolocation
+    enabled: false
+  id: 11f10c60-a992-4b68-ab7f-ec926c931d1a
+  model: ApprovalRequest
+- fields:
+    country: GRD
+    dataset: School Coverage
+    enabled: false
+  id: 128137ea-c090-4c84-b8ec-ae24b89b02f9
+  model: ApprovalRequest
+- fields:
+    country: GLP
+    dataset: School Geolocation
+    enabled: false
+  id: 340e8462-eb2c-49d4-8f07-8f6c26a89353
+  model: ApprovalRequest
+- fields:
+    country: GLP
+    dataset: School Coverage
+    enabled: false
+  id: e9901243-175a-4163-a31a-7b190d8509db
+  model: ApprovalRequest
+- fields:
+    country: GUM
+    dataset: School Geolocation
+    enabled: false
+  id: 500c48e1-fc14-4a78-996a-8d845ec8e9d7
+  model: ApprovalRequest
+- fields:
+    country: GUM
+    dataset: School Coverage
+    enabled: false
+  id: e539d34d-20d1-4b7d-aa0c-b6f5717f5eed
+  model: ApprovalRequest
+- fields:
+    country: GTM
+    dataset: School Geolocation
+    enabled: false
+  id: bc937d7e-064d-4a2f-b232-80c3e1df6f91
+  model: ApprovalRequest
+- fields:
+    country: GTM
+    dataset: School Coverage
+    enabled: false
+  id: 4d455c71-15f6-463e-934e-570fcce695f7
+  model: ApprovalRequest
+- fields:
+    country: GGY
+    dataset: School Geolocation
+    enabled: false
+  id: bc377f13-502e-4056-82d1-5cd3bb8c1409
+  model: ApprovalRequest
+- fields:
+    country: GGY
+    dataset: School Coverage
+    enabled: false
+  id: ad83c3fb-db19-40bb-9dfc-a10cce9244cb
+  model: ApprovalRequest
+- fields:
+    country: GIN
+    dataset: School Geolocation
+    enabled: false
+  id: 3495d62a-8ea3-4f2e-80b3-80113ed1e0eb
+  model: ApprovalRequest
+- fields:
+    country: GIN
+    dataset: School Coverage
+    enabled: false
+  id: e54e1ad1-f4cf-4336-a41e-9e8dc89b69d3
+  model: ApprovalRequest
+- fields:
+    country: GNB
+    dataset: School Geolocation
+    enabled: false
+  id: 86143e14-72d8-47af-908e-f562a70f268f
+  model: ApprovalRequest
+- fields:
+    country: GNB
+    dataset: School Coverage
+    enabled: false
+  id: 8523e065-b387-4f0e-94d4-3eded5b48ad0
+  model: ApprovalRequest
+- fields:
+    country: GUY
+    dataset: School Geolocation
+    enabled: false
+  id: be40f38e-4a94-4554-bdbb-37b8d4e4db03
+  model: ApprovalRequest
+- fields:
+    country: GUY
+    dataset: School Coverage
+    enabled: false
+  id: 68d52eb6-18ed-46c3-9300-1b63856558b2
+  model: ApprovalRequest
+- fields:
+    country: HTI
+    dataset: School Geolocation
+    enabled: false
+  id: cc88ebd1-d0a0-49f5-8ced-509a0b27b4c9
+  model: ApprovalRequest
+- fields:
+    country: HTI
+    dataset: School Coverage
+    enabled: false
+  id: 45cda949-5a45-4d23-919c-d4cc4c5ec38d
+  model: ApprovalRequest
+- fields:
+    country: HMD
+    dataset: School Geolocation
+    enabled: false
+  id: 1f327a74-86b0-49dc-8234-5a9d8045432f
+  model: ApprovalRequest
+- fields:
+    country: HMD
+    dataset: School Coverage
+    enabled: false
+  id: 92b75630-53db-4391-88e2-896a5358bf46
+  model: ApprovalRequest
+- fields:
+    country: HND
+    dataset: School Geolocation
+    enabled: false
+  id: 5d39f1b8-e9b2-406a-b442-a8cc7acd7a45
+  model: ApprovalRequest
+- fields:
+    country: HND
+    dataset: School Coverage
+    enabled: false
+  id: 1402f91c-ece9-48ed-a3bb-a436d0cd14a1
+  model: ApprovalRequest
+- fields:
+    country: HKG
+    dataset: School Geolocation
+    enabled: false
+  id: 7dff04ae-8611-48b9-8c79-50fa2273ea38
+  model: ApprovalRequest
+- fields:
+    country: HKG
+    dataset: School Coverage
+    enabled: false
+  id: 92e38012-b3f2-413d-bed0-3c49c8b0da28
+  model: ApprovalRequest
+- fields:
+    country: HUN
+    dataset: School Geolocation
+    enabled: false
+  id: 5ec127b3-a4bc-4977-8c02-5364f13b7619
+  model: ApprovalRequest
+- fields:
+    country: HUN
+    dataset: School Coverage
+    enabled: false
+  id: 81ee476c-8839-4110-9727-d740fad13805
+  model: ApprovalRequest
+- fields:
+    country: ISL
+    dataset: School Geolocation
+    enabled: false
+  id: 2226ff43-9012-4ea1-b89c-1ccfafef1ac1
+  model: ApprovalRequest
+- fields:
+    country: ISL
+    dataset: School Coverage
+    enabled: false
+  id: 9ea4f0bb-ba5b-49cd-b06f-217a693e6d5d
+  model: ApprovalRequest
+- fields:
+    country: IND
+    dataset: School Geolocation
+    enabled: false
+  id: b6f3d08a-4406-447f-ae6a-c89a8bb3835b
+  model: ApprovalRequest
+- fields:
+    country: IND
+    dataset: School Coverage
+    enabled: false
+  id: a41aafac-86c0-4bfe-923b-3beaa1d3ff82
+  model: ApprovalRequest
+- fields:
+    country: IDN
+    dataset: School Geolocation
+    enabled: false
+  id: d69871bc-a4ab-4eec-b7a6-437bd9c2b0cf
+  model: ApprovalRequest
+- fields:
+    country: IDN
+    dataset: School Coverage
+    enabled: false
+  id: e66743dc-5e3c-4d96-9721-c6e50597ebc1
+  model: ApprovalRequest
+- fields:
+    country: IRN
+    dataset: School Geolocation
+    enabled: false
+  id: 334c76b8-e42b-4627-b84d-a68248a3ff76
+  model: ApprovalRequest
+- fields:
+    country: IRN
+    dataset: School Coverage
+    enabled: false
+  id: 73c2f6f0-6ce9-4732-bc37-7da0e48e1b4d
+  model: ApprovalRequest
+- fields:
+    country: IRQ
+    dataset: School Geolocation
+    enabled: false
+  id: 7b6eb806-cc54-4333-b056-ddb0f1da2b29
+  model: ApprovalRequest
+- fields:
+    country: IRQ
+    dataset: School Coverage
+    enabled: false
+  id: 68457e41-41ad-4e67-b9ee-f8dbff876918
+  model: ApprovalRequest
+- fields:
+    country: IRL
+    dataset: School Geolocation
+    enabled: false
+  id: e0463f9f-83a8-4a4e-a176-a3cac53482ec
+  model: ApprovalRequest
+- fields:
+    country: IRL
+    dataset: School Coverage
+    enabled: false
+  id: 940a3aeb-cbd5-4a31-8293-d779e1f86d03
+  model: ApprovalRequest
+- fields:
+    country: IMN
+    dataset: School Geolocation
+    enabled: false
+  id: 01a38311-755d-4871-bce5-d2c6d9e46a51
+  model: ApprovalRequest
+- fields:
+    country: IMN
+    dataset: School Coverage
+    enabled: false
+  id: 8a70103f-0168-4969-a45f-419cb0fb4bc8
+  model: ApprovalRequest
+- fields:
+    country: ISR
+    dataset: School Geolocation
+    enabled: false
+  id: 50c80450-bf32-4ef2-be72-5a5ee31ef8fb
+  model: ApprovalRequest
+- fields:
+    country: ISR
+    dataset: School Coverage
+    enabled: false
+  id: 48525e8a-8d27-47d7-be69-2199926c8264
+  model: ApprovalRequest
+- fields:
+    country: ITA
+    dataset: School Geolocation
+    enabled: false
+  id: 8492c7b5-f40f-4922-ad42-1259d18da490
+  model: ApprovalRequest
+- fields:
+    country: ITA
+    dataset: School Coverage
+    enabled: false
+  id: 21858664-4d49-4fce-b3d8-7fd74ec9521c
+  model: ApprovalRequest
+- fields:
+    country: JAM
+    dataset: School Geolocation
+    enabled: false
+  id: f97c4298-fa01-408b-85c3-28968ccc6ff2
+  model: ApprovalRequest
+- fields:
+    country: JAM
+    dataset: School Coverage
+    enabled: false
+  id: a95b3b44-bc73-4ca7-ac96-edfafe99958f
+  model: ApprovalRequest
+- fields:
+    country: JPN
+    dataset: School Geolocation
+    enabled: false
+  id: a8b3b3de-efbf-4a3d-8813-fcaa66f292ed
+  model: ApprovalRequest
+- fields:
+    country: JPN
+    dataset: School Coverage
+    enabled: false
+  id: 170c4b00-ecd7-4663-9729-7db8e6145787
+  model: ApprovalRequest
+- fields:
+    country: JEY
+    dataset: School Geolocation
+    enabled: false
+  id: c812fed7-cbc0-481c-859f-039076e099f9
+  model: ApprovalRequest
+- fields:
+    country: JEY
+    dataset: School Coverage
+    enabled: false
+  id: 6372099a-5627-422c-84c5-475d7b3e5daa
+  model: ApprovalRequest
+- fields:
+    country: JOR
+    dataset: School Geolocation
+    enabled: false
+  id: 25f46356-6a4a-4ead-a50a-bf6e5ac04ca4
+  model: ApprovalRequest
+- fields:
+    country: JOR
+    dataset: School Coverage
+    enabled: false
+  id: 208ad9ff-db9e-49be-9e25-e8a0429ea21f
+  model: ApprovalRequest
+- fields:
+    country: KAZ
+    dataset: School Geolocation
+    enabled: false
+  id: f065df4a-4207-458a-a9b4-8c0eff6b0446
+  model: ApprovalRequest
+- fields:
+    country: KAZ
+    dataset: School Coverage
+    enabled: false
+  id: 55fdc401-6efa-483b-860f-923db0fa6216
+  model: ApprovalRequest
+- fields:
+    country: KEN
+    dataset: School Geolocation
+    enabled: false
+  id: f3085db8-7dca-4a54-9462-0a8bb728b7f9
+  model: ApprovalRequest
+- fields:
+    country: KEN
+    dataset: School Coverage
+    enabled: false
+  id: 34c590e7-2124-4447-907f-37d417647fa2
+  model: ApprovalRequest
+- fields:
+    country: KIR
+    dataset: School Geolocation
+    enabled: false
+  id: 27dccbb0-40d3-458c-9a6f-936506b0da21
+  model: ApprovalRequest
+- fields:
+    country: KIR
+    dataset: School Coverage
+    enabled: false
+  id: 2ffbbd51-b937-4988-a650-23ba662d6088
+  model: ApprovalRequest
+- fields:
+    country: XKX
+    dataset: School Geolocation
+    enabled: false
+  id: 0d05f982-feeb-4948-b46e-d6dd9ca4f36e
+  model: ApprovalRequest
+- fields:
+    country: XKX
+    dataset: School Coverage
+    enabled: false
+  id: a6ce9740-f233-4692-8c0a-78d058c17f6b
+  model: ApprovalRequest
+- fields:
+    country: KWT
+    dataset: School Geolocation
+    enabled: false
+  id: d5bc9f74-6b6c-423a-add7-63fa8d86850e
+  model: ApprovalRequest
+- fields:
+    country: KWT
+    dataset: School Coverage
+    enabled: false
+  id: 2dd5ad98-475c-41b1-af3e-f55c43ecf2b9
+  model: ApprovalRequest
+- fields:
+    country: KGZ
+    dataset: School Geolocation
+    enabled: false
+  id: 36d71c3f-c953-4f5e-8c34-6fdfdb9be515
+  model: ApprovalRequest
+- fields:
+    country: KGZ
+    dataset: School Coverage
+    enabled: false
+  id: 7281c9e4-ab30-4794-9fb0-975f63c47f8a
+  model: ApprovalRequest
+- fields:
+    country: LAO
+    dataset: School Geolocation
+    enabled: false
+  id: 9b2a1bb0-1dbc-47ac-a4a1-1177e7b33734
+  model: ApprovalRequest
+- fields:
+    country: LAO
+    dataset: School Coverage
+    enabled: false
+  id: b3cfb710-e7c7-499c-9d17-3f5b62e8c79c
+  model: ApprovalRequest
+- fields:
+    country: LVA
+    dataset: School Geolocation
+    enabled: false
+  id: ef65f0f8-e350-435f-be40-d9f36aa68fdb
+  model: ApprovalRequest
+- fields:
+    country: LVA
+    dataset: School Coverage
+    enabled: false
+  id: cf696e8f-e51f-4eba-a237-b1967e12f154
+  model: ApprovalRequest
+- fields:
+    country: LBN
+    dataset: School Geolocation
+    enabled: false
+  id: dc6da46e-564b-4be9-9fa1-6a0cc2793ab2
+  model: ApprovalRequest
+- fields:
+    country: LBN
+    dataset: School Coverage
+    enabled: false
+  id: 58cd091b-a843-4823-bab2-4193fd2cf1a3
+  model: ApprovalRequest
+- fields:
+    country: LSO
+    dataset: School Geolocation
+    enabled: false
+  id: a01d9d30-8a60-40cf-8e72-c596447d1660
+  model: ApprovalRequest
+- fields:
+    country: LSO
+    dataset: School Coverage
+    enabled: false
+  id: 820d311a-3a82-4b36-99cb-517bd7a6965b
+  model: ApprovalRequest
+- fields:
+    country: LBR
+    dataset: School Geolocation
+    enabled: false
+  id: 419def82-2154-4354-a5f9-672969617062
+  model: ApprovalRequest
+- fields:
+    country: LBR
+    dataset: School Coverage
+    enabled: false
+  id: 0ef54306-f5c7-4033-a74b-7fb69936ee94
+  model: ApprovalRequest
+- fields:
+    country: LBY
+    dataset: School Geolocation
+    enabled: false
+  id: 452959cf-69ee-4c3b-b224-2639261b5841
+  model: ApprovalRequest
+- fields:
+    country: LBY
+    dataset: School Coverage
+    enabled: false
+  id: 7fae9d40-36e2-404e-bdc7-922e445ddd25
+  model: ApprovalRequest
+- fields:
+    country: LIE
+    dataset: School Geolocation
+    enabled: false
+  id: c2485eaa-9b11-4332-ad18-be2f56a10d9b
+  model: ApprovalRequest
+- fields:
+    country: LIE
+    dataset: School Coverage
+    enabled: false
+  id: 264103c5-88e6-4e06-b37c-2ee5b1b536f9
+  model: ApprovalRequest
+- fields:
+    country: LTU
+    dataset: School Geolocation
+    enabled: false
+  id: c2eba580-a522-4eb3-a293-c61eb0aae07c
+  model: ApprovalRequest
+- fields:
+    country: LTU
+    dataset: School Coverage
+    enabled: false
+  id: 7afbf358-7e65-4242-9f5f-48b450bbd9b0
+  model: ApprovalRequest
+- fields:
+    country: LUX
+    dataset: School Geolocation
+    enabled: false
+  id: 399b6c99-41a7-4b5f-b2c6-fbd023deb6a8
+  model: ApprovalRequest
+- fields:
+    country: LUX
+    dataset: School Coverage
+    enabled: false
+  id: 2c0dacc3-9025-4697-8cce-d50db3f2b9a2
+  model: ApprovalRequest
+- fields:
+    country: MAC
+    dataset: School Geolocation
+    enabled: false
+  id: a8ef8120-914c-45d1-80c5-b52f330c29c0
+  model: ApprovalRequest
+- fields:
+    country: MAC
+    dataset: School Coverage
+    enabled: false
+  id: d25c8062-0522-4a0f-8617-0c370115a71d
+  model: ApprovalRequest
+- fields:
+    country: MKD
+    dataset: School Geolocation
+    enabled: false
+  id: 47b963b4-3979-4287-be38-915f15a61486
+  model: ApprovalRequest
+- fields:
+    country: MKD
+    dataset: School Coverage
+    enabled: false
+  id: b80100ca-99e4-4e94-84e2-0d0d57508c39
+  model: ApprovalRequest
+- fields:
+    country: MDG
+    dataset: School Geolocation
+    enabled: false
+  id: 1d07d20c-23b2-4ad1-98d6-83c054700723
+  model: ApprovalRequest
+- fields:
+    country: MDG
+    dataset: School Coverage
+    enabled: false
+  id: 58d51a05-0a80-4a90-92f2-33a4ae634acc
+  model: ApprovalRequest
+- fields:
+    country: MWI
+    dataset: School Geolocation
+    enabled: false
+  id: 3fbb550a-5128-48d7-8ccb-e4bf1a6bf371
+  model: ApprovalRequest
+- fields:
+    country: MWI
+    dataset: School Coverage
+    enabled: false
+  id: ecfeba26-2397-4884-940c-a1a807fac177
+  model: ApprovalRequest
+- fields:
+    country: MYS
+    dataset: School Geolocation
+    enabled: false
+  id: 18074ae5-3df7-45a2-b0f9-2f03a36cbfa7
+  model: ApprovalRequest
+- fields:
+    country: MYS
+    dataset: School Coverage
+    enabled: false
+  id: f57dd6ab-5263-4c8a-a360-8ec683e6a37a
+  model: ApprovalRequest
+- fields:
+    country: MDV
+    dataset: School Geolocation
+    enabled: false
+  id: b962ba01-a425-48db-8a7e-0f4bcdb64aa5
+  model: ApprovalRequest
+- fields:
+    country: MDV
+    dataset: School Coverage
+    enabled: false
+  id: 17508f8c-67b8-42f8-8565-7cb4ded18ce5
+  model: ApprovalRequest
+- fields:
+    country: MLI
+    dataset: School Geolocation
+    enabled: false
+  id: 6b314e0b-907f-4360-b9bf-fa4687198e7a
+  model: ApprovalRequest
+- fields:
+    country: MLI
+    dataset: School Coverage
+    enabled: false
+  id: 4d7be03f-a1fa-4df8-b82a-1bd2e5f84260
+  model: ApprovalRequest
+- fields:
+    country: MLT
+    dataset: School Geolocation
+    enabled: false
+  id: 3d96bfb1-2cd6-4a72-9c20-5729822ee60d
+  model: ApprovalRequest
+- fields:
+    country: MLT
+    dataset: School Coverage
+    enabled: false
+  id: 89f0f4a1-401b-4277-851d-cf528bc3d38a
+  model: ApprovalRequest
+- fields:
+    country: MHL
+    dataset: School Geolocation
+    enabled: false
+  id: b578afa0-673d-493b-a046-56047925de5f
+  model: ApprovalRequest
+- fields:
+    country: MHL
+    dataset: School Coverage
+    enabled: false
+  id: 5cf6e757-8b50-4f22-ba3b-a057a78826d6
+  model: ApprovalRequest
+- fields:
+    country: MTQ
+    dataset: School Geolocation
+    enabled: false
+  id: 94b0cd98-af41-4d9d-81e2-021bb92136b9
+  model: ApprovalRequest
+- fields:
+    country: MTQ
+    dataset: School Coverage
+    enabled: false
+  id: 130865e4-27e0-498a-a1d8-9737aeb292fb
+  model: ApprovalRequest
+- fields:
+    country: MRT
+    dataset: School Geolocation
+    enabled: false
+  id: 7bec1bce-375d-4cf7-93ac-07e5e10e1a45
+  model: ApprovalRequest
+- fields:
+    country: MRT
+    dataset: School Coverage
+    enabled: false
+  id: 4ad70091-e37a-4a27-9d76-9cea55e103e8
+  model: ApprovalRequest
+- fields:
+    country: MUS
+    dataset: School Geolocation
+    enabled: false
+  id: 67d80702-7091-4526-9548-052b61b95afe
+  model: ApprovalRequest
+- fields:
+    country: MUS
+    dataset: School Coverage
+    enabled: false
+  id: afdc47c4-aab8-4a16-8b98-48d9450eb7aa
+  model: ApprovalRequest
+- fields:
+    country: MYT
+    dataset: School Geolocation
+    enabled: false
+  id: 027b97bf-f3cc-4e09-898b-22520218664e
+  model: ApprovalRequest
+- fields:
+    country: MYT
+    dataset: School Coverage
+    enabled: false
+  id: f13a0899-8fd9-449c-bf3a-a50a612753f1
+  model: ApprovalRequest
+- fields:
+    country: MEX
+    dataset: School Geolocation
+    enabled: false
+  id: ade3485d-993b-47e2-ae94-87c1c77ad8c8
+  model: ApprovalRequest
+- fields:
+    country: MEX
+    dataset: School Coverage
+    enabled: false
+  id: 7644d38c-9b14-4735-a7f8-6286688eed8f
+  model: ApprovalRequest
+- fields:
+    country: FSM
+    dataset: School Geolocation
+    enabled: false
+  id: b2867e2f-b442-4d35-a565-b2450993fab3
+  model: ApprovalRequest
+- fields:
+    country: FSM
+    dataset: School Coverage
+    enabled: false
+  id: 87cb2d11-23bb-4e3a-965f-47121c72ba61
+  model: ApprovalRequest
+- fields:
+    country: MDA
+    dataset: School Geolocation
+    enabled: false
+  id: 9177206d-fbce-41bd-886d-dbce4559eb49
+  model: ApprovalRequest
+- fields:
+    country: MDA
+    dataset: School Coverage
+    enabled: false
+  id: b28d8aac-d1d8-4841-b952-6c86cd55924f
+  model: ApprovalRequest
+- fields:
+    country: MCO
+    dataset: School Geolocation
+    enabled: false
+  id: f3b43519-8ff6-4970-9b04-b28c3d644b75
+  model: ApprovalRequest
+- fields:
+    country: MCO
+    dataset: School Coverage
+    enabled: false
+  id: b43ce7fa-ea95-4e0e-8a63-5aa2c6dfeea6
+  model: ApprovalRequest
+- fields:
+    country: MNG
+    dataset: School Geolocation
+    enabled: false
+  id: a032b015-a855-4c5d-80e4-c61258a43d4e
+  model: ApprovalRequest
+- fields:
+    country: MNG
+    dataset: School Coverage
+    enabled: false
+  id: 6a3932eb-6f53-40b3-9df0-96d00e4034d0
+  model: ApprovalRequest
+- fields:
+    country: MNE
+    dataset: School Geolocation
+    enabled: false
+  id: cc564cc8-70e6-431e-975b-3db1d0ee4266
+  model: ApprovalRequest
+- fields:
+    country: MNE
+    dataset: School Coverage
+    enabled: false
+  id: 576c5be3-0e58-4ffe-a4f5-a90184dce864
+  model: ApprovalRequest
+- fields:
+    country: MSR
+    dataset: School Geolocation
+    enabled: false
+  id: a03b4b0b-a48a-45e0-8b04-45512c154307
+  model: ApprovalRequest
+- fields:
+    country: MSR
+    dataset: School Coverage
+    enabled: false
+  id: 953122a4-f9a6-43ac-9f19-7477b5de8693
+  model: ApprovalRequest
+- fields:
+    country: MAR
+    dataset: School Geolocation
+    enabled: false
+  id: f3fdfbe3-d577-45f1-a1b0-b3a8621bed79
+  model: ApprovalRequest
+- fields:
+    country: MAR
+    dataset: School Coverage
+    enabled: false
+  id: f9916395-55ea-4c2b-bf94-1ef51985b59f
+  model: ApprovalRequest
+- fields:
+    country: MOZ
+    dataset: School Geolocation
+    enabled: false
+  id: be3455c8-7618-4cc4-ad42-9a2bc8d68c82
+  model: ApprovalRequest
+- fields:
+    country: MOZ
+    dataset: School Coverage
+    enabled: false
+  id: efd01861-b926-4626-a9c6-057cc5ed8155
+  model: ApprovalRequest
+- fields:
+    country: MMR
+    dataset: School Geolocation
+    enabled: false
+  id: 7cffc46c-9249-45d4-9ed3-34d08ac21475
+  model: ApprovalRequest
+- fields:
+    country: MMR
+    dataset: School Coverage
+    enabled: false
+  id: 6a245782-6049-4284-830e-a6ed265e9ded
+  model: ApprovalRequest
+- fields:
+    country: NAM
+    dataset: School Geolocation
+    enabled: false
+  id: 7573bb6c-2ed6-444c-b0fc-4b47131810bf
+  model: ApprovalRequest
+- fields:
+    country: NAM
+    dataset: School Coverage
+    enabled: false
+  id: eaff520b-49db-4c12-90a0-1524cc4145bf
+  model: ApprovalRequest
+- fields:
+    country: NRU
+    dataset: School Geolocation
+    enabled: false
+  id: 412cb34e-f260-4f52-9b11-74fad3765e6d
+  model: ApprovalRequest
+- fields:
+    country: NRU
+    dataset: School Coverage
+    enabled: false
+  id: cafdfd7e-bc6f-4237-b466-120da240998e
+  model: ApprovalRequest
+- fields:
+    country: NPL
+    dataset: School Geolocation
+    enabled: false
+  id: 8b4bae04-015c-4a36-bddc-cada640af86c
+  model: ApprovalRequest
+- fields:
+    country: NPL
+    dataset: School Coverage
+    enabled: false
+  id: 2dd66631-a98a-4ddc-a8ad-fdb0e8414d8d
+  model: ApprovalRequest
+- fields:
+    country: NLD
+    dataset: School Geolocation
+    enabled: false
+  id: 8ecfafe3-ef78-4c8f-894e-cb0dc667b0a8
+  model: ApprovalRequest
+- fields:
+    country: NLD
+    dataset: School Coverage
+    enabled: false
+  id: 37845506-835b-4805-8585-d23f95d9ad91
+  model: ApprovalRequest
+- fields:
+    country: NCL
+    dataset: School Geolocation
+    enabled: false
+  id: 30b3858e-b981-4331-8402-6d89ef8f6f23
+  model: ApprovalRequest
+- fields:
+    country: NCL
+    dataset: School Coverage
+    enabled: false
+  id: 13c4be39-8968-4582-bf8a-a933a74f7dff
+  model: ApprovalRequest
+- fields:
+    country: NZL
+    dataset: School Geolocation
+    enabled: false
+  id: 0c607fe9-a4d5-4af8-9127-bd471e7ce857
+  model: ApprovalRequest
+- fields:
+    country: NZL
+    dataset: School Coverage
+    enabled: false
+  id: 0b83c705-7a9a-4b94-90a4-0d77a4352c10
+  model: ApprovalRequest
+- fields:
+    country: NIC
+    dataset: School Geolocation
+    enabled: false
+  id: dbf9fb74-f48b-4982-8556-7ef4031d76d8
+  model: ApprovalRequest
+- fields:
+    country: NIC
+    dataset: School Coverage
+    enabled: false
+  id: 22197c77-984f-4d65-aaac-ba426a6213e1
+  model: ApprovalRequest
+- fields:
+    country: NER
+    dataset: School Geolocation
+    enabled: false
+  id: a2f1cfc9-88e1-44aa-8545-ff88517d6efd
+  model: ApprovalRequest
+- fields:
+    country: NER
+    dataset: School Coverage
+    enabled: false
+  id: b2e9ed25-2ae9-4104-8dc7-238e6ae85efa
+  model: ApprovalRequest
+- fields:
+    country: NGA
+    dataset: School Geolocation
+    enabled: false
+  id: 47473c91-d121-450d-bed2-24ed3362591e
+  model: ApprovalRequest
+- fields:
+    country: NGA
+    dataset: School Coverage
+    enabled: false
+  id: 2cd71c4a-d847-4872-878c-8b5f911eace3
+  model: ApprovalRequest
+- fields:
+    country: NIU
+    dataset: School Geolocation
+    enabled: false
+  id: eda92bb4-560b-4ad2-9c4b-4649bb254e83
+  model: ApprovalRequest
+- fields:
+    country: NIU
+    dataset: School Coverage
+    enabled: false
+  id: 90c28c8d-4775-4f9b-a25f-0520596f3d85
+  model: ApprovalRequest
+- fields:
+    country: NFK
+    dataset: School Geolocation
+    enabled: false
+  id: 39d59764-40b2-42f6-b574-c6332158d607
+  model: ApprovalRequest
+- fields:
+    country: NFK
+    dataset: School Coverage
+    enabled: false
+  id: 8b02d636-32cb-43fa-9e51-33be899d52ea
+  model: ApprovalRequest
+- fields:
+    country: PRK
+    dataset: School Geolocation
+    enabled: false
+  id: 75e3944e-8dcd-4310-a3a2-258f93de63d6
+  model: ApprovalRequest
+- fields:
+    country: PRK
+    dataset: School Coverage
+    enabled: false
+  id: 27304c5f-13c0-4044-af4b-73d7a01a8c21
+  model: ApprovalRequest
+- fields:
+    country: MNP
+    dataset: School Geolocation
+    enabled: false
+  id: 6ad12a0f-61f3-4bc8-a7c7-79bbbf109e08
+  model: ApprovalRequest
+- fields:
+    country: MNP
+    dataset: School Coverage
+    enabled: false
+  id: 8bdd915d-89db-4616-ac35-4cdd2111a822
+  model: ApprovalRequest
+- fields:
+    country: NOR
+    dataset: School Geolocation
+    enabled: false
+  id: 33d14172-4921-4ef4-a3b1-7de061b50dcd
+  model: ApprovalRequest
+- fields:
+    country: NOR
+    dataset: School Coverage
+    enabled: false
+  id: 2da54a07-d6ae-4cae-bfc2-47155b5b46b3
+  model: ApprovalRequest
+- fields:
+    country: OMN
+    dataset: School Geolocation
+    enabled: false
+  id: 4ab15fee-890d-4238-bdfb-bb5a590433bd
+  model: ApprovalRequest
+- fields:
+    country: OMN
+    dataset: School Coverage
+    enabled: false
+  id: 059b5c77-76a4-46e5-b493-c84235763838
+  model: ApprovalRequest
+- fields:
+    country: PAK
+    dataset: School Geolocation
+    enabled: false
+  id: 5f64d5b0-9d7c-4285-9a60-c5c697b449d5
+  model: ApprovalRequest
+- fields:
+    country: PAK
+    dataset: School Coverage
+    enabled: false
+  id: c80035e4-d41c-4466-8d54-19000ee95a3a
+  model: ApprovalRequest
+- fields:
+    country: PLW
+    dataset: School Geolocation
+    enabled: false
+  id: d266b00a-a112-4d73-ac5e-eb42f4e65212
+  model: ApprovalRequest
+- fields:
+    country: PLW
+    dataset: School Coverage
+    enabled: false
+  id: bea29cb9-3ef3-4007-9624-d494a228587a
+  model: ApprovalRequest
+- fields:
+    country: PSE
+    dataset: School Geolocation
+    enabled: false
+  id: fc570dd0-e7f0-4e9c-a982-148c1f1ef074
+  model: ApprovalRequest
+- fields:
+    country: PSE
+    dataset: School Coverage
+    enabled: false
+  id: 84774c41-ec56-43f2-a92d-aea262420fd3
+  model: ApprovalRequest
+- fields:
+    country: PAN
+    dataset: School Geolocation
+    enabled: false
+  id: b7bbe1d6-00ee-4092-b99e-0db7412dbabb
+  model: ApprovalRequest
+- fields:
+    country: PAN
+    dataset: School Coverage
+    enabled: false
+  id: a9bdb4ee-60c7-41d7-900d-f18dc36a9864
+  model: ApprovalRequest
+- fields:
+    country: PNG
+    dataset: School Geolocation
+    enabled: false
+  id: 2af346e9-a370-4225-89a7-3b97448563f0
+  model: ApprovalRequest
+- fields:
+    country: PNG
+    dataset: School Coverage
+    enabled: false
+  id: 6912cc4a-daf4-481b-bbad-948580bbe14e
+  model: ApprovalRequest
+- fields:
+    country: PRY
+    dataset: School Geolocation
+    enabled: false
+  id: 7e7534d9-45a0-47d6-a607-1f0b6bd33a6b
+  model: ApprovalRequest
+- fields:
+    country: PRY
+    dataset: School Coverage
+    enabled: false
+  id: 04102605-8f3c-4cd2-afc8-7104212d7797
+  model: ApprovalRequest
+- fields:
+    country: PER
+    dataset: School Geolocation
+    enabled: false
+  id: bae95d91-d2a9-49a4-a4d9-4b3e36ded715
+  model: ApprovalRequest
+- fields:
+    country: PER
+    dataset: School Coverage
+    enabled: false
+  id: 13bdb673-1812-40ae-be54-d185e870fbaf
+  model: ApprovalRequest
+- fields:
+    country: PHL
+    dataset: School Geolocation
+    enabled: false
+  id: 30549cc9-7118-49af-9571-84186c33e05d
+  model: ApprovalRequest
+- fields:
+    country: PHL
+    dataset: School Coverage
+    enabled: false
+  id: 62827e2b-827e-4ca2-98eb-c32d30a3e121
+  model: ApprovalRequest
+- fields:
+    country: PCN
+    dataset: School Geolocation
+    enabled: false
+  id: 9607cf15-e0a3-4d11-a89c-4b655c175a9a
+  model: ApprovalRequest
+- fields:
+    country: PCN
+    dataset: School Coverage
+    enabled: false
+  id: 0d42aa6e-e7e7-48b8-974e-358910832bb7
+  model: ApprovalRequest
+- fields:
+    country: POL
+    dataset: School Geolocation
+    enabled: false
+  id: da92657b-25ce-4933-a42a-c3222d417214
+  model: ApprovalRequest
+- fields:
+    country: POL
+    dataset: School Coverage
+    enabled: false
+  id: 109bad30-8044-41fb-9554-a0b30b05ae32
+  model: ApprovalRequest
+- fields:
+    country: PRT
+    dataset: School Geolocation
+    enabled: false
+  id: 6662bec8-fe3a-4f38-978c-53966573e4bf
+  model: ApprovalRequest
+- fields:
+    country: PRT
+    dataset: School Coverage
+    enabled: false
+  id: 44963ff3-64f6-4cde-8d21-e937a56743ec
+  model: ApprovalRequest
+- fields:
+    country: PRI
+    dataset: School Geolocation
+    enabled: false
+  id: f299414d-8d5c-44d7-8c90-c7bcef44b596
+  model: ApprovalRequest
+- fields:
+    country: PRI
+    dataset: School Coverage
+    enabled: false
+  id: bfbaf77d-96b3-4241-8dfa-a7976d44209d
+  model: ApprovalRequest
+- fields:
+    country: QAT
+    dataset: School Geolocation
+    enabled: false
+  id: ff33a69b-d9d8-44ba-8e45-661296de7db5
+  model: ApprovalRequest
+- fields:
+    country: QAT
+    dataset: School Coverage
+    enabled: false
+  id: 5c69467e-c692-4163-8a76-9e0ac9814899
+  model: ApprovalRequest
+- fields:
+    country: REU
+    dataset: School Geolocation
+    enabled: false
+  id: 94ec71a6-935d-4824-860c-a48cca76ff1d
+  model: ApprovalRequest
+- fields:
+    country: REU
+    dataset: School Coverage
+    enabled: false
+  id: 5500e973-e6f7-461b-99d6-0f4203ae7c81
+  model: ApprovalRequest
+- fields:
+    country: ROU
+    dataset: School Geolocation
+    enabled: false
+  id: 5ec2a92c-a330-47b0-88d2-78868d06ae30
+  model: ApprovalRequest
+- fields:
+    country: ROU
+    dataset: School Coverage
+    enabled: false
+  id: 8a22739b-d8de-40a0-9571-620ca2651af5
+  model: ApprovalRequest
+- fields:
+    country: RUS
+    dataset: School Geolocation
+    enabled: false
+  id: ec2f23e1-00df-4854-8b49-284dcf72e552
+  model: ApprovalRequest
+- fields:
+    country: RUS
+    dataset: School Coverage
+    enabled: false
+  id: 94883ba1-e560-4869-a569-aa4536c499d2
+  model: ApprovalRequest
+- fields:
+    country: RWA
+    dataset: School Geolocation
+    enabled: false
+  id: 6bbd6a3c-8236-47d0-9de6-3f075134151e
+  model: ApprovalRequest
+- fields:
+    country: RWA
+    dataset: School Coverage
+    enabled: false
+  id: 5e550418-9bdc-47f7-8280-8849da1421b3
+  model: ApprovalRequest
+- fields:
+    country: MAF
+    dataset: School Geolocation
+    enabled: false
+  id: ca597dec-d1e3-4e9b-bf24-57cda177eb6e
+  model: ApprovalRequest
+- fields:
+    country: MAF
+    dataset: School Coverage
+    enabled: false
+  id: c92c3f45-92e2-4b5a-88aa-c7b68ce62ebd
+  model: ApprovalRequest
+- fields:
+    country: WSM
+    dataset: School Geolocation
+    enabled: false
+  id: f3d05037-efaa-4c5c-a786-ba332b9e8e92
+  model: ApprovalRequest
+- fields:
+    country: WSM
+    dataset: School Coverage
+    enabled: false
+  id: a41fc4a8-b9e4-4758-8d03-89dd484d4356
+  model: ApprovalRequest
+- fields:
+    country: SMR
+    dataset: School Geolocation
+    enabled: false
+  id: 0c0fd5b5-7afc-4949-b8c1-a06046f1f3c1
+  model: ApprovalRequest
+- fields:
+    country: SMR
+    dataset: School Coverage
+    enabled: false
+  id: 343353b0-f9d3-4e2e-8f90-34addf9e5384
+  model: ApprovalRequest
+- fields:
+    country: STP
+    dataset: School Geolocation
+    enabled: false
+  id: 4bc9afd3-ed00-4c2c-96f4-4f8150c1e48a
+  model: ApprovalRequest
+- fields:
+    country: STP
+    dataset: School Coverage
+    enabled: false
+  id: cc8ef3a1-5d2b-4496-906a-e58771359d55
+  model: ApprovalRequest
+- fields:
+    country: SAU
+    dataset: School Geolocation
+    enabled: false
+  id: 29ef95e9-bff1-4e2d-aae1-043650c3192c
+  model: ApprovalRequest
+- fields:
+    country: SAU
+    dataset: School Coverage
+    enabled: false
+  id: a12251bd-a9e2-4fe1-b3ba-5d0e969e5481
+  model: ApprovalRequest
+- fields:
+    country: SEN
+    dataset: School Geolocation
+    enabled: false
+  id: 3b9b56ae-328a-4f0c-a737-1f87f919c8b5
+  model: ApprovalRequest
+- fields:
+    country: SEN
+    dataset: School Coverage
+    enabled: false
+  id: b8b72aa9-1f58-42a6-8198-f9cc96338789
+  model: ApprovalRequest
+- fields:
+    country: SRB
+    dataset: School Geolocation
+    enabled: false
+  id: 74c472bb-f65e-4ffc-9c7e-94520e27b9d9
+  model: ApprovalRequest
+- fields:
+    country: SRB
+    dataset: School Coverage
+    enabled: false
+  id: ecf50b6e-3842-4bf3-9acc-5117b925dd5a
+  model: ApprovalRequest
+- fields:
+    country: SYC
+    dataset: School Geolocation
+    enabled: false
+  id: 2a156e47-0842-4a40-bd1e-2afffb4dbafd
+  model: ApprovalRequest
+- fields:
+    country: SYC
+    dataset: School Coverage
+    enabled: false
+  id: e32a9e7b-c3c4-4754-bae7-25910259794a
+  model: ApprovalRequest
+- fields:
+    country: SLE
+    dataset: School Geolocation
+    enabled: false
+  id: 3343b7a5-8735-4806-b223-43ef08fc9944
+  model: ApprovalRequest
+- fields:
+    country: SLE
+    dataset: School Coverage
+    enabled: false
+  id: 532c9735-5f12-409d-8182-3d607d9062f5
+  model: ApprovalRequest
+- fields:
+    country: SGP
+    dataset: School Geolocation
+    enabled: false
+  id: 3001b914-2e76-4d6c-9825-5bb431fb56fa
+  model: ApprovalRequest
+- fields:
+    country: SGP
+    dataset: School Coverage
+    enabled: false
+  id: 9d1907e2-6d1e-421d-94cd-826deed626a7
+  model: ApprovalRequest
+- fields:
+    country: SXM
+    dataset: School Geolocation
+    enabled: false
+  id: a8be977a-1ad2-4096-ae16-ca5a0549ae39
+  model: ApprovalRequest
+- fields:
+    country: SXM
+    dataset: School Coverage
+    enabled: false
+  id: d3caeafb-6eb6-4112-988e-5847f3c33813
+  model: ApprovalRequest
+- fields:
+    country: SVK
+    dataset: School Geolocation
+    enabled: false
+  id: 31fec1fe-6b91-461d-a59d-054b12f5b904
+  model: ApprovalRequest
+- fields:
+    country: SVK
+    dataset: School Coverage
+    enabled: false
+  id: 9ba2540e-d509-4917-978c-1a16f3b53254
+  model: ApprovalRequest
+- fields:
+    country: SVN
+    dataset: School Geolocation
+    enabled: false
+  id: 999775e4-7a44-4bb9-9ae9-58f88047c621
+  model: ApprovalRequest
+- fields:
+    country: SVN
+    dataset: School Coverage
+    enabled: false
+  id: 9a8d9457-7338-4f5a-849c-1282db6ef511
+  model: ApprovalRequest
+- fields:
+    country: SLB
+    dataset: School Geolocation
+    enabled: false
+  id: 4d308418-8642-4baa-91c4-4202acf67f8d
+  model: ApprovalRequest
+- fields:
+    country: SLB
+    dataset: School Coverage
+    enabled: false
+  id: 4160ede6-4257-4e5b-8a2a-70579b7d630d
+  model: ApprovalRequest
+- fields:
+    country: SOM
+    dataset: School Geolocation
+    enabled: false
+  id: 7521269b-7523-4960-882b-9ca50bbcb351
+  model: ApprovalRequest
+- fields:
+    country: SOM
+    dataset: School Coverage
+    enabled: false
+  id: 79db1796-b312-4b95-b58a-b2cb71b435ff
+  model: ApprovalRequest
+- fields:
+    country: ZAF
+    dataset: School Geolocation
+    enabled: false
+  id: dcc1afb6-6246-40bf-a513-ea80a0366b60
+  model: ApprovalRequest
+- fields:
+    country: ZAF
+    dataset: School Coverage
+    enabled: false
+  id: ea5f0e71-c8ed-4301-9f1c-a14a5b37c7a2
+  model: ApprovalRequest
+- fields:
+    country: SGS
+    dataset: School Geolocation
+    enabled: false
+  id: 60f4f163-4e72-4b14-8dd4-e6cfbdf6c6c8
+  model: ApprovalRequest
+- fields:
+    country: SGS
+    dataset: School Coverage
+    enabled: false
+  id: d2f3b53f-c975-4cef-a0c2-15be96d4e1a7
+  model: ApprovalRequest
+- fields:
+    country: KOR
+    dataset: School Geolocation
+    enabled: false
+  id: abe63c70-1eb0-4b42-9421-d2c914ecb493
+  model: ApprovalRequest
+- fields:
+    country: KOR
+    dataset: School Coverage
+    enabled: false
+  id: 4b56813c-b0d5-4dff-87f3-059120dc84b8
+  model: ApprovalRequest
+- fields:
+    country: SSD
+    dataset: School Geolocation
+    enabled: false
+  id: a4e0880a-f65f-48ee-86f7-03553b89d84c
+  model: ApprovalRequest
+- fields:
+    country: SSD
+    dataset: School Coverage
+    enabled: false
+  id: bff5887a-8111-46ca-81bb-6958c426dbb0
+  model: ApprovalRequest
+- fields:
+    country: ESP
+    dataset: School Geolocation
+    enabled: false
+  id: ed590374-6ba1-4b2b-a0c5-a3164b334ccc
+  model: ApprovalRequest
+- fields:
+    country: ESP
+    dataset: School Coverage
+    enabled: false
+  id: f0b60fc8-12ff-4249-9ba0-e8bfddc395d0
+  model: ApprovalRequest
+- fields:
+    country: LKA
+    dataset: School Geolocation
+    enabled: false
+  id: 3da256de-9e16-4ea5-8acf-264a9b9c963f
+  model: ApprovalRequest
+- fields:
+    country: LKA
+    dataset: School Coverage
+    enabled: false
+  id: 9f332145-35cc-4955-a11d-c4806509b280
+  model: ApprovalRequest
+- fields:
+    country: BLM
+    dataset: School Geolocation
+    enabled: false
+  id: 5c2f66a9-e10f-438a-b801-fbbcbe6a99e7
+  model: ApprovalRequest
+- fields:
+    country: BLM
+    dataset: School Coverage
+    enabled: false
+  id: 2bbe8e6b-7f77-43d1-b1bb-cfea4ea8ba03
+  model: ApprovalRequest
+- fields:
+    country: SHN
+    dataset: School Geolocation
+    enabled: false
+  id: 578656a9-8dcc-4817-afde-bbf75eea1539
+  model: ApprovalRequest
+- fields:
+    country: SHN
+    dataset: School Coverage
+    enabled: false
+  id: 1c8c6682-9a90-405e-b065-f2e6514d2290
+  model: ApprovalRequest
+- fields:
+    country: KNA
+    dataset: School Geolocation
+    enabled: false
+  id: 6df5eaf1-46af-4d36-a9a4-c1f88c4d1dd7
+  model: ApprovalRequest
+- fields:
+    country: KNA
+    dataset: School Coverage
+    enabled: false
+  id: 1d6e6958-7dec-45c0-a382-1107162054fc
+  model: ApprovalRequest
+- fields:
+    country: LCA
+    dataset: School Geolocation
+    enabled: false
+  id: f934d17f-bfd7-4c04-a4b1-b297bf76cf0c
+  model: ApprovalRequest
+- fields:
+    country: LCA
+    dataset: School Coverage
+    enabled: false
+  id: 0de0b9d4-3b05-4ac0-88cf-b9555f6b997b
+  model: ApprovalRequest
+- fields:
+    country: SPM
+    dataset: School Geolocation
+    enabled: false
+  id: 4ac4430a-2135-4722-a9be-8d8282e66b1d
+  model: ApprovalRequest
+- fields:
+    country: SPM
+    dataset: School Coverage
+    enabled: false
+  id: ac24ccc7-00cf-4099-b7de-f267117c7dcb
+  model: ApprovalRequest
+- fields:
+    country: VCT
+    dataset: School Geolocation
+    enabled: false
+  id: 0e155d2a-10f0-4b49-8562-d3bbda3ed7b2
+  model: ApprovalRequest
+- fields:
+    country: VCT
+    dataset: School Coverage
+    enabled: false
+  id: 9c8c7680-04cc-41c8-88ff-89b3552c92bd
+  model: ApprovalRequest
+- fields:
+    country: SDN
+    dataset: School Geolocation
+    enabled: false
+  id: 94eafc85-4b9c-4b25-8429-c9f9333a6521
+  model: ApprovalRequest
+- fields:
+    country: SDN
+    dataset: School Coverage
+    enabled: false
+  id: 64363d4c-35f3-4315-aec3-cc333bc7bda8
+  model: ApprovalRequest
+- fields:
+    country: SUR
+    dataset: School Geolocation
+    enabled: false
+  id: 090c7e5c-73df-487c-b357-4c278e2a1e1a
+  model: ApprovalRequest
+- fields:
+    country: SUR
+    dataset: School Coverage
+    enabled: false
+  id: 816fe127-2f5f-4baa-9003-0aec0418008d
+  model: ApprovalRequest
+- fields:
+    country: SJM
+    dataset: School Geolocation
+    enabled: false
+  id: 4ddf19cb-2d31-4b5d-b992-967b37e715ad
+  model: ApprovalRequest
+- fields:
+    country: SJM
+    dataset: School Coverage
+    enabled: false
+  id: b9fa521e-e0c8-4266-9059-1164cb7bf940
+  model: ApprovalRequest
+- fields:
+    country: SWE
+    dataset: School Geolocation
+    enabled: false
+  id: bf637293-0b09-4ed6-bb1e-c2f0266a1d83
+  model: ApprovalRequest
+- fields:
+    country: SWE
+    dataset: School Coverage
+    enabled: false
+  id: 33423aa2-7149-4b28-96da-2a3a96ec1b5c
+  model: ApprovalRequest
+- fields:
+    country: CHE
+    dataset: School Geolocation
+    enabled: false
+  id: 0dd5e1a6-33ce-404c-8eb4-feae1e837f23
+  model: ApprovalRequest
+- fields:
+    country: CHE
+    dataset: School Coverage
+    enabled: false
+  id: be112bc1-cfc2-4411-8949-7dc4f3dfe94b
+  model: ApprovalRequest
+- fields:
+    country: SYR
+    dataset: School Geolocation
+    enabled: false
+  id: df03202a-6c3f-41e6-86f7-1912408b4204
+  model: ApprovalRequest
+- fields:
+    country: SYR
+    dataset: School Coverage
+    enabled: false
+  id: 53655c69-31de-44a5-83d4-a2674073d07c
+  model: ApprovalRequest
+- fields:
+    country: TWN
+    dataset: School Geolocation
+    enabled: false
+  id: de0420c2-a8d8-48f1-ac22-54d9dfd2ecc1
+  model: ApprovalRequest
+- fields:
+    country: TWN
+    dataset: School Coverage
+    enabled: false
+  id: ee862ab4-6d14-4d54-96e1-839d62f3db21
+  model: ApprovalRequest
+- fields:
+    country: TJK
+    dataset: School Geolocation
+    enabled: false
+  id: 2dba1741-e92c-45e4-97fd-0e22e09ab5f2
+  model: ApprovalRequest
+- fields:
+    country: TJK
+    dataset: School Coverage
+    enabled: false
+  id: 6fc484db-cc2b-48b3-85dd-dd3512803301
+  model: ApprovalRequest
+- fields:
+    country: TZA
+    dataset: School Geolocation
+    enabled: false
+  id: 55c50e4b-ee47-41d7-b8b8-7edcebb769f9
+  model: ApprovalRequest
+- fields:
+    country: TZA
+    dataset: School Coverage
+    enabled: false
+  id: 50de36d7-5a15-4335-9d47-3c8674d2d35a
+  model: ApprovalRequest
+- fields:
+    country: THA
+    dataset: School Geolocation
+    enabled: false
+  id: 4d6be287-2099-48a6-9ecb-3ca30461587b
+  model: ApprovalRequest
+- fields:
+    country: THA
+    dataset: School Coverage
+    enabled: false
+  id: ba11fc33-b61e-493d-8c6c-6764df21ca9b
+  model: ApprovalRequest
+- fields:
+    country: TLS
+    dataset: School Geolocation
+    enabled: false
+  id: 293ed17f-229b-4150-a6f9-0507a097021c
+  model: ApprovalRequest
+- fields:
+    country: TLS
+    dataset: School Coverage
+    enabled: false
+  id: 50b1c7ab-a522-4b6f-9b1f-b5823c4508b1
+  model: ApprovalRequest
+- fields:
+    country: TGO
+    dataset: School Geolocation
+    enabled: false
+  id: 276dcee0-6da8-4c24-93c7-7dbd4f4b245b
+  model: ApprovalRequest
+- fields:
+    country: TGO
+    dataset: School Coverage
+    enabled: false
+  id: 27e2f47a-d844-4118-9b80-1cbbea97b607
+  model: ApprovalRequest
+- fields:
+    country: TKL
+    dataset: School Geolocation
+    enabled: false
+  id: 08f3ff18-88db-48cc-bac5-d58c2fd16ec8
+  model: ApprovalRequest
+- fields:
+    country: TKL
+    dataset: School Coverage
+    enabled: false
+  id: bc4195c3-5b22-4216-a643-ce683110ddfe
+  model: ApprovalRequest
+- fields:
+    country: TON
+    dataset: School Geolocation
+    enabled: false
+  id: d9efb08e-dba5-413f-9af5-1434decd2cd9
+  model: ApprovalRequest
+- fields:
+    country: TON
+    dataset: School Coverage
+    enabled: false
+  id: a7790c95-5792-4d2f-9fe1-1b09aa74b7a8
+  model: ApprovalRequest
+- fields:
+    country: TTO
+    dataset: School Geolocation
+    enabled: false
+  id: e29fe160-4558-477d-ba20-90ab085a75c6
+  model: ApprovalRequest
+- fields:
+    country: TTO
+    dataset: School Coverage
+    enabled: false
+  id: d67645dc-3f39-44c4-8ff8-116d35cd901a
+  model: ApprovalRequest
+- fields:
+    country: TUN
+    dataset: School Geolocation
+    enabled: false
+  id: c5be85a4-5c17-4ead-be8d-301867281434
+  model: ApprovalRequest
+- fields:
+    country: TUN
+    dataset: School Coverage
+    enabled: false
+  id: 320178e7-01bf-47b8-9186-50e5b29e753a
+  model: ApprovalRequest
+- fields:
+    country: TUR
+    dataset: School Geolocation
+    enabled: false
+  id: 443bebcb-e3ec-44e0-8193-94ee5e6f5ca8
+  model: ApprovalRequest
+- fields:
+    country: TUR
+    dataset: School Coverage
+    enabled: false
+  id: 825f0883-82bc-4e55-92ca-a6c54fbac550
+  model: ApprovalRequest
+- fields:
+    country: TKM
+    dataset: School Geolocation
+    enabled: false
+  id: ca0d6262-8abb-4adb-9d06-485fe74f58b9
+  model: ApprovalRequest
+- fields:
+    country: TKM
+    dataset: School Coverage
+    enabled: false
+  id: 2ed145f4-7998-4798-8302-0cf694b19e9f
+  model: ApprovalRequest
+- fields:
+    country: TCA
+    dataset: School Geolocation
+    enabled: false
+  id: 46e46f6b-12fc-4ebb-8df1-49a66edfbaf9
+  model: ApprovalRequest
+- fields:
+    country: TCA
+    dataset: School Coverage
+    enabled: false
+  id: 056d543c-354f-45f4-85c3-359b22329623
+  model: ApprovalRequest
+- fields:
+    country: TUV
+    dataset: School Geolocation
+    enabled: false
+  id: 151c1ca5-5c3e-4ccb-8889-90a30c9e2633
+  model: ApprovalRequest
+- fields:
+    country: TUV
+    dataset: School Coverage
+    enabled: false
+  id: 70f5cdfd-164a-4910-b61e-fb35de0a7162
+  model: ApprovalRequest
+- fields:
+    country: UGA
+    dataset: School Geolocation
+    enabled: false
+  id: b0ffdc9a-933b-4d5e-aa3d-9f0d57a92bdf
+  model: ApprovalRequest
+- fields:
+    country: UGA
+    dataset: School Coverage
+    enabled: false
+  id: 37b2c03e-0498-4bde-adf3-308efc3c8c87
+  model: ApprovalRequest
+- fields:
+    country: UKR
+    dataset: School Geolocation
+    enabled: false
+  id: da6fe220-0d68-4a44-a6b8-b19a0944c4fb
+  model: ApprovalRequest
+- fields:
+    country: UKR
+    dataset: School Coverage
+    enabled: false
+  id: 82dc49a0-117c-4ea6-bcfa-1dd922b11cce
+  model: ApprovalRequest
+- fields:
+    country: ARE
+    dataset: School Geolocation
+    enabled: false
+  id: 4fc289f7-ff2e-4189-ab74-180991323f9e
+  model: ApprovalRequest
+- fields:
+    country: ARE
+    dataset: School Coverage
+    enabled: false
+  id: 5686e719-7b1d-43c3-96ef-edad92a8db77
+  model: ApprovalRequest
+- fields:
+    country: GBR
+    dataset: School Geolocation
+    enabled: false
+  id: a55361fd-a88d-4a76-bdc1-599c101c417f
+  model: ApprovalRequest
+- fields:
+    country: GBR
+    dataset: School Coverage
+    enabled: false
+  id: 39cd8586-53d4-43f6-a891-59732e23561a
+  model: ApprovalRequest
+- fields:
+    country: USA
+    dataset: School Geolocation
+    enabled: false
+  id: f3be7284-4e64-42de-9e8f-4b1e409d41ea
+  model: ApprovalRequest
+- fields:
+    country: USA
+    dataset: School Coverage
+    enabled: false
+  id: 4a70c70a-a23a-432c-a990-1ff84b655508
+  model: ApprovalRequest
+- fields:
+    country: UMI
+    dataset: School Geolocation
+    enabled: false
+  id: 473f8e52-37a7-4901-9ceb-a1bfed5dd620
+  model: ApprovalRequest
+- fields:
+    country: UMI
+    dataset: School Coverage
+    enabled: false
+  id: 480393b6-9376-4da0-be80-af8e90c7531d
+  model: ApprovalRequest
+- fields:
+    country: VIR
+    dataset: School Geolocation
+    enabled: false
+  id: 1837ca3f-5a0a-4251-a48f-9d3b529a1a4a
+  model: ApprovalRequest
+- fields:
+    country: VIR
+    dataset: School Coverage
+    enabled: false
+  id: 313874cd-dfbc-423d-b246-548991270564
+  model: ApprovalRequest
+- fields:
+    country: URY
+    dataset: School Geolocation
+    enabled: false
+  id: b2a548e5-f898-4df3-bb2b-e71dd528d775
+  model: ApprovalRequest
+- fields:
+    country: URY
+    dataset: School Coverage
+    enabled: false
+  id: 120daf99-bdba-4fb4-9438-c8173f637df1
+  model: ApprovalRequest
+- fields:
+    country: UZB
+    dataset: School Geolocation
+    enabled: false
+  id: 53c752ba-b318-4bd8-bbf8-528e91ea1fb1
+  model: ApprovalRequest
+- fields:
+    country: UZB
+    dataset: School Coverage
+    enabled: false
+  id: 65cdde4f-7f46-4848-b54e-9de390260a5a
+  model: ApprovalRequest
+- fields:
+    country: VUT
+    dataset: School Geolocation
+    enabled: false
+  id: 73564174-bdfa-42ee-94a9-efeb8fedf0c0
+  model: ApprovalRequest
+- fields:
+    country: VUT
+    dataset: School Coverage
+    enabled: false
+  id: 5e494e61-b9d4-4fa2-9739-ac080d34845d
+  model: ApprovalRequest
+- fields:
+    country: VAT
+    dataset: School Geolocation
+    enabled: false
+  id: 8bf17146-a98d-4f22-a516-c874b00c3046
+  model: ApprovalRequest
+- fields:
+    country: VAT
+    dataset: School Coverage
+    enabled: false
+  id: 31fab544-5b69-4159-9f25-2e31c20c22f6
+  model: ApprovalRequest
+- fields:
+    country: VEN
+    dataset: School Geolocation
+    enabled: false
+  id: 5d33ae1f-f445-4073-8b89-7e21d53ba0be
+  model: ApprovalRequest
+- fields:
+    country: VEN
+    dataset: School Coverage
+    enabled: false
+  id: 7a71282c-7d8b-4f24-919a-818e2c6591b8
+  model: ApprovalRequest
+- fields:
+    country: VNM
+    dataset: School Geolocation
+    enabled: false
+  id: 71b109a9-0f34-4c6c-9c04-18f6e0664205
+  model: ApprovalRequest
+- fields:
+    country: VNM
+    dataset: School Coverage
+    enabled: false
+  id: 7746802e-fe5c-43d9-a67b-6a16fcd1d8a3
+  model: ApprovalRequest
+- fields:
+    country: WLF
+    dataset: School Geolocation
+    enabled: false
+  id: 21b3170b-5477-451b-ab57-c724fdcd9d48
+  model: ApprovalRequest
+- fields:
+    country: WLF
+    dataset: School Coverage
+    enabled: false
+  id: 3bf80201-4ee3-4e18-87bf-36289e024117
+  model: ApprovalRequest
+- fields:
+    country: ESH
+    dataset: School Geolocation
+    enabled: false
+  id: 4fa3e7be-8d58-4102-82ac-cce8753e7feb
+  model: ApprovalRequest
+- fields:
+    country: ESH
+    dataset: School Coverage
+    enabled: false
+  id: d7b88a2f-978f-4b91-8f0e-cad4f485f033
+  model: ApprovalRequest
+- fields:
+    country: YEM
+    dataset: School Geolocation
+    enabled: false
+  id: d03ce695-01a5-441e-aea6-035c2793967c
+  model: ApprovalRequest
+- fields:
+    country: YEM
+    dataset: School Coverage
+    enabled: false
+  id: 8346d982-a79b-4151-b695-458a6148a733
+  model: ApprovalRequest
+- fields:
+    country: ZMB
+    dataset: School Geolocation
+    enabled: false
+  id: 8880d14a-d09f-4fe7-b30c-559c70872ded
+  model: ApprovalRequest
+- fields:
+    country: ZMB
+    dataset: School Coverage
+    enabled: false
+  id: 1b791e3f-b8d5-4d41-95cd-d3570dd49263
+  model: ApprovalRequest
+- fields:
+    country: ZWE
+    dataset: School Geolocation
+    enabled: false
+  id: 799bac6e-2e96-44da-a5ac-84287181d777
+  model: ApprovalRequest
+- fields:
+    country: ZWE
+    dataset: School Coverage
+    enabled: false
+  id: f26515f4-31a4-4cd3-964f-bc6309520649
+  model: ApprovalRequest

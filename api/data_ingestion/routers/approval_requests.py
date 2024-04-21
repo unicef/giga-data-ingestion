@@ -6,16 +6,18 @@ from pathlib import Path
 import pandas as pd
 from country_converter import country_converter as coco
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
-from sqlalchemy import column, func, literal, select, text
+from sqlalchemy import column, func, literal, select, text, update
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import count
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
+from data_ingestion.db.primary import get_db as get_primary_db
 from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
+from data_ingestion.models import ApprovalRequest
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
     ApprovalRequestListing,
@@ -38,7 +40,16 @@ async def list_approval_requests(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=50),
     db: Session = Depends(get_db),
+    primary_db: Session = Depends(get_primary_db),
 ):
+    base_query = select(ApprovalRequest).order_by(
+        ApprovalRequest.country, ApprovalRequest.dataset
+    )
+    items = await primary_db.scalars(base_query)
+    settings = {}
+    for item in items:
+        settings[f"{item.country}-{item.dataset}"] = item.enabled
+
     data_cte = (
         select("*")
         .select_from(text("information_schema.tables"))
@@ -100,7 +111,15 @@ async def list_approval_requests(
         stats = res.mappings().one()
 
         country = coco.convert(table["table_name"], to="name_short")
-        dataset = table["table_schema"].replace("staging", "").replace("_", " ").title()
+        country_iso3 = coco.convert(table["table_name"], to="ISO3")
+
+        dataset = (
+            table["table_schema"]
+            .replace("staging", "")
+            .replace("_", " ")
+            .title()
+            .rstrip()
+        )
         body.append(
             ApprovalRequestListing(
                 id=f'{table["table_name"].upper()}-{dataset}',
@@ -113,6 +132,7 @@ async def list_approval_requests(
                 rows_added=stats["rows_added"],
                 rows_updated=stats["rows_updated"],
                 rows_deleted=0,
+                enabled=settings[f"{country_iso3}-{dataset}"],
             )
         )
 
@@ -192,6 +212,7 @@ async def get_approval_request(
 async def upload_approved_rows(
     body: UploadApprovedRowsRequest,
     user=Depends(azure_scheme),
+    primary_db: Session = Depends(get_primary_db),
 ):
     posix_path = Path(urllib.parse.unquote(body.subpath))
     dataset = posix_path.parent.name.replace("_staging", "").replace("_", "-")
@@ -214,6 +235,18 @@ async def upload_approved_rows(
             overwrite=True,
             content_settings=ContentSettings(content_type="application/json"),
         )
+
+        formatted_dataset = dataset.replace("-", " ").title()
+        update_query = (
+            update(ApprovalRequest)
+            .where(
+                ApprovalRequest.country == country_iso3,
+                ApprovalRequest.dataset == formatted_dataset,
+            )
+            .values(enabled=False)
+        )
+        await primary_db.execute(update_query)
+        await primary_db.commit()
 
     except HttpResponseError as err:
         raise HTTPException(
