@@ -90,7 +90,7 @@ function ColumnMapping() {
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
     incrementStepIndex();
     setColumnMapping(data);
-    void navigate({ to: "../school-connectivity" });
+    void navigate({ to: "/ingest-api/add/school-connectivity" });
   };
 
   const rows = useMemo(() => {

@@ -4,7 +4,11 @@ import {
   CommonApiIngestionFormSchema,
   TestApiSchema,
 } from "@/forms/ingestApi.ts";
-import { AuthorizationTypeEnum, PaginationTypeEnum } from "@/types/qos.ts";
+import {
+  AuthorizationTypeEnum,
+  PaginationTypeEnum,
+  SendQueryInEnum,
+} from "@/types/qos.ts";
 
 export function validateAuthType(
   val: TestApiSchema | CommonApiIngestionFormSchema,
@@ -91,6 +95,17 @@ export function validatePaginationType(
           path: ["page_offset_key"],
         });
       }
+      if (
+        !val.page_send_query_in ||
+        val.page_send_query_in === SendQueryInEnum.NONE
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Send pagination parameters is required when Pagination Method is provided",
+          path: ["page_send_query_in"],
+        });
+      }
       break;
     }
     case PaginationTypeEnum.PAGE_NUMBER: {
@@ -123,6 +138,17 @@ export function validatePaginationType(
           message:
             "Page Starts With must be greater than or equal to 0 when Pagination Method is PAGE NUMBER",
           path: ["page_starts_with"],
+        });
+      }
+      if (
+        !val.page_send_query_in ||
+        val.page_send_query_in === SendQueryInEnum.NONE
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Send pagination parameters is required when Pagination Method is provided",
+          path: ["page_send_query_in"],
         });
       }
       break;

@@ -1,5 +1,5 @@
 import { Suspense, useState } from "react";
-import { Control, Controller, SubmitHandler, useForm } from "react-hook-form";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
 import { Add } from "@carbon/icons-react";
 import {

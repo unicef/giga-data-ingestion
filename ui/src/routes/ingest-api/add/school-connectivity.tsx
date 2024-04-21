@@ -30,7 +30,7 @@ export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
 
     if (api_endpoint === "") {
       setStepIndex(0);
-      throw redirect({ to: ".." });
+      throw redirect({ to: "/ingest-api/add" });
     }
 
     setStepIndex(2);

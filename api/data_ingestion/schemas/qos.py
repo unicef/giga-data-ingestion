@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+import orjson
 from fastapi import Form
-from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_validator
 
 from data_ingestion.models.ingest_api_qos import (
     AuthorizationTypeEnum,
@@ -110,6 +111,13 @@ class CreateSchoolListRequest(ApiConfigurationRequest):
     name: str
     user_email: EmailStr
     user_id: str
+
+    @field_validator("column_to_schema_mapping", mode="before")
+    @classmethod
+    def validate_column_to_schema_mapping(cls, value: str | dict):
+        if isinstance(value, str):
+            return orjson.loads(value)
+        return value
 
 
 @dataclass

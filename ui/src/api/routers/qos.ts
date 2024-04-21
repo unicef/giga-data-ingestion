@@ -59,7 +59,7 @@ export default function route(axi: AxiosInstance) {
         formData.append("file", params.file);
       }
 
-      return axi.post(`/qos/api_ingestion`, formData);
+      return axi.post("/qos/api_ingestion", formData);
     },
     update_api_ingestion: (params: {
       body: EditApiIngestionRequest;

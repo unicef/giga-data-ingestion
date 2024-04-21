@@ -46,9 +46,9 @@ const ConfirmAddIngestionModal = ({
         file: file,
       },
       {
-        onSuccess: async () => {
+        onSuccess: () => {
           setOpen(false);
-          await navigate({
+          void navigate({
             to: "/ingest-api",
             search: {
               page: DEFAULT_PAGE_NUMBER,
@@ -74,7 +74,7 @@ const ConfirmAddIngestionModal = ({
       onRequestClose={onCancel}
       onRequestSubmit={onSubmit}
     >
-      This will create a new ingesiton that will ingest from{" "}
+      This will create a new ingestion that will ingest from{" "}
       <b>{schoolConnectivity.api_endpoint}</b> every{" "}
       <b>{schoolConnectivity.ingestion_frequency_minutes}</b> minutes
     </Modal>

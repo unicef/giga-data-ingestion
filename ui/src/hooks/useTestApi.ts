@@ -96,8 +96,9 @@ export function useTestApi() {
             setIsValidDataKey(true);
             setIsValidResponse(true);
             setIsResponseError(false);
-            if (apiType === "schoolList")
+            if (apiType === "schoolList") {
               setDetectedColumns(Object.keys(responseData[0]));
+            }
           } else {
             setIsValidDataKey(false);
           }
