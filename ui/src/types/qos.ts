@@ -1,3 +1,8 @@
+import {
+  SchoolConnectivityFormSchema,
+  SchoolListFormSchema,
+} from "@/forms/ingestApi.ts";
+
 export enum AuthorizationTypeEnum {
   NONE = "NONE",
   API_KEY = "API_KEY",
@@ -122,55 +127,17 @@ export interface SchoolConnectivityFormValues extends ApiIngestionFormValues {
   response_date_format: string | null;
 }
 
-export const initialApiIngestionFormValues: ApiIngestionFormValues = {
-  api_auth_api_key: null,
-  api_auth_api_value: null,
-  api_endpoint: "",
-  authorization_type: AuthorizationTypeEnum.NONE,
-  basic_auth_password: null,
-  basic_auth_username: null,
-  bearer_auth_bearer_token: null,
-  data_key: "",
-  enabled: true,
-  error_message: null,
-  page_number_key: null,
-  page_offset_key: null,
-  page_send_query_in: SendQueryInEnum.NONE,
-  page_size_key: null,
-  page_starts_with: null,
-  pagination_type: PaginationTypeEnum.NONE,
-  query_parameters: null,
-  request_body: null,
-  request_method: RequestMethodEnum.GET,
-  school_id_key: "",
-  school_id_send_query_in: SendQueryInEnum.NONE,
-  size: null,
-};
-
-export const initialSchoolListFormValues: SchoolListFormValues = {
-  ...initialApiIngestionFormValues,
-  name: "",
-  column_to_schema_mapping: "",
-  user_email: "",
-  user_id: "",
-};
-
-export const initialSchoolConnectivityFormValues: SchoolConnectivityFormValues =
-  {
-    ...initialApiIngestionFormValues,
-
-    ingestion_frequency_minutes: 5,
-    date_key: null,
-    date_format: null,
-    send_date_in: SendQueryInEnum.QUERY_PARAMETERS,
-    response_date_key: null,
-    response_date_format: null,
-  };
-
-export interface CreateSchoolListRequest extends SchoolListFormValues {}
+export interface CreateSchoolListRequest extends SchoolListFormSchema {
+  column_to_schema_mapping: string;
+  enabled: boolean;
+  error_message: string | null;
+}
 
 export interface CreateSchoolConnectivityRequest
-  extends SchoolConnectivityFormValues {}
+  extends SchoolConnectivityFormSchema {
+  error_message: string | null;
+}
+
 export interface CreateApiIngestionRequest {
   school_connectivity: CreateSchoolConnectivityRequest;
   school_list: CreateSchoolListRequest;

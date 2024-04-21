@@ -31,6 +31,12 @@ const schemaQueryOptions = queryOptions({
 export const Route = createFileRoute("/ingest-api/add/")({
   component: AddIngestion,
   loader: ({ context: { queryClient } }) => {
+    const {
+      apiIngestionSliceActions: { setStepIndex },
+    } = useStore.getState();
+
+    setStepIndex(0);
+
     return Promise.all([
       queryClient.ensureQueryData(schemaQueryOptions),
       queryClient.ensureQueryData(listUsersQueryOptions),

@@ -1,4 +1,4 @@
-import { UseFormReturn } from "react-hook-form";
+import { Controller, UseFormReturn } from "react-hook-form";
 
 import {
   Button,
@@ -318,20 +318,25 @@ export function Switch<MappingType>({
   mapping,
   hookForm,
 }: BaseInputProps<MappingType>) {
-  const { register } = hookForm;
+  const { control, setValue } = hookForm;
   const name = mapping.name as keyof (
     | SchoolListFormSchema
     | SchoolConnectivityFormSchema
   );
 
   return (
-    <Toggle
-      id={name}
-      labelText={mapping.label}
-      {...register(name, {
-        required: mapping.required,
-        onChange: mapping.onChange,
-      })}
+    <Controller
+      control={control}
+      name={name}
+      render={({ field: { value } }) => (
+        <Toggle
+          id={name}
+          labelText={mapping.label}
+          toggled={Boolean(value)}
+          // @ts-expect-error wrong type
+          onToggle={value => setValue(name, value)}
+        />
+      )}
     />
   );
 }

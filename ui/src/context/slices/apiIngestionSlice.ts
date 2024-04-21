@@ -7,7 +7,6 @@ import {
   schoolConnectivityFormInitialValues,
   schoolListFormInitialValues,
 } from "@/forms/ingestApi.ts";
-import { initialSchoolConnectivityFormValues } from "@/types/qos";
 
 export interface ApiIngestionSliceState {
   apiIngestionSlice: {
@@ -96,7 +95,7 @@ export const createApiIngestionSlice: StateCreator<
     resetSchoolConnectivityFormValues: () =>
       set(state => {
         state.apiIngestionSlice.schoolConnectivity =
-          initialSchoolConnectivityFormValues;
+          schoolConnectivityFormInitialValues;
       }),
     resetSchoolListFormValues: () =>
       set(state => {

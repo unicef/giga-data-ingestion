@@ -30,25 +30,34 @@ const ConfirmAddIngestionModal = ({
   });
 
   const onSubmit = async () => {
-    await mutateAsync({
-      school_connectivity: { ...schoolConnectivity, error_message: null },
-      school_list: {
-        ...schoolList,
-        column_to_schema_mapping: JSON.stringify(columnMapping),
-        enabled: true,
-        error_message: null,
-      },
-      file: file,
-    });
+    const correctedColumnMapping = Object.fromEntries(
+      Object.entries(columnMapping).map(([key, value]) => [value, key]),
+    );
 
-    setOpen(false);
-    void navigate({
-      to: "/ingest-api",
-      search: {
-        page: DEFAULT_PAGE_NUMBER,
-        page_size: DEFAULT_PAGE_SIZE,
+    await mutateAsync(
+      {
+        school_connectivity: { ...schoolConnectivity, error_message: null },
+        school_list: {
+          ...schoolList,
+          column_to_schema_mapping: JSON.stringify(correctedColumnMapping),
+          enabled: true,
+          error_message: null,
+        },
+        file: file,
       },
-    });
+      {
+        onSuccess: async () => {
+          setOpen(false);
+          await navigate({
+            to: "/ingest-api",
+            search: {
+              page: DEFAULT_PAGE_NUMBER,
+              page_size: DEFAULT_PAGE_SIZE,
+            },
+          });
+        },
+      },
+    );
   };
 
   const onCancel = () => {

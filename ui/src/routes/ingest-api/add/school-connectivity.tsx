@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, Loading, Section, Tag } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Editor } from "@monaco-editor/react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { ZodError } from "zod";
 
 import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
@@ -21,12 +21,19 @@ import { useTestApi } from "@/hooks/useTestApi.ts";
 export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
   component: SchoolConnectivity,
   loader: () => {
-    // TODO: put this back
-    // const {
-    //   schoolList: { api_endpoint },
-    // } = useStore.getState().apiIngestionSlice;
-    //
-    // if (api_endpoint === "") throw redirect({ to: ".." });
+    const {
+      apiIngestionSlice: {
+        schoolList: { api_endpoint },
+      },
+      apiIngestionSliceActions: { setStepIndex },
+    } = useStore.getState();
+
+    if (api_endpoint === "") {
+      setStepIndex(0);
+      throw redirect({ to: ".." });
+    }
+
+    setStepIndex(2);
   },
 });
 
