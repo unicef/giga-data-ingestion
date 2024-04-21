@@ -34,7 +34,7 @@ export default function route(axi: AxiosInstance) {
     update_school_list_status: (params: {
       id: string;
       enabled: boolean;
-    }): Promise<AxiosResponse<null>> => {
+    }): Promise<AxiosResponse<void>> => {
       return axi.patch(
         `/qos/school_list/${params.id}/status/`,
         {},
@@ -47,7 +47,7 @@ export default function route(axi: AxiosInstance) {
     },
     create_api_ingestion: (
       params: CreateApiIngestionRequest,
-    ): Promise<null> => {
+    ): Promise<AxiosResponse<never>> => {
       const formData = new FormData();
 
       const jsonSchoolConnectivity = JSON.stringify(params.school_connectivity);
@@ -64,7 +64,7 @@ export default function route(axi: AxiosInstance) {
     update_api_ingestion: (params: {
       body: EditApiIngestionRequest;
       id: string;
-    }): Promise<null> => {
+    }): Promise<AxiosResponse<void>> => {
       return axi.patch(`/qos/api_ingestion/${params.id}`, {
         school_connectivity: params.body.school_connectivity,
         school_list: params.body.school_list,

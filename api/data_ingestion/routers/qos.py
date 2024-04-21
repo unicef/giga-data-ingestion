@@ -234,15 +234,23 @@ async def create_api_ingestion(
             ) from err
 
     school_connectivity = SchoolConnectivity(
-        **school_connectivity_data.model_dump(),
-        schema_url=upload_path,
-        school_list_id=school_list.id,
+        **{
+            **school_connectivity_data.model_dump(),
+            "schema_url": upload_path,
+            "school_list_id": school_list.id,
+            "send_date_in": None
+            if school_connectivity_data.send_date_in == "NONE"
+            else school_connectivity_data.send_date_in,
+        }
     )
 
     db.add(school_connectivity)
     await db.commit()
 
-    return {"school_list": school_list, "school_connectivity": school_connectivity}
+    return {
+        "school_list": school_list,
+        "school_connectivity": school_connectivity,
+    }
 
 
 @router.patch("/api_ingestion/{id}", status_code=status.HTTP_204_NO_CONTENT)

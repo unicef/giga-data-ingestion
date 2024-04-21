@@ -22,16 +22,19 @@ const ConfirmAddIngestionModal = ({
 }: ConfirmAddIngestionModalInputs) => {
   const {
     apiIngestionSlice: { columnMapping, file, schoolConnectivity, schoolList },
-  } = useStore.getState();
-  const navigate = useNavigate({ from: "/ingest-api" });
+  } = useStore();
+  const navigate = useNavigate({ from: "/ingest-api/add/school-connectivity" });
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: api.qos.create_api_ingestion,
+    mutationKey: ["school_list"],
   });
 
   const onSubmit = async () => {
     const correctedColumnMapping = Object.fromEntries(
-      Object.entries(columnMapping).map(([key, value]) => [value, key]),
+      Object.entries(columnMapping)
+        .map(([key, value]) => [value, key])
+        .filter(([key, value]) => !!key && !!value),
     );
 
     await mutateAsync(
@@ -46,9 +49,9 @@ const ConfirmAddIngestionModal = ({
         file: file,
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
           setOpen(false);
-          void navigate({
+          await navigate({
             to: "/ingest-api",
             search: {
               page: DEFAULT_PAGE_NUMBER,

@@ -48,7 +48,7 @@ class ApiConfiguration(BaseModel):
 
 class SchoolConnectivitySchema(ApiConfiguration):
     ingestion_frequency_minutes: int
-    schema_url: str
+    schema_url: str | None
     school_list_id: str
     date_key: str | None
     date_format: str | None
@@ -63,11 +63,7 @@ class SchoolConnectivitySchema(ApiConfiguration):
                 raise ValueError(
                     "date_format should also be provided when date_key is provided"
                 )
-            if self.send_date_in is None:
-                raise ValueError(
-                    "send_date_in should also be provided when date_key is provided"
-                )
-            if is_valid_format_code(self.date_format) is False:
+            if not is_valid_format_code(self.date_format):
                 raise ValueError("date_format is invalid")
         return self
 
@@ -125,7 +121,7 @@ class CreateSchoolConnectivityRequest(ApiConfigurationRequest):
     ingestion_frequency_minutes: int
     date_key: str | None
     date_format: str | None
-    send_date_in: str
+    send_date_in: str | None
     response_date_key: str
     response_date_format: str
 

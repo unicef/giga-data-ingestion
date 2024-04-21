@@ -62,11 +62,7 @@ function EditIngestion() {
     queryFn: () => api.qos.get_school_list(ingestionId),
   });
 
-  const {
-    data: usersQuery,
-    isFetching: isUsersFetching,
-    isRefetching: isUsersRefetching,
-  } = useQuery({
+  const { data: usersQuery } = useQuery({
     queryKey: ["users"],
     queryFn: api.users.list,
   });
@@ -80,28 +76,19 @@ function EditIngestion() {
     ...SchoolListFormDefaultValues
   } = schoolListQuery;
 
-  const {
-    control,
-    formState,
-    handleSubmit,
-    register,
-    resetField,
-    trigger,
-    watch,
-  } = useForm<SchoolListFormValues>({
-    mode: "onChange",
-    reValidateMode: "onChange",
-    defaultValues: {
-      ...SchoolListFormDefaultValues,
-    },
-  });
+  const { formState, handleSubmit, resetField, watch } =
+    useForm<SchoolListFormValues>({
+      mode: "onChange",
+      reValidateMode: "onChange",
+      defaultValues: {
+        ...SchoolListFormDefaultValues,
+      },
+    });
 
   const { errors } = formState;
   const watchAuthType = watch("authorization_type");
   const watchPaginationType = watch("pagination_type");
   const watchRequestMethod = watch("request_method");
-
-  const hasError = Object.keys(errors).length > 0;
 
   useEffect(() => {
     resetField("api_auth_api_key");
@@ -144,18 +131,6 @@ function EditIngestion() {
 
   const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
 
-  const errorStates = {
-    setIsResponseError,
-    setIsValidDatakey,
-    setIsValidResponse,
-    setResponsePreview,
-  };
-
-  const fetchingStates = {
-    isUsersFetching,
-    isUsersRefetching,
-  };
-
   if (isError) return <IngestFormSkeleton />;
 
   return (
@@ -168,17 +143,7 @@ function EditIngestion() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex w-full space-x-10 ">
           <section className="flex w-full flex-col gap-4">
-            <SchoolListFormInputs
-              errors={errors}
-              errorStates={errorStates}
-              fetchingStates={fetchingStates}
-              hasError={hasError}
-              users={users}
-              control={control}
-              register={register}
-              trigger={trigger}
-              watch={watch}
-            />
+            <SchoolListFormInputs users={users} />
             <ButtonSet className="w-full">
               <Button
                 as={Link}
