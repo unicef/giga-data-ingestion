@@ -19,7 +19,7 @@ import {
   Toggle,
 } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, getRouteApi, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { HEADERS } from "@/constants/ingest-api";
@@ -33,10 +33,10 @@ export type LoadingStates = {
   [key: string]: boolean;
 };
 
+const Route = getRouteApi("/ingest-api/");
+
 function IngestTable() {
-  const { page: currentPage, page_size: pageSize } = useSearch({
-    from: "/ingest-api/",
-  });
+  const { page: currentPage, page_size: pageSize } = Route.useSearch();
   const navigate = useNavigate({ from: "/ingest-api/" });
 
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({});
@@ -58,7 +58,7 @@ function IngestTable() {
   } = useStore();
 
   const {
-    data: schoolListQuery,
+    data: { data: schoolListQuery },
     isLoading: isSchoolListLoading,
     refetch: refetchSchoolList,
     isRefetching: isSchoolListRefetching,
@@ -70,11 +70,7 @@ function IngestTable() {
         page: currentPage,
       }),
   });
-
-  const schoolListData = useMemo(
-    () => schoolListQuery?.data.data ?? [],
-    [schoolListQuery],
-  );
+  const schoolListData = schoolListQuery.data;
 
   const formattedSchoolListData = useMemo(() => {
     return schoolListData.map(schoolList => {
@@ -216,7 +212,7 @@ function IngestTable() {
               page={currentPage}
               pageSize={pageSize}
               pageSizes={[10, 25, 50]}
-              totalItems={schoolListQuery?.data.total_count}
+              totalItems={schoolListQuery.total_count}
               onChange={handlePaginationChange}
             />
           </TableContainer>

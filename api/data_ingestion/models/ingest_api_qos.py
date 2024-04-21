@@ -109,7 +109,7 @@ class SchoolConnectivity(ApiConfiguration):
     __tablename__ = "qos_school_connectivity"
 
     ingestion_frequency_minutes: Mapped[int] = mapped_column()
-    schema_url: Mapped[str] = mapped_column()
+    schema_url: Mapped[str] = mapped_column(nullable=True)
 
     school_list_id: Mapped[str] = mapped_column(ForeignKey("qos_school_list.id"))
     school_list: Mapped["SchoolList"] = relationship(

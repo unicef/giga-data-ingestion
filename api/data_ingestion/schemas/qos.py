@@ -72,7 +72,7 @@ class SchoolConnectivitySchema(ApiConfiguration):
 
 
 class SchoolListSchema(ApiConfiguration):
-    column_to_schema_mapping: str
+    column_to_schema_mapping: dict[str, str]
     name: str
     user_email: EmailStr
     user_id: str
@@ -106,7 +106,7 @@ class ApiConfigurationRequest(BaseModel):
 
 @dataclass
 class CreateSchoolListRequest(ApiConfigurationRequest):
-    column_to_schema_mapping: str
+    column_to_schema_mapping: dict[str, str]
     name: str
     user_email: EmailStr
     user_id: str
@@ -115,8 +115,8 @@ class CreateSchoolListRequest(ApiConfigurationRequest):
 @dataclass
 class CreateSchoolConnectivityRequest(ApiConfigurationRequest):
     ingestion_frequency_minutes: int
-    date_key: str
-    date_format: str
+    date_key: str | None
+    date_format: str | None
     send_date_in: str
     response_date_key: str
     response_date_format: str
@@ -145,7 +145,7 @@ class EditSchoolConnectivityRequest(ApiConfigurationRequest):
 
 
 class EditSchoolListRequest(ApiConfigurationRequest):
-    column_to_schema_mapping: str
+    column_to_schema_mapping: dict[str, str]
     name: str
     user_email: EmailStr
     user_id: str
