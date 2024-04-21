@@ -103,17 +103,21 @@ export function useTestApi() {
           }
 
           if (apiType === "schoolConnectivity") {
-            const responseDateKeyValue = responseData[0][
-              response_date_key ?? ""
-            ] as string;
+            if (response_date_key) {
+              const responseDateKeyValue = responseData[0][
+                response_date_key ?? ""
+              ] as string;
 
-            const { data: isValid } =
-              await api.utils.isValidDateTimeFormatCodeRequest({
-                datetime_str: responseDateKeyValue,
-                format_code: response_date_format ?? "",
-              });
+              const { data: isValid } =
+                await api.utils.isValidDateTimeFormatCodeRequest({
+                  datetime_str: responseDateKeyValue,
+                  format_code: response_date_format ?? "",
+                });
 
-            setIsValidResponseDateFormat(isValid);
+              setIsValidResponseDateFormat(isValid);
+            } else {
+              setIsValidResponseDateFormat(false);
+            }
           }
         } else {
           if (!Array.isArray(responseData)) {
@@ -257,6 +261,7 @@ export function useTestApi() {
       const res = await axios(requestConfig);
       await handleValidationTry(res.data);
     } catch (e) {
+      console.error(e);
       handleValidationCatch(e);
     } finally {
       setIsLoading(false);

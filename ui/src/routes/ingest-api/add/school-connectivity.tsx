@@ -86,9 +86,6 @@ function SchoolConnectivity() {
     const excludedFields: (keyof SchoolConnectivityFormSchema)[] = [
       "school_id_key",
       "school_id_send_query_in",
-      // 'ingestion_frequency_minutes',
-      // 'response_date_key',
-      // 'response_date_format',
     ];
     const currentForm = Object.fromEntries(
       Object.entries(getValues()).filter(
