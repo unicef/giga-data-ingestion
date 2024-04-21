@@ -21,7 +21,7 @@ def main(number: int = 5):
     coco = CountryConverter()
     df = coco.data
     countries = df["ISO3"].to_list()
-    datasets = ["School Geolocation", "School Coverage", "School QoS"]
+    datasets = ["School Geolocation", "School Coverage"]
 
     for country, dataset in product(countries, datasets):
         approval_request_id = fake.uuid4()
