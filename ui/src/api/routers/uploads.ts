@@ -1,7 +1,11 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
 import { PagedResponse } from "@/types/api.ts";
-import { DataQualityCheck, UploadParams } from "@/types/upload";
+import {
+  DataQualityCheck,
+  UploadParams,
+  UploadUnstructuredParams,
+} from "@/types/upload";
 import { UploadResponse } from "@/types/upload.ts";
 
 export default function routes(axi: AxiosInstance) {
@@ -32,6 +36,20 @@ export default function routes(axi: AxiosInstance) {
         params: { dataset: params.dataset },
       });
     },
+
+    upload_unstructured: (
+      params: UploadUnstructuredParams,
+    ): Promise<AxiosResponse<null>> => {
+      const formData = new FormData();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value != null) {
+          formData.append(key, value);
+        }
+      });
+
+      return axi.post("/upload/unstructured", formData);
+    },
+
     download_data_quality_check: (
       upload_id: string,
     ): Promise<AxiosResponse<Blob>> => {

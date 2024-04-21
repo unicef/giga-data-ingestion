@@ -46,9 +46,10 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
 });
 
 function Layout() {
-  const { uploadType } = Route.useParams();
+  const { uploadType, uploadGroup } = Route.useParams();
   const title = uploadType.replace(/-/g, " ");
-
+  const isUnstructured =
+    uploadGroup === "other" && uploadType === "unstructured";
   const {
     uploadSlice: { stepIndex },
     uploadSliceActions: { resetUploadSliceState },
@@ -67,20 +68,49 @@ function Layout() {
           name, education level, internet connection, computer count etc.
         </p>
       </Stack>
-      <ProgressIndicator currentIndex={stepIndex} spaceEqually>
-        <ProgressStep label="1" description="Upload" secondaryLabel="Upload" />
-        <ProgressStep
-          label="2"
-          description="Configure columns"
-          secondaryLabel="Configure columns"
-        />
-        <ProgressStep
-          label="3"
-          description="Add metadata"
-          secondaryLabel="Add metadata"
-        />
-        <ProgressStep label="4" description="Submit" secondaryLabel="Submit" />
-      </ProgressIndicator>
+
+      {isUnstructured ? (
+        <ProgressIndicator currentIndex={stepIndex} spaceEqually>
+          <ProgressStep
+            label="1"
+            description="Upload"
+            secondaryLabel="Upload"
+          />
+          <ProgressStep
+            label="2"
+            description="Add metadata"
+            secondaryLabel="Add metadata"
+          />
+          <ProgressStep
+            label="3"
+            description="Submit"
+            secondaryLabel="Submit"
+          />
+        </ProgressIndicator>
+      ) : (
+        <ProgressIndicator currentIndex={stepIndex} spaceEqually>
+          <ProgressStep
+            label="1"
+            description="Upload"
+            secondaryLabel="Upload"
+          />
+          <ProgressStep
+            label="2"
+            description="Configure columns"
+            secondaryLabel="Configure columns"
+          />
+          <ProgressStep
+            label="3"
+            description="Add metadata"
+            secondaryLabel="Add metadata"
+          />
+          <ProgressStep
+            label="4"
+            description="Submit"
+            secondaryLabel="Submit"
+          />
+        </ProgressIndicator>
+      )}
 
       <Outlet />
     </Stack>

@@ -46,3 +46,11 @@ class FileUploadRequest:
     dataset: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+
+
+@dataclass
+class UnstructuredFileUploadRequest:
+    file: UploadFile = Form(...)
+    country: str = Form(...)
+    metadata: str = Form(...)
+    source: str | None = Form(None)

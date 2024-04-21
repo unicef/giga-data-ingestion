@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from typing import Annotated
 
 import country_converter as coco
@@ -36,6 +37,7 @@ from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
     FileUploadRequest,
+    UnstructuredFileUploadRequest,
 )
 
 router = APIRouter(
@@ -195,6 +197,76 @@ async def upload_file(
         raise err
 
     return file_upload
+
+
+@router.post("/unstructured", status_code=status.HTTP_201_CREATED)
+async def upload_unstructured(
+    response: Response,
+    user: User = Depends(azure_scheme),
+    form: UnstructuredFileUploadRequest = Depends(),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    file = form.file
+
+    if not is_privileged:
+        if not any(group.rsplit("-")[0] == form.country for group in user.groups):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have permissions on this dataset",
+            )
+
+    if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds 10 MB limit",
+        )
+
+    file_content = await file.read(2048)
+    file_type = magic.from_buffer(file_content, mime=True)
+    file_extension = os.path.splitext(file.filename)[1]
+
+    if file_type not in constants.VALID_UNSTRUCTURED_UPLOAD_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file type.",
+        )
+
+    if file_extension not in constants.VALID_UNSTRUCTURED_UPLOAD_TYPES[file_type]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File extension does not match file type.",
+        )
+
+    country_code = coco.convert(form.country, to="ISO3")
+
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    upload_path = (
+        f"raw/uploads/unstructured/{country_code}/" f"{timestamp}_{file.filename}"
+    )
+    client = storage_client.get_blob_client(upload_path)
+
+    try:
+        metadata = {
+            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            "country": form.country,
+        }
+
+        if form.source is not None:
+            metadata["source"] = form.source
+
+        await file.seek(0)
+        client.upload_blob(
+            await file.read(),
+            metadata=metadata,
+            content_settings=ContentSettings(content_type=file_type),
+        )
+        response.status_code = status.HTTP_201_CREATED
+    except HttpResponseError as err:
+        raise HTTPException(
+            detail=err.message, status_code=err.response.status_code
+        ) from err
+    except Exception as err:
+        raise err
 
 
 @router.get(

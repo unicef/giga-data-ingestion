@@ -2,15 +2,19 @@ import { parse } from "papaparse";
 import * as XLSX from "xlsx";
 import { utils as xlsxUtils } from "xlsx";
 
-import { AcceptedFileTypes } from "@/constants/upload.ts";
+import {
+  AcceptedFileTypes,
+  AcceptedUnstructuredFileTypes,
+  AcceptedUnstructuredMimeTypes,
+} from "@/constants/upload.ts";
 import { MetaSchema } from "@/types/schema.ts";
 
 interface DetectHeadersOptions {
-  type: AcceptedFileTypes;
+  type: AcceptedFileTypes | AcceptedUnstructuredFileTypes;
   file: File;
   setDetectedColumns: (columns: string[]) => void;
   setColumnMapping: (mapping: Record<string, string>) => void;
-  setIsLoading: (isLoading: boolean) => void;
+  setIsParsing: (isLoading: boolean) => void;
   setError: (error: string) => void;
   schema: MetaSchema[];
 }
@@ -23,6 +27,10 @@ export class HeaderDetector {
   }
 
   public detect() {
+    if (AcceptedUnstructuredMimeTypes.includes(this.options.file.type)) {
+      this.image();
+      return;
+    }
     switch (this.options.type) {
       case AcceptedFileTypes.CSV:
         this.csv();
@@ -54,7 +62,7 @@ export class HeaderDetector {
       options.setColumnMapping(autoColumnMapping);
     }
 
-    options.setIsLoading(false);
+    options.setIsParsing(false);
   }
 
   private csv() {
@@ -68,7 +76,7 @@ export class HeaderDetector {
       error: e => {
         console.error(e.message);
         options.setError(e.message);
-        options.setIsLoading(false);
+        options.setIsParsing(false);
       },
       preview: 1,
     });
@@ -142,5 +150,10 @@ export class HeaderDetector {
         console.error(e);
         options.setError("A parsing error occurred. Please try again.");
       });
+  }
+
+  private image() {
+    const { options } = this;
+    options.setIsParsing(false);
   }
 }
