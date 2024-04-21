@@ -4,6 +4,7 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, Loading, Section, Tag } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Editor } from "@monaco-editor/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
@@ -15,7 +16,6 @@ import { ZodError } from "zod";
 
 import { api } from "@/api";
 import { listUsersQueryOptions } from "@/api/queryOptions.ts";
-import { MemoizedApiPreview } from "@/components/ingest-api/ApiPreview.tsx";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
 import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
@@ -224,8 +224,17 @@ function AddIngestion() {
             <Tag type="red">Invalid Output from API request</Tag>
           )}
           {!isValidDataKey && <Tag type="red">Invalid Data Key</Tag>}
-          <MemoizedApiPreview
-            preview={responsePreview === "" ? "" : prettyResponse}
+          <Editor
+            height="100%"
+            defaultLanguage="json"
+            value={prettyResponse}
+            options={{
+              readOnly: true,
+              domReadOnly: true,
+              minimap: {
+                enabled: false,
+              },
+            }}
           />
         </aside>
       </div>

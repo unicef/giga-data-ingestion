@@ -4,10 +4,10 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, Loading, Section, Tag } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Editor } from "@monaco-editor/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ZodError } from "zod";
 
-import { MemoizedApiPreview } from "@/components/ingest-api/ApiPreview.tsx";
 import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
 import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs";
 import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
@@ -204,8 +204,17 @@ function SchoolConnectivity() {
           {!isValidResponseDateFormat && (
             <Tag type="red">Response date format mismatch</Tag>
           )}
-          <MemoizedApiPreview
-            preview={responsePreview === "" ? "" : prettyResponse}
+          <Editor
+            height="100%"
+            defaultLanguage="json"
+            value={prettyResponse}
+            options={{
+              readOnly: true,
+              domReadOnly: true,
+              minimap: {
+                enabled: false,
+              },
+            }}
           />
         </aside>
       </div>
