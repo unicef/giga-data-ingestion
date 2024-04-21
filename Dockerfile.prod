@@ -24,7 +24,7 @@ COPY ./ui/ /tmp/
 
 WORKDIR /tmp
 
-RUN npm install --ignore-scripts && npm run build
+RUN npm ci && npm run build
 
 FROM python:3.11-alpine3.19 AS base
 

@@ -33,13 +33,12 @@ export const Route = createFileRoute(
 
 function SchoolConnectivity() {
   ``;
-  const [isResponseError, setIsResponseError] = useState<boolean>(false);
-  const [isValidDatakey, setIsValidDataKey] = useState<boolean>(false);
-  const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
-  const [isValidResponseDateFormat, setIsValidResponseDateFormat] =
-    useState<boolean>(false);
+  const [isResponseError] = useState<boolean>(false);
+  const [isValidDatakey] = useState<boolean>(false);
+  const [isValidResponse] = useState<boolean>(false);
+  const [isValidResponseDateFormat] = useState<boolean>(false);
   const [open, setOpen] = useState<boolean>(false);
-  const [responsePreview, setResponsePreview] = useState<string | string[]>("");
+  const [responsePreview] = useState<string | string[]>("");
 
   const {
     apiIngestionSliceActions: {
@@ -70,24 +69,14 @@ function SchoolConnectivity() {
     ...schoolConnectivityFormDefaultValues
   } = schoolConnectivityQuery;
 
-  const {
-    clearErrors,
-    control,
-    formState,
-    handleSubmit,
-    register,
-    resetField,
-    setError,
-    setValue,
-    trigger,
-    watch,
-  } = useForm<SchoolConnectivityFormValues>({
-    defaultValues: {
-      ...schoolConnectivityFormDefaultValues,
-    },
-    mode: "onChange",
-    reValidateMode: "onChange",
-  });
+  const { formState, handleSubmit, resetField, watch } =
+    useForm<SchoolConnectivityFormValues>({
+      defaultValues: {
+        ...schoolConnectivityFormDefaultValues,
+      },
+      mode: "onChange",
+      reValidateMode: "onChange",
+    });
 
   const { errors, isValid } = formState;
   const watchAuthType = watch("authorization_type");
@@ -119,19 +108,13 @@ function SchoolConnectivity() {
       return;
     }
 
+    // @ts-expect-error FIXME
     setSchoolConnectivityFormValues(data);
     setOpen(true);
   };
 
   const prettyResponse = JSON.stringify(responsePreview, undefined, 4);
 
-  const errorStates = {
-    setIsResponseError,
-    setIsValidDataKey,
-    setIsValidResponse,
-    setResponsePreview,
-    setIsValidResponseDateFormat,
-  };
   return (
     <section className="container py-6">
       <header className="gap-2">
@@ -142,18 +125,7 @@ function SchoolConnectivity() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="flex w-full space-x-10 ">
           <section className="flex w-full flex-col gap-4">
-            <SchoolConnectivityFormInputs
-              clearErrors={clearErrors}
-              control={control}
-              errors={errors}
-              errorStates={errorStates}
-              hasFileUpload={false}
-              register={register}
-              setError={setError}
-              setValue={setValue}
-              trigger={trigger}
-              watch={watch}
-            />
+            <SchoolConnectivityFormInputs />
             <ButtonSet className="w-full">
               <Button
                 as={Link}

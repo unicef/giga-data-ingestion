@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 from datetime import datetime
 
+import orjson
 from fastapi import Form
-from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_validator
 
 from data_ingestion.models.ingest_api_qos import (
     AuthorizationTypeEnum,
@@ -47,7 +48,7 @@ class ApiConfiguration(BaseModel):
 
 class SchoolConnectivitySchema(ApiConfiguration):
     ingestion_frequency_minutes: int
-    schema_url: str
+    schema_url: str | None
     school_list_id: str
     date_key: str | None
     date_format: str | None
@@ -62,17 +63,13 @@ class SchoolConnectivitySchema(ApiConfiguration):
                 raise ValueError(
                     "date_format should also be provided when date_key is provided"
                 )
-            if self.send_date_in is None:
-                raise ValueError(
-                    "send_date_in should also be provided when date_key is provided"
-                )
-            if is_valid_format_code(self.date_format) is False:
+            if not is_valid_format_code(self.date_format):
                 raise ValueError("date_format is invalid")
         return self
 
 
 class SchoolListSchema(ApiConfiguration):
-    column_to_schema_mapping: str
+    column_to_schema_mapping: dict[str, str]
     name: str
     user_email: EmailStr
     user_id: str
@@ -106,18 +103,25 @@ class ApiConfigurationRequest(BaseModel):
 
 @dataclass
 class CreateSchoolListRequest(ApiConfigurationRequest):
-    column_to_schema_mapping: str
+    column_to_schema_mapping: dict[str, str]
     name: str
     user_email: EmailStr
     user_id: str
+
+    @field_validator("column_to_schema_mapping", mode="before")
+    @classmethod
+    def validate_column_to_schema_mapping(cls, value: str | dict):
+        if isinstance(value, str):
+            return orjson.loads(value)
+        return value
 
 
 @dataclass
 class CreateSchoolConnectivityRequest(ApiConfigurationRequest):
     ingestion_frequency_minutes: int
-    date_key: str
-    date_format: str
-    send_date_in: str
+    date_key: str | None
+    date_format: str | None
+    send_date_in: str | None
     response_date_key: str
     response_date_format: str
 
@@ -145,7 +149,7 @@ class EditSchoolConnectivityRequest(ApiConfigurationRequest):
 
 
 class EditSchoolListRequest(ApiConfigurationRequest):
-    column_to_schema_mapping: str
+    column_to_schema_mapping: dict[str, str]
     name: str
     user_email: EmailStr
     user_id: str

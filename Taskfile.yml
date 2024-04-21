@@ -247,14 +247,16 @@ tasks:
     cmds:
       - rm -rf build
       - >
-        docker run --rm 
-        --volume $(pwd):/app 
-        --workdir /app
-        --env-file .env
-        --entrypoint /bin/sh
-        --user $(id -u):$(id -g)
-        node:20-alpine
-        -c "npm ci && npm run build"
+        docker build --tag {{.INGESTION_PORTAL_IMAGE_REPOSITORY}}:{{.COMMIT_SHA}}
+        --build-arg "VITE_SENTRY_DSN={{.VITE_SENTRY_DSN}}"
+        --build-arg "VITE_AZURE_CLIENT_ID={{.VITE_AZURE_CLIENT_ID}}"
+        --build-arg "VITE_AZURE_TENANT_ID={{.VITE_AZURE_TENANT_ID}}"
+        --build-arg "VITE_AZURE_TENANT_NAME={{.VITE_AZURE_TENANT_NAME}}"
+        --build-arg "VITE_AZURE_SUSI_AUTH_POLICY_NAME={{.VITE_AZURE_SUSI_AUTH_POLICY_NAME}}"
+        --build-arg "VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME={{.VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME}}"
+        --build-arg "VITE_DATAHUB_URL=https://io-datahub-dev.unitst.org"
+        --target build
+        -f Dockerfile.prod .
 
   generate-b2c-policy:
     desc: Generate AAD B2C policy

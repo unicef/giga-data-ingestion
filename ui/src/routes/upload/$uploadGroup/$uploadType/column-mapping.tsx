@@ -13,7 +13,7 @@ import {
   Stack,
   Tag,
 } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
   createFileRoute,
@@ -31,9 +31,9 @@ export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/column-mapping",
 )({
   component: UploadColumnMapping,
-  loader: () => {
+  loader: ({ params: { uploadType }, context: { queryClient } }) => {
     const {
-      uploadSlice: { file },
+      uploadSlice: { file, source },
       uploadSliceActions: { setStepIndex },
     } = useStore.getState();
 
@@ -41,6 +41,14 @@ export const Route = createFileRoute(
       setStepIndex(0);
       throw redirect({ to: ".." });
     }
+
+    const metaschemaName =
+      uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
+
+    return queryClient.ensureQueryData({
+      queryFn: () => api.schema.get(metaschemaName),
+      queryKey: ["schema", metaschemaName],
+    });
   },
 });
 
@@ -70,7 +78,7 @@ function UploadColumnMapping() {
   const metaschemaName =
     uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
 
-  const { data: schemaQuery, isLoading } = useQuery({
+  const { data: schemaQuery, isLoading } = useSuspenseQuery({
     queryFn: () => api.schema.get(metaschemaName),
     queryKey: ["schema", metaschemaName],
   });

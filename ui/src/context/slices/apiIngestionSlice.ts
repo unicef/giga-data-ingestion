@@ -1,38 +1,48 @@
-// import apiIngestion slice
 import { StateCreator } from "zustand";
 
 import {
-  SchoolConnectivityFormValues,
-  SchoolListFormValues,
-  initialSchoolConnectivityFormValues,
-  initialSchoolListFormValues,
-} from "@/types/qos";
+  ConfigureColumnsForm,
+  SchoolConnectivityFormSchema,
+  SchoolListFormSchema,
+  schoolConnectivityFormInitialValues,
+  schoolListFormInitialValues,
+} from "@/forms/ingestApi.ts";
 
 export interface ApiIngestionSliceState {
   apiIngestionSlice: {
-    columnMapping: Record<string, string>;
+    columnMapping: ConfigureColumnsForm;
     detectedColumns: string[];
-    schoolList: SchoolListFormValues;
-    schoolConnectivity: SchoolConnectivityFormValues;
+    schoolList: SchoolListFormSchema;
+    schoolConnectivity: SchoolConnectivityFormSchema;
     stepIndex: number;
     file: File | null;
   };
 }
+
 export interface ApiIngestionSliceActions {
   apiIngestionSliceActions: {
     decrementStepIndex: () => void;
     incrementStepIndex: () => void;
+    setStepIndex: (
+      stepIndex: ApiIngestionSliceState["apiIngestionSlice"]["stepIndex"],
+    ) => void;
     resetColumnMapping: () => void;
     resetApiIngestionState: () => void;
     resetSchoolConnectivityFormValues: () => void;
     resetSchoolListFormValues: () => void;
-    setColumnMapping: (columnMapping: Record<string, string>) => void;
-    setDetectedColumns: (detectedColumns: Array<string>) => void;
+    setColumnMapping: (
+      columnMapping: ApiIngestionSliceState["apiIngestionSlice"]["columnMapping"],
+    ) => void;
+    setDetectedColumns: (
+      detectedColumns: ApiIngestionSliceState["apiIngestionSlice"]["detectedColumns"],
+    ) => void;
     setFile: (file: File | null) => void;
     setSchoolConnectivityFormValues: (
-      formValues: SchoolConnectivityFormValues,
+      formValues: ApiIngestionSliceState["apiIngestionSlice"]["schoolConnectivity"],
     ) => void;
-    setSchoolListFormValues: (formValues: SchoolListFormValues) => void;
+    setSchoolListFormValues: (
+      formValues: ApiIngestionSliceState["apiIngestionSlice"]["schoolList"],
+    ) => void;
   };
 }
 
@@ -44,8 +54,8 @@ export const initialApiIngestionSliceState: ApiIngestionSliceState = {
   apiIngestionSlice: {
     columnMapping: {},
     detectedColumns: [],
-    schoolList: initialSchoolListFormValues,
-    schoolConnectivity: initialSchoolConnectivityFormValues,
+    schoolList: schoolListFormInitialValues,
+    schoolConnectivity: schoolConnectivityFormInitialValues,
     stepIndex: 0,
     file: null,
   },
@@ -68,6 +78,10 @@ export const createApiIngestionSlice: StateCreator<
       set(state => {
         state.apiIngestionSlice.stepIndex += 1;
       }),
+    setStepIndex: stepIndex =>
+      set(state => {
+        state.apiIngestionSlice.stepIndex = stepIndex;
+      }),
     resetColumnMapping: () =>
       set(state => {
         state.apiIngestionSlice.columnMapping = {};
@@ -81,17 +95,17 @@ export const createApiIngestionSlice: StateCreator<
     resetSchoolConnectivityFormValues: () =>
       set(state => {
         state.apiIngestionSlice.schoolConnectivity =
-          initialSchoolConnectivityFormValues;
+          schoolConnectivityFormInitialValues;
       }),
     resetSchoolListFormValues: () =>
       set(state => {
-        state.apiIngestionSlice.schoolList = initialSchoolListFormValues;
+        state.apiIngestionSlice.schoolList = schoolListFormInitialValues;
       }),
-    setColumnMapping: (columnMapping: Record<string, string>) =>
+    setColumnMapping: columnMapping =>
       set(state => {
         state.apiIngestionSlice.columnMapping = columnMapping;
       }),
-    setDetectedColumns: (detectedColumns: Array<string>) =>
+    setDetectedColumns: detectedColumns =>
       set(state => {
         state.apiIngestionSlice.detectedColumns = detectedColumns;
       }),
@@ -99,13 +113,11 @@ export const createApiIngestionSlice: StateCreator<
       set(state => {
         state.apiIngestionSlice.file = file;
       }),
-    setSchoolConnectivityFormValues: (
-      formValues: SchoolConnectivityFormValues,
-    ) =>
+    setSchoolConnectivityFormValues: formValues =>
       set(state => {
         state.apiIngestionSlice.schoolConnectivity = formValues;
       }),
-    setSchoolListFormValues: (formValues: SchoolListFormValues) =>
+    setSchoolListFormValues: (formValues: SchoolListFormSchema) =>
       set(state => {
         state.apiIngestionSlice.schoolList = formValues;
       }),

@@ -21,8 +21,8 @@ function Layout() {
       <ProgressIndicator currentIndex={stepIndex} spaceEqually>
         <ProgressStep
           label="1"
-          description="School-listing"
-          secondaryLabel="School-listing"
+          description="School listing"
+          secondaryLabel="School listing"
         />
         <ProgressStep
           label="2"

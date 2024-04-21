@@ -5,102 +5,128 @@ import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, Loading, Section, Tag } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Editor } from "@monaco-editor/react";
-import { Link, createFileRoute, redirect } from "@tanstack/react-router";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  Link,
+  Outlet,
+  createFileRoute,
+  useNavigate,
+} from "@tanstack/react-router";
 import { ZodError } from "zod";
 
-import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal";
-import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs";
+import { api } from "@/api";
+import { listUsersQueryOptions } from "@/api/queryOptions.ts";
+import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
+import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs";
 import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { useStore } from "@/context/store";
-import {
-  SchoolConnectivityFormSchema,
-  TestApiSchema,
-} from "@/forms/ingestApi.ts";
+import { SchoolListFormSchema, TestApiSchema } from "@/forms/ingestApi.ts";
 import { useTestApi } from "@/hooks/useTestApi.ts";
 
-export const Route = createFileRoute("/ingest-api/add/school-connectivity")({
-  component: SchoolConnectivity,
-  loader: () => {
+const schemaQueryOptions = queryOptions({
+  queryFn: () => api.schema.get("school_geolocation"),
+  queryKey: ["schema", "school_geolocation"],
+});
+
+export const Route = createFileRoute("/ingest-api/add/")({
+  component: AddIngestion,
+  loader: ({ context: { queryClient } }) => {
     const {
-      apiIngestionSlice: {
-        schoolList: { api_endpoint },
-      },
       apiIngestionSliceActions: { setStepIndex },
     } = useStore.getState();
 
-    if (api_endpoint === "") {
-      setStepIndex(0);
-      throw redirect({ to: "/ingest-api/add" });
-    }
+    setStepIndex(0);
 
-    setStepIndex(2);
+    return Promise.all([
+      queryClient.ensureQueryData(schemaQueryOptions),
+      queryClient.ensureQueryData(listUsersQueryOptions),
+    ]);
   },
+  pendingComponent: IngestFormSkeleton,
 });
 
-function SchoolConnectivity() {
-  const [isResponseError, setIsResponseError] = useState<boolean>(false);
-  const [isValidDataKey, setIsValidDataKey] = useState<boolean>(false);
-  const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
-  const [isValidResponseDateFormat, setIsValidResponseDateFormat] =
-    useState<boolean>(false);
-  const [open, setOpen] = useState<boolean>(false);
+function AddIngestion() {
   const [responsePreview, setResponsePreview] = useState<
     Record<string, unknown> | Record<string, unknown>[] | string
   >("");
+  const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
+  const [isValidDataKey, setIsValidDataKey] = useState<boolean>(false);
+  const [isResponseError, setIsResponseError] = useState<boolean>(false);
 
   const {
-    apiIngestionSlice: {
-      // file,
-      schoolConnectivity,
-    },
+    apiIngestionSlice: { schoolList, detectedColumns },
     apiIngestionSliceActions: {
-      decrementStepIndex,
-      resetSchoolConnectivityFormValues,
-      setSchoolConnectivityFormValues,
+      setSchoolListFormValues,
+      setColumnMapping,
+      incrementStepIndex,
+      resetApiIngestionState,
     },
   } = useStore();
 
   const { testApi, isLoading } = useTestApi();
 
-  // const hasUploadedFile = file != null;
+  const navigate = useNavigate({ from: Route.fullPath });
 
-  const hookForm = useForm<SchoolConnectivityFormSchema>({
+  const {
+    data: { data: users },
+    isLoading: isUsersLoading,
+  } = useSuspenseQuery(listUsersQueryOptions);
+
+  const {
+    data: { data: schema },
+  } = useSuspenseQuery(schemaQueryOptions);
+
+  const hookForm = useForm<SchoolListFormSchema>({
     mode: "onSubmit",
     reValidateMode: "onBlur",
-    resolver: zodResolver(SchoolConnectivityFormSchema),
-    defaultValues: schoolConnectivity,
+    resolver: zodResolver(SchoolListFormSchema, { async: true }),
+    defaultValues: schoolList,
     shouldFocusError: true,
   });
+
   const {
-    formState: { errors },
     handleSubmit,
-    getValues,
     control,
-    clearErrors,
+    formState: { errors },
     setError,
+    getValues,
+    clearErrors,
   } = hookForm;
 
-  const onSubmit: SubmitHandler<SchoolConnectivityFormSchema> = async data => {
+  const onSubmit: SubmitHandler<SchoolListFormSchema> = async data => {
     if (Object.keys(errors).length > 0) {
       // form has errors, don't submit
       return;
     }
-    resetSchoolConnectivityFormValues();
-    setSchoolConnectivityFormValues(data);
-    setOpen(true);
+
+    const user = users.find(user => user.id === data.user_id);
+    const dataWithUserEmail = { ...data, user_email: user?.mail ?? "" };
+
+    const autoColumnMapping: Record<string, string> = {};
+    schema.forEach(column => {
+      if (detectedColumns.includes(column.name)) {
+        autoColumnMapping[column.name] = column.name;
+      }
+    });
+
+    setSchoolListFormValues(dataWithUserEmail);
+    setColumnMapping(autoColumnMapping);
+    incrementStepIndex();
+    void navigate({ to: "./column-mapping" });
   };
 
   const handleClickTest = useCallback(async () => {
     clearErrors();
 
-    const excludedFields: (keyof SchoolConnectivityFormSchema)[] = [
+    const excludedFields: (keyof SchoolListFormSchema)[] = [
+      "name",
+      "user_id",
       "school_id_key",
       "school_id_send_query_in",
     ];
     const currentForm = Object.fromEntries(
       Object.entries(getValues()).filter(
-        ([key]) =>
-          !excludedFields.includes(key as keyof SchoolConnectivityFormSchema),
+        ([key]) => !excludedFields.includes(key as keyof SchoolListFormSchema),
       ),
     );
 
@@ -110,7 +136,7 @@ function SchoolConnectivity() {
       console.error(error);
       if (error instanceof ZodError) {
         for (const e of error.errors) {
-          setError(e.path.join(".") as keyof SchoolConnectivityFormSchema, {
+          setError(e.path.join(".") as keyof SchoolListFormSchema, {
             message: e.message,
           });
         }
@@ -119,42 +145,41 @@ function SchoolConnectivity() {
     }
 
     await testApi({
-      apiType: "schoolConnectivity",
+      apiType: "schoolList",
       getValues,
       setIsValidResponse,
       setIsResponseError,
       setResponsePreview,
       setIsValidDataKey,
-      setIsValidResponseDateFormat,
     });
-  }, [clearErrors, getValues, testApi, setError]);
+  }, [clearErrors, getValues, setError, testApi]);
 
   const prettyResponse = useMemo(
     () => JSON.stringify(responsePreview, undefined, 2),
     [responsePreview],
   );
 
-  const isSubmitDisabled =
-    // !hasUploadedFile ||
-    !isValidDataKey ||
-    !isValidResponse ||
-    !isValidResponseDateFormat ||
-    isResponseError;
-
-  return (
+  return isUsersLoading ? (
+    <IngestFormSkeleton />
+  ) : (
     <Section className="container py-6">
       <header className="gap-2">
         <p className="my-0 py-1 text-2xl">
-          Step 3: Configure school connectivity API
+          Step 1: Configure school listing API
         </p>
       </header>
 
       <div className="grid grid-cols-2 gap-10">
-        <div className="flex w-full flex-col gap-4">
+        <div>
+          <p>
+            Enter the details for a school listing API. The API must be tested
+            and should return a success response with valid parameters before
+            you can proceed.
+          </p>
           <FormProvider {...hookForm}>
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="flex w-full flex-col gap-4">
-                <SchoolConnectivityFormInputs />
+                <SchoolListFormInputs users={users} />
 
                 <ButtonSet className="w-full">
                   <Button
@@ -163,17 +188,16 @@ function SchoolConnectivity() {
                     isExpressive
                     kind="secondary"
                     renderIcon={ArrowLeft}
-                    to="/ingest-api/add/column-mapping"
-                    onClick={() => {
-                      decrementStepIndex();
-                      resetSchoolConnectivityFormValues();
-                    }}
+                    to="/ingest-api"
+                    onClick={resetApiIngestionState}
                   >
                     Cancel
                   </Button>
                   <Button
                     className="w-full"
-                    disabled={isSubmitDisabled}
+                    disabled={
+                      !isValidResponse || !isValidDataKey || isResponseError
+                    }
                     isExpressive
                     renderIcon={ArrowRight}
                     type="submit"
@@ -205,12 +229,7 @@ function SchoolConnectivity() {
           {isResponseError && (
             <Tag type="red">Invalid Output from API request</Tag>
           )}
-          {responsePreview === "invalid" && (
-            <Tag type="red">Invalid Data Key</Tag>
-          )}
-          {!isValidResponseDateFormat && (
-            <Tag type="red">Response date format mismatch</Tag>
-          )}
+          {!isValidDataKey && <Tag type="red">Invalid Data Key</Tag>}
           <Editor
             height="100%"
             defaultLanguage="json"
@@ -225,7 +244,7 @@ function SchoolConnectivity() {
           />
         </aside>
       </div>
-      <ConfirmAddIngestionModal open={open} setOpen={setOpen} />
+      <Outlet />
       <Suspense>
         <ReactHookFormDevTools
           // @ts-expect-error incorrect type inference

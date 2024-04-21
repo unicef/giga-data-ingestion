@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
+import { UseFormWatch } from "react-hook-form";
 
 import { Button } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
@@ -7,25 +8,19 @@ import { isPlainObject } from "lodash-es";
 
 import { api } from "@/api";
 import { useStore } from "@/context/store";
-import { AuthorizationTypeEnum, RequestMethodEnum } from "@/types/qos";
+import {
+  AuthorizationTypeEnum,
+  RequestMethodEnum,
+  SchoolListFormValues,
+} from "@/types/qos";
 
 interface TestApiButtonProps {
   setResponsePreview: Dispatch<SetStateAction<string | string[]>>;
   setIsValidResponse: Dispatch<SetStateAction<boolean>>;
   setIsResponseError: Dispatch<SetStateAction<boolean>>;
   setIsValidDataKey: Dispatch<SetStateAction<boolean>>;
-  authorizationType: AuthorizationTypeEnum;
-  dataKey: string;
-  apiKeyName: string | null;
-  apiKeyValue: string | null;
-  basicAuthUserName: string | null;
-  basicAuthPassword: string | null;
-  apiEndpoint: string;
-  bearerAuthBearerToken: string | null;
-  queryParams: string | null;
-  requestBody: string | null;
-  requestMethod: RequestMethodEnum;
-  handleTriggerValidation: () => void;
+  handleTriggerValidation: () => Promise<void>;
+  watch: UseFormWatch<SchoolListFormValues>;
 }
 
 const TestApiButton = ({
@@ -33,19 +28,21 @@ const TestApiButton = ({
   setIsResponseError,
   setResponsePreview,
   setIsValidDataKey,
-  authorizationType,
-  dataKey,
-  apiKeyName,
-  apiKeyValue,
-  basicAuthUserName,
-  basicAuthPassword,
-  apiEndpoint,
-  bearerAuthBearerToken,
   handleTriggerValidation,
-  queryParams,
-  requestBody,
-  requestMethod,
+  watch,
 }: TestApiButtonProps) => {
+  const dataKey = watch("data_key");
+  const requestMethod = watch("request_method");
+  const apiKeyName = watch("api_auth_api_key");
+  const apiKeyValue = watch("api_auth_api_value");
+  const authorizationType = watch("authorization_type");
+  const basicAuthUserName = watch("basic_auth_username");
+  const basicAuthPassword = watch("basic_auth_password");
+  const bearerAuthBearerToken = watch("bearer_auth_bearer_token");
+  const apiEndpoint = watch("api_endpoint");
+  const queryParams = watch("query_parameters");
+  const requestBody = watch("request_body");
+
   const {
     apiIngestionSliceActions: { setDetectedColumns },
   } = useStore();
@@ -126,7 +123,7 @@ const TestApiButton = ({
   };
 
   const handleOnClick = async () => {
-    handleTriggerValidation();
+    await handleTriggerValidation();
 
     if (requestMethod === GET && queryParams) {
       const jsonQueryParams = JSON.parse(queryParams);
