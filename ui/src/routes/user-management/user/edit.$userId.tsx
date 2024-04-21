@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { Suspense, useState } from "react";
+import { Control, Controller, SubmitHandler, useForm } from "react-hook-form";
 
 import { Add } from "@carbon/icons-react";
 import {
@@ -23,6 +23,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { api } from "@/api";
 import { Select } from "@/components/forms/Select.tsx";
 import ToastNotification from "@/components/user-management/ToastNotification.tsx";
+import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import countries from "@/constants/countries.ts";
 import {
   filterCountries,
@@ -476,6 +477,11 @@ function EditUser() {
           </form>
         </Modal>
       )}
+
+      <Suspense>
+        {/* @ts-expect-error inference */}
+        <ReactHookFormDevTools control={control} />
+      </Suspense>
 
       <ToastNotification
         show={showEditUserSuccessNotification}
