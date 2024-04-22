@@ -224,7 +224,7 @@ async def upload_approved_rows(
 
     approve_location = (
         f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
-        f"/approved-row-ids/{dataset}/{country_iso3}/{filename}"
+        f"/approved-row-ids/{dataset}/{filename}"
     )
 
     approve_client = storage_client.get_blob_client(approve_location)
