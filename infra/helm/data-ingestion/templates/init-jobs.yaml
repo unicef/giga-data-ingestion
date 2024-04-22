@@ -63,6 +63,34 @@ spec:
 apiVersion: batch/v1
 kind: Job
 metadata:
+  name: "{{ include "data-ingestion.fullname" . }}-init-load-db-fixtures"
+  labels:
+      {{- include "data-ingestion.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-3"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  activeDeadlineSeconds: 300
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: "{{ include "data-ingestion.fullname" . }}-init-load-db-fixtures"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command:
+            - /bin/sh
+            - -c
+            - python -m scripts.load_fixtures approval_requests
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
   name: "{{ include "data-ingestion.fullname" . }}-init-wait-redis"
   labels:
     {{- include "data-ingestion.labels" . | nindent 4 }}
