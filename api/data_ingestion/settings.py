@@ -51,14 +51,12 @@ class Settings(BaseSettings):
     WEB_APP_REDIRECT_URI: str
     AZURE_EMAIL_CONNECTION_STRING: str
     AZURE_EMAIL_SENDER: str
-    WEB_APP_REDIRECT_URI: str
     MAILJET_API_KEY: str
     MAILJET_API_URL: str
     MAILJET_SECRET_KEY: str
     SENDER_EMAIL: str
     EMAIL_RENDERER_BEARER_TOKEN: str
     EMAIL_RENDERER_SERVICE_URL: AnyUrl
-    EMAIL_TEST_RECIPIENTS: list[str]
     TRINO_USERNAME: str
     TRINO_PASSWORD: str
     REDIS_PASSWORD: str
@@ -80,6 +78,7 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "redis"
     REDIS_PORT: int = 6379
     REDIS_CACHE_DEFAULT_TTL_SECONDS: int = int(timedelta(minutes=10).total_seconds())
+    ADMIN_EMAIL: str = ""
 
     @computed_field
     @property

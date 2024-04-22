@@ -1,3 +1,5 @@
+import sys
+
 import requests
 from data_ingestion.settings import settings
 from loguru import logger
@@ -7,6 +9,10 @@ from azure.communication.email import EmailClient
 
 
 def main():
+    if not settings.ADMIN_EMAIL:
+        logger.warning("ADMIN_EMAIL is not set. Exiting.")
+        sys.exit(1)
+
     client = EmailClient.from_connection_string(settings.AZURE_EMAIL_CONNECTION_STRING)
 
     res = requests.post(
@@ -29,11 +35,7 @@ def main():
 
     message = {
         "senderAddress": settings.AZURE_EMAIL_SENDER,
-        "recipients": {
-            "to": [
-                {"address": recipient} for recipient in settings.EMAIL_TEST_RECIPIENTS
-            ]
-        },
+        "recipients": {"to": [{"address": settings.ADMIN_EMAIL}]},
         "content": {
             "subject": "Giga Test Email",
             "html": data.get("html"),
