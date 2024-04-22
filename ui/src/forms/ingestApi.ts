@@ -123,6 +123,7 @@ export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
           .regex(
             /^(%Y|%m|%d|%H|%M|%S|%z)([\\/\\-_.+: ]?(%Y|%m|%d|%H|%M|%S|%z))?$/,
           ),
+        z.literal(""),
       ])
       .nullable(),
     send_date_in: z.string().nullable(),
@@ -137,6 +138,14 @@ export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
       code: z.ZodIssueCode.custom,
       message: "Date format must be specified when date key is provided.",
       path: ["date_format"],
+    });
+  }
+
+  if (!arg.date_key && !!arg.date_format) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Date format must be empty if date key is empty",
+      path: ["date_key"],
     });
   }
 });
