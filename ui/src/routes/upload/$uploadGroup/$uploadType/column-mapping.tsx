@@ -1,18 +1,8 @@
-import { Suspense } from "react";
-import { Control, SubmitHandler, useForm } from "react-hook-form";
+import { Suspense, useMemo } from "react";
+import { Control, FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
-import {
-  Button,
-  ButtonSet,
-  DataTableHeader,
-  DataTableSkeleton,
-  DefinitionTooltip,
-  Select,
-  SelectItem,
-  Stack,
-  Tag,
-} from "@carbon/react";
+import { Button, ButtonSet, DataTableHeader, Stack, Tag } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
@@ -23,9 +13,14 @@ import {
 
 import { api } from "@/api";
 import DataTable from "@/components/common/DataTable.tsx";
+import {
+  ColumnLicense,
+  ConfigureColumnsForm,
+  DetectedColumn,
+  MasterColumn,
+} from "@/components/upload/ColumnMapping.tsx";
 import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { useStore } from "@/context/store";
-import { licenseOptions } from "@/mocks/metadataFormValues.tsx";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/column-mapping",
@@ -58,11 +53,6 @@ const headers: DataTableHeader[] = [
   { key: "license", header: "License" },
 ];
 
-interface ConfigureColumnsForm {
-  mapping: Record<string, string>;
-  license: Record<string, string>;
-}
-
 function UploadColumnMapping() {
   const {
     uploadSlice: { detectedColumns, columnMapping, source },
@@ -78,27 +68,25 @@ function UploadColumnMapping() {
   const metaschemaName =
     uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
 
-  const { data: schemaQuery, isLoading } = useSuspenseQuery({
+  const {
+    data: { data: schema },
+  } = useSuspenseQuery({
     queryFn: () => api.schema.get(metaschemaName),
     queryKey: ["schema", metaschemaName],
   });
 
   const navigate = useNavigate({ from: Route.fullPath });
 
-  const {
-    handleSubmit,
-    register,
-    control,
-    formState: { errors },
-    watch,
-  } = useForm<ConfigureColumnsForm>({
+  const hookForm = useForm<ConfigureColumnsForm>({
     mode: "onSubmit",
-    reValidateMode: "onChange",
+    reValidateMode: "onBlur",
     defaultValues: {
       mapping: columnMapping,
       license: {},
     },
+    shouldFocusError: true,
   });
+  const { handleSubmit, control } = hookForm;
 
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
     const dataWithNullsReplaced: ConfigureColumnsForm = {
@@ -115,135 +103,66 @@ function UploadColumnMapping() {
     void navigate({ to: "../metadata" });
   };
 
-  const schema = schemaQuery?.data ?? [];
-
-  const rows = isLoading
-    ? []
-    : schema.map(column => ({
+  const rows = useMemo(
+    () =>
+      schema.map(column => ({
         id: column.id,
-        masterColumn: (
-          <div className="flex items-center gap-4">
-            {column.description ? (
-              <DefinitionTooltip
-                align="right"
-                definition={column.description}
-                openOnHover
-              >
-                <div className="flex items-center gap-1">
-                  <div>{column.name}</div>
-                  <div>
-                    {!column.is_nullable ? (
-                      <span className="text-giga-red">*</span>
-                    ) : column.is_important ? (
-                      <Warning className="text-purple-600" />
-                    ) : null}
-                  </div>
-                </div>
-              </DefinitionTooltip>
-            ) : (
-              <div className="flex items-center gap-1">
-                <div>{column.name}</div>
-                <div>
-                  {!column.is_nullable ? (
-                    <span className="text-giga-red">*</span>
-                  ) : column.is_important ? (
-                    <Warning className="text-purple-600" />
-                  ) : null}
-                </div>
-              </div>
-            )}
-          </div>
-        ),
+        masterColumn: <MasterColumn column={column} />,
         detectedColumns: (
-          <div className="w-11/12 px-2 pb-2">
-            <Select
-              id={`mapping.${column.name}`}
-              invalid={column.name in (errors.mapping ?? {})}
-              labelText=""
-              {...register(`mapping.${column.name}`, {
-                required: !column.is_nullable,
-              })}
-            >
-              <SelectItem text="" value="" />
-              {detectedColumns.map(detectedColumn => (
-                <SelectItem
-                  key={detectedColumn}
-                  text={detectedColumn}
-                  value={detectedColumn}
-                />
-              ))}
-            </Select>
-          </div>
+          <DetectedColumn detectedColumns={detectedColumns} column={column} />
         ),
-        license: (
-          <div className="w-full">
-            <Select
-              id={`license.${column.name}`}
-              invalid={column.name in (errors.license ?? {})}
-              labelText=""
-              {...register(`license.${column.name}`, {
-                validate: (value, formValues) =>
-                  !!value && !!formValues.mapping[column.name],
-                disabled: !watch(`mapping.${column.name}`),
-                deps: [`mapping.${column.name}`],
-              })}
-            >
-              <SelectItem text="" value="" />
-              {licenseOptions.map(license => (
-                <SelectItem key={license} text={license} value={license} />
-              ))}
-            </Select>
-          </div>
-        ),
-      }));
+        license: <ColumnLicense column={column} />,
+      })),
+    [detectedColumns, schema],
+  );
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <Stack gap={8}>
-        <section className="flex flex-col gap-8">
-          <h2 className="text-[23px] capitalize">Configure Columns</h2>
-          <div className="flex gap-4">
-            <Tag type="red">*Required</Tag>
-            <Tag type="purple">
-              <div className="flex align-middle">
-                <Warning /> Important
-              </div>
-            </Tag>
-          </div>
-        </section>
-        <section className="w-3/4">
-          {isLoading ? (
-            <DataTableSkeleton headers={headers} />
-          ) : (
-            <DataTable columns={headers} rows={rows} />
-          )}
-        </section>
-        <Suspense>
-          <ReactHookFormDevTools control={control as unknown as Control} />
-        </Suspense>
+    <FormProvider {...hookForm}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Stack gap={8}>
+          <section className="flex flex-col gap-8">
+            <h2 className="text-[23px] capitalize">Configure Columns</h2>
+            <div className="flex gap-4">
+              <Tag type="red">*Required</Tag>
+              <Tag type="purple">
+                <div className="flex align-middle">
+                  <Warning /> Important
+                </div>
+              </Tag>
+            </div>
+          </section>
 
-        <ButtonSet className="w-full">
-          <Button
-            as={Link}
-            className="w-full"
-            isExpressive
-            kind="secondary"
-            renderIcon={ArrowLeft}
-            to=".."
-            onClick={decrementStepIndex}
-          >
-            Cancel
-          </Button>
-          <Button
-            className="w-full"
-            isExpressive
-            renderIcon={ArrowRight}
-            type="submit"
-          >
-            Proceed
-          </Button>
-        </ButtonSet>
-      </Stack>
-    </form>
+          <section className="w-3/4">
+            <DataTable columns={headers} rows={rows} />
+          </section>
+
+          <Suspense>
+            <ReactHookFormDevTools control={control as unknown as Control} />
+          </Suspense>
+
+          <ButtonSet className="w-full">
+            <Button
+              as={Link}
+              className="w-full"
+              isExpressive
+              kind="secondary"
+              renderIcon={ArrowLeft}
+              to=".."
+              onClick={decrementStepIndex}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="w-full"
+              isExpressive
+              renderIcon={ArrowRight}
+              type="submit"
+            >
+              Proceed
+            </Button>
+          </ButtonSet>
+        </Stack>
+      </form>
+    </FormProvider>
   );
 }
