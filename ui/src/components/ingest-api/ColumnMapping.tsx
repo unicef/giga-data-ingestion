@@ -67,7 +67,6 @@ function ColumnMapping() {
   });
 
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
-    console.log("hi");
     incrementStepIndex();
     setColumnMapping(data);
     void navigate({ to: "../school-connectivity" });
