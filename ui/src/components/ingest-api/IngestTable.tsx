@@ -23,6 +23,10 @@ import { Link, getRouteApi, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { HEADERS } from "@/constants/ingest-api";
+import {
+  DEFAULT_PAGE_NUMBER,
+  DEFAULT_PAGE_SIZE,
+} from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 
 import StatusIndicator from "../upload/StatusIndicator";
@@ -36,7 +40,10 @@ export type LoadingStates = {
 const Route = getRouteApi("/ingest-api/");
 
 function IngestTable() {
-  const { page: currentPage, page_size: pageSize } = Route.useSearch();
+  const {
+    page: currentPage = DEFAULT_PAGE_NUMBER,
+    page_size: pageSize = DEFAULT_PAGE_SIZE,
+  } = Route.useSearch();
   const navigate = useNavigate({ from: "/ingest-api/" });
 
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({});

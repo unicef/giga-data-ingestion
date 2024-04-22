@@ -4,6 +4,10 @@ import { uploadsQueryOptions } from "@/api/queryOptions.ts";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import UploadLanding from "@/components/upload/UploadLanding.tsx";
+import {
+  DEFAULT_PAGE_NUMBER,
+  DEFAULT_PAGE_SIZE,
+} from "@/constants/pagination.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
 export const Route = createFileRoute("/upload/")({
@@ -16,7 +20,8 @@ export const Route = createFileRoute("/upload/")({
 });
 
 function Index() {
-  const { page, page_size } = Route.useSearch();
+  const { page = DEFAULT_PAGE_NUMBER, page_size = DEFAULT_PAGE_SIZE } =
+    Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
 
   function handlePaginationChange({

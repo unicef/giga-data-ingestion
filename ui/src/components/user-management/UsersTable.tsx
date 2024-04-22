@@ -29,6 +29,10 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 
 import { api } from "@/api";
+import {
+  DEFAULT_PAGE_NUMBER,
+  DEFAULT_PAGE_SIZE,
+} from "@/constants/pagination.ts";
 import { GraphUser } from "@/types/user.ts";
 
 const columns: DataTableHeader[] = [
@@ -58,7 +62,10 @@ interface TableGraphUser extends GraphUser {
 }
 
 function UsersTable() {
-  const { page: currentPage, page_size: pageSize } = useSearch({
+  const {
+    page: currentPage = DEFAULT_PAGE_NUMBER,
+    page_size: pageSize = DEFAULT_PAGE_SIZE,
+  } = useSearch({
     from: "/user-management",
   });
   const navigate = useNavigate({ from: "/user-management" });
