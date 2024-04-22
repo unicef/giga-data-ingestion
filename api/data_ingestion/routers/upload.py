@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 from typing import Annotated
 
 import country_converter as coco
@@ -204,6 +203,7 @@ async def upload_unstructured(
     response: Response,
     user: User = Depends(azure_scheme),
     form: UnstructuredFileUploadRequest = Depends(),
+    db: AsyncSession = Depends(get_db),
     is_privileged: bool = Depends(IsPrivileged.raises(False)),
 ):
     file = form.file
@@ -238,12 +238,23 @@ async def upload_unstructured(
         )
 
     country_code = coco.convert(form.country, to="ISO3")
+    email = user.email or user.claims.get("email")
+    if email is None:
+        email = (await UsersApi.get_user(user.sub)).mail
 
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    upload_path = (
-        f"raw/uploads/unstructured/{country_code}/" f"{timestamp}_{file.filename}"
+    file_upload = FileUpload(
+        uploader_id=user.sub,
+        uploader_email=email,
+        country=country_code,
+        dataset="unstructured",
+        original_filename=file.filename,
+        column_to_schema_mapping={},
+        column_license={},
     )
-    client = storage_client.get_blob_client(upload_path)
+    db.add(file_upload)
+    await db.commit()
+
+    client = storage_client.get_blob_client(file_upload.upload_path)
 
     try:
         metadata = {

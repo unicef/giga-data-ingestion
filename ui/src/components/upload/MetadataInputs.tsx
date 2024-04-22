@@ -78,7 +78,13 @@ export function FreeTextInput({
         <span className="whitespace-pre-line">{formItem.helperText}</span>
       }
       invalid={formItem.name in errors}
-      invalidText={errors[formItem.name]?.message as string}
+      invalidText={
+        <span className="whitespace-pre-line">
+          {errors[formItem.name]?.message as string}
+          <br />
+          {formItem.helperText}
+        </span>
+      }
       {...register}
     />
   );
@@ -99,7 +105,13 @@ export function SelectFromEnum({
       labelText={formItem.label}
       helperText={formItem.helperText}
       invalid={formItem.name in errors}
-      invalidText={errors[formItem.name]?.message as string}
+      invalidText={
+        <span className="whitespace-pre-line">
+          {errors[formItem.name]?.message as string}
+          <br />
+          {formItem.helperText}
+        </span>
+      }
       {...register}
     >
       {formItem.enum.map(el => (

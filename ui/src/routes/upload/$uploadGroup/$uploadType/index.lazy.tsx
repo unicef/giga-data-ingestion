@@ -92,7 +92,7 @@ export default function Index() {
   const { data: schemaQuery, isFetching: isSchemaFetching } = useQuery({
     queryFn: () => api.schema.get(metaschemaName),
     queryKey: ["schema", metaschemaName],
-    enabled: isCoverage ? !!source && !isUnstructured : true,
+    enabled: isCoverage ? !!source : !isUnstructured,
   });
   const schema = schemaQuery?.data ?? [];
 
