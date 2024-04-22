@@ -59,15 +59,6 @@ export const DataQualityReportUploadSuccess = ({
                 File Uploaded at <strong>{uploadDate}</strong>
               </Text>
 
-              <Section className="text-center my-8 ">
-                <Button
-                  className="bg-primary px-5 py-3 text-sm rounded font-semibold text-white no-underline text-center"
-                  href={`${baseUrl}/check-file-uploads/${uploadId}`}
-                >
-                  View Complete Report
-                </Button>
-              </Section>
-
               <Footer>
                 <>
                   Your file has been successfully uploaded. After a round of
