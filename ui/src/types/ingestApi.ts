@@ -1,3 +1,5 @@
+import { SyntheticEvent } from "react";
+
 import { GraphUser } from "@/types/user.ts";
 
 export type IngestApiFormMapping<T> = {
@@ -6,7 +8,7 @@ export type IngestApiFormMapping<T> = {
   helperText: string;
   required: boolean;
   placeholder?: string;
-  onChange?: (...args: unknown[]) => void;
+  onChange?: (e?: SyntheticEvent) => void;
   dependsOnName?: Extract<keyof T, string>;
   dependsOnValue?: string[] | true;
   customValidation?:
