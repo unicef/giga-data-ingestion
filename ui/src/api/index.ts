@@ -60,9 +60,14 @@ export function AxiosProvider({ children }: PropsWithChildren) {
     config: InternalAxiosRequestConfig,
   ) {
     if (!isAuthenticated && inProgress === InteractionStatus.Startup) {
-      const { accessToken } = await getToken();
-      config.headers["Authorization"] = `Bearer ${accessToken}`;
-      return Promise.resolve(config);
+      try {
+        const { accessToken } = await getToken();
+        config.headers["Authorization"] = `Bearer ${accessToken}`;
+        return Promise.resolve(config);
+      } catch (err) {
+        console.error(err);
+        return Promise.resolve(config);
+      }
     }
 
     return Promise.resolve(config);
@@ -97,14 +102,17 @@ export function AxiosProvider({ children }: PropsWithChildren) {
           });
           return Promise.resolve(res);
         } catch (e) {
+          console.error(e);
           return Promise.reject(e);
         }
       } catch (e) {
-        return Promise.reject(e);
+        console.error(e);
+        return Promise.resolve(error);
       }
     }
 
-    return error;
+    console.error(error);
+    return Promise.reject(error);
   }
 
   useEffect(() => {
