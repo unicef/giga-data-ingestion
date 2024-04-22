@@ -241,6 +241,9 @@ async def create_api_ingestion(
             "send_date_in": None
             if school_connectivity_data.send_date_in == "NONE"
             else school_connectivity_data.send_date_in,
+            "date_key": None
+            if school_connectivity_data.send_date_in == "NONE"
+            else school_connectivity_data.date_key,
         }
     )
 
