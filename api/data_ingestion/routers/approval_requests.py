@@ -7,6 +7,7 @@ import pandas as pd
 from country_converter import country_converter as coco
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from sqlalchemy import column, func, literal, select, text, update
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import count
 
@@ -40,7 +41,7 @@ async def list_approval_requests(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=50),
     db: Session = Depends(get_db),
-    primary_db: Session = Depends(get_primary_db),
+    primary_db: AsyncSession = Depends(get_primary_db),
 ):
     base_query = select(ApprovalRequest).order_by(
         ApprovalRequest.country, ApprovalRequest.dataset

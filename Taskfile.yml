@@ -121,7 +121,7 @@ tasks:
     cmds:
       - kubectl apply -f namespace.yaml
       - kubectl apply -f secrets.yaml --namespace giga-data-ingestion
-      - kubectl apply -f configmap.yaml --namespace giga-data-ingestion
+      - kubectl apply -f configmap-prd.yaml --namespace giga-data-ingestion
 
   helm-up:
     desc: Install/upgrade Helm chart to a K8s cluster running on localhost
