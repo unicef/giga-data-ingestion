@@ -154,6 +154,13 @@ class EditSchoolListRequest(ApiConfigurationRequest):
     user_email: EmailStr
     user_id: str
 
+    @field_validator("column_to_schema_mapping", mode="before")
+    @classmethod
+    def validate_column_to_schema_mapping(cls, value: str | dict):
+        if isinstance(value, str):
+            return orjson.loads(value)
+        return value
+
 
 class EditApiIngestionRequest(BaseModel):
     school_connectivity: EditSchoolConnectivityRequest

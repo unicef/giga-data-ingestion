@@ -52,8 +52,8 @@ export const MasterDataReleaseNotification = ({
 
             <div className="p-6 mx-auto">
               <Text className="text-black text-sm leading-6">
-                The School Master data for <strong>{country}</strong> has been updated
-                with the following details:
+                The School Master data for <strong>{country}</strong> has been
+                updated with the following details:
               </Text>
               <ul>
                 <li>
@@ -73,20 +73,11 @@ export const MasterDataReleaseNotification = ({
                 To view the changes, please click the button below.
               </Text>
 
-              <Section className="text-center my-8 ">
-                <Button
-                  className="bg-primary px-5 py-3 text-sm rounded font-semibold text-white no-underline text-center"
-                  href={`${baseUrl}/check-file-uploads/[SOME_UPDATE_ID]`}
-                >
-                  View Report
-                </Button>
-              </Section>
-
               <Footer>
                 <>
-                  School Master data updated at <strong>{updateDate}</strong>. This
-                  notification is sent automatically because you are assigned to
-                  the relevant country.
+                  School Master data updated at <strong>{updateDate}</strong>.
+                  This notification is sent automatically because you are
+                  assigned to the relevant country.
                 </>
               </Footer>
             </div>

@@ -94,7 +94,9 @@ function UploadsTable({
     } as PagedResponse<TableUpload>;
 
     _renderUploads.data = uploads.data.map(upload => {
-      const isStatusCompleted = upload.dq_report_path !== null;
+      const isUnstructured = upload.dataset === "unstructured";
+      const isStatusCompleted =
+        isUnstructured || upload.dq_report_path !== null;
 
       return {
         ...upload,
@@ -105,7 +107,7 @@ function UploadsTable({
         ) : (
           <Tag type="gray">In Progress</Tag>
         ),
-        actions: (
+        actions: !isUnstructured && (
           <Button
             as={Link}
             to="/upload/$uploadId"

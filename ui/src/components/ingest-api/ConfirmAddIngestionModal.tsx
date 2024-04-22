@@ -1,6 +1,6 @@
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
-import { Modal } from "@carbon/react";
+import { InlineNotification, Modal, Stack } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -25,12 +25,16 @@ const ConfirmAddIngestionModal = ({
   } = useStore();
   const navigate = useNavigate({ from: "/ingest-api/add/school-connectivity" });
 
+  const [showErrorNotification, setShowErrorNotification] = useState(false);
+
   const { mutateAsync, isPending } = useMutation({
     mutationFn: api.qos.create_api_ingestion,
     mutationKey: ["school_list"],
   });
 
   const onSubmit = async () => {
+    setShowErrorNotification(false);
+
     const correctedColumnMapping = Object.fromEntries(
       Object.entries(columnMapping)
         .map(([key, value]) => [value, key])
@@ -59,6 +63,7 @@ const ConfirmAddIngestionModal = ({
             },
           });
         },
+        onError: () => setShowErrorNotification(true),
       },
     );
   };
@@ -70,16 +75,29 @@ const ConfirmAddIngestionModal = ({
   return (
     <Modal
       loadingStatus={isPending ? "active" : "inactive"}
-      modalHeading="Create New Ingestion"
+      modalHeading="Edit Ingestion"
       open={open}
       primaryButtonText="Proceed"
       secondaryButtonText="Cancel"
       onRequestClose={onCancel}
       onRequestSubmit={onSubmit}
     >
-      This will create a new ingestion that will ingest from{" "}
-      <b>{schoolConnectivity.api_endpoint}</b> every{" "}
-      <b>{schoolConnectivity.ingestion_frequency_minutes}</b> minutes
+      <Stack gap={4}>
+        <p>
+          This will create a new ingestion that will ingest from{" "}
+          <b>{schoolConnectivity.api_endpoint}</b> every{" "}
+          <b>{schoolConnectivity.ingestion_frequency_minutes}</b> minutes
+        </p>
+        {showErrorNotification && (
+          <InlineNotification
+            aria-label="create API ingestion error notification"
+            kind="error"
+            title=""
+            subtitle="Operation failed. Please try again"
+            statusIconDescription="error"
+          />
+        )}
+      </Stack>
     </Modal>
   );
 };

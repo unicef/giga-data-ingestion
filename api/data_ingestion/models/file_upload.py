@@ -42,4 +42,13 @@ class FileUpload(BaseModel):
 
         filename_elements.append(timestamp)
         filename = "_".join(filename_elements)
-        return f"{constants.UPLOAD_PATH_PREFIX}/school-{self.dataset}/{self.country}/{filename}{ext}"
+
+        filename_parts = [
+            constants.UPLOAD_PATH_PREFIX,
+            self.dataset
+            if self.dataset == "unstructured"
+            else f"school-{self.dataset}",
+            self.country,
+            f"{filename}{ext}",
+        ]
+        return "/".join(filename_parts)

@@ -15,6 +15,8 @@ import DataCheckItem from "@/components/check-file-uploads/DataCheckItem";
 import SummaryBanner from "@/components/check-file-uploads/SummaryBanner";
 import SummaryChecks from "@/components/check-file-uploads/SummaryChecks";
 import UploadCheckSkeleton from "@/components/check-file-uploads/UploadCheckSkeleton";
+import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
+import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Check } from "@/types/upload";
 import {
   DataQualityCheck,
@@ -37,6 +39,8 @@ export const Route = createFileRoute("/upload/$uploadId/")({
         queryFn: () => api.uploads.get_upload(uploadId),
       }),
     ]),
+  pendingComponent: PendingComponent,
+  errorComponent: ErrorComponent,
 });
 
 function Index() {

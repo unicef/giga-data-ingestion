@@ -71,8 +71,8 @@ export const DataQualityReportCheckSuccess = ({
 
               <Section className="text-center my-8">
                 <Button
-                  className="bg-primary px-5 py-3 text-sm rounded font-semibold text-white no-underline text-center"
-                  href={`${baseUrl}/check-file-uploads/${uploadId}`}
+                  className="bg-primary px-6 py-4 text-sm font-semibold text-white no-underline text-center"
+                  href={`${baseUrl}/upload/${uploadId}`}
                 >
                   View Complete Report
                 </Button>

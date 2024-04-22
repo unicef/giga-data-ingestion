@@ -11,8 +11,10 @@ import {
 
 import gigaLogo from "@/assets/GIGA_logo.png";
 import homeBg from "@/assets/home-bg.jpg";
+import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
+import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import {
   TanStackQueryDevTools,
   TanStackRouterDevtools,
@@ -34,6 +36,8 @@ export const Route = createRootRouteWithContext<RouteContext>()({
       <NotFound />
     </Base>
   ),
+  pendingComponent: PendingComponent,
+  errorComponent: ErrorComponent,
 });
 
 function Base({ children }: PropsWithChildren) {
