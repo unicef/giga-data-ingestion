@@ -46,6 +46,7 @@ function EditSchoolConnectivity() {
     <SchoolConnectivity
       isEditing
       defaultData={schoolConnectivityFormDefaultValues}
+      ingestionId={ingestionId}
     />
   );
 }

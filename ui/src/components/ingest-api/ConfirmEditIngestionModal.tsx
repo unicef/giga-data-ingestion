@@ -1,6 +1,6 @@
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
-import { Modal } from "@carbon/react";
+import { InlineNotification, Modal, Stack } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -26,34 +26,47 @@ const ConfirmEditIngestionModal = ({
     apiIngestionSlice: { columnMapping, schoolConnectivity, schoolList },
   } = useStore.getState();
 
-  const navigate = useNavigate({ from: "/ingest-api" });
+  const [showErrorNotification, setShowErrorNotification] = useState(false);
 
-  const { mutateAsync: mutateAsync, isPending } = useMutation({
+  const navigate = useNavigate({
+    from: "/ingest-api/edit/$ingestionId/school-connectivity",
+  });
+
+  const { mutateAsync, isPending } = useMutation({
     mutationFn: api.qos.update_api_ingestion,
+    mutationKey: ["school_list"],
   });
 
   const onSubmit = async () => {
-    await mutateAsync({
-      id: schoolListId,
-      body: {
-        school_connectivity: { ...schoolConnectivity, error_message: null },
-        school_list: {
-          ...schoolList,
-          column_to_schema_mapping: JSON.stringify(columnMapping),
-          enabled: true,
-          error_message: null,
+    setShowErrorNotification(false);
+
+    await mutateAsync(
+      {
+        id: schoolListId,
+        body: {
+          school_connectivity: { ...schoolConnectivity, error_message: null },
+          school_list: {
+            ...schoolList,
+            column_to_schema_mapping: JSON.stringify(columnMapping),
+            enabled: true,
+            error_message: null,
+          },
         },
       },
-    });
-
-    setOpen(false);
-    void navigate({
-      to: "/ingest-api",
-      search: {
-        page: DEFAULT_PAGE_NUMBER,
-        page_size: DEFAULT_PAGE_SIZE,
+      {
+        onSuccess: async () => {
+          setOpen(false);
+          await navigate({
+            to: "/ingest-api",
+            search: {
+              page: DEFAULT_PAGE_NUMBER,
+              page_size: DEFAULT_PAGE_SIZE,
+            },
+          });
+        },
+        onError: () => setShowErrorNotification(true),
       },
-    });
+    );
   };
 
   const onCancel = () => {
@@ -70,9 +83,23 @@ const ConfirmEditIngestionModal = ({
       onRequestClose={onCancel}
       onRequestSubmit={onSubmit}
     >
-      This will edit a new ingesiton that will ingest from{" "}
-      <b>{schoolConnectivity.api_endpoint}</b> every{" "}
-      <b>{schoolConnectivity.ingestion_frequency_minutes}</b> minutes
+      <Stack gap={4}>
+        <p>
+          This will edit the API ingestion for{" "}
+          <b>{schoolConnectivity.api_endpoint}</b>, which ingests every{" "}
+          <b>{schoolConnectivity.ingestion_frequency_minutes}</b> minutes.
+        </p>
+        {showErrorNotification && (
+          <InlineNotification
+            aria-label="edit API ingestion error notification"
+            kind="error"
+            statusIconDescription="error"
+            title=""
+            subtitle="Operation failed. Please try again"
+            className="w-full"
+          />
+        )}
+      </Stack>
     </Modal>
   );
 };

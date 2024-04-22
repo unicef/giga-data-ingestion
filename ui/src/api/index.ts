@@ -104,7 +104,7 @@ export function AxiosProvider({ children }: PropsWithChildren) {
       }
     }
 
-    return error;
+    return Promise.reject(error);
   }
 
   useEffect(() => {

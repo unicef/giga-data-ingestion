@@ -9,6 +9,7 @@ import { Link } from "@tanstack/react-router";
 import { ZodError } from "zod";
 
 import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal.tsx";
+import ConfirmEditIngestionModal from "@/components/ingest-api/ConfirmEditIngestionModal.tsx";
 import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs.tsx";
 import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { useStore } from "@/context/store.ts";
@@ -22,15 +23,18 @@ type SchoolConnectivityProps =
   | {
       isEditing?: boolean;
       defaultData: never;
+      ingestionId: never;
     }
   | {
       isEditing: true;
       defaultData: SchoolConnectivityFormSchema;
+      ingestionId: string;
     };
 
 function SchoolConnectivity({
   isEditing = false,
   defaultData,
+  ingestionId,
 }: SchoolConnectivityProps) {
   const [isResponseError, setIsResponseError] = useState<boolean>(false);
   const [isValidDataKey, setIsValidDataKey] = useState<boolean>(false);
@@ -219,7 +223,15 @@ function SchoolConnectivity({
           />
         </aside>
       </div>
-      <ConfirmAddIngestionModal open={open} setOpen={setOpen} />
+      {isEditing ? (
+        <ConfirmEditIngestionModal
+          schoolListId={ingestionId}
+          open={open}
+          setOpen={setOpen}
+        />
+      ) : (
+        <ConfirmAddIngestionModal open={open} setOpen={setOpen} />
+      )}
       <Suspense>
         <ReactHookFormDevTools
           // @ts-expect-error incorrect type inference
