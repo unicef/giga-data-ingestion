@@ -12,10 +12,11 @@ ENV POETRY_CACHE_DIR "/var/cache/pypoetry"
 ENV POETRY_HOME /etc/poetry
 ENV PATH "$POETRY_HOME/bin:$PATH"
 
-RUN apk add curl libmagic && apk cache clean
+RUN apk add --no-cache curl libmagic
 
 ARG POETRY_VERSION=1.6.1
 
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 RUN curl -sSL https://install.python-poetry.org | python - --version "$POETRY_VERSION"
 
 RUN poetry config virtualenvs.create true && \

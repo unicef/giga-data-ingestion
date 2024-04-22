@@ -31,7 +31,7 @@ FROM python:3.11-alpine3.19 AS base
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 
-RUN apk add libmagic && apk cache clean
+RUN apk add --no-cache libmagic
 
 FROM base AS deps
 
@@ -39,10 +39,12 @@ ARG POETRY_VERSION=1.6.1
 
 WORKDIR /tmp
 
-RUN pip install "poetry==$POETRY_VERSION"
+RUN pip install --no-cache-dir "poetry==$POETRY_VERSION"
 
 COPY api/pyproject.toml api/poetry.lock ./
 
+# SC2094: -f is a format specifier, not an input file
+# hadolint ignore=SC2094
 RUN poetry export -f requirements.txt --without-hashes --without dev > requirements.txt
 
 FROM base AS prod
