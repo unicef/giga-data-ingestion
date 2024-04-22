@@ -231,6 +231,12 @@ export function SchoolConnectivityFormInputs() {
           required: false,
           helperText:
             "If the API requires a date parameter, specify the name of the record where this date should be sent.",
+          onChange: e => {
+            // @ts-expect-error text field has e.target.value, TODO: figure out what the correct type is
+            if (e?.target.value === "") {
+              resetField("date_format");
+            }
+          },
         },
         {
           name: "date_format",
