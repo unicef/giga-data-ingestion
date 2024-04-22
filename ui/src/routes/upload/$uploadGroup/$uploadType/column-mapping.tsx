@@ -13,6 +13,8 @@ import {
 
 import { api } from "@/api";
 import DataTable from "@/components/common/DataTable.tsx";
+import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
+import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import {
   ColumnLicense,
   ConfigureColumnsForm,
@@ -45,6 +47,8 @@ export const Route = createFileRoute(
       queryKey: ["schema", metaschemaName],
     });
   },
+  pendingComponent: PendingComponent,
+  errorComponent: ErrorComponent,
 });
 
 const headers: DataTableHeader[] = [

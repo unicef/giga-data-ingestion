@@ -14,6 +14,8 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { FileUploaderDropContainer } from "@/components/common/CarbonOverrides.tsx";
+import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
+import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Select } from "@/components/forms/Select.tsx";
 import {
   AcceptedFileTypes,
@@ -25,6 +27,8 @@ import { HeaderDetector } from "@/utils/upload.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
   component: Index,
+  pendingComponent: PendingComponent,
+  errorComponent: ErrorComponent,
 });
 
 const validStructuredTypes = {

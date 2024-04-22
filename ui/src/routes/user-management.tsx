@@ -2,6 +2,7 @@ import { Heading, Section, Stack } from "@carbon/react";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 
 import { listUsersQueryOptions } from "@/api/queryOptions.ts";
+import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import UsersTable from "@/components/user-management/UsersTable.tsx";
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/user-management")({
     queryClient.ensureQueryData(listUsersQueryOptions),
   validateSearch: validateSearchParams,
   pendingComponent: PendingComponent,
+  errorComponent: ErrorComponent,
 });
 
 function UserManagement() {

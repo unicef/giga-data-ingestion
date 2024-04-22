@@ -5,6 +5,8 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
+import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
+import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 
 export const Route = createFileRoute("/user-management/user/enable/$userId")({
   component: EnableUser,
@@ -14,6 +16,8 @@ export const Route = createFileRoute("/user-management/user/enable/$userId")({
       queryFn: () => api.users.get(userId),
     });
   },
+  pendingComponent: PendingComponent,
+  errorComponent: ErrorComponent,
 });
 
 function EnableUser() {

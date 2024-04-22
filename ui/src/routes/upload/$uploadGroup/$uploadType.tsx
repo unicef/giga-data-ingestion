@@ -4,6 +4,8 @@ import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 
 import { api } from "@/api";
+import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
+import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import {
   DEFAULT_PAGE_NUMBER,
   DEFAULT_PAGE_SIZE,
@@ -43,6 +45,8 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
       });
     }
   },
+  pendingComponent: PendingComponent,
+  errorComponent: ErrorComponent,
 });
 
 function Layout() {

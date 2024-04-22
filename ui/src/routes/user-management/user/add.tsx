@@ -22,6 +22,8 @@ import {
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
+import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
+import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Select } from "@/components/forms/Select.tsx";
 import countries from "@/constants/countries.ts";
 import { GraphGroup } from "@/types/group.ts";
@@ -39,6 +41,8 @@ export const Route = createFileRoute("/user-management/user/add")({
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(groupsQueryOptions),
   validateSearch: validateSearchParams,
+  pendingComponent: PendingComponent,
+  errorComponent: ErrorComponent,
 });
 
 const groupsQueryOptions = queryOptions({

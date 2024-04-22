@@ -1,4 +1,4 @@
-import { Column, Grid, Link, Stack } from "@carbon/react";
+import { Column, Grid, Stack } from "@carbon/react";
 
 import gigaUnicefItu from "@/assets/giga-unicef-itu.svg";
 import instagram from "@/assets/instagram.svg";
@@ -117,9 +117,14 @@ export default function Footer() {
         <div>For more information: Giga Sync or tweet us @Gigaglobal</div>
         <div className="text-sm">
           Share your thoughts and suggestions with us on our{" "}
-          <Link href="https://github.com/unicef/giga-data-ingestion/issues/new">
+          <a
+            className="text-white"
+            href="https://github.com/unicef/giga-data-ingestion/issues/new"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
             GitHub issues page
-          </Link>
+          </a>
           .
         </div>
       </Column>

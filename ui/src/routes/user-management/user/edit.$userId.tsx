@@ -21,6 +21,8 @@ import {
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
+import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
+import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Select } from "@/components/forms/Select.tsx";
 import ToastNotification from "@/components/user-management/ToastNotification.tsx";
 import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
@@ -47,6 +49,8 @@ export const Route = createFileRoute("/user-management/user/edit/$userId")({
     return queryClient.ensureQueryData(userQueryOptions);
   },
   validateSearch: validateSearchParams,
+  pendingComponent: PendingComponent,
+  errorComponent: ErrorComponent,
 });
 
 type CountryDataset = {
