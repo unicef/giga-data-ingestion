@@ -103,7 +103,7 @@ function ApprovalRequests() {
         country: `${request.country} (${request.country_iso3})`,
         actions: (
           <Button
-            disabled={!request.enabled || isFetching || isRefetching}
+            disabled={isFetching || isRefetching}
             kind="tertiary"
             size="sm"
             as={Link}
