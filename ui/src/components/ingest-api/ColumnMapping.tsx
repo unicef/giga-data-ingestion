@@ -46,10 +46,10 @@ function ColumnMapping() {
   } = useRouterState();
 
   const pathSplits = pathname.split("/");
-  const path =
-    pathSplits[1] === "ingest-api" && pathSplits[2] === "edit"
-      ? "/ingest-api/edit/$ingestionId/column-mapping"
-      : "/ingest-api/add/column-mapping";
+  const isEditing = pathSplits[1] === "ingest-api" && pathSplits[2] === "edit";
+  const path = isEditing
+    ? "/ingest-api/edit/$ingestionId/column-mapping"
+    : "/ingest-api/add/column-mapping";
   const navigate = useNavigate({ from: path });
 
   const {
@@ -67,9 +67,10 @@ function ColumnMapping() {
   });
 
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
+    console.log("hi");
     incrementStepIndex();
     setColumnMapping(data);
-    void navigate({ to: "../column-mapping" });
+    void navigate({ to: "../school-connectivity" });
   };
 
   const rows = useMemo(() => {
