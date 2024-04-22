@@ -37,3 +37,8 @@ export const listApprovalRequestQueryOptions = queryOptions({
       page_size: DEFAULT_PAGE_SIZE,
     }),
 });
+
+export const geolocationSchemaQueryOptions = queryOptions({
+  queryFn: () => api.schema.get("school_geolocation"),
+  queryKey: ["schema", "school_geolocation"],
+});

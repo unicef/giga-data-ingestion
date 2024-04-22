@@ -76,6 +76,11 @@ export interface SchoolConnectivityResponse extends ApiConfigurationResponse {
   schema_url: string;
   school_list: SchoolListResponse;
   school_list_id: string;
+  date_key: string | null;
+  date_format: string | null;
+  send_date_in: SendQueryInEnum | null;
+  response_date_key: string;
+  response_date_format: string;
 }
 
 export interface PagedSchoolConnectivityResponse {
