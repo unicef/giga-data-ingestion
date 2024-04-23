@@ -4,7 +4,7 @@ import {
   MisuseOutline,
   Warning,
 } from "@carbon/icons-react";
-import { Link, Tag } from "@carbon/react";
+import { Button, InlineLoading, Tag } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
 import { saveAs } from "file-saver";
 
@@ -24,9 +24,30 @@ const SummaryBanner = ({
   totalFailedAssertions,
   uploadId,
 }: AccordionSummaryProps) => {
-  const downloadDataQualityCheck = useMutation({
+  const { mutateAsync, isPending } = useMutation({
     mutationFn: api.uploads.download_data_quality_check,
   });
+
+  async function handleDownloadFullChecks() {
+    const blob = await mutateAsync(uploadId);
+
+    if (blob) {
+      const contentDisposition = blob.headers["content-disposition"];
+      const filenameMatch = contentDisposition.match(
+        /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
+      );
+      let filename = "file.csv"; // Default filename
+      if (filenameMatch != null && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, "");
+      }
+
+      const file = new File([blob.data], filename, {
+        type: blob.data.type,
+      });
+      saveAs(file);
+    }
+  }
+
   return (
     <div className="flex h-12 items-center gap-4 border-b-2 border-gray-200">
       <div className="flex h-full items-center bg-carbon-datatable-grey px-6 font-semibold">
@@ -55,32 +76,15 @@ const SummaryBanner = ({
         </div>
       )}
       <div className="flex-grow"></div>
-      {hasCriticalError && (
-        <Link
-          className="cursor-pointer"
-          onClick={async () => {
-            const blob = await downloadDataQualityCheck.mutateAsync(uploadId);
-
-            if (blob) {
-              const contentDisposition = blob.headers["content-disposition"];
-              const filenameMatch = contentDisposition.match(
-                /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
-              );
-              let filename = "file.csv"; // Default filename
-              if (filenameMatch != null && filenameMatch[1]) {
-                filename = filenameMatch[1].replace(/['"]/g, "");
-              }
-
-              const file = new File([blob.data], filename, {
-                type: blob.data.type,
-              });
-              saveAs(file);
-            }
-          }}
-        >
-          <Download /> Download CSV with data quality checks
-        </Link>
-      )}
+      <Button
+        kind="ghost"
+        className="flex cursor-pointer items-center"
+        onClick={handleDownloadFullChecks}
+        renderIcon={isPending ? InlineLoading : Download}
+        disabled={isPending}
+      >
+        Download CSV with data quality checks
+      </Button>
     </div>
   );
 };
