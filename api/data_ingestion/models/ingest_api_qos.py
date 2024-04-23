@@ -84,9 +84,7 @@ class ApiConfiguration(BaseModel):
         Enum(RequestMethodEnum), default=RequestMethodEnum.GET, nullable=False
     )
     school_id_key: Mapped[str] = mapped_column(nullable=False)
-    school_id_send_query_in: Mapped[SendQueryInEnum] = mapped_column(
-        Enum(SendQueryInEnum), default=SendQueryInEnum.NONE, nullable=False
-    )
+
     size: Mapped[int] = mapped_column(nullable=True)
 
 
@@ -108,7 +106,7 @@ class SchoolList(ApiConfiguration):
 class SchoolConnectivity(ApiConfiguration):
     __tablename__ = "qos_school_connectivity"
 
-    ingestion_frequency_minutes: Mapped[int] = mapped_column()
+    ingestion_frequency: Mapped[str] = mapped_column()
     schema_url: Mapped[str] = mapped_column(nullable=True)
 
     school_list_id: Mapped[str] = mapped_column(ForeignKey("qos_school_list.id"))
@@ -118,6 +116,9 @@ class SchoolConnectivity(ApiConfiguration):
 
     date_key: Mapped[str] = mapped_column(nullable=True, default=None)
     date_format: Mapped[str] = mapped_column(nullable=True, default=None)
+    school_id_send_query_in: Mapped[SendQueryInEnum] = mapped_column(
+        Enum(SendQueryInEnum), default=SendQueryInEnum.NONE, nullable=False
+    )
     send_date_in: Mapped[SendDateInEnum] = mapped_column(nullable=True, default=None)
     response_date_key: Mapped[str] = mapped_column(nullable=False, default="")
     response_date_format: Mapped[str] = mapped_column(
