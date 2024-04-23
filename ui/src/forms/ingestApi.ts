@@ -98,7 +98,6 @@ export const schoolListFormInitialValues: SchoolListFormSchema = {
 
   data_key: null,
   school_id_key: "",
-  school_id_send_query_in: SendQueryInEnum.NONE,
   pagination_type: PaginationTypeEnum.NONE,
   page_number_key: null,
   page_offset_key: null,
@@ -177,7 +176,7 @@ export const schoolConnectivityFormInitialValues: SchoolConnectivityFormSchema =
     size: null,
     page_send_query_in: SendQueryInEnum.NONE,
 
-    ingestion_frequency_minutes: 0,
+    ingestion_frequency: "*/30 * * * *",
     enabled: true,
   };
 
