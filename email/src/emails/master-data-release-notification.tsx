@@ -69,9 +69,6 @@ export const MasterDataReleaseNotification = ({
                   <strong>{rows}</strong> total rows in dataset
                 </li>
               </ul>
-              <Text className="text-black text-sm leading-6">
-                To view the changes, please click the button below.
-              </Text>
 
               <Footer>
                 <>
