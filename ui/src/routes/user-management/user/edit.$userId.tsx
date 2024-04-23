@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
 import { Add } from "@carbon/icons-react";
@@ -25,7 +25,6 @@ import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Select } from "@/components/forms/Select.tsx";
 import ToastNotification from "@/components/user-management/ToastNotification.tsx";
-import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import countries from "@/constants/countries.ts";
 import {
   filterCountries,
@@ -482,10 +481,10 @@ function EditUser() {
         </Modal>
       )}
 
-      <Suspense>
-        {/* @ts-expect-error inference */}
+      {/* <Suspense>
+        //@ts-expect-error inference
         <ReactHookFormDevTools control={control} />
-      </Suspense>
+      </Suspense> */}
 
       <ToastNotification
         show={showEditUserSuccessNotification}

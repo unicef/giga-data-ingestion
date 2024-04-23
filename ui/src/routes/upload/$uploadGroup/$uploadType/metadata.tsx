@@ -1,4 +1,4 @@
-import { Suspense, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   FieldErrors,
   SubmitHandler,
@@ -35,7 +35,6 @@ import {
   SelectFromArray,
   SelectFromEnum,
 } from "@/components/upload/MetadataInputs.tsx";
-import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { metadataMapping, yearList } from "@/constants/metadata";
 import { useStore } from "@/context/store";
 import useRoles from "@/hooks/useRoles.ts";
@@ -161,7 +160,6 @@ function Metadata() {
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors },
   } = useForm<MetadataForm>({
     mode: "onSubmit",
@@ -335,9 +333,9 @@ function Metadata() {
           </Stack>
         </Form>
 
-        <Suspense>
+        {/* <Suspense>
           <ReactHookFormDevTools control={control} />
-        </Suspense>
+        </Suspense> */}
       </Section>
     </Section>
   );
