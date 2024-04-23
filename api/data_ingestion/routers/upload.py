@@ -14,6 +14,7 @@ from fastapi import (
     status,
 )
 from fastapi_azure_auth.user import User
+from icecream import ic
 from pydantic import Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,7 +22,7 @@ from starlette.responses import StreamingResponse
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
-from data_ingestion.constants import constants
+from data_ingestion.constants import constants, get_dq_overall_path_prefix
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.data_quality_checks import (
@@ -172,6 +173,7 @@ async def upload_file(
         metadata = {
             **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
             "country": form.country,
+            "uploader_email": email,
         }
 
         if form.source is not None:
@@ -260,6 +262,7 @@ async def upload_unstructured(
         metadata = {
             **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
             "country": form.country,
+            "uploader_email": email,
         }
 
         if form.source is not None:
@@ -342,12 +345,14 @@ async def download_data_quality_check(
                 detail="You do not have permission to access details for this file.",
             )
 
-    blob_list = storage_client.list_blobs(name_starts_with=file_upload.dq_report_path)
-    first_blob = next(blob_list, None)
-
-    blob = storage_client.get_blob_client(first_blob.name)
+    path_prefix = get_dq_overall_path_prefix(file_upload.dataset)
+    upload_path_parts = file_upload.upload_path.split("/")
+    upload_filename = upload_path_parts[-1]
+    blob = storage_client.get_blob_client(
+        ic(f"{path_prefix}/{file_upload.country}/{upload_filename}")
+    )
     stream = blob.download_blob()
-    headers = {"Content-Disposition": f"attachment; filename={first_blob.name}"}
+    headers = {"Content-Disposition": f"attachment; filename={upload_filename}"}
 
     return StreamingResponse(
         stream.chunks(),

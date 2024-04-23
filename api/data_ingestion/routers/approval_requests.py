@@ -18,6 +18,7 @@ from data_ingestion.db.primary import get_db as get_primary_db
 from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
+from data_ingestion.internal.users import UsersApi
 from data_ingestion.models import ApprovalRequest
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
@@ -181,6 +182,16 @@ async def get_approval_request(
         .mappings()
         .all()
     )
+    detail = (
+        db.execute(
+            select("*")
+            .select_from(text(f'{table_schema}."{table_name}$history"'))
+            .order_by(column("version").desc())
+            .limit(1)
+        )
+        .mappings()
+        .first()
+    )
 
     for i, row in (df := pd.DataFrame(cdf)).iterrows():
         if row["_change_type"] in ["update_postimage", "insert"]:
@@ -200,7 +211,12 @@ async def get_approval_request(
         .fillna("NULL")
     )
     return {
-        "info": {"country": country, "dataset": dataset.title()},
+        "info": {
+            "country": country,
+            "dataset": dataset.title(),
+            "version": detail["version"],
+            "timestamp": detail["timestamp"],
+        },
         "total_count": total_count,
         "data": df.to_dict(orient="records"),
     }
@@ -213,7 +229,7 @@ async def get_approval_request(
 async def upload_approved_rows(
     body: UploadApprovedRowsRequest,
     user=Depends(azure_scheme),
-    primary_db: Session = Depends(get_primary_db),
+    primary_db: AsyncSession = Depends(get_primary_db),
 ):
     posix_path = Path(urllib.parse.unquote(body.subpath))
     dataset = posix_path.parent.name.replace("_staging", "").replace("_", "-")
@@ -227,6 +243,10 @@ async def upload_approved_rows(
         f"/approved-row-ids/{dataset}/{country_iso3}/{filename}"
     )
 
+    email = user.email or user.claims.get("email")
+    if email is None:
+        email = (await UsersApi.get_user(user.sub)).mail
+
     approve_client = storage_client.get_blob_client(approve_location)
     try:
         approve_client.upload_blob(
@@ -234,6 +254,7 @@ async def upload_approved_rows(
                 body.approved_rows,
             ),
             overwrite=True,
+            metadata={"approver_email": email},
             content_settings=ContentSettings(content_type="application/json"),
         )
 

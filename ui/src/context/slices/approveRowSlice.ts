@@ -14,10 +14,16 @@ interface ApproveRowSliceState {
 
 interface ApproveRowSliceActions {
   approveRowActions: {
-    setHeaders: (header: DataTableHeader[]) => void;
-    setRows: (row: KeyValueObject[]) => void;
-    setApprovedRows: (approvedRows: string[]) => void;
-    setRejectedRows: (rejectedRows: string[]) => void;
+    setHeaders: (
+      header: ApproveRowSliceState["approveRowState"]["headers"],
+    ) => void;
+    setRows: (row: ApproveRowSliceState["approveRowState"]["rows"]) => void;
+    setApprovedRows: (
+      approvedRows: ApproveRowSliceState["approveRowState"]["approvedRowsList"],
+    ) => void;
+    setRejectedRows: (
+      rejectedRows: ApproveRowSliceState["approveRowState"]["rejectedRowsList"],
+    ) => void;
     resetApproveRowState: () => void;
   };
 }
@@ -57,7 +63,7 @@ export const createApproveRowSlice: StateCreator<
         REPLACE_FLAG_DEFAULT,
         "approveRowSlice/resetApproveRowState",
       ),
-    setApprovedRows: (approvedRows: string[]) =>
+    setApprovedRows: approvedRows =>
       set(
         state => {
           state.approveRowState.approvedRowsList = approvedRows;
@@ -65,7 +71,7 @@ export const createApproveRowSlice: StateCreator<
         REPLACE_FLAG_DEFAULT,
         "approveRowSlice/setApprovedRows",
       ),
-    setRejectedRows: (rejectedRows: string[]) =>
+    setRejectedRows: rejectedRows =>
       set(
         state => {
           state.approveRowState.rejectedRowsList = rejectedRows;
@@ -73,7 +79,7 @@ export const createApproveRowSlice: StateCreator<
         REPLACE_FLAG_DEFAULT,
         "approveRowSlice/setRejectedRows",
       ),
-    setHeaders: (header: DataTableHeader[]) =>
+    setHeaders: header =>
       set(
         state => {
           state.approveRowState.headers = header;
@@ -81,7 +87,7 @@ export const createApproveRowSlice: StateCreator<
         REPLACE_FLAG_DEFAULT,
         "approveRowSlice/setHeaders",
       ),
-    setRows: (rows: KeyValueObject[]) =>
+    setRows: rows =>
       set(
         state => {
           state.approveRowState.rows = rows;

@@ -5,6 +5,7 @@ import {
   Button,
   ButtonSet,
   DataTable,
+  DataTableSkeleton,
   Loading,
   Section,
   Table,
@@ -14,18 +15,53 @@ import {
   TableHeader,
   TableRow,
 } from "@carbon/react";
-import { useMutation } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useMutation,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
+import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
+import { HEADERS } from "@/constants/ingest-api.ts";
+import {
+  DEFAULT_PAGE_NUMBER,
+  DEFAULT_PAGE_SIZE,
+} from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
 import { CarbonDataTableRow } from "@/types/datatable";
 import { KeyValueObject } from "@/types/datatable";
 import { getValueByHeader } from "@/utils/approval_requests";
+import { validateSearchParams } from "@/utils/pagination.ts";
 
 export const Route = createFileRoute("/approval-requests/$subpath/confirm")({
   component: Confirm,
+  validateSearch: validateSearchParams,
+  loader: ({ params: { subpath }, context: { queryClient } }) => {
+    return queryClient.ensureQueryData(
+      queryOptions({
+        queryFn: () =>
+          api.approvalRequests.get(subpath, {
+            page: DEFAULT_PAGE_NUMBER,
+            page_size: DEFAULT_PAGE_SIZE,
+          }),
+        queryKey: [
+          "approval-requests",
+          subpath,
+          DEFAULT_PAGE_NUMBER,
+          DEFAULT_PAGE_SIZE,
+        ],
+      }),
+    );
+  },
+  pendingComponent: () => (
+    <Section className="container py-6">
+      <DataTableSkeleton headers={HEADERS} />
+    </Section>
+  ),
+  errorComponent: ErrorComponent,
 });
 
 interface ConfirmDataTablesProps {
@@ -39,7 +75,24 @@ function Confirm() {
   } = useStore();
   const { subpath } = Route.useParams();
 
+  const {
+    page = DEFAULT_PAGE_NUMBER,
+    page_size: pageSize = DEFAULT_PAGE_SIZE,
+  } = Route.useSearch();
+
   const navigate = useNavigate({ from: Route.fullPath });
+
+  const {
+    data: {
+      data: { total_count },
+    },
+  } = useSuspenseQuery(
+    queryOptions({
+      queryFn: () =>
+        api.approvalRequests.get(subpath, { page: page, page_size: pageSize }),
+      queryKey: ["approval-requests", subpath, page, pageSize],
+    }),
+  );
 
   const { mutateAsync: upload, isPending } = useMutation({
     mutationKey: ["approval-request-upload", subpath],
@@ -116,32 +169,34 @@ function Confirm() {
   };
 
   const handleSubmit = async () => {
-    const approvedRowIds = approvedRows.map(row => row.id as string);
-    const rejectedRowIds = rejectedRows.map(row => row.id as string);
-
     await upload({
-      approved_rows: approvedRowIds,
-      rejected_rows: rejectedRowIds,
+      approved_rows: approvedRowsList,
       subpath: subpath,
     });
-    navigate({ to: "/approval-requests" });
+    await navigate({ to: "/approval-requests" });
   };
 
   return (
     <Section className="container py-6">
       <Accordion>
-        <AccordionItem title={`Approved Rows (${approvedRows.length})`}>
+        <AccordionItem
+          disabled
+          title={`Approved Rows (${approvedRowsList.length})`}
+        >
           <ConfirmDatatables rows={approvedRows} />
         </AccordionItem>
-        <AccordionItem title={`Rejected Rows (${rejectedRows.length})`}>
+        <AccordionItem
+          disabled
+          title={`Rejected Rows (${total_count - approvedRowsList.length})`}
+        >
           <ConfirmDatatables rows={rejectedRows} />
         </AccordionItem>
       </Accordion>
       <Section level={8}>
         <p className="py-4">
           The approved rows above will be scheduled for merging to the School
-          Master Silver dataset, and the rejected rows will be dropped. Please
-          double check and click submit to complete the review process.
+          Master dataset, and the rejected rows will be dropped. Please double
+          check and click submit to complete the review process.
         </p>
       </Section>
       <ButtonSet className="w-full">
@@ -159,6 +214,7 @@ function Confirm() {
         <Button
           className="w-full"
           isExpressive
+          disabled={isPending}
           renderIcon={
             isPending
               ? props => <Loading small={true} withOverlay={false} {...props} />
