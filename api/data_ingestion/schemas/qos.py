@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import orjson
+from croniter import croniter
 from fastapi import Form
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_validator
 
@@ -40,18 +41,18 @@ class ApiConfiguration(BaseModel):
     request_body: str | None
     request_method: RequestMethodEnum
     school_id_key: str
-    school_id_send_query_in: SendQueryInEnum
     size: int | None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class SchoolConnectivitySchema(ApiConfiguration):
-    ingestion_frequency_minutes: int
+    ingestion_frequency: str
     schema_url: str | None
     school_list_id: str
     date_key: str | None
     date_format: str | None
+    school_id_send_query_in: SendQueryInEnum
     send_date_in: str | None
     response_date_key: str
     response_date_format: str
@@ -65,6 +66,12 @@ class SchoolConnectivitySchema(ApiConfiguration):
                 )
             if not is_valid_format_code(self.date_format):
                 raise ValueError("date_format is invalid")
+        return self
+
+    @model_validator(mode="after")
+    def validate_ingestion_frequency(self):
+        if not croniter.is_valid(self.ingestion_frequency):
+            raise ValueError("ingestion_frequency must be a valid cron expression")
         return self
 
 
@@ -97,7 +104,6 @@ class ApiConfigurationRequest(BaseModel):
     request_body: str | None
     request_method: RequestMethodEnum
     school_id_key: str
-    school_id_send_query_in: SendQueryInEnum
     size: int | None
 
 
@@ -118,9 +124,10 @@ class CreateSchoolListRequest(ApiConfigurationRequest):
 
 @dataclass
 class CreateSchoolConnectivityRequest(ApiConfigurationRequest):
-    ingestion_frequency_minutes: int
+    ingestion_frequency: str
     date_key: str | None
     date_format: str | None
+    school_id_send_query_in: SendQueryInEnum
     send_date_in: str | None
     response_date_key: str
     response_date_format: str
@@ -145,7 +152,30 @@ class CreateApiIngestionRequest:
 
 
 class EditSchoolConnectivityRequest(ApiConfigurationRequest):
-    ingestion_frequency_minutes: int
+    ingestion_frequency: str
+    date_key: str | None
+    date_format: str | None
+    school_id_send_query_in: SendQueryInEnum
+    send_date_in: str | None
+    response_date_key: str
+    response_date_format: str
+
+    @model_validator(mode="after")
+    def validate_date_format(self):
+        if self.date_key is not None:
+            if self.date_format is None:
+                raise ValueError(
+                    "date_format should also be provided when date_key is provided"
+                )
+            if not is_valid_format_code(self.date_format):
+                raise ValueError("date_format is invalid")
+        return self
+
+    @model_validator(mode="after")
+    def validate_ingestion_frequency(self):
+        if not croniter.is_valid(self.ingestion_frequency):
+            raise ValueError("ingestion_frequency must be a valid cron expression")
+        return self
 
 
 class EditSchoolListRequest(ApiConfigurationRequest):

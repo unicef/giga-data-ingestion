@@ -52,7 +52,6 @@ export interface ApiConfigurationResponse {
   request_body: string;
   request_method: RequestMethodEnum;
   school_id_key: string;
-  school_id_send_query_in: SendQueryInEnum;
   size: number;
   user_email: string;
   user_id: string;
@@ -72,12 +71,13 @@ export interface PagedSchoolListResponse {
 }
 
 export interface SchoolConnectivityResponse extends ApiConfigurationResponse {
-  ingestion_frequency_minutes: number;
+  ingestion_frequency: string;
   schema_url: string;
   school_list: SchoolListResponse;
   school_list_id: string;
   date_key: string | null;
   date_format: string | null;
+  school_id_send_query_in: SendQueryInEnum;
   send_date_in: SendQueryInEnum | null;
   response_date_key: string;
   response_date_format: string;
@@ -112,7 +112,6 @@ export interface ApiIngestionFormValues {
   request_body: string | null;
   request_method: RequestMethodEnum;
   school_id_key: string;
-  school_id_send_query_in: SendQueryInEnum;
   size: number | null;
 }
 
@@ -124,9 +123,10 @@ export interface SchoolListFormValues extends ApiIngestionFormValues {
 }
 
 export interface SchoolConnectivityFormValues extends ApiIngestionFormValues {
-  ingestion_frequency_minutes: number;
+  ingestion_frequency: string;
   date_key: string | null;
   date_format: string | null;
+  school_id_send_query_in: SendQueryInEnum;
   send_date_in: string | null;
   response_date_key: string | null;
   response_date_format: string | null;

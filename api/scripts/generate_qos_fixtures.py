@@ -1,4 +1,3 @@
-import json
 from base64 import b64encode
 from datetime import timedelta
 from random import SystemRandom
@@ -85,20 +84,20 @@ def main(number: int = 5):
                 random.choice([r.name for r in RequestMethodEnum])
             ],
             school_id_key=random.choice(["school_id", "schoolId", "schoolID"]),
-            school_id_send_query_in=SendQueryInEnum[
-                random.choice([s.name for s in SendQueryInEnum])
-            ],
             size=random.randint(1, 50),
         )
 
         school_connectivity_config = {
             **base_config.model_dump(),
             "id": school_connectivity_id,
-            "ingestion_frequency_minutes": random.choice([15, 30, 45, 60]),
+            "ingestion_frequency": "*/30 * * * *",
             "schema_url": fake.url(),
             "school_list_id": school_list_id,
             "date_key": random.choice(["data", "results", "result"]),
             "date_format": random.choice(["timestamp", "unix"]),
+            "school_id_send_query_in": SendQueryInEnum[
+                random.choice([s.name for s in SendQueryInEnum])
+            ],
             "send_date_in": SendQueryInEnum[
                 random.choice([s.name for s in SendQueryInEnum if s.name != "NONE"])
             ],
@@ -114,36 +113,34 @@ def main(number: int = 5):
             **{
                 **base_config.model_dump(),
                 "id": school_list_id,
-                "column_to_schema_mapping": json.dumps(
-                    {
-                        random.choice(
-                            [
-                                "school_id_giga",
-                                "school_giga_id",
-                                "giga_school_id",
-                                "school_id",
-                            ]
-                        ): "school_id_giga",
-                        random.choice(
-                            ["lat", "latitude", "Latitude", "LATITUDE"]
-                        ): "latitude",
-                        random.choice(
-                            ["lon", "lng", "long", "latitude", "Longitude", "Longitude"]
-                        ): "longitude",
-                        random.choice(
-                            ["name", "school_name", "schoolName", "school_name"]
-                        ): "school_name",
-                        random.choice(
-                            ["download_speed", "downloadSpeed", "DownloadSpeed"]
-                        ): "speed_download",
-                        random.choice(
-                            ["upload_speed", "uploadSpeed", "UploadSpeed"]
-                        ): "speed_upload",
-                        random.choice(
-                            ["ping", "RTT", "RoundtripTime", "rtt"]
-                        ): "roundtrip_time",
-                    }
-                ),
+                "column_to_schema_mapping": {
+                    random.choice(
+                        [
+                            "school_id_giga",
+                            "school_giga_id",
+                            "giga_school_id",
+                            "school_id",
+                        ]
+                    ): "school_id_giga",
+                    random.choice(
+                        ["lat", "latitude", "Latitude", "LATITUDE"]
+                    ): "latitude",
+                    random.choice(
+                        ["lon", "lng", "long", "latitude", "Longitude", "Longitude"]
+                    ): "longitude",
+                    random.choice(
+                        ["name", "school_name", "schoolName", "school_name"]
+                    ): "school_name",
+                    random.choice(
+                        ["download_speed", "downloadSpeed", "DownloadSpeed"]
+                    ): "speed_download",
+                    random.choice(
+                        ["upload_speed", "uploadSpeed", "UploadSpeed"]
+                    ): "speed_upload",
+                    random.choice(
+                        ["ping", "RTT", "RoundtripTime", "rtt"]
+                    ): "roundtrip_time",
+                },
                 "name": fake.nic_handle(),
                 "user_email": fake.safe_email(),
                 "user_id": fake.uuid4(),

@@ -3,6 +3,7 @@ import { zu } from "zod_utilz";
 
 import {
   validateAuthType,
+  validateCron,
   validatePaginationType,
   validateSchoolId,
 } from "@/forms/validators.ts";
@@ -21,7 +22,6 @@ function commonSuperRefine(
 ) {
   validateAuthType(val, ctx);
   validatePaginationType(val, ctx);
-  validateSchoolId(val, ctx);
 }
 
 const TestApiRawSchema = z.object({
@@ -49,7 +49,6 @@ const TestApiRawSchema = z.object({
 
   data_key: z.string().nullable(),
   school_id_key: z.string().min(1).optional(),
-  school_id_send_query_in: z.nativeEnum(SendQueryInEnum).optional(),
 
   pagination_type: z.nativeEnum(PaginationTypeEnum),
   page_number_key: z.string().nullable(),
@@ -69,7 +68,6 @@ export type TestApiSchema = z.infer<typeof TestApiSchema>;
 
 export const CommonApiIngestionFormSchema = TestApiRawSchema.extend({
   school_id_key: z.string().min(1),
-  school_id_send_query_in: z.nativeEnum(SendQueryInEnum),
 });
 
 export type CommonApiIngestionFormSchema = z.infer<
@@ -100,7 +98,6 @@ export const schoolListFormInitialValues: SchoolListFormSchema = {
 
   data_key: null,
   school_id_key: "",
-  school_id_send_query_in: SendQueryInEnum.NONE,
   pagination_type: PaginationTypeEnum.NONE,
   page_number_key: null,
   page_offset_key: null,
@@ -113,7 +110,7 @@ export const schoolListFormInitialValues: SchoolListFormSchema = {
 export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
   {
     enabled: z.boolean().default(true),
-    ingestion_frequency_minutes: z.coerce.number().int().min(5),
+    ingestion_frequency: z.string(),
     date_key: z.string().nullable(),
     date_format: z
       .union([
@@ -125,12 +122,15 @@ export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
           ),
       ])
       .nullable(),
+    school_id_send_query_in: z.nativeEnum(SendQueryInEnum),
     send_date_in: z.string().nullable(),
     response_date_key: z.string().min(1),
     response_date_format: z.string().min(1),
   },
 ).superRefine((arg, ctx) => {
   commonSuperRefine(arg, ctx);
+  validateSchoolId(arg, ctx);
+  validateCron(arg, ctx);
 
   if (arg.date_key && !arg.date_format) {
     ctx.addIssue({
@@ -176,7 +176,7 @@ export const schoolConnectivityFormInitialValues: SchoolConnectivityFormSchema =
     size: null,
     page_send_query_in: SendQueryInEnum.NONE,
 
-    ingestion_frequency_minutes: 0,
+    ingestion_frequency: "*/30 * * * *",
     enabled: true,
   };
 

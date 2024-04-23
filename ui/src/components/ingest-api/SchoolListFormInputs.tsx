@@ -161,15 +161,6 @@ export function SchoolListFormInputs({ users }: SchoolListFormInputsProps) {
             "Specify the name of the key in the API response that contains the school ID.",
         },
         {
-          name: "school_id_send_query_in",
-          label: "Send School ID in",
-          type: "enum",
-          enum: Object.values(SendQueryInEnum),
-          required: true,
-          helperText:
-            "If the corresponding school connectivity API for this school listing requires the school ID as a parameter, specify where to insert the school ID.",
-        },
-        {
           name: "pagination_type",
           label: "Pagination Method",
           type: "enum",

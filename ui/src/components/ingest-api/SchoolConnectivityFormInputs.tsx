@@ -271,12 +271,12 @@ export function SchoolConnectivityFormInputs() {
           `,
         },
         {
-          name: "ingestion_frequency_minutes",
-          label: "Frequency",
-          type: "number",
+          name: "ingestion_frequency",
+          label: "Schedule",
+          type: "text",
           required: true,
           helperText:
-            "Ingestion frequency in minutes. Minimum value is 5 minutes.",
+            "Ingestion schedule in UNIX cron format. If running on an interval, the minimum is 5 minutes.",
         },
         {
           name: "enabled",

@@ -39,6 +39,7 @@ trino = { extras = ["sqlalchemy"], version = "^0.328.0" }
 redis = { extras = ["hiredis"], version = "^5.0.3" }
 celery = "^5.3.6"
 asgiref = "^3.8.1"
+croniter = "^2.0.5"
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.16.1"
