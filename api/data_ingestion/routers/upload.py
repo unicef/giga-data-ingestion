@@ -173,6 +173,7 @@ async def upload_file(
         metadata = {
             **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
             "country": form.country,
+            "uploader_email": email,
         }
 
         if form.source is not None:
@@ -261,6 +262,7 @@ async def upload_unstructured(
         metadata = {
             **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
             "country": form.country,
+            "uploader_email": email,
         }
 
         if form.source is not None:
