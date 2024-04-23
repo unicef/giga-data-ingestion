@@ -14,12 +14,20 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import CDFDataTable from "@/components/approval-requests/CDFDataTable";
+import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { HEADERS } from "@/constants/ingest-api";
+import {
+  DEFAULT_PAGE_NUMBER,
+  DEFAULT_PAGE_SIZE,
+} from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests";
+import { validateSearchParams } from "@/utils/pagination.ts";
+import { difference } from "@/utils/set.ts";
 
 export const Route = createFileRoute("/approval-requests/$subpath/")({
   component: ApproveRejectTable,
+  validateSearch: validateSearchParams,
   loader: ({ params: { subpath }, context: { queryClient } }) => {
     return queryClient.ensureQueryData(
       queryOptions({
@@ -34,13 +42,16 @@ export const Route = createFileRoute("/approval-requests/$subpath/")({
       <DataTableSkeleton headers={HEADERS} />
     </Section>
   ),
+  errorComponent: ErrorComponent,
 });
 
 function ApproveRejectTable() {
-  const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(10);
   const [isOpen, setOpen] = useState<boolean>(false);
 
+  const {
+    page = DEFAULT_PAGE_NUMBER,
+    page_size: pageSize = DEFAULT_PAGE_SIZE,
+  } = Route.useSearch();
   const { subpath } = Route.useParams();
   const navigate = useNavigate({ from: Route.fullPath });
 
@@ -54,13 +65,21 @@ function ApproveRejectTable() {
     },
     approveRowState: { approvedRowsList, rejectedRowsList },
   } = useStore();
-  const { data: approvalRequestsQuery } = useSuspenseQuery(
+
+  const {
+    data: approvalRequestsQuery,
+    isFetching,
+    isRefetching,
+  } = useSuspenseQuery(
     queryOptions({
       queryFn: () =>
         api.approvalRequests.get(subpath, { page: page, page_size: pageSize }),
       queryKey: ["approval-requests", subpath, page, pageSize],
     }),
   );
+
+  const isLoading = isFetching || isRefetching;
+
   const {
     data: approvalRequests,
     info,
@@ -72,6 +91,7 @@ function ApproveRejectTable() {
     const idIndex = keys.findIndex(key => key === "school_id_giga");
     if (idIndex > -1) {
       keys = [
+        "approval_status",
         "school_id_giga",
         ...keys.slice(0, idIndex),
         ...keys.slice(idIndex + 1),
@@ -87,28 +107,37 @@ function ApproveRejectTable() {
     () =>
       approvalRequests.map(row => ({
         ...row,
-        id: row.school_id_giga,
+        id: `${row.school_id_giga}-${row._commit_version}`,
+        approval_status: approvedRowsList.includes(row.school_id_giga ?? "")
+          ? "Approved"
+          : rejectedRowsList.includes(row.school_id_giga ?? "")
+          ? "Rejected"
+          : "",
       })),
-    [approvalRequests],
+    [approvalRequests, approvedRowsList, rejectedRowsList],
   );
 
-  const unselectedRows = useMemo<Record<string, string | null>[]>(() => {
-    return formattedRows.filter(
-      approvalRequest =>
-        !approvedRowsList.includes(approvalRequest.school_id_giga ?? "") &&
-        !rejectedRowsList.includes(approvalRequest.school_id_giga ?? ""),
-    );
-  }, [formattedRows, approvedRowsList, rejectedRowsList]);
-
   const handleApproveRows = (rows: Record<string, string | null>[]) => {
-    const ids = rows.map(row => row.school_id_giga ?? "NULL");
-    setApprovedRows([...approvedRowsList, ...ids]);
+    const ids = rows.map(row => row.school_id_giga ?? "").filter(Boolean);
+
+    const _approvedRows = new Set([...approvedRowsList, ...ids]);
+    setApprovedRows([..._approvedRows]);
+
+    const _rejectedRows = difference(new Set(rejectedRowsList), new Set(ids));
+    setRejectedRows([..._rejectedRows]);
+
     setHeaders(headers);
   };
 
   const handleRejectRows = (rows: Record<string, string | null>[]) => {
-    const ids = rows.map(row => row.school_id_giga ?? "NULL");
-    setRejectedRows([...rejectedRowsList, ...ids]);
+    const ids = rows.map(row => row.school_id_giga ?? "").filter(Boolean);
+
+    const _rejectedRows = new Set([...rejectedRowsList, ...ids]);
+    setRejectedRows([..._rejectedRows]);
+
+    const _approvedRows = difference(new Set(approvedRowsList), new Set(ids));
+    setApprovedRows([..._approvedRows]);
+
     setHeaders(headers);
   };
 
@@ -119,30 +148,30 @@ function ApproveRejectTable() {
     pageSize: number;
     page: number;
   }) => {
-    setPage(page);
-    setPageSize(pageSize);
+    void navigate({
+      to: "",
+      params: { subpath },
+      search: {
+        page,
+        page_size: pageSize,
+      },
+    });
   };
 
   const handleSubmit = () => {
-    if (unselectedRows.length > 0) {
+    if (approvedRowsList.length < total_count) {
       setOpen(true);
     } else {
       handleProceed();
     }
   };
-  const handleProceed = () => {
-    const unselectedRowsIds = unselectedRows.map(
-      row => row.school_id_giga ?? "NULL",
-    );
 
-    setRejectedRows([...rejectedRowsList, ...unselectedRowsIds]);
+  const handleProceed = async () => {
     setRows(formattedRows);
 
-    void navigate({
+    await navigate({
       to: "/approval-requests/$subpath/confirm",
-      params: {
-        subpath: subpath,
-      },
+      params: { subpath },
     });
   };
 
@@ -150,7 +179,7 @@ function ApproveRejectTable() {
     <>
       <CDFDataTable
         headers={headers}
-        rows={unselectedRows}
+        rows={formattedRows}
         handleApproveRows={handleApproveRows}
         handleRejectRows={handleRejectRows}
         handlePaginationChange={handlePaginationChange}
@@ -158,6 +187,7 @@ function ApproveRejectTable() {
         pageSize={pageSize}
         count={total_count}
         info={info}
+        isLoading={isLoading}
       />
       <div className="container">
         <ButtonSet className="w-full">
@@ -191,8 +221,8 @@ function ApproveRejectTable() {
         onRequestClose={() => setOpen(false)}
         onRequestSubmit={handleProceed}
       >
-        You have {unselectedRows.length} unselected rows. These rows will be
-        automatically rejected. Are you sure?
+        You have {total_count - approvedRowsList.length} unselected rows. These
+        rows will be automatically rejected. Proceed?
       </Modal>
     </>
   );

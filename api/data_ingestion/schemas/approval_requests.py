@@ -17,7 +17,6 @@ class ApprovalRequestListing(BaseModel):
 
 class UploadApprovedRowsRequest(BaseModel):
     approved_rows: list[str]
-    rejected_rows: list[str]
     subpath: str
 
 

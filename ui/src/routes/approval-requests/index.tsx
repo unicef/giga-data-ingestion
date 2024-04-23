@@ -83,7 +83,7 @@ function ApprovalRequests() {
     setPageSize(pageSize);
   }
 
-  const { data, isLoading, isFetching, isRefetching } = useSuspenseQuery(
+  const { data, isFetching, isRefetching } = useSuspenseQuery(
     queryOptions({
       queryKey: ["approval-requests", page, pageSize],
       queryFn: () =>
@@ -94,7 +94,9 @@ function ApprovalRequests() {
     }),
   );
 
-  const approvalRequests = data?.data ?? SENTINEL_PAGED_RESPONSE;
+  const isLoading = isFetching || isRefetching;
+
+  const approvalRequests = data.data ?? SENTINEL_PAGED_RESPONSE;
 
   const formattedApprovalRequests = useMemo<ApprovalRequestTableRow[]>(
     () =>
@@ -103,13 +105,13 @@ function ApprovalRequests() {
         country: `${request.country} (${request.country_iso3})`,
         actions: (
           <Button
-            disabled={isFetching || isRefetching}
+            disabled={isLoading || !request.enabled}
             kind="tertiary"
             size="sm"
             as={Link}
             to="./$subpath"
             renderIcon={
-              isFetching || isRefetching
+              isLoading
                 ? props => (
                     <Loading small={true} withOverlay={false} {...props} />
                   )
@@ -128,7 +130,7 @@ function ApprovalRequests() {
           DEFAULT_DATETIME_FORMAT,
         ),
       })),
-    [approvalRequests, resetApproveRowState, isFetching, isRefetching],
+    [approvalRequests.data, isLoading, resetApproveRowState],
   );
 
   return (

@@ -15,6 +15,8 @@ export interface ApprovalRequestListing {
 export interface ApprovalRequestInfo {
   country: string;
   dataset: string;
+  version: number;
+  timestamp: string;
 }
 
 export type ApprovalRequestData = Record<string, null> & {
@@ -31,6 +33,8 @@ export const SENTINEL_APPROVAL_REQUEST: ApprovalRequest = {
   info: {
     country: "",
     dataset: "",
+    version: 0,
+    timestamp: "",
   },
   data: [],
   total_count: 0,
