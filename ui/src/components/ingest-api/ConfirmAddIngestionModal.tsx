@@ -84,9 +84,9 @@ const ConfirmAddIngestionModal = ({
     >
       <Stack gap={4}>
         <p>
-          This will create a new ingestion that will ingest from{" "}
-          <b>{schoolConnectivity.api_endpoint}</b> every{" "}
-          <b>{schoolConnectivity.ingestion_frequency}</b> minutes
+          This will create a new ingestion that will ingest from
+          <b>{schoolConnectivity.api_endpoint}</b> using the cron schedule
+          <b>{schoolConnectivity.ingestion_frequency}</b>
         </p>
         {showErrorNotification && (
           <InlineNotification
