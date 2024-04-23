@@ -1,4 +1,4 @@
-import { Suspense, useMemo } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { Control, FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
@@ -68,6 +68,9 @@ function UploadColumnMapping() {
     },
   } = useStore();
 
+  const [selectedColumns, setSelectedColumns] =
+    useState<Record<string, string>>(columnMapping);
+
   const { uploadType } = Route.useParams();
   const metaschemaName =
     uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
@@ -113,11 +116,16 @@ function UploadColumnMapping() {
         id: column.id,
         masterColumn: <MasterColumn column={column} />,
         detectedColumns: (
-          <DetectedColumn detectedColumns={detectedColumns} column={column} />
+          <DetectedColumn
+            column={column}
+            detectedColumns={detectedColumns}
+            selectedColumns={selectedColumns}
+            setSelectedColumns={setSelectedColumns}
+          />
         ),
         license: <ColumnLicense column={column} />,
       })),
-    [detectedColumns, schema],
+    [detectedColumns, schema, selectedColumns],
   );
 
   return (
