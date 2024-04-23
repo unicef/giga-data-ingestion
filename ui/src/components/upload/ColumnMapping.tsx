@@ -1,5 +1,9 @@
-import { memo } from "react";
-import { useFormContext } from "react-hook-form";
+import { ChangeEvent, Dispatch, SetStateAction, memo } from "react";
+import {
+  FieldValues,
+  UseFormResetField,
+  useFormContext,
+} from "react-hook-form";
 
 import { Warning } from "@carbon/icons-react";
 import { DefinitionTooltip, Select, SelectItem } from "@carbon/react";
@@ -56,10 +60,43 @@ export const MasterColumn = memo(({ column }: MasterColumnProps) => {
 
 interface DetectedColumnProps extends BaseColumnProps {
   detectedColumns: string[];
+  selectedColumns: Record<string, string>;
+  setSelectedColumns: Dispatch<SetStateAction<Record<string, string>>>;
 }
 
+const handleSelectOnChange = ({
+  resetField,
+  selectedColumn,
+  expectedColumn,
+  setSelectedColumns,
+}: {
+  resetField: UseFormResetField<FieldValues>;
+  selectedColumn: string;
+  expectedColumn: string;
+  setSelectedColumns: Dispatch<SetStateAction<Record<string, string>>>;
+}) => {
+  if (selectedColumn === "") {
+    setSelectedColumns(old => {
+      resetField(`license.${selectedColumn}`);
+
+      const copy = { ...old };
+      delete copy[expectedColumn];
+      return copy;
+    });
+  } else {
+    setSelectedColumns(old => {
+      return { ...old, [expectedColumn]: selectedColumn };
+    });
+  }
+};
+
 export const DetectedColumn = memo(
-  ({ column, detectedColumns }: DetectedColumnProps) => {
+  ({
+    column,
+    detectedColumns,
+    selectedColumns,
+    setSelectedColumns,
+  }: DetectedColumnProps) => {
     const {
       formState: { errors },
       register,
@@ -74,17 +111,26 @@ export const DetectedColumn = memo(
           labelText=""
           {...register(`mapping.${column.name}`, {
             required: !column.is_nullable,
-            onChange: e => {
-              if (e.target.value === "") {
-                resetField(`license.${column.name}`);
-              }
+            onChange: (e: ChangeEvent<HTMLInputElement>) => {
+              handleSelectOnChange({
+                resetField: resetField,
+                selectedColumn: e.target.value,
+                expectedColumn: column.name,
+                setSelectedColumns: setSelectedColumns,
+              });
             },
           })}
         >
           <SelectItem text="" value="" />
-          {detectedColumns.map(col => (
-            <SelectItem key={col} text={col} value={col} />
-          ))}
+          {detectedColumns
+            .filter(
+              detectedColumn =>
+                !Object.values(selectedColumns).includes(detectedColumn) ||
+                selectedColumns[column.name] === detectedColumn,
+            )
+            .map(col => (
+              <SelectItem key={col} text={col} value={col} />
+            ))}
         </Select>
       </div>
     );
