@@ -1,5 +1,5 @@
-import { Suspense, useMemo } from "react";
-import { Control, FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { useMemo } from "react";
+import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
 import { Button, ButtonSet, DataTableHeader, Stack, Tag } from "@carbon/react";
@@ -21,7 +21,6 @@ import {
   DetectedColumn,
   MasterColumn,
 } from "@/components/upload/ColumnMapping.tsx";
-import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { useStore } from "@/context/store";
 
 export const Route = createFileRoute(
@@ -90,7 +89,7 @@ function UploadColumnMapping() {
     },
     shouldFocusError: true,
   });
-  const { handleSubmit, control } = hookForm;
+  const { handleSubmit } = hookForm;
 
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
     const dataWithNullsReplaced: ConfigureColumnsForm = {
@@ -139,10 +138,10 @@ function UploadColumnMapping() {
           <section className="w-3/4">
             <DataTable columns={headers} rows={rows} />
           </section>
-
+          {/* 
           <Suspense>
             <ReactHookFormDevTools control={control as unknown as Control} />
-          </Suspense>
+          </Suspense> */}
 
           <ButtonSet className="w-full">
             <Button
