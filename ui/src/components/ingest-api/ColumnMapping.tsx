@@ -33,6 +33,10 @@ const headers: DataTableHeader[] = [
 ];
 
 function ColumnMapping() {
+  const [selectedColumns, setSelectedColumns] = useState<
+    Record<string, string>
+  >({});
+
   const {
     apiIngestionSlice: { detectedColumns, columnMapping },
     apiIngestionSliceActions: {
@@ -70,6 +74,23 @@ function ColumnMapping() {
     incrementStepIndex();
     setColumnMapping(data);
     void navigate({ to: "../school-connectivity" });
+  };
+
+  const handleSelectOnChange = (
+    selectedColumn: string,
+    expectedColumn: string,
+  ) => {
+    if (selectedColumn === "") {
+      setSelectedColumns(old => {
+        const copy = { ...old };
+        delete copy[expectedColumn];
+        return copy;
+      });
+    } else {
+      setSelectedColumns(old => {
+        return { ...old, [expectedColumn]: selectedColumn };
+      });
+    }
   };
 
   const rows = useMemo(() => {
@@ -117,22 +138,31 @@ function ColumnMapping() {
               labelText=""
               {...register(column.name, {
                 required: !column.is_nullable,
+                onChange: (e: ChangeEvent<HTMLInputElement>) => {
+                  handleSelectOnChange(e.target.value, column.name);
+                },
               })}
             >
               <SelectItem text="" value="" />
-              {detectedColumns.map(detectedColumn => (
-                <SelectItem
-                  key={detectedColumn}
-                  text={detectedColumn}
-                  value={detectedColumn}
-                />
-              ))}
+              {detectedColumns
+                .filter(
+                  detectedColumn =>
+                    !Object.values(selectedColumns).includes(detectedColumn) ||
+                    selectedColumns[column.name] === detectedColumn,
+                )
+                .map(detectedColumn => (
+                  <SelectItem
+                    key={detectedColumn}
+                    text={detectedColumn}
+                    value={detectedColumn}
+                  />
+                ))}
             </Select>
           </div>
         ),
       };
     });
-  }, [schema, errors, register, detectedColumns]);
+  }, [schema, errors, register, detectedColumns, selectedColumns]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
