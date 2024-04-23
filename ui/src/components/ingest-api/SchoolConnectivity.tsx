@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
@@ -11,7 +11,6 @@ import { ZodError } from "zod";
 import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestionModal.tsx";
 import ConfirmEditIngestionModal from "@/components/ingest-api/ConfirmEditIngestionModal.tsx";
 import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs.tsx";
-import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { useStore } from "@/context/store.ts";
 import {
   SchoolConnectivityFormSchema,
@@ -73,7 +72,6 @@ function SchoolConnectivity({
     formState: { errors },
     handleSubmit,
     getValues,
-    control,
     clearErrors,
     setError,
   } = hookForm;
@@ -232,12 +230,12 @@ function SchoolConnectivity({
       ) : (
         <ConfirmAddIngestionModal open={open} setOpen={setOpen} />
       )}
-      <Suspense>
+      {/* <Suspense>
         <ReactHookFormDevTools
           // @ts-expect-error incorrect type inference
           control={control}
         />
-      </Suspense>
+      </Suspense> */}
     </Section>
   );
 }

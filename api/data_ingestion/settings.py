@@ -38,7 +38,6 @@ class Settings(BaseSettings):
     POSTGRESQL_USERNAME: str
     POSTGRESQL_PASSWORD: str
     POSTGRESQL_DATABASE: str
-    AZURE_APPLICATION_ID: str
     AZURE_TENANT_NAME: str
     AZURE_TENANT_ID: str
     AZURE_CLIENT_ID: str

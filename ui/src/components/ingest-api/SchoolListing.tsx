@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
@@ -15,7 +15,6 @@ import {
 } from "@/api/queryOptions.ts";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton.tsx";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs.tsx";
-import { ReactHookFormDevTools } from "@/components/utils/DevTools.tsx";
 import { useStore } from "@/context/store.ts";
 import { SchoolListFormSchema, TestApiSchema } from "@/forms/ingestApi.ts";
 import { useTestApi } from "@/hooks/useTestApi.ts";
@@ -72,7 +71,6 @@ function SchoolListing({ isEditing = false, defaultData }: SchoolListingProps) {
 
   const {
     handleSubmit,
-    control,
     formState: { errors },
     setError,
     getValues,
@@ -232,13 +230,13 @@ function SchoolListing({ isEditing = false, defaultData }: SchoolListingProps) {
       </div>
 
       <Outlet />
-
+      {/* 
       <Suspense>
         <ReactHookFormDevTools
           // @ts-expect-error incorrect type inference
           control={control}
         />
-      </Suspense>
+      </Suspense> */}
     </Section>
   );
 }
