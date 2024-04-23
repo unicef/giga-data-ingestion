@@ -177,7 +177,18 @@ export function validateCron(
   ctx: z.RefinementCtx,
 ) {
   try {
-    cronParser.parseExpression(val.ingestion_frequency);
+    const interval = cronParser.parseExpression(val.ingestion_frequency);
+    const date1 = interval.next().toDate();
+    const date2 = interval.next().toDate();
+    const diffInMinutes = (date2.getTime() - date1.getTime()) / 1000 / 60;
+
+    if (diffInMinutes < 5) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ingestion frequency must be at least every 5 minutes",
+        path: ["ingestion_frequency"],
+      });
+    }
   } catch {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
