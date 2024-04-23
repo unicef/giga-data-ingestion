@@ -87,7 +87,7 @@ const ConfirmEditIngestionModal = ({
         <p>
           This will edit the API ingestion for{" "}
           <b>{schoolConnectivity.api_endpoint}</b>, which ingests every{" "}
-          <b>{schoolConnectivity.ingestion_frequency_minutes}</b> minutes.
+          <b>{schoolConnectivity.ingestion_frequency}</b> minutes.
         </p>
         {showErrorNotification && (
           <InlineNotification

@@ -1,7 +1,9 @@
+import cronParser from "cron-parser";
 import { z } from "zod";
 
 import {
   CommonApiIngestionFormSchema,
+  SchoolConnectivityFormSchema,
   TestApiSchema,
 } from "@/forms/ingestApi.ts";
 import {
@@ -157,7 +159,7 @@ export function validatePaginationType(
 }
 
 export function validateSchoolId(
-  val: TestApiSchema | CommonApiIngestionFormSchema,
+  val: SchoolConnectivityFormSchema,
   ctx: z.RefinementCtx,
 ) {
   if (!!val.school_id_key && !val.school_id_send_query_in) {
@@ -166,6 +168,21 @@ export function validateSchoolId(
       message:
         "School ID Send Query In is required when School ID Key is provided",
       path: ["school_id_send_query_in"],
+    });
+  }
+}
+
+export function validateCron(
+  val: SchoolConnectivityFormSchema,
+  ctx: z.RefinementCtx,
+) {
+  try {
+    cronParser.parseExpression(val.ingestion_frequency);
+  } catch {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Ingestion frequency must be a valid UNIX cron format",
+      path: ["ingestion_frequency"],
     });
   }
 }

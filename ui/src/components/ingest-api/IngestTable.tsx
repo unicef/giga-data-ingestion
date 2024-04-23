@@ -81,21 +81,17 @@ function IngestTable() {
 
   const formattedSchoolListData = useMemo(() => {
     return schoolListData.map(schoolList => {
-      const lastRun = new Date(schoolList.date_modified).toLocaleString();
-
-      const nextRun = new Date(
-        new Date(schoolList.date_modified).setMinutes(
-          new Date(schoolList.date_modified).getMinutes() +
-            schoolList.school_connectivity.ingestion_frequency_minutes,
-        ),
-      ).toLocaleString();
+      const lastRunSchoolList = new Date(schoolList.date_modified);
+      const lastRunSchoolConn = new Date(
+        schoolList.school_connectivity.date_last_ingested,
+      );
 
       return {
         id: schoolList.id,
         name: schoolList.name,
         endpoint: schoolList.api_endpoint,
-        frequency: schoolList.school_connectivity.ingestion_frequency_minutes,
-        lastRunConnectivity: lastRun,
+        frequency: schoolList.school_connectivity.ingestion_frequency,
+        lastRunConnectivity: lastRunSchoolList.toLocaleString(),
         status: schoolList.error_message ? (
           <CarbonLink
             className="flex cursor-pointer"
@@ -118,7 +114,7 @@ function IngestTable() {
           </div>
         ),
 
-        lastRunList: nextRun,
+        lastRunList: lastRunSchoolConn.toLocaleString(),
         active: (
           <Toggle
             disabled={loadingStates[schoolList.id]}

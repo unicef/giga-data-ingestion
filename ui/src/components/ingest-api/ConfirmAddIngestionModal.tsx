@@ -86,7 +86,7 @@ const ConfirmAddIngestionModal = ({
         <p>
           This will create a new ingestion that will ingest from{" "}
           <b>{schoolConnectivity.api_endpoint}</b> every{" "}
-          <b>{schoolConnectivity.ingestion_frequency_minutes}</b> minutes
+          <b>{schoolConnectivity.ingestion_frequency}</b> minutes
         </p>
         {showErrorNotification && (
           <InlineNotification

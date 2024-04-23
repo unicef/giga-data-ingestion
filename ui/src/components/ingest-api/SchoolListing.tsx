@@ -106,7 +106,6 @@ function SchoolListing({ isEditing = false, defaultData }: SchoolListingProps) {
       "name",
       "user_id",
       "school_id_key",
-      "school_id_send_query_in",
     ];
     const currentForm = Object.fromEntries(
       Object.entries(getValues()).filter(
