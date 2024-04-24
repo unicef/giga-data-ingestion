@@ -224,7 +224,7 @@ function IngestTable() {
       {isOpenConfirmModal && (
         <ConfirmToggleIngestionEnabledModal
           isIngestionActive={selectedIngestionEnabled}
-          mutationQueryKey={currentPage}
+          mutationQueryKey={[currentPage, pageSize]}
           ingestionName={selectedIngestionName}
           open={isOpenConfirmModal}
           setLoadingStates={setLoadingStates}

@@ -11,7 +11,7 @@ import { LoadingStates } from "./IngestTable";
 
 interface ConfirmEnableIngestionModalProps {
   ingestionName: string;
-  mutationQueryKey: number;
+  mutationQueryKey: number[];
   open: boolean;
   setLoadingStates: Dispatch<SetStateAction<LoadingStates>>;
   setOpen: Dispatch<SetStateAction<boolean>>;
@@ -22,7 +22,7 @@ interface ConfirmEnableIngestionModalProps {
 const ConfirmToggleIngestionEnabledModal = ({
   ingestionName,
   isIngestionActive,
-  mutationQueryKey: currentPage,
+  mutationQueryKey,
   open,
   schoolListId,
   setLoadingStates,
@@ -34,16 +34,16 @@ const ConfirmToggleIngestionEnabledModal = ({
       setLoadingStates(prev => ({ ...prev, [schoolIdStatus.id]: true }));
 
       await queryClient.cancelQueries({
-        queryKey: ["school_list", currentPage],
+        queryKey: ["school_list", ...mutationQueryKey],
       });
 
       const previousSchoolList = queryClient.getQueryData([
         "school_list",
-        currentPage,
+        mutationQueryKey,
       ]);
 
       queryClient.setQueryData(
-        ["school_list", currentPage],
+        ["school_list", ...mutationQueryKey],
         (old: AxiosResponse<PagedSchoolListResponse>) => {
           const newSchoolListStatus = old.data.data.find(
             item => item.id === schoolIdStatus.id,
@@ -73,7 +73,9 @@ const ConfirmToggleIngestionEnabledModal = ({
 
     onSettled: (_, __, schoolIdStatus) => {
       setLoadingStates(prev => ({ ...prev, [schoolIdStatus.id]: false }));
-      queryClient.invalidateQueries({ queryKey: ["school_list", currentPage] });
+      queryClient.invalidateQueries({
+        queryKey: ["school_list", ...mutationQueryKey],
+      });
     },
   });
 
