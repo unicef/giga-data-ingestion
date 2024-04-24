@@ -39,7 +39,7 @@ const ConfirmToggleIngestionEnabledModal = ({
 
       const previousSchoolList = queryClient.getQueryData([
         "school_list",
-        mutationQueryKey,
+        ...mutationQueryKey,
       ]);
 
       queryClient.setQueryData(
