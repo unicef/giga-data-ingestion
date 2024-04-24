@@ -43,7 +43,7 @@ const columns: DataTableHeader[] = [
   },
   {
     key: "status",
-    header: "Status",
+    header: "DQ Check Status",
   },
   {
     key: "actions",
