@@ -55,16 +55,22 @@ export default function routes(axi: AxiosInstance) {
       groups_to_add,
       groups_to_remove,
       user_id,
+      given_name,
+      surname,
     }: {
       email: string;
       user_id: string;
       groups_to_add: string[];
       groups_to_remove: string[];
+      given_name: string;
+      surname: string;
     }): Promise<AxiosResponse<null>> => {
       return axi.post(`/groups/${user_id}`, {
         email,
         groups_to_add,
         groups_to_remove,
+        given_name,
+        surname,
       });
     },
   };

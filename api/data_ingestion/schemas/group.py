@@ -34,3 +34,5 @@ class ModifyUserAccessRequest(BaseModel):
     email: str
     groups_to_add: list[UUID4]
     groups_to_remove: list[UUID4]
+    given_name: str
+    surname: str
