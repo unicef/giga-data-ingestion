@@ -120,7 +120,6 @@ function EditUser() {
               ? {
                   ...item,
                   given_name: modifiedUser.given_name,
-                  mail: modifiedUser.email,
                   surname: modifiedUser.surname,
                 }
               : item,

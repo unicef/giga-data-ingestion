@@ -57,7 +57,6 @@ export default function routes(axi: AxiosInstance) {
       given_name,
       surname,
     }: {
-      email: string;
       user_id: string;
       groups_to_add: string[];
       groups_to_remove: string[];
