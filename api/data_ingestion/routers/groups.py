@@ -71,6 +71,5 @@ async def modify_user_access(user_id: UUID4, body: ModifyUserAccessRequest):
             display_name=f"{body.given_name} {body.surname}",
             given_name=body.given_name,
             surname=body.surname,
-            mail=body.email,
         ),
     )

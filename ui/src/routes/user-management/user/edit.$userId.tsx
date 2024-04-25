@@ -337,7 +337,6 @@ function EditUser() {
           removedRoleWithId => removedRoleWithId.id ?? "",
         ),
       ],
-      email: data.email,
       given_name: data.givenName,
       surname: data.surname,
       user_id: initialId,
@@ -380,6 +379,7 @@ function EditUser() {
               {...register("surname", { required: true })}
             />
             <TextInput
+              disabled
               id="email"
               labelText="Email"
               {...register("email", { required: true })}
