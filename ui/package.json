@@ -75,7 +75,7 @@
     "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^6.19.1",
     "@typescript-eslint/parser": "^6.19.1",
-    "@vitejs/plugin-react-swc": "^3.5.0",
+    "@vitejs/plugin-react-swc": "^3.6.0",
     "autoprefixer": "^10.4.15",
     "clsx": "^2.0.0",
     "eslint": "^8.56.0",
@@ -87,7 +87,7 @@
     "tailwind-merge": "^1.14.0",
     "tailwindcss": "^3.3.3",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.12"
+    "typescript": "^5.4.5",
+    "vite": "^5.2.10"
   }
 }
