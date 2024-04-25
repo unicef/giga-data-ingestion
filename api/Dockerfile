@@ -12,7 +12,9 @@ ENV POETRY_CACHE_DIR "/var/cache/pypoetry"
 ENV POETRY_HOME /etc/poetry
 ENV PATH "$POETRY_HOME/bin:$PATH"
 
-RUN apk add --no-cache curl libmagic
+# Only libmagic is needed for x86 (e.g. Windows/WSL)
+# The others are needed for building on ARM (e.g. Apple Silicon)
+RUN apk add --no-cache curl libmagic gcc musl-dev libffi-dev
 
 ARG POETRY_VERSION=1.6.1
 
