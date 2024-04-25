@@ -1,6 +1,6 @@
-/* prettier-ignore-start */
-
 /* eslint-disable */
+
+/* prettier-ignore */
 
 // @ts-nocheck
 
@@ -15,6 +15,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Route as rootRoute } from './routes/__root'
 import { Route as UserManagementImport } from './routes/user-management'
 import { Route as IndexImport } from './routes/index'
+import { Route as UserManagementIndexImport } from './routes/user-management/index'
 import { Route as UploadIndexImport } from './routes/upload/index'
 import { Route as IngestApiIndexImport } from './routes/ingest-api/index'
 import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
@@ -72,6 +73,11 @@ const UserManagementRoute = UserManagementImport.update({
 const IndexRoute = IndexImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
+} as any)
+
+const UserManagementIndexRoute = UserManagementIndexImport.update({
+  path: '/',
+  getParentRoute: () => UserManagementRoute,
 } as any)
 
 const UploadIndexRoute = UploadIndexImport.update({
@@ -247,6 +253,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UploadIndexImport
       parentRoute: typeof UploadLazyImport
     }
+    '/user-management/': {
+      preLoaderRoute: typeof UserManagementIndexImport
+      parentRoute: typeof UserManagementImport
+    }
     '/approval-requests/$subpath/confirm': {
       preLoaderRoute: typeof ApprovalRequestsSubpathConfirmImport
       parentRoute: typeof ApprovalRequestsLazyImport
@@ -327,6 +337,7 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
   UserManagementRoute.addChildren([
+    UserManagementIndexRoute,
     UserManagementUserAddRoute,
     UserManagementUserEditUserIdRoute,
     UserManagementUserEnableUserIdRoute,
@@ -361,5 +372,3 @@ export const routeTree = rootRoute.addChildren([
     UploadUploadIdIndexRoute,
   ]),
 ])
-
-/* prettier-ignore-end */

@@ -7,9 +7,11 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { api } from "@/api";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
+import { validateSearchParams } from "@/utils/pagination.ts";
 
 export const Route = createFileRoute("/user-management/user/revoke/$userId")({
   component: RevokeUser,
+  validateSearch: validateSearchParams,
   loader: ({ params: { userId }, context: { queryClient } }) => {
     return queryClient.ensureQueryData({
       queryKey: ["user", userId],
@@ -23,6 +25,7 @@ export const Route = createFileRoute("/user-management/user/revoke/$userId")({
 function RevokeUser() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { userId } = Route.useParams();
+  const { page, page_size } = Route.useSearch();
   const {
     data: { data: initialValues },
   } = useSuspenseQuery({
@@ -45,7 +48,7 @@ function RevokeUser() {
       });
 
       setShowSuccessNotification(true);
-      await navigate({ to: "../../.." });
+      await navigate({ to: "../../..", search: { page, page_size } });
     } catch (err) {
       setError(true);
     }
@@ -60,7 +63,9 @@ function RevokeUser() {
         modalHeading="Confirm Revoke User"
         primaryButtonText="Confirm"
         secondaryButtonText="Cancel"
-        onRequestClose={async () => await navigate({ to: "../../.." })}
+        onRequestClose={async () =>
+          await navigate({ to: "../../..", search: { page, page_size } })
+        }
         onRequestSubmit={handleSubmit}
       >
         <div>

@@ -20,9 +20,11 @@ import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { useStore } from "@/context/store";
 import { SENTINEL_PAGED_RESPONSE } from "@/types/api.ts";
 import { ApprovalRequestListing } from "@/types/approvalRequests";
+import { validateSearchParams } from "@/utils/pagination.ts";
 
 export const Route = createFileRoute("/approval-requests/")({
   component: ApprovalRequests,
+  validateSearch: validateSearchParams,
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(listApprovalRequestQueryOptions),
   pendingComponent: PendingComponent,

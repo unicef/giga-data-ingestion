@@ -243,7 +243,6 @@ tasks:
 
   test-build:
     desc: Test UI build
-    dir: ui
     cmds:
       - rm -rf build
       - >
