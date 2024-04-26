@@ -68,6 +68,8 @@ async def modify_user_access(user_id: UUID4, body: ModifyUserAccessRequest):
     await UsersApi.edit_user(
         user_id,
         GraphUserUpdateRequest(
-            display_name=body.email,
+            display_name=f"{body.given_name} {body.surname}",
+            given_name=body.given_name,
+            surname=body.surname,
         ),
     )

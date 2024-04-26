@@ -19,13 +19,15 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { AxiosResponse } from "axios";
 
-import { api } from "@/api";
+import { api, queryClient } from "@/api";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Select } from "@/components/forms/Select.tsx";
 import ToastNotification from "@/components/user-management/ToastNotification.tsx";
 import countries from "@/constants/countries.ts";
+import { GraphUser } from "@/types/user";
 import {
   filterCountries,
   filterRoles,
@@ -103,6 +105,37 @@ function EditUser() {
 
   const modifyUserAccess = useMutation({
     mutationFn: api.groups.modify_user_access,
+    onMutate: async modifiedUser => {
+      await queryClient.cancelQueries({
+        queryKey: ["users"],
+      });
+
+      const previousUsers = queryClient.getQueryData(["users"]);
+
+      queryClient.setQueryData(["users"], (old: AxiosResponse<GraphUser[]>) => {
+        const newData = {
+          ...old,
+          data: old.data.map(item =>
+            item.id === modifiedUser.user_id
+              ? {
+                  ...item,
+                  given_name: modifiedUser.given_name,
+                  surname: modifiedUser.surname,
+                }
+              : item,
+          ),
+        };
+
+        return newData;
+      });
+
+      return { previousUsers };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+    },
   });
 
   const deriveInitialCountryDataset = (
@@ -151,6 +184,9 @@ function EditUser() {
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
+      email: initialEmail,
+      givenName: givenName,
+      surname: surname,
       roles: initialRoles,
       countryDatasets: [...initialCountryDataset],
     },
@@ -278,7 +314,7 @@ function EditUser() {
     };
   };
 
-  const onSubmit: SubmitHandler<EditUserInputs> = async () => {
+  const onSubmit: SubmitHandler<EditUserInputs> = async data => {
     const {
       addedDatasetsWithIds,
       addedRolesWithIds,
@@ -300,10 +336,10 @@ function EditUser() {
           removedRoleWithId => removedRoleWithId.id ?? "",
         ),
       ],
+      given_name: data.givenName,
+      surname: data.surname,
       user_id: initialId,
-      email: initialEmail,
     };
-
     try {
       await modifyUserAccess.mutateAsync(editGroupsPayload);
       setShowEditUserSuccessNotification(true);
@@ -334,22 +370,17 @@ function EditUser() {
             <TextInput
               id="givenName"
               labelText="First Name"
-              readOnly
-              value={givenName}
               {...register("givenName", { required: true })}
             />
             <TextInput
               id="surname"
               labelText="Last Name"
-              readOnly
-              value={surname}
               {...register("surname", { required: true })}
             />
             <TextInput
+              disabled
               id="email"
               labelText="Email"
-              readOnly
-              value={initialEmail}
               {...register("email", { required: true })}
             />
             <Controller
