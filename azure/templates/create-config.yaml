@@ -10,7 +10,7 @@ jobs:
 
             - task: Kubernetes@1
               displayName: Create configmap
-              condition: eq(variables.deployEnv, 'dev')
+              condition: eq(variables.environment, 'dev')
               inputs:
                 namespace: $(kubernetesNamespace)
                 configurationType: configuration
@@ -20,7 +20,7 @@ jobs:
 
             - task: Kubernetes@1
               displayName: Create production configmap
-              condition: not(eq(variables.deployEnv, 'dev'))
+              condition: or(eq(variables.environment, 'stg'), eq(variables.environment, 'prd'))
               inputs:
                 namespace: $(kubernetesNamespace)
                 configurationType: configuration
