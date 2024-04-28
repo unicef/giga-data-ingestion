@@ -3,7 +3,7 @@ import { StateCreator } from "zustand";
 
 import { KeyValueObject } from "@/types/datatable";
 
-interface CDFSelector {
+export interface CDFSelector {
   school_id_giga: string;
   _change_type: "insert" | "update_preimage" | "update_postimage" | "delete";
   _commit_version: number;

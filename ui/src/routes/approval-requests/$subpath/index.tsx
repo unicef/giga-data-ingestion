@@ -25,6 +25,10 @@ import {
   ChangeType,
   SENTINEL_APPROVAL_REQUEST,
 } from "@/types/approvalRequests";
+import {
+  cdfComponentStringHash,
+  cdfRowStringHash,
+} from "@/utils/approval_requests.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
 export const Route = createFileRoute("/approval-requests/$subpath/")({
@@ -108,14 +112,14 @@ function ApproveRejectTable() {
   const formattedRows = useMemo<Record<string, string | null>[]>(
     () =>
       approvalRequests.map(row => {
-        const id = `${row.school_id_giga}-${row._commit_version}-${row._change_type}`;
+        const id = cdfRowStringHash(row);
 
         return {
           ...row,
           id,
-          approval_status: Object.keys(approvedRows).includes(id ?? "")
+          approval_status: Object.keys(approvedRows).includes(id)
             ? "Approved"
-            : Object.keys(rejectedRows).includes(id ?? "")
+            : Object.keys(rejectedRows).includes(id)
             ? "Rejected"
             : "",
         };
@@ -128,8 +132,33 @@ function ApproveRejectTable() {
 
     const newApprovedRows = { ...approvedRows };
     for (const row of rows) {
-      const id = `${row.school_id_giga}-${row._commit_version}-${row._change_type}`;
+      const id = cdfRowStringHash(row);
       ids.push(id);
+
+      // Only one of update_preimage/update_postimage for the same
+      // _commit_version/school_id_giga combination can be approved
+      if (row._change_type === "update_preimage") {
+        const id = cdfComponentStringHash({
+          school_id_giga: row.school_id_giga!,
+          _change_type: "update_postimage",
+          _commit_version: Number(row._commit_version),
+        });
+        if (id in newApprovedRows) {
+          delete newApprovedRows[id];
+        }
+      }
+
+      if (row._change_type === "update_postimage") {
+        const id = cdfComponentStringHash({
+          school_id_giga: row.school_id_giga!,
+          _change_type: "update_preimage",
+          _commit_version: Number(row._commit_version),
+        });
+        if (id in newApprovedRows) {
+          delete newApprovedRows[id];
+        }
+      }
+
       newApprovedRows[id] = {
         school_id_giga: row.school_id_giga!,
         _change_type: row._change_type as ChangeType,
@@ -138,6 +167,7 @@ function ApproveRejectTable() {
     }
     setApprovedRows(newApprovedRows);
 
+    // Remove ids from rejected rows
     const newRejectedRows = { ...rejectedRows };
     for (const id of ids) {
       if (id in newRejectedRows) {
@@ -154,7 +184,7 @@ function ApproveRejectTable() {
 
     const _rejectedRows = { ...rejectedRows };
     for (const row of rows) {
-      const id = `${row.school_id_giga}-${row._commit_version}-${row._change_type}`;
+      const id = cdfRowStringHash(row);
       ids.push(id);
       _rejectedRows[id] = {
         school_id_giga: row.school_id_giga!,
@@ -164,6 +194,7 @@ function ApproveRejectTable() {
     }
     setRejectedRows(_rejectedRows);
 
+    // Remove ids from approved rows
     const _approvedRows = { ...approvedRows };
     for (const id of ids) {
       if (id in _approvedRows) {
