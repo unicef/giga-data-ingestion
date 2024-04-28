@@ -38,6 +38,7 @@ class Constants(BaseSettings):
         "coverage_itu",
         "coverage_fb",
     ]
+    FILENAME_TIMESTAMP_FORMAT: str = "%Y%m%d-%H%M%S"
 
     @computed_field
     @property

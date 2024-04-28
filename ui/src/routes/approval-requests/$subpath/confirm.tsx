@@ -5,6 +5,7 @@ import {
   Button,
   ButtonSet,
   DataTable,
+  DataTableHeader,
   DataTableSkeleton,
   Loading,
   Section,
@@ -33,7 +34,7 @@ import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
 import { CarbonDataTableRow } from "@/types/datatable";
 import { KeyValueObject } from "@/types/datatable";
-import { getValueByHeader } from "@/utils/approval_requests";
+import { cdfRowStringHash, getValueByHeader } from "@/utils/approval_requests";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
 export const Route = createFileRoute("/approval-requests/$subpath/confirm")({
@@ -68,9 +69,24 @@ interface ConfirmDataTablesProps {
   rows: KeyValueObject[];
 }
 
+const headers: DataTableHeader[] = [
+  {
+    key: "school_id_giga",
+    header: "school_id_giga",
+  },
+  {
+    key: "_commit_version",
+    header: "_commit_version",
+  },
+  {
+    key: "_change_type",
+    header: "_change_type",
+  },
+];
+
 function Confirm() {
   const {
-    approveRowState: { headers, rows, approvedRowsList, rejectedRowsList },
+    approveRowState: { rows, approvedRows, rejectedRows },
     approveRowActions: { resetApproveRowState },
   } = useStore();
   const { subpath } = Route.useParams();
@@ -99,12 +115,12 @@ function Confirm() {
     mutationFn: api.approvalRequests.upload_approved_rows,
   });
 
-  const approvedRows = rows.filter(obj =>
-    approvedRowsList.includes(obj.id as string),
+  const approvedRowsList = rows.filter(
+    row => cdfRowStringHash(row) in approvedRows,
   );
 
-  const rejectedRows = rows.filter(obj =>
-    rejectedRowsList.includes(obj.id as string),
+  const rejectedRowsList = rows.filter(
+    row => cdfRowStringHash(row) in rejectedRows,
   );
 
   const ConfirmDatatables = ({ rows }: ConfirmDataTablesProps) => {
@@ -137,7 +153,10 @@ function Confirm() {
                     <TableRow
                       className={cn({
                         "bg-green-300": changeType === "insert",
-                        "bg-yellow-200": changeType === "update_preimage",
+                        "bg-yellow-200": (changeType as string).startsWith(
+                          "update_",
+                        ),
+                        "bg-red-300": changeType === "delete",
                       })}
                       {...getRowProps({
                         row,
@@ -170,7 +189,7 @@ function Confirm() {
 
   const handleSubmit = async () => {
     await upload({
-      approved_rows: approvedRowsList,
+      approved_rows: Object.values(approvedRows),
       subpath: subpath,
     });
     await navigate({ to: "/approval-requests" });
@@ -180,16 +199,17 @@ function Confirm() {
     <Section className="container py-6">
       <Accordion>
         <AccordionItem
-          disabled
-          title={`Approved Rows (${approvedRowsList.length})`}
+          title={`Approved Rows (${Object.keys(approvedRows).length})`}
         >
-          <ConfirmDatatables rows={approvedRows} />
+          <ConfirmDatatables rows={approvedRowsList} />
         </AccordionItem>
         <AccordionItem
           disabled
-          title={`Rejected Rows (${total_count - approvedRowsList.length})`}
+          title={`Rejected Rows (${
+            total_count - Object.keys(rejectedRows).length
+          })`}
         >
-          <ConfirmDatatables rows={rejectedRows} />
+          <ConfirmDatatables rows={rejectedRowsList} />
         </AccordionItem>
       </Accordion>
       <Section level={8}>

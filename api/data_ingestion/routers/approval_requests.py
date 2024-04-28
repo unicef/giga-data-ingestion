@@ -220,14 +220,11 @@ async def upload_approved_rows(
     posix_path = Path(urllib.parse.unquote(body.subpath))
     dataset = posix_path.parent.name.replace("_staging", "").replace("_", "-")
     country_iso3 = posix_path.name.split("_")[0].upper()
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    timestamp = datetime.now().strftime(constants.FILENAME_TIMESTAMP_FORMAT)
 
     filename = f"{country_iso3}_{dataset}_{timestamp}.json"
 
-    approve_location = (
-        f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
-        f"/approved-row-ids/{dataset}/{country_iso3}/{filename}"
-    )
+    approve_location = f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/{dataset}/{country_iso3}/{filename}"
 
     email = user.email or user.claims.get("email")
     if email is None:
@@ -248,8 +245,8 @@ async def upload_approved_rows(
         update_query = (
             update(ApprovalRequest)
             .where(
-                ApprovalRequest.country == country_iso3,
-                ApprovalRequest.dataset == formatted_dataset,
+                (ApprovalRequest.country == country_iso3)
+                & (ApprovalRequest.dataset == formatted_dataset)
             )
             .values(enabled=False)
         )
