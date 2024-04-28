@@ -21,9 +21,11 @@ import {
   DEFAULT_PAGE_SIZE,
 } from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
-import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests";
+import {
+  ChangeType,
+  SENTINEL_APPROVAL_REQUEST,
+} from "@/types/approvalRequests";
 import { validateSearchParams } from "@/utils/pagination.ts";
-import { difference } from "@/utils/set.ts";
 
 export const Route = createFileRoute("/approval-requests/$subpath/")({
   component: ApproveRejectTable,
@@ -63,7 +65,7 @@ function ApproveRejectTable() {
       setRows,
       resetApproveRowState,
     },
-    approveRowState: { approvedRowsList, rejectedRowsList },
+    approveRowState: { approvedRows, rejectedRows },
   } = useStore();
 
   const {
@@ -105,38 +107,70 @@ function ApproveRejectTable() {
 
   const formattedRows = useMemo<Record<string, string | null>[]>(
     () =>
-      approvalRequests.map(row => ({
-        ...row,
-        id: `${row.school_id_giga}-${row._commit_version}`,
-        approval_status: approvedRowsList.includes(row.school_id_giga ?? "")
-          ? "Approved"
-          : rejectedRowsList.includes(row.school_id_giga ?? "")
-          ? "Rejected"
-          : "",
-      })),
-    [approvalRequests, approvedRowsList, rejectedRowsList],
+      approvalRequests.map(row => {
+        const id = `${row.school_id_giga}-${row._commit_version}-${row._change_type}`;
+
+        return {
+          ...row,
+          id,
+          approval_status: Object.keys(approvedRows).includes(id ?? "")
+            ? "Approved"
+            : Object.keys(rejectedRows).includes(id ?? "")
+            ? "Rejected"
+            : "",
+        };
+      }),
+    [approvalRequests, approvedRows, rejectedRows],
   );
 
   const handleApproveRows = (rows: Record<string, string | null>[]) => {
-    const ids = rows.map(row => row.school_id_giga ?? "").filter(Boolean);
+    const ids: string[] = [];
 
-    const _approvedRows = new Set([...approvedRowsList, ...ids]);
-    setApprovedRows([..._approvedRows]);
+    const newApprovedRows = { ...approvedRows };
+    for (const row of rows) {
+      const id = `${row.school_id_giga}-${row._commit_version}-${row._change_type}`;
+      ids.push(id);
+      newApprovedRows[id] = {
+        school_id_giga: row.school_id_giga!,
+        _change_type: row._change_type as ChangeType,
+        _commit_version: Number(row._commit_version),
+      };
+    }
+    setApprovedRows(newApprovedRows);
 
-    const _rejectedRows = difference(new Set(rejectedRowsList), new Set(ids));
-    setRejectedRows([..._rejectedRows]);
+    const newRejectedRows = { ...rejectedRows };
+    for (const id of ids) {
+      if (id in newRejectedRows) {
+        delete newRejectedRows[id];
+      }
+    }
+    setRejectedRows(newRejectedRows);
 
     setHeaders(headers);
   };
 
   const handleRejectRows = (rows: Record<string, string | null>[]) => {
-    const ids = rows.map(row => row.school_id_giga ?? "").filter(Boolean);
+    const ids: string[] = [];
 
-    const _rejectedRows = new Set([...rejectedRowsList, ...ids]);
-    setRejectedRows([..._rejectedRows]);
+    const _rejectedRows = { ...rejectedRows };
+    for (const row of rows) {
+      const id = `${row.school_id_giga}-${row._commit_version}-${row._change_type}`;
+      ids.push(id);
+      _rejectedRows[id] = {
+        school_id_giga: row.school_id_giga!,
+        _change_type: row._change_type as ChangeType,
+        _commit_version: Number(row._commit_version),
+      };
+    }
+    setRejectedRows(_rejectedRows);
 
-    const _approvedRows = difference(new Set(approvedRowsList), new Set(ids));
-    setApprovedRows([..._approvedRows]);
+    const _approvedRows = { ...approvedRows };
+    for (const id of ids) {
+      if (id in _approvedRows) {
+        delete _approvedRows[id];
+      }
+    }
+    setApprovedRows(_approvedRows);
 
     setHeaders(headers);
   };
@@ -159,10 +193,10 @@ function ApproveRejectTable() {
   };
 
   const handleSubmit = () => {
-    if (approvedRowsList.length < total_count) {
+    if (Object.keys(approvedRows).length < total_count) {
       setOpen(true);
     } else {
-      handleProceed();
+      void handleProceed();
     }
   };
 
@@ -208,6 +242,7 @@ function ApproveRejectTable() {
             renderIcon={ArrowRight}
             type="submit"
             onClick={handleSubmit}
+            disabled={isLoading}
           >
             Proceed
           </Button>
@@ -221,8 +256,8 @@ function ApproveRejectTable() {
         onRequestClose={() => setOpen(false)}
         onRequestSubmit={handleProceed}
       >
-        You have {total_count - approvedRowsList.length} unselected rows. These
-        rows will be automatically rejected. Proceed?
+        You have {total_count - Object.keys(approvedRows).length} unapproved
+        rows. These rows will be automatically rejected. Proceed?
       </Modal>
     </>
   );

@@ -27,11 +27,15 @@ import { UploadResponse } from "@/types/upload.ts";
 const columns: DataTableHeader[] = [
   {
     key: "id",
-    header: "Upload Id",
+    header: "Upload ID",
   },
   {
     key: "created",
-    header: "Date Uploaded",
+    header: "Date uploaded",
+  },
+  {
+    key: "uploader_email",
+    header: "Uploaded by",
   },
   {
     key: "dataset",
@@ -43,7 +47,7 @@ const columns: DataTableHeader[] = [
   },
   {
     key: "status",
-    header: "DQ Check Status",
+    header: "DQ check status",
   },
   {
     key: "actions",
