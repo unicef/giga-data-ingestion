@@ -1,5 +1,5 @@
-import os.path
 from datetime import datetime
+from pathlib import Path
 
 from pydantic import UUID4, EmailStr
 from sqlalchemy import JSON, VARCHAR, DateTime, String, func
@@ -21,6 +21,9 @@ class FileUpload(BaseModel):
     uploader_id: Mapped[UUID4] = mapped_column(VARCHAR(36), nullable=False, index=True)
     uploader_email: Mapped[EmailStr] = mapped_column(String(), nullable=False)
     dq_report_path: Mapped[str] = mapped_column(nullable=True, default=None)
+    dq_full_path: Mapped[str] = mapped_column(nullable=True, default=None)
+    bronze_path: Mapped[str] = mapped_column(nullable=True, default=None)
+    is_processed_in_staging: Mapped[bool] = mapped_column(nullable=False, default=False)
     country: Mapped[str] = mapped_column(VARCHAR(3), nullable=False)
     dataset: Mapped[str] = mapped_column(nullable=False)
     source: Mapped[str] = mapped_column(nullable=True)
@@ -35,7 +38,7 @@ class FileUpload(BaseModel):
     @hybrid_property
     def upload_path(self) -> str:
         timestamp = self.created.strftime("%Y%m%d-%H%M%S")
-        ext = os.path.splitext(self.original_filename)[1]
+        ext = Path(self.original_filename).suffix
         filename_elements = [self.id, self.country, self.dataset]
         if self.source is not None:
             filename_elements.append(self.source)

@@ -95,8 +95,7 @@ function UploadsTable({
 
     _renderUploads.data = uploads.data.map(upload => {
       const isUnstructured = upload.dataset === "unstructured";
-      const isStatusCompleted =
-        isUnstructured || upload.dq_report_path !== null;
+      const isStatusCompleted = upload.dq_report_path != null;
 
       return {
         ...upload,
@@ -104,6 +103,8 @@ function UploadsTable({
         dataset: <span className="capitalize">{upload.dataset}</span>,
         status: isStatusCompleted ? (
           <Tag type="blue">Completed</Tag>
+        ) : isUnstructured ? (
+          <Tag type="gray">Skipped</Tag>
         ) : (
           <Tag type="gray">In Progress</Tag>
         ),

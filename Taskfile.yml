@@ -211,6 +211,11 @@ tasks:
     cmds:
       - task exec -- api poetry run alembic revision --autogenerate -m "{{.CLI_ARGS}}"
 
+  generate-migration:
+    desc: Generate skeleton database migration file
+    cmds:
+      - task exec -- api poetry run alembic revision -m "{{.CLI_ARGS}}"
+
   migrate:
     desc: Run database migrations
     cmds:
