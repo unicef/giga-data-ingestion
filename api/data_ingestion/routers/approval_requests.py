@@ -193,23 +193,9 @@ async def get_approval_request(
         .first()
     )
 
-    for i, row in (df := pd.DataFrame(cdf)).iterrows():
-        if row["_change_type"] in ["update_postimage", "insert"]:
-            continue
-
-        for col in df.columns:
-            if col == "_change_type":
-                continue
-
-            if (old := getattr(row, col)) != (update := df.at[i + 1, col]):
-                df.at[i, col] = {"old": old, "update": update}
-
+    df = pd.DataFrame(cdf)
     total_count = int(df.at[0, "row_count"])
-    df = (
-        df[df["_change_type"] != "update_postimage"]
-        .drop(columns=["row_count", "signature"])
-        .fillna("NULL")
-    )
+    df = df.drop(columns=["row_count", "signature"]).fillna("NULL")
     return {
         "info": {
             "country": country,

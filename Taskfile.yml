@@ -283,3 +283,8 @@ tasks:
         -e 's|${DEPLOY_ENV}|stg|'
         template/TrustFrameworkExtensions_groups.xml > stg/TrustFrameworkExtensions_groups.xml
       - sed -e 's|${TENANT_NAME}|gigasyncteststg|g' template/TrustFrameworkLocalization.xml > stg/TrustFrameworkLocalization.xml
+
+  ipython:
+    desc: Open an IPython shell
+    cmds:
+      - task exec -- api poetry run ipython
