@@ -18,11 +18,13 @@ import { Route as IndexImport } from './routes/index'
 import { Route as UserManagementIndexImport } from './routes/user-management/index'
 import { Route as UploadIndexImport } from './routes/upload/index'
 import { Route as IngestApiIndexImport } from './routes/ingest-api/index'
+import { Route as DeleteIndexImport } from './routes/delete/index'
 import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
 import { Route as IngestApiEditImport } from './routes/ingest-api/edit'
 import { Route as IngestApiAddImport } from './routes/ingest-api/add'
 import { Route as UploadUploadIdIndexImport } from './routes/upload/$uploadId/index'
 import { Route as IngestApiAddIndexImport } from './routes/ingest-api/add/index'
+import { Route as DeleteCountryIndexImport } from './routes/delete/$country/index'
 import { Route as ApprovalRequestsSubpathIndexImport } from './routes/approval-requests/$subpath/index'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
@@ -44,6 +46,7 @@ import { Route as IngestApiEditIngestionIdColumnMappingImport } from './routes/i
 
 const UploadLazyImport = createFileRoute('/upload')()
 const IngestApiLazyImport = createFileRoute('/ingest-api')()
+const DeleteLazyImport = createFileRoute('/delete')()
 const ApprovalRequestsLazyImport = createFileRoute('/approval-requests')()
 
 // Create/Update Routes
@@ -57,6 +60,11 @@ const IngestApiLazyRoute = IngestApiLazyImport.update({
   path: '/ingest-api',
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/ingest-api.lazy').then((d) => d.Route))
+
+const DeleteLazyRoute = DeleteLazyImport.update({
+  path: '/delete',
+  getParentRoute: () => rootRoute,
+} as any).lazy(() => import('./routes/delete.lazy').then((d) => d.Route))
 
 const ApprovalRequestsLazyRoute = ApprovalRequestsLazyImport.update({
   path: '/approval-requests',
@@ -90,6 +98,11 @@ const IngestApiIndexRoute = IngestApiIndexImport.update({
   getParentRoute: () => IngestApiLazyRoute,
 } as any)
 
+const DeleteIndexRoute = DeleteIndexImport.update({
+  path: '/',
+  getParentRoute: () => DeleteLazyRoute,
+} as any)
+
 const ApprovalRequestsIndexRoute = ApprovalRequestsIndexImport.update({
   path: '/',
   getParentRoute: () => ApprovalRequestsLazyRoute,
@@ -113,6 +126,11 @@ const UploadUploadIdIndexRoute = UploadUploadIdIndexImport.update({
 const IngestApiAddIndexRoute = IngestApiAddIndexImport.update({
   path: '/',
   getParentRoute: () => IngestApiAddRoute,
+} as any)
+
+const DeleteCountryIndexRoute = DeleteCountryIndexImport.update({
+  path: '/$country/',
+  getParentRoute: () => DeleteLazyRoute,
 } as any)
 
 const ApprovalRequestsSubpathIndexRoute =
@@ -225,6 +243,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApprovalRequestsLazyImport
       parentRoute: typeof rootRoute
     }
+    '/delete': {
+      preLoaderRoute: typeof DeleteLazyImport
+      parentRoute: typeof rootRoute
+    }
     '/ingest-api': {
       preLoaderRoute: typeof IngestApiLazyImport
       parentRoute: typeof rootRoute
@@ -244,6 +266,10 @@ declare module '@tanstack/react-router' {
     '/approval-requests/': {
       preLoaderRoute: typeof ApprovalRequestsIndexImport
       parentRoute: typeof ApprovalRequestsLazyImport
+    }
+    '/delete/': {
+      preLoaderRoute: typeof DeleteIndexImport
+      parentRoute: typeof DeleteLazyImport
     }
     '/ingest-api/': {
       preLoaderRoute: typeof IngestApiIndexImport
@@ -280,6 +306,10 @@ declare module '@tanstack/react-router' {
     '/approval-requests/$subpath/': {
       preLoaderRoute: typeof ApprovalRequestsSubpathIndexImport
       parentRoute: typeof ApprovalRequestsLazyImport
+    }
+    '/delete/$country/': {
+      preLoaderRoute: typeof DeleteCountryIndexImport
+      parentRoute: typeof DeleteLazyImport
     }
     '/ingest-api/add/': {
       preLoaderRoute: typeof IngestApiAddIndexImport
@@ -348,6 +378,7 @@ export const routeTree = rootRoute.addChildren([
     ApprovalRequestsSubpathConfirmRoute,
     ApprovalRequestsSubpathIndexRoute,
   ]),
+  DeleteLazyRoute.addChildren([DeleteIndexRoute, DeleteCountryIndexRoute]),
   IngestApiLazyRoute.addChildren([
     IngestApiAddRoute.addChildren([
       IngestApiAddColumnMappingRoute,

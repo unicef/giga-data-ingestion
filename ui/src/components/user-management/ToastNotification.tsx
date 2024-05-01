@@ -7,7 +7,7 @@ import {
 
 type ToastProps = {
   show: boolean;
-  setShow: Dispatch<SetStateAction<boolean>>;
+  setShow: Dispatch<SetStateAction<boolean>> | ((bool: boolean) => void);
   kind?: ToastNotificationProps["kind"];
   caption: string;
   title: string;

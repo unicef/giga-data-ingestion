@@ -12,6 +12,7 @@ import axios, {
 import useGetToken from "@/hooks/useGetToken.ts";
 
 import approvalRequestsRouter from "./routers/approvalRequests.ts";
+import deleteRouter from "./routers/delete.ts";
 import externalRequestsRouter from "./routers/externalRequests.ts";
 import rolesRouter from "./routers/groups.ts";
 import qosRouter from "./routers/qos.ts";
@@ -28,13 +29,14 @@ export const axi = axios.create({
 });
 
 export const api = {
-  users: usersRouter(axi),
-  groups: rolesRouter(axi),
-  uploads: uploadsRouter(axi),
   approvalRequests: approvalRequestsRouter(axi),
+  delete: deleteRouter(axi),
+  externalRequests: externalRequestsRouter(),
+  groups: rolesRouter(axi),
   qos: qosRouter(axi),
   schema: schemaRouter(axi),
-  externalRequests: externalRequestsRouter(),
+  uploads: uploadsRouter(axi),
+  users: usersRouter(axi),
   utils: utilsRouter(axi),
 };
 
