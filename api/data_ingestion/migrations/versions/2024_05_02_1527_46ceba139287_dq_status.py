@@ -24,7 +24,7 @@ def upgrade() -> None:
         sa.text("""
         BEGIN;
 
-        CREATE TYPE dq_status_enum AS ENUM (
+        CREATE TYPE dqstatusenum AS ENUM (
             'IN_PROGRESS',
             'COMPLETED',
             'ERROR',
@@ -33,19 +33,19 @@ def upgrade() -> None:
         );
 
         ALTER TABLE file_uploads
-        ADD COLUMN dq_status dq_status_enum NOT NULL DEFAULT 'IN_PROGRESS';
+        ADD COLUMN dq_status dqstatusenum NOT NULL DEFAULT 'IN_PROGRESS';
 
         UPDATE file_uploads
         SET
             dq_status = CASE WHEN dq_report_path IS NULL
                 THEN CASE WHEN dataset = 'unstructured'
-                    THEN 'SKIPPED'::dq_status_enum
+                    THEN 'SKIPPED'::dqstatusenum
                     ELSE CASE WHEN created < current_timestamp - INTERVAL '1 hour'
-                        THEN 'TIMEOUT'::dq_status_enum
-                        ELSE 'IN_PROGRESS'::dq_status_enum
+                        THEN 'TIMEOUT'::dqstatusenum
+                        ELSE 'IN_PROGRESS'::dqstatusenum
                         END
                     END
-                ELSE 'COMPLETED'::dq_status_enum
+                ELSE 'COMPLETED'::dqstatusenum
             END;
 
         COMMIT;
@@ -62,7 +62,7 @@ def downgrade() -> None:
         ALTER TABLE file_uploads
         DROP COLUMN dq_status;
 
-        DROP TYPE dq_status_enum;
+        DROP TYPE dqstatusenum;
 
         COMMIT;
         """)
