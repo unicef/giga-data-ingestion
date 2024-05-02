@@ -60,6 +60,19 @@ export default function Navbar() {
           >
             File uploads
           </HeaderMenuItem>
+          {isPrivileged && (
+            <HeaderMenuItem
+              as={Link}
+              to="/delete"
+              search={{
+                page: DEFAULT_PAGE_NUMBER,
+                page_size: DEFAULT_PAGE_SIZE,
+              }}
+              isActive={location.pathname.startsWith("/delete")}
+            >
+              Delete Rows
+            </HeaderMenuItem>
+          )}
           <HeaderMenuItem
             as={Link}
             to="/ingest-api"

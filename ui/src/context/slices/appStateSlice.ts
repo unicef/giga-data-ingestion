@@ -7,12 +7,14 @@ import { UploadSliceState } from "./uploadSlice";
 interface AppStateSliceState {
   appState: {
     user: User;
+    notification: boolean;
   };
 }
 
 interface AppStateSliceActions {
   appStateActions: {
     setUser: (user: User) => void;
+    setNotificiation: (bool: boolean) => void;
   };
 }
 
@@ -27,6 +29,7 @@ const initialAppState: AppStateSliceState = {
       email: "",
       roles: [],
     },
+    notification: false,
   },
 };
 
@@ -41,6 +44,10 @@ export const createAppStateSlice: StateCreator<
     setUser: (user: User) =>
       set(state => {
         state.appState.user = user;
+      }),
+    setNotificiation: (bool: boolean) =>
+      set(state => {
+        state.appState.notification = bool;
       }),
   },
 });

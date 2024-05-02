@@ -11,6 +11,7 @@ from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
 from data_ingestion.routers import (
     approval_requests,
     core,
+    delete,
     email,
     groups,
     qos,
@@ -58,16 +59,16 @@ async def load_config():
     await azure_scheme.openid_config.load_config()
 
 
-app.include_router(core.router)
-app.include_router(email.router)
-app.include_router(upload.router)
 app.include_router(approval_requests.router)
-app.include_router(users.router)
+app.include_router(core.router)
+app.include_router(delete.router)
+app.include_router(email.router)
 app.include_router(groups.router)
 app.include_router(qos.router)
-app.include_router(utils.router)
 app.include_router(schema.router)
-
+app.include_router(upload.router)
+app.include_router(users.router)
+app.include_router(utils.router)
 
 if settings.IN_PRODUCTION:
 

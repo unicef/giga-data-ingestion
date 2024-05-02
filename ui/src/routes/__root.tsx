@@ -15,6 +15,7 @@ import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import Footer from "@/components/common/Footer.tsx";
 import Navbar from "@/components/common/Navbar.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
+import ToastNotification from "@/components/user-management/ToastNotification";
 import {
   TanStackQueryDevTools,
   TanStackRouterDevtools,
@@ -70,7 +71,8 @@ function Base({ children }: PropsWithChildren) {
 
 function Layout() {
   const {
-    appStateActions: { setUser },
+    appStateActions: { setUser, setNotificiation },
+    appState: { notification },
   } = useStore();
   const { instance } = useMsal();
   const account = useAccount();
@@ -99,6 +101,13 @@ function Layout() {
 
   return (
     <Base>
+      <ToastNotification
+        show={notification}
+        setShow={setNotificiation}
+        kind="success"
+        caption="Rows to delete successfully uploaded"
+        title="Success"
+      />
       <Outlet />
     </Base>
   );

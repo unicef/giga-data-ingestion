@@ -1,6 +1,7 @@
 import { parse } from "papaparse";
 import * as XLSX from "xlsx";
 import { utils as xlsxUtils } from "xlsx";
+import { z } from "zod";
 
 import {
   AcceptedFileTypes,
@@ -17,6 +18,14 @@ interface DetectHeadersOptions {
   setIsParsing: (isLoading: boolean) => void;
   setError: (error: string) => void;
   schema: MetaSchema[];
+}
+
+interface ColumnDetectorOptions {
+  type: AcceptedFileTypes;
+  file: File;
+  setValues: (columns: string[]) => void;
+  setIsParsing: (isLoading: boolean) => void;
+  setError: (error: string) => void;
 }
 
 export class HeaderDetector {
@@ -156,4 +165,146 @@ export class HeaderDetector {
     const { options } = this;
     options.setIsParsing(false);
   }
+}
+
+export class ColumnValidator {
+  private readonly options: ColumnDetectorOptions;
+
+  constructor(options: ColumnDetectorOptions) {
+    this.options = options;
+  }
+
+  public validate() {
+    // 10 megabytes
+    if (this.options.file.size >= 10000000) {
+      this.options.setError("File size is too big, please try again");
+      return;
+    }
+    switch (this.options.type) {
+      case AcceptedFileTypes.JSON:
+        this.json();
+        return;
+
+      default:
+        this.options.setError("Invalid file type, please only upload JSON");
+    }
+  }
+
+  private commonProcess(columnValues: string[]) {
+    const {
+      options: { setIsParsing, setValues, setError },
+    } = this;
+
+    const UuidArraySchema = z.array(z.string().uuid());
+
+    try {
+      UuidArraySchema.parse(columnValues);
+      setValues(columnValues);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        console.log(err);
+
+        const uniqueErrors = [
+          ...new Set(err.issues.map(err => `"${err.message}"`)),
+        ];
+        const uniqueErrorMessage = uniqueErrors.join(", ");
+        const message = `Uploaded file contained the following errors on some of the rows: ${uniqueErrorMessage}`;
+
+        setError(message);
+      }
+    } finally {
+      setIsParsing(false);
+    }
+  }
+
+  private json() {
+    const { options } = this;
+
+    // TODO: Use alternative streaming implementation to avoid loading the entire file into memory
+    const reader = new FileReader();
+
+    reader.onload = e => {
+      const result = (e.target?.result ?? null) as string | null;
+      if (!result) return;
+
+      try {
+        const data = JSON.parse(result);
+        if (!Array.isArray(data)) {
+          const message = "JSON top-level entity is not an array";
+          options.setError(message);
+          return;
+        }
+        if (data.length === 0) {
+          const message = "Data is empty";
+          options.setError(message);
+          return;
+        }
+
+        this.commonProcess(data);
+      } catch (e) {
+        console.error(e);
+        options.setError("A parsing error occurred. Please try again.");
+      }
+    };
+
+    reader.onerror = console.error;
+
+    reader.readAsText(options.file);
+  }
+
+  // private csv() {
+  //   const { options } = this;
+
+  //   parse(options.file, {
+  //     complete: result => {
+  //       const firstColumnValues = (result.data as string[][]).map(
+  //         row => row[0],
+  //       );
+
+  //       this.commonProcess(firstColumnValues);
+  //     },
+  //     error: e => {
+  //       console.error(e.message);
+  //       options.setError(e.message);
+  //       options.setIsParsing(false);
+  //     },
+  //     skipEmptyLines: true,
+  //   });
+  // }
+
+  // private excel() {
+  //   const { options } = this;
+  //   let workbook: XLSX.WorkBook;
+
+  //   options.file
+  //     .arrayBuffer()
+  //     .then(buf => {
+  //       try {
+  //         workbook = XLSX.read(buf);
+  //       } catch (e) {
+  //         options.setError("A parsing error occurred. Please try again.");
+  //         console.error(e);
+  //         return;
+  //       }
+
+  //       const firstSheet = workbook.SheetNames[0];
+  //       const sheet = workbook.Sheets[firstSheet];
+  //       const data = xlsxUtils.sheet_to_json(sheet);
+  //       if (data.length === 0) {
+  //         options.setError("First sheet is empty");
+  //         return;
+  //       }
+
+  //       const firstKey = Object.keys(data[0] as Record<string, unknown>)[0];
+  //       const firstColumnValues = (data as Record<string, unknown>[]).map(
+  //         (row: Record<string, unknown>) => row[firstKey] as string,
+  //       );
+
+  //       this.commonProcess(firstColumnValues);
+  //     })
+  //     .catch(e => {
+  //       console.error(e);
+  //       options.setError("A parsing error occurred. Please try again.");
+  //     });
+  // }
 }
