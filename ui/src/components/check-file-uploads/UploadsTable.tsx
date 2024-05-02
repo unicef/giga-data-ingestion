@@ -22,7 +22,11 @@ import { format } from "date-fns";
 import { api } from "@/api";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { PagedResponse } from "@/types/api.ts";
-import { UploadResponse } from "@/types/upload.ts";
+import {
+  DQStatus,
+  DQStatusTagMapping,
+  UploadResponse,
+} from "@/types/upload.ts";
 
 const columns: DataTableHeader[] = [
   {
@@ -57,7 +61,7 @@ const columns: DataTableHeader[] = [
 
 type TableUpload = Record<
   keyof UploadResponse,
-  ReactElement | string | number | null
+  ReactElement | string | number | null | DQStatus | boolean
 > & { id: string };
 
 interface UploadsTableProps {
@@ -99,18 +103,19 @@ function UploadsTable({
 
     _renderUploads.data = uploads.data.map(upload => {
       const isUnstructured = upload.dataset === "unstructured";
-      const isStatusCompleted = upload.dq_report_path != null;
+      const statusText = upload.dq_status.replace("_", " ").toLowerCase();
 
       return {
         ...upload,
         created: format(new Date(upload.created), DEFAULT_DATETIME_FORMAT),
         dataset: <span className="capitalize">{upload.dataset}</span>,
-        status: isStatusCompleted ? (
-          <Tag type="blue">Completed</Tag>
-        ) : isUnstructured ? (
-          <Tag type="gray">Skipped</Tag>
-        ) : (
-          <Tag type="gray">In Progress</Tag>
+        status: (
+          <Tag
+            type={DQStatusTagMapping[upload.dq_status]}
+            className="capitalize"
+          >
+            {statusText}
+          </Tag>
         ),
         actions: !isUnstructured && (
           <Button
@@ -119,7 +124,7 @@ function UploadsTable({
             params={{ uploadId: upload.id }}
             kind="ghost"
             size="sm"
-            disabled={!isStatusCompleted}
+            disabled={upload.dq_status !== DQStatus.COMPLETED}
           >
             View
           </Button>

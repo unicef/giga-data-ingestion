@@ -1,3 +1,7 @@
+import { ComponentProps } from "react";
+
+import { Tag } from "@carbon/react";
+
 export interface Check {
   assertion: string;
   column: string;
@@ -72,19 +76,23 @@ export interface UploadUnstructuredParams {
   metadata: string;
 }
 
-export const initialUploadResponse: UploadResponse = {
-  id: "",
-  created: "",
-  uploader_id: "",
-  uploader_email: "",
-  dq_report_path: null,
-  country: "",
-  dataset: "",
-  source: null,
-  original_filename: "",
-  upload_path: "",
-  column_to_schema_mapping: "",
-  column_license: "",
+export enum DQStatus {
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  ERROR = "ERROR",
+  TIMEOUT = "TIMEOUT",
+  SKIPPED = "SKIPPED",
+}
+
+export const DQStatusTagMapping: Record<
+  DQStatus,
+  ComponentProps<typeof Tag>["type"]
+> = {
+  [DQStatus.IN_PROGRESS]: "gray",
+  [DQStatus.COMPLETED]: "blue",
+  [DQStatus.ERROR]: "red",
+  [DQStatus.TIMEOUT]: "red",
+  [DQStatus.SKIPPED]: "gray",
 };
 
 export interface UploadResponse {
@@ -93,6 +101,10 @@ export interface UploadResponse {
   uploader_id: string;
   uploader_email: string;
   dq_report_path: string | null;
+  dq_full_path: string | null;
+  dq_status: DQStatus;
+  bronze_path: string | null;
+  is_processed_in_staging: boolean;
   country: string;
   dataset: string;
   source: string | null;
@@ -101,3 +113,22 @@ export interface UploadResponse {
   column_to_schema_mapping: string;
   column_license: string;
 }
+
+export const initialUploadResponse: UploadResponse = {
+  id: "",
+  created: "",
+  uploader_id: "",
+  uploader_email: "",
+  dq_report_path: null,
+  dq_full_path: null,
+  dq_status: DQStatus.IN_PROGRESS,
+  bronze_path: null,
+  is_processed_in_staging: false,
+  country: "",
+  dataset: "",
+  source: null,
+  original_filename: "",
+  upload_path: "",
+  column_to_schema_mapping: "",
+  column_license: "",
+};
