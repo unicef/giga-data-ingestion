@@ -6,7 +6,6 @@ import {
   DataTableHeader,
   DataTableSkeleton,
   Loading,
-  Section,
 } from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
@@ -58,6 +57,9 @@ export const Route = createFileRoute("/approval-requests/")({
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(listApprovalRequestQueryOptions),
   pendingComponent: () => <DataTableSkeleton headers={columns} />,
+  errorComponent: () => (
+    <DataTable title="Approval Requests" columns={columns} rows={[]} />
+  ),
 });
 
 type ApprovalRequestTableRow = Record<
@@ -135,17 +137,15 @@ function ApprovalRequests() {
   );
 
   return (
-    <Section className="container flex flex-col gap-4 py-6">
-      <DataTable
-        title="Approval Requests"
-        columns={columns}
-        rows={formattedApprovalRequests}
-        isPaginated
-        count={approvalRequests.total_count}
-        handlePaginationChange={handlePaginationChange}
-        page={approvalRequests.page}
-        pageSize={approvalRequests.page_size}
-      />
-    </Section>
+    <DataTable
+      title="Approval Requests"
+      columns={columns}
+      rows={formattedApprovalRequests}
+      isPaginated
+      count={approvalRequests.total_count}
+      handlePaginationChange={handlePaginationChange}
+      page={approvalRequests.page}
+      pageSize={approvalRequests.page_size}
+    />
   );
 }

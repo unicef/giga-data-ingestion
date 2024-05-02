@@ -152,7 +152,7 @@ async def get_approval_request(
     subpath: str,
     db: Session = Depends(get_db),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=10, ge=1, le=50),
+    page_size: int = Query(default=10, ge=1, le=100),
 ):
     if len(splits := urllib.parse.unquote(subpath).split("/")) != 2:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

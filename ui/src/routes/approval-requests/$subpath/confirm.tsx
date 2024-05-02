@@ -82,6 +82,10 @@ const headers: DataTableHeader[] = [
     key: "_change_type",
     header: "_change_type",
   },
+  {
+    key: "_commit_timestamp",
+    header: "_commit_timestamp",
+  },
 ];
 
 function Confirm() {

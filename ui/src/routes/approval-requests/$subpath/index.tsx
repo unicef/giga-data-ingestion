@@ -14,7 +14,6 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import CDFDataTable from "@/components/approval-requests/CDFDataTable";
-import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import {
   DEFAULT_PAGE_NUMBER,
   DEFAULT_PAGE_SIZE,
@@ -64,7 +63,24 @@ export const Route = createFileRoute("/approval-requests/$subpath/")({
       <DataTableSkeleton headers={skeletonHeaders} />
     </Section>
   ),
-  errorComponent: ErrorComponent,
+  errorComponent: () => (
+    <CDFDataTable
+      headers={skeletonHeaders}
+      rows={[]}
+      handleApproveRows={() => {}}
+      handleRejectRows={() => {}}
+      handlePaginationChange={() => {}}
+      info={{
+        dataset: "",
+        timestamp: "",
+        version: 0,
+        country: "",
+      }}
+      page={DEFAULT_PAGE_NUMBER}
+      pageSize={DEFAULT_PAGE_SIZE}
+      count={0}
+    />
+  ),
 });
 
 function ApproveRejectTable() {

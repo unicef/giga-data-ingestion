@@ -1,3 +1,4 @@
+import { Section } from "@carbon/react";
 import { Outlet, createLazyFileRoute } from "@tanstack/react-router";
 
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
@@ -9,7 +10,9 @@ export const Route = createLazyFileRoute("/approval-requests")({
 function ApprovalRequestsLayout() {
   return (
     <AuthenticatedRBACView>
-      <Outlet />
+      <Section className="container flex flex-col gap-4 py-6">
+        <Outlet />
+      </Section>
     </AuthenticatedRBACView>
   );
 }
