@@ -1,5 +1,4 @@
 import json
-import os.path
 from io import StringIO
 
 import pandas as pd
@@ -31,16 +30,12 @@ def get_data_quality_summary(dq_report_path: str):
 
 
 def get_first_n_error_rows_for_data_quality_check(
-    dq_report_path: str,
+    dq_full_path: str,
     rows_to_process: int = 5,
 ) -> tuple[BlobProperties, dict]:
-    path, _ = os.path.splitext(dq_report_path)
-    path = path.replace("dq-summary", "dq-failed-rows")
-    dq_failed_path = f"{path}.csv"
-
     results = {}
 
-    blob = storage_client.get_blob_client(dq_failed_path)
+    blob = storage_client.get_blob_client(dq_full_path)
     if not blob.exists():
         logger.error("DQ report does not exist in azure storage")
         raise HTTPException(

@@ -59,9 +59,5 @@ def get_app_version() -> str:
         )
 
 
-def get_dq_overall_path_prefix(dataset: str):
-    return f"data-quality-results/school-{dataset}/dq-overall"
-
-
 constants = get_constants()
 __version__ = get_app_version()

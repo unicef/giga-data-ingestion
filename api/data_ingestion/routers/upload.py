@@ -14,7 +14,6 @@ from fastapi import (
     status,
 )
 from fastapi_azure_auth.user import User
-from icecream import ic
 from pydantic import Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +21,7 @@ from starlette.responses import StreamingResponse
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
-from data_ingestion.constants import constants, get_dq_overall_path_prefix
+from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.data_quality_checks import (
@@ -308,7 +307,7 @@ async def get_data_quality_check(
         )
 
     blob_properties, results = get_first_n_error_rows_for_data_quality_check(
-        file_upload.dq_report_path
+        file_upload.dq_full_path
     )
     dq_report_summary_dict = get_data_quality_summary(file_upload.dq_report_path)
 
@@ -345,12 +344,9 @@ async def download_data_quality_check(
                 detail="You do not have permission to access details for this file.",
             )
 
-    path_prefix = get_dq_overall_path_prefix(file_upload.dataset)
-    upload_path_parts = file_upload.upload_path.split("/")
+    upload_path_parts = file_upload.dq_full_path.split("/")
     upload_filename = upload_path_parts[-1]
-    blob = storage_client.get_blob_client(
-        ic(f"{path_prefix}/{file_upload.country}/{upload_filename}")
-    )
+    blob = storage_client.get_blob_client(file_upload.dq_full_path)
     stream = blob.download_blob()
     headers = {"Content-Disposition": f"attachment; filename={upload_filename}"}
 
