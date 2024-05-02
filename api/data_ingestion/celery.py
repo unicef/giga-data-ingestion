@@ -25,6 +25,10 @@ celery.conf.update(
             "task": "data_ingestion.tasks.update_schemas",
             "schedule": timedelta(minutes=10),
         },
+        "file-upload-dq-checks-timeout": {
+            "task": "data_ingestion.tasks.file_upload_dq_checks_timeout",
+            "schedule": timedelta(minutes=10),
+        },
     },
 )
 
