@@ -186,7 +186,7 @@ export class ColumnValidator {
         return;
 
       default:
-        this.options.setError("Invalid file type, please only uplad JSON");
+        this.options.setError("Invalid file type, please only upload JSON");
     }
   }
 
