@@ -175,19 +175,18 @@ export class ColumnValidator {
   }
 
   public validate() {
+    // 10 megabytes
+    if (this.options.file.size >= 10000000) {
+      this.options.setError("File size is too big, please try again");
+      return;
+    }
     switch (this.options.type) {
-      case AcceptedFileTypes.CSV:
-        this.csv();
-        return;
       case AcceptedFileTypes.JSON:
         this.json();
         return;
-      case AcceptedFileTypes.EXCEL:
-      case AcceptedFileTypes.EXCEL_LEGACY:
-        this.excel();
-        return;
+
       default:
-      // do nothing
+        this.options.setError("Invalid file type, please only uplad JSON");
     }
   }
 
@@ -218,26 +217,6 @@ export class ColumnValidator {
     }
   }
 
-  private csv() {
-    const { options } = this;
-
-    parse(options.file, {
-      complete: result => {
-        const firstColumnValues = (result.data as string[][]).map(
-          row => row[0],
-        );
-
-        this.commonProcess(firstColumnValues);
-      },
-      error: e => {
-        console.error(e.message);
-        options.setError(e.message);
-        options.setIsParsing(false);
-      },
-      skipEmptyLines: true,
-    });
-  }
-
   private json() {
     const { options } = this;
 
@@ -261,8 +240,7 @@ export class ColumnValidator {
           return;
         }
 
-        const detectedColumns = Object.keys(data[0]);
-        this.commonProcess(detectedColumns);
+        this.commonProcess(data);
       } catch (e) {
         console.error(e);
         options.setError("A parsing error occurred. Please try again.");
@@ -274,39 +252,59 @@ export class ColumnValidator {
     reader.readAsText(options.file);
   }
 
-  private excel() {
-    const { options } = this;
-    let workbook: XLSX.WorkBook;
+  // private csv() {
+  //   const { options } = this;
 
-    options.file
-      .arrayBuffer()
-      .then(buf => {
-        try {
-          workbook = XLSX.read(buf);
-        } catch (e) {
-          options.setError("A parsing error occurred. Please try again.");
-          console.error(e);
-          return;
-        }
+  //   parse(options.file, {
+  //     complete: result => {
+  //       const firstColumnValues = (result.data as string[][]).map(
+  //         row => row[0],
+  //       );
 
-        const firstSheet = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[firstSheet];
-        const data = xlsxUtils.sheet_to_json(sheet);
-        if (data.length === 0) {
-          options.setError("First sheet is empty");
-          return;
-        }
+  //       this.commonProcess(firstColumnValues);
+  //     },
+  //     error: e => {
+  //       console.error(e.message);
+  //       options.setError(e.message);
+  //       options.setIsParsing(false);
+  //     },
+  //     skipEmptyLines: true,
+  //   });
+  // }
 
-        const firstKey = Object.keys(data[0] as Record<string, unknown>)[0];
-        const firstColumnValues = (data as Record<string, unknown>[]).map(
-          (row: Record<string, unknown>) => row[firstKey] as string,
-        );
+  // private excel() {
+  //   const { options } = this;
+  //   let workbook: XLSX.WorkBook;
 
-        this.commonProcess(firstColumnValues);
-      })
-      .catch(e => {
-        console.error(e);
-        options.setError("A parsing error occurred. Please try again.");
-      });
-  }
+  //   options.file
+  //     .arrayBuffer()
+  //     .then(buf => {
+  //       try {
+  //         workbook = XLSX.read(buf);
+  //       } catch (e) {
+  //         options.setError("A parsing error occurred. Please try again.");
+  //         console.error(e);
+  //         return;
+  //       }
+
+  //       const firstSheet = workbook.SheetNames[0];
+  //       const sheet = workbook.Sheets[firstSheet];
+  //       const data = xlsxUtils.sheet_to_json(sheet);
+  //       if (data.length === 0) {
+  //         options.setError("First sheet is empty");
+  //         return;
+  //       }
+
+  //       const firstKey = Object.keys(data[0] as Record<string, unknown>)[0];
+  //       const firstColumnValues = (data as Record<string, unknown>[]).map(
+  //         (row: Record<string, unknown>) => row[firstKey] as string,
+  //       );
+
+  //       this.commonProcess(firstColumnValues);
+  //     })
+  //     .catch(e => {
+  //       console.error(e);
+  //       options.setError("A parsing error occurred. Please try again.");
+  //     });
+  // }
 }

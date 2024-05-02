@@ -22,10 +22,6 @@ export const Route = createFileRoute("/delete/")({
 });
 
 const validTypes = {
-  "text/csv": AcceptedFileTypes.CSV,
-  "application/vnd.ms-excel": AcceptedFileTypes.EXCEL_LEGACY,
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-    AcceptedFileTypes.EXCEL,
   "application/json": AcceptedFileTypes.JSON,
 };
 
