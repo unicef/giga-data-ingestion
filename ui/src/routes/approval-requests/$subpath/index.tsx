@@ -15,21 +15,37 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { api } from "@/api";
 import CDFDataTable from "@/components/approval-requests/CDFDataTable";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
-import { HEADERS } from "@/constants/ingest-api";
 import {
   DEFAULT_PAGE_NUMBER,
   DEFAULT_PAGE_SIZE,
 } from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
-import {
-  ChangeType,
-  SENTINEL_APPROVAL_REQUEST,
-} from "@/types/approvalRequests";
-import {
-  cdfComponentStringHash,
-  cdfRowStringHash,
-} from "@/utils/approval_requests.ts";
+import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests";
+import { computeChangeId } from "@/utils/approval_requests.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
+
+const skeletonHeaders: DataTableHeader[] = [
+  {
+    key: "approval_status",
+    header: "approval_status",
+  },
+  {
+    key: "school_id_giga",
+    header: "school_id_giga",
+  },
+  {
+    key: "_change_type",
+    header: "_change_type",
+  },
+  {
+    key: "_commit_timestamp",
+    header: "_commit_timestamp",
+  },
+  {
+    key: "_commit_version",
+    header: "_commit_version",
+  },
+];
 
 export const Route = createFileRoute("/approval-requests/$subpath/")({
   component: ApproveRejectTable,
@@ -45,7 +61,7 @@ export const Route = createFileRoute("/approval-requests/$subpath/")({
   },
   pendingComponent: () => (
     <Section className="container py-6">
-      <DataTableSkeleton headers={HEADERS} />
+      <DataTableSkeleton headers={skeletonHeaders} />
     </Section>
   ),
   errorComponent: ErrorComponent,
@@ -101,6 +117,7 @@ function ApproveRejectTable() {
         "school_id_giga",
         ...keys.slice(0, idIndex),
         ...keys.slice(idIndex + 1),
+        "change_id",
       ];
     }
     return keys.map(key => ({
@@ -109,99 +126,82 @@ function ApproveRejectTable() {
     }));
   }, [approvalRequests]);
 
-  const formattedRows = useMemo<Record<string, string | null>[]>(
-    () =>
-      approvalRequests.map(row => {
-        const id = cdfRowStringHash(row);
-
-        return {
-          ...row,
-          id,
-          approval_status: Object.keys(approvedRows).includes(id)
-            ? "Approved"
-            : Object.keys(rejectedRows).includes(id)
-            ? "Rejected"
-            : "",
-        };
-      }),
-    [approvalRequests, approvedRows, rejectedRows],
-  );
+  const formattedRows = useMemo<Record<string, string | null>[]>(() => {
+    return approvalRequests.map(row => {
+      const formattedRow: Record<string, string | null> = {
+        ...row,
+        id: row.change_id,
+        approval_status: approvedRows.includes(row.change_id!)
+          ? "Approved"
+          : rejectedRows.includes(row.change_id!)
+          ? "Rejected"
+          : "",
+      };
+      return formattedRow;
+    });
+  }, [approvalRequests, approvedRows, rejectedRows]);
 
   const handleApproveRows = (rows: Record<string, string | null>[]) => {
-    const ids: string[] = [];
+    console.log(rows);
 
-    const newApprovedRows = { ...approvedRows };
+    const newApprovedRows = new Set(approvedRows);
+
     for (const row of rows) {
-      const id = cdfRowStringHash(row);
-      ids.push(id);
-
       // Only one of update_preimage/update_postimage for the same
-      // _commit_version/school_id_giga combination can be approved
+      // school_id_giga/_commit_version/_commit_timestamp combination
+      // can be approved
       if (row._change_type === "update_preimage") {
-        const id = cdfComponentStringHash({
+        const postImageId = computeChangeId({
           school_id_giga: row.school_id_giga!,
           _change_type: "update_postimage",
           _commit_version: Number(row._commit_version),
+          _commit_timestamp: row._commit_timestamp!,
         });
-        if (id in newApprovedRows) {
-          delete newApprovedRows[id];
-        }
-      }
-
-      if (row._change_type === "update_postimage") {
-        const id = cdfComponentStringHash({
+        newApprovedRows.delete(postImageId);
+      } else if (row._change_type === "update_postimage") {
+        const preImageId = computeChangeId({
           school_id_giga: row.school_id_giga!,
           _change_type: "update_preimage",
           _commit_version: Number(row._commit_version),
+          _commit_timestamp: row._commit_timestamp!,
         });
-        if (id in newApprovedRows) {
-          delete newApprovedRows[id];
-        }
+        newApprovedRows.delete(preImageId);
       }
 
-      newApprovedRows[id] = {
-        school_id_giga: row.school_id_giga!,
-        _change_type: row._change_type as ChangeType,
-        _commit_version: Number(row._commit_version),
-      };
+      newApprovedRows.add(row.change_id!);
     }
-    setApprovedRows(newApprovedRows);
+    setApprovedRows([...newApprovedRows]);
+
+    const ids = rows.map(row => row.change_id ?? "").filter(Boolean);
 
     // Remove ids from rejected rows
-    const newRejectedRows = { ...rejectedRows };
+    const newRejectedRows = new Set(rejectedRows);
     for (const id of ids) {
-      if (id in newRejectedRows) {
-        delete newRejectedRows[id];
+      if (newApprovedRows.has(id)) {
+        newRejectedRows.delete(id);
       }
     }
-    setRejectedRows(newRejectedRows);
+    setRejectedRows([...newRejectedRows]);
 
     setHeaders(headers);
   };
 
   const handleRejectRows = (rows: Record<string, string | null>[]) => {
-    const ids: string[] = [];
-
-    const _rejectedRows = { ...rejectedRows };
+    const newRejectedRows = new Set(rejectedRows);
     for (const row of rows) {
-      const id = cdfRowStringHash(row);
-      ids.push(id);
-      _rejectedRows[id] = {
-        school_id_giga: row.school_id_giga!,
-        _change_type: row._change_type as ChangeType,
-        _commit_version: Number(row._commit_version),
-      };
+      newRejectedRows.add(row.change_id!);
     }
-    setRejectedRows(_rejectedRows);
+    setRejectedRows([...newRejectedRows]);
 
+    const ids = rows.map(row => row.change_id ?? "").filter(Boolean);
     // Remove ids from approved rows
-    const _approvedRows = { ...approvedRows };
+    const newApprovedRows = new Set(approvedRows);
     for (const id of ids) {
-      if (id in _approvedRows) {
-        delete _approvedRows[id];
+      if (newRejectedRows.has(id)) {
+        newApprovedRows.delete(id);
       }
     }
-    setApprovedRows(_approvedRows);
+    setApprovedRows([...newApprovedRows]);
 
     setHeaders(headers);
   };
@@ -287,8 +287,8 @@ function ApproveRejectTable() {
         onRequestClose={() => setOpen(false)}
         onRequestSubmit={handleProceed}
       >
-        You have {total_count - Object.keys(approvedRows).length} unapproved
-        rows. These rows will be automatically rejected. Proceed?
+        You have {total_count - approvedRows.length} unapproved rows. These rows
+        will be automatically rejected. Proceed?
       </Modal>
     </>
   );

@@ -1,11 +1,10 @@
 import { useEffect } from "react";
 
-import { Stack } from "@carbon/react";
+import { DataTableSkeleton, Stack } from "@carbon/react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { uploadsQueryOptions } from "@/api/queryOptions.ts";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
-import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import UploadBreadcrumbs from "@/components/upload/UploadBreadcrumbs.tsx";
 import UploadLanding from "@/components/upload/UploadLanding.tsx";
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
@@ -21,7 +20,7 @@ export const Route = createFileRoute("/")({
   loader: ({ context: { queryClient } }) =>
     queryClient.ensureQueryData(uploadsQueryOptions),
   validateSearch: validateSearchParams,
-  pendingComponent: PendingComponent,
+  pendingComponent: DataTableSkeleton,
   errorComponent: ErrorComponent,
 });
 

@@ -1,6 +1,5 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
-import { CDFSelector } from "@/context/slices/approveRowSlice.ts";
 import { PagedResponse, PaginationRequest } from "@/types/api.ts";
 import {
   ApprovalRequest,
@@ -29,13 +28,10 @@ export default function routes(axi: AxiosInstance) {
       approved_rows,
       subpath,
     }: {
-      approved_rows: CDFSelector[];
+      approved_rows: string[];
       subpath: string;
     }): Promise<AxiosResponse<void>> => {
-      return axi.post(`approval-requests/upload`, {
-        approved_rows: approved_rows,
-        subpath: subpath,
-      });
+      return axi.post(`approval-requests/upload`, { approved_rows, subpath });
     },
   };
 }

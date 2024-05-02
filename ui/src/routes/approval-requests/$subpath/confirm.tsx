@@ -34,7 +34,7 @@ import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
 import { CarbonDataTableRow } from "@/types/datatable";
 import { KeyValueObject } from "@/types/datatable";
-import { cdfRowStringHash, getValueByHeader } from "@/utils/approval_requests";
+import { getValueByHeader } from "@/utils/approval_requests";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
 export const Route = createFileRoute("/approval-requests/$subpath/confirm")({
@@ -115,13 +115,13 @@ function Confirm() {
     mutationFn: api.approvalRequests.upload_approved_rows,
   });
 
-  const approvedRowsList = rows.filter(
-    row => cdfRowStringHash(row) in approvedRows,
-  );
+  const approvedRowsList = rows
+    .filter(row => approvedRows.includes(row.change_id!))
+    .filter(Boolean);
 
-  const rejectedRowsList = rows.filter(
-    row => cdfRowStringHash(row) in rejectedRows,
-  );
+  const rejectedRowsList = rows
+    .filter(row => rejectedRows.includes(row.change_id!))
+    .filter(Boolean);
 
   const ConfirmDatatables = ({ rows }: ConfirmDataTablesProps) => {
     return (
@@ -189,7 +189,7 @@ function Confirm() {
 
   const handleSubmit = async () => {
     await upload({
-      approved_rows: Object.values(approvedRows),
+      approved_rows: approvedRows,
       subpath: subpath,
     });
     await navigate({ to: "/approval-requests" });
@@ -198,16 +198,12 @@ function Confirm() {
   return (
     <Section className="container py-6">
       <Accordion>
-        <AccordionItem
-          title={`Approved Rows (${Object.keys(approvedRows).length})`}
-        >
+        <AccordionItem title={`Approved Rows (${approvedRows.length})`}>
           <ConfirmDatatables rows={approvedRowsList} />
         </AccordionItem>
         <AccordionItem
           disabled
-          title={`Rejected Rows (${
-            total_count - Object.keys(rejectedRows).length
-          })`}
+          title={`Rejected Rows (${total_count - rejectedRows.length})`}
         >
           <ConfirmDatatables rows={rejectedRowsList} />
         </AccordionItem>

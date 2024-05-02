@@ -10,6 +10,7 @@ from sqlalchemy import column, func, literal, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import count
+from sqlalchemy.types import VARCHAR
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
@@ -161,7 +162,17 @@ async def get_approval_request(
     dataset = table_schema.replace("staging", "").replace("_", " ").title()
 
     data_cte = (
-        select("*")
+        select(
+            # Create an identifier that is unique across versions
+            func.concat_ws(
+                "|",
+                column("school_id_giga"),
+                column("_change_type"),
+                column("_commit_version").cast(VARCHAR()),
+                column("_commit_timestamp").cast(VARCHAR()),
+            ).label("change_id"),
+            "*",
+        )
         .select_from(
             func.table(
                 func.delta_lake.system.table_changes(

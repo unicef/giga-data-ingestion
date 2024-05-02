@@ -1,4 +1,4 @@
-import { CDFSelector } from "@/context/slices/approveRowSlice.ts";
+import { ChangeType } from "@/types/approvalRequests.ts";
 
 interface Item {
   info?: {
@@ -13,14 +13,18 @@ export function getValueByHeader(array: Item[], header: string) {
   return item ? item.value : undefined;
 }
 
-export function cdfRowStringHash(row: Record<string, string | null>) {
-  return `${row.school_id_giga}|${row._commit_version}|${row._change_type}`;
+interface CDFSelector {
+  school_id_giga: string;
+  _change_type: ChangeType;
+  _commit_version: number;
+  _commit_timestamp: string;
 }
 
-export function cdfComponentStringHash({
+export function computeChangeId({
   school_id_giga,
   _change_type,
   _commit_version,
+  _commit_timestamp,
 }: CDFSelector) {
-  return `${school_id_giga}|${_commit_version}|${_change_type}`;
+  return `${school_id_giga}|${_change_type}|${_commit_version}|${_commit_timestamp}`;
 }

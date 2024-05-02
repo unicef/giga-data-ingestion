@@ -3,16 +3,10 @@ import { StateCreator } from "zustand";
 
 import { KeyValueObject } from "@/types/datatable";
 
-export interface CDFSelector {
-  school_id_giga: string;
-  _change_type: "insert" | "update_preimage" | "update_postimage" | "delete";
-  _commit_version: number;
-}
-
 interface ApproveRowSliceState {
   approveRowState: {
-    approvedRows: Record<string, CDFSelector>;
-    rejectedRows: Record<string, CDFSelector>;
+    approvedRows: string[];
+    rejectedRows: string[];
     headers: DataTableHeader[];
     rows: KeyValueObject[];
   };
@@ -40,8 +34,8 @@ export interface ApproveRowSlice
 
 const initialAppState: ApproveRowSliceState = {
   approveRowState: {
-    approvedRows: {},
-    rejectedRows: {},
+    approvedRows: [],
+    rejectedRows: [],
     headers: [],
     rows: [],
   },
@@ -60,8 +54,8 @@ export const createApproveRowSlice: StateCreator<
     resetApproveRowState: () =>
       set(
         state => {
-          state.approveRowState.approvedRows = {};
-          state.approveRowState.rejectedRows = {};
+          state.approveRowState.approvedRows = [];
+          state.approveRowState.rejectedRows = [];
 
           state.approveRowState.headers = [];
           state.approveRowState.rows = [];

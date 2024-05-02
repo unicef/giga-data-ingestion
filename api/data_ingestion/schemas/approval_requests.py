@@ -1,6 +1,4 @@
-from typing import Literal
-
-from pydantic import AwareDatetime, BaseModel, ConfigDict, conint, constr
+from pydantic import UUID4, AwareDatetime, BaseModel, ConfigDict, constr
 
 
 class ApprovalRequestListing(BaseModel):
@@ -17,14 +15,8 @@ class ApprovalRequestListing(BaseModel):
     enabled: bool
 
 
-class CDFSelection(BaseModel):
-    school_id_giga: str
-    _change_type: Literal["insert", "update_preimage", "update_postimage", "delete"]
-    _commit_version: conint(ge=0)
-
-
 class UploadApprovedRowsRequest(BaseModel):
-    approved_rows: Literal["__all__"] | list[CDFSelection]
+    approved_rows: list[UUID4]
     subpath: str
 
 

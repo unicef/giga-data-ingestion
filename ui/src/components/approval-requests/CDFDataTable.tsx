@@ -206,7 +206,7 @@ function CDFDataTable({
           onChange={handlePaginationChange}
           page={page}
           pageSize={pageSize}
-          pageSizes={[10, 25, 50]}
+          pageSizes={[10, 25, 50, 100]}
           totalItems={count}
         />
       </Section>
