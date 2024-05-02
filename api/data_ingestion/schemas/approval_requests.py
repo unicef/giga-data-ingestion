@@ -1,4 +1,4 @@
-from pydantic import UUID4, AwareDatetime, BaseModel, ConfigDict, constr
+from pydantic import AwareDatetime, BaseModel, ConfigDict, constr
 
 
 class ApprovalRequestListing(BaseModel):
@@ -16,7 +16,7 @@ class ApprovalRequestListing(BaseModel):
 
 
 class UploadApprovedRowsRequest(BaseModel):
-    approved_rows: list[UUID4]
+    approved_rows: list[str]
     subpath: str
 
 

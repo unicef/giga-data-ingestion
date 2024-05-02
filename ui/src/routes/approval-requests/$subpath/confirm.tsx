@@ -6,7 +6,6 @@ import {
   ButtonSet,
   DataTable,
   DataTableHeader,
-  DataTableSkeleton,
   Loading,
   Section,
   Table,
@@ -16,20 +15,11 @@ import {
   TableHeader,
   TableRow,
 } from "@carbon/react";
-import {
-  queryOptions,
-  useMutation,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
-import { HEADERS } from "@/constants/ingest-api.ts";
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
 import { CarbonDataTableRow } from "@/types/datatable";
@@ -40,28 +30,6 @@ import { validateSearchParams } from "@/utils/pagination.ts";
 export const Route = createFileRoute("/approval-requests/$subpath/confirm")({
   component: Confirm,
   validateSearch: validateSearchParams,
-  loader: ({ params: { subpath }, context: { queryClient } }) => {
-    return queryClient.ensureQueryData(
-      queryOptions({
-        queryFn: () =>
-          api.approvalRequests.get(subpath, {
-            page: DEFAULT_PAGE_NUMBER,
-            page_size: DEFAULT_PAGE_SIZE,
-          }),
-        queryKey: [
-          "approval-requests",
-          subpath,
-          DEFAULT_PAGE_NUMBER,
-          DEFAULT_PAGE_SIZE,
-        ],
-      }),
-    );
-  },
-  pendingComponent: () => (
-    <Section className="container py-6">
-      <DataTableSkeleton headers={HEADERS} />
-    </Section>
-  ),
   errorComponent: ErrorComponent,
 });
 
@@ -95,24 +63,7 @@ function Confirm() {
   } = useStore();
   const { subpath } = Route.useParams();
 
-  const {
-    page = DEFAULT_PAGE_NUMBER,
-    page_size: pageSize = DEFAULT_PAGE_SIZE,
-  } = Route.useSearch();
-
   const navigate = useNavigate({ from: Route.fullPath });
-
-  const {
-    data: {
-      data: { total_count },
-    },
-  } = useSuspenseQuery(
-    queryOptions({
-      queryFn: () =>
-        api.approvalRequests.get(subpath, { page: page, page_size: pageSize }),
-      queryKey: ["approval-requests", subpath, page, pageSize],
-    }),
-  );
 
   const { mutateAsync: upload, isPending } = useMutation({
     mutationKey: ["approval-request-upload", subpath],
@@ -207,7 +158,7 @@ function Confirm() {
         </AccordionItem>
         <AccordionItem
           disabled
-          title={`Rejected Rows (${total_count - rejectedRows.length})`}
+          title={`Rejected Rows (${rejectedRows.length})`}
         >
           <ConfirmDatatables rows={rejectedRowsList} />
         </AccordionItem>
