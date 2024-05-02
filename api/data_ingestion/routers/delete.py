@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 
 import country_converter as coco
-from fastapi import APIRouter, Depends, HTTPException, Response, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Response, Security
 from fastapi_azure_auth.user import User
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,7 +18,7 @@ from data_ingestion.schemas.delete import DeleteRowsRequest, DeleteRowsSchema
 router = APIRouter(
     prefix="/api/delete",
     tags=["delete"],
-    dependencies=[Security(azure_scheme)],
+    dependencies=[Security(IsPrivileged())],
 )
 
 
@@ -27,15 +27,8 @@ async def delete_rows(
     response: Response,
     body: DeleteRowsRequest,
     db: AsyncSession = Depends(get_db),
-    is_privileged: bool = Depends(IsPrivileged.raises(False)),
     user: User = Depends(azure_scheme),
 ):
-    if not is_privileged:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to access this endpoint",
-        )
-
     country_iso3 = coco.convert(body.country, to="ISO3")
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
