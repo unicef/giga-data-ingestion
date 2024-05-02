@@ -199,7 +199,7 @@
             Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"
           />
           <Metadata>
-            <Item Key="ServiceUrl">https://dataingestion.giga.global/api/utils/parse-group-displayname
+            <Item Key="ServiceUrl">https://sync.giga.global/api/utils/parse-group-displayname
             </Item>
             <Item Key="AuthenticationType">None</Item>
             <Item Key="AllowInsecureAuthInProduction">true</Item>
