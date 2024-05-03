@@ -9,7 +9,9 @@ from fastapi import (
     Security,
     status,
 )
+from fastapi.responses import StreamingResponse
 from loguru import logger
+from starlette.background import BackgroundTask
 
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.schemas.core import B2CPolicyGroupRequest, B2CPolicyGroupResponse
@@ -90,6 +92,12 @@ async def forward_get_request(
     }
 
     sharing_req = sharing_client.build_request(**request_params)
-    sharing_res = await sharing_client.send(sharing_req)
+    sharing_res = await sharing_client.send(sharing_req, stream=True)
 
-    return sharing_res.json()
+    return StreamingResponse(
+        sharing_res.aiter_raw(),
+        headers=sharing_res.headers,
+        status_code=sharing_res.status_code,
+        media_type="application/json",
+        background=BackgroundTask(sharing_res.aclose),
+    )
