@@ -2,14 +2,26 @@ import json
 from datetime import datetime
 from json import JSONDecodeError
 
-from fastapi import APIRouter, HTTPException, Security, status
+import httpx
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Security,
+    status,
+)
 from loguru import logger
 
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.schemas.core import B2CPolicyGroupRequest, B2CPolicyGroupResponse
-from data_ingestion.schemas.util import ResponseWithDateKeyBody, ValidDateTimeFormat
+from data_ingestion.schemas.util import (
+    ForwardRequestBody,
+    ResponseWithDateKeyBody,
+    ValidDateTimeFormat,
+)
 
-router = APIRouter(prefix="/api/utils", tags=["utils"])
+router = APIRouter(
+    prefix="/api/utils", tags=["utils"], dependencies=[Security(azure_scheme)]
+)
 
 
 @router.post(
@@ -33,7 +45,7 @@ def parse_group_display_names(body: B2CPolicyGroupRequest):
     return out
 
 
-@router.post("/is_valid_datetime_format_code", dependencies=[Security(azure_scheme)])
+@router.post("/is_valid_datetime_format_code")
 def is_valid_datetime_format_code(body: ValidDateTimeFormat) -> bool:
     datetime_str = body.datetime_str
     format_code = body.format_code
@@ -46,7 +58,7 @@ def is_valid_datetime_format_code(body: ValidDateTimeFormat) -> bool:
 
 
 # simulates nic.br/GetMeasurementsByDayOfYear
-@router.post("/test/response_with_date_key", dependencies=[Security(azure_scheme)])
+@router.post("/test/response_with_date_key")
 async def response_with_date_key(body: ResponseWithDateKeyBody):
     day_of_year = body.dayofyear
 
@@ -60,3 +72,23 @@ async def response_with_date_key(body: ResponseWithDateKeyBody):
     times = ["2023-12-04 15:50:24", "2023-12-04 16:17:36", "2023-12-04 20:04:57"]
 
     return [{"time": item, "sample_data": "sample_data"} for item in times]
+
+
+@router.post("/forward_request")
+async def forward_get_request(
+    body: ForwardRequestBody,
+):
+    auth_tuple = (body.auth["username"], body.auth["password"]) if body.auth else None
+
+    sharing_client = httpx.AsyncClient(
+        timeout=300, auth=auth_tuple if auth_tuple else None
+    )
+
+    request_params = {
+        k: v for k, v in body.model_dump().items() if v is not None and k != "auth"
+    }
+
+    sharing_req = sharing_client.build_request(**request_params)
+    sharing_res = await sharing_client.send(sharing_req)
+
+    return sharing_res.json()
