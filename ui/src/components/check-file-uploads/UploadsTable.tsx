@@ -108,7 +108,14 @@ function UploadsTable({
       return {
         ...upload,
         created: format(new Date(upload.created), DEFAULT_DATETIME_FORMAT),
-        dataset: <span className="capitalize">{upload.dataset}</span>,
+        dataset: (
+          <>
+            <span className="capitalize">{upload.dataset}</span>
+            {upload.source && (
+              <span className="uppercase"> ({upload.source})</span>
+            )}
+          </>
+        ),
         status: (
           <Tag
             type={DQStatusTagMapping[upload.dq_status]}
