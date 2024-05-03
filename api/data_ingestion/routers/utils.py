@@ -20,7 +20,8 @@ from data_ingestion.schemas.util import (
 )
 
 router = APIRouter(
-    prefix="/api/utils", tags=["utils"], dependencies=[Security(azure_scheme)]
+    prefix="/api/utils",
+    tags=["utils"],
 )
 
 
@@ -45,7 +46,7 @@ def parse_group_display_names(body: B2CPolicyGroupRequest):
     return out
 
 
-@router.post("/is_valid_datetime_format_code")
+@router.post("/is_valid_datetime_format_code", dependencies=[Security(azure_scheme)])
 def is_valid_datetime_format_code(body: ValidDateTimeFormat) -> bool:
     datetime_str = body.datetime_str
     format_code = body.format_code
@@ -58,7 +59,7 @@ def is_valid_datetime_format_code(body: ValidDateTimeFormat) -> bool:
 
 
 # simulates nic.br/GetMeasurementsByDayOfYear
-@router.post("/test/response_with_date_key")
+@router.post("/test/response_with_date_key", dependencies=[Security(azure_scheme)])
 async def response_with_date_key(body: ResponseWithDateKeyBody):
     day_of_year = body.dayofyear
 
