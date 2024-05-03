@@ -130,10 +130,10 @@ function ApproveRejectTable() {
     if (idIndex > -1) {
       keys = [
         "approval_status",
+        "change_id",
         "school_id_giga",
         ...keys.slice(0, idIndex),
         ...keys.slice(idIndex + 1),
-        "change_id",
       ];
     }
     return keys.map(key => ({

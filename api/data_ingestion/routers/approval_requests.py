@@ -6,6 +6,7 @@ from pathlib import Path
 import pandas as pd
 from country_converter import country_converter as coco
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
+from fastapi_azure_auth.user import User
 from sqlalchemy import column, func, literal, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
@@ -19,7 +20,6 @@ from data_ingestion.db.primary import get_db as get_primary_db
 from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
-from data_ingestion.internal.users import UsersApi
 from data_ingestion.models import ApprovalRequest
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
@@ -27,6 +27,7 @@ from data_ingestion.schemas.approval_requests import (
     UploadApprovedRowsRequest,
 )
 from data_ingestion.schemas.core import PagedResponseSchema
+from data_ingestion.utils.user import get_user_email
 
 router = APIRouter(
     prefix="/api/approval-requests",
@@ -225,7 +226,7 @@ async def get_approval_request(
 )
 async def upload_approved_rows(
     body: UploadApprovedRowsRequest,
-    user=Depends(azure_scheme),
+    user: User = Depends(azure_scheme),
     primary_db: AsyncSession = Depends(get_primary_db),
 ):
     posix_path = Path(urllib.parse.unquote(body.subpath))
@@ -234,12 +235,8 @@ async def upload_approved_rows(
     timestamp = datetime.now().strftime(constants.FILENAME_TIMESTAMP_FORMAT)
 
     filename = f"{country_iso3}_{dataset}_{timestamp}.json"
-
     approve_location = f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/{dataset}/{country_iso3}/{filename}"
-
-    email = user.email or user.claims.get("email")
-    if email is None:
-        email = (await UsersApi.get_user(user.sub)).mail
+    email = await get_user_email(user)
 
     approve_client = storage_client.get_blob_client(approve_location)
     try:
@@ -253,15 +250,20 @@ async def upload_approved_rows(
         )
 
         formatted_dataset = dataset.replace("-", " ").title()
-        update_query = (
+        await primary_db.execute(
             update(ApprovalRequest)
             .where(
                 (ApprovalRequest.country == country_iso3)
                 & (ApprovalRequest.dataset == formatted_dataset)
             )
-            .values(enabled=False)
+            .values(
+                {
+                    ApprovalRequest.enabled: False,
+                    ApprovalRequest.last_approved_by_id: user.sub,
+                    ApprovalRequest.last_approved_by_email: email,
+                }
+            )
         )
-        await primary_db.execute(update_query)
         await primary_db.commit()
 
     except HttpResponseError as err:
