@@ -46,6 +46,10 @@ const columns: DataTableHeader[] = [
     header: "Rows Updated",
   },
   {
+    key: "rows_deleted",
+    header: "Rows Deleted",
+  },
+  {
     key: "actions",
     header: "",
   },

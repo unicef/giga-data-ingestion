@@ -7,7 +7,7 @@ import pandas as pd
 from country_converter import country_converter as coco
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi_azure_auth.user import User
-from sqlalchemy import column, func, literal, select, text, update
+from sqlalchemy import column, func, literal, select, text, union_all, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import count
@@ -74,6 +74,7 @@ async def list_approval_requests(
         total_count = staging_tables[0]["total_count"]
 
     body: list[ApprovalRequestListing] = []
+    queries = []
     for table in staging_tables:
         change_types_cte = (
             select(column("_change_type")).select_from(
@@ -83,7 +84,7 @@ async def list_approval_requests(
                     )
                 )
             )
-        ).cte("change_types")
+        ).cte(f"change_types_{table['table_schema']}_{table['table_name']}")
         timestamp_cte = (
             select(column("timestamp"))
             .select_from(
@@ -93,32 +94,41 @@ async def list_approval_requests(
             )
             .order_by(column("timestamp").desc())
             .limit(1)
-        ).cte("timestamp")
-        res = db.execute(
-            select(
-                (select(count()).select_from(change_types_cte)).label("rows_count"),
-                (
-                    select(count())
-                    .select_from(change_types_cte)
-                    .where(column("_change_type") == literal("insert"))
-                ).label("rows_added"),
-                (
-                    select(count())
-                    .select_from(change_types_cte)
-                    .where(column("_change_type") == literal("update_preimage"))
-                ).label("rows_updated"),
-                (select(column("timestamp")).select_from(timestamp_cte)).label(
-                    "last_modified"
-                ),
-            )
+        ).cte(f"timestamp_{table['table_schema']}_{table['table_name']}")
+        query = select(
+            literal(table["table_schema"]).label("table_schema"),
+            literal(table["table_name"]).label("table_name"),
+            (select(count()).select_from(change_types_cte)).label("rows_count"),
+            (
+                select(count())
+                .select_from(change_types_cte)
+                .where(column("_change_type") == literal("insert"))
+            ).label("rows_added"),
+            (
+                select(count())
+                .select_from(change_types_cte)
+                .where(column("_change_type") == literal("update_preimage"))
+            ).label("rows_updated"),
+            (
+                select(count())
+                .select_from(change_types_cte)
+                .where(column("_change_type") == literal("delete"))
+            ).label("rows_deleted"),
+            (select(column("timestamp")).select_from(timestamp_cte)).label(
+                "last_modified"
+            ),
         )
-        stats = res.mappings().one()
+        queries.append(query)
 
-        country = coco.convert(table["table_name"], to="name_short")
-        country_iso3 = coco.convert(table["table_name"], to="ISO3")
+    res = db.execute(union_all(*queries))
+    stats = res.mappings().all()
+
+    for stat in stats:
+        country = coco.convert(stat["table_name"], to="name_short")
+        country_iso3 = coco.convert(stat["table_name"], to="ISO3")
 
         dataset = (
-            table["table_schema"]
+            stat["table_schema"]
             .replace("staging", "")
             .replace("_", " ")
             .title()
@@ -126,16 +136,16 @@ async def list_approval_requests(
         )
         body.append(
             ApprovalRequestListing(
-                id=f'{table["table_name"].upper()}-{dataset}',
+                id=f'{stat["table_name"].upper()}-{dataset}',
                 country=country,
-                country_iso3=table["table_name"].upper(),
+                country_iso3=stat["table_name"].upper(),
                 dataset=dataset,
-                subpath=f'{table["table_schema"]}/{table["table_name"]}',
-                last_modified=stats["last_modified"],
-                rows_count=stats["rows_count"],
-                rows_added=stats["rows_added"],
-                rows_updated=stats["rows_updated"],
-                rows_deleted=0,
+                subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
+                last_modified=stat["last_modified"],
+                rows_count=stat["rows_count"],
+                rows_added=stat["rows_added"],
+                rows_updated=stat["rows_updated"],
+                rows_deleted=stat["rows_deleted"],
                 enabled=settings[f"{country_iso3}-{dataset}"],
             )
         )
