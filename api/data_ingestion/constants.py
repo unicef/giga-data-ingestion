@@ -38,6 +38,7 @@ class Constants(BaseSettings):
         "coverage_itu",
         "coverage_fb",
     ]
+    FILENAME_TIMESTAMP_FORMAT: str = "%Y%m%d-%H%M%S"
 
     @computed_field
     @property
@@ -56,10 +57,6 @@ def get_app_version() -> str:
         return (
             tomllib.load(f).get("tool", {}).get("poetry", {}).get("version", "unknown")
         )
-
-
-def get_dq_overall_path_prefix(dataset: str):
-    return f"data-quality-results/school-{dataset}/dq-overall"
 
 
 constants = get_constants()

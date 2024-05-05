@@ -211,6 +211,11 @@ tasks:
     cmds:
       - task exec -- api poetry run alembic revision --autogenerate -m "{{.CLI_ARGS}}"
 
+  generate-migration:
+    desc: Generate skeleton database migration file
+    cmds:
+      - task exec -- api poetry run alembic revision -m "{{.CLI_ARGS}}"
+
   migrate:
     desc: Run database migrations
     cmds:
@@ -278,3 +283,8 @@ tasks:
         -e 's|${DEPLOY_ENV}|stg|'
         template/TrustFrameworkExtensions_groups.xml > stg/TrustFrameworkExtensions_groups.xml
       - sed -e 's|${TENANT_NAME}|gigasyncteststg|g' template/TrustFrameworkLocalization.xml > stg/TrustFrameworkLocalization.xml
+
+  ipython:
+    desc: Open an IPython shell
+    cmds:
+      - task exec -- api poetry run ipython

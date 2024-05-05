@@ -5,7 +5,7 @@ import {
   Button,
   ButtonSet,
   DataTable,
-  DataTableSkeleton,
+  DataTableHeader,
   Loading,
   Section,
   Table,
@@ -15,20 +15,11 @@ import {
   TableHeader,
   TableRow,
 } from "@carbon/react";
-import {
-  queryOptions,
-  useMutation,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
-import { HEADERS } from "@/constants/ingest-api.ts";
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
 import { CarbonDataTableRow } from "@/types/datatable";
@@ -39,28 +30,6 @@ import { validateSearchParams } from "@/utils/pagination.ts";
 export const Route = createFileRoute("/approval-requests/$subpath/confirm")({
   component: Confirm,
   validateSearch: validateSearchParams,
-  loader: ({ params: { subpath }, context: { queryClient } }) => {
-    return queryClient.ensureQueryData(
-      queryOptions({
-        queryFn: () =>
-          api.approvalRequests.get(subpath, {
-            page: DEFAULT_PAGE_NUMBER,
-            page_size: DEFAULT_PAGE_SIZE,
-          }),
-        queryKey: [
-          "approval-requests",
-          subpath,
-          DEFAULT_PAGE_NUMBER,
-          DEFAULT_PAGE_SIZE,
-        ],
-      }),
-    );
-  },
-  pendingComponent: () => (
-    <Section className="container py-6">
-      <DataTableSkeleton headers={HEADERS} />
-    </Section>
-  ),
   errorComponent: ErrorComponent,
 });
 
@@ -68,44 +37,46 @@ interface ConfirmDataTablesProps {
   rows: KeyValueObject[];
 }
 
+const headers: DataTableHeader[] = [
+  {
+    key: "school_id_giga",
+    header: "school_id_giga",
+  },
+  {
+    key: "_commit_version",
+    header: "_commit_version",
+  },
+  {
+    key: "_change_type",
+    header: "_change_type",
+  },
+  {
+    key: "_commit_timestamp",
+    header: "_commit_timestamp",
+  },
+];
+
 function Confirm() {
   const {
-    approveRowState: { headers, rows, approvedRowsList, rejectedRowsList },
+    approveRowState: { rows, approvedRows, rejectedRows },
     approveRowActions: { resetApproveRowState },
   } = useStore();
   const { subpath } = Route.useParams();
 
-  const {
-    page = DEFAULT_PAGE_NUMBER,
-    page_size: pageSize = DEFAULT_PAGE_SIZE,
-  } = Route.useSearch();
-
   const navigate = useNavigate({ from: Route.fullPath });
-
-  const {
-    data: {
-      data: { total_count },
-    },
-  } = useSuspenseQuery(
-    queryOptions({
-      queryFn: () =>
-        api.approvalRequests.get(subpath, { page: page, page_size: pageSize }),
-      queryKey: ["approval-requests", subpath, page, pageSize],
-    }),
-  );
 
   const { mutateAsync: upload, isPending } = useMutation({
     mutationKey: ["approval-request-upload", subpath],
     mutationFn: api.approvalRequests.upload_approved_rows,
   });
 
-  const approvedRows = rows.filter(obj =>
-    approvedRowsList.includes(obj.id as string),
-  );
+  const approvedRowsList = rows
+    .filter(row => approvedRows.includes(row.change_id!))
+    .filter(Boolean);
 
-  const rejectedRows = rows.filter(obj =>
-    rejectedRowsList.includes(obj.id as string),
-  );
+  const rejectedRowsList = rows
+    .filter(row => rejectedRows.includes(row.change_id!))
+    .filter(Boolean);
 
   const ConfirmDatatables = ({ rows }: ConfirmDataTablesProps) => {
     return (
@@ -137,7 +108,10 @@ function Confirm() {
                     <TableRow
                       className={cn({
                         "bg-green-300": changeType === "insert",
-                        "bg-yellow-200": changeType === "update_preimage",
+                        "bg-yellow-200": (changeType as string).startsWith(
+                          "update_",
+                        ),
+                        "bg-red-300": changeType === "delete",
                       })}
                       {...getRowProps({
                         row,
@@ -170,7 +144,7 @@ function Confirm() {
 
   const handleSubmit = async () => {
     await upload({
-      approved_rows: approvedRowsList,
+      approved_rows: approvedRows,
       subpath: subpath,
     });
     await navigate({ to: "/approval-requests" });
@@ -179,17 +153,14 @@ function Confirm() {
   return (
     <Section className="container py-6">
       <Accordion>
-        <AccordionItem
-          disabled
-          title={`Approved Rows (${approvedRowsList.length})`}
-        >
-          <ConfirmDatatables rows={approvedRows} />
+        <AccordionItem title={`Approved Rows (${approvedRows.length})`}>
+          <ConfirmDatatables rows={approvedRowsList} />
         </AccordionItem>
         <AccordionItem
           disabled
-          title={`Rejected Rows (${total_count - approvedRowsList.length})`}
+          title={`Rejected Rows (${rejectedRows.length})`}
         >
-          <ConfirmDatatables rows={rejectedRows} />
+          <ConfirmDatatables rows={rejectedRowsList} />
         </AccordionItem>
       </Accordion>
       <Section level={8}>

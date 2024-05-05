@@ -5,8 +5,8 @@ import { KeyValueObject } from "@/types/datatable";
 
 interface ApproveRowSliceState {
   approveRowState: {
-    approvedRowsList: string[];
-    rejectedRowsList: string[];
+    approvedRows: string[];
+    rejectedRows: string[];
     headers: DataTableHeader[];
     rows: KeyValueObject[];
   };
@@ -19,10 +19,10 @@ interface ApproveRowSliceActions {
     ) => void;
     setRows: (row: ApproveRowSliceState["approveRowState"]["rows"]) => void;
     setApprovedRows: (
-      approvedRows: ApproveRowSliceState["approveRowState"]["approvedRowsList"],
+      approvedRows: ApproveRowSliceState["approveRowState"]["approvedRows"],
     ) => void;
     setRejectedRows: (
-      rejectedRows: ApproveRowSliceState["approveRowState"]["rejectedRowsList"],
+      rejectedRows: ApproveRowSliceState["approveRowState"]["rejectedRows"],
     ) => void;
     resetApproveRowState: () => void;
   };
@@ -34,8 +34,8 @@ export interface ApproveRowSlice
 
 const initialAppState: ApproveRowSliceState = {
   approveRowState: {
-    approvedRowsList: [],
-    rejectedRowsList: [],
+    approvedRows: [],
+    rejectedRows: [],
     headers: [],
     rows: [],
   },
@@ -54,8 +54,8 @@ export const createApproveRowSlice: StateCreator<
     resetApproveRowState: () =>
       set(
         state => {
-          state.approveRowState.approvedRowsList = [];
-          state.approveRowState.rejectedRowsList = [];
+          state.approveRowState.approvedRows = [];
+          state.approveRowState.rejectedRows = [];
 
           state.approveRowState.headers = [];
           state.approveRowState.rows = [];
@@ -66,7 +66,7 @@ export const createApproveRowSlice: StateCreator<
     setApprovedRows: approvedRows =>
       set(
         state => {
-          state.approveRowState.approvedRowsList = approvedRows;
+          state.approveRowState.approvedRows = approvedRows;
         },
         REPLACE_FLAG_DEFAULT,
         "approveRowSlice/setApprovedRows",
@@ -74,7 +74,7 @@ export const createApproveRowSlice: StateCreator<
     setRejectedRows: rejectedRows =>
       set(
         state => {
-          state.approveRowState.rejectedRowsList = rejectedRows;
+          state.approveRowState.rejectedRows = rejectedRows;
         },
         REPLACE_FLAG_DEFAULT,
         "approveRowSlice/setRejectedRows",

@@ -5,6 +5,8 @@ import orjson
 from fastapi import Form, UploadFile
 from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr, field_validator
 
+from data_ingestion.models.file_upload import DQStatusEnum
+
 
 class FileUpload(BaseModel):
     id: str
@@ -12,6 +14,10 @@ class FileUpload(BaseModel):
     uploader_id: UUID4
     uploader_email: EmailStr
     dq_report_path: str | None
+    dq_full_path: str | None
+    dq_status: DQStatusEnum
+    bronze_path: str | None
+    is_processed_in_staging: bool
     country: constr(min_length=3, max_length=3)
     dataset: str
     source: str | None

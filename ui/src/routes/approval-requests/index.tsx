@@ -6,7 +6,6 @@ import {
   DataTableHeader,
   DataTableSkeleton,
   Loading,
-  Section,
 } from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
@@ -15,20 +14,11 @@ import { format } from "date-fns";
 import { api } from "@/api";
 import { listApprovalRequestQueryOptions } from "@/api/queryOptions";
 import DataTable from "@/components/common/DataTable.tsx";
-import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { useStore } from "@/context/store";
 import { SENTINEL_PAGED_RESPONSE } from "@/types/api.ts";
 import { ApprovalRequestListing } from "@/types/approvalRequests";
 import { validateSearchParams } from "@/utils/pagination.ts";
-
-export const Route = createFileRoute("/approval-requests/")({
-  component: ApprovalRequests,
-  validateSearch: validateSearchParams,
-  loader: ({ context: { queryClient } }) =>
-    queryClient.ensureQueryData(listApprovalRequestQueryOptions),
-  pendingComponent: PendingComponent,
-});
 
 const columns: DataTableHeader[] = [
   {
@@ -56,10 +46,25 @@ const columns: DataTableHeader[] = [
     header: "Rows Updated",
   },
   {
+    key: "rows_deleted",
+    header: "Rows Deleted",
+  },
+  {
     key: "actions",
     header: "",
   },
 ];
+
+export const Route = createFileRoute("/approval-requests/")({
+  component: ApprovalRequests,
+  validateSearch: validateSearchParams,
+  loader: ({ context: { queryClient } }) =>
+    queryClient.ensureQueryData(listApprovalRequestQueryOptions),
+  pendingComponent: () => <DataTableSkeleton headers={columns} />,
+  errorComponent: () => (
+    <DataTable title="Approval Requests" columns={columns} rows={[]} />
+  ),
+});
 
 type ApprovalRequestTableRow = Record<
   keyof ApprovalRequestListing,
@@ -136,21 +141,15 @@ function ApprovalRequests() {
   );
 
   return (
-    <Section className="container flex flex-col gap-4 py-6">
-      {isLoading ? (
-        <DataTableSkeleton headers={columns} />
-      ) : (
-        <DataTable
-          title="Approval Requests"
-          columns={columns}
-          rows={formattedApprovalRequests}
-          isPaginated
-          count={approvalRequests.total_count}
-          handlePaginationChange={handlePaginationChange}
-          page={approvalRequests.page}
-          pageSize={approvalRequests.page_size}
-        />
-      )}
-    </Section>
+    <DataTable
+      title="Approval Requests"
+      columns={columns}
+      rows={formattedApprovalRequests}
+      isPaginated
+      count={approvalRequests.total_count}
+      handlePaginationChange={handlePaginationChange}
+      page={approvalRequests.page}
+      pageSize={approvalRequests.page_size}
+    />
   );
 }
