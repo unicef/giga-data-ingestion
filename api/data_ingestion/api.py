@@ -20,7 +20,7 @@ from data_ingestion.routers import (
     users,
     utils,
 )
-from data_ingestion.settings import initialize_sentry, settings
+from data_ingestion.settings import DeploymentEnvironment, initialize_sentry, settings
 
 initialize_sentry()
 
@@ -74,7 +74,14 @@ if settings.IN_PRODUCTION:
 
     @app.exception_handler(404)
     async def send_to_frontend(*_, **__):
-        return FileResponse(settings.STATICFILES_DIR / "index.html")
+        headers = {}
+        if settings.DEPLOY_ENV != DeploymentEnvironment.PRD:
+            headers = {
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache",
+            }
+
+        return FileResponse(settings.STATICFILES_DIR / "index.html", headers=headers)
 
     app.mount(
         "/{catch_all}",
