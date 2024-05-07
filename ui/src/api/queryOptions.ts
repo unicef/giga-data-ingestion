@@ -42,3 +42,8 @@ export const geolocationSchemaQueryOptions = queryOptions({
   queryFn: () => api.schema.get("school_geolocation"),
   queryKey: ["schema", "school_geolocation"],
 });
+
+export const listCountriesQueryOptions = queryOptions({
+  queryKey: ["countries"],
+  queryFn: api.utils.listCountries,
+});

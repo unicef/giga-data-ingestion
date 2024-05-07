@@ -3,6 +3,7 @@ import { useFormContext } from "react-hook-form";
 
 import IngestApiFormInputs from "@/components/ingest-api/IngestApiFormInputs.tsx";
 import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
+import { Country } from "@/types/country.ts";
 import { IngestApiFormMapping } from "@/types/ingestApi.ts";
 import {
   AuthorizationTypeEnum,
@@ -14,9 +15,13 @@ import { GraphUser } from "@/types/user";
 
 interface SchoolListFormInputsProps {
   users: GraphUser[];
+  countries: Country[];
 }
 
-export function SchoolListFormInputs({ users }: SchoolListFormInputsProps) {
+export function SchoolListFormInputs({
+  users,
+  countries,
+}: SchoolListFormInputsProps) {
   const { resetField } = useFormContext<SchoolListFormSchema>();
 
   const schoolListFormMapping = useMemo<
@@ -36,6 +41,17 @@ export function SchoolListFormInputs({ users }: SchoolListFormInputsProps) {
           label: "Owner",
           type: "select-user",
           options: users,
+          required: true,
+          helperText:
+            "Who will be the designated point person responsible for this ingestion?",
+        },
+        {
+          name: "country",
+          label: "Country",
+          type: "select-object",
+          options: countries,
+          labelAccessor: "name_short",
+          valueAccessor: "ISO3",
           required: true,
           helperText:
             "Who will be the designated point person responsible for this ingestion?",
@@ -243,7 +259,7 @@ export function SchoolListFormInputs({ users }: SchoolListFormInputsProps) {
         },
       ],
     }),
-    [resetField, users],
+    [countries, resetField, users],
   );
 
   return <IngestApiFormInputs formMappings={schoolListFormMapping} />;

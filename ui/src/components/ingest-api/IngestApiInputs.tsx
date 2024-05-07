@@ -201,6 +201,56 @@ export function SelectFromArray<MappingType>({
   );
 }
 
+export function SelectFromObjectArray<MappingType>({
+  mapping,
+  hookForm,
+}: BaseInputProps<MappingType>) {
+  const {
+    register,
+    formState: { errors },
+  } = hookForm;
+  const name = mapping.name as keyof (
+    | SchoolListFormSchema
+    | SchoolConnectivityFormSchema
+  );
+
+  return (
+    <Select
+      id={name}
+      labelText={
+        <>
+          {mapping.label}
+          {mapping.required && <sup className="text-giga-red">*</sup>}
+        </>
+      }
+      helperText={mapping.helperText}
+      invalid={name in errors}
+      invalidText={
+        <span className="whitespace-pre-line">
+          {errors[name]?.message as string}
+          <br />
+          {mapping.helperText}
+        </span>
+      }
+      {...register(name, {
+        required: mapping.required,
+        onChange: mapping.onChange,
+      })}
+    >
+      <SelectItem text="" value="" />
+      {mapping.type === "select-object" &&
+        mapping.options.map(option => (
+          <SelectItem
+            id={option[mapping.valueAccessor]}
+            key={option[mapping.valueAccessor]}
+            text={option[mapping.labelAccessor]}
+            value={option[mapping.valueAccessor]}
+          />
+        ))}
+    </Select>
+  );
+}
+
 interface SelectFromEnumProps<MappingType> extends BaseInputProps<MappingType> {
   mapping: Extract<IngestApiFormMapping<MappingType>, { type: "enum" }>;
 }

@@ -23,6 +23,12 @@ export type IngestApiFormMapping<T> = {
       options: string[];
     }
   | {
+      type: "select-object";
+      options: Record<string, string>[];
+      valueAccessor: string;
+      labelAccessor: string;
+    }
+  | {
       type: "select-user";
       options: GraphUser[];
     }

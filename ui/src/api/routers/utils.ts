@@ -1,5 +1,7 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
+import { Country } from "@/types/country.ts";
+
 export default function routers(axi: AxiosInstance) {
   return {
     isValidDateTimeFormatCodeRequest: ({
@@ -13,6 +15,9 @@ export default function routers(axi: AxiosInstance) {
         datetime_str: datetime_str,
         format_code: format_code,
       });
+    },
+    listCountries: (): Promise<AxiosResponse<Country[]>> => {
+      return axi.get("/utils/countries");
     },
   };
 }

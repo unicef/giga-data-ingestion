@@ -3,6 +3,7 @@ from datetime import datetime
 from json import JSONDecodeError
 
 import httpx
+from country_converter import CountryConverter
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -16,6 +17,7 @@ from starlette.background import BackgroundTask
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.schemas.core import B2CPolicyGroupRequest, B2CPolicyGroupResponse
 from data_ingestion.schemas.util import (
+    Country,
     ForwardRequestBody,
     ResponseWithDateKeyBody,
     ValidDateTimeFormat,
@@ -46,6 +48,13 @@ def parse_group_display_names(body: B2CPolicyGroupRequest):
     out = B2CPolicyGroupResponse(value=ret)
     logger.info(f"{out.model_dump()=}")
     return out
+
+
+@router.get("/countries", response_model=list[Country])
+def list_countries():
+    coco = CountryConverter()
+    data = coco.data
+    return data[["ISO3", "name_short"]].to_dict(orient="records")
 
 
 @router.post("/is_valid_datetime_format_code", dependencies=[Security(azure_scheme)])

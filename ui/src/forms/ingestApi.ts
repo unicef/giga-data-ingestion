@@ -77,6 +77,7 @@ export type CommonApiIngestionFormSchema = z.infer<
 export const SchoolListFormSchema = CommonApiIngestionFormSchema.extend({
   name: z.string().min(1, requiredFieldErrorMessage),
   user_id: z.string().min(1, requiredFieldErrorMessage),
+  country: z.string().length(3),
 }).superRefine(commonSuperRefine);
 
 export type SchoolListFormSchema = z.infer<typeof SchoolListFormSchema>;
@@ -84,6 +85,7 @@ export type SchoolListFormSchema = z.infer<typeof SchoolListFormSchema>;
 export const schoolListFormInitialValues: SchoolListFormSchema = {
   name: "",
   user_id: "",
+  country: "",
 
   request_method: RequestMethodEnum.GET,
   api_endpoint: "",
