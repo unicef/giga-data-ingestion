@@ -2,14 +2,29 @@ import json
 from datetime import datetime
 from json import JSONDecodeError
 
-from fastapi import APIRouter, HTTPException, Security, status
+import httpx
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Security,
+    status,
+)
+from fastapi.responses import StreamingResponse
 from loguru import logger
+from starlette.background import BackgroundTask
 
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.schemas.core import B2CPolicyGroupRequest, B2CPolicyGroupResponse
-from data_ingestion.schemas.util import ResponseWithDateKeyBody, ValidDateTimeFormat
+from data_ingestion.schemas.util import (
+    ForwardRequestBody,
+    ResponseWithDateKeyBody,
+    ValidDateTimeFormat,
+)
 
-router = APIRouter(prefix="/api/utils", tags=["utils"])
+router = APIRouter(
+    prefix="/api/utils",
+    tags=["utils"],
+)
 
 
 @router.post(
@@ -60,3 +75,29 @@ async def response_with_date_key(body: ResponseWithDateKeyBody):
     times = ["2023-12-04 15:50:24", "2023-12-04 16:17:36", "2023-12-04 20:04:57"]
 
     return [{"time": item, "sample_data": "sample_data"} for item in times]
+
+
+@router.post("/forward_request")
+async def forward_get_request(
+    body: ForwardRequestBody,
+):
+    auth_tuple = (body.auth["username"], body.auth["password"]) if body.auth else None
+
+    sharing_client = httpx.AsyncClient(
+        timeout=300, auth=auth_tuple if auth_tuple else None
+    )
+
+    request_params = {
+        k: v for k, v in body.model_dump().items() if v is not None and k != "auth"
+    }
+
+    sharing_req = sharing_client.build_request(**request_params)
+    sharing_res = await sharing_client.send(sharing_req, stream=True)
+
+    return StreamingResponse(
+        sharing_res.aiter_raw(),
+        headers=sharing_res.headers,
+        status_code=sharing_res.status_code,
+        media_type="application/json",
+        background=BackgroundTask(sharing_res.aclose),
+    )

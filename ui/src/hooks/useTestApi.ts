@@ -1,11 +1,11 @@
 import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import { UseFormGetValues } from "react-hook-form";
 
-import axios, { AxiosError, AxiosRequestConfig } from "axios";
+import { AxiosError, AxiosRequestConfig } from "axios";
 import { isMatch, parseISO } from "date-fns";
 import { isPlainObject } from "lodash-es";
 
-import { api } from "@/api";
+import { api, axi } from "@/api";
 import { useStore } from "@/context/store";
 import {
   SchoolConnectivityFormSchema,
@@ -259,7 +259,16 @@ export function useTestApi() {
 
     try {
       setIsLoading(true);
-      const res = await axios(requestConfig);
+
+      const res = await axi.post("/utils/forward_request", {
+        auth: requestConfig.auth || null,
+        method: requestConfig.method,
+        url: requestConfig.url,
+        params: requestConfig.params || null,
+        data: requestConfig.data || null,
+        headers: requestConfig.headers || null,
+      });
+
       await handleValidationTry(res.data);
     } catch (e) {
       console.error(e);
