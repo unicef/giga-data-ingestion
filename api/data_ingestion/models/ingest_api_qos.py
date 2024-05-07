@@ -36,6 +36,7 @@ class SendQueryInEnum(enum.Enum):
 class SendDateInEnum(enum.Enum):
     BODY = "BODY"
     QUERY_PARAMETERS = "QUERY_PARAMETERS"
+    NONE = "NONE"
 
 
 class ApiConfiguration(BaseModel):
@@ -83,7 +84,7 @@ class ApiConfiguration(BaseModel):
     request_method: Mapped[RequestMethodEnum] = mapped_column(
         Enum(RequestMethodEnum), default=RequestMethodEnum.GET, nullable=False
     )
-    school_id_key: Mapped[str] = mapped_column(nullable=False)
+    school_id_key: Mapped[str] = mapped_column(nullable=True)
 
     size: Mapped[int] = mapped_column(nullable=True)
 
@@ -94,7 +95,7 @@ class SchoolList(ApiConfiguration):
     column_to_schema_mapping: Mapped[dict] = mapped_column(
         JSON, nullable=False, server_default="{}"
     )
-    name: Mapped[str] = mapped_column(nullable=False, server_default="")
+    name: Mapped[str] = mapped_column(nullable=False)
     user_email: Mapped[EmailStr] = mapped_column(String(), nullable=False)
     user_id: Mapped[str] = mapped_column(nullable=False)
     country: Mapped[str] = mapped_column(VARCHAR(3), nullable=False)
@@ -107,7 +108,7 @@ class SchoolList(ApiConfiguration):
 class SchoolConnectivity(ApiConfiguration):
     __tablename__ = "qos_school_connectivity"
 
-    ingestion_frequency: Mapped[str] = mapped_column()
+    ingestion_frequency: Mapped[str] = mapped_column(nullable=False)
     schema_url: Mapped[str] = mapped_column(nullable=True)
 
     school_list_id: Mapped[str] = mapped_column(ForeignKey("qos_school_list.id"))
@@ -115,12 +116,14 @@ class SchoolConnectivity(ApiConfiguration):
         "SchoolList", back_populates="school_connectivity"
     )
 
-    date_key: Mapped[str] = mapped_column(nullable=True, default=None)
-    date_format: Mapped[str] = mapped_column(nullable=True, default=None)
+    date_key: Mapped[str] = mapped_column(nullable=True)
+    date_format: Mapped[str] = mapped_column(nullable=True)
     school_id_send_query_in: Mapped[SendQueryInEnum] = mapped_column(
         Enum(SendQueryInEnum), default=SendQueryInEnum.NONE, nullable=False
     )
-    send_date_in: Mapped[SendDateInEnum] = mapped_column(nullable=True, default=None)
+    send_date_in: Mapped[SendDateInEnum] = mapped_column(
+        Enum(SendDateInEnum), nullable=False, default=SendDateInEnum.NONE
+    )
     response_date_key: Mapped[str] = mapped_column(nullable=False, default="")
     response_date_format: Mapped[str] = mapped_column(
         nullable=False, default="%Y-%m-%d"
