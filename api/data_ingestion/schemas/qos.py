@@ -80,6 +80,7 @@ class SchoolListSchema(ApiConfiguration):
     name: str
     user_email: EmailStr
     user_id: str
+    country: str
     school_connectivity: SchoolConnectivitySchema
 
 
