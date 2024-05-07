@@ -9,6 +9,13 @@ jobs:
             - checkout: self
 
             - task: Kubernetes@1
+              displayName: Verify namespace secrets
+              inputs:
+                namespace: $(kubernetesNamespace)
+                command: get
+                arguments: secret oi-ingestionportal-secrets-$(deployEnv) -o yaml --ignore-not-found
+
+            - task: Kubernetes@1
               displayName: Create configmap
               condition: eq(variables.environment, 'dev')
               inputs:
