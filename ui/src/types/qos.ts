@@ -133,6 +133,7 @@ export interface SchoolConnectivityFormValues extends ApiIngestionFormValues {
 }
 
 export interface CreateSchoolListRequest extends SchoolListFormSchema {
+  country: string;
   column_to_schema_mapping: string;
   enabled: boolean;
   error_message: string | null;
