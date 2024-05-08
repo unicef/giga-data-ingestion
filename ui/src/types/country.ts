@@ -1,5 +1,5 @@
 export interface Country {
   [key: string]: string;
-  ISO2: string;
+  ISO3: string;
   name_short: string;
 }
