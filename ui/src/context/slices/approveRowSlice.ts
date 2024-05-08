@@ -9,6 +9,7 @@ interface ApproveRowSliceState {
     rejectedRows: string[];
     headers: DataTableHeader[];
     rows: KeyValueObject[];
+    totalCount: number;
   };
 }
 
@@ -25,6 +26,7 @@ interface ApproveRowSliceActions {
       rejectedRows: ApproveRowSliceState["approveRowState"]["rejectedRows"],
     ) => void;
     resetApproveRowState: () => void;
+    setTotalCount: (count: number) => void;
   };
 }
 
@@ -38,6 +40,7 @@ const initialAppState: ApproveRowSliceState = {
     rejectedRows: [],
     headers: [],
     rows: [],
+    totalCount: 0,
   },
 };
 
@@ -59,6 +62,8 @@ export const createApproveRowSlice: StateCreator<
 
           state.approveRowState.headers = [];
           state.approveRowState.rows = [];
+
+          state.approveRowState.totalCount = 0;
         },
         REPLACE_FLAG_DEFAULT,
         "approveRowSlice/resetApproveRowState",
@@ -94,6 +99,14 @@ export const createApproveRowSlice: StateCreator<
         },
         REPLACE_FLAG_DEFAULT,
         "approveRowSlice/setRows",
+      ),
+    setTotalCount: count =>
+      set(
+        state => {
+          state.approveRowState.totalCount = count;
+        },
+        REPLACE_FLAG_DEFAULT,
+        "approveRowSlice/setTotalCount",
       ),
   },
 });

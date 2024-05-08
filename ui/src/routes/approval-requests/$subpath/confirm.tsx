@@ -58,7 +58,7 @@ const headers: DataTableHeader[] = [
 
 function Confirm() {
   const {
-    approveRowState: { rows, approvedRows, rejectedRows },
+    approveRowState: { rows, approvedRows, rejectedRows, totalCount },
     approveRowActions: { resetApproveRowState },
   } = useStore();
   const { subpath } = Route.useParams();
@@ -158,7 +158,7 @@ function Confirm() {
         </AccordionItem>
         <AccordionItem
           disabled
-          title={`Rejected Rows (${rejectedRows.length})`}
+          title={`Rejected Rows (${totalCount - approvedRows.length})`}
         >
           <ConfirmDatatables rows={rejectedRowsList} />
         </AccordionItem>

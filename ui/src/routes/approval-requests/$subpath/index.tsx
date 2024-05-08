@@ -100,6 +100,7 @@ function ApproveRejectTable() {
       setRejectedRows,
       setRows,
       resetApproveRowState,
+      setTotalCount,
     },
     approveRowState: { approvedRows, rejectedRows },
   } = useStore();
@@ -249,6 +250,7 @@ function ApproveRejectTable() {
 
   const handleProceed = async () => {
     setRows(formattedRows);
+    setTotalCount(total_count);
 
     await navigate({
       to: "/approval-requests/$subpath/confirm",
