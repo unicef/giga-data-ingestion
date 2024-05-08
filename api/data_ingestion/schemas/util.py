@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
 
 
 class ResponseWithDateKeyBody(BaseModel):
@@ -17,3 +17,8 @@ class ForwardRequestBody(BaseModel):
     method: str
     params: dict[str, str | int] | None
     url: str
+
+
+class Country(BaseModel):
+    ISO3: constr(min_length=3, max_length=3)
+    name_short: str

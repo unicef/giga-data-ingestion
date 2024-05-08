@@ -11,6 +11,7 @@ import { ZodError } from "zod";
 
 import {
   geolocationSchemaQueryOptions,
+  listCountriesQueryOptions,
   listUsersQueryOptions,
 } from "@/api/queryOptions.ts";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton.tsx";
@@ -60,6 +61,10 @@ function SchoolListing({ isEditing = false, defaultData }: SchoolListingProps) {
   const {
     data: { data: schema },
   } = useSuspenseQuery(geolocationSchemaQueryOptions);
+
+  const {
+    data: { data: countries },
+  } = useSuspenseQuery(listCountriesQueryOptions);
 
   const hookForm = useForm<SchoolListFormSchema>({
     mode: "onSubmit",
@@ -162,7 +167,7 @@ function SchoolListing({ isEditing = false, defaultData }: SchoolListingProps) {
           <FormProvider {...hookForm}>
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="flex w-full flex-col gap-4">
-                <SchoolListFormInputs users={users} />
+                <SchoolListFormInputs users={users} countries={countries} />
 
                 <ButtonSet className="w-full">
                   <Button

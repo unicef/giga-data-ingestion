@@ -2,6 +2,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { api } from "@/api";
+import { listCountriesQueryOptions } from "@/api/queryOptions.ts";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
 import SchoolListing from "@/components/ingest-api/SchoolListing.tsx";
 
@@ -13,7 +14,10 @@ export const Route = createFileRoute("/ingest-api/edit/$ingestionId/")({
       queryFn: () => api.qos.get_school_list(ingestionId),
     });
 
-    return queryClient.ensureQueryData(options);
+    return Promise.all([
+      queryClient.ensureQueryData(options),
+      queryClient.ensureQueryData(listCountriesQueryOptions),
+    ]);
   },
   pendingComponent: IngestFormSkeleton,
 });

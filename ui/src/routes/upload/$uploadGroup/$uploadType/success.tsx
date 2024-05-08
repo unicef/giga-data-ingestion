@@ -45,7 +45,7 @@ function Success() {
       Data quality checks will now be performed on your upload; you may check
       the progress and output of the checks on the File Uploads page. To check
       this upload in the future, it has Upload ID <b>{uploadId}</b> and
-      completed at
+      completed at{" "}
       <b>{format(uploadDate ?? new Date(), DEFAULT_DATETIME_FORMAT)}</b>
     </>
   );

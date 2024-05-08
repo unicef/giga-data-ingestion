@@ -40,7 +40,7 @@ class ApiConfiguration(BaseModel):
     query_parameters: str | None
     request_body: str | None
     request_method: RequestMethodEnum
-    school_id_key: str
+    school_id_key: str | None
     size: int | None
 
     model_config = ConfigDict(from_attributes=True)
@@ -80,6 +80,7 @@ class SchoolListSchema(ApiConfiguration):
     name: str
     user_email: EmailStr
     user_id: str
+    country: str
     school_connectivity: SchoolConnectivitySchema
 
 
@@ -109,6 +110,7 @@ class ApiConfigurationRequest(BaseModel):
 
 @dataclass
 class CreateSchoolListRequest(ApiConfigurationRequest):
+    country: str
     column_to_schema_mapping: dict[str, str]
     name: str
     user_email: EmailStr

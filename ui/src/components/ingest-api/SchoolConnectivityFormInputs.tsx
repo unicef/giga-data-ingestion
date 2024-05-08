@@ -133,7 +133,7 @@ export function SchoolConnectivityFormInputs() {
           name: "school_id_key",
           label: "School ID key",
           type: "text",
-          required: true,
+          required: false,
           helperText:
             "If the API requires a school ID parameter, specify the name of the record where this ID should be sent.",
         },

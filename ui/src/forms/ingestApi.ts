@@ -67,7 +67,7 @@ export const TestApiSchema = TestApiRawSchema.superRefine((val, ctx) => {
 export type TestApiSchema = z.infer<typeof TestApiSchema>;
 
 export const CommonApiIngestionFormSchema = TestApiRawSchema.extend({
-  school_id_key: z.string().min(1),
+  school_id_key: z.string().optional(),
 });
 
 export type CommonApiIngestionFormSchema = z.infer<
@@ -77,6 +77,7 @@ export type CommonApiIngestionFormSchema = z.infer<
 export const SchoolListFormSchema = CommonApiIngestionFormSchema.extend({
   name: z.string().min(1, requiredFieldErrorMessage),
   user_id: z.string().min(1, requiredFieldErrorMessage),
+  country: z.string().length(3),
 }).superRefine(commonSuperRefine);
 
 export type SchoolListFormSchema = z.infer<typeof SchoolListFormSchema>;
@@ -84,6 +85,7 @@ export type SchoolListFormSchema = z.infer<typeof SchoolListFormSchema>;
 export const schoolListFormInitialValues: SchoolListFormSchema = {
   name: "",
   user_id: "",
+  country: "",
 
   request_method: RequestMethodEnum.GET,
   api_endpoint: "",

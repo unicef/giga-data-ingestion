@@ -7,6 +7,7 @@ import {
   PasswordInput,
   SelectFromArray,
   SelectFromEnum,
+  SelectFromObjectArray,
   Switch,
   TextInputWithAction,
 } from "@/components/ingest-api/IngestApiInputs.tsx";
@@ -45,6 +46,9 @@ function FormItem({ mapping }: FormItemProps) {
     case "select":
     case "select-user": {
       return <SelectFromArray mapping={mapping} hookForm={hookForm} />;
+    }
+    case "select-object": {
+      return <SelectFromObjectArray mapping={mapping} hookForm={hookForm} />;
     }
     case "enum": {
       return <SelectFromEnum mapping={mapping} hookForm={hookForm} />;
