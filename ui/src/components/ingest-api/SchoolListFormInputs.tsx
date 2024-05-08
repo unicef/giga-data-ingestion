@@ -172,7 +172,7 @@ export function SchoolListFormInputs({
           name: "school_id_key",
           label: "School ID key",
           type: "text",
-          required: true,
+          required: false,
           helperText:
             "Specify the name of the key in the API response that contains the school ID.",
         },

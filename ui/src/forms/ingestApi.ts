@@ -67,7 +67,7 @@ export const TestApiSchema = TestApiRawSchema.superRefine((val, ctx) => {
 export type TestApiSchema = z.infer<typeof TestApiSchema>;
 
 export const CommonApiIngestionFormSchema = TestApiRawSchema.extend({
-  school_id_key: z.string().min(1),
+  school_id_key: z.string().optional(),
 });
 
 export type CommonApiIngestionFormSchema = z.infer<
