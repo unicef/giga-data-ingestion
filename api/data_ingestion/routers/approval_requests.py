@@ -197,7 +197,11 @@ async def get_approval_request(
         db.execute(
             select("*", select(count()).select_from(data_cte).label("row_count"))
             .select_from(data_cte)
-            .order_by(column("school_id_giga"), column("_change_type").desc())
+            .order_by(
+                column("school_id_giga"),
+                column("_commit_version").desc(),
+                column("_change_type").desc(),
+            )
             .offset((page - 1) * page_size)
             .limit(page_size)
         )
