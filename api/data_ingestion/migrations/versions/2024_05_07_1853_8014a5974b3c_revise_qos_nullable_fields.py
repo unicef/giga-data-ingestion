@@ -21,7 +21,8 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     conn = op.get_bind()
     conn.execute(
-        sa.text("""
+        sa.text(
+            """
         ALTER TYPE senddateinenum ADD VALUE 'NONE';
         COMMIT;
 
@@ -36,15 +37,30 @@ def upgrade() -> None:
         ALTER COLUMN send_date_in SET DEFAULT 'NONE'::senddateinenum,
         ALTER COLUMN school_id_key DROP NOT NULL;
 
-        COMMIT; 
-        """)
+        ALTER TABLE qos_school_connectivity
+        DROP CONSTRAINT IF EXISTS date_key_conditional_not_null;
+
+        ALTER TABLE qos_school_connectivity
+        ADD CONSTRAINT date_key_conditional_not_null
+        CHECK (
+            (date_key IS NULL AND date_format IS NULL AND
+             send_date_in = 'NONE'::senddateinenum)
+            OR
+            (date_key IS NOT NULL AND date_format IS NOT NULL AND
+             send_date_in != 'NONE'::senddateinenum)
+        );
+
+
+        """
+        )
     )
 
 
 def downgrade() -> None:
     conn = op.get_bind()
     conn.execute(
-        sa.text("""
+        sa.text(
+            """
         BEGIN;
 
         ALTER TABLE qos_school_connectivity
@@ -59,6 +75,20 @@ def downgrade() -> None:
         COMMIT;
 
         DROP TYPE senddateinenum;
-        CREATE TYPE senddateinenum AS ENUM ('BODY', 'QUERY_PARAMETERS'); 
-        """)
+        CREATE TYPE senddateinenum AS ENUM ('BODY', 'QUERY_PARAMETERS');
+
+        ALTER TABLE qos_school_connectivity
+        DROP CONSTRAINT IF EXISTS date_key_conditional_not_null;
+
+        ALTER TABLE qos_school_connectivity
+        ADD CONSTRAINT date_key_conditional_not_null
+        CHECK (
+            (date_key IS NULL AND date_format IS NULL AND
+             send_date_in IS NULL)
+            OR
+            (date_key IS NOT NULL AND date_format IS NOT NULL AND
+             send_date_in IS NOT NULL)
+        );
+        """
+        )
     )
