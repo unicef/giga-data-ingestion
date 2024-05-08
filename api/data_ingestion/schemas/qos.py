@@ -110,6 +110,7 @@ class ApiConfigurationRequest(BaseModel):
 
 @dataclass
 class CreateSchoolListRequest(ApiConfigurationRequest):
+    country: str
     column_to_schema_mapping: dict[str, str]
     name: str
     user_email: EmailStr
