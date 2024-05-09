@@ -40,6 +40,8 @@ function SchoolConnectivity({
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
   const [isValidResponseDateFormat, setIsValidResponseDateFormat] =
     useState<boolean>(false);
+  const [isValidSchoolIdGigaGovtKey, setIsValidSchoolIdGigaGovtKey] =
+    useState(false);
   const [open, setOpen] = useState<boolean>(false);
   const [responsePreview, setResponsePreview] = useState<
     Record<string, unknown> | Record<string, unknown>[] | string
@@ -122,6 +124,7 @@ function SchoolConnectivity({
       setResponsePreview,
       setIsValidDataKey,
       setIsValidResponseDateFormat,
+      setIsValidSchoolIdGigaGovtKey,
     });
   }, [clearErrors, getValues, testApi, setError]);
 
@@ -135,6 +138,7 @@ function SchoolConnectivity({
     !isValidDataKey ||
     !isValidResponse ||
     !isValidResponseDateFormat ||
+    !isValidSchoolIdGigaGovtKey ||
     isResponseError;
 
   return (
@@ -206,6 +210,9 @@ function SchoolConnectivity({
           )}
           {!isValidResponseDateFormat && (
             <Tag type="red">Response date format mismatch</Tag>
+          )}
+          {!isValidSchoolIdGigaGovtKey && (
+            <Tag type="red">Invalid Giga/govt school ID</Tag>
           )}
           <Editor
             height="100%"

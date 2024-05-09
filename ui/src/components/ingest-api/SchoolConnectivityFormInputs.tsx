@@ -146,6 +146,23 @@ export function SchoolConnectivityFormInputs() {
           helperText: "Specify where to add the school ID record.",
         },
         {
+          name: "has_school_id_giga",
+          label: "Do the entries in the API response have a Giga school ID?",
+          type: "toggle",
+          required: true,
+          helperText: "",
+          onLabel: "Yes",
+          offLabel: "No",
+        },
+        {
+          name: "school_id_giga_govt_key",
+          label: "Giga/Government school ID key",
+          type: "text",
+          required: true,
+          helperText:
+            "If your answer to the previous item is Yes, specify the key containing the Giga school ID. Otherwise, specify the key containing the government school ID.",
+        },
+        {
           name: "pagination_type",
           label: "Pagination Method",
           type: "enum",
@@ -235,6 +252,7 @@ export function SchoolConnectivityFormInputs() {
             // @ts-expect-error text field has e.target.value, TODO: figure out what the correct type is
             if (e?.target.value === "") {
               resetField("date_format");
+              resetField("send_date_in");
             }
           },
         },
@@ -244,10 +262,20 @@ export function SchoolConnectivityFormInputs() {
           type: "text",
           required: false,
           helperText: `If the API requires a date parameter, specify the date format using one of the following:
-          - A valid Python datetime format string, e.g. %Y-%m-%d %H:%M:%S
-          - "timestamp" for Unix epoch timestamps (in milliseconds)
-          - "ISO8601" for ISO timestamps, e.g. 2024-01-01T03:14:00Z
+          • A valid Python datetime format string, e.g. %Y-%m-%d %H:%M:%S
+          • "timestamp" for Unix epoch timestamps (in milliseconds)
+          • "ISO8601" for ISO timestamps, e.g. 2024-01-01T03:14:00Z
           `,
+          dependsOnName: "date_key",
+          dependsOnValue: true,
+        },
+        {
+          name: "send_date_in",
+          label: "Send date in",
+          type: "enum",
+          enum: Object.values(SendQueryInEnum),
+          required: false,
+          helperText: "Specify where to add the date in the request.",
           dependsOnName: "date_key",
           dependsOnValue: true,
         },
@@ -265,9 +293,9 @@ export function SchoolConnectivityFormInputs() {
           type: "text",
           required: true,
           helperText: `Specify the date format of the response timestamp using one of the following:
-          - A valid Python datetime format string, e.g. %Y-%m-%d %H:%M:%S
-          - "timestamp" for Unix epoch timestamps (in milliseconds)
-          - "ISO8601" for ISO timestamps, e.g. 2024-01-01T03:14:00Z
+          • A valid Python datetime format string, e.g. %Y-%m-%d %H:%M:%S
+          • "timestamp" for Unix epoch timestamps (in milliseconds)
+          • "ISO8601" for ISO timestamps, e.g. 2024-01-01T03:14:00Z
           `,
         },
         {

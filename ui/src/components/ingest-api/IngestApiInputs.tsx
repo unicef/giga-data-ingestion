@@ -201,10 +201,18 @@ export function SelectFromArray<MappingType>({
   );
 }
 
+interface SelectFromObjectArrayProps<MappingType>
+  extends BaseInputProps<MappingType> {
+  mapping: Extract<
+    IngestApiFormMapping<MappingType>,
+    { type: "select-object" }
+  >;
+}
+
 export function SelectFromObjectArray<MappingType>({
   mapping,
   hookForm,
-}: BaseInputProps<MappingType>) {
+}: SelectFromObjectArrayProps<MappingType>) {
   const {
     register,
     formState: { errors },
@@ -238,15 +246,14 @@ export function SelectFromObjectArray<MappingType>({
       })}
     >
       <SelectItem text="" value="" />
-      {mapping.type === "select-object" &&
-        mapping.options.map(option => (
-          <SelectItem
-            id={option[mapping.valueAccessor]}
-            key={option[mapping.valueAccessor]}
-            text={option[mapping.labelAccessor]}
-            value={option[mapping.valueAccessor]}
-          />
-        ))}
+      {mapping.options.map(option => (
+        <SelectItem
+          id={option[mapping.valueAccessor]}
+          key={option[mapping.valueAccessor]}
+          text={option[mapping.labelAccessor]}
+          value={option[mapping.valueAccessor]}
+        />
+      ))}
     </Select>
   );
 }
@@ -364,10 +371,14 @@ export function TextInputWithAction<MappingType>({
   );
 }
 
+interface SwitchProps<MappingType> extends BaseInputProps<MappingType> {
+  mapping: Extract<IngestApiFormMapping<MappingType>, { type: "toggle" }>;
+}
+
 export function Switch<MappingType>({
   mapping,
   hookForm,
-}: BaseInputProps<MappingType>) {
+}: SwitchProps<MappingType>) {
   const { control, setValue } = hookForm;
   const name = mapping.name as keyof (
     | SchoolListFormSchema
@@ -383,6 +394,8 @@ export function Switch<MappingType>({
           id={name}
           labelText={mapping.label}
           toggled={Boolean(value)}
+          labelA={mapping.offLabel}
+          labelB={mapping.onLabel}
           // @ts-expect-error wrong type
           onToggle={value => setValue(name, value)}
         />
