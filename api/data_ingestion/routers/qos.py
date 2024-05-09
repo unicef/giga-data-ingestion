@@ -24,6 +24,7 @@ from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import SchoolConnectivity, SchoolList
+from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.qos import (
     CreateApiIngestionRequest,
@@ -36,7 +37,7 @@ from data_ingestion.schemas.qos import (
 router = APIRouter(
     prefix="/api/qos",
     tags=["qos"],
-    dependencies=[Security(azure_scheme)],
+    dependencies=[Security(azure_scheme), Security(IsPrivileged())],
 )
 
 

@@ -17,7 +17,7 @@ from data_ingestion.schemas.user import GraphUser
 router = APIRouter(
     prefix="/api/groups",
     tags=["groups"],
-    dependencies=[Security(azure_scheme), Security(IsPrivileged())],
+    dependencies=[Security(azure_scheme)],
 )
 
 
@@ -26,42 +26,71 @@ async def list_groups():
     return await GroupsApi.list_groups()
 
 
-@router.post("", status_code=status.HTTP_201_CREATED, response_model=GraphGroup)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    response_model=GraphGroup,
+    dependencies=[Security(IsPrivileged())],
+)
 async def create_group(body: CreateGroupRequest):
     return await GroupsApi.create_group(body)
 
 
-@router.get("/{id}", response_model=GraphGroup)
+@router.get("/{id}", response_model=GraphGroup, dependencies=[Security(IsPrivileged())])
 async def get_group(id: UUID4):
     return await GroupsApi.get_group(id)
 
 
-@router.patch("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch(
+    "/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
 async def edit_group(id: UUID4, body: UpdateGroupRequest):
     await GroupsApi.update_group(id, body)
 
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
 async def delete_group(id: UUID4):
     await GroupsApi.delete_group(id)
 
 
-@router.get("/{id}/users", response_model=list[GraphUser])
+@router.get(
+    "/{id}/users",
+    response_model=list[GraphUser],
+    dependencies=[Security(IsPrivileged())],
+)
 async def list_group_members(id: UUID4):
     return await GroupsApi.list_group_members(group_id=id)
 
 
-@router.post("/{id}/users", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    "/{id}/users",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
 async def add_user_to_group(id: UUID4, body: AddGroupMemberRequest):
     await GroupsApi.add_group_member(group_id=id, user_id=body.user_id)
 
 
-@router.delete("/{id}/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{id}/users/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
 async def remove_user_from_group(id: UUID4, user_id: UUID4):
     await GroupsApi.remove_group_member(group_id=id, user_id=user_id)
 
 
-@router.post("/{user_id}", status_code=status.HTTP_200_OK)
+@router.post(
+    "/{user_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(IsPrivileged())],
+)
 async def modify_user_access(user_id: UUID4, body: ModifyUserAccessRequest):
     await GroupsApi.modify_user_access(user_id=user_id, body=body)
 

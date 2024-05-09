@@ -73,18 +73,20 @@ export default function Navbar() {
               Delete Rows
             </HeaderMenuItem>
           )}
-          <HeaderMenuItem
-            as={Link}
-            to="/ingest-api"
-            search={{
-              page: DEFAULT_PAGE_NUMBER,
-              page_size: DEFAULT_PAGE_SIZE,
-            }}
-            disabled={!hasRoles}
-            isActive={location.pathname.startsWith("/ingest-api")}
-          >
-            Ingest API
-          </HeaderMenuItem>
+          {isPrivileged && (
+            <HeaderMenuItem
+              as={Link}
+              to="/ingest-api"
+              search={{
+                page: DEFAULT_PAGE_NUMBER,
+                page_size: DEFAULT_PAGE_SIZE,
+              }}
+              disabled={!hasRoles}
+              isActive={location.pathname.startsWith("/ingest-api")}
+            >
+              Ingest API
+            </HeaderMenuItem>
+          )}
           {isPrivileged && (
             <HeaderMenuItem
               as={Link}
