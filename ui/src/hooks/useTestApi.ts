@@ -33,6 +33,7 @@ type TestApiOptions = {
       apiType: "schoolConnectivity";
       getValues: UseFormGetValues<SchoolConnectivityFormSchema>;
       setIsValidResponseDateFormat: Dispatch<SetStateAction<boolean>>;
+      setIsValidSchoolIdGigaGovtKey: Dispatch<SetStateAction<boolean>>;
     }
 );
 
@@ -75,15 +76,22 @@ export function useTestApi() {
 
     let response_date_format: string | undefined;
     let response_date_key: string | undefined;
+    let school_id_giga_govt_key: string;
     let setIsValidResponseDateFormat: Extract<
       TestApiOptions,
       { apiType: "schoolConnectivity" }
     >["setIsValidResponseDateFormat"];
+    let setIsValidGigaGovtSchoolIdKey: Extract<
+      TestApiOptions,
+      { apiType: "schoolConnectivity" }
+    >["setIsValidSchoolIdGigaGovtKey"];
 
     if (apiType === "schoolConnectivity") {
       response_date_key = getValues("response_date_key");
       response_date_format = getValues("response_date_format");
+      school_id_giga_govt_key = getValues("school_id_giga_govt_key");
       setIsValidResponseDateFormat = options.setIsValidResponseDateFormat;
+      setIsValidGigaGovtSchoolIdKey = options.setIsValidSchoolIdGigaGovtKey;
     }
 
     const handleValidationTry =
@@ -96,11 +104,24 @@ export function useTestApi() {
             setIsValidDataKey(true);
             setIsValidResponse(true);
             setIsResponseError(false);
+
             if (apiType === "schoolList") {
               setDetectedColumns(Object.keys(responseData[0]));
             }
+
+            if (apiType === "schoolConnectivity") {
+              setIsValidGigaGovtSchoolIdKey(
+                Object.keys(responseData[0]).includes(school_id_giga_govt_key),
+              );
+            }
           } else {
             setIsValidDataKey(false);
+
+            if (apiType === "schoolConnectivity") {
+              setIsValidGigaGovtSchoolIdKey(
+                Object.keys(responseData).includes(school_id_giga_govt_key),
+              );
+            }
           }
 
           if (apiType === "schoolConnectivity") {
@@ -161,6 +182,12 @@ export function useTestApi() {
 
                 setIsValidResponseDateFormat(isValid);
               }
+
+              setIsValidGigaGovtSchoolIdKey(
+                Object.keys(responseData[data_key][0]).includes(
+                  school_id_giga_govt_key,
+                ),
+              );
             }
           }
         }

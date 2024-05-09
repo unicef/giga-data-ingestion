@@ -79,9 +79,11 @@ export interface SchoolConnectivityResponse extends ApiConfigurationResponse {
   date_key: string | null;
   date_format: string | null;
   school_id_send_query_in: SendQueryInEnum;
-  send_date_in: SendQueryInEnum | null;
+  send_date_in: SendQueryInEnum;
   response_date_key: string;
   response_date_format: string;
+  has_school_id_giga: boolean;
+  school_id_giga_govt_key: string;
 }
 
 export interface PagedSchoolConnectivityResponse {

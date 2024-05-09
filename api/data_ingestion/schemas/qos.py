@@ -10,6 +10,7 @@ from data_ingestion.models.ingest_api_qos import (
     AuthorizationTypeEnum,
     PaginationTypeEnum,
     RequestMethodEnum,
+    SendDateInEnum,
     SendQueryInEnum,
 )
 from data_ingestion.utils.string import is_valid_format_code
@@ -53,9 +54,11 @@ class SchoolConnectivitySchema(ApiConfiguration):
     date_key: str | None
     date_format: str | None
     school_id_send_query_in: SendQueryInEnum
-    send_date_in: str | None
+    send_date_in: SendDateInEnum
     response_date_key: str
     response_date_format: str
+    has_school_id_giga: bool
+    school_id_giga_govt_key: str
 
     @model_validator(mode="after")
     def validate_date_format(self):
@@ -130,9 +133,11 @@ class CreateSchoolConnectivityRequest(ApiConfigurationRequest):
     date_key: str | None
     date_format: str | None
     school_id_send_query_in: SendQueryInEnum
-    send_date_in: str | None
+    send_date_in: SendDateInEnum
     response_date_key: str
     response_date_format: str
+    has_school_id_giga: bool
+    school_id_giga_govt_key: str
 
 
 @dataclass
@@ -158,9 +163,11 @@ class EditSchoolConnectivityRequest(ApiConfigurationRequest):
     date_key: str | None
     date_format: str | None
     school_id_send_query_in: SendQueryInEnum
-    send_date_in: str | None
+    send_date_in: SendDateInEnum
     response_date_key: str
     response_date_format: str
+    has_school_id_giga: bool
+    school_id_giga_govt_key: str
 
     @model_validator(mode="after")
     def validate_date_format(self):

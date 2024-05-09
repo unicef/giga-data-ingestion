@@ -16,7 +16,12 @@ export type IngestApiFormMapping<T> = {
     | Record<string, (value: T[keyof T]) => boolean | string>;
 } & (
   | {
-      type: "text" | "code" | "number" | "password" | "toggle";
+      type: "text" | "code" | "number" | "password";
+    }
+  | {
+      type: "toggle";
+      offLabel?: string;
+      onLabel?: string;
     }
   | {
       type: "select";

@@ -125,7 +125,9 @@ export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
       ])
       .nullable(),
     school_id_send_query_in: z.nativeEnum(SendQueryInEnum),
-    send_date_in: z.string().nullable(),
+    send_date_in: z.nativeEnum(SendQueryInEnum),
+    has_school_id_giga: z.boolean().default(false),
+    school_id_giga_govt_key: z.string().min(1),
     response_date_key: z.string().min(1),
     response_date_format: z.string().min(1),
   },
@@ -137,8 +139,17 @@ export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
   if (arg.date_key && !arg.date_format) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Date format must be specified when date key is provided.",
+      message:
+        "Date format must be specified when request date key is provided.",
       path: ["date_format"],
+    });
+  }
+
+  if (arg.date_key && arg.send_date_in === SendQueryInEnum.NONE) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Must not be NONE when request date key is provided.",
+      path: ["send_date_in"],
     });
   }
 });
@@ -169,6 +180,9 @@ export const schoolConnectivityFormInitialValues: SchoolConnectivityFormSchema =
     response_date_key: "",
     response_date_format: "",
     send_date_in: SendQueryInEnum.NONE,
+
+    has_school_id_giga: false,
+    school_id_giga_govt_key: "",
 
     pagination_type: PaginationTypeEnum.NONE,
     page_number_key: null,
