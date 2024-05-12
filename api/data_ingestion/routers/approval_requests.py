@@ -115,7 +115,7 @@ async def list_approval_requests(
             (
                 select(count())
                 .select_from(change_types_cte)
-                .where(column("_change_type") == literal("update_preimage"))
+                .where(column("_change_type") == literal("update_postimage"))
             ).label("rows_updated"),
             (
                 select(count())
@@ -200,6 +200,7 @@ async def get_approval_request(
                 )
             )
         )
+        .where(column("_change_type") != "update_preimage")
         .cte("changes")
     )
     cdf = (

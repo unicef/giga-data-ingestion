@@ -20,7 +20,6 @@ import {
 } from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests";
-import { computeChangeId } from "@/utils/approval_requests.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
 const skeletonHeaders: DataTableHeader[] = [
@@ -127,16 +126,25 @@ function ApproveRejectTable() {
 
   const headers = useMemo<DataTableHeader[]>(() => {
     let keys = Object.keys(approvalRequests[0] ?? { _change_type: "insert" });
-    const idIndex = keys.findIndex(key => key === "school_id_giga");
-    if (idIndex > -1) {
+    const schoolIdGigaIndex = keys.findIndex(key => key === "school_id_giga");
+    if (schoolIdGigaIndex > -1) {
+      keys = [
+        "school_id_giga",
+        ...keys.slice(0, schoolIdGigaIndex),
+        ...keys.slice(schoolIdGigaIndex + 1),
+      ];
+    }
+
+    const changeIdIndex = keys.findIndex(key => key === "change_id");
+    if (changeIdIndex > -1) {
       keys = [
         "approval_status",
         "change_id",
-        "school_id_giga",
-        ...keys.slice(0, idIndex),
-        ...keys.slice(idIndex + 1),
+        ...keys.slice(0, changeIdIndex),
+        ...keys.slice(changeIdIndex + 1),
       ];
     }
+
     return keys.map(key => ({
       key,
       header: key,
@@ -164,27 +172,6 @@ function ApproveRejectTable() {
     const newApprovedRows = new Set(approvedRows);
 
     for (const row of rows) {
-      // Only one of update_preimage/update_postimage for the same
-      // school_id_giga/_commit_version/_commit_timestamp combination
-      // can be approved
-      if (row._change_type === "update_preimage") {
-        const postImageId = computeChangeId({
-          school_id_giga: row.school_id_giga!,
-          _change_type: "update_postimage",
-          _commit_version: Number(row._commit_version),
-          _commit_timestamp: row._commit_timestamp!,
-        });
-        newApprovedRows.delete(postImageId);
-      } else if (row._change_type === "update_postimage") {
-        const preImageId = computeChangeId({
-          school_id_giga: row.school_id_giga!,
-          _change_type: "update_preimage",
-          _commit_version: Number(row._commit_version),
-          _commit_timestamp: row._commit_timestamp!,
-        });
-        newApprovedRows.delete(preImageId);
-      }
-
       newApprovedRows.add(row.change_id!);
     }
     setApprovedRows([...newApprovedRows]);
