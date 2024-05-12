@@ -21,6 +21,7 @@ from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import ApprovalRequest
+from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
     ApprovalRequestListing,
@@ -63,7 +64,7 @@ async def list_approval_requests(
     res = db.execute(
         select("*", select(count()).select_from(data_cte).label("total_count"))
         .select_from(data_cte)
-        .order_by(column("table_name"))
+        .order_by(column("table_name"), column("table_schema"))
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -120,7 +121,9 @@ async def list_approval_requests(
         )
         queries.append(query)
 
-    res = db.execute(union_all(*queries))
+    res = db.execute(
+        union_all(*queries).order_by(column("table_name"), column("table_schema"))
+    )
     stats = res.mappings().all()
 
     for stat in stats:
@@ -264,21 +267,29 @@ async def upload_approved_rows(
         )
 
         formatted_dataset = dataset.replace("-", " ").title()
-        await primary_db.execute(
-            update(ApprovalRequest)
-            .where(
-                (ApprovalRequest.country == country_iso3)
-                & (ApprovalRequest.dataset == formatted_dataset)
+
+        async with primary_db.begin():
+            obj = await primary_db.execute(
+                update(ApprovalRequest)
+                .where(
+                    (ApprovalRequest.country == country_iso3)
+                    & (ApprovalRequest.dataset == formatted_dataset)
+                )
+                .values(
+                    {
+                        ApprovalRequest.enabled: False,
+                        ApprovalRequest.is_merge_processing: True,
+                    }
+                )
+                .returning(column("id"))
             )
-            .values(
-                {
-                    ApprovalRequest.enabled: False,
-                    ApprovalRequest.last_approved_by_id: user.sub,
-                    ApprovalRequest.last_approved_by_email: email,
-                }
+            primary_db.add(
+                ApprovalRequestAuditLog(
+                    approval_request_id=obj.first().id,
+                    approved_by_id=user.sub,
+                    approved_by_email=email,
+                )
             )
-        )
-        await primary_db.commit()
 
     except HttpResponseError as err:
         raise HTTPException(
