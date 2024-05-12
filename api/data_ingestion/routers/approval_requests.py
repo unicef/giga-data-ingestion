@@ -155,7 +155,7 @@ async def list_approval_requests(
                     rows_added=stat["rows_added"],
                     rows_updated=stat["rows_updated"],
                     rows_deleted=stat["rows_deleted"],
-                    enabled=settings[f"{country_iso3}-{dataset}"],
+                    enabled=settings.get(f"{country_iso3}-{dataset}", False),
                 )
             )
 
