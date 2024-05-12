@@ -11,7 +11,7 @@ from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
 from data_ingestion.routers import (
     approval_requests,
     core,
-    delete,
+    deletion_requests,
     email,
     groups,
     qos,
@@ -61,7 +61,7 @@ async def load_config():
 
 app.include_router(approval_requests.router)
 app.include_router(core.router)
-app.include_router(delete.router)
+app.include_router(deletion_requests.router)
 app.include_router(email.router)
 app.include_router(groups.router)
 app.include_router(qos.router)

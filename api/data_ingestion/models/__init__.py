@@ -1,5 +1,6 @@
 from .approval_requests import ApprovalRequest
 from .base import BaseModel
+from .deletion_requests import DeletionRequest
 from .file_upload import FileUpload
 from .ingest_api_qos import ApiConfiguration, SchoolConnectivity, SchoolList
 
@@ -10,4 +11,5 @@ __all__ = [
     "SchoolList",
     "SchoolConnectivity",
     "ApprovalRequest",
+    "DeletionRequest",
 ]

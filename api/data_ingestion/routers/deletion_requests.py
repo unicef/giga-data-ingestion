@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 
 import country_converter as coco
-from fastapi import APIRouter, Depends, HTTPException, Response, Security
+from fastapi import APIRouter, Depends, HTTPException, Security
 from fastapi_azure_auth.user import User
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,19 +12,20 @@ from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
+from data_ingestion.models import DeletionRequest
 from data_ingestion.permissions.permissions import IsPrivileged
-from data_ingestion.schemas.delete import DeleteRowsRequest, DeleteRowsSchema
+from data_ingestion.schemas.deletion_requests import DeleteRowsRequest, DeleteRowsSchema
+from data_ingestion.utils.user import get_user_email
 
 router = APIRouter(
     prefix="/api/delete",
-    tags=["delete"],
+    tags=["deletion-requests"],
     dependencies=[Security(IsPrivileged())],
 )
 
 
 @router.post("", response_model=DeleteRowsSchema)
 async def delete_rows(
-    response: Response,
     body: DeleteRowsRequest,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(azure_scheme),
@@ -52,5 +53,16 @@ async def delete_rows(
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
+
+    email = await get_user_email(user)
+
+    async with db.begin():
+        db.add(
+            DeletionRequest(
+                requested_by_email=email,
+                requested_by_id=user.sub,
+                country=country_iso3,
+            )
+        )
 
     return {"filename": filename}
