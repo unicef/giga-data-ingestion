@@ -69,7 +69,7 @@ export default function Index() {
   const {
     uploadSlice,
     uploadSliceActions: {
-      incrementStepIndex,
+      setStepIndex,
       resetUploadSliceState,
       setUploadSliceState,
       setSource,
@@ -103,7 +103,7 @@ export default function Index() {
   const handleProceedToNextStep = () => {
     if (file) {
       setSource(source ?? null);
-      incrementStepIndex();
+      setStepIndex(1);
     }
   };
 

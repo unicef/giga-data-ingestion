@@ -59,12 +59,7 @@ const headers: DataTableHeader[] = [
 function UploadColumnMapping() {
   const {
     uploadSlice: { detectedColumns, columnMapping, source },
-    uploadSliceActions: {
-      decrementStepIndex,
-      incrementStepIndex,
-      setColumnMapping,
-      setColumnLicense,
-    },
+    uploadSliceActions: { setStepIndex, setColumnMapping, setColumnLicense },
   } = useStore();
 
   const [selectedColumns, setSelectedColumns] =
@@ -105,7 +100,7 @@ function UploadColumnMapping() {
     };
     setColumnMapping(dataWithNullsReplaced.mapping);
     setColumnLicense(dataWithNullsReplaced.license);
-    incrementStepIndex();
+    setStepIndex(2);
     void navigate({ to: "../metadata" });
   };
 
@@ -159,7 +154,7 @@ function UploadColumnMapping() {
               kind="secondary"
               renderIcon={ArrowLeft}
               to=".."
-              onClick={decrementStepIndex}
+              onClick={() => setStepIndex(0)}
             >
               Cancel
             </Button>
