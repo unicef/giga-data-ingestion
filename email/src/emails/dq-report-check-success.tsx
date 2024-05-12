@@ -5,7 +5,6 @@ import {
   Head,
   Heading,
   Img,
-  Hr,
   Html,
   Preview,
   Section,
@@ -101,6 +100,6 @@ DataQualityReportCheckSuccess.PreviewProps = {
   checkDate: new Date().toLocaleString(undefined, {
     timeZoneName: "short",
   }),
-} as DataQualityCheckSuccessProps;
+} satisfies DataQualityCheckSuccessProps;
 
 export default DataQualityReportCheckSuccess;

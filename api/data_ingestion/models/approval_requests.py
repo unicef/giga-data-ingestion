@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from pydantic import UUID4
-from sqlalchemy import VARCHAR, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import VARCHAR, DateTime, ForeignKey, UniqueConstraint, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import BaseModel
 
@@ -14,9 +16,23 @@ class ApprovalRequest(BaseModel):
     country: Mapped[str] = mapped_column(VARCHAR(3), nullable=False)
     dataset: Mapped[str] = mapped_column(nullable=False)
     enabled: Mapped[bool] = mapped_column(default=False)
-    last_approved_by_id: Mapped[UUID4 | None] = mapped_column(
-        VARCHAR(36), nullable=True
+    is_merge_processing: Mapped[bool] = mapped_column(default=False)
+    audit_logs: Mapped[list["ApprovalRequestAuditLog"]] = relationship(
+        back_populates="approval_request"
     )
-    last_approved_by_email: Mapped[str | None] = mapped_column(
-        VARCHAR(255), nullable=True
+
+
+class ApprovalRequestAuditLog(BaseModel):
+    __tablename__ = "approval_request_audit_log"
+
+    approval_request_id: Mapped[str] = mapped_column(
+        ForeignKey("approval_requests.id"), nullable=False
+    )
+    approval_request: Mapped["ApprovalRequest"] = relationship(
+        "ApprovalRequest", back_populates="audit_logs"
+    )
+    approved_by_id: Mapped[UUID4] = mapped_column(VARCHAR(36), nullable=False)
+    approved_by_email: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
+    approved_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
     )

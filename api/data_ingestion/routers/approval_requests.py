@@ -21,6 +21,7 @@ from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import ApprovalRequest
+from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
     ApprovalRequestListing,
@@ -46,24 +47,31 @@ async def list_approval_requests(
     db: Session = Depends(get_db),
     primary_db: AsyncSession = Depends(get_primary_db),
 ):
-    base_query = select(ApprovalRequest).order_by(
-        ApprovalRequest.country, ApprovalRequest.dataset
+    base_query = (
+        select(ApprovalRequest)
+        .where(ApprovalRequest.enabled)
+        .order_by(ApprovalRequest.country, ApprovalRequest.dataset)
     )
     items = await primary_db.scalars(base_query)
     settings = {}
+    table_names = []
     for item in items:
         settings[f"{item.country}-{item.dataset}"] = item.enabled
+        table_names.append(item.country.lower())
 
     data_cte = (
         select("*")
         .select_from(text("information_schema.tables"))
-        .where(column("table_schema").like(literal("school%staging")))
+        .where(
+            (column("table_schema").like(literal("school%staging")))
+            & (column("table_name").in_(table_names))
+        )
         .cte("tables")
     )
     res = db.execute(
         select("*", select(count()).select_from(data_cte).label("total_count"))
         .select_from(data_cte)
-        .order_by(column("table_name"))
+        .order_by(column("table_name"), column("table_schema"))
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
@@ -107,7 +115,7 @@ async def list_approval_requests(
             (
                 select(count())
                 .select_from(change_types_cte)
-                .where(column("_change_type") == literal("update_preimage"))
+                .where(column("_change_type") == literal("update_postimage"))
             ).label("rows_updated"),
             (
                 select(count())
@@ -120,35 +128,36 @@ async def list_approval_requests(
         )
         queries.append(query)
 
-    res = db.execute(union_all(*queries))
-    stats = res.mappings().all()
+    if len(queries) > 0:
+        res = db.execute(union_all(*queries))
+        stats = res.mappings().all()
 
-    for stat in stats:
-        country = coco.convert(stat["table_name"], to="name_short")
-        country_iso3 = coco.convert(stat["table_name"], to="ISO3")
+        for stat in stats:
+            country = coco.convert(stat["table_name"], to="name_short")
+            country_iso3 = coco.convert(stat["table_name"], to="ISO3")
 
-        dataset = (
-            stat["table_schema"]
-            .replace("staging", "")
-            .replace("_", " ")
-            .title()
-            .rstrip()
-        )
-        body.append(
-            ApprovalRequestListing(
-                id=f'{stat["table_name"].upper()}-{dataset}',
-                country=country,
-                country_iso3=stat["table_name"].upper(),
-                dataset=dataset,
-                subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
-                last_modified=stat["last_modified"],
-                rows_count=stat["rows_count"],
-                rows_added=stat["rows_added"],
-                rows_updated=stat["rows_updated"],
-                rows_deleted=stat["rows_deleted"],
-                enabled=settings[f"{country_iso3}-{dataset}"],
+            dataset = (
+                stat["table_schema"]
+                .replace("staging", "")
+                .replace("_", " ")
+                .title()
+                .rstrip()
             )
-        )
+            body.append(
+                ApprovalRequestListing(
+                    id=f'{stat["table_name"].upper()}-{dataset}',
+                    country=country,
+                    country_iso3=stat["table_name"].upper(),
+                    dataset=dataset,
+                    subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
+                    last_modified=stat["last_modified"],
+                    rows_count=stat["rows_count"],
+                    rows_added=stat["rows_added"],
+                    rows_updated=stat["rows_updated"],
+                    rows_deleted=stat["rows_deleted"],
+                    enabled=settings.get(f"{country_iso3}-{dataset}", False),
+                )
+            )
 
     return {
         "data": body,
@@ -191,6 +200,7 @@ async def get_approval_request(
                 )
             )
         )
+        .where(column("_change_type") != "update_preimage")
         .cte("changes")
     )
     cdf = (
@@ -264,21 +274,29 @@ async def upload_approved_rows(
         )
 
         formatted_dataset = dataset.replace("-", " ").title()
-        await primary_db.execute(
-            update(ApprovalRequest)
-            .where(
-                (ApprovalRequest.country == country_iso3)
-                & (ApprovalRequest.dataset == formatted_dataset)
+
+        async with primary_db.begin():
+            obj = await primary_db.execute(
+                update(ApprovalRequest)
+                .where(
+                    (ApprovalRequest.country == country_iso3)
+                    & (ApprovalRequest.dataset == formatted_dataset)
+                )
+                .values(
+                    {
+                        ApprovalRequest.enabled: False,
+                        ApprovalRequest.is_merge_processing: True,
+                    }
+                )
+                .returning(column("id"))
             )
-            .values(
-                {
-                    ApprovalRequest.enabled: False,
-                    ApprovalRequest.last_approved_by_id: user.sub,
-                    ApprovalRequest.last_approved_by_email: email,
-                }
+            primary_db.add(
+                ApprovalRequestAuditLog(
+                    approval_request_id=obj.first().id,
+                    approved_by_id=user.sub,
+                    approved_by_email=email,
+                )
             )
-        )
-        await primary_db.commit()
 
     except HttpResponseError as err:
         raise HTTPException(

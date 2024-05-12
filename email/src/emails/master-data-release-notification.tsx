@@ -1,15 +1,9 @@
 import {
   Body,
-  Button,
-  Column,
   Container,
   Head,
-  Hr,
   Html,
-  Img,
   Preview,
-  Row,
-  Section,
   Text,
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
@@ -17,11 +11,11 @@ import tailwindConfig from "../styles/tailwind.config";
 import { MasterDataReleaseNotificationProps } from "../types/master-data-release-notification";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
 export const MasterDataReleaseNotification = ({
   added,
   modified,
+  deleted,
   country,
   updateDate,
   version,
@@ -64,6 +58,9 @@ export const MasterDataReleaseNotification = ({
                 </li>
                 <li>
                   <strong>{added}</strong> rows added
+                </li>
+                <li>
+                  <strong>{deleted}</strong> rows deleted
                 </li>
                 <li className="pt-4">
                   <strong>{rows}</strong> total rows in dataset

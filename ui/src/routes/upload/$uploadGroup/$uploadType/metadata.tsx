@@ -134,12 +134,7 @@ const RenderFormItem = ({
 function Metadata() {
   const {
     uploadSlice,
-    uploadSliceActions: {
-      decrementStepIndex,
-      incrementStepIndex,
-      setUploadDate,
-      setUploadId,
-    },
+    uploadSliceActions: { setStepIndex, setUploadDate, setUploadId },
   } = useStore();
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType, uploadGroup } = Route.useParams();
@@ -234,19 +229,16 @@ function Metadata() {
     try {
       if (isUnstructured) {
         await uploadUnstructuredFile.mutateAsync(body);
-        setIsUploading(false);
-        setUploadDate(uploadSlice.timeStamp);
-        incrementStepIndex();
       } else {
         const {
           data: { id: uploadId },
         } = await uploadFile.mutateAsync(body);
-        setIsUploading(false);
         setUploadId(uploadId);
-        setUploadDate(uploadSlice.timeStamp);
-        incrementStepIndex();
       }
 
+      setIsUploading(false);
+      setUploadDate(uploadSlice.timeStamp);
+      setStepIndex(3);
       void navigate({ to: "../success" });
     } catch {
       console.error(
@@ -301,7 +293,7 @@ function Metadata() {
                 kind="secondary"
                 as={Link}
                 to={isUnstructured ? ".." : "../column-mapping"}
-                onClick={decrementStepIndex}
+                onClick={() => setStepIndex(1)}
                 className="w-full"
                 renderIcon={ArrowLeft}
                 isExpressive

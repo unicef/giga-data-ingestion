@@ -1,14 +1,10 @@
 import {
   Body,
-  Button,
   Container,
   Head,
   Heading,
-  Img,
-  Hr,
   Html,
   Preview,
-  Section,
   Text,
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
@@ -16,7 +12,6 @@ import tailwindConfig from "../styles/tailwind.config";
 import { DataQualityUploadSuccessProps } from "../types/dq-report";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
 export const DataQualityReportUploadSuccess = ({
   uploadId,
@@ -81,6 +76,6 @@ DataQualityReportUploadSuccess.PreviewProps = {
   uploadDate: new Date().toLocaleString(undefined, {
     timeZoneName: "short",
   }),
-} as DataQualityUploadSuccessProps;
+} satisfies DataQualityUploadSuccessProps;
 
 export default DataQualityReportUploadSuccess;
