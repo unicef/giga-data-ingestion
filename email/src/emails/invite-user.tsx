@@ -99,7 +99,6 @@ InviteUserEmail.PreviewProps = {
     "Philippines-School Coverage",
     "Philippines-School Geolocation",
   ],
-  temporaryPassword: "adobo24601",
-} as InviteUserProps;
+} satisfies InviteUserProps;
 
 export default InviteUserEmail;

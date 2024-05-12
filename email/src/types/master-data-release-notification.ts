@@ -1,19 +1,15 @@
 import { z } from "zod";
 
-export interface MasterDataReleaseNotificationProps {
-  added: number;
-  country: string;
-  modified: number;
-  updateDate: string;
-  version: number;
-  rows: number;
-}
-
 export const MasterDataReleaseNotificationProps = z.object({
-  added: z.number(),
   country: z.string(),
-  modified: z.number(),
+  added: z.number().int(),
+  modified: z.number().int(),
+  deleted: z.number().int(),
   updateDate: z.string(),
   version: z.number(),
   rows: z.number(),
 });
+
+export type MasterDataReleaseNotificationProps = z.infer<
+  typeof MasterDataReleaseNotificationProps
+>;

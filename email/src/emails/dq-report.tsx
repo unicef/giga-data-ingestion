@@ -18,7 +18,9 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import DqReportHeading from "../components/DqReportHeading";
 import { isSummaryCheck } from "../utils/dq-report";
+
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
+
 const DataQualityReport = ({
   dataQualityCheck,
   dataset,

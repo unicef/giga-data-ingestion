@@ -1,15 +1,5 @@
 import { z } from "zod";
-export interface Check {
-  assertion: string;
-  column: string;
-  count_failed: number;
-  count_overall: number;
-  count_passed: number;
-  description: string;
-  percent_failed: number;
-  percent_passed: number;
-  dq_remarks?: string;
-}
+
 const Check = z.object({
   assertion: z.string(),
   column: z.string(),
@@ -19,13 +9,10 @@ const Check = z.object({
   description: z.string(),
   percent_failed: z.number(),
   percent_passed: z.number(),
+  dq_remarks: z.string().optional(),
 });
 
-export interface SummaryCheck {
-  columns: number;
-  rows: number;
-  timestamp: string;
-}
+export type Check = z.infer<typeof Check>;
 
 const SummaryCheck = z.object({
   columns: z.number(),
@@ -33,16 +20,18 @@ const SummaryCheck = z.object({
   timestamp: z.string(),
 });
 
-export interface DataQualityCheck {
-  [key: string]: Check[] | SummaryCheck;
-  critical_error_check?: Check[];
-  summary?: SummaryCheck;
-}
+export type SummaryCheck = z.infer<typeof SummaryCheck>;
 
 export const DataQualityCheck = z
   .record(z.union([z.array(Check), SummaryCheck]))
   .and(
     z.object({
       summary: z.optional(SummaryCheck),
-    })
+    }),
   );
+
+export interface DataQualityCheck {
+  [key: string]: Check[] | SummaryCheck;
+  critical_error_check?: Check[];
+  summary?: SummaryCheck;
+}
