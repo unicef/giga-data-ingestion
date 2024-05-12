@@ -47,18 +47,25 @@ async def list_approval_requests(
     db: Session = Depends(get_db),
     primary_db: AsyncSession = Depends(get_primary_db),
 ):
-    base_query = select(ApprovalRequest).order_by(
-        ApprovalRequest.country, ApprovalRequest.dataset
+    base_query = (
+        select(ApprovalRequest)
+        .where(ApprovalRequest.enabled)
+        .order_by(ApprovalRequest.country, ApprovalRequest.dataset)
     )
     items = await primary_db.scalars(base_query)
     settings = {}
+    table_names = []
     for item in items:
         settings[f"{item.country}-{item.dataset}"] = item.enabled
+        table_names.append(item.country.lower())
 
     data_cte = (
         select("*")
         .select_from(text("information_schema.tables"))
-        .where(column("table_schema").like(literal("school%staging")))
+        .where(
+            (column("table_schema").like(literal("school%staging")))
+            & (column("table_name").in_(table_names))
+        )
         .cte("tables")
     )
     res = db.execute(
@@ -121,37 +128,36 @@ async def list_approval_requests(
         )
         queries.append(query)
 
-    res = db.execute(
-        union_all(*queries).order_by(column("table_name"), column("table_schema"))
-    )
-    stats = res.mappings().all()
+    if len(queries) > 0:
+        res = db.execute(union_all(*queries))
+        stats = res.mappings().all()
 
-    for stat in stats:
-        country = coco.convert(stat["table_name"], to="name_short")
-        country_iso3 = coco.convert(stat["table_name"], to="ISO3")
+        for stat in stats:
+            country = coco.convert(stat["table_name"], to="name_short")
+            country_iso3 = coco.convert(stat["table_name"], to="ISO3")
 
-        dataset = (
-            stat["table_schema"]
-            .replace("staging", "")
-            .replace("_", " ")
-            .title()
-            .rstrip()
-        )
-        body.append(
-            ApprovalRequestListing(
-                id=f'{stat["table_name"].upper()}-{dataset}',
-                country=country,
-                country_iso3=stat["table_name"].upper(),
-                dataset=dataset,
-                subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
-                last_modified=stat["last_modified"],
-                rows_count=stat["rows_count"],
-                rows_added=stat["rows_added"],
-                rows_updated=stat["rows_updated"],
-                rows_deleted=stat["rows_deleted"],
-                enabled=settings[f"{country_iso3}-{dataset}"],
+            dataset = (
+                stat["table_schema"]
+                .replace("staging", "")
+                .replace("_", " ")
+                .title()
+                .rstrip()
             )
-        )
+            body.append(
+                ApprovalRequestListing(
+                    id=f'{stat["table_name"].upper()}-{dataset}',
+                    country=country,
+                    country_iso3=stat["table_name"].upper(),
+                    dataset=dataset,
+                    subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
+                    last_modified=stat["last_modified"],
+                    rows_count=stat["rows_count"],
+                    rows_added=stat["rows_added"],
+                    rows_updated=stat["rows_updated"],
+                    rows_deleted=stat["rows_deleted"],
+                    enabled=settings[f"{country_iso3}-{dataset}"],
+                )
+            )
 
     return {
         "data": body,
