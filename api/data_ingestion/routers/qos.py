@@ -163,93 +163,100 @@ async def create_api_ingestion(
     db: AsyncSession = Depends(get_db),
     file: UploadFile = None,
 ):
-    if file is not None:
-        if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="File size exceeds 10 MB limit",
-            )
-
-        valid_types = {"text/csv": [".csv"], "application/csv": [".csv"]}
-
-        file_content = await file.read(2048)
-        file_type = magic.from_buffer(file_content, mime=True)
-        file_extension = os.path.splitext(file.filename)[1]
-
-        if file_type not in valid_types:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid file type.",
-            )
-
-        if file_extension not in valid_types[file_type]:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="File extension does not match file type.",
-            )
-
-    school_connectivity_data = data.get_school_connectivity_model()
-    school_list_data = data.get_school_list_model()
-
-    school_list = SchoolList(**school_list_data.model_dump())
-    db.add(school_list)
-    await db.commit()
-
-    upload_path = None
-    if file is not None:
-        timestamp = school_list.date_created.strftime("%Y%m%d-%H%M%S")
-        ext = Path(file.filename).suffix
-        filename_elements = [school_list.id, timestamp]
-        filename = "_".join(filename_elements)
-        upload_path = f"{constants.API_INGESTION_SCHEMA_UPLOAD_PATH}/{filename}{ext}"
-
-        client = storage_client.get_blob_client(upload_path)
-        try:
-            client.upload_blob(await file.read())
-            response.status_code = status.HTTP_201_CREATED
-        except HttpResponseError as err:
-            await db.execute(
-                delete(SchoolConnectivity).where(
-                    SchoolConnectivity.school_list_id == school_list.id
+    with db.begin():
+        if file is not None:
+            if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="File size exceeds 10 MB limit",
                 )
-            )
-            await db.commit()
 
-            await db.execute(delete(SchoolList).where(SchoolList.id == school_list.id))
-            await db.commit()
-            raise HTTPException(
-                detail=err.message, status_code=err.response.status_code
-            ) from err
-        except Exception as err:
-            await db.execute(
-                delete(SchoolConnectivity).where(
-                    SchoolConnectivity.school_list_id == school_list.id
+            valid_types = {"text/csv": [".csv"], "application/csv": [".csv"]}
+
+            file_content = await file.read(2048)
+            file_type = magic.from_buffer(file_content, mime=True)
+            file_extension = os.path.splitext(file.filename)[1]
+
+            if file_type not in valid_types:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid file type.",
                 )
+
+            if file_extension not in valid_types[file_type]:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="File extension does not match file type.",
+                )
+
+        school_connectivity_data = data.get_school_connectivity_model()
+        school_list_data = data.get_school_list_model()
+
+        school_list = SchoolList(**school_list_data.model_dump())
+        db.add(school_list)
+        await db.commit()
+
+        upload_path = None
+        if file is not None:
+            timestamp = school_list.date_created.strftime("%Y%m%d-%H%M%S")
+            ext = Path(file.filename).suffix
+            filename_elements = [school_list.id, timestamp]
+            filename = "_".join(filename_elements)
+            upload_path = (
+                f"{constants.API_INGESTION_SCHEMA_UPLOAD_PATH}/{filename}{ext}"
             )
-            await db.commit()
 
-            await db.execute(delete(SchoolList).where(SchoolList.id == school_list.id))
-            await db.commit()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-            ) from err
+            client = storage_client.get_blob_client(upload_path)
+            try:
+                client.upload_blob(await file.read())
+                response.status_code = status.HTTP_201_CREATED
+            except HttpResponseError as err:
+                await db.execute(
+                    delete(SchoolConnectivity).where(
+                        SchoolConnectivity.school_list_id == school_list.id
+                    )
+                )
+                await db.commit()
 
-    school_connectivity = SchoolConnectivity(
-        **{
-            **school_connectivity_data.model_dump(),
-            "schema_url": upload_path,
-            "school_list_id": school_list.id,
-            "send_date_in": None
-            if school_connectivity_data.send_date_in == "NONE"
-            else school_connectivity_data.send_date_in,
-            "date_key": None
-            if school_connectivity_data.send_date_in == "NONE"
-            else school_connectivity_data.date_key,
-        }
-    )
+                await db.execute(
+                    delete(SchoolList).where(SchoolList.id == school_list.id)
+                )
+                await db.commit()
+                raise HTTPException(
+                    detail=err.message, status_code=err.response.status_code
+                ) from err
+            except Exception as err:
+                await db.execute(
+                    delete(SchoolConnectivity).where(
+                        SchoolConnectivity.school_list_id == school_list.id
+                    )
+                )
+                await db.commit()
 
-    db.add(school_connectivity)
-    await db.commit()
+                await db.execute(
+                    delete(SchoolList).where(SchoolList.id == school_list.id)
+                )
+                await db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                ) from err
+
+        school_connectivity = SchoolConnectivity(
+            **{
+                **school_connectivity_data.model_dump(),
+                "schema_url": upload_path,
+                "school_list_id": school_list.id,
+                "send_date_in": None
+                if school_connectivity_data.send_date_in == "NONE"
+                else school_connectivity_data.send_date_in,
+                "date_key": None
+                if school_connectivity_data.send_date_in == "NONE"
+                else school_connectivity_data.date_key,
+            }
+        )
+
+        db.add(school_connectivity)
+        await db.commit()
 
     return {
         "school_list": school_list,
