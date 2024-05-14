@@ -116,6 +116,9 @@ export const createApiIngestionSlice: StateCreator<
     setSchoolConnectivityFormValues: formValues =>
       set(state => {
         state.apiIngestionSlice.schoolConnectivity = formValues;
+
+        if (formValues.date_key === "")
+          state.apiIngestionSlice.schoolConnectivity.date_key = null;
       }),
     setSchoolListFormValues: (formValues: SchoolListFormSchema) =>
       set(state => {
