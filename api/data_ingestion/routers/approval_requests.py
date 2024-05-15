@@ -85,7 +85,11 @@ async def list_approval_requests(
     queries = []
     for table in staging_tables:
         change_types_cte = (
-            select(column("_change_type")).select_from(
+            select(
+                column("school_id_giga"),
+                column("_change_type"),
+                column("_commit_version"),
+            ).select_from(
                 func.table(
                     func.delta_lake.system.table_changes(
                         literal(table["table_schema"]), literal(table["table_name"]), 0
@@ -106,11 +110,18 @@ async def list_approval_requests(
         query = select(
             literal(table["table_schema"]).label("table_schema"),
             literal(table["table_name"]).label("table_name"),
-            (select(count()).select_from(change_types_cte)).label("rows_count"),
+            (
+                select(count(column("school_id_giga").distinct())).select_from(
+                    change_types_cte
+                )
+            ).label("rows_count"),
             (
                 select(count())
                 .select_from(change_types_cte)
-                .where(column("_change_type") == literal("insert"))
+                .where(
+                    (column("_change_type") == literal("insert"))
+                    & (column("_commit_version") > 1)
+                )
             ).label("rows_added"),
             (
                 select(count())
@@ -200,7 +211,13 @@ async def get_approval_request(
                 )
             )
         )
-        .where(column("_change_type") != "update_preimage")
+        .where(
+            (column("_commit_version") == 2)
+            | (
+                (column("_commit_version") > 2)
+                & (column("_change_type") != "update_preimage")
+            )
+        )
         .cte("changes")
     )
     cdf = (
