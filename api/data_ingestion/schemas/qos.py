@@ -192,6 +192,7 @@ class EditSchoolListRequest(ApiConfigurationRequest):
     name: str
     user_email: EmailStr
     user_id: str
+    country: str
 
     @field_validator("column_to_schema_mapping", mode="before")
     @classmethod
