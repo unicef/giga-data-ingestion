@@ -154,6 +154,12 @@ async def list_approval_requests(
                 .title()
                 .rstrip()
             )
+            enabled = settings.get(f"{country_iso3}-{dataset}", False) and (
+                stat["rows_added"] > 0
+                or stat["rows_updated"] > 0
+                or stat["rows_deleted"] > 0
+            )
+
             body.append(
                 ApprovalRequestListing(
                     id=f'{stat["table_name"].upper()}-{dataset}',
@@ -166,7 +172,7 @@ async def list_approval_requests(
                     rows_added=stat["rows_added"],
                     rows_updated=stat["rows_updated"],
                     rows_deleted=stat["rows_deleted"],
-                    enabled=settings.get(f"{country_iso3}-{dataset}", False),
+                    enabled=enabled,
                 )
             )
 
