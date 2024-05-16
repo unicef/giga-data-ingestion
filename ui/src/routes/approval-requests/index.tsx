@@ -150,6 +150,7 @@ function ApprovalRequests() {
       handlePaginationChange={handlePaginationChange}
       page={approvalRequests.page}
       pageSize={approvalRequests.page_size}
+      pageSizes={[10]}
     />
   );
 }

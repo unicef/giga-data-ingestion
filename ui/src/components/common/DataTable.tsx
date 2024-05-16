@@ -17,6 +17,7 @@ interface _DataTableProps extends ComponentProps<typeof CarbonDataTable> {
   rows: ComponentProps<typeof CarbonDataTable>["rows"];
   size?: ComponentProps<typeof CarbonDataTable>["size"];
   title?: string;
+  pageSizes?: number[];
 }
 
 export type DataTableProps = _DataTableProps &
@@ -52,6 +53,7 @@ function DataTable({
   isPaginated = false,
   pageSize,
   page,
+  pageSizes = [10, 25, 50],
   handlePaginationChange,
 }: DataTableProps) {
   return (
@@ -83,7 +85,7 @@ function DataTable({
             <Pagination
               page={page}
               pageSize={pageSize}
-              pageSizes={[10, 25, 50]}
+              pageSizes={pageSizes}
               totalItems={count}
               onChange={handlePaginationChange}
             />
