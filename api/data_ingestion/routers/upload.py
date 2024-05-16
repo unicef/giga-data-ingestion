@@ -31,6 +31,7 @@ from data_ingestion.internal.data_quality_checks import (
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.internal.users import UsersApi
 from data_ingestion.models import FileUpload
+from data_ingestion.models.file_upload import DQStatusEnum
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.upload import (
@@ -251,6 +252,7 @@ async def upload_unstructured(
         original_filename=file.filename,
         column_to_schema_mapping={},
         column_license={},
+        dq_status=DQStatusEnum.SKIPPED,
     )
     db.add(file_upload)
     await db.commit()
