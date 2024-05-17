@@ -1,5 +1,5 @@
 import { CheckmarkOutline } from "@carbon/icons-react";
-import { Button } from "@carbon/react";
+import { Button, DefinitionTooltip } from "@carbon/react";
 import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { format } from "date-fns";
 
@@ -46,7 +46,13 @@ function Success() {
       the progress and output of the checks on the File Uploads page. To check
       this upload in the future, it has Upload ID <b>{uploadId}</b> and
       completed at{" "}
-      <b>{format(uploadDate ?? new Date(), DEFAULT_DATETIME_FORMAT)}</b>
+      <DefinitionTooltip
+        align="right"
+        definition="Date uploaded is the server time"
+        openOnHover
+      >
+        <b>{format(uploadDate ?? new Date(), DEFAULT_DATETIME_FORMAT)}</b>
+      </DefinitionTooltip>
     </>
   );
 

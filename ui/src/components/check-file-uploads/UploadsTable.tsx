@@ -5,6 +5,7 @@ import {
   DataTable,
   DataTableHeader,
   DataTableSkeleton,
+  DefinitionTooltip,
   Pagination,
   Table,
   TableBody,
@@ -35,7 +36,15 @@ const columns: DataTableHeader[] = [
   },
   {
     key: "created",
-    header: "Date uploaded",
+    header: (
+      <DefinitionTooltip
+        align="right"
+        definition="Date uploaded is the server time"
+        openOnHover
+      >
+        <b>Date uploaded</b>
+      </DefinitionTooltip>
+    ),
   },
   {
     key: "uploader_email",

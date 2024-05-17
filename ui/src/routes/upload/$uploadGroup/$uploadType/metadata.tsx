@@ -229,15 +229,16 @@ function Metadata() {
     try {
       if (isUnstructured) {
         await uploadUnstructuredFile.mutateAsync(body);
+        setUploadDate(uploadSlice.timeStamp);
       } else {
         const {
-          data: { id: uploadId },
+          data: { id: uploadId, created: created },
         } = await uploadFile.mutateAsync(body);
         setUploadId(uploadId);
+        setUploadDate(new Date(created));
       }
 
       setIsUploading(false);
-      setUploadDate(uploadSlice.timeStamp);
       setStepIndex(3);
       void navigate({ to: "../success" });
     } catch {
