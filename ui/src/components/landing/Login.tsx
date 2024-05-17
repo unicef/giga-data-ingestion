@@ -5,19 +5,38 @@ import { Link } from "@tanstack/react-router";
 
 import { loginRequest } from "@/lib/auth.ts";
 
-const cards: { title: string; description: string }[] = [
+const cards: { title: string; description: React.ReactNode }[] = [
   {
     title: "Upload data file",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+    description: (
+      <>
+        <p className="cds--label-description">
+          Contribute to Project Giga by uploading your data directly.
+        </p>
+        <p className="cds--label">
+          Accepted formats include: [.csv, .xls, .xlsx, etc. ]
+        </p>
+      </>
+    ),
   },
   {
     title: "Configure API",
-    description:
-      "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua",
+    description: (
+      <p className="cds--label-description">
+        Integrate your data using our Ingest API and send data directly to
+        Project Giga.
+      </p>
+    ),
   },
   {
     title: "Check data quality",
-    description: "Ut enim ad minim veniam, quis nostrud exercitation ullamco",
+    description: (
+      <p className="cds--label-description">
+        Over 150 data validation checks are performed on ingest before data is
+        added to the platform in order to ensure all data meets the standards
+        required.
+      </p>
+    ),
   },
 ];
 
@@ -50,10 +69,12 @@ function Login() {
         {cards.map(card => (
           <div
             key={card.title}
-            className="flex flex-col gap-4 bg-giga-light-gray p-4 text-black hover:bg-giga-light-gray hover:text-black"
+            className="flex flex-col justify-between gap-4 bg-giga-light-gray p-4 text-black hover:bg-giga-light-gray hover:text-black"
           >
-            <div className="text-2xl font-semibold">{card.title}</div>
-            <div>{card.description}</div>
+            <div className="flex flex-col gap-4">
+              <div className="text-2xl font-semibold">{card.title}</div>
+              <div>{card.description}</div>
+            </div>
             <DocumentAdd size={60} className="text-giga-dark-gray" />
           </div>
         ))}

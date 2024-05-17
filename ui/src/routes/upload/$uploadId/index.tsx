@@ -121,14 +121,40 @@ function Index() {
                 <Heading className="capitalize">
                   School {uploadData.dataset}
                 </Heading>
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  Ut enim ad minim veniam, quis nostrud exercitation ullamco
-                  laboris nisi ut aliquip ex ea commodo consequat. Duis aute
-                  irure dolor in reprehenderit in voluptate velit esse cillum
-                  dolore eu fugiat nulla pariatur.
-                </p>
+                <>
+                  <p className="cds--label-description">
+                    This page can be used to check on the progress of all 156
+                    data quality checks or “assertions” being performed on your
+                    data.
+                  </p>
+                  <p className="cds--label-description">
+                    It will label each assertion and provide an overall summary
+                    of those that have been successful, those with errors and
+                    those with critical errors. Data which contains any critical
+                    errors will not pass these validation checks and will not be
+                    loaded to Project Connect.
+                  </p>{" "}
+                  <p className="cds--label-description">
+                    This page can be used to identify which, if any, quality
+                    tests your data has failed on, the values causing the
+                    failure and a suggestion as to what is needed to fix it. A
+                    full report will be emailed to but, and is also available to
+                    be downloaded as a .csv file for use offline. In the event
+                    your data contains critical errors which need to be fixed,
+                    this page is designed to help assist you with those
+                    necessary changes before re-uploading your data again.
+                  </p>{" "}
+                  <p className="cds--label-description">
+                    Users can expect a wait time of approx.15 minutes for all
+                    checks to be carried out successfully, at which time an
+                    email will be sent with a full report and the “DQ Check
+                    Status” will show as “Completed” in the File Uploads table.
+                    Once all data checks have been completed with 0 critical
+                    errors, a final approval request will be made to ingest your
+                    data into Project Connect. Data will not be displayed on the
+                    live site until this process is complete.”
+                  </p>
+                </>
               </Section>
             </Section>
             <Accordion align="start">

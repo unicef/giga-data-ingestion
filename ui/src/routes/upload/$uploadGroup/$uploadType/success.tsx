@@ -42,10 +42,9 @@ function Success() {
     "Your file has been uploaded! Note that no checks will be performed on this file.";
   const defaultMessage = (
     <>
-      Data quality checks will now be performed on your upload; you may check
-      the progress and output of the checks on the File Uploads page. To check
-      this upload in the future, it has Upload ID <b>{uploadId}</b> and
-      completed at{" "}
+      Your data has been successfully uploaded and submitted for data quality
+      checks. You can check on the progress using the File Uploads page and
+      searching for Upload ID <b>{uploadId}</b> - this task was completed at{" "}
       <DefinitionTooltip
         align="right"
         definition="Date uploaded is the server time"
@@ -63,10 +62,7 @@ function Success() {
           <CheckmarkOutline size={30} />
           Success!
         </div>
-        <p>
-          Your data upload was successful. Thank you for uploading your file and
-          filling in the metadata!
-        </p>
+
         <p>{isUnstructured ? unstructuredMessage : defaultMessage}</p>
         <p>You may now safely close this page</p>
       </div>

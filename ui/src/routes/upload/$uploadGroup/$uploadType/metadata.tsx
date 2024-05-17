@@ -260,10 +260,17 @@ function Metadata() {
     <Section>
       <Section>
         <Heading>Add Metadata</Heading>
-        <p>
-          Please check if any information about the dataset is meant to be
-          updated.
-        </p>
+        <div>
+          <p>
+            Please provide any additional context on your data by filling in the
+            metadata sheet below.
+          </p>
+          <p>
+            Not all metadata information is not made visible on Project Connect
+            but does allow the Giga team to understand where the data has come
+            from, and how it can be best integrated into our dataset.
+          </p>
+        </div>
         <Form className="" onSubmit={handleSubmit(onSubmit)}>
           <Stack gap={8}>
             {Object.entries(metadataMapping).map(([group, formItems]) => (
