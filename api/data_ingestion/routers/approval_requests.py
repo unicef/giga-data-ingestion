@@ -11,7 +11,7 @@ from sqlalchemy import column, func, literal, select, text, union_all, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import count
-from sqlalchemy.types import VARCHAR
+from sqlalchemy.types import String
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
@@ -205,8 +205,8 @@ async def get_approval_request(
                 "|",
                 column("school_id_giga"),
                 column("_change_type"),
-                column("_commit_version").cast(VARCHAR()),
-                column("_commit_timestamp").cast(VARCHAR()),
+                column("_commit_version").cast(String()),
+                func.date_format("_commit_timestamp", "%Y-%m-%d %H:%i:%S"),
             ).label("change_id"),
             "*",
         )
