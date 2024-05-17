@@ -206,7 +206,6 @@ async def get_approval_request(
                 column("school_id_giga"),
                 column("_change_type"),
                 column("_commit_version").cast(String()),
-                func.date_format("_commit_timestamp", "%Y-%m-%d %H:%i:%S"),
             ).label("change_id"),
             "*",
         )
