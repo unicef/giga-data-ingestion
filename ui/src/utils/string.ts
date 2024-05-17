@@ -1,3 +1,5 @@
+import { MetaSchema } from "@/types/schema";
+
 export const pluralizeDatasets = (uniqueDatasets: number) =>
   `${uniqueDatasets} ${uniqueDatasets === 1 ? "dataset" : "datasets"}`;
 
@@ -112,4 +114,18 @@ export function validateDatetimeFormat(str: string): boolean {
   const matchesFullPattern = new RegExp(fullPattern).test(str);
 
   return matchesFullPattern || str === "timestamp" || str === "ISO8601";
+}
+
+export function sortSchema(a: MetaSchema, b: MetaSchema) {
+  if (!a.is_nullable && b.is_nullable) return -1;
+
+  if (a.is_nullable && !b.is_nullable) return 1;
+
+  if (a.is_nullable && b.is_nullable && a.is_important && !b.is_important)
+    return -1;
+
+  if (a.is_nullable && b.is_nullable && !a.is_important && b.is_important)
+    return 1;
+
+  return 0;
 }
