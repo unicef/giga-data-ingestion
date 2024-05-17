@@ -12,14 +12,14 @@ import { api } from "@/api";
 
 interface AccordionSummaryProps {
   totalAssertions: number;
-  hasCriticalError?: boolean;
+  criticalErrors?: number;
   totalFailedAssertions: number;
   totalPassedAssertions: number;
   uploadId: string;
 }
 const SummaryBanner = ({
   totalAssertions,
-  hasCriticalError = false,
+  criticalErrors = 0,
   totalPassedAssertions,
   totalFailedAssertions,
   uploadId,
@@ -64,14 +64,16 @@ const SummaryBanner = ({
         <Tag className="flex w-auto gap-2 px-3 py-2" type="red">
           <Warning className="align-middle" /> {totalFailedAssertions}
           {"      "}
-          Assertions with errors
+          Assertions with warnings
         </Tag>
       </div>
-      {hasCriticalError && (
+      {criticalErrors > 0 && (
         <div className="flex ">
           <Tag className="flex w-auto gap-2 px-3 py-2" type="magenta">
             <MisuseOutline className="align-middle" />
-            {"      "} Has Critical Errors
+            {criticalErrors > 1
+              ? `${criticalErrors} Critical Errors`
+              : `${criticalErrors} Critical Error`}
           </Tag>
         </div>
       )}

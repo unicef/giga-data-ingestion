@@ -95,10 +95,6 @@ function Index() {
 
   const totalAssertions = typedChecks.flat().length;
 
-  const hasCriticalError =
-    (critical_error_check as Check[]).length > 0 &&
-    (critical_error_check as Check[])[0].percent_passed != 100;
-
   const dataCheckItems = Object.keys(checks).map(key => {
     const check = checks[key] as Check[];
     return (
@@ -161,7 +157,7 @@ function Index() {
               <AccordionItem title="Summary">
                 <div className="flex flex-col gap-4">
                   <SummaryBanner
-                    hasCriticalError={hasCriticalError}
+                    criticalErrors={critical_error_check[0].count_failed}
                     totalAssertions={totalAssertions}
                     totalFailedAssertions={totalFailedAssertions}
                     totalPassedAssertions={totalPassedAssertions}
