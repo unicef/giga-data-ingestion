@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FieldErrors,
   SubmitHandler,
@@ -155,12 +155,17 @@ function Metadata() {
   const {
     register,
     handleSubmit,
+    trigger,
     formState: { errors },
   } = useForm<MetadataForm>({
     mode: "onSubmit",
     reValidateMode: "onChange",
     resolver: zodResolver(MetadataForm),
   });
+
+  useEffect(() => {
+    trigger();
+  }, [trigger]);
 
   const uploadFile = useMutation({
     mutationFn: api.uploads.upload,
