@@ -47,7 +47,7 @@ function Success() {
       searching for Upload ID <b>{uploadId}</b> - this task was completed at{" "}
       <DefinitionTooltip
         align="right"
-        definition="Date uploaded is the server time"
+        definition="Date uploaded is your local time"
         openOnHover
       >
         <b>{format(uploadDate ?? new Date(), DEFAULT_DATETIME_FORMAT)}</b>

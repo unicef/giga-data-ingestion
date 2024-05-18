@@ -1,7 +1,6 @@
 import { useMsal } from "@azure/msal-react";
 import { ArrowRight, DocumentAdd } from "@carbon/icons-react";
 import { Button, Heading } from "@carbon/react";
-import { Link } from "@tanstack/react-router";
 
 import { loginRequest } from "@/lib/auth.ts";
 
@@ -82,28 +81,14 @@ function Login() {
 
       <div />
 
-      <div className="flex flex-col gap-2">
-        <Button
-          className="w-full"
-          renderIcon={ArrowRight}
-          onClick={handleLogin}
-          isExpressive
-        >
-          Log in
-        </Button>
-        <div>
-          Login lorem ipsum{" "}
-          <Link
-            to="/"
-            search={{
-              page: 1,
-              page_size: 10,
-            }}
-          >
-            <u>Dolor sit Amet</u>
-          </Link>
-        </div>
-      </div>
+      <Button
+        className="w-full"
+        renderIcon={ArrowRight}
+        onClick={handleLogin}
+        isExpressive
+      >
+        Log in
+      </Button>
     </div>
   );
 }
