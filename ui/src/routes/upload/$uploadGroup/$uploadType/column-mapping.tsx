@@ -23,7 +23,6 @@ import {
 } from "@/components/upload/ColumnMapping.tsx";
 import { useStore } from "@/context/store";
 import { getDataPrivacyDocument } from "@/utils/download.ts";
-import { sortSchema } from "@/utils/string";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/column-mapping",
@@ -136,7 +135,7 @@ function UploadColumnMapping() {
 
   const rows = useMemo(
     () =>
-      schema.sort(sortSchema).map(column => ({
+      schema.map(column => ({
         id: column.id,
         masterColumn: <MasterColumn column={column} />,
         detectedColumns: (

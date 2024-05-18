@@ -43,7 +43,7 @@ async def get_schema(
         .select_from(text(f"schemas.{name}"))
         .where(
             column("is_system_generated").is_(None)
-            | (not column("is_system_generated"))
+            | (column("is_system_generated") == False)  # noqa: E712
             | column("primary_key")
         )
         .order_by(
@@ -59,7 +59,12 @@ async def get_schema(
         if metaschema.primary_key:
             metaschema.is_nullable = True
 
+        if metaschema.is_important is None:
+            metaschema.is_important = False
+
         schema.append(metaschema)
+
+    schema = sorted(schema, key=lambda s: (s.is_nullable, -s.is_important, s.name))
 
     background_tasks.add_task(
         set_cache_string, get_schema_key(name), orjson.dumps(jsonable_encoder(schema))
