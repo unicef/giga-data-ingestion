@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
@@ -11,6 +11,7 @@ import {
   DEFAULT_PAGE_SIZE,
 } from "@/constants/pagination.ts";
 import { useStore } from "@/context/store.ts";
+import { cn } from "@/lib/utils.ts";
 import { saveFile } from "@/utils/download.ts";
 
 const doRedirect = redirect({
@@ -71,6 +72,7 @@ function Layout() {
     uploadSlice: { stepIndex },
     uploadSliceActions: { resetUploadSliceState },
   } = useStore();
+  const [isSchemaDownloading, setIsSchemaDownloading] = useState(false);
 
   useEffect(() => {
     return resetUploadSliceState;
@@ -97,7 +99,18 @@ function Layout() {
       </p>
       <p>
         Click{" "}
-        <a className="cursor-pointer" onClick={downloadGeolocationSchema}>
+        <a
+          className={cn("cursor-pointer", {
+            "cursor-wait": isSchemaDownloading,
+          })}
+          onClick={async () => {
+            if (isSchemaDownloading) return;
+
+            setIsSchemaDownloading(true);
+            await downloadGeolocationSchema();
+            setIsSchemaDownloading(false);
+          }}
+        >
           here
         </a>{" "}
         to download a template copy of the expected schema. Please use this as a

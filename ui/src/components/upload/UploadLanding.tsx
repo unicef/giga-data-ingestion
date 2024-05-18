@@ -1,8 +1,11 @@
+import { useState } from "react";
+
 import { Add } from "@carbon/icons-react";
 import { Button, Heading, Section, Stack } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
+import { cn } from "@/lib/utils.ts";
 import { getDataPrivacyDocument } from "@/utils/download.ts";
 
 interface UploadLandingProps {
@@ -18,6 +21,8 @@ interface UploadLandingProps {
 }
 
 function UploadLanding(props: UploadLandingProps) {
+  const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
+
   return (
     <Section>
       <Section>
@@ -37,7 +42,21 @@ function UploadLanding(props: UploadLandingProps) {
               </p>
               <p>
                 Please review our{" "}
-                <a onClick={getDataPrivacyDocument} className="cursor-pointer">
+                <a
+                  onClick={async () => {
+                    // It's ridiculous how there's no native way of disabling
+                    // HTML anchors. We could add the pointer-events-none class
+                    // but that disables the loading cursor animation.
+                    if (isPrivacyLoading) return;
+
+                    setIsPrivacyLoading(true);
+                    await getDataPrivacyDocument();
+                    setIsPrivacyLoading(false);
+                  }}
+                  className={cn("cursor-pointer", {
+                    "cursor-wait": isPrivacyLoading,
+                  })}
+                >
                   data privacy and sharing framework
                 </a>{" "}
                 to answer any questions you may have regarding what data can be
