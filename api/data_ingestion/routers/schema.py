@@ -1,14 +1,26 @@
+import io
+
 import orjson
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
-from fastapi.encoders import jsonable_encoder
-from sqlalchemy import column, select, text
+import pandas as pd
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Response,
+    Security,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from data_ingestion.cache.keys import get_schema_key
-from data_ingestion.cache.serde import get_cache_string, set_cache_string
+from data_ingestion.cache.serde import get_cache_string
 from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.internal.schema import get_schemas
+from data_ingestion.internal.schema import (
+    get_schema as _get_schema,
+    get_schemas,
+)
 from data_ingestion.schemas.schema import Schema as MetaSchema
 
 router = APIRouter(
@@ -38,35 +50,31 @@ async def get_schema(
     if (schema := await get_cache_string(get_schema_key(name))) is not None:
         return orjson.loads(schema)
 
-    res = db.execute(
-        select("*")
-        .select_from(text(f"schemas.{name}"))
-        .where(
-            column("is_system_generated").is_(None)
-            | (column("is_system_generated") == False)  # noqa: E712
-            | column("primary_key")
-        )
-        .order_by(
-            column("is_nullable").nulls_last(),
-            column("is_important").nulls_last(),
-            column("name"),
-        )
-    )
+    return await _get_schema(name, db, background_tasks)
 
-    schema = []
-    for mapping in res.mappings().all():
-        metaschema = MetaSchema(**mapping)
-        if metaschema.primary_key:
-            metaschema.is_nullable = True
 
-        if metaschema.is_important is None:
-            metaschema.is_important = False
+@router.get("/{name}/download", response_class=Response)
+async def download_schema(
+    response: Response,
+    name: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    schemas = await get_schemas(db, background_tasks)
+    if name not in schemas:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-        schema.append(metaschema)
+    if (schema := await get_cache_string(get_schema_key(name))) is not None:
+        schema = orjson.loads(schema)
+    else:
+        schema = [s.model_dump() for s in await _get_schema(name, db, background_tasks)]
 
-    schema = sorted(schema, key=lambda s: (s.is_nullable, -s.is_important, s.name))
+    df = pd.DataFrame.from_records(schema)
 
-    background_tasks.add_task(
-        set_cache_string, get_schema_key(name), orjson.dumps(jsonable_encoder(schema))
-    )
-    return schema
+    buffer = io.BytesIO()
+    df[["name", "data_type", "is_nullable", "description"]].to_csv(buffer, index=False)
+    buffer.seek(0)
+
+    response.media_type = "text/csv"
+    response.headers.update({"Content-Disposition": f"attachment; filename={name}.csv"})
+    return buffer.getvalue()
