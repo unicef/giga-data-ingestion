@@ -41,9 +41,14 @@ async def get_schema(
     res = db.execute(
         select("*")
         .select_from(text(f"schemas.{name}"))
+        .where(
+            column("is_system_generated").is_(None)
+            | (not column("is_system_generated"))
+            | column("primary_key")
+        )
         .order_by(
-            column("primary_key"),
             column("is_nullable").nulls_last(),
+            column("is_important").nulls_last(),
             column("name"),
         )
     )
@@ -53,11 +58,8 @@ async def get_schema(
         metaschema = MetaSchema(**mapping)
         if metaschema.primary_key:
             metaschema.is_nullable = True
-            schema.append(metaschema)
-            continue
 
-        if not metaschema.is_system_generated:
-            schema.append(metaschema)
+        schema.append(metaschema)
 
     background_tasks.add_task(
         set_cache_string, get_schema_key(name), orjson.dumps(jsonable_encoder(schema))

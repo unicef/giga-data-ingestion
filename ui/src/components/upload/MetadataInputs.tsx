@@ -41,7 +41,11 @@ export function CountrySelect({
   ) : (
     <Select
       id="country"
-      labelText="Country"
+      labelText={
+        <>
+          Country<sup className="text-giga-red">*</sup>
+        </>
+      }
       placeholder="Country"
       invalid={!!errors.country}
       invalidText={errors["country"]?.message as string}
@@ -73,7 +77,12 @@ export function FreeTextInput({
   ) : (
     <TextInput
       id={formItem.name}
-      labelText={formItem.label}
+      labelText={
+        <>
+          {formItem.label}
+          {formItem.required && <sup className="text-giga-red">*</sup>}
+        </>
+      }
       helperText={
         <span className="whitespace-pre-line">{formItem.helperText}</span>
       }

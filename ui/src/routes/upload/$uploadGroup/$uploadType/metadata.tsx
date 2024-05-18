@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   FieldErrors,
   SubmitHandler,
@@ -16,6 +16,7 @@ import {
   Loading,
   Section,
   Stack,
+  Tag,
 } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
@@ -155,17 +156,12 @@ function Metadata() {
   const {
     register,
     handleSubmit,
-    trigger,
     formState: { errors },
   } = useForm<MetadataForm>({
     mode: "onSubmit",
     reValidateMode: "onChange",
     resolver: zodResolver(MetadataForm),
   });
-
-  useEffect(() => {
-    trigger();
-  }, [trigger]);
 
   const uploadFile = useMutation({
     mutationFn: api.uploads.upload,
@@ -266,10 +262,11 @@ function Metadata() {
             metadata sheet below.
           </p>
           <p>
-            Not all metadata information is not made visible on Project Connect
-            but does allow the Giga team to understand where the data has come
-            from, and how it can be best integrated into our dataset.
+            Not all metadata information is made visible on Project Connect but
+            does allow the Giga team to understand where the data has come from,
+            and how it can be best integrated into our dataset.
           </p>
+          <Tag type="red">*Required</Tag>
         </div>
         <Form className="" onSubmit={handleSubmit(onSubmit)}>
           <Stack gap={8}>

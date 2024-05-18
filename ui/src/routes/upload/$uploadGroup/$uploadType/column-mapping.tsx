@@ -2,14 +2,7 @@ import { useMemo, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
-import {
-  Button,
-  ButtonSet,
-  Link as CarbonLink,
-  DataTableHeader,
-  Stack,
-  Tag,
-} from "@carbon/react";
+import { Button, ButtonSet, DataTableHeader, Stack, Tag } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
@@ -29,6 +22,7 @@ import {
   MasterColumn,
 } from "@/components/upload/ColumnMapping.tsx";
 import { useStore } from "@/context/store";
+import { getDataPrivacyDocument } from "@/utils/download.ts";
 import { sortSchema } from "@/utils/string";
 
 export const Route = createFileRoute(
@@ -78,9 +72,10 @@ const DESCRIPTION = (
     <p>
       If you are unsure on which licence to provide, please consult our data
       sharing and privacy framework by clicking{" "}
-      <CarbonLink href="https://unicef.sharepoint.com/teams/OOI/DocumentLibrary1/Forms/AllItems.aspx?id=%2Fteams%2FOOI%2FDocumentLibrary1%2FGiga%2F004%20Country%20support%2F%5FGlobal%20%2D%20Country%20info%20pack%2F08%2E%20Giga%20Data%20Sharing%20Framework%2FGiga%20Data%20Sharing%20Framework%5FENG%5FJan%5F2024%5FFinal%2Epdf&viewid=8a9966f4%2De600%2D450e%2Daa6d%2D71ab396305cf&parent=%2Fteams%2FOOI%2FDocumentLibrary1%2FGiga%2F004%20Country%20support%2F%5FGlobal%20%2D%20Country%20info%20pack%2F08%2E%20Giga%20Data%20Sharing%20Framework">
-        here.
-      </CarbonLink>
+      <a onClick={getDataPrivacyDocument} className="cursor-pointer">
+        here
+      </a>
+      .
     </p>
   </>
 );

@@ -70,9 +70,7 @@ const GEOLOCATION_DESCRIPTION = (
       We ask that you take special note of those columns marked as “Mandatory”
       and ensure they all filled in correctly.{" "}
     </p>
-    <p className="cds--label">
-      Accepted file formats include: [.csv, .xlsx, .xls, etc....]
-    </p>
+    <p>Accepted file formats include: [.csv, .xlsx, .xls]</p>
   </>
 );
 
@@ -95,9 +93,9 @@ const COVERAGE_DESCRIPTION = (
       Please take special note of those columns marked as “Mandatory” and ensure
       they all filled in correctly.
     </p>
-    <p className="cds--label">
+    <p>
       Any file uploaded must be no larger than 10MB and be in one of the
-      accepted file formats: [.csv, .xlsx, .xls.] ”
+      accepted file formats: [.csv, .xlsx, .xls.]
     </p>
   </>
 );

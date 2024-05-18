@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from json import JSONDecodeError
+from pathlib import Path
 
 import httpx
 from country_converter import CountryConverter
@@ -14,7 +15,9 @@ from fastapi.responses import StreamingResponse
 from loguru import logger
 from starlette.background import BackgroundTask
 
+from data_ingestion.constants import constants
 from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.storage import storage_client
 from data_ingestion.schemas.core import B2CPolicyGroupRequest, B2CPolicyGroupResponse
 from data_ingestion.schemas.util import (
     Country,
@@ -109,4 +112,17 @@ async def forward_get_request(
         status_code=sharing_res.status_code,
         media_type="application/json",
         background=BackgroundTask(sharing_res.aclose),
+    )
+
+
+@router.get("/data-privacy")
+async def get_data_privacy_document():
+    path = Path(constants.DATA_PRIVACY_DOCUMENT_PATH)
+    blob = storage_client.get_blob_client(str(path))
+    stream = blob.download_blob()
+    headers = {"Content-Disposition": f"attachment; filename={path.name}"}
+    return StreamingResponse(
+        stream.chunks(),
+        media_type="application/pdf",
+        headers=headers,
     )

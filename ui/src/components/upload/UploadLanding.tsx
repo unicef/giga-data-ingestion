@@ -1,14 +1,9 @@
 import { Add } from "@carbon/icons-react";
-import {
-  Button,
-  Link as CarbonLink,
-  Heading,
-  Section,
-  Stack,
-} from "@carbon/react";
+import { Button, Heading, Section, Stack } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
+import { getDataPrivacyDocument } from "@/utils/download.ts";
 
 interface UploadLandingProps {
   page: number;
@@ -42,9 +37,9 @@ function UploadLanding(props: UploadLandingProps) {
               </p>
               <p>
                 Please review our{" "}
-                <CarbonLink href="https://unicef.sharepoint.com/teams/OOI/DocumentLibrary1/Forms/AllItems.aspx?id=%2Fteams%2FOOI%2FDocumentLibrary1%2FGiga%2F004%20Country%20support%2F%5FGlobal%20%2D%20Country%20info%20pack%2F08%2E%20Giga%20Data%20Sharing%20Framework%2FGiga%20Data%20Sharing%20Framework%5FENG%5FJan%5F2024%5FFinal%2Epdf&viewid=8a9966f4%2De600%2D450e%2Daa6d%2D71ab396305cf&parent=%2Fteams%2FOOI%2FDocumentLibrary1%2FGiga%2F004%20Country%20support%2F%5FGlobal%20%2D%20Country%20info%20pack%2F08%2E%20Giga%20Data%20Sharing%20Framework">
+                <a onClick={getDataPrivacyDocument} className="cursor-pointer">
                   data privacy and sharing framework
-                </CarbonLink>{" "}
+                </a>{" "}
                 to answer any questions you may have regarding what data can be
                 shared and in which context.
               </p>
