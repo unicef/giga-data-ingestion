@@ -22,6 +22,7 @@ interface Summary {
 
 export interface DataQualityCheckSummary {
   [key: string]: Check[] | Summary;
+  critical_error_check: Check[];
   summary: Summary;
 }
 

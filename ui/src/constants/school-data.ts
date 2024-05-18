@@ -254,7 +254,7 @@ export const masterSchemaData: MasterSchema = {
     data_relevance: DataRelevanceEnum.Optional,
   },
   nearest_LTE_distance: {
-    description: "The distance to the nearest LTE tower",
+    description: "LTE (Long-Term Evolution) is the nearest 4G cellular tower",
     data_relevance: DataRelevanceEnum.Optional,
   },
   nearest_UMTS_distance: {
@@ -262,7 +262,8 @@ export const masterSchemaData: MasterSchema = {
     data_relevance: DataRelevanceEnum.Optional,
   },
   nearest_GSM_distance: {
-    description: "The distance to the nearest GSM tower",
+    description:
+      "GSM (Global System for Mobile Communications) is the nearest 2G coverage tower",
     data_relevance: DataRelevanceEnum.Optional,
   },
   pop_within_1km: {

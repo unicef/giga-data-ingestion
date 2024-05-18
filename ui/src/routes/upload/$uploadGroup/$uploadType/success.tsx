@@ -1,5 +1,5 @@
 import { CheckmarkOutline } from "@carbon/icons-react";
-import { Button } from "@carbon/react";
+import { Button, DefinitionTooltip } from "@carbon/react";
 import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { format } from "date-fns";
 
@@ -42,11 +42,16 @@ function Success() {
     "Your file has been uploaded! Note that no checks will be performed on this file.";
   const defaultMessage = (
     <>
-      Data quality checks will now be performed on your upload; you may check
-      the progress and output of the checks on the File Uploads page. To check
-      this upload in the future, it has Upload ID <b>{uploadId}</b> and
-      completed at{" "}
-      <b>{format(uploadDate ?? new Date(), DEFAULT_DATETIME_FORMAT)}</b>
+      Your data has been successfully uploaded and submitted for data quality
+      checks. You can check on the progress using the File Uploads page and
+      searching for Upload ID <b>{uploadId}</b> - this task was completed at{" "}
+      <DefinitionTooltip
+        align="right"
+        definition="Date uploaded is your local time"
+        openOnHover
+      >
+        <b>{format(uploadDate ?? new Date(), DEFAULT_DATETIME_FORMAT)}</b>
+      </DefinitionTooltip>
     </>
   );
 
@@ -57,10 +62,7 @@ function Success() {
           <CheckmarkOutline size={30} />
           Success!
         </div>
-        <p>
-          Your data upload was successful. Thank you for uploading your file and
-          filling in the metadata!
-        </p>
+
         <p>{isUnstructured ? unstructuredMessage : defaultMessage}</p>
         <p>You may now safely close this page</p>
       </div>

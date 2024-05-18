@@ -19,5 +19,8 @@ export default function routers(axi: AxiosInstance) {
     listCountries: (): Promise<AxiosResponse<Country[]>> => {
       return axi.get("/utils/countries");
     },
+    getDataPrivacyDocument: (): Promise<AxiosResponse<Blob>> => {
+      return axi.get("/utils/data-privacy", { responseType: "blob" });
+    },
   };
 }

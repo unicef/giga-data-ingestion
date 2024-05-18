@@ -22,6 +22,8 @@ import {
   MasterColumn,
 } from "@/components/upload/ColumnMapping.tsx";
 import { useStore } from "@/context/store";
+import { cn } from "@/lib/utils.ts";
+import { getDataPrivacyDocument } from "@/utils/download.ts";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/column-mapping",
@@ -61,6 +63,7 @@ function UploadColumnMapping() {
     uploadSlice: { detectedColumns, columnMapping, source },
     uploadSliceActions: { setStepIndex, setColumnMapping, setColumnLicense },
   } = useStore();
+  const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
 
   const [selectedColumns, setSelectedColumns] =
     useState<Record<string, string>>(columnMapping);
@@ -122,12 +125,52 @@ function UploadColumnMapping() {
     [detectedColumns, schema, selectedColumns],
   );
 
+  const DESCRIPTION = (
+    <>
+      <p>
+        Below is a list of all possible columns which can be created from your
+        data upload.
+      </p>
+      <p>
+        Please fill in and map each column from your file to the expected field
+        names. It is important to complete this page as accurately as possible,
+        any incorrect mappings will result in the failure of data validation
+        checks and your data not being uploaded correctly.{" "}
+      </p>
+      <p>
+        Finally select the applicable licence for each field. Please note that
+        the licence selected will determine who can access this data via the
+        Giga Sharing API .{" "}
+      </p>
+      <p>
+        If you are unsure on which licence to provide, please consult our data
+        sharing and privacy framework by clicking{" "}
+        <a
+          onClick={async () => {
+            if (isPrivacyLoading) return;
+
+            setIsPrivacyLoading(true);
+            await getDataPrivacyDocument();
+            setIsPrivacyLoading(false);
+          }}
+          className={cn("cursor-pointer", {
+            "cursor-wait": isPrivacyLoading,
+          })}
+        >
+          here
+        </a>
+        .
+      </p>
+    </>
+  );
+
   return (
     <FormProvider {...hookForm}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack gap={8}>
           <section className="flex flex-col gap-8">
             <h2 className="text-[23px] capitalize">Configure Columns</h2>
+            <div>{DESCRIPTION}</div>
             <div className="flex gap-4">
               <Tag type="red">*Required</Tag>
               <Tag type="purple">

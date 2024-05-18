@@ -1,8 +1,12 @@
+import { useState } from "react";
+
 import { Add } from "@carbon/icons-react";
 import { Button, Heading, Section, Stack } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
+import { cn } from "@/lib/utils.ts";
+import { getDataPrivacyDocument } from "@/utils/download.ts";
 
 interface UploadLandingProps {
   page: number;
@@ -17,18 +21,48 @@ interface UploadLandingProps {
 }
 
 function UploadLanding(props: UploadLandingProps) {
+  const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
+
   return (
     <Section>
       <Section>
         <Stack gap={8}>
           <Stack gap={4}>
             <Heading>What will you be uploading today?</Heading>
-            <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat.
-            </p>
+            <div>
+              <p>
+                Giga is an international project, focused on building the
+                world's largest, most comprehensive database of schools mapped
+                around the world. It relies on collaboration and data
+                contributions from a number of sources, such as Governments,
+                Internet Service Providers (ISPs), Ministries of Education and
+                private companies. As such, your contributions are highly valued
+                and essential to us achieving our mission of connecting every
+                school to the internet by 2030.
+              </p>
+              <p>
+                Please review our{" "}
+                <a
+                  onClick={async () => {
+                    // It's ridiculous how there's no native way of disabling
+                    // HTML anchors. We could add the pointer-events-none class
+                    // but that disables the loading cursor animation.
+                    if (isPrivacyLoading) return;
+
+                    setIsPrivacyLoading(true);
+                    await getDataPrivacyDocument();
+                    setIsPrivacyLoading(false);
+                  }}
+                  className={cn("cursor-pointer", {
+                    "cursor-wait": isPrivacyLoading,
+                  })}
+                >
+                  data privacy and sharing framework
+                </a>{" "}
+                to answer any questions you may have regarding what data can be
+                shared and in which context.
+              </p>
+            </div>
             <div className="grid grid-cols-4">
               <Button
                 as={Link}
