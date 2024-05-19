@@ -18,6 +18,7 @@ import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { useStore } from "@/context/store";
 import { SENTINEL_PAGED_RESPONSE } from "@/types/api.ts";
 import { ApprovalRequestListing } from "@/types/approvalRequests";
+import { commaNumber } from "@/utils/number.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
 const columns: DataTableHeader[] = [
@@ -109,6 +110,10 @@ function ApprovalRequests() {
     () =>
       approvalRequests.data.map(request => ({
         ...request,
+        rows_count: commaNumber(request.rows_count),
+        rows_added: commaNumber(request.rows_added),
+        rows_updated: commaNumber(request.rows_updated),
+        rows_deleted: commaNumber(request.rows_deleted),
         country: `${request.country} (${request.country_iso3})`,
         actions: (
           <Button
