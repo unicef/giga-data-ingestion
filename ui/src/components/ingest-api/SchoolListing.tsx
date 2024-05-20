@@ -10,9 +10,9 @@ import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { ZodError } from "zod";
 
 import {
-  geolocationSchemaQueryOptions,
   listCountriesQueryOptions,
   listUsersQueryOptions,
+  qosGeolocationSchemaQueryOptions,
 } from "@/api/queryOptions.ts";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton.tsx";
 import SchoolListFormInputs from "@/components/ingest-api/SchoolListFormInputs.tsx";
@@ -60,7 +60,7 @@ function SchoolListing({ isEditing = false, defaultData }: SchoolListingProps) {
 
   const {
     data: { data: schema },
-  } = useSuspenseQuery(geolocationSchemaQueryOptions);
+  } = useSuspenseQuery(qosGeolocationSchemaQueryOptions);
 
   const {
     data: { data: countries },

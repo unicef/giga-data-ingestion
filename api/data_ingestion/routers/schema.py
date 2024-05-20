@@ -11,6 +11,7 @@ from fastapi import (
     Security,
     status,
 )
+from loguru import logger
 from sqlalchemy.orm import Session
 
 from data_ingestion.cache.keys import get_schema_key
@@ -41,16 +42,24 @@ async def list_schemas(
 async def get_schema(
     name: str,
     background_tasks: BackgroundTasks,
+    is_qos: bool = False,
     db: Session = Depends(get_db),
 ):
+    logger.info(f"{is_qos=}")
     schemas = await get_schemas(db, background_tasks)
+
     if name not in schemas:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    if (schema := await get_cache_string(get_schema_key(name))) is not None:
+    if is_qos:
+        schema_cache_key = f"{name}_qos"
+    else:
+        schema_cache_key = name
+
+    if (schema := await get_cache_string(get_schema_key(schema_cache_key))) is not None:
         return orjson.loads(schema)
 
-    return await _get_schema(name, db, background_tasks)
+    return await _get_schema(name, db, background_tasks, is_qos=is_qos)
 
 
 @router.get("/{name}/download", response_class=Response)

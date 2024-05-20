@@ -1,5 +1,6 @@
 from fastapi import BackgroundTasks
 from fastapi.encoders import jsonable_encoder
+from loguru import logger
 from orjson import orjson
 from sqlalchemy import column, literal, select, text
 from sqlalchemy.orm import Session
@@ -32,6 +33,8 @@ async def get_schema(
     name: str,
     db: Session,
     background_tasks: BackgroundTasks,
+    *,
+    is_qos=False,
 ) -> list[Schema]:
     res = db.execute(
         select("*")
@@ -57,13 +60,27 @@ async def get_schema(
         if metaschema.is_important is None:
             metaschema.is_important = False
 
+        logger.info(metaschema.model_dump())
+
+        if is_qos and metaschema.name in [
+            "education_level_govt",
+            "school_id_govt_type",
+        ]:
+            metaschema.is_nullable = True
+            metaschema.is_important = True
+
         schema.append(metaschema)
 
-    schemas = sorted(schema, key=lambda s: (s.is_nullable, -s.is_important, s.name))
+    schema = sorted(schema, key=lambda s: (s.is_nullable, -s.is_important, s.name))
+
+    if is_qos:
+        schema_cache_key = f"{name}_qos"
+    else:
+        schema_cache_key = name
 
     background_tasks.add_task(
         set_cache_string,
-        get_schema_key(name),
+        get_schema_key(schema_cache_key),
         orjson.dumps(jsonable_encoder(schema)),
     )
-    return schemas
+    return schema

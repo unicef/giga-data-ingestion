@@ -23,7 +23,7 @@ import {
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 
-import { geolocationSchemaQueryOptions } from "@/api/queryOptions.ts";
+import { qosGeolocationSchemaQueryOptions } from "@/api/queryOptions.ts";
 import { useStore } from "@/context/store.ts";
 import { ConfigureColumnsForm } from "@/forms/ingestApi.ts";
 
@@ -58,7 +58,7 @@ function ColumnMapping() {
 
   const {
     data: { data: schema },
-  } = useSuspenseQuery(geolocationSchemaQueryOptions);
+  } = useSuspenseQuery(qosGeolocationSchemaQueryOptions);
 
   const {
     handleSubmit,

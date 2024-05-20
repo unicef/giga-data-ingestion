@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-import { geolocationSchemaQueryOptions } from "@/api/queryOptions.ts";
+import { qosGeolocationSchemaQueryOptions } from "@/api/queryOptions.ts";
 import ColumnMapping from "@/components/ingest-api/ColumnMapping";
 import { useStore } from "@/context/store";
 
@@ -26,6 +26,6 @@ export const Route = createFileRoute(
 
     setStepIndex(1);
 
-    return queryClient.ensureQueryData(geolocationSchemaQueryOptions);
+    return queryClient.ensureQueryData(qosGeolocationSchemaQueryOptions);
   },
 });

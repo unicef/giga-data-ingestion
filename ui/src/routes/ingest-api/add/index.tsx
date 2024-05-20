@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import {
-  geolocationSchemaQueryOptions,
   listCountriesQueryOptions,
+  qosGeolocationSchemaQueryOptions,
 } from "@/api/queryOptions.ts";
 import { listUsersQueryOptions } from "@/api/queryOptions.ts";
 import IngestFormSkeleton from "@/components/ingest-api/IngestFormSkeleton";
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/ingest-api/add/")({
     setStepIndex(0);
 
     return Promise.all([
-      queryClient.ensureQueryData(geolocationSchemaQueryOptions),
+      queryClient.ensureQueryData(qosGeolocationSchemaQueryOptions),
       queryClient.ensureQueryData(listUsersQueryOptions),
       queryClient.ensureQueryData(listCountriesQueryOptions),
     ]);
