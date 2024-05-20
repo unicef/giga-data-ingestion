@@ -24,7 +24,20 @@ def get_data_quality_summary(dq_report_path: str):
 
     blob_data = blob.download_blob().readall()
     dq_report_summary = blob_data.decode("utf-8")
-    dq_report_summary_dict = json.loads(dq_report_summary)
+    dq_report_summary_dict: dict = json.loads(dq_report_summary)
+
+    for group in dq_report_summary_dict.keys():
+        if group == "summary":
+            continue
+
+        dq_report_summary_dict[group] = sorted(
+            dq_report_summary_dict[group],
+            key=lambda x: (
+                -int("mandatory" in x["assertion"]),
+                -x["count_failed"],
+                x["column"],
+            ),
+        )
 
     return dq_report_summary_dict
 

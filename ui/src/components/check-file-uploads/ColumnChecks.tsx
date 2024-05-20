@@ -57,92 +57,82 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
   >([{}]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const rows = data
-    .sort((a, b) => a.column.localeCompare(b.column))
-    .map(check => {
-      const {
-        assertion,
-        column = "NO_COLUMN",
-        description,
-        count_failed,
-        count_passed,
-        count_overall,
-        percent_failed,
-        percent_passed,
-      } = check;
+  const rows = data.map(check => {
+    const {
+      assertion,
+      column = "NO_COLUMN",
+      description,
+      count_failed,
+      count_passed,
+      count_overall,
+      percent_failed,
+      percent_passed,
+    } = check;
 
-      const columnValue = column === "" ? "NO_COLUMN" : column;
+    const columnValue = column === "" ? "NO_COLUMN" : column;
 
-      const definition =
-        masterSchemaData[columnValue as keyof MasterSchema]?.description ||
-        "NO DESCRIPTION";
+    const definition =
+      masterSchemaData[columnValue as keyof MasterSchema]?.description ||
+      "NO DESCRIPTION";
 
-      return {
-        id: `${assertion}-${column}`,
-        column: (
-          <div className="min-w-64">
-            <DefinitionTooltip
-              align="right"
-              definition={definition}
-              openOnHover
-            >
-              {columnValue}
-            </DefinitionTooltip>
-          </div>
-        ),
-        assertion: (
-          <div className="min-w-64 ">
-            <DefinitionTooltip
-              align="right"
-              definition={description}
-              openOnHover
-            >
-              {assertion}
-            </DefinitionTooltip>
-          </div>
-        ),
-        count_failed: (
-          <div className="flex">
-            {count_failed}/{count_overall}
-          </div>
-        ),
-        percent_failed: (
-          <div className="flex">
-            <StatusIndicator className="mr-1" type="error" />
-            {percent_failed}%
-          </div>
-        ),
-        count_passed: (
-          <div className="flex">
-            {count_passed}/{count_overall}
-          </div>
-        ),
-        percent_passed: (
-          <div className="flex">
-            <StatusIndicator className="mr-1" type="success" />
-            {percent_passed}%
-          </div>
-        ),
-        actions: (
-          <Button
-            className="cursor-pointer"
-            kind="ghost"
-            disabled={columnValue === "NO_COLUMN" || percent_passed === 100}
-            onClick={() => {
-              const selectedPreviewData =
-                previewData[`${assertion}-${column}`] || INVALID_VALUES;
+    return {
+      id: `${assertion}-${column}`,
+      column: (
+        <div className="min-w-64">
+          <DefinitionTooltip align="right" definition={definition} openOnHover>
+            {columnValue}
+          </DefinitionTooltip>
+        </div>
+      ),
+      assertion: (
+        <div className="min-w-64 ">
+          <DefinitionTooltip align="right" definition={description} openOnHover>
+            {assertion}
+          </DefinitionTooltip>
+        </div>
+      ),
+      count_failed: (
+        <div className="flex">
+          {count_failed}/{count_overall}
+        </div>
+      ),
+      percent_failed: (
+        <div className="flex">
+          <StatusIndicator className="mr-1" type="error" />
+          {percent_failed.toFixed(2)}%
+        </div>
+      ),
+      count_passed: (
+        <div className="flex">
+          {count_passed}/{count_overall}
+        </div>
+      ),
+      percent_passed: (
+        <div className="flex">
+          <StatusIndicator className="mr-1" type="success" />
+          {percent_passed.toFixed(2)}%
+        </div>
+      ),
+      actions: (
+        <Button
+          className="cursor-pointer"
+          kind="ghost"
+          disabled={columnValue === "NO_COLUMN" || percent_passed === 100}
+          onClick={() => {
+            const selectedPreviewData =
+              previewData[`${assertion}-${column}`] || INVALID_VALUES;
 
-              setSelctedAssertion(assertion);
-              setSelectedPreviewData(selectedPreviewData);
-              setIsModalOpen(true);
-              setSelectedColumn(column);
-            }}
-          >
-            View Details
-          </Button>
-        ),
-      };
-    });
+            setSelctedAssertion(assertion);
+            setSelectedPreviewData(selectedPreviewData);
+            setIsModalOpen(true);
+            setSelectedColumn(column);
+          }}
+        >
+          View Details
+        </Button>
+      ),
+    };
+  });
 
   const maxPages = Math.ceil(data.length / ITEMS_PER_PAGE);
   const startIndex = page * ITEMS_PER_PAGE;
