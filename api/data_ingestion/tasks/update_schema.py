@@ -65,6 +65,9 @@ def update_schemas():
 
                 schema.append(metaschema)
 
+            schema = sorted(
+                schema, key=lambda s: (s.is_nullable, -s.is_important, s.name)
+            )
             schemas[name] = schema
 
         if "school_geolocation" in schemas.keys():

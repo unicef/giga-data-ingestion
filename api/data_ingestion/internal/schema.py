@@ -81,6 +81,6 @@ async def get_schema(
     background_tasks.add_task(
         set_cache_string,
         get_schema_key(schema_cache_key),
-        orjson.dumps(jsonable_encoder(schema)),
+        orjson.dumps(jsonable_encoder([s.model_dump() for s in schema])),
     )
     return schema
