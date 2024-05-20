@@ -43,9 +43,14 @@ def update_schemas():
             res = db.execute(
                 select("*")
                 .select_from(text(f"schemas.{name}"))
+                .where(
+                    column("is_system_generated").is_(None)
+                    | (column("is_system_generated") == False)  # noqa: E712
+                    | column("primary_key")
+                )
                 .order_by(
-                    column("primary_key"),
                     column("is_nullable").nulls_last(),
+                    column("is_important").nulls_last(),
                     column("name"),
                 )
             )
@@ -54,13 +59,23 @@ def update_schemas():
                 metaschema = Schema(**mapping)
                 if metaschema.primary_key:
                     metaschema.is_nullable = True
-                    schema.append(metaschema.model_dump(mode="json"))
-                    continue
 
-                if not metaschema.is_system_generated:
-                    schema.append(metaschema.model_dump(mode="json"))
+                if metaschema.is_important is None:
+                    metaschema.is_important = False
+
+                schema.append(metaschema)
 
             schemas[name] = schema
+
+        if "school_geolocation" in schemas.keys():
+            schemas["school_geolocation_qos"] = {**schemas["school_geolocation"]}
+            for col in schemas["school_geolocation_qos"]:
+                if col.name in [
+                    "education_level_govt",
+                    "school_id_govt_type",
+                ]:
+                    col.is_nullable = True
+                    col.is_important = True
 
     for name, schema in schemas.items():
         async_to_sync(set_cache_string)(
