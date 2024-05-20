@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { MetadataFormMapping } from "@/types/metadata.ts";
 
-const thisYear = new Date().getFullYear();
+const thisYear = new Date().getFullYear() + 10;
 
 const unicefFoundingYear = 1945;
 
