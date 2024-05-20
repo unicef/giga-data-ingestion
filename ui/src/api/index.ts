@@ -135,8 +135,8 @@ export function AxiosProvider({ children }: PropsWithChildren) {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: true,
-      refetchOnReconnect: true,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
       placeholderData: keepPreviousData,
     },
   },
