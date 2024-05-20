@@ -1,5 +1,6 @@
 import orjson
 from asgiref.sync import async_to_sync
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import column, literal, select, text
 
 from data_ingestion.cache.keys import SCHEMAS_KEY, get_schema_key
@@ -83,7 +84,7 @@ def update_schemas():
     for name, schema in schemas.items():
         async_to_sync(set_cache_string)(
             get_schema_key(name),
-            orjson.dumps([s.model_dump(mode="json") for s in schema]),
+            orjson.dumps(jsonable_encoder(schema)),
         )
 
-    return schemas
+    return jsonable_encoder(schemas)
