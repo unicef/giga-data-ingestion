@@ -1,4 +1,4 @@
-import { ReactElement, useMemo, useState } from "react";
+import { ReactElement, useMemo } from "react";
 
 import { CheckmarkFilled } from "@carbon/icons-react";
 import {
@@ -8,7 +8,7 @@ import {
   Loading,
 } from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 
 import { api } from "@/api";
@@ -73,9 +73,8 @@ type ApprovalRequestTableRow = Record<
 > & { id: string; actions: ReactElement };
 
 function ApprovalRequests() {
-  const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(10);
-
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { page = 1, page_size = 10 } = Route.useSearch();
   const {
     approveRowActions: { resetApproveRowState },
   } = useStore();
@@ -87,18 +86,19 @@ function ApprovalRequests() {
     page: number;
     pageSize: number;
   }) {
-    setPage(page);
-    setPageSize(pageSize);
+    void navigate({
+      to: "",
+      search: {
+        page,
+        page_size: pageSize,
+      },
+    });
   }
 
   const { data, isFetching, isRefetching } = useSuspenseQuery(
     queryOptions({
-      queryKey: ["approval-requests", page, pageSize],
-      queryFn: () =>
-        api.approvalRequests.list({
-          page: page,
-          page_size: pageSize,
-        }),
+      queryKey: ["approval-requests", page, page_size],
+      queryFn: () => api.approvalRequests.list({ page, page_size }),
     }),
   );
 
