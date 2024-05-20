@@ -80,7 +80,7 @@ def update_schemas():
     for name, schema in schemas.items():
         async_to_sync(set_cache_string)(
             get_schema_key(name),
-            orjson.dumps(schema),
+            orjson.dumps([s.model_dump(mode="json") for s in schema]),
         )
 
     return schemas
