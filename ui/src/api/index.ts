@@ -135,9 +135,13 @@ export function AxiosProvider({ children }: PropsWithChildren) {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      retry: false,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
       placeholderData: keepPreviousData,
+    },
+    mutations: {
+      retry: false,
     },
   },
 });
