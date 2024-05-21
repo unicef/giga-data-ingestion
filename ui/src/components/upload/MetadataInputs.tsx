@@ -10,7 +10,11 @@ import { z } from "zod";
 
 import { Select } from "@/components/forms/Select.tsx";
 import { TextInput } from "@/components/forms/TextInput.tsx";
-import { metadataMapping, monthList, yearList } from "@/constants/metadata.ts";
+import {
+  futureyearList,
+  metadataMapping,
+  monthList,
+} from "@/constants/metadata.ts";
 import { MetadataFormMapping } from "@/types/metadata.ts";
 
 export const MetadataForm = z.object({
@@ -195,7 +199,7 @@ export function MonthYearSelect({
         })}
       />
       <SelectFromArray
-        options={yearList}
+        options={futureyearList}
         formItem={formItem}
         subpath="year"
         labelOverride="Year"
