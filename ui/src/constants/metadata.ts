@@ -3,7 +3,8 @@ import { z } from "zod";
 
 import { MetadataFormMapping } from "@/types/metadata.ts";
 
-const thisYear = new Date().getFullYear();
+const currentYear = new Date().getFullYear();
+const futureYearStart = currentYear + 10;
 
 const unicefFoundingYear = 1945;
 
@@ -97,7 +98,7 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
         z.coerce
           .number()
           .min(unicefFoundingYear, notInRangeErrorMessage)
-          .max(thisYear, notInRangeErrorMessage),
+          .max(currentYear, notInRangeErrorMessage),
       ]),
     },
     {
@@ -157,8 +158,8 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
             z.string().max(0),
             z.coerce
               .number()
-              .min(unicefFoundingYear, notInRangeErrorMessage)
-              .max(thisYear, notInRangeErrorMessage),
+              .min(currentYear, notInRangeErrorMessage)
+              .max(futureYearStart, notInRangeErrorMessage),
           ]),
         })
         .optional()
@@ -194,8 +195,15 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
 
 export const yearList = [
   "",
-  ...Array(thisYear - unicefFoundingYear + 1)
-    .fill(thisYear)
+  ...Array(currentYear - unicefFoundingYear + 1)
+    .fill(currentYear)
+    .map((el, i) => `${el - i}`),
+];
+
+export const futureyearList = [
+  "",
+  ...Array(futureYearStart - currentYear + 1)
+    .fill(futureYearStart)
     .map((el, i) => `${el - i}`),
 ];
 
@@ -203,5 +211,5 @@ export const monthList = [
   "",
   ...Array(12)
     .fill(0)
-    .map((_, i) => format(`${thisYear}-${i + 1}-01`, "MMMM")),
+    .map((_, i) => format(`${currentYear}-${i + 1}-01`, "MMMM")),
 ];
