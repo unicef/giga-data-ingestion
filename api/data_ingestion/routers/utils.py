@@ -21,6 +21,7 @@ from data_ingestion.internal.storage import storage_client
 from data_ingestion.schemas.core import B2CPolicyGroupRequest, B2CPolicyGroupResponse
 from data_ingestion.schemas.util import (
     Country,
+    FormatDateRequest,
     ForwardRequestBody,
     ResponseWithDateKeyBody,
     ValidDateTimeFormat,
@@ -126,3 +127,14 @@ async def get_data_privacy_document():
         media_type="application/pdf",
         headers=headers,
     )
+
+
+@router.post("/format_date", dependencies=[Security(azure_scheme)])
+def format_date(body: FormatDateRequest) -> str:
+    format_code = body.format_code
+
+    try:
+        current_date = datetime.now()
+        return current_date.strftime(format_code)
+    except ValueError:
+        return "Invalid format code"
