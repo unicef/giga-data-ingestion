@@ -120,6 +120,8 @@ export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
         z.string().regex(/^(%[YmdHMSz])([\\\-_.+: ]%[YmdHMSz])*$/),
       ])
       .nullable(),
+    test_date_value: z.string(),
+
     school_id_send_query_in: z.nativeEnum(SendQueryInEnum),
     send_date_in: z.nativeEnum(SendQueryInEnum),
     has_school_id_giga: z.boolean().default(false),
@@ -187,6 +189,7 @@ export const schoolConnectivityFormInitialValues: SchoolConnectivityFormSchema =
     page_starts_with: null,
     size: null,
     page_send_query_in: SendQueryInEnum.NONE,
+    test_date_value: "",
 
     ingestion_frequency: "*/30 * * * *",
     enabled: true,

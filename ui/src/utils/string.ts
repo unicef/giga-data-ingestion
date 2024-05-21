@@ -47,3 +47,20 @@ export const getUniqueDatasets = (
 export function capitalizeFirstLetter(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
+
+export function getTestSchoolId(
+  responsePreview: Record<string, unknown> | Record<string, unknown>[] | string,
+  dataKey: string | null,
+  schoolIdKey: string,
+) {
+  if (dataKey) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (responsePreview as Record<string, any>)[dataKey][0][
+      schoolIdKey
+    ] as string;
+  } else {
+    return (responsePreview as unknown as Record<string, unknown>[])[0][
+      schoolIdKey
+    ] as string;
+  }
+}

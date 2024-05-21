@@ -270,6 +270,16 @@ export function SchoolConnectivityFormInputs() {
           dependsOnValue: true,
         },
         {
+          name: "test_date_value",
+          label: "Test Api button date value",
+          type: "text",
+          required: false,
+          helperText: `Placeholder value for the date_key's value for the test API button. If left empty in your specified date format will be sent instead.
+          `,
+          dependsOnName: "date_key",
+          dependsOnValue: true,
+        },
+        {
           name: "send_date_in",
           label: "Send date in",
           type: "enum",

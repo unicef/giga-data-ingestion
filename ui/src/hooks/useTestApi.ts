@@ -16,6 +16,7 @@ import {
   PaginationTypeEnum,
   SendQueryInEnum,
 } from "@/types/qos";
+import { getTestSchoolId } from "@/utils/string";
 
 type TestApiOptions = {
   setResponsePreview: Dispatch<
@@ -39,7 +40,8 @@ type TestApiOptions = {
 
 export function useTestApi() {
   const {
-    apiIngestionSliceActions: { setDetectedColumns },
+    apiIngestionSliceActions: { setDetectedColumns, setTestSchoolId },
+    apiIngestionSlice: { testSchoolId },
   } = useStore();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -71,12 +73,18 @@ export function useTestApi() {
       page_size_key,
       page_number_key,
       page_send_query_in,
+      school_id_key,
       size,
     } = getValues();
 
+    let date_key: string | null = null;
+    let date_format: string | null = null;
+    let send_date_in: SendQueryInEnum = SendQueryInEnum.NONE;
+    let test_date_value: string | null = null;
     let response_date_format: string | undefined;
     let response_date_key: string | undefined;
     let school_id_giga_govt_key: string;
+    let school_id_send_query_in: SendQueryInEnum = SendQueryInEnum.NONE;
     let setIsValidResponseDateFormat: Extract<
       TestApiOptions,
       { apiType: "schoolConnectivity" }
@@ -87,9 +95,14 @@ export function useTestApi() {
     >["setIsValidSchoolIdGigaGovtKey"];
 
     if (apiType === "schoolConnectivity") {
+      date_format = getValues("date_format");
+      date_key = getValues("date_key");
+      send_date_in = getValues("send_date_in");
+      test_date_value = getValues("test_date_value");
       response_date_key = getValues("response_date_key");
       response_date_format = getValues("response_date_format");
       school_id_giga_govt_key = getValues("school_id_giga_govt_key");
+      school_id_send_query_in = getValues("school_id_send_query_in");
       setIsValidResponseDateFormat = options.setIsValidResponseDateFormat;
       setIsValidGigaGovtSchoolIdKey = options.setIsValidSchoolIdGigaGovtKey;
     }
@@ -97,21 +110,39 @@ export function useTestApi() {
     const handleValidationTry =
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       async (responseData: any) => {
+        let formattedResponseData = responseData;
+
         setResponsePreview(responseData);
 
         if (data_key === "" || data_key == null) {
-          if (Array.isArray(responseData)) {
+          if (Object.prototype.hasOwnProperty.call(responseData, "")) {
+            formattedResponseData = [responseData[""]];
+            setResponsePreview(formattedResponseData);
+          }
+
+          if (Array.isArray(formattedResponseData)) {
             setIsValidDataKey(true);
             setIsValidResponse(true);
             setIsResponseError(false);
 
             if (apiType === "schoolList") {
-              setDetectedColumns(Object.keys(responseData[0]));
+              if (school_id_key) {
+                const testSchoolIdKey = getTestSchoolId(
+                  formattedResponseData,
+                  data_key,
+                  school_id_key,
+                );
+
+                setTestSchoolId(testSchoolIdKey);
+              }
+              setDetectedColumns(Object.keys(formattedResponseData[0]));
             }
 
             if (apiType === "schoolConnectivity") {
               setIsValidGigaGovtSchoolIdKey(
-                Object.keys(responseData[0]).includes(school_id_giga_govt_key),
+                Object.keys(formattedResponseData[0]).includes(
+                  school_id_giga_govt_key,
+                ),
               );
             }
           } else {
@@ -119,24 +150,38 @@ export function useTestApi() {
 
             if (apiType === "schoolConnectivity") {
               setIsValidGigaGovtSchoolIdKey(
-                Object.keys(responseData).includes(school_id_giga_govt_key),
+                Object.keys(formattedResponseData).includes(
+                  school_id_giga_govt_key,
+                ),
               );
             }
           }
 
           if (apiType === "schoolConnectivity") {
             if (response_date_key) {
-              const responseDateKeyValue = responseData[0][
+              const responseDateKeyValue = formattedResponseData[0][
                 response_date_key ?? ""
               ] as string;
 
-              const { data: isValid } =
-                await api.utils.isValidDateTimeFormatCodeRequest({
-                  datetime_str: responseDateKeyValue,
-                  format_code: response_date_format ?? "",
-                });
+              const castResponseDateKeyValue = String(responseDateKeyValue);
 
-              setIsValidResponseDateFormat(isValid);
+              if (response_date_format === "timestamp") {
+                setIsValidResponseDateFormat(
+                  isMatch(castResponseDateKeyValue, "t"),
+                );
+              } else if (response_date_format === "ISO8601") {
+                setIsValidResponseDateFormat(
+                  !!parseISO(castResponseDateKeyValue),
+                );
+              } else {
+                const { data: isValid } =
+                  await api.utils.isValidDateTimeFormatCodeRequest({
+                    datetime_str: castResponseDateKeyValue,
+                    format_code: response_date_format ?? "",
+                  });
+
+                setIsValidResponseDateFormat(isValid);
+              }
             } else {
               setIsValidResponseDateFormat(false);
             }
@@ -155,8 +200,19 @@ export function useTestApi() {
             setIsValidResponse(true);
 
             if (isValidDataKey) {
-              if (apiType === "schoolList")
+              if (apiType === "schoolList") {
                 setDetectedColumns(Object.keys(responseData[data_key][0]));
+
+                if (school_id_key) {
+                  const testSchoolIdKey = getTestSchoolId(
+                    formattedResponseData,
+                    data_key,
+                    school_id_key,
+                  );
+
+                  setTestSchoolId(testSchoolIdKey);
+                }
+              }
               setIsValidDataKey(true);
             } else {
               setIsValidDataKey(false);
@@ -169,7 +225,7 @@ export function useTestApi() {
 
               if (response_date_format === "timestamp") {
                 setIsValidResponseDateFormat(
-                  isMatch("t", responseDateKeyValue),
+                  isMatch(responseDateKeyValue, "t"),
                 );
               } else if (response_date_format === "ISO8601") {
                 setIsValidResponseDateFormat(!!parseISO(responseDateKeyValue));
@@ -284,6 +340,41 @@ export function useTestApi() {
       else Object.assign(requestConfig.data, paginationParams);
     }
 
+    if (testSchoolId) {
+      if (school_id_send_query_in === SendQueryInEnum.QUERY_PARAMETERS) {
+        if (requestConfig.params == null)
+          requestConfig.params = { [school_id_key as string]: testSchoolId };
+        else Object.assign(requestConfig.params, paginationParams);
+      } else if (school_id_send_query_in === SendQueryInEnum.BODY) {
+        if (requestConfig.data == null)
+          requestConfig.data = { [school_id_key as string]: testSchoolId };
+        else Object.assign(requestConfig.data, paginationParams);
+      }
+    }
+
+    if (date_format) {
+      let dateValue;
+
+      if (test_date_value) {
+        dateValue = test_date_value;
+      } else {
+        const { data: dateString } = await api.utils.format_date({
+          format_code: date_format,
+        });
+        dateValue = dateString;
+      }
+
+      if (send_date_in === SendQueryInEnum.QUERY_PARAMETERS) {
+        if (requestConfig.params == null)
+          requestConfig.params = { [date_key as string]: dateValue };
+        else Object.assign(requestConfig.params, paginationParams);
+      } else if (send_date_in === SendQueryInEnum.BODY) {
+        if (requestConfig.data == null)
+          requestConfig.params = { [date_key as string]: dateValue };
+        else Object.assign(requestConfig.data, paginationParams);
+      }
+    }
+
     try {
       setIsLoading(true);
 
@@ -306,7 +397,11 @@ export function useTestApi() {
   }
 
   return {
-    testApi: useCallback(testApi, [setDetectedColumns]),
+    testApi: useCallback(testApi, [
+      setDetectedColumns,
+      testSchoolId,
+      setTestSchoolId,
+    ]),
     isLoading,
   };
 }
