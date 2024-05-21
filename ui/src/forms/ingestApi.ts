@@ -117,11 +117,7 @@ export const SchoolConnectivityFormSchema = CommonApiIngestionFormSchema.extend(
     date_format: z
       .union([
         z.enum(["timestamp", "ISO8601"]),
-        z
-          .string()
-          .regex(
-            /^(%Y|%m|%d|%H|%M|%S|%z)([\\/\\-_.+: ]?(%Y|%m|%d|%H|%M|%S|%z))?$/,
-          ),
+        z.string().regex(/^(%[YmdHMSz])([\\\-_.+: ]%[YmdHMSz])*$/),
       ])
       .nullable(),
     school_id_send_query_in: z.nativeEnum(SendQueryInEnum),
