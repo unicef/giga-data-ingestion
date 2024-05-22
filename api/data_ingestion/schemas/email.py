@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Generic, TypeVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .data_quality_report import DataQualityCheck
 
@@ -40,3 +40,10 @@ class MasterDataReleaseNotificationRenderRequest(BaseModel):
     updateDate: datetime
     version: int
     rows: int
+
+
+class GenericEmailRequest(BaseModel):
+    recipients: list[str]
+    subject: str
+    html_part: str
+    text_part: str | None = Field(None)

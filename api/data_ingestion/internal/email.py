@@ -17,17 +17,50 @@ from data_ingestion.schemas.invitation import InviteEmailRenderRequest
 from data_ingestion.settings import DeploymentEnvironment, settings
 
 
-def send_rendered_email(
-    endpoint: str,
-    json: dict[str, Any],
-    recipient: str,
+def send_email_base(
+    recipients: list[str],
     subject: str,
+    html_part: str,
+    text_part: str = None,
 ):
+    if len(recipients) == 0:
+        logger.warning("No recipients provided, skipping email send")
+        return
+
     client = Client(
         auth=(settings.MAILJET_API_KEY, settings.MAILJET_SECRET_KEY),
         api_url=settings.MAILJET_API_URL,
     )
 
+    from_name = "Giga Sync"
+    if settings.DEPLOY_ENV != DeploymentEnvironment.PRD:
+        from_name = f"{from_name} {settings.DEPLOY_ENV.name}"
+
+    message = {
+        "FromEmail": settings.SENDER_EMAIL,
+        "FromName": from_name,
+        "Subject": subject,
+        "Html-part": html_part,
+        "Text-part": text_part,
+    }
+
+    formatted_recipients = [{"Email": r} for r in recipients]
+
+    if len(recipients) > 1:
+        message["Bcc"] = formatted_recipients
+    else:
+        message["Recipients"] = formatted_recipients
+
+    result = client.send.create(data=message)
+    logger.info(result.json())
+
+
+def send_rendered_email(
+    endpoint: str,
+    json: dict[str, Any],
+    recipients: list[str],
+    subject: str,
+):
     res = requests.post(
         f"{settings.EMAIL_RENDERER_SERVICE_URL}{endpoint}",
         headers={
@@ -43,29 +76,17 @@ def send_rendered_email(
             raise HTTPError(res.text) from None
 
     data = res.json()
+    html = data.get("html")
+    text = data.get("text")
 
-    from_name = "Giga Sync"
-    if settings.DEPLOY_ENV != DeploymentEnvironment.PRD:
-        from_name = f"{from_name} {settings.DEPLOY_ENV.name}"
-
-    message = {
-        "FromEmail": settings.SENDER_EMAIL,
-        "FromName": from_name,
-        "Subject": subject,
-        "Recipients": [{"Email": recipient}],
-        "Html-part": data.get("html"),
-        "Text-part": data.get("text"),
-    }
-
-    result = client.send.create(data=message)
-    logger.info(result.json())
+    send_email_base(recipients, subject, html, text)
 
 
 def invite_user(body: InviteEmailRenderRequest):
     send_rendered_email(
         endpoint="email/invite-user",
         json=body.model_dump(),
-        recipient=body.email,
+        recipients=[body.email],
         subject="Welcome to Giga Sync",
     )
 
@@ -77,7 +98,7 @@ def send_upload_success_email(body: EmailRenderRequest[UploadSuccessRenderReques
     send_rendered_email(
         endpoint="email/dq-report-upload-success",
         json=json_dump,
-        recipient=body.email,
+        recipients=[body.email],
         subject="Successfuly uploaded file",
     )
 
@@ -89,7 +110,7 @@ def send_check_success_email(body: EmailRenderRequest[DataCheckSuccessRenderRequ
     send_rendered_email(
         endpoint="email/dq-report-check-success",
         json=json_dump,
-        recipient=body.email,
+        recipients=[body.email],
         subject="Data checks successfully passed",
     )
 
@@ -103,7 +124,7 @@ def send_dq_report_email(body: EmailRenderRequest[DqReportRenderRequest]):
     send_rendered_email(
         endpoint="email/dq-report",
         json=json_dump,
-        recipient=body.email,
+        recipients=[body.email],
         subject="DQ summary report",
     )
 
@@ -115,6 +136,6 @@ def send_master_data_release_notification(
     send_rendered_email(
         endpoint="email/master-data-release-notification",
         json=json_dump,
-        recipient=body.email,
+        recipients=[body.email],
         subject="Master Data Update Notification",
     )

@@ -25,4 +25,4 @@ graph_scopes = ["https://graph.microsoft.com/.default"]
 
 graph_client = GraphServiceClient(credentials=graph_credentials, scopes=graph_scopes)
 
-email_bearer = HTTPBearer(scheme_name="bearer")
+email_header = HTTPBearer(scheme_name="bearer")
