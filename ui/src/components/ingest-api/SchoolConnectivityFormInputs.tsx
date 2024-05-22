@@ -271,10 +271,10 @@ export function SchoolConnectivityFormInputs() {
         },
         {
           name: "test_date_value",
-          label: "Test Api button date value",
+          label: "Date value to test with",
           type: "text",
           required: false,
-          helperText: `Placeholder value for the date_key's value for the test API button. If left empty in your specified date format will be sent instead.
+          helperText: `Placeholder value for the date_key's value for the test API button. If left empty, the current date and time using the format in the request date format field will be used instead.
           `,
           dependsOnName: "date_key",
           dependsOnValue: true,
