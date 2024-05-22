@@ -20,17 +20,16 @@ from data_ingestion.settings import DeploymentEnvironment, settings
 def send_email_base(
     recipients: list[str],
     subject: str,
-    html_part: str,
+    html_part: str = None,
     text_part: str = None,
 ):
     if len(recipients) == 0:
         logger.warning("No recipients provided, skipping email send")
         return
 
-    client = Client(
-        auth=(settings.MAILJET_API_KEY, settings.MAILJET_SECRET_KEY),
-        api_url=settings.MAILJET_API_URL,
-    )
+    if html_part is None and text_part is None:
+        logger.warning("No email content provided, skipping email send")
+        return
 
     from_name = "Giga Sync"
     if settings.DEPLOY_ENV != DeploymentEnvironment.PRD:
@@ -51,6 +50,10 @@ def send_email_base(
     else:
         message["Recipients"] = formatted_recipients
 
+    client = Client(
+        auth=(settings.MAILJET_API_KEY, settings.MAILJET_SECRET_KEY),
+        api_url=settings.MAILJET_API_URL,
+    )
     result = client.send.create(data=message)
     logger.info(result.json())
 
