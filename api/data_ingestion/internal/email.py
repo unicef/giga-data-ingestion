@@ -20,7 +20,7 @@ from data_ingestion.settings import DeploymentEnvironment, settings
 def send_email_base(
     endpoint: str,
     json: dict[str, Any],
-    recepient: str,
+    recipient: str,
     subject: str,
 ):
     client = Client(
@@ -52,7 +52,7 @@ def send_email_base(
         "FromEmail": settings.SENDER_EMAIL,
         "FromName": from_name,
         "Subject": subject,
-        "Recipients": [{"Email": recepient}],
+        "Recipients": [{"Email": recipient}],
         "Html-part": data.get("html"),
         "Text-part": data.get("text"),
     }
@@ -65,7 +65,7 @@ def invite_user(body: InviteEmailRenderRequest):
     send_email_base(
         endpoint="email/invite-user",
         json=body.model_dump(),
-        recepient=body.email,
+        recipient=body.email,
         subject="Welcome to Giga Sync",
     )
 
@@ -77,7 +77,7 @@ def send_upload_success_email(body: EmailRenderRequest[UploadSuccessRenderReques
     send_email_base(
         endpoint="email/dq-report-upload-success",
         json=json_dump,
-        recepient=body.email,
+        recipient=body.email,
         subject="Successfuly uploaded file",
     )
 
@@ -89,7 +89,7 @@ def send_check_success_email(body: EmailRenderRequest[DataCheckSuccessRenderRequ
     send_email_base(
         endpoint="email/dq-report-check-success",
         json=json_dump,
-        recepient=body.email,
+        recipient=body.email,
         subject="Data checks successfully passed",
     )
 
@@ -103,7 +103,7 @@ def send_dq_report_email(body: EmailRenderRequest[DqReportRenderRequest]):
     send_email_base(
         endpoint="email/dq-report",
         json=json_dump,
-        recepient=body.email,
+        recipient=body.email,
         subject="DQ summary report",
     )
 
@@ -115,6 +115,6 @@ def send_master_data_release_notification(
     send_email_base(
         endpoint="email/master-data-release-notification",
         json=json_dump,
-        recepient=body.email,
+        recipient=body.email,
         subject="Master Data Update Notification",
     )
