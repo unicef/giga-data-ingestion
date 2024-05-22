@@ -32,6 +32,7 @@ async def delete_rows(
 ):
     country_iso3 = coco.convert(body.country, to="ISO3")
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    email = await get_user_email(user)
 
     filename = f"{country_iso3}_{timestamp}.json"
 
@@ -46,15 +47,13 @@ async def delete_rows(
         approve_client.upload_blob(
             json.dumps(body.ids),
             overwrite=True,
-            metadata={"email": user.sub},
-            content_settings=ContentSettings(content_type="appication/json"),
+            metadata={"requester_email": email},
+            content_settings=ContentSettings(content_type="application/json"),
         )
     except HttpResponseError as err:
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
-
-    email = await get_user_email(user)
 
     async with db.begin():
         db.add(
