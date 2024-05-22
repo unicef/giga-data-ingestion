@@ -45,7 +45,10 @@ function EditSchoolConnectivity() {
   return (
     <SchoolConnectivity
       isEditing
-      defaultData={schoolConnectivityFormDefaultValues}
+      defaultData={{
+        ...schoolConnectivityFormDefaultValues,
+        test_date_value: "",
+      }}
       ingestionId={ingestionId}
     />
   );

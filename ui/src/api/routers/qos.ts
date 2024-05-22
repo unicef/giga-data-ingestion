@@ -50,6 +50,14 @@ export default function route(axi: AxiosInstance) {
     ): Promise<AxiosResponse<never>> => {
       const formData = new FormData();
 
+      if (params.school_connectivity.data_key === null) {
+        params.school_connectivity.data_key = "";
+      }
+
+      if (params.school_list.data_key === null) {
+        params.school_list.data_key = "";
+      }
+
       const jsonSchoolConnectivity = JSON.stringify(params.school_connectivity);
       const jsonSchoolList = JSON.stringify(params.school_list);
 

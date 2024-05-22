@@ -10,6 +10,10 @@ class ValidDateTimeFormat(BaseModel):
     format_code: str
 
 
+class FormatDateRequest(BaseModel):
+    format_code: str
+
+
 class ForwardRequestBody(BaseModel):
     auth: dict[str, str] | None
     data: dict[str, str] | None

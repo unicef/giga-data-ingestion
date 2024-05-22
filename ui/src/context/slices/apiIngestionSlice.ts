@@ -16,6 +16,7 @@ export interface ApiIngestionSliceState {
     schoolConnectivity: SchoolConnectivityFormSchema;
     stepIndex: number;
     file: File | null;
+    testSchoolId: string | null;
   };
 }
 
@@ -43,6 +44,7 @@ export interface ApiIngestionSliceActions {
     setSchoolListFormValues: (
       formValues: ApiIngestionSliceState["apiIngestionSlice"]["schoolList"],
     ) => void;
+    setTestSchoolId: (testSchoolId: string) => void;
   };
 }
 
@@ -58,6 +60,7 @@ export const initialApiIngestionSliceState: ApiIngestionSliceState = {
     schoolConnectivity: schoolConnectivityFormInitialValues,
     stepIndex: 0,
     file: null,
+    testSchoolId: null,
   },
 };
 
@@ -123,6 +126,11 @@ export const createApiIngestionSlice: StateCreator<
     setSchoolListFormValues: (formValues: SchoolListFormSchema) =>
       set(state => {
         state.apiIngestionSlice.schoolList = formValues;
+      }),
+
+    setTestSchoolId: (schoolId: string) =>
+      set(state => {
+        state.apiIngestionSlice.testSchoolId = schoolId;
       }),
   },
 });

@@ -16,6 +16,15 @@ export default function routers(axi: AxiosInstance) {
         format_code: format_code,
       });
     },
+    format_date: ({
+      format_code,
+    }: {
+      format_code: string;
+    }): Promise<AxiosResponse<string>> => {
+      return axi.post("/utils/format_date", {
+        format_code: format_code,
+      });
+    },
     listCountries: (): Promise<AxiosResponse<Country[]>> => {
       return axi.get("/utils/countries");
     },
