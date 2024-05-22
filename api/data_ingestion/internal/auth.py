@@ -1,3 +1,4 @@
+from fastapi.security import HTTPBearer
 from fastapi_azure_auth import B2CMultiTenantAuthorizationCodeBearer
 from msgraph import GraphServiceClient
 
@@ -23,3 +24,5 @@ graph_credentials = ClientSecretCredential(
 graph_scopes = ["https://graph.microsoft.com/.default"]
 
 graph_client = GraphServiceClient(credentials=graph_credentials, scopes=graph_scopes)
+
+email_header = HTTPBearer(scheme_name="bearer")

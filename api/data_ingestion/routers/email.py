@@ -1,26 +1,32 @@
-from fastapi import APIRouter, BackgroundTasks, Security, status
+from typing import Annotated
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
+from fastapi.security import HTTPAuthorizationCredentials
 
 from data_ingestion.internal import email
-from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.auth import email_header
+from data_ingestion.internal.email import send_email_base
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.email import (
     DataCheckSuccessRenderRequest,
     DqReportRenderRequest,
     EmailRenderRequest,
+    GenericEmailRequest,
     MasterDataReleaseNotificationRenderRequest,
     UploadSuccessRenderRequest,
 )
+from data_ingestion.settings import settings
 
 router = APIRouter(
     prefix="/api/email",
     tags=["email"],
-    dependencies=[Security(azure_scheme), Security(IsPrivileged())],
 )
 
 
 @router.post(
     "/dq-report-upload-success",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
 )
 async def send_upload_success_email(
     body: EmailRenderRequest[UploadSuccessRenderRequest],
@@ -43,6 +49,7 @@ async def send_upload_success_email(
 @router.post(
     "/dq-report-check-success",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
 )
 async def send_check_success_email(
     body: EmailRenderRequest[DataCheckSuccessRenderRequest],
@@ -62,6 +69,7 @@ async def send_check_success_email(
 @router.post(
     "/dq-report",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
 )
 async def send_dq_report_email(
     body: EmailRenderRequest[DqReportRenderRequest],
@@ -95,3 +103,14 @@ async def send_master_data_release_notification(
             props=props,
         ),
     )
+
+
+@router.post("/send-email", status_code=status.HTTP_204_NO_CONTENT)
+def send_generic_email(
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(email_header)],
+    body: GenericEmailRequest,
+):
+    if credentials.credentials != settings.EMAIL_RENDERER_BEARER_TOKEN:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    send_email_base(**body.model_dump())
