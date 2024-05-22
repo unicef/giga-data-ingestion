@@ -115,16 +115,16 @@ export function useTestApi() {
         setResponsePreview(responseData);
 
         if (data_key === "" || data_key == null) {
+          setIsValidDataKey(true);
+          setIsValidResponse(true);
+          setIsResponseError(false);
+
           if (Object.prototype.hasOwnProperty.call(responseData, "")) {
             formattedResponseData = [responseData[""]];
             setResponsePreview(formattedResponseData);
           }
 
           if (Array.isArray(formattedResponseData)) {
-            setIsValidDataKey(true);
-            setIsValidResponse(true);
-            setIsResponseError(false);
-
             if (apiType === "schoolList") {
               if (school_id_key) {
                 const testSchoolIdKey = getTestSchoolId(
@@ -146,8 +146,6 @@ export function useTestApi() {
               );
             }
           } else {
-            setIsValidDataKey(false);
-
             if (apiType === "schoolConnectivity") {
               setIsValidGigaGovtSchoolIdKey(
                 Object.keys(formattedResponseData).includes(
@@ -158,11 +156,18 @@ export function useTestApi() {
           }
 
           if (apiType === "schoolConnectivity") {
-            if (response_date_key) {
-              const responseDateKeyValue = formattedResponseData[0][
+            let responseDateKeyValue;
+
+            if (Array.isArray(formattedResponseData)) {
+              responseDateKeyValue = formattedResponseData[0][
                 response_date_key ?? ""
               ] as string;
-
+            } else {
+              responseDateKeyValue = formattedResponseData[
+                response_date_key ?? ""
+              ] as string;
+            }
+            if (response_date_key) {
               const castResponseDateKeyValue = String(responseDateKeyValue);
 
               if (response_date_format === "timestamp") {
