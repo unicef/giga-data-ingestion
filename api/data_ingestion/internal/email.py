@@ -17,7 +17,7 @@ from data_ingestion.schemas.invitation import InviteEmailRenderRequest
 from data_ingestion.settings import DeploymentEnvironment, settings
 
 
-def send_email_base(
+def send_rendered_email(
     endpoint: str,
     json: dict[str, Any],
     recipient: str,
@@ -62,7 +62,7 @@ def send_email_base(
 
 
 def invite_user(body: InviteEmailRenderRequest):
-    send_email_base(
+    send_rendered_email(
         endpoint="email/invite-user",
         json=body.model_dump(),
         recipient=body.email,
@@ -74,7 +74,7 @@ def send_upload_success_email(body: EmailRenderRequest[UploadSuccessRenderReques
     json_dump = body.props.model_dump()
     json_dump["uploadDate"] = json_dump["uploadDate"].isoformat()
 
-    send_email_base(
+    send_rendered_email(
         endpoint="email/dq-report-upload-success",
         json=json_dump,
         recipient=body.email,
@@ -86,7 +86,7 @@ def send_check_success_email(body: EmailRenderRequest[DataCheckSuccessRenderRequ
     json_dump = body.props.model_dump()
     json_dump["uploadDate"] = json_dump["uploadDate"].isoformat()
     json_dump["checkDate"] = json_dump["checkDate"].isoformat()
-    send_email_base(
+    send_rendered_email(
         endpoint="email/dq-report-check-success",
         json=json_dump,
         recipient=body.email,
@@ -100,7 +100,7 @@ def send_dq_report_email(body: EmailRenderRequest[DqReportRenderRequest]):
     json_dump["dataQualityCheck"]["summary"]["timestamp"] = json_dump[
         "dataQualityCheck"
     ]["summary"]["timestamp"].isoformat()
-    send_email_base(
+    send_rendered_email(
         endpoint="email/dq-report",
         json=json_dump,
         recipient=body.email,
@@ -112,7 +112,7 @@ def send_master_data_release_notification(
     body: EmailRenderRequest[MasterDataReleaseNotificationRenderRequest],
 ):
     json_dump = jsonable_encoder(body.props.model_dump())
-    send_email_base(
+    send_rendered_email(
         endpoint="email/master-data-release-notification",
         json=json_dump,
         recipient=body.email,
