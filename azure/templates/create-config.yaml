@@ -63,13 +63,10 @@ jobs:
                     AZURE_AUTH_POLICY_NAME: "$(azureAdSusiPolicyName)"
                     AZURE_REDIRECT_URI: "$(azureAdRedirectUri)"
                     WEB_APP_REDIRECT_URI: "https://$(ingressHost)"
-                    AZURE_EMAIL_CONNECTION_STRING: "$(azureEmailConnectionString)"
-                    AZURE_EMAIL_SENDER: "$(azureEmailSender)"
                     AZURE_SAS_TOKEN: "$(azureSasToken)"
                     AZURE_STORAGE_ACCOUNT_NAME: "$(storageAccountName)"
                     AZURE_BLOB_CONTAINER_NAME: "$(storageContainerName)"
                     EMAIL_RENDERER_BEARER_TOKEN: "$(emailRendererBearerToken)"
-                    EMAIL_TEST_RECIPIENTS: '$(emailTestRecipients)'
                     POSTGRESQL_USERNAME: "$(postgresqlUsername)"
                     POSTGRESQL_PASSWORD: "$(postgresqlPassword)"
                     POSTGRESQL_DATABASE: "$(postgresqlDatabase)"
