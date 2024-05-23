@@ -97,18 +97,27 @@ async def update_school_list_status(
     enabled: bool,
     db: AsyncSession = Depends(get_db),
 ):
-    try:
-        update_query = (
-            update(SchoolList).where(SchoolList.id == id).values(enabled=enabled)
-        )
-        await db.execute(update_query)
-        await db.commit()
-        response.status_code = status.HTTP_204_NO_CONTENT
+    async with db.begin() as trans:
+        try:
+            update_schoolList_query = (
+                update(SchoolList).where(SchoolList.id == id).values(enabled=enabled)
+            )
+            await db.execute(update_schoolList_query)
 
-    except exc.SQLAlchemyError as err:
-        raise HTTPException(
-            detail=err._message, status_code=status.HTTP_400_BAD_REQUEST
-        ) from err
+            update_schoolConnectivity_query = (
+                update(SchoolConnectivity)
+                .where(SchoolConnectivity.school_list_id == id)
+                .values(enabled=enabled)
+            )
+            await db.execute(update_schoolConnectivity_query)
+
+            response.status_code = status.HTTP_204_NO_CONTENT
+
+        except exc.SQLAlchemyError as err:
+            await trans.rollback()
+            raise HTTPException(
+                detail=err._message, status_code=status.HTTP_400_BAD_REQUEST
+            ) from err
 
 
 @router.patch("/school_list/{id}/error_message", status_code=status.HTTP_204_NO_CONTENT)
