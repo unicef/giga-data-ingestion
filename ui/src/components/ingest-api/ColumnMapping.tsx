@@ -33,10 +33,6 @@ const headers: DataTableHeader[] = [
 ];
 
 function ColumnMapping() {
-  const [selectedColumns, setSelectedColumns] = useState<
-    Record<string, string>
-  >({});
-
   const {
     apiIngestionSlice: { detectedColumns, columnMapping },
     apiIngestionSliceActions: {
@@ -45,6 +41,9 @@ function ColumnMapping() {
       setColumnMapping,
     },
   } = useStore();
+
+  const [selectedColumns, setSelectedColumns] =
+    useState<ConfigureColumnsForm>(columnMapping);
   const {
     location: { pathname },
   } = useRouterState();
