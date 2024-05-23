@@ -161,10 +161,12 @@ export const ColumnLicense = memo(({ column }: ColumnLicenseProps) => {
           deps: [`mapping.${column.name}`],
         })}
       >
-        <SelectItem text="" value="" />
-        {licenseOptions.map(license => (
-          <SelectItem key={license} text={license} value={license} />
-        ))}
+        <SelectItem text={licenseOptions[0]} value={licenseOptions[0]} />
+        {licenseOptions.map((license, index) => {
+          if (index == 0) return null;
+
+          return <SelectItem key={license} text={license} value={license} />;
+        })}
       </Select>
     </div>
   );
