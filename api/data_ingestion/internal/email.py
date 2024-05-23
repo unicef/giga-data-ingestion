@@ -55,7 +55,10 @@ def send_email_base(
         api_url=settings.MAILJET_API_URL,
     )
     result = client.send.create(data=message)
-    logger.info(result.json())
+    try:
+        logger.info(result.json())
+    except JSONDecodeError:
+        logger.info(result)
 
 
 def send_rendered_email(
