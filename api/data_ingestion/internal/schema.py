@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from data_ingestion.cache.keys import SCHEMAS_KEY, get_schema_key
 from data_ingestion.cache.serde import get_cache_list, set_cache_list, set_cache_string
 from data_ingestion.schemas.schema import Schema
+from data_ingestion.utils.schema import sort_schema_columns_key
 
 
 async def get_schemas(
@@ -69,9 +70,13 @@ async def get_schema(
             metaschema.is_nullable = True
             metaschema.is_important = True
 
+        if metaschema.name == "education_level":
+            metaschema.is_nullable = True
+            metaschema.is_important = True
+
         schema.append(metaschema)
 
-    schema = sorted(schema, key=lambda s: (s.is_nullable, -s.is_important, s.name))
+    schema = sorted(schema, key=sort_schema_columns_key)
 
     if is_qos:
         schema_cache_key = f"{name}_qos"

@@ -60,7 +60,7 @@ const headers: DataTableHeader[] = [
 
 function UploadColumnMapping() {
   const {
-    uploadSlice: { detectedColumns, columnMapping, source },
+    uploadSlice: { detectedColumns, columnMapping, source, columnLicense },
     uploadSliceActions: { setStepIndex, setColumnMapping, setColumnLicense },
   } = useStore();
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
@@ -86,7 +86,7 @@ function UploadColumnMapping() {
     reValidateMode: "onBlur",
     defaultValues: {
       mapping: columnMapping,
-      license: {},
+      license: columnLicense,
     },
     shouldFocusError: true,
   });
