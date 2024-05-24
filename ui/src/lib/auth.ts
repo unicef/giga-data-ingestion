@@ -9,16 +9,27 @@ import {
 const {
   VITE_AZURE_CLIENT_ID: AZURE_CLIENT_ID,
   VITE_AZURE_TENANT_NAME: AZURE_TENANT_NAME,
-  VITE_AZURE_SUSI_AUTH_POLICY_NAME: B2C_SUSI_POLICY_NAME,
+  VITE_AZURE_SUSI_AUTH_POLICY_NAME: AZURE_SUSI_AUTH_POLICY_NAME,
+  VITE_AZURE_EDIT_PROFILE_AUTH_POLICY_NAME: AZURE_EDIT_PROFILE_AUTH_POLICY_NAME,
+  VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME:
+    AZURE_PASSWORD_RESET_AUTH_POLICY_NAME,
 } = import.meta.env;
 
 export const b2cPolicies = {
   names: {
-    signUpSignIn: B2C_SUSI_POLICY_NAME,
+    signUpSignIn: AZURE_SUSI_AUTH_POLICY_NAME,
+    passwordReset: AZURE_PASSWORD_RESET_AUTH_POLICY_NAME,
+    editProfile: AZURE_EDIT_PROFILE_AUTH_POLICY_NAME,
   },
   authorities: {
     signUpSignIn: {
-      authority: `https://${AZURE_TENANT_NAME}.b2clogin.com/${AZURE_TENANT_NAME}.onmicrosoft.com/${B2C_SUSI_POLICY_NAME}`,
+      authority: `https://${AZURE_TENANT_NAME}.b2clogin.com/${AZURE_TENANT_NAME}.onmicrosoft.com/${AZURE_SUSI_AUTH_POLICY_NAME}`,
+    },
+    passwordReset: {
+      authority: `https://${AZURE_TENANT_NAME}.b2clogin.com/${AZURE_TENANT_NAME}.onmicrosoft.com/${AZURE_PASSWORD_RESET_AUTH_POLICY_NAME}`,
+    },
+    editProfile: {
+      authority: `https://${AZURE_TENANT_NAME}.b2clogin.com/${AZURE_TENANT_NAME}.onmicrosoft.com/${AZURE_EDIT_PROFILE_AUTH_POLICY_NAME}`,
     },
   },
   authorityDomain: `${AZURE_TENANT_NAME}.b2clogin.com`,

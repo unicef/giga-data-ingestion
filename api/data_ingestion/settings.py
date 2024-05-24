@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     AZURE_TENANT_ID: str
     AZURE_CLIENT_ID: str
     AZURE_CLIENT_SECRET: str
-    AZURE_AUTH_POLICY_NAME: str
+    AZURE_SUSI_AUTH_POLICY_NAME: str
     AZURE_REDIRECT_URI: str
     AZURE_SAS_TOKEN: str
     AZURE_BLOB_CONTAINER_NAME: str
@@ -65,6 +65,8 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: list[str] = ["*"]
     CORS_ALLOWED_ORIGINS: list[str] = ["*"]
     AZURE_SCOPE_DESCRIPTION: Literal["User.Impersonate"] = "User.Impersonate"
+    AZURE_EDIT_PROFILE_AUTH_POLICY_NAME: str = ""
+    AZURE_PASSWORD_RESET_AUTH_POLICY_NAME: str = ""
     DB_HOST: str = "db"
     DB_PORT: int = 5432
     SENTRY_DSN: str = ""
@@ -105,17 +107,17 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def OPENID_CONFIG_URL(self) -> str:
-        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AUTHORITY_DOMAIN}/{self.AZURE_AUTH_POLICY_NAME}/v2.0/.well-known/openid-configuration"
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AUTHORITY_DOMAIN}/{self.AZURE_SUSI_AUTH_POLICY_NAME}/v2.0/.well-known/openid-configuration"
 
     @computed_field
     @property
     def OPENAPI_AUTHORIZATION_URL(self) -> str:
-        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AUTHORITY_DOMAIN}/{self.AZURE_AUTH_POLICY_NAME}/oauth2/v2.0/authorize"
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AUTHORITY_DOMAIN}/{self.AZURE_SUSI_AUTH_POLICY_NAME}/oauth2/v2.0/authorize"
 
     @computed_field
     @property
     def OPENAPI_TOKEN_URL(self) -> str:
-        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AUTHORITY_DOMAIN}/{self.AZURE_AUTH_POLICY_NAME}/oauth2/v2.0/token"
+        return f"https://{self.AZURE_TENANT_NAME}.b2clogin.com/{self.AUTHORITY_DOMAIN}/{self.AZURE_SUSI_AUTH_POLICY_NAME}/oauth2/v2.0/token"
 
     @computed_field
     @property
