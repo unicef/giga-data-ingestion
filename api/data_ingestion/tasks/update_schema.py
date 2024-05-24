@@ -8,6 +8,7 @@ from data_ingestion.cache.serde import get_cache_list, set_cache_list, set_cache
 from data_ingestion.celery import celery
 from data_ingestion.db.trino import get_db_context
 from data_ingestion.schemas.schema import Schema
+from data_ingestion.utils.schema import sort_schema_columns_key
 
 
 def get_schema_list() -> list[str]:
@@ -31,7 +32,7 @@ def update_schemas_list():
 
 
 @celery.task(name="data_ingestion.tasks.update_schemas")
-def update_schemas():
+def update_schemas():  # noqa: C901
     schema_names = async_to_sync(get_cache_list)(SCHEMAS_KEY)
     if schema_names is None:
         schema_names = get_schema_list()
@@ -64,11 +65,13 @@ def update_schemas():
                 if metaschema.is_important is None:
                     metaschema.is_important = False
 
+                if metaschema.name == "education_level":
+                    metaschema.is_nullable = True
+                    metaschema.is_important = True
+
                 schema.append(metaschema)
 
-            schema = sorted(
-                schema, key=lambda s: (s.is_nullable, -s.is_important, s.name)
-            )
+            schema = sorted(schema, key=sort_schema_columns_key)
             schemas[name] = schema
 
         if "school_geolocation" in schemas.keys():
@@ -80,6 +83,10 @@ def update_schemas():
                 ]:
                     col.is_nullable = True
                     col.is_important = True
+
+            schemas["school_geolocation_qos"] = sorted(
+                schemas["school_geolocation_qos"], key=sort_schema_columns_key
+            )
 
     for name, schema in schemas.items():
         async_to_sync(set_cache_string)(
