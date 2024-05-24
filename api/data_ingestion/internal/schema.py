@@ -69,6 +69,12 @@ async def get_schema(
             metaschema.is_nullable = True
             metaschema.is_important = True
 
+        if metaschema.name in [
+            "education_level",
+        ]:
+            metaschema.is_nullable = True
+            metaschema.is_important = True
+
         schema.append(metaschema)
 
     schema = sorted(schema, key=lambda s: (s.is_nullable, -s.is_important, s.name))
