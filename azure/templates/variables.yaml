@@ -6,6 +6,8 @@ variables:
   azureSasToken: $(AZURE_SAS_TOKEN)
   storageContainerName: $(AZURE_BLOB_CONTAINER_NAME)
   storageAccountName: $(AZURE_STORAGE_ACCOUNT_NAME)
+  azureAdClientId: $(AZURE_CLIENT_ID)
+  azureAdClientSecret: $(AZURE_CLIENT_SECRET)
   azureAdTenantId: $(AZURE_TENANT_ID)
   azureAdTenantName: $(AZURE_TENANT_NAME)
   azureEditProfileAuthPolicyName: $(AZURE_EDIT_PROFILE_AUTH_POLICY_NAME)

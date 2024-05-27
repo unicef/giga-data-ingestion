@@ -37,6 +37,52 @@ jobs:
 
             - task: Kubernetes@1
               displayName: Create secret
+              condition: not(eq(variables.environment, 'prd'))
+              inputs:
+                namespace: $(kubernetesNamespace)
+                configurationType: inline
+                command: apply
+                useConfigurationFile: true
+                inline: |
+                  apiVersion: v1
+                  kind: Secret
+                  metadata:
+                    name: "giga-ingestion-portal-secrets-$(deployEnv)"
+                    labels:
+                      app.kubernetes.io/name: giga-data-ingestion
+                      app.kubernetes.io/part-of: giga-dataops-platform
+                      app.kubernetes.io/component: data-ingestion
+                  stringData:
+                    DEPLOY_ENV: "$(deployEnv)"
+                    SECRET_KEY: "$(applicationSecretKey)"
+                    SENTRY_DSN: "$(sentryDsn)"
+                    AZURE_CLIENT_ID: "$(azureAdClientId)"
+                    AZURE_CLIENT_SECRET: "$(azureAdClientSecret)"
+                    AZURE_TENANT_ID: "$(azureAdTenantId)"
+                    AZURE_APPLICATION_ID: "$(azureAdApplicationId)"
+                    AZURE_TENANT_NAME: "$(azureAdTenantName)"
+                    AZURE_EDIT_PROFILE_AUTH_POLICY_NAME: "$(azureEditProfileAuthPolicyName)"
+                    AZURE_PASSWORD_RESET_AUTH_POLICY_NAME: "$(azureAdPasswordResetAuthPolicyName)"
+                    AZURE_SUSI_AUTH_POLICY_NAME: "$(azureAdSuSiAuthPolicyName)"
+                    AZURE_REDIRECT_URI: "$(azureAdRedirectUri)"
+                    WEB_APP_REDIRECT_URI: "https://$(ingressHost)"
+                    AZURE_SAS_TOKEN: "$(azureSasToken)"
+                    AZURE_STORAGE_ACCOUNT_NAME: "$(storageAccountName)"
+                    AZURE_BLOB_CONTAINER_NAME: "$(storageContainerName)"
+                    EMAIL_RENDERER_BEARER_TOKEN: "$(emailRendererBearerToken)"
+                    POSTGRESQL_USERNAME: "$(postgresqlUsername)"
+                    POSTGRESQL_PASSWORD: "$(postgresqlPassword)"
+                    POSTGRESQL_DATABASE: "$(postgresqlDatabase)"
+                    COMMIT_SHA: "$(Build.SourceVersion)"
+                    TRINO_USERNAME: "$(trinoUsername)"
+                    TRINO_PASSWORD: ""
+                    TRINO_HOST: "trino.ictd-ooi-trino-$(deployEnv).svc.cluster.local"
+                    REDIS_PASSWORD: "$(redisPassword)"
+
+
+            - task: Kubernetes@1
+              displayName: Create production secret
+              condition: eq(variables.environment, 'prd')
               inputs:
                 namespace: $(kubernetesNamespace)
                 configurationType: inline

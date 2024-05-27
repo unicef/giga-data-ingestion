@@ -15,12 +15,13 @@ jobs:
                 containerRegistry: $(ACR_SERVICE_CONNECTION)
 
             - task: Bash@3
-              displayName: Get Azure client ID
+              displayName: Get Azure client ID from secret
+              condition: eq(variables.environment, 'prd')
               inputs:
                 targetType: inline
                 script: |
-                  $AZURE_CLIENT_ID = kubectl get secret -n $(kubernetesNamespace) oi-ingestionportal-secrets-$(deployEnv) -o jsonpath="{.data.AZURE_CLIENT_ID}" | base64 --decode
-                  echo "##vso[task.setvariable variable=AZURE_CLIENT_ID;issecret=true;isOutput=true;]$(AZURE_CLIENT_ID)"
+                  azureAdClientId=$(kubectl get secret -n $(kubernetesNamespace) oi-ingestionportal-secrets-$(deployEnv) -o jsonpath="{.data.AZURE_CLIENT_ID}" | base64 --decode)
+                  echo "##vso[task.setvariable variable=azureAdClientId;issecret=true;isOutput=true;]$(azureAdClientId)"
 
             - task: Docker@2
               displayName: Build Docker image
@@ -30,7 +31,7 @@ jobs:
                 dockerfile: $(Build.SourcesDirectory)/Dockerfile.prod
                 arguments: >
                   --build-arg "VITE_SENTRY_DSN=$(sentryDsn)"
-                  --build-arg "VITE_AZURE_CLIENT_ID=$(AZURE_CLIENT_ID)"
+                  --build-arg "VITE_AZURE_CLIENT_ID=$(azureAdClientId)"
                   --build-arg "VITE_AZURE_TENANT_ID=$(azureAdTenantId)"
                   --build-arg "VITE_AZURE_TENANT_NAME=$(azureAdTenantName)"
                   --build-arg "VITE_AZURE_EDIT_PROFILE_AUTH_POLICY_NAME=$(azureEditProfileAuthPolicyName)"
