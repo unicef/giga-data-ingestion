@@ -47,7 +47,7 @@ class GroupsApi:
                 "accountEnabled",
                 "externalUserState",
             ],
-            orderby=["displayName", "mail", "userPrincipalName"],
+            # orderby=["displayName", "mail", "userPrincipalName"],
             count=True,
         )
     )
