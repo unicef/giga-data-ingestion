@@ -30,6 +30,7 @@
         <OutputClaim ClaimTypeReferenceId="email" />
         <OutputClaim ClaimTypeReferenceId="groups" />
         <OutputClaim ClaimTypeReferenceId="objectId" PartnerClaimType="sub" />
+        <OutputClaim ClaimTypeReferenceId="objectId" PartnerClaimType="oid" />
         <OutputClaim
           ClaimTypeReferenceId="tenantId"
           AlwaysUseDefaultValue="true"

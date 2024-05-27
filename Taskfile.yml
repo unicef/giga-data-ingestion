@@ -271,7 +271,7 @@ tasks:
       - sed -e 's|${TENANT_NAME}|{{.AZURE_TENANT_NAME}}|g' template/TrustFrameworkExtensions.xml > dev/TrustFrameworkExtensions.xml
       - >
         sed -e 's|${TENANT_NAME}|{{.AZURE_TENANT_NAME}}|g'
-        -e 's|${DEPLOY_ENV}|dev|'
+        -e 's|${INGRESS_HOST}|io-dataingestion-dev.unitst.org|'
         template/TrustFrameworkExtensions_groups.xml > dev/TrustFrameworkExtensions_groups.xml
       - sed -e 's|${TENANT_NAME}|{{.AZURE_TENANT_NAME}}|g' template/TrustFrameworkLocalization.xml > dev/TrustFrameworkLocalization.xml
 
@@ -280,9 +280,18 @@ tasks:
       - sed -e 's|${TENANT_NAME}|gigasyncteststg|g' template/TrustFrameworkExtensions.xml > stg/TrustFrameworkExtensions.xml
       - >
         sed -e 's|${TENANT_NAME}|gigasyncteststg|g'
-        -e 's|${DEPLOY_ENV}|stg|'
+        -e 's|${INGRESS_HOST}|io-dataingestion-stg.unitst.org|'
         template/TrustFrameworkExtensions_groups.xml > stg/TrustFrameworkExtensions_groups.xml
       - sed -e 's|${TENANT_NAME}|gigasyncteststg|g' template/TrustFrameworkLocalization.xml > stg/TrustFrameworkLocalization.xml
+
+      - sed -e 's|${TENANT_NAME}|gigasynctestprd|g' template/SignUpOrSignin.xml > prd/SignUpOrSignin.xml
+      - sed -e 's|${TENANT_NAME}|gigasynctestprd|g' template/TrustFrameworkBase.xml > prd/TrustFrameworkBase.xml
+      - sed -e 's|${TENANT_NAME}|gigasynctestprd|g' template/TrustFrameworkExtensions.xml > prd/TrustFrameworkExtensions.xml
+      - >
+        sed -e 's|${TENANT_NAME}|gigasynctestprd|g'
+        -e 's|${INGRESS_HOST}|sync.giga.global|'
+        template/TrustFrameworkExtensions_groups.xml > prd/TrustFrameworkExtensions_groups.xml
+      - sed -e 's|${TENANT_NAME}|gigasynctestprd|g' template/TrustFrameworkLocalization.xml > prd/TrustFrameworkLocalization.xml
 
   ipython:
     desc: Open an IPython shell
