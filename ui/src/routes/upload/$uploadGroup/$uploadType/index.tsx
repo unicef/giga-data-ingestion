@@ -184,7 +184,10 @@ export default function Index() {
               handleOnAddFiles(addedFiles)
             }
           />
-          <p>File formats: {Object.values(validTypes).join(", ")} up to 10MB</p>
+          <p>
+            File formats: {Object.values(validTypes).flat().join(", ")} up to
+            10MB
+          </p>
           {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
         </div>
       )}
