@@ -160,9 +160,7 @@ function CDFDataTable({
                         <TableRow
                           className={cn({
                             "bg-green-300": changeType === "insert",
-                            "bg-yellow-200": (changeType as string).startsWith(
-                              "update_",
-                            ),
+                            "bg-yellow-200": changeType === "update_postimage",
                             "bg-red-300": changeType === "delete",
                           })}
                           {...getRowProps({
