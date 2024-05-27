@@ -14,7 +14,7 @@ from fastapi import (
     status,
 )
 from pydantic import Field
-from sqlalchemy import desc, exc, func, select, update
+from sqlalchemy import delete, desc, exc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -283,3 +283,12 @@ async def update_api_ingestion(
             raise HTTPException(
                 detail=err._message, status_code=status.HTTP_400_BAD_REQUEST
             ) from err
+
+
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_api_ingestion(id: str, db: AsyncSession = Depends(get_db)):
+    async with db.begin():
+        await db.execute(
+            delete(SchoolConnectivity).where(SchoolConnectivity.school_list_id == id)
+        )
+        await db.execute(delete(SchoolList).where(SchoolList.id == id))
