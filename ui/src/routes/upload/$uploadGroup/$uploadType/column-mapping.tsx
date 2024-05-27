@@ -35,7 +35,7 @@ export const Route = createFileRoute(
       uploadSliceActions: { setStepIndex },
     } = useStore.getState();
 
-    if (!file) {
+    if (!file || (uploadType === "coverage" && !source)) {
       setStepIndex(0);
       throw redirect({ to: ".." });
     }

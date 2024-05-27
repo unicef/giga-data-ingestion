@@ -11,7 +11,6 @@ from fastapi import (
     Security,
     status,
 )
-from loguru import logger
 from sqlalchemy.orm import Session
 
 from data_ingestion.cache.keys import get_schema_key
@@ -45,7 +44,6 @@ async def get_schema(
     is_qos: bool = False,
     db: Session = Depends(get_db),
 ):
-    logger.info(f"{is_qos=}")
     schemas = await get_schemas(db, background_tasks)
 
     if name not in schemas:

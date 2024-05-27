@@ -133,7 +133,7 @@ async def upload_file(
             detail="File size exceeds 10 MB limit",
         )
 
-    file_content = await file.read(2048)
+    file_content = await file.read(4096)
     file_type = magic.from_buffer(file_content, mime=True)
     file_extension = os.path.splitext(file.filename)[1]
 
