@@ -81,7 +81,28 @@ async def download_schema(
     df = pd.DataFrame.from_records(schema)
 
     buffer = io.BytesIO()
-    df[["name", "data_type", "is_nullable", "description"]].to_csv(buffer, index=False)
+
+    # Remove system-generated cols
+    df = df[df["is_system_generated"].isnull() | (df["is_system_generated"] is False)]
+
+    # Select specific cols
+    df = df[["name", "data_type", "is_nullable", "is_important", "description"]]
+
+    # Invert `is_nullable` to change the meaning to `is_mandatory`
+    df["is_nullable"] = ~df["is_nullable"]
+
+    # Rename columns to be user-friendly
+    df = df.rename(
+        columns={
+            "name": "Column Name",
+            "data_type": "Data Type",
+            "is_nullable": "Mandatory",
+            "is_important": "Important",
+            "description": "Description",
+        }
+    )
+
+    df.to_csv(buffer, index=False)
     buffer.seek(0)
 
     response.media_type = "text/csv"
