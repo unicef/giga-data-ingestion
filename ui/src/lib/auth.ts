@@ -13,6 +13,7 @@ const {
   VITE_AZURE_EDIT_PROFILE_AUTH_POLICY_NAME: AZURE_EDIT_PROFILE_AUTH_POLICY_NAME,
   VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME:
     AZURE_PASSWORD_RESET_AUTH_POLICY_NAME,
+  VITE_REDIRECT_URL: REDIRECT_URL,
 } = import.meta.env;
 
 export const b2cPolicies = {
@@ -46,8 +47,8 @@ export const msalConfig: Configuration = {
     clientId: AZURE_CLIENT_ID,
     authority: b2cPolicies.authorities.signUpSignIn.authority,
     knownAuthorities: [b2cPolicies.authorityDomain],
-    redirectUri: "/",
-    postLogoutRedirectUri: "/",
+    redirectUri: REDIRECT_URL,
+    postLogoutRedirectUri: REDIRECT_URL,
     navigateToLoginRequestUrl: false,
   },
   cache: {

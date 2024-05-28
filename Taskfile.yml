@@ -259,6 +259,7 @@ tasks:
         --build-arg "VITE_AZURE_SUSI_AUTH_POLICY_NAME={{.VITE_AZURE_SUSI_AUTH_POLICY_NAME}}"
         --build-arg "VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME={{.VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME}}"
         --build-arg "VITE_DATAHUB_URL=https://io-datahub-dev.unitst.org"
+        --build-arg "VITE_REDIRECT_URL=http://localhost:3000"
         --target build
         -f Dockerfile.prod .
 
