@@ -1,6 +1,7 @@
 import { ComponentProps } from "react";
 
 import { Tag } from "@carbon/react";
+import { z } from "zod";
 
 export interface Check {
   assertion: string;
@@ -133,3 +134,23 @@ export const initialUploadResponse: UploadResponse = {
   column_to_schema_mapping: "",
   column_license: "",
 };
+
+export const basicCheckSchema = z.object({
+  assertion: z.string(),
+  column: z.string(),
+  description: z.string(),
+});
+
+export type BasicCheck = z.infer<typeof basicCheckSchema>;
+
+export const basicChecksSchema = z.object({
+  completeness_checks: z.array(basicCheckSchema),
+  critical_error_check: z.array(basicCheckSchema),
+  domain_checks: z.array(basicCheckSchema),
+  duplicate_rows_checks: z.array(basicCheckSchema),
+  format_validation_checks: z.array(basicCheckSchema),
+  geospatial_checks: z.array(basicCheckSchema),
+  range_checks: z.array(basicCheckSchema),
+});
+
+export type BasicChecks = z.infer<typeof basicChecksSchema>;
