@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Annotated
 
@@ -14,6 +15,7 @@ from fastapi import (
     status,
 )
 from fastapi_azure_auth.user import User
+from loguru import logger
 from pydantic import Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,6 +36,7 @@ from data_ingestion.models import FileUpload
 from data_ingestion.models.file_upload import DQStatusEnum
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
+from data_ingestion.schemas.data_quality_report import BasicDataQualityCheck
 from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
     FileUploadRequest,
@@ -45,6 +48,40 @@ router = APIRouter(
     tags=["upload"],
     dependencies=[Security(azure_scheme)],
 )
+
+
+@router.get("/basic_check", response_model=BasicDataQualityCheck)
+async def list_basic_checks(
+    # db: AsyncSession = Depends(get_db),
+    # is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    # user: User = Depends(azure_scheme),
+):
+    path = (
+        "data-quality-results/school-geolocation/dq-summary/ATG/"
+        "ctyadp44nu99r9hmd3mmmka6_ATG_geolocation_20240518-123456.json"
+    )
+
+    blob = storage_client.get_blob_client(path)
+    if not blob.exists():
+        logger.error("DQ report summary still does not exist")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not Found",
+        )
+
+    blob_data = blob.download_blob().readall()
+    dq_report_summary = blob_data.decode("utf-8")
+    dq_report_summary_dict: dict = json.loads(dq_report_summary)
+
+    basic_dq_check = BasicDataQualityCheck(**dq_report_summary_dict)
+
+    blob_list = storage_client.list_blobs(
+        "data-quality-results/school-geolocation/dq-summary"
+    )
+
+    for blob in blob_list:
+        print("\t" + blob.name)
+    return basic_dq_check
 
 
 @router.get("", response_model=PagedResponseSchema[FileUploadSchema])
