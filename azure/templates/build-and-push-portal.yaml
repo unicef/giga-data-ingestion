@@ -40,6 +40,7 @@ jobs:
                   --build-arg "VITE_DATAHUB_URL=https://$(datahubIngressHost)"
                   --build-arg "VITE_COMMIT_SHA=$(Build.SourceVersion)"
                   --build-arg "VITE_DEPLOY_ENV=$(deployEnv)"
+                  --build-arg "VITE_REDIRECT_URL=https://$(ingressHost)"
                 tags: |
                   $(Build.SourceVersion)
 
