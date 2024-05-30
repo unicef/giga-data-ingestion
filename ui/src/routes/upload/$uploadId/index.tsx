@@ -134,11 +134,11 @@ function Index() {
                     This page can be used to identify which, if any, quality
                     tests your data has failed on, the values causing the
                     failure and a suggestion as to what is needed to fix it. A
-                    full report will be emailed to but, and is also available to
-                    be downloaded as a .csv file for use offline. In the event
-                    your data contains critical errors which need to be fixed,
-                    this page is designed to help assist you with those
-                    necessary changes before re-uploading your data again.
+                    full summary report will be emailed to but, and is also
+                    available to be downloaded as a .csv file for use offline.
+                    In the event your data contains critical errors which need
+                    to be fixed, this page is designed to help assist you with
+                    those necessary changes before re-uploading your data again.
                   </p>{" "}
                   <p className="cds--label-description">
                     Users can expect a wait time of approx.15 minutes for all
