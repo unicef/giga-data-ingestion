@@ -58,7 +58,7 @@ def send_email_base(
     try:
         logger.info(result.json())
     except JSONDecodeError:
-        logger.info(result)
+        logger.info(result.text)
 
 
 def send_rendered_email(
