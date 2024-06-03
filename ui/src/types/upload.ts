@@ -22,7 +22,7 @@ export interface Check {
   dq_remarks: string;
 }
 
-interface Summary {
+export interface Summary {
   rows: number;
   columns: number;
   timestamp: Date;

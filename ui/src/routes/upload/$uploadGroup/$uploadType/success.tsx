@@ -5,6 +5,7 @@ import {
   ArrowRight,
   Download,
   InProgress,
+  Restart,
 } from "@carbon/icons-react";
 import {
   Accordion,
@@ -20,7 +21,8 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Link,
-  createFileRoute, // redirect,
+  createFileRoute,
+  redirect,
   useNavigate,
 } from "@tanstack/react-router";
 import { z } from "zod";
@@ -49,94 +51,35 @@ export const Route = createFileRoute(
 )({
   component: Success,
   loader: ({ params: { uploadGroup, uploadType } }) => {
-    console.log(uploadGroup, uploadType);
+    const {
+      uploadSlice: { file, columnMapping },
+      uploadSliceActions: { setStepIndex },
+    } = useStore.getState();
 
-    // const {
-    //   uploadSlice: { file, columnMapping },
-    //   uploadSliceActions: { setStepIndex },
-    // } = useStore.getState();
-
-    // if (uploadGroup === "other" && uploadType === "unstructured") {
-    //   //do nothing
-    // } else if (
-    //   !file ||
-    //   Object.values(columnMapping).filter(Boolean).length === 0
-    // ) {
-    //   setStepIndex(0);
-    //   throw redirect({ to: ".." });
-    // }
+    if (uploadGroup === "other" && uploadType === "unstructured") {
+      //do nothing
+    } else if (
+      !file ||
+      Object.values(columnMapping).filter(Boolean).length === 0
+    ) {
+      setStepIndex(0);
+      throw redirect({ to: ".." });
+    }
   },
 });
 
-function Success() {
-  const { uploadGroup, uploadType } = Route.useParams();
-  const {
-    uploadSliceActions: { resetUploadSliceState },
-    // uploadSlice: { uploadId },
-  } = useStore();
-
-  const navigate = useNavigate({ from: "/upload/$uploadId" });
-
-  const isUnstructured =
-    uploadGroup === "other" && uploadType === "unstructured";
-
-  const uploadId = "cim7x7kas1th971rgftl3yus";
-
-  const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
-    queryFn: () => api.uploads.list_basic_checks(uploadType),
-    queryKey: ["basic_checks", uploadType],
-  });
-  const basicCheck = basicCheckQuery?.data ?? [];
-
-  const { data: uploadQuery } = useQuery({
-    queryKey: ["upload", uploadId],
-    queryFn: () => api.uploads.get_upload(uploadId),
-  });
-  const uploadData = useMemo<UploadResponse>(
-    () => uploadQuery?.data ?? initialUploadResponse,
-    [uploadQuery],
-  );
-
-  const { data: dqResultQuery } = useQuery({
-    queryKey: ["dq_check", uploadId],
-    queryFn: () => api.uploads.get_data_quality_check(uploadId),
-    refetchInterval: 5000,
-    enabled: !isUnstructured,
-  });
-
-  const dqResult = useMemo<DataQualityCheck>(
-    () => dqResultQuery?.data ?? initialDataQualityCheck,
-    [dqResultQuery],
-  );
-
-  const status = dqResult?.status;
-
-  const isError =
-    status == DQStatus.ERROR ||
-    status === DQStatus.SKIPPED ||
-    status === DQStatus.TIMEOUT;
-
-  const { mutateAsync: downloadFile, isPending: isPendingDownloadFile } =
-    useMutation({
-      mutationFn: api.uploads.download_data_quality_check,
-    });
-
-  const basicCheckItems = Object.entries(basicCheck).map(([key, value]) => {
-    const basicCheckArraySchema = z.array(basicCheckSchema);
-    const check = basicCheckArraySchema.safeParse(value);
-
-    if (check.success) {
-      return (
-        <AccordionItem title={key}>
-          <BasicDataQualityCheck data={check.data} />
-        </AccordionItem>
-      );
-    } else {
-      return null;
-    }
-  });
-
-  const DataQualityChecks = memo(() => {
+const SuccessDataQualityChecks = memo(
+  ({
+    dqResult,
+    status,
+    uploadData,
+    uploadId,
+  }: {
+    dqResult: DataQualityCheck;
+    status: DQStatus;
+    uploadData: UploadResponse;
+    uploadId: string;
+  }) => {
     if (status === DQStatus.COMPLETED) {
       const {
         summary: _,
@@ -186,6 +129,77 @@ function Success() {
           </AccordionItem>
           {dataCheckItems}
         </>
+      );
+    } else {
+      return null;
+    }
+  },
+);
+
+function Success() {
+  const { uploadGroup, uploadType } = Route.useParams();
+  const {
+    uploadSliceActions: { resetUploadSliceState },
+    uploadSlice: { uploadId },
+  } = useStore();
+
+  const navigate = useNavigate({ from: "/upload/$uploadId" });
+
+  const isUnstructured =
+    uploadGroup === "other" && uploadType === "unstructured";
+
+  const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
+    queryFn: () => api.uploads.list_basic_checks(uploadType),
+    queryKey: ["basic_checks", uploadType],
+  });
+  const basicCheck = basicCheckQuery?.data ?? [];
+
+  const { data: uploadQuery } = useQuery({
+    queryKey: ["upload", uploadId],
+    queryFn: () => api.uploads.get_upload(uploadId),
+  });
+  const uploadData = useMemo<UploadResponse>(
+    () => uploadQuery?.data ?? initialUploadResponse,
+    [uploadQuery],
+  );
+
+  const {
+    data: dqResultQuery,
+    isRefetching: isRefetchingDqResultQuery,
+    refetch: refetchDqResultQuery,
+  } = useQuery({
+    queryKey: ["dq_check", uploadId],
+    queryFn: () => api.uploads.get_data_quality_check(uploadId),
+    refetchInterval: 7000,
+    enabled: !isUnstructured,
+  });
+
+  const dqResult = useMemo<DataQualityCheck>(
+    () => dqResultQuery?.data ?? initialDataQualityCheck,
+    [dqResultQuery],
+  );
+
+  const status = dqResult?.status;
+
+  const isError =
+    status == DQStatus.ERROR ||
+    status === DQStatus.SKIPPED ||
+    status === DQStatus.TIMEOUT;
+
+  const { mutateAsync: downloadFile, isPending: isPendingDownloadFile } =
+    useMutation({
+      mutationFn: api.uploads.download_data_quality_check,
+    });
+
+  const basicCheckItems = Object.entries(basicCheck).map(([key, value]) => {
+    const basicCheckArraySchema = z.array(basicCheckSchema);
+    const check = basicCheckArraySchema.safeParse(value);
+
+    if (check.success) {
+      return (
+        <AccordionItem title={key}>
+          <BasicDataQualityCheck data={check.data} />
+        </AccordionItem>
       );
     } else {
       return null;
@@ -242,6 +256,13 @@ function Success() {
                 <div className=" bg-gray-100 py-4 pl-4 pr-28 text-base font-semibold">
                   Data Quality Review
                 </div>
+                <Button
+                  className="bg-gray-100"
+                  disabled={isRefetchingDqResultQuery}
+                  renderIcon={Restart}
+                  kind="ghost"
+                  onClick={async () => await refetchDqResultQuery()}
+                />
                 <div className="flex items-center ">
                   {tagProps && (
                     <Tag renderIcon={InProgress} type={tagProps.color}>
@@ -320,7 +341,12 @@ function Success() {
             <Accordion align="start">
               {status === DQStatus.COMPLETED ? (
                 <>
-                  <DataQualityChecks />
+                  <SuccessDataQualityChecks
+                    dqResult={dqResult}
+                    status={status}
+                    uploadData={uploadData}
+                    uploadId={uploadId}
+                  />
                 </>
               ) : (
                 <>
