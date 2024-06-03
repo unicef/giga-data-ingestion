@@ -10,7 +10,7 @@ import {
   Stack,
 } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { FileUploaderDropContainer } from "@/components/common/CarbonOverrides.tsx";
@@ -59,6 +59,7 @@ export default function Index() {
   const [isParsing, setIsParsing] = useState(false);
 
   const [parsingError, setParsingError] = useState("");
+  const navigate = useNavigate({ from: Route.fullPath });
   const hasParsingError = !!parsingError;
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
@@ -106,6 +107,7 @@ export default function Index() {
       setSource(source ?? null);
       setStepIndex(1);
     }
+    void navigate({ to: isUnstructured ? "./metadata" : "./column-mapping" });
   };
 
   const isProceedDisabled =
@@ -207,8 +209,6 @@ export default function Index() {
         </Button>
         <Button
           disabled={isProceedDisabled}
-          as={Link}
-          to={isUnstructured ? "./metadata" : "./column-mapping"}
           onClick={handleProceedToNextStep}
           className="w-full"
           renderIcon={ArrowRight}
