@@ -36,7 +36,6 @@ from data_ingestion.models import FileUpload
 from data_ingestion.models.file_upload import DQStatusEnum
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
-from data_ingestion.schemas.data_quality_report import BasicDataQualityCheck
 from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
     FileUploadRequest,
@@ -50,16 +49,29 @@ router = APIRouter(
 )
 
 
-@router.get("/basic_check", response_model=BasicDataQualityCheck)
+@router.get("/basic_check/{dataset}")
 async def list_basic_checks(
-    # db: AsyncSession = Depends(get_db),
-    # is_privileged: bool = Depends(IsPrivileged.raises(False)),
-    # user: User = Depends(azure_scheme),
+    dataset: str = "geolocation",
+    db: AsyncSession = Depends(get_db),
 ):
-    path = (
-        "data-quality-results/school-geolocation/dq-summary/ATG/"
-        "ctyadp44nu99r9hmd3mmmka6_ATG_geolocation_20240518-123456.json"
+    query = (
+        select(FileUpload)
+        .where(FileUpload.is_processed_in_staging == True)  # noqa: E712
+        .where(FileUpload.dataset == dataset)
+        .where(FileUpload.dq_status == DQStatusEnum.COMPLETED)
+        .where(FileUpload.dq_report_path != None)  # noqa: E711
+        .where(FileUpload.dq_full_path != None)  # noqa: E711
+        .order_by(FileUpload.created.desc())
     )
+    result = await db.scalars(query)
+    file_upload = result.first()
+
+    path = ""
+
+    if file_upload is not None:
+        path = file_upload.dq_report_path
+    else:
+        path = f"data-quality-results/school-{dataset}/sample_data_check.json"
 
     blob = storage_client.get_blob_client(path)
     if not blob.exists():
@@ -73,15 +85,7 @@ async def list_basic_checks(
     dq_report_summary = blob_data.decode("utf-8")
     dq_report_summary_dict: dict = json.loads(dq_report_summary)
 
-    basic_dq_check = BasicDataQualityCheck(**dq_report_summary_dict)
-
-    blob_list = storage_client.list_blobs(
-        "data-quality-results/school-geolocation/dq-summary"
-    )
-
-    for blob in blob_list:
-        print("\t" + blob.name)
-    return basic_dq_check
+    return dq_report_summary_dict
 
 
 @router.get("", response_model=PagedResponseSchema[FileUploadSchema])
@@ -345,6 +349,14 @@ async def get_data_quality_check(
             detail="You do not have permission to access details for this file.",
         )
 
+    if file_upload.dq_status != DQStatusEnum.COMPLETED:
+        return {
+            "name": None,
+            "creation_time": None,
+            "dq_summary": None,
+            "dq_failed_rows_first_five_rows": None,
+            "status": file_upload.dq_status,
+        }
     blob_properties, results = get_first_n_error_rows_for_data_quality_check(
         file_upload.dq_full_path
     )
@@ -355,6 +367,7 @@ async def get_data_quality_check(
         "creation_time": blob_properties.creation_time.isoformat(),
         "dq_summary": dq_report_summary_dict,
         "dq_failed_rows_first_five_rows": results,
+        "status": file_upload.dq_status,
     }
 
 
