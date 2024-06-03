@@ -23,4 +23,4 @@ jobs:
                 buildContext: $(Build.SourcesDirectory)/email
                 containerRegistry: $(ACR_SERVICE_CONNECTION)
                 tags: |
-                  $(Build.SourceVersion)
+                  $(deployEnv)-$(Build.SourceVersion)

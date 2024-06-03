@@ -83,7 +83,7 @@ jobs:
                 valueFile: infra/helm/data-ingestion.values-override.yaml
                 arguments: >
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
-                  --set image.tag="$(Build.SourceVersion)"
+                  --set image.tag="$(deployEnv)-$(Build.SourceVersion)"
                   --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
                   --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
@@ -100,7 +100,7 @@ jobs:
                 arguments: >
                   --values infra/helm/data-ingestion.values-override-prd.yaml
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
-                  --set image.tag="$(Build.SourceVersion)"
+                  --set image.tag="$(deployEnv)-$(Build.SourceVersion)"
                   --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
                   --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
@@ -117,7 +117,7 @@ jobs:
                 arguments: >
                   --values infra/helm/data-ingestion.values-override-prd.yaml
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal-email"
-                  --set image.tag="$(Build.SourceVersion)"
+                  --set image.tag="$(deployEnv)-$(Build.SourceVersion)"
                   --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
                   --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
@@ -133,7 +133,7 @@ jobs:
                 valueFile: infra/helm/data-ingestion.values-override.yaml
                 arguments: >
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
-                  --set image.tag="$(Build.SourceVersion)"
+                  --set image.tag="$(deployEnv)-$(Build.SourceVersion)"
                   --set ingress.enabled=true
                   --set ingress.hosts[0].host="$(ingressHost)"
                   --set ingress.hosts[0].paths[0].path="/"
@@ -154,7 +154,7 @@ jobs:
                 arguments: >
                   --values infra/helm/data-ingestion.values-override-prd.yaml
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
-                  --set image.tag="$(Build.SourceVersion)"
+                  --set image.tag="$(deployEnv)-$(Build.SourceVersion)"
                   --set ingress.enabled=true
                   --set ingress.hosts[0].host="$(ingressHost)"
                   --set ingress.hosts[0].paths[0].path="/"
@@ -175,7 +175,7 @@ jobs:
                 arguments: >
                   --values infra/helm/data-ingestion.values-override-prd.yaml
                   --set image.repository="$(containerRegistryName).azurecr.io/giga-ingestion-portal"
-                  --set image.tag="$(Build.SourceVersion)"
+                  --set image.tag="$(deployEnv)-$(Build.SourceVersion)"
                   --set ingress.enabled=true
                   --set ingress.hosts[0].host="$(ingressHost)"
                   --set ingress.hosts[0].paths[0].path="/"
