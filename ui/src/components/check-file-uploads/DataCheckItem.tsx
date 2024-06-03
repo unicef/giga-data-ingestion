@@ -11,18 +11,21 @@ interface DataCheckItemProps {
   previewData: DqFailedRowsFirstFiveRows;
   title: string;
   uploadId: string;
+  hasDownloadButton?: boolean;
 }
 const DataCheckItem = ({
   data,
   previewData,
   title,
   uploadId,
+  hasDownloadButton = true,
 }: DataCheckItemProps) => {
   const { passed, failed } = sumAsertions([data]);
 
   return (
     <AccordionItem title={title}>
       <SummaryBanner
+        hasDownloadButton={hasDownloadButton}
         totalAssertions={data.length}
         totalFailedAssertions={failed}
         totalPassedAssertions={passed}

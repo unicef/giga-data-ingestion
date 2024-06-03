@@ -3,6 +3,13 @@ import { ComponentProps } from "react";
 import { Tag } from "@carbon/react";
 import { z } from "zod";
 
+export enum DQStatus {
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  ERROR = "ERROR",
+  TIMEOUT = "TIMEOUT",
+  SKIPPED = "SKIPPED",
+}
 export interface Check {
   assertion: string;
   column: string;
@@ -34,11 +41,13 @@ export interface DqFailedRowValues {
 export interface DqFailedRowsFirstFiveRows {
   [checkName: string]: DqFailedRowValues[];
 }
+
 export interface DataQualityCheck {
   name: string;
   creation_time: string;
   dq_summary: DataQualityCheckSummary;
   dq_failed_rows_first_five_rows: DqFailedRowsFirstFiveRows;
+  status: DQStatus;
 }
 
 export const initialDataQualityCheck: DataQualityCheck = {
@@ -59,6 +68,7 @@ export const initialDataQualityCheck: DataQualityCheck = {
     critical_error_check: [],
   },
   dq_failed_rows_first_five_rows: {},
+  status: DQStatus.IN_PROGRESS,
 };
 
 export interface UploadParams {
@@ -76,14 +86,6 @@ export interface UploadUnstructuredParams {
   file: File;
   source?: string | null;
   metadata: string;
-}
-
-export enum DQStatus {
-  IN_PROGRESS = "IN_PROGRESS",
-  COMPLETED = "COMPLETED",
-  ERROR = "ERROR",
-  TIMEOUT = "TIMEOUT",
-  SKIPPED = "SKIPPED",
 }
 
 export const DQStatusTagMapping: Record<
@@ -143,14 +145,6 @@ export const basicCheckSchema = z.object({
 
 export type BasicCheck = z.infer<typeof basicCheckSchema>;
 
-export const basicChecksSchema = z.object({
-  completeness_checks: z.array(basicCheckSchema),
-  critical_error_check: z.array(basicCheckSchema),
-  domain_checks: z.array(basicCheckSchema),
-  duplicate_rows_checks: z.array(basicCheckSchema),
-  format_validation_checks: z.array(basicCheckSchema),
-  geospatial_checks: z.array(basicCheckSchema),
-  range_checks: z.array(basicCheckSchema),
-});
+export const basicChecksSchema = z.record(z.array(basicCheckSchema));
 
 export type BasicChecks = z.infer<typeof basicChecksSchema>;

@@ -3,9 +3,6 @@ import { useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
-  Accordion,
-  AccordionItem,
-  AccordionSkeleton,
   Button,
   ButtonSet,
   SelectItem,
@@ -14,10 +11,8 @@ import {
 } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
 
 import { api } from "@/api";
-import BasicDataQualityCheck from "@/components/check-file-uploads/BasicDataQualityCheck";
 import { FileUploaderDropContainer } from "@/components/common/CarbonOverrides.tsx";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
@@ -28,7 +23,6 @@ import {
 } from "@/constants/upload.ts";
 import { useStore } from "@/context/store";
 import { sourceOptions } from "@/mocks/metadataFormValues.tsx";
-import { basicCheckSchema } from "@/types/upload";
 import { HeaderDetector } from "@/utils/upload.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
@@ -106,28 +100,6 @@ export default function Index() {
   });
 
   const schema = schemaQuery?.data ?? [];
-
-  const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
-    queryFn: () => api.uploads.list_basic_checks(),
-    queryKey: ["basic_checks"],
-  });
-
-  const basicCheck = basicCheckQuery?.data ?? [];
-
-  const dataCheckItems = Object.entries(basicCheck).map(([key, value]) => {
-    const basicCheckArraySchema = z.array(basicCheckSchema);
-    const check = basicCheckArraySchema.safeParse(value);
-
-    if (check.success) {
-      return (
-        <AccordionItem title={key}>
-          <BasicDataQualityCheck data={check.data} />
-        </AccordionItem>
-      );
-    } else {
-      return null;
-    }
-  });
 
   const handleProceedToNextStep = () => {
     if (file) {
@@ -220,9 +192,6 @@ export default function Index() {
           {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
         </div>
       )}
-      <Accordion align="start">
-        {isBasicCheckFetching ? <AccordionSkeleton /> : dataCheckItems}
-      </Accordion>
 
       <ButtonSet className="w-full">
         <Button

@@ -59,8 +59,10 @@ export default function routes(axi: AxiosInstance) {
       });
     },
 
-    list_basic_checks: (): Promise<AxiosResponse<BasicChecks>> => {
-      return axi.get(`/upload/basic_check`);
+    list_basic_checks: (
+      dataset: string,
+    ): Promise<AxiosResponse<BasicChecks>> => {
+      return axi.get(`/upload/basic_check/${dataset}`);
     },
   };
 }
