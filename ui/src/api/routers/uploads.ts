@@ -61,8 +61,11 @@ export default function routes(axi: AxiosInstance) {
 
     list_basic_checks: (
       dataset: string,
+      source: string | null,
     ): Promise<AxiosResponse<BasicChecks>> => {
-      return axi.get(`/upload/basic_check/${dataset}`);
+      return axi.get(`/upload/basic_check/${dataset}`, {
+        params: { source: source },
+      });
     },
   };
 }

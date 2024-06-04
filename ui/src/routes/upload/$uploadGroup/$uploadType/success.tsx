@@ -140,7 +140,7 @@ function Success() {
   const { uploadGroup, uploadType } = Route.useParams();
   const {
     uploadSliceActions: { resetUploadSliceState },
-    uploadSlice: { uploadId },
+    uploadSlice: { uploadId, source },
   } = useStore();
 
   const navigate = useNavigate({ from: "/upload/$uploadId" });
@@ -149,8 +149,8 @@ function Success() {
     uploadGroup === "other" && uploadType === "unstructured";
 
   const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
-    queryFn: () => api.uploads.list_basic_checks(uploadType),
-    queryKey: ["basic_checks", uploadType],
+    queryFn: () => api.uploads.list_basic_checks(uploadType, source),
+    queryKey: ["basic_checks", uploadType, source],
   });
   const basicCheck = basicCheckQuery?.data ?? [];
 
