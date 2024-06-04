@@ -52,9 +52,12 @@ router = APIRouter(
 @router.get("/basic_check/{dataset}")
 async def list_basic_checks(
     dataset: str = "geolocation",
+    source: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
-    query = (
+    path = ""
+
+    is_completed_query = (
         select(FileUpload)
         .where(FileUpload.is_processed_in_staging == True)  # noqa: E712
         .where(FileUpload.dataset == dataset)
@@ -63,15 +66,39 @@ async def list_basic_checks(
         .where(FileUpload.dq_full_path != None)  # noqa: E711
         .order_by(FileUpload.created.desc())
     )
-    result = await db.scalars(query)
-    file_upload = result.first()
 
-    path = ""
+    if dataset == "geolocation":
+        result = await db.scalars(is_completed_query)
+        file_upload = result.first()
 
-    if file_upload is not None:
-        path = file_upload.dq_report_path
-    else:
-        path = f"data-quality-results/school-{dataset}/sample_data_check.json"
+        if file_upload is not None:
+            path = file_upload.dq_report_path
+        else:
+            path = (
+                "data-quality-results/school-geolocation/"
+                "sample-data-check/geolocation.json"
+            )
+
+    if dataset == "coverage":
+        if source not in ["fb", "itu"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Schema does not exist"
+            )
+
+        is_completed_coverage_query = is_completed_query.where(
+            FileUpload.source == source
+        )
+
+        result = await db.scalars(is_completed_coverage_query)
+        file_upload = result.first()
+
+        if file_upload is not None:
+            path = file_upload.dq_report_path
+        else:
+            path = (
+                "data-quality-results/school-coverage/"
+                f"sample-data-check/{source}.json"
+            )
 
     blob = storage_client.get_blob_client(path)
     if not blob.exists():
