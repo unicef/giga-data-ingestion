@@ -16,7 +16,7 @@ jobs:
                 namespace: $(kubernetesNamespace)
 
             - task: HelmDeploy@0
-              displayName: Helm deploy PostgreSQL
+              displayName: Helm deploy PostgreSQL dev
               condition: eq(variables.environment, 'dev')
               inputs:
                 command: upgrade
@@ -31,7 +31,7 @@ jobs:
                   --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
-              displayName: Helm deploy production-config PostgreSQL
+              displayName: Helm deploy PostgreSQL stg/prd
               condition: or(eq(variables.environment, 'stg'), eq(variables.environment, 'prd'))
               inputs:
                 command: upgrade
@@ -44,7 +44,7 @@ jobs:
                 arguments: --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
-              displayName: Helm deploy Redis
+              displayName: Helm deploy Redis dev
               condition: eq(variables.environment, 'dev')
               inputs:
                 command: upgrade
@@ -59,7 +59,7 @@ jobs:
                   --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
-              displayName: Helm deploy production-config Redis
+              displayName: Helm deploy Redis stg/prd
               condition: or(eq(variables.environment, 'stg'), eq(variables.environment, 'prd'))
               inputs:
                 command: upgrade
@@ -72,7 +72,7 @@ jobs:
                 arguments: --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
-              displayName: Helm deploy email service
+              displayName: Helm deploy email service dev
               condition: eq(variables.environment, 'dev')
               inputs:
                 command: upgrade
@@ -88,7 +88,7 @@ jobs:
                   --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
-              displayName: Helm deploy staging-config email service
+              displayName: Helm deploy email service stg
               condition: eq(variables.environment, 'stg')
               inputs:
                 command: upgrade
@@ -105,7 +105,7 @@ jobs:
                   --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
-              displayName: Helm deploy production-config email service
+              displayName: Helm deploy email service prd
               condition: eq(variables.environment, 'prd')
               inputs:
                 command: upgrade
@@ -122,7 +122,7 @@ jobs:
                   --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
-              displayName: Helm deploy Ingestion Portal
+              displayName: Helm deploy Ingestion Portal dev
               condition: eq(variables.environment, 'dev')
               inputs:
                 command: upgrade
@@ -142,7 +142,7 @@ jobs:
                   --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
-              displayName: Helm deploy staging-config Ingestion Portal
+              displayName: Helm deploy Ingestion Portal stg
               condition: eq(variables.environment, 'stg')
               inputs:
                 command: upgrade
@@ -163,7 +163,7 @@ jobs:
                   --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
-              displayName: Helm deploy production-config Ingestion Portal
+              displayName: Helm deploy Ingestion Portal prd
               condition: eq(variables.environment, 'prd')
               inputs:
                 command: upgrade
