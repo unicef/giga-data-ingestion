@@ -1,7 +1,15 @@
 import { ComponentProps } from "react";
 
 import { Tag } from "@carbon/react";
+import { z } from "zod";
 
+export enum DQStatus {
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  ERROR = "ERROR",
+  TIMEOUT = "TIMEOUT",
+  SKIPPED = "SKIPPED",
+}
 export interface Check {
   assertion: string;
   column: string;
@@ -14,7 +22,7 @@ export interface Check {
   dq_remarks: string;
 }
 
-interface Summary {
+export interface Summary {
   rows: number;
   columns: number;
   timestamp: Date;
@@ -33,11 +41,13 @@ export interface DqFailedRowValues {
 export interface DqFailedRowsFirstFiveRows {
   [checkName: string]: DqFailedRowValues[];
 }
+
 export interface DataQualityCheck {
   name: string;
   creation_time: string;
   dq_summary: DataQualityCheckSummary;
   dq_failed_rows_first_five_rows: DqFailedRowsFirstFiveRows;
+  status: DQStatus;
 }
 
 export const initialDataQualityCheck: DataQualityCheck = {
@@ -58,6 +68,7 @@ export const initialDataQualityCheck: DataQualityCheck = {
     critical_error_check: [],
   },
   dq_failed_rows_first_five_rows: {},
+  status: DQStatus.IN_PROGRESS,
 };
 
 export interface UploadParams {
@@ -75,14 +86,6 @@ export interface UploadUnstructuredParams {
   file: File;
   source?: string | null;
   metadata: string;
-}
-
-export enum DQStatus {
-  IN_PROGRESS = "IN_PROGRESS",
-  COMPLETED = "COMPLETED",
-  ERROR = "ERROR",
-  TIMEOUT = "TIMEOUT",
-  SKIPPED = "SKIPPED",
 }
 
 export const DQStatusTagMapping: Record<
@@ -133,3 +136,15 @@ export const initialUploadResponse: UploadResponse = {
   column_to_schema_mapping: "",
   column_license: "",
 };
+
+export const basicCheckSchema = z.object({
+  assertion: z.string(),
+  column: z.string(),
+  description: z.string(),
+});
+
+export type BasicCheck = z.infer<typeof basicCheckSchema>;
+
+export const basicChecksSchema = z.record(z.array(basicCheckSchema));
+
+export type BasicChecks = z.infer<typeof basicChecksSchema>;

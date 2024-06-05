@@ -6,9 +6,9 @@ import {
 } from "@carbon/icons-react";
 import { Button, InlineLoading, Tag } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
-import { saveAs } from "file-saver";
 
 import { api } from "@/api";
+import { saveFile } from "@/utils/download";
 
 interface AccordionSummaryProps {
   totalAssertions: number;
@@ -16,6 +16,7 @@ interface AccordionSummaryProps {
   totalFailedAssertions: number;
   totalPassedAssertions: number;
   uploadId: string;
+  hasDownloadButton?: boolean;
 }
 const SummaryBanner = ({
   totalAssertions,
@@ -23,6 +24,7 @@ const SummaryBanner = ({
   totalPassedAssertions,
   totalFailedAssertions,
   uploadId,
+  hasDownloadButton = true,
 }: AccordionSummaryProps) => {
   const { mutateAsync, isPending } = useMutation({
     mutationFn: api.uploads.download_data_quality_check,
@@ -32,19 +34,7 @@ const SummaryBanner = ({
     const blob = await mutateAsync(uploadId);
 
     if (blob) {
-      const contentDisposition = blob.headers["content-disposition"];
-      const filenameMatch = contentDisposition.match(
-        /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
-      );
-      let filename = "file.csv"; // Default filename
-      if (filenameMatch != null && filenameMatch[1]) {
-        filename = filenameMatch[1].replace(/['"]/g, "");
-      }
-
-      const file = new File([blob.data], filename, {
-        type: blob.data.type,
-      });
-      saveAs(file);
+      saveFile(blob);
     }
   }
 
@@ -78,15 +68,17 @@ const SummaryBanner = ({
         </div>
       )}
       <div className="flex-grow"></div>
-      <Button
-        kind="ghost"
-        className="flex cursor-pointer items-center"
-        onClick={handleDownloadFullChecks}
-        renderIcon={isPending ? InlineLoading : Download}
-        disabled={isPending}
-      >
-        Download CSV with data quality checks
-      </Button>
+      {hasDownloadButton && (
+        <Button
+          kind="ghost"
+          className="flex cursor-pointer items-center"
+          onClick={handleDownloadFullChecks}
+          renderIcon={isPending ? InlineLoading : Download}
+          disabled={isPending}
+        >
+          Download CSV with data quality checks
+        </Button>
+      )}
     </div>
   );
 };

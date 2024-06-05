@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Annotated
 
@@ -14,6 +15,7 @@ from fastapi import (
     status,
 )
 from fastapi_azure_auth.user import User
+from loguru import logger
 from pydantic import Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -45,6 +47,72 @@ router = APIRouter(
     tags=["upload"],
     dependencies=[Security(azure_scheme)],
 )
+
+
+@router.get("/basic_check/{dataset}")
+async def list_basic_checks(
+    dataset: str = "geolocation",
+    source: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    path = ""
+
+    is_completed_query = (
+        select(FileUpload)
+        .where(FileUpload.is_processed_in_staging == True)  # noqa: E712
+        .where(FileUpload.dataset == dataset)
+        .where(FileUpload.dq_status == DQStatusEnum.COMPLETED)
+        .where(FileUpload.dq_report_path != None)  # noqa: E711
+        .where(FileUpload.dq_full_path != None)  # noqa: E711
+        .order_by(FileUpload.created.desc())
+    )
+
+    if dataset == "geolocation":
+        result = await db.scalars(is_completed_query)
+        file_upload = result.first()
+
+        if file_upload is not None:
+            path = file_upload.dq_report_path
+        else:
+            path = (
+                "data-quality-results/school-geolocation/"
+                "sample-data-check/geolocation.json"
+            )
+
+    if dataset == "coverage":
+        if source not in ["fb", "itu"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Schema does not exist"
+            )
+
+        is_completed_coverage_query = is_completed_query.where(
+            FileUpload.source == source
+        )
+
+        result = await db.scalars(is_completed_coverage_query)
+        file_upload = result.first()
+
+        if file_upload is not None:
+            path = file_upload.dq_report_path
+        else:
+            path = (
+                "data-quality-results/school-coverage/"
+                f"sample-data-check/{source}.json"
+            )
+
+    blob = storage_client.get_blob_client(path)
+    if not blob.exists():
+        logger.error("DQ report summary still does not exist")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not Found",
+        )
+
+    blob_data = blob.download_blob().readall()
+    dq_report_summary = blob_data.decode("utf-8")
+    dq_report_summary_dict: dict = json.loads(dq_report_summary)
+
+    return dq_report_summary_dict
 
 
 @router.get("", response_model=PagedResponseSchema[FileUploadSchema])
@@ -308,6 +376,14 @@ async def get_data_quality_check(
             detail="You do not have permission to access details for this file.",
         )
 
+    if file_upload.dq_status != DQStatusEnum.COMPLETED:
+        return {
+            "name": None,
+            "creation_time": None,
+            "dq_summary": None,
+            "dq_failed_rows_first_five_rows": None,
+            "status": file_upload.dq_status,
+        }
     blob_properties, results = get_first_n_error_rows_for_data_quality_check(
         file_upload.dq_full_path
     )
@@ -318,6 +394,7 @@ async def get_data_quality_check(
         "creation_time": blob_properties.creation_time.isoformat(),
         "dq_summary": dq_report_summary_dict,
         "dq_failed_rows_first_five_rows": results,
+        "status": file_upload.dq_status,
     }
 
 

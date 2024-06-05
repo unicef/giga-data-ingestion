@@ -2,6 +2,7 @@ import { AxiosInstance, AxiosResponse } from "axios";
 
 import { PagedResponse } from "@/types/api.ts";
 import {
+  BasicChecks,
   DataQualityCheck,
   UploadParams,
   UploadUnstructuredParams,
@@ -55,6 +56,15 @@ export default function routes(axi: AxiosInstance) {
     ): Promise<AxiosResponse<Blob>> => {
       return axi.get(`upload/data_quality_check/${upload_id}/download`, {
         responseType: "blob",
+      });
+    },
+
+    list_basic_checks: (
+      dataset: string,
+      source: string | null,
+    ): Promise<AxiosResponse<BasicChecks>> => {
+      return axi.get(`/upload/basic_check/${dataset}`, {
+        params: { source: source },
       });
     },
   };

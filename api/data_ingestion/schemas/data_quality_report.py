@@ -29,3 +29,9 @@ class DataQualityCheck(BaseModel):
     geospatial_checks: list[Check]
     range_checks: list[Check]
     summary: SummaryCheck
+
+
+class BasicCheck(BaseModel):
+    assertion: str
+    column: str
+    description: str
