@@ -19,8 +19,8 @@
     "last 2 versions"
   ],
   "dependencies": {
-    "@azure/msal-browser": "^3.13.0",
-    "@azure/msal-react": "^2.0.15",
+    "@azure/msal-browser": "^3.16.0",
+    "@azure/msal-react": "^2.0.18",
     "@carbon/icons-react": "11.39.0",
     "@carbon/react": "1.55.0",
     "@carbon/themes": "11.34.0",
