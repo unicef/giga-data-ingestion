@@ -55,7 +55,7 @@ export default function Footer() {
         </ul>
       </Column>
 
-      <Column lg={8} className="text-right">
+      <Column lg={10} className="text-right">
         <Stack orientation="horizontal" gap={4}>
           <a
             href="https://twitter.com/Gigaglobal"
