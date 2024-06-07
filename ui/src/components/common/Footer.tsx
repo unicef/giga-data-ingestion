@@ -34,7 +34,7 @@ export default function Footer() {
           </li>
           <li>
             <a
-              href="https://projectconnect.unicef.org/map"
+              href="https://maps.giga.global/map"
               target="_blank"
               rel="noopener noreferrer"
               className="text-white"
@@ -55,42 +55,7 @@ export default function Footer() {
         </ul>
       </Column>
 
-      <Column lg={2}>
-        <ul>
-          <li>
-            <a
-              href="https://projectconnect.unicef.org/map"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white"
-            >
-              Project Connect
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://www.patchwork-kingdoms.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white"
-            >
-              Patchwork Kingdoms
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://unicef.github.io/mapbox_analysis/story/map"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-white"
-            >
-              Mapbox Data Story
-            </a>
-          </li>
-        </ul>
-      </Column>
-
-      <Column lg={8} className="text-right">
+      <Column lg={10} className="text-right">
         <Stack orientation="horizontal" gap={4}>
           <a
             href="https://twitter.com/Gigaglobal"
