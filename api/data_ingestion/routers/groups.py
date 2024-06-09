@@ -1,9 +1,13 @@
-from fastapi import APIRouter, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 from pydantic import UUID4
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
+from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
-from data_ingestion.internal.users import GraphUserUpdateRequest, UsersApi
+from data_ingestion.models import Role, User
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.group import (
     AddGroupMemberRequest,
@@ -12,7 +16,7 @@ from data_ingestion.schemas.group import (
     ModifyUserAccessRequest,
     UpdateGroupRequest,
 )
-from data_ingestion.schemas.user import GraphUser
+from data_ingestion.schemas.user import DatabaseUser, GraphUser
 
 router = APIRouter(
     prefix="/api/groups",
@@ -88,17 +92,36 @@ async def remove_user_from_group(id: UUID4, user_id: UUID4):
 
 @router.post(
     "/{user_id}",
-    status_code=status.HTTP_200_OK,
+    response_model=DatabaseUser,
     dependencies=[Security(IsPrivileged())],
 )
-async def modify_user_access(user_id: UUID4, body: ModifyUserAccessRequest):
-    await GroupsApi.modify_user_access(user_id=user_id, body=body)
-
-    await UsersApi.edit_user(
-        user_id,
-        GraphUserUpdateRequest(
-            display_name=f"{body.given_name} {body.surname}",
-            given_name=body.given_name,
-            surname=body.surname,
-        ),
+async def modify_user_access(
+    user_id: str, body: ModifyUserAccessRequest, db: AsyncSession = Depends(get_db)
+):
+    user = await db.scalar(
+        select(User).where(User.id == user_id).options(selectinload(User.roles))
     )
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+
+    if len(body.groups_to_add) > 0:
+        requested_roles_add = await db.scalars(
+            select(Role).where(Role.id.in_([str(g) for g in body.groups_to_add]))
+        )
+        for r in requested_roles_add:
+            user.roles.add(r)
+
+    if len(body.groups_to_remove) > 0:
+        requested_roles_remove = await db.scalars(
+            select(Role).where(Role.id.in_([str(g) for g in body.groups_to_remove]))
+        )
+        for r in requested_roles_remove:
+            user.roles.discard(r)
+
+    user.given_name = body.given_name
+    user.surname = body.surname
+    await db.commit()
+
+    return user
