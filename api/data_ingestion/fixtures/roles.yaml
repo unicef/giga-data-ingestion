@@ -1,0 +1,3016 @@
+- fields:
+    name: Admin
+  id: 92933bc1-f64c-4dec-a782-9d952115af67
+  model: Role
+- fields:
+    name: Developer
+  id: 5a858553-226c-4cf6-aaba-33a40ba4051b
+  model: Role
+- fields:
+    name: QA
+  id: ac278490-85a5-4f20-99ce-a559de1f8a10
+  model: Role
+- fields:
+    name: Regular
+  id: 3c53e9a7-1514-49b4-baf1-7b48f0e336bc
+  model: Role
+- fields:
+    name: Afghanistan-School Geolocation
+  id: 513522c0-f496-4921-815c-779713b354fa
+  model: Role
+- fields:
+    name: Afghanistan-School Coverage
+  id: 6a357798-66d1-4c55-8c9f-fb93a9493b67
+  model: Role
+- fields:
+    name: Afghanistan-School QoS
+  id: 850429fc-1bb8-404f-bdf3-bd0846af5aeb
+  model: Role
+- fields:
+    name: Aland Islands-School Geolocation
+  id: aeee6175-b5b2-4982-b654-d46856979138
+  model: Role
+- fields:
+    name: Aland Islands-School Coverage
+  id: 82f7998d-f16b-4887-996c-24e7661d4ae5
+  model: Role
+- fields:
+    name: Aland Islands-School QoS
+  id: b239b185-4466-4fbf-9f2e-a71812bb3554
+  model: Role
+- fields:
+    name: Albania-School Geolocation
+  id: db22c182-8bbb-43ef-939b-a90cd04e69ee
+  model: Role
+- fields:
+    name: Albania-School Coverage
+  id: ce8faf29-bc25-43c8-b20c-7bf04e1495f0
+  model: Role
+- fields:
+    name: Albania-School QoS
+  id: 81607349-b588-43e2-bdea-ad15aa487293
+  model: Role
+- fields:
+    name: Algeria-School Geolocation
+  id: a12460df-7abc-4781-9c0f-3eb57c2b165b
+  model: Role
+- fields:
+    name: Algeria-School Coverage
+  id: ae604c10-253b-43fb-aba1-70606382b13a
+  model: Role
+- fields:
+    name: Algeria-School QoS
+  id: 43947a90-2b36-4275-965d-3f8efb646386
+  model: Role
+- fields:
+    name: American Samoa-School Geolocation
+  id: 2e4e04ed-7fb2-41a5-b3df-e75bbf1c0d50
+  model: Role
+- fields:
+    name: American Samoa-School Coverage
+  id: 7f6da61e-4bdd-470d-b5be-038facbf5374
+  model: Role
+- fields:
+    name: American Samoa-School QoS
+  id: 2ff76907-3ca8-464d-894c-f5bcd142f1ed
+  model: Role
+- fields:
+    name: Andorra-School Geolocation
+  id: 0435507c-d2b5-4959-a099-e657bfdcbe06
+  model: Role
+- fields:
+    name: Andorra-School Coverage
+  id: 3b4fc86b-4236-49e8-ac58-881a7b555e41
+  model: Role
+- fields:
+    name: Andorra-School QoS
+  id: 4be65d7d-62f4-4cac-b4eb-947eb13773c5
+  model: Role
+- fields:
+    name: Angola-School Geolocation
+  id: b3380ac8-0fd9-43f9-9a08-b599f5e48c97
+  model: Role
+- fields:
+    name: Angola-School Coverage
+  id: f3507c66-8ff2-4de4-a6aa-95b169ad38cc
+  model: Role
+- fields:
+    name: Angola-School QoS
+  id: 17128bfb-c152-4d7f-8832-2118f628d2dd
+  model: Role
+- fields:
+    name: Anguilla-School Geolocation
+  id: 45cd33fa-9776-4238-b0f3-fd8ebcfdb3a3
+  model: Role
+- fields:
+    name: Anguilla-School Coverage
+  id: c967d5c9-9453-4ae9-940a-b744166cd3bd
+  model: Role
+- fields:
+    name: Anguilla-School QoS
+  id: 539fcb0a-5bbe-4f89-b7c4-f773de33f023
+  model: Role
+- fields:
+    name: Antarctica-School Geolocation
+  id: a34ebdb4-f67b-4d54-80a9-d449bf02aeb1
+  model: Role
+- fields:
+    name: Antarctica-School Coverage
+  id: f14b439f-a087-4c67-bd8f-efa4e14d08b8
+  model: Role
+- fields:
+    name: Antarctica-School QoS
+  id: 939c7250-6a35-4d4c-8ee3-d46115e7fc9d
+  model: Role
+- fields:
+    name: Antigua and Barbuda-School Geolocation
+  id: ab792d3c-26b5-4c01-b1df-6b6940ecfd48
+  model: Role
+- fields:
+    name: Antigua and Barbuda-School Coverage
+  id: acca55e9-a95b-4038-9d5a-4f07184b0830
+  model: Role
+- fields:
+    name: Antigua and Barbuda-School QoS
+  id: f983a818-be27-46f3-a4e7-64fbd9f1f718
+  model: Role
+- fields:
+    name: Argentina-School Geolocation
+  id: 6b822836-64f9-4600-993e-f48a60523ba8
+  model: Role
+- fields:
+    name: Argentina-School Coverage
+  id: 55313075-66c9-41e8-a8b2-53368e73a590
+  model: Role
+- fields:
+    name: Argentina-School QoS
+  id: 4af0f063-d670-4fbf-831f-f622114b6157
+  model: Role
+- fields:
+    name: Armenia-School Geolocation
+  id: fa9b6bd0-f168-4989-aeb8-d194b6b53e79
+  model: Role
+- fields:
+    name: Armenia-School Coverage
+  id: 0488da1e-9014-4b9f-9458-178999c40a55
+  model: Role
+- fields:
+    name: Armenia-School QoS
+  id: 17b6e9e8-cec5-4e25-802b-e2c64786801a
+  model: Role
+- fields:
+    name: Aruba-School Geolocation
+  id: 2bfec877-0317-4845-9ae8-4a5d863721ee
+  model: Role
+- fields:
+    name: Aruba-School Coverage
+  id: 162e507f-f70b-467e-b201-adb43ed4c5a4
+  model: Role
+- fields:
+    name: Aruba-School QoS
+  id: 9ed6d9b7-2b90-484b-bd64-3848a9f72855
+  model: Role
+- fields:
+    name: Australia-School Geolocation
+  id: ae917297-e309-4861-90c3-1b037f92085a
+  model: Role
+- fields:
+    name: Australia-School Coverage
+  id: 7a0415ca-81f5-4ef2-bbc5-529380b1577e
+  model: Role
+- fields:
+    name: Australia-School QoS
+  id: 3a1cb1d1-8126-4cb3-98d2-a4eb9981b316
+  model: Role
+- fields:
+    name: Austria-School Geolocation
+  id: 850b6228-b29b-4ed6-a95e-6d7a07bf19d2
+  model: Role
+- fields:
+    name: Austria-School Coverage
+  id: 7284a9b1-cfa9-46cf-ba11-ca510a753ec6
+  model: Role
+- fields:
+    name: Austria-School QoS
+  id: 4df6de64-b381-4c11-97c0-ba1aa57be7e1
+  model: Role
+- fields:
+    name: Azerbaijan-School Geolocation
+  id: d3b8ed39-af85-4bdf-869a-242eb4d87dd5
+  model: Role
+- fields:
+    name: Azerbaijan-School Coverage
+  id: 83dc45e5-0f1d-46b7-8c19-79093c11e2ad
+  model: Role
+- fields:
+    name: Azerbaijan-School QoS
+  id: 2a287cf4-5b1b-4c75-97d5-d27887334c72
+  model: Role
+- fields:
+    name: Bahamas-School Geolocation
+  id: 16279883-1aff-4ebe-9a72-ceaaecb5aac1
+  model: Role
+- fields:
+    name: Bahamas-School Coverage
+  id: d7a5a588-25ec-481d-97f2-8c8fd2f3b54a
+  model: Role
+- fields:
+    name: Bahamas-School QoS
+  id: d1b8d0d9-0fac-4071-aa70-dd65b08d36db
+  model: Role
+- fields:
+    name: Bahrain-School Geolocation
+  id: c2188f64-3311-44f6-8537-2f80ed11cce1
+  model: Role
+- fields:
+    name: Bahrain-School Coverage
+  id: d13af0d6-5e38-477c-83bd-d4e6af3230c7
+  model: Role
+- fields:
+    name: Bahrain-School QoS
+  id: f3030328-6172-4587-8c55-58f748c762e7
+  model: Role
+- fields:
+    name: Bangladesh-School Geolocation
+  id: 213decdb-1c9d-45a7-90de-884305534c4b
+  model: Role
+- fields:
+    name: Bangladesh-School Coverage
+  id: 5f4eb64c-3532-4669-a575-7e6f62845a41
+  model: Role
+- fields:
+    name: Bangladesh-School QoS
+  id: 2e95d5cf-cd18-4515-93e4-1e638fc4a66f
+  model: Role
+- fields:
+    name: Barbados-School Geolocation
+  id: d9da99e0-8eb9-4c02-a227-8476ea320a65
+  model: Role
+- fields:
+    name: Barbados-School Coverage
+  id: cadfd6b3-dc72-4f03-8aa5-87a1f84473e9
+  model: Role
+- fields:
+    name: Barbados-School QoS
+  id: 30218b9f-03a8-4f47-a55c-548d9ae4f51a
+  model: Role
+- fields:
+    name: Belarus-School Geolocation
+  id: 9f257a87-0188-4ef8-bba1-ebe0b352620b
+  model: Role
+- fields:
+    name: Belarus-School Coverage
+  id: 0072d8df-94c0-4200-a8d9-f1703e0b4de9
+  model: Role
+- fields:
+    name: Belarus-School QoS
+  id: 1005a04d-6e4b-4de9-8d52-7b6f527ae9e5
+  model: Role
+- fields:
+    name: Belgium-School Geolocation
+  id: 96692837-1c52-4db1-a4e4-1c5be7731c1f
+  model: Role
+- fields:
+    name: Belgium-School Coverage
+  id: 76a55c91-3dbd-4350-b84b-64a043696f82
+  model: Role
+- fields:
+    name: Belgium-School QoS
+  id: 12bf5d60-30ee-402e-beac-df610c324671
+  model: Role
+- fields:
+    name: Belize-School Geolocation
+  id: add27b0c-27fb-4aec-ae99-43f128035f8f
+  model: Role
+- fields:
+    name: Belize-School Coverage
+  id: 5cef81aa-e82f-468e-a1dd-ff7f4c275d24
+  model: Role
+- fields:
+    name: Belize-School QoS
+  id: ee0c93a2-5837-4400-8f2d-ba4cac70d3ab
+  model: Role
+- fields:
+    name: Benin-School Geolocation
+  id: 9a1423a7-c997-4f1d-924d-eb9135865060
+  model: Role
+- fields:
+    name: Benin-School Coverage
+  id: 2aab99a8-d585-4e5a-ae82-415fcfe3d78c
+  model: Role
+- fields:
+    name: Benin-School QoS
+  id: 0aa31ddc-f082-43fc-884a-3b9272524cb3
+  model: Role
+- fields:
+    name: Bermuda-School Geolocation
+  id: 2bdbe562-ef49-4da5-a765-49f1302cd278
+  model: Role
+- fields:
+    name: Bermuda-School Coverage
+  id: 67e5e79f-5974-46ba-a3c3-5acc08e187e4
+  model: Role
+- fields:
+    name: Bermuda-School QoS
+  id: cb2091f9-2f01-4c4f-87ca-852a87946c55
+  model: Role
+- fields:
+    name: Bhutan-School Geolocation
+  id: 18531906-527a-4900-a2ad-76500fba74ac
+  model: Role
+- fields:
+    name: Bhutan-School Coverage
+  id: 2751f152-0389-44dc-9815-5c7579adc21c
+  model: Role
+- fields:
+    name: Bhutan-School QoS
+  id: 685c2ac7-be79-437c-b196-4ed87ebb2c09
+  model: Role
+- fields:
+    name: Bolivia-School Geolocation
+  id: 458bcf15-e6c0-4590-930a-b9cd09a91288
+  model: Role
+- fields:
+    name: Bolivia-School Coverage
+  id: fff520f4-4999-4ec9-8172-568f72704a69
+  model: Role
+- fields:
+    name: Bolivia-School QoS
+  id: fb77922f-25b4-4542-a4be-4af017b4fc2f
+  model: Role
+- fields:
+    name: Bonaire, Saint Eustatius and Saba-School Geolocation
+  id: e4e14dbc-27ba-4927-9649-e12f1cb06c8d
+  model: Role
+- fields:
+    name: Bonaire, Saint Eustatius and Saba-School Coverage
+  id: 345ec726-cc30-4990-8fc8-88fd4748e174
+  model: Role
+- fields:
+    name: Bonaire, Saint Eustatius and Saba-School QoS
+  id: 36098eaf-b85e-4059-b45a-abf6c6fa1940
+  model: Role
+- fields:
+    name: Bosnia and Herzegovina-School Geolocation
+  id: dcd0b437-8853-4053-88f6-911ffc12a28e
+  model: Role
+- fields:
+    name: Bosnia and Herzegovina-School Coverage
+  id: a7658f44-b797-4c4d-a7ae-fd85bf49ad8c
+  model: Role
+- fields:
+    name: Bosnia and Herzegovina-School QoS
+  id: a60274d1-bc60-41de-909f-4fe7cba16a53
+  model: Role
+- fields:
+    name: Botswana-School Geolocation
+  id: 1ff5fe1c-72d9-4ab8-a1fe-736063f972f8
+  model: Role
+- fields:
+    name: Botswana-School Coverage
+  id: 27710703-0f0c-43f6-8bc6-b86682a9ae56
+  model: Role
+- fields:
+    name: Botswana-School QoS
+  id: 8282f88f-b6c2-4a9a-b166-f2fc9540919b
+  model: Role
+- fields:
+    name: Bouvet Island-School Geolocation
+  id: c4110a74-5b04-4cbd-aeb3-11dd258f0ae7
+  model: Role
+- fields:
+    name: Bouvet Island-School Coverage
+  id: f5654787-bc94-4b3e-a27e-85e0d2d2682c
+  model: Role
+- fields:
+    name: Bouvet Island-School QoS
+  id: 055d7e13-c029-41be-b446-09701201dd3a
+  model: Role
+- fields:
+    name: Brazil-School Geolocation
+  id: 232f12b1-bc25-485b-9b88-26fe24218f80
+  model: Role
+- fields:
+    name: Brazil-School Coverage
+  id: e3ee3ced-32ce-453a-923a-a691fa7aef92
+  model: Role
+- fields:
+    name: Brazil-School QoS
+  id: c9c2dfe1-6717-4a47-990d-45a76debbebd
+  model: Role
+- fields:
+    name: British Indian Ocean Territory-School Geolocation
+  id: 02d7e057-a185-4b8b-954e-2c57eff12ad4
+  model: Role
+- fields:
+    name: British Indian Ocean Territory-School Coverage
+  id: a44b1da5-a857-4f2d-8667-84941e629c67
+  model: Role
+- fields:
+    name: British Indian Ocean Territory-School QoS
+  id: 687f2444-0201-4bf0-9067-371c7ea7b448
+  model: Role
+- fields:
+    name: British Virgin Islands-School Geolocation
+  id: 6b48058c-3569-4551-84a5-c3df4efd25da
+  model: Role
+- fields:
+    name: British Virgin Islands-School Coverage
+  id: b064b85e-95c3-443a-afec-6d70e42ebb3e
+  model: Role
+- fields:
+    name: British Virgin Islands-School QoS
+  id: dca42b59-f129-4b5a-a2c3-a6328bf28d7b
+  model: Role
+- fields:
+    name: Brunei Darussalam-School Geolocation
+  id: a8e2e940-b7cd-4767-9418-666161765785
+  model: Role
+- fields:
+    name: Brunei Darussalam-School Coverage
+  id: d7d88445-21d7-4a7e-8fbb-e20d0d3dbc28
+  model: Role
+- fields:
+    name: Brunei Darussalam-School QoS
+  id: 66f39a50-fe64-49f9-8924-be1488daafe2
+  model: Role
+- fields:
+    name: Bulgaria-School Geolocation
+  id: 8dda6d8d-def9-4e42-b63f-6246c1007e47
+  model: Role
+- fields:
+    name: Bulgaria-School Coverage
+  id: 2fd2e955-0195-482b-a1d2-43233d861e31
+  model: Role
+- fields:
+    name: Bulgaria-School QoS
+  id: a498d859-42d0-4169-bdc2-ee0a6a5c3599
+  model: Role
+- fields:
+    name: Burkina Faso-School Geolocation
+  id: 91ac5a8d-f2b2-4648-a75a-61fb6ad95404
+  model: Role
+- fields:
+    name: Burkina Faso-School Coverage
+  id: c7519177-fe79-46f0-be12-d57a3357a4e8
+  model: Role
+- fields:
+    name: Burkina Faso-School QoS
+  id: 9eb18801-7880-4a2c-92f5-77ea45238289
+  model: Role
+- fields:
+    name: Burundi-School Geolocation
+  id: 26501c7c-b414-43c4-9761-54b9ada439bd
+  model: Role
+- fields:
+    name: Burundi-School Coverage
+  id: 0e31b62c-c42d-44c6-a1cd-73614c2eec31
+  model: Role
+- fields:
+    name: Burundi-School QoS
+  id: 5d2081c3-f72b-4dcf-889f-7ec64838580f
+  model: Role
+- fields:
+    name: Cabo Verde-School Geolocation
+  id: 4efaf02a-fb8f-4cce-8491-81aa013c200c
+  model: Role
+- fields:
+    name: Cabo Verde-School Coverage
+  id: 20134f9e-69b8-462d-ad27-5eb800410b59
+  model: Role
+- fields:
+    name: Cabo Verde-School QoS
+  id: 6800fd0d-06cd-4abe-9e71-2e3b37b10b8d
+  model: Role
+- fields:
+    name: Cambodia-School Geolocation
+  id: 7c34131e-8df2-4ed9-bc9f-3f7234628b76
+  model: Role
+- fields:
+    name: Cambodia-School Coverage
+  id: c9d8d4c1-fcc1-4998-bede-b9d32e49604c
+  model: Role
+- fields:
+    name: Cambodia-School QoS
+  id: b31ad063-f5d4-418f-b42d-86812a2e9a1b
+  model: Role
+- fields:
+    name: Cameroon-School Geolocation
+  id: 79b3bcca-e409-4b91-8845-296be12cb766
+  model: Role
+- fields:
+    name: Cameroon-School Coverage
+  id: e4bfd275-355f-46d2-b9c7-ea9eaf7d2d84
+  model: Role
+- fields:
+    name: Cameroon-School QoS
+  id: c7126ae5-3214-40f2-95ff-d9b2ac4f1011
+  model: Role
+- fields:
+    name: Canada-School Geolocation
+  id: 35e6fc78-1c94-47c1-a9cf-c2e6d9f9616d
+  model: Role
+- fields:
+    name: Canada-School Coverage
+  id: 1d554840-4e18-4dd5-a0bf-45e94bdd53fd
+  model: Role
+- fields:
+    name: Canada-School QoS
+  id: a2d478bd-5bb0-4c54-96ac-d311e1534c76
+  model: Role
+- fields:
+    name: Cayman Islands-School Geolocation
+  id: e4e97e26-eaec-48d7-bf99-e841129c8618
+  model: Role
+- fields:
+    name: Cayman Islands-School Coverage
+  id: 4b18ad1c-28a3-4b88-944e-7e4bb0393f29
+  model: Role
+- fields:
+    name: Cayman Islands-School QoS
+  id: 6dbf2292-bfe1-4fdc-852b-da85f181a4e1
+  model: Role
+- fields:
+    name: Central African Republic-School Geolocation
+  id: 3395413c-a5fc-4b92-8dec-addbbbeacf26
+  model: Role
+- fields:
+    name: Central African Republic-School Coverage
+  id: 85a76b70-b3b0-4f63-8ae4-5b78679f28ce
+  model: Role
+- fields:
+    name: Central African Republic-School QoS
+  id: 93d0eebb-208e-4015-b7e0-b76c88b17d3c
+  model: Role
+- fields:
+    name: Chad-School Geolocation
+  id: a73883a7-11b5-42ed-b7fd-6c0a86a2b736
+  model: Role
+- fields:
+    name: Chad-School Coverage
+  id: 6d03f3c4-9ef8-474b-88b3-3809894c6638
+  model: Role
+- fields:
+    name: Chad-School QoS
+  id: 6f99016e-4a44-496f-8490-ceec0bff4541
+  model: Role
+- fields:
+    name: Chile-School Geolocation
+  id: 6e15f411-9c15-4333-ba22-43925fa95e8a
+  model: Role
+- fields:
+    name: Chile-School Coverage
+  id: 57e85091-550d-4f3c-8cb7-c43e221a7187
+  model: Role
+- fields:
+    name: Chile-School QoS
+  id: 695fab6c-8f72-43d7-9171-120705e2bf02
+  model: Role
+- fields:
+    name: China-School Geolocation
+  id: aca60ed4-ab7a-46ed-af06-7f66aa34b1d7
+  model: Role
+- fields:
+    name: China-School Coverage
+  id: 7139da34-46bf-48cb-b0ba-06b35c85f884
+  model: Role
+- fields:
+    name: China-School QoS
+  id: d39695f2-2c9b-4fa3-9a02-34f14a4c5718
+  model: Role
+- fields:
+    name: Christmas Island-School Geolocation
+  id: 96512da2-99cd-4e0e-aeab-11d688e67d09
+  model: Role
+- fields:
+    name: Christmas Island-School Coverage
+  id: 187c137e-7801-478b-bf2c-fd3b0051a59b
+  model: Role
+- fields:
+    name: Christmas Island-School QoS
+  id: 8ad50a21-1815-463a-ad36-d0d0b328c6b5
+  model: Role
+- fields:
+    name: Cocos (Keeling) Islands-School Geolocation
+  id: e0a49ffb-24f1-4753-bcde-1f7632908ef2
+  model: Role
+- fields:
+    name: Cocos (Keeling) Islands-School Coverage
+  id: fe75c423-249a-46cb-ae15-45fabd24f985
+  model: Role
+- fields:
+    name: Cocos (Keeling) Islands-School QoS
+  id: 00e22b78-daca-4436-9dbd-88f6404bdc96
+  model: Role
+- fields:
+    name: Colombia-School Geolocation
+  id: be6d8c3c-32d6-479a-bec6-47bc51d46658
+  model: Role
+- fields:
+    name: Colombia-School Coverage
+  id: d12bbd30-685c-4d89-9b83-c762923444e1
+  model: Role
+- fields:
+    name: Colombia-School QoS
+  id: 50d2bf08-a382-4363-8492-48cd912e910d
+  model: Role
+- fields:
+    name: Comoros-School Geolocation
+  id: 453745a8-89ef-4e0a-b3a9-f1898897f2b1
+  model: Role
+- fields:
+    name: Comoros-School Coverage
+  id: f18e9b0e-132e-4b50-b8ec-6390f04c0849
+  model: Role
+- fields:
+    name: Comoros-School QoS
+  id: 722e9fa4-1eb7-464c-b688-36a87a19b171
+  model: Role
+- fields:
+    name: Congo Republic-School Geolocation
+  id: 7c386671-ff4d-4fe4-b783-d18b6fc34141
+  model: Role
+- fields:
+    name: Congo Republic-School Coverage
+  id: 49d5e1bb-41a2-4e33-9a91-b49d6196aba4
+  model: Role
+- fields:
+    name: Congo Republic-School QoS
+  id: e1617c74-70ca-4d62-8685-355c36a341f2
+  model: Role
+- fields:
+    name: Cook Islands-School Geolocation
+  id: 10f79f8a-2716-47e5-8f83-5ce999a6b1f7
+  model: Role
+- fields:
+    name: Cook Islands-School Coverage
+  id: 8a81d356-03ee-408c-bc3c-3c2ab5ed141b
+  model: Role
+- fields:
+    name: Cook Islands-School QoS
+  id: be362465-b839-4fc8-b93b-cc624cd76c5b
+  model: Role
+- fields:
+    name: Costa Rica-School Geolocation
+  id: 75d56729-fea0-4fd7-ad04-093f66180c22
+  model: Role
+- fields:
+    name: Costa Rica-School Coverage
+  id: b456d98d-e553-4823-8351-f9b21d68954e
+  model: Role
+- fields:
+    name: Costa Rica-School QoS
+  id: 6ac02577-b161-42ed-99dd-7c5e91202ad4
+  model: Role
+- fields:
+    name: Cote d'Ivoire-School Geolocation
+  id: 79d37de2-634a-48ab-a453-681e7160dabc
+  model: Role
+- fields:
+    name: Cote d'Ivoire-School Coverage
+  id: 293cf7bb-fb27-4533-b950-93cfe0c79593
+  model: Role
+- fields:
+    name: Cote d'Ivoire-School QoS
+  id: 3db2be70-23de-48ef-b8e5-75137a2f3847
+  model: Role
+- fields:
+    name: Croatia-School Geolocation
+  id: ab37ba5b-811d-4f5b-bbe9-ffd532dcacf4
+  model: Role
+- fields:
+    name: Croatia-School Coverage
+  id: 74659ecd-856f-4c32-8af7-c183f311b904
+  model: Role
+- fields:
+    name: Croatia-School QoS
+  id: 095f7c35-5f4e-4226-be6c-386eb837595a
+  model: Role
+- fields:
+    name: Cuba-School Geolocation
+  id: ba8742c5-9e71-4382-91f5-93798e4c2925
+  model: Role
+- fields:
+    name: Cuba-School Coverage
+  id: 20d8e86b-6d16-4dba-94d1-67278c7afb66
+  model: Role
+- fields:
+    name: Cuba-School QoS
+  id: 6cd3b6a1-9b37-4c78-8d86-b838f27c97fc
+  model: Role
+- fields:
+    name: Curacao-School Geolocation
+  id: 48f11267-87f6-46f5-9af3-237f89c6ca03
+  model: Role
+- fields:
+    name: Curacao-School Coverage
+  id: fdc23c1d-4bd9-444b-922b-b57e0a25f7ed
+  model: Role
+- fields:
+    name: Curacao-School QoS
+  id: a885e135-3353-427f-acbb-4ae74a3863f4
+  model: Role
+- fields:
+    name: Cyprus-School Geolocation
+  id: 158452d4-f23f-43d8-a128-1e3fd5e842ce
+  model: Role
+- fields:
+    name: Cyprus-School Coverage
+  id: 0a9d1f0b-fb75-4465-8d2c-fd54af0ef00a
+  model: Role
+- fields:
+    name: Cyprus-School QoS
+  id: dc62b804-a404-46de-8b1f-03e8bf6c4ca3
+  model: Role
+- fields:
+    name: Czechia-School Geolocation
+  id: a0da4538-7fa7-4021-b218-1a4e73c9ba0e
+  model: Role
+- fields:
+    name: Czechia-School Coverage
+  id: 02fda55f-1f03-45b5-88fb-f5cae73dc646
+  model: Role
+- fields:
+    name: Czechia-School QoS
+  id: f14ff500-5365-4b5d-b755-12274ed246d6
+  model: Role
+- fields:
+    name: Denmark-School Geolocation
+  id: eb85ecb4-1d26-4068-b376-81617638fcbf
+  model: Role
+- fields:
+    name: Denmark-School Coverage
+  id: 03543a08-a77b-4967-bd96-2a7f7907adc4
+  model: Role
+- fields:
+    name: Denmark-School QoS
+  id: aefa948d-849d-47a0-8fa1-ef954a9da294
+  model: Role
+- fields:
+    name: Djibouti-School Geolocation
+  id: 5a922679-489c-4f99-9fa9-857f8ea7804f
+  model: Role
+- fields:
+    name: Djibouti-School Coverage
+  id: 86b9444f-4798-4014-9cb1-b0364ea34ef7
+  model: Role
+- fields:
+    name: Djibouti-School QoS
+  id: 4a91390b-05de-43f6-870a-57ce50efe60f
+  model: Role
+- fields:
+    name: Dominica-School Geolocation
+  id: f2130bec-d388-4ba9-9be8-deed74d89a9f
+  model: Role
+- fields:
+    name: Dominica-School Coverage
+  id: 3d1eaffb-6211-4923-8433-e860d9a49759
+  model: Role
+- fields:
+    name: Dominica-School QoS
+  id: fdf8d97e-ac10-4880-9308-4fabf439b5e6
+  model: Role
+- fields:
+    name: Dominican Republic-School Geolocation
+  id: 50d385c1-765b-47ad-b03b-31a55caa3592
+  model: Role
+- fields:
+    name: Dominican Republic-School Coverage
+  id: 63e2e65d-4f4f-473d-9c8a-3c7f5cccf327
+  model: Role
+- fields:
+    name: Dominican Republic-School QoS
+  id: 841da0ea-ed8f-415b-851e-cc3ebf8a1ded
+  model: Role
+- fields:
+    name: DR Congo-School Geolocation
+  id: e3254e32-2f70-448c-9fc6-1c2cd94a568f
+  model: Role
+- fields:
+    name: DR Congo-School Coverage
+  id: 9f2b20b6-8e93-4a20-990a-7e99bd0ac992
+  model: Role
+- fields:
+    name: DR Congo-School QoS
+  id: 65ec72e7-1ba4-4c8f-839a-8ebac0cdadc7
+  model: Role
+- fields:
+    name: Ecuador-School Geolocation
+  id: 22e0bd0c-e155-4057-8b4b-234008c358d1
+  model: Role
+- fields:
+    name: Ecuador-School Coverage
+  id: efb48e5b-e240-4e4e-8ed0-bc27f5db48c9
+  model: Role
+- fields:
+    name: Ecuador-School QoS
+  id: e06caa1e-ee15-4c7a-a028-d83e0ad19236
+  model: Role
+- fields:
+    name: Egypt-School Geolocation
+  id: 6509b442-217a-45df-a38d-deb7ece8a5b1
+  model: Role
+- fields:
+    name: Egypt-School Coverage
+  id: cce43020-b088-4fe8-9a26-1711157209e4
+  model: Role
+- fields:
+    name: Egypt-School QoS
+  id: 0c7277b7-8b18-4167-a4aa-37fc17e226f3
+  model: Role
+- fields:
+    name: El Salvador-School Geolocation
+  id: 0e742274-3a32-4765-8172-9609448c0cc6
+  model: Role
+- fields:
+    name: El Salvador-School Coverage
+  id: 6d8fca31-d829-4043-b29e-0ad3ded1656d
+  model: Role
+- fields:
+    name: El Salvador-School QoS
+  id: 035367c7-b901-44f6-83c1-bbd2ae9bde19
+  model: Role
+- fields:
+    name: Equatorial Guinea-School Geolocation
+  id: efda69c8-2229-4153-ad68-2c0df3b041c2
+  model: Role
+- fields:
+    name: Equatorial Guinea-School Coverage
+  id: a662ec1c-4eaa-48bf-845b-6698fa3979df
+  model: Role
+- fields:
+    name: Equatorial Guinea-School QoS
+  id: 11a3ffb8-8eae-46ff-80f4-f43af7da3417
+  model: Role
+- fields:
+    name: Eritrea-School Geolocation
+  id: 7385bd4c-edc6-44fe-8827-7d6084626bc4
+  model: Role
+- fields:
+    name: Eritrea-School Coverage
+  id: c6d47df2-5ce2-40cc-8bfb-5677d32f6b84
+  model: Role
+- fields:
+    name: Eritrea-School QoS
+  id: 9efd0b59-654c-4879-a545-9526c3e8130f
+  model: Role
+- fields:
+    name: Estonia-School Geolocation
+  id: 36d482d3-1681-45a8-abcf-736f14538e31
+  model: Role
+- fields:
+    name: Estonia-School Coverage
+  id: 08c4b0b9-43a5-4456-9061-8572156af040
+  model: Role
+- fields:
+    name: Estonia-School QoS
+  id: 26fdea1d-5209-4ae3-9d5c-5338ecb114ab
+  model: Role
+- fields:
+    name: Eswatini-School Geolocation
+  id: 4b092d55-345e-4d2a-8723-75510e06c52b
+  model: Role
+- fields:
+    name: Eswatini-School Coverage
+  id: d6d1a7ee-bb43-45d1-89dd-35a4c2c82e15
+  model: Role
+- fields:
+    name: Eswatini-School QoS
+  id: d266edb8-215b-474b-b349-32fc5bbcae58
+  model: Role
+- fields:
+    name: Ethiopia-School Geolocation
+  id: 5e852455-e093-4da4-9db3-6028ac8ebe01
+  model: Role
+- fields:
+    name: Ethiopia-School Coverage
+  id: 88b9856c-a535-4dcb-bfea-7228cffb8ae0
+  model: Role
+- fields:
+    name: Ethiopia-School QoS
+  id: 34a0d032-6f31-4efa-af93-3237a95539b7
+  model: Role
+- fields:
+    name: Faroe Islands-School Geolocation
+  id: 80211790-6943-423a-b883-6de5b7ec1e6b
+  model: Role
+- fields:
+    name: Faroe Islands-School Coverage
+  id: 5b5ca71b-ceb1-4dfa-a58c-d6f67d5a6d89
+  model: Role
+- fields:
+    name: Faroe Islands-School QoS
+  id: cface171-59c4-467d-bcc7-43a3c92976e0
+  model: Role
+- fields:
+    name: Falkland Islands-School Geolocation
+  id: e6d9cfd9-bfa3-4304-a47d-0651f5093797
+  model: Role
+- fields:
+    name: Falkland Islands-School Coverage
+  id: 5f948058-7908-4b29-afda-cd3c4012aaf3
+  model: Role
+- fields:
+    name: Falkland Islands-School QoS
+  id: 25fbc8a2-ca90-4176-9369-492f214c7d57
+  model: Role
+- fields:
+    name: Fiji-School Geolocation
+  id: 419ab6a2-cd29-44cd-ae7c-2195e5a1824a
+  model: Role
+- fields:
+    name: Fiji-School Coverage
+  id: 9894a44d-b368-491c-859d-f273a70fdfff
+  model: Role
+- fields:
+    name: Fiji-School QoS
+  id: 7bab4d8c-a2b3-4340-b36d-f104d4385a4b
+  model: Role
+- fields:
+    name: Finland-School Geolocation
+  id: 70ee1ae9-460f-43c5-a4e0-474932333d56
+  model: Role
+- fields:
+    name: Finland-School Coverage
+  id: f09933b5-600a-4728-824b-2095215346ed
+  model: Role
+- fields:
+    name: Finland-School QoS
+  id: 468d9b1a-57b7-4e68-8b47-64f4411abdce
+  model: Role
+- fields:
+    name: France-School Geolocation
+  id: a9e8c457-efb4-4d04-b9af-ad80800c2ee8
+  model: Role
+- fields:
+    name: France-School Coverage
+  id: 6859797a-06d2-49ef-b879-34209f387a20
+  model: Role
+- fields:
+    name: France-School QoS
+  id: 4fbdc200-6d49-40f8-acbd-591b0ccf2053
+  model: Role
+- fields:
+    name: French Guiana-School Geolocation
+  id: 54dc26c8-8818-4963-87cd-7647c7a8a07e
+  model: Role
+- fields:
+    name: French Guiana-School Coverage
+  id: c4694fac-5e81-4337-9bd6-29b909306e8b
+  model: Role
+- fields:
+    name: French Guiana-School QoS
+  id: cafad208-1fe1-4fa1-87d1-34a390ac79f2
+  model: Role
+- fields:
+    name: French Polynesia-School Geolocation
+  id: ef6386c1-4559-4cd6-9ab9-e610e942ff9b
+  model: Role
+- fields:
+    name: French Polynesia-School Coverage
+  id: 694f2530-7cad-414e-81da-583acb7b7a6a
+  model: Role
+- fields:
+    name: French Polynesia-School QoS
+  id: e0e624f5-f2c4-4db2-9f3d-1a88b32de92d
+  model: Role
+- fields:
+    name: French Southern Territories-School Geolocation
+  id: 33cc52d6-382d-43fa-8c66-11b7d6b59cdd
+  model: Role
+- fields:
+    name: French Southern Territories-School Coverage
+  id: c4a18a00-437f-4afe-8cd8-e4515a619eed
+  model: Role
+- fields:
+    name: French Southern Territories-School QoS
+  id: 4738d86e-8155-4e30-a06f-605da26c309d
+  model: Role
+- fields:
+    name: Gabon-School Geolocation
+  id: d5a8360a-f20b-44fd-a097-75a964fae1f4
+  model: Role
+- fields:
+    name: Gabon-School Coverage
+  id: c3b99f69-80c6-439d-852f-93c3247ff120
+  model: Role
+- fields:
+    name: Gabon-School QoS
+  id: 8d8c7ac6-6d73-48bf-9f79-ed89bfb44a35
+  model: Role
+- fields:
+    name: Gambia-School Geolocation
+  id: a0acc46a-0a18-414c-af3d-b7a6a5571f42
+  model: Role
+- fields:
+    name: Gambia-School Coverage
+  id: 81118d99-b0ac-4afa-a1dc-b7170ac729d3
+  model: Role
+- fields:
+    name: Gambia-School QoS
+  id: 526ce0d5-1fc5-45c1-bc90-4b57809a3efb
+  model: Role
+- fields:
+    name: Georgia-School Geolocation
+  id: f255060b-9420-4610-9ea3-a0cee0a3cf61
+  model: Role
+- fields:
+    name: Georgia-School Coverage
+  id: 764370f0-1541-4260-8f08-f319688dcba2
+  model: Role
+- fields:
+    name: Georgia-School QoS
+  id: fbb78d8a-15f4-4577-b219-7b5ae4578c93
+  model: Role
+- fields:
+    name: Germany-School Geolocation
+  id: 3d6142b6-33d1-4ef3-bdbe-8a940a438e96
+  model: Role
+- fields:
+    name: Germany-School Coverage
+  id: de973281-ff29-4128-a464-8e67d88df438
+  model: Role
+- fields:
+    name: Germany-School QoS
+  id: 2c00cd85-3544-4941-aa76-8f899d9d5963
+  model: Role
+- fields:
+    name: Ghana-School Geolocation
+  id: 9bfe6002-9e4b-4b32-985a-e59673cc0d67
+  model: Role
+- fields:
+    name: Ghana-School Coverage
+  id: dc555a52-a925-46ae-bb58-6760a819aa9b
+  model: Role
+- fields:
+    name: Ghana-School QoS
+  id: 8da966bc-6d00-4796-b89a-10dcf1f2e889
+  model: Role
+- fields:
+    name: Gibraltar-School Geolocation
+  id: af8fb0ad-c593-42f1-8757-b3dbe13f418f
+  model: Role
+- fields:
+    name: Gibraltar-School Coverage
+  id: ecc08394-050f-4d72-9fb0-95e9a916b4a6
+  model: Role
+- fields:
+    name: Gibraltar-School QoS
+  id: 2b1dbbe8-d674-4cf9-94fb-c3f3c9d5531c
+  model: Role
+- fields:
+    name: Greece-School Geolocation
+  id: 296325ac-8eb3-454a-b59f-4179fb0ee24d
+  model: Role
+- fields:
+    name: Greece-School Coverage
+  id: 4e54c824-81a7-4be9-9546-fd097552d2ce
+  model: Role
+- fields:
+    name: Greece-School QoS
+  id: 7fbdfb4e-b0d9-4707-8d6e-ff28abd1bff6
+  model: Role
+- fields:
+    name: Greenland-School Geolocation
+  id: 2c54b9dc-2b80-41cf-95e0-5fb8e887ac05
+  model: Role
+- fields:
+    name: Greenland-School Coverage
+  id: 4fc26323-deb5-45b6-866b-6ac7b56042a8
+  model: Role
+- fields:
+    name: Greenland-School QoS
+  id: e537a88f-1e3e-4600-9ea3-f2a22c394f4c
+  model: Role
+- fields:
+    name: Grenada-School Geolocation
+  id: aca00b11-0b58-4b02-b181-5912b907ea78
+  model: Role
+- fields:
+    name: Grenada-School Coverage
+  id: 55be5c47-e3ed-43bb-b47b-b8e3e665247c
+  model: Role
+- fields:
+    name: Grenada-School QoS
+  id: 26ac8206-ca7e-4081-beba-8a075494184a
+  model: Role
+- fields:
+    name: Guadeloupe-School Geolocation
+  id: 405a9991-ffd3-4cd2-8fec-4a61df24ea09
+  model: Role
+- fields:
+    name: Guadeloupe-School Coverage
+  id: 62be2e35-4956-4ee9-b817-09a13aebcbe6
+  model: Role
+- fields:
+    name: Guadeloupe-School QoS
+  id: 6916abda-f1e0-4bcc-9157-da35efc7e9e5
+  model: Role
+- fields:
+    name: Guam-School Geolocation
+  id: a9325556-95e6-4895-92be-0d7f8324728c
+  model: Role
+- fields:
+    name: Guam-School Coverage
+  id: 41806076-f577-4782-89b9-ae14cbf38fad
+  model: Role
+- fields:
+    name: Guam-School QoS
+  id: 01fe4cb8-3532-4228-820a-f9e0dabb2a2b
+  model: Role
+- fields:
+    name: Guatemala-School Geolocation
+  id: 5d20af22-5569-4825-b4e3-16038b6c32f1
+  model: Role
+- fields:
+    name: Guatemala-School Coverage
+  id: 8626088c-03e1-4093-b776-939be03495e4
+  model: Role
+- fields:
+    name: Guatemala-School QoS
+  id: c5163912-374e-4b4d-b9d6-c5cd1efe56f5
+  model: Role
+- fields:
+    name: Guernsey-School Geolocation
+  id: d8fabb90-78b1-41a6-800c-46f3930b1ee9
+  model: Role
+- fields:
+    name: Guernsey-School Coverage
+  id: 0b925e16-a6b2-40f4-b03e-0ed72d79560e
+  model: Role
+- fields:
+    name: Guernsey-School QoS
+  id: 64433749-d6f5-49af-b517-b8b1df55040b
+  model: Role
+- fields:
+    name: Guinea-School Geolocation
+  id: 9834e801-684c-4c55-8688-b926d6f92c23
+  model: Role
+- fields:
+    name: Guinea-School Coverage
+  id: 6fba0500-bd7e-46c6-9d1d-e84bb534ec6c
+  model: Role
+- fields:
+    name: Guinea-School QoS
+  id: 82e9c43d-a7ee-4e42-a2cf-12a1a8307d61
+  model: Role
+- fields:
+    name: Guinea-Bissau-School Geolocation
+  id: a25b458e-7724-4d16-8dbe-8d64da7a3fa8
+  model: Role
+- fields:
+    name: Guinea-Bissau-School Coverage
+  id: d9dfa6aa-f1aa-4ce3-9483-7a7ef0edfe5f
+  model: Role
+- fields:
+    name: Guinea-Bissau-School QoS
+  id: 03f48ca6-eedc-417b-bdd0-894f35058697
+  model: Role
+- fields:
+    name: Guyana-School Geolocation
+  id: 3434d735-5b67-4a6b-92ef-c6e5daaecd89
+  model: Role
+- fields:
+    name: Guyana-School Coverage
+  id: 1cdbaf67-cf9e-42ed-8f30-b632d0d3453e
+  model: Role
+- fields:
+    name: Guyana-School QoS
+  id: 8e71322d-d5f9-4a41-9107-a17da2b2d2df
+  model: Role
+- fields:
+    name: Haiti-School Geolocation
+  id: bbe7b2d0-c980-45c9-b9e0-1ada5f662784
+  model: Role
+- fields:
+    name: Haiti-School Coverage
+  id: 52741d9b-3b22-4920-b444-10d3f6b77880
+  model: Role
+- fields:
+    name: Haiti-School QoS
+  id: 60bb179a-2d52-4246-b169-498388bbd71c
+  model: Role
+- fields:
+    name: Heard and McDonald Islands-School Geolocation
+  id: daa9ccba-76e0-4e2c-afe2-505ab54650d2
+  model: Role
+- fields:
+    name: Heard and McDonald Islands-School Coverage
+  id: b204a897-2300-414f-b05f-59982f0923e4
+  model: Role
+- fields:
+    name: Heard and McDonald Islands-School QoS
+  id: 577bc720-e6b5-422e-add1-553600af3a76
+  model: Role
+- fields:
+    name: Honduras-School Geolocation
+  id: a4b22be0-ae90-4db1-aa36-efcfbb968edb
+  model: Role
+- fields:
+    name: Honduras-School Coverage
+  id: c9bc2d03-8874-4e37-9b44-130a249b8e14
+  model: Role
+- fields:
+    name: Honduras-School QoS
+  id: 5262ecdb-c928-4bae-92db-e9f3f37ff6e3
+  model: Role
+- fields:
+    name: Hong Kong-School Geolocation
+  id: 8972aa82-0ab1-4eca-a900-7d720c1cbef6
+  model: Role
+- fields:
+    name: Hong Kong-School Coverage
+  id: f48cf0e1-7902-46bb-a515-96589515f885
+  model: Role
+- fields:
+    name: Hong Kong-School QoS
+  id: 2503836e-50fc-42bd-924f-aa127ac420e2
+  model: Role
+- fields:
+    name: Hungary-School Geolocation
+  id: d811cbc2-a90c-4d59-b886-b8722009c125
+  model: Role
+- fields:
+    name: Hungary-School Coverage
+  id: febddeb5-bcb2-409f-bdc6-75cd48d63f92
+  model: Role
+- fields:
+    name: Hungary-School QoS
+  id: 6154145b-b1dd-4c4c-a4ea-0aaaea6a6ff8
+  model: Role
+- fields:
+    name: Iceland-School Geolocation
+  id: c9a477c5-0f35-479e-b0d2-6934b06f4b2e
+  model: Role
+- fields:
+    name: Iceland-School Coverage
+  id: a9e0dfda-4111-478b-8b6f-2b5c5f667f43
+  model: Role
+- fields:
+    name: Iceland-School QoS
+  id: 05ce88c1-8591-4a89-88a4-e186406218fe
+  model: Role
+- fields:
+    name: India-School Geolocation
+  id: 82942847-83b5-41b4-b460-e86b5cd757cc
+  model: Role
+- fields:
+    name: India-School Coverage
+  id: 29203284-8236-4a42-be46-2c880cd61bc0
+  model: Role
+- fields:
+    name: India-School QoS
+  id: e7a75c62-5a7e-4013-9c07-6a79bf62241d
+  model: Role
+- fields:
+    name: Indonesia-School Geolocation
+  id: 8c07a3d9-9aad-4fba-a535-58a2d24a3109
+  model: Role
+- fields:
+    name: Indonesia-School Coverage
+  id: 1639d8ce-b4e1-4ff6-a68c-9e6de337feb9
+  model: Role
+- fields:
+    name: Indonesia-School QoS
+  id: c1f855dc-d3f8-4ff2-a3d4-59f8fdf35d2a
+  model: Role
+- fields:
+    name: Iran-School Geolocation
+  id: a597bf74-f614-449a-8558-36d555e2f43f
+  model: Role
+- fields:
+    name: Iran-School Coverage
+  id: 92c5949b-c055-4c1f-9336-3e092585d340
+  model: Role
+- fields:
+    name: Iran-School QoS
+  id: e9540d39-ce25-4a78-b424-aa45d98a114d
+  model: Role
+- fields:
+    name: Iraq-School Geolocation
+  id: b0d59fb9-7923-4dec-8178-cd876a4baa9f
+  model: Role
+- fields:
+    name: Iraq-School Coverage
+  id: 09e165eb-9c64-4bf1-88e7-83e859701191
+  model: Role
+- fields:
+    name: Iraq-School QoS
+  id: 56c28f40-033f-4d13-9ddf-debe89c61a34
+  model: Role
+- fields:
+    name: Ireland-School Geolocation
+  id: c72b40f8-796e-455c-88c3-d6aa72a09692
+  model: Role
+- fields:
+    name: Ireland-School Coverage
+  id: 310642d2-a3f6-4b60-8140-4c42ffb7ea22
+  model: Role
+- fields:
+    name: Ireland-School QoS
+  id: 1cc4c184-bb21-4602-9af6-6fe4cf77e0db
+  model: Role
+- fields:
+    name: Isle of Man-School Geolocation
+  id: b45060d1-7009-4915-9e97-ba641c2dff35
+  model: Role
+- fields:
+    name: Isle of Man-School Coverage
+  id: 40aa0c0e-9d54-498b-9af5-0db30c67ca53
+  model: Role
+- fields:
+    name: Isle of Man-School QoS
+  id: 11b954cd-9b54-4eb7-8806-eea85e9ba698
+  model: Role
+- fields:
+    name: Israel-School Geolocation
+  id: 89dd7b5a-f2c5-401c-a0d1-2a6a787bf8be
+  model: Role
+- fields:
+    name: Israel-School Coverage
+  id: 0654d202-3924-45c0-8abf-058ac34b876d
+  model: Role
+- fields:
+    name: Israel-School QoS
+  id: e96b9b87-d9c0-471d-82bc-4d3eb982f3ca
+  model: Role
+- fields:
+    name: Italy-School Geolocation
+  id: 8861bd3d-545a-4518-ad29-5a6bdcc879dd
+  model: Role
+- fields:
+    name: Italy-School Coverage
+  id: aa80e22d-b017-4234-81ff-121990efb866
+  model: Role
+- fields:
+    name: Italy-School QoS
+  id: c1006dfc-6a9a-435b-b509-75a7d18cb372
+  model: Role
+- fields:
+    name: Jamaica-School Geolocation
+  id: 9061e6e0-34cf-42f4-9de0-d1e9fcb0310b
+  model: Role
+- fields:
+    name: Jamaica-School Coverage
+  id: e479100f-5742-408e-96cb-423459adfe4b
+  model: Role
+- fields:
+    name: Jamaica-School QoS
+  id: 91d6b23e-e4f7-477c-90d6-ebd238f3fdea
+  model: Role
+- fields:
+    name: Japan-School Geolocation
+  id: 4cb276cc-b788-45a2-80aa-da7a75e64444
+  model: Role
+- fields:
+    name: Japan-School Coverage
+  id: bfe0d7f7-169d-451b-9b6d-31724da639dc
+  model: Role
+- fields:
+    name: Japan-School QoS
+  id: 0928a77d-137d-422f-bb5b-19ac04d785f3
+  model: Role
+- fields:
+    name: Jersey-School Geolocation
+  id: c4d5bda4-2d8f-480b-a325-487534d4372f
+  model: Role
+- fields:
+    name: Jersey-School Coverage
+  id: 9a593de7-9b83-4775-8708-009e78e48a85
+  model: Role
+- fields:
+    name: Jersey-School QoS
+  id: 2266e3f2-1f02-440d-ac49-64b3e4ff2dda
+  model: Role
+- fields:
+    name: Jordan-School Geolocation
+  id: 499702ea-1b67-424a-974d-83592b7f1370
+  model: Role
+- fields:
+    name: Jordan-School Coverage
+  id: 454bd0bf-983f-4752-86a4-f850c384b653
+  model: Role
+- fields:
+    name: Jordan-School QoS
+  id: 35495f54-b72d-4c91-9cc1-183fbab5a07f
+  model: Role
+- fields:
+    name: Kazakhstan-School Geolocation
+  id: 0926a682-7053-40a2-8dab-49fe02168b27
+  model: Role
+- fields:
+    name: Kazakhstan-School Coverage
+  id: ce340a8a-8b0a-4c29-a2da-9fe1439610d2
+  model: Role
+- fields:
+    name: Kazakhstan-School QoS
+  id: 5cf5fb89-8eab-4af1-9a78-65919c936ff7
+  model: Role
+- fields:
+    name: Kenya-School Geolocation
+  id: 7812218a-e0e0-44d3-9fb1-00a64b0e8b02
+  model: Role
+- fields:
+    name: Kenya-School Coverage
+  id: d736f3a6-ac4e-45ec-8a29-9e1698dd8f83
+  model: Role
+- fields:
+    name: Kenya-School QoS
+  id: 96683f8a-088e-4b5c-a550-8ca02e90e6d3
+  model: Role
+- fields:
+    name: Kiribati-School Geolocation
+  id: a7b6929e-fcb4-4dee-b3a3-d6122887b6ad
+  model: Role
+- fields:
+    name: Kiribati-School Coverage
+  id: 1e9e8bc7-6395-41f7-bd4e-7bb6411ee622
+  model: Role
+- fields:
+    name: Kiribati-School QoS
+  id: 229a3845-56a3-49dc-a8bd-967b07b926a9
+  model: Role
+- fields:
+    name: Kosovo-School Geolocation
+  id: 755324f8-35f9-4357-bbdc-b3f4d1cd2345
+  model: Role
+- fields:
+    name: Kosovo-School Coverage
+  id: 3b79431d-8c80-47af-b7f6-931db922e028
+  model: Role
+- fields:
+    name: Kosovo-School QoS
+  id: 139805ae-e250-4740-9834-ed2525755f4d
+  model: Role
+- fields:
+    name: Kuwait-School Geolocation
+  id: 66d19b28-2d09-46a5-b2b0-3f7583096518
+  model: Role
+- fields:
+    name: Kuwait-School Coverage
+  id: 874e497a-53e9-4845-8070-a4b1b3333493
+  model: Role
+- fields:
+    name: Kuwait-School QoS
+  id: 1ee70c17-7b3c-4429-9f76-c00dd920dd28
+  model: Role
+- fields:
+    name: Kyrgyz Republic-School Geolocation
+  id: f662d574-b2dc-48e5-90b8-950fa51d578d
+  model: Role
+- fields:
+    name: Kyrgyz Republic-School Coverage
+  id: ed151c76-99c5-4a2e-a10f-1f81f710c845
+  model: Role
+- fields:
+    name: Kyrgyz Republic-School QoS
+  id: 9f5e8ea3-9d0f-4a02-a24c-8e41911201ca
+  model: Role
+- fields:
+    name: Laos-School Geolocation
+  id: 4efa587f-920e-4407-9089-af5cfa542cc3
+  model: Role
+- fields:
+    name: Laos-School Coverage
+  id: 7904f4bf-6d85-41de-9b26-5d4dc6ed940c
+  model: Role
+- fields:
+    name: Laos-School QoS
+  id: 41a00adc-a38d-4d79-a01b-4daf8651dff7
+  model: Role
+- fields:
+    name: Latvia-School Geolocation
+  id: 9d700c84-1c18-4e92-aaf3-f771913b9bad
+  model: Role
+- fields:
+    name: Latvia-School Coverage
+  id: 996cdfe8-38b3-4e3c-b8d1-777abd56c263
+  model: Role
+- fields:
+    name: Latvia-School QoS
+  id: 54bbfc4c-1652-4832-a7cd-e63f9d5cb977
+  model: Role
+- fields:
+    name: Lebanon-School Geolocation
+  id: b8f16425-5397-4a65-98ea-9835669c35c2
+  model: Role
+- fields:
+    name: Lebanon-School Coverage
+  id: 00f7a11e-645c-41e9-bcbc-e01ac20571da
+  model: Role
+- fields:
+    name: Lebanon-School QoS
+  id: 736ccb21-7b65-4edb-92f5-d7ecd46bc6b0
+  model: Role
+- fields:
+    name: Lesotho-School Geolocation
+  id: 2d959083-71bc-452c-859c-2d655f75d363
+  model: Role
+- fields:
+    name: Lesotho-School Coverage
+  id: 53b277c9-c5b9-4829-baad-33a24b88fd79
+  model: Role
+- fields:
+    name: Lesotho-School QoS
+  id: 523c6e61-59d2-41f7-a0ea-3be4f91d5673
+  model: Role
+- fields:
+    name: Liberia-School Geolocation
+  id: 703ce4d0-fcb2-4289-a5f2-5daa2e226674
+  model: Role
+- fields:
+    name: Liberia-School Coverage
+  id: 669e306f-1174-4d76-8e35-a8d9c108284b
+  model: Role
+- fields:
+    name: Liberia-School QoS
+  id: f413669f-1fc0-4b87-a23c-0137ae3ea29a
+  model: Role
+- fields:
+    name: Libya-School Geolocation
+  id: ae33382d-7d2c-419b-8988-4548815dac5d
+  model: Role
+- fields:
+    name: Libya-School Coverage
+  id: e0497eaf-f6cb-41dc-926a-c4a9e9c2504c
+  model: Role
+- fields:
+    name: Libya-School QoS
+  id: ab7c7690-9d70-4923-b2e8-e86276f0d22b
+  model: Role
+- fields:
+    name: Liechtenstein-School Geolocation
+  id: 369daf7b-ed03-4dec-bef4-9209b215f2b6
+  model: Role
+- fields:
+    name: Liechtenstein-School Coverage
+  id: 15b652d0-77a3-455d-90ac-d6fec363e93e
+  model: Role
+- fields:
+    name: Liechtenstein-School QoS
+  id: 9e0efa8d-8543-428d-8383-2cf67b9dc3bc
+  model: Role
+- fields:
+    name: Lithuania-School Geolocation
+  id: b2d8caf8-1971-4397-bf38-4257451dbf74
+  model: Role
+- fields:
+    name: Lithuania-School Coverage
+  id: 558beae0-1d97-443a-a1b2-88ffd4f14125
+  model: Role
+- fields:
+    name: Lithuania-School QoS
+  id: c94c2e60-17dd-4ef3-a706-75835e276f7f
+  model: Role
+- fields:
+    name: Luxembourg-School Geolocation
+  id: 1aac3c8b-76e5-4a05-b55b-835364dc1163
+  model: Role
+- fields:
+    name: Luxembourg-School Coverage
+  id: 4db79f18-68c3-43ca-bb59-2a20446a785e
+  model: Role
+- fields:
+    name: Luxembourg-School QoS
+  id: f8ecf376-5f63-4f21-b627-3803fe22739e
+  model: Role
+- fields:
+    name: Macau-School Geolocation
+  id: 21637498-8508-4587-8e94-9eee08f3b406
+  model: Role
+- fields:
+    name: Macau-School Coverage
+  id: 59725ee7-1d99-494e-9541-f380ad03ac2a
+  model: Role
+- fields:
+    name: Macau-School QoS
+  id: ac15b6d4-9324-44f5-a9c9-90c291460d5d
+  model: Role
+- fields:
+    name: North Macedonia-School Geolocation
+  id: 6622c3cb-b6e5-4dbb-b8d6-ee604981a74e
+  model: Role
+- fields:
+    name: North Macedonia-School Coverage
+  id: be650cf4-3e38-4e8d-bf89-59287be8612a
+  model: Role
+- fields:
+    name: North Macedonia-School QoS
+  id: 8062311a-0130-4c72-80b0-4aaf8dfb1e1a
+  model: Role
+- fields:
+    name: Madagascar-School Geolocation
+  id: c58804e3-e83f-408e-a1bb-0e5c3958f73f
+  model: Role
+- fields:
+    name: Madagascar-School Coverage
+  id: fd2ef824-ce0c-4a53-ad02-21cb9e9e2787
+  model: Role
+- fields:
+    name: Madagascar-School QoS
+  id: 749ad79a-a1e8-47a7-8a7d-93512f94a0b9
+  model: Role
+- fields:
+    name: Malawi-School Geolocation
+  id: aa77dfb3-7dd3-4d7d-9a1b-532f6f43481c
+  model: Role
+- fields:
+    name: Malawi-School Coverage
+  id: 0c484095-bb30-47fa-8e6e-db97259287da
+  model: Role
+- fields:
+    name: Malawi-School QoS
+  id: 9aac3d69-a6cd-46f2-945a-0f30e34a4483
+  model: Role
+- fields:
+    name: Malaysia-School Geolocation
+  id: c297b48c-de4a-43e9-b18f-df306eee49e1
+  model: Role
+- fields:
+    name: Malaysia-School Coverage
+  id: b2594346-db1a-4712-8703-d0e8fd4df110
+  model: Role
+- fields:
+    name: Malaysia-School QoS
+  id: 9c069334-3081-4a98-9909-14567d310e37
+  model: Role
+- fields:
+    name: Maldives-School Geolocation
+  id: d7831b4c-227a-4e44-a704-1b47c9e05df5
+  model: Role
+- fields:
+    name: Maldives-School Coverage
+  id: 3cd3ffd2-6043-4940-a643-9f72f078eb52
+  model: Role
+- fields:
+    name: Maldives-School QoS
+  id: b28509a0-db63-4124-a881-22a2b07f3565
+  model: Role
+- fields:
+    name: Mali-School Geolocation
+  id: 9acc29e2-ce52-4a13-856c-a2728e93ba1e
+  model: Role
+- fields:
+    name: Mali-School Coverage
+  id: 229c6f73-b5c2-4561-bc8f-7aca0aa5d118
+  model: Role
+- fields:
+    name: Mali-School QoS
+  id: dbbfdde3-4163-489b-833e-855cffb547bb
+  model: Role
+- fields:
+    name: Malta-School Geolocation
+  id: 432bc6bc-9eba-4af4-8e52-1932cf9b0b6f
+  model: Role
+- fields:
+    name: Malta-School Coverage
+  id: 791987d9-2467-4ad9-858a-25bc53fc06a2
+  model: Role
+- fields:
+    name: Malta-School QoS
+  id: 9e81b1b4-aa9f-44a6-9c7d-7cfaf3effbb3
+  model: Role
+- fields:
+    name: Marshall Islands-School Geolocation
+  id: 5e68d5d7-930f-4b04-b1a2-410cdd965460
+  model: Role
+- fields:
+    name: Marshall Islands-School Coverage
+  id: a4c02f4b-9908-4833-a224-6706639a8ff7
+  model: Role
+- fields:
+    name: Marshall Islands-School QoS
+  id: f9989891-378c-458f-96e9-c473fb6820e6
+  model: Role
+- fields:
+    name: Martinique-School Geolocation
+  id: 8d075afc-54a3-45b8-9b39-2228b3030659
+  model: Role
+- fields:
+    name: Martinique-School Coverage
+  id: b6f797c8-6bb0-4e5f-951e-e4bc277c4108
+  model: Role
+- fields:
+    name: Martinique-School QoS
+  id: 4215734b-81a9-4f10-a556-a9a738caa3ff
+  model: Role
+- fields:
+    name: Mauritania-School Geolocation
+  id: 1c53fece-de17-4486-b5be-841af7a23170
+  model: Role
+- fields:
+    name: Mauritania-School Coverage
+  id: 6f4563e0-cb2d-46a3-8c66-d2ca991deeff
+  model: Role
+- fields:
+    name: Mauritania-School QoS
+  id: cd882074-4814-48cf-adde-9bd3c9dba28b
+  model: Role
+- fields:
+    name: Mauritius-School Geolocation
+  id: bbe3a59c-e2f3-4a3e-b5a0-75dfe452d86c
+  model: Role
+- fields:
+    name: Mauritius-School Coverage
+  id: 25f2893d-46c6-4dea-b3b7-4d9b363a7685
+  model: Role
+- fields:
+    name: Mauritius-School QoS
+  id: 138f2d56-44e7-4879-aa90-b62080bc1e4f
+  model: Role
+- fields:
+    name: Mayotte-School Geolocation
+  id: 42a3b9e6-8f5d-49cf-9545-3c50543def9e
+  model: Role
+- fields:
+    name: Mayotte-School Coverage
+  id: 325cb850-e848-4b5d-a391-63f90dee11ca
+  model: Role
+- fields:
+    name: Mayotte-School QoS
+  id: c51fb028-310e-4ea5-be6d-9ecf1744da15
+  model: Role
+- fields:
+    name: Mexico-School Geolocation
+  id: 3ad47a74-bafa-4331-ba69-c5cbe66244fd
+  model: Role
+- fields:
+    name: Mexico-School Coverage
+  id: 0808e320-4935-418b-ae60-2694342283c5
+  model: Role
+- fields:
+    name: Mexico-School QoS
+  id: bf901c4f-67c9-4e54-8429-4ac712b19280
+  model: Role
+- fields:
+    name: Micronesia, Fed. Sts.-School Geolocation
+  id: a4ec3c3c-501a-4e9f-b4b1-18687514b60e
+  model: Role
+- fields:
+    name: Micronesia, Fed. Sts.-School Coverage
+  id: e4edfe0a-9737-4ff9-bf3d-41347e0c0d72
+  model: Role
+- fields:
+    name: Micronesia, Fed. Sts.-School QoS
+  id: 8af0261d-b660-4f46-8d11-45f24baae14e
+  model: Role
+- fields:
+    name: Moldova-School Geolocation
+  id: 2bc4b463-bc30-432f-bb33-345b67e976f7
+  model: Role
+- fields:
+    name: Moldova-School Coverage
+  id: 107eca0a-a863-47cf-8164-d7efc18f3223
+  model: Role
+- fields:
+    name: Moldova-School QoS
+  id: bbd0fac3-466a-45d1-b6e9-1ab959cf6e35
+  model: Role
+- fields:
+    name: Monaco-School Geolocation
+  id: 8bb451f6-aca5-46e7-80b8-4fa1a379b2c3
+  model: Role
+- fields:
+    name: Monaco-School Coverage
+  id: 810dc339-54eb-4835-9153-adfce745fc08
+  model: Role
+- fields:
+    name: Monaco-School QoS
+  id: a67f18b1-c107-40d9-9a89-74e4a698b3e3
+  model: Role
+- fields:
+    name: Mongolia-School Geolocation
+  id: 7521c5b0-2567-433a-8835-f4c1e604ddba
+  model: Role
+- fields:
+    name: Mongolia-School Coverage
+  id: 90cc1794-3bd0-43b5-88a1-dcb55297e034
+  model: Role
+- fields:
+    name: Mongolia-School QoS
+  id: 1687a3f4-1a29-4c34-8b3a-ebd8873a6162
+  model: Role
+- fields:
+    name: Montenegro-School Geolocation
+  id: c157daa9-f013-4952-8e8d-c0983c9424b3
+  model: Role
+- fields:
+    name: Montenegro-School Coverage
+  id: abd6633b-e916-4b5e-8852-662824e455a4
+  model: Role
+- fields:
+    name: Montenegro-School QoS
+  id: 9fef623d-fb70-49f4-887f-fb40b63da444
+  model: Role
+- fields:
+    name: Montserrat-School Geolocation
+  id: 6870900a-2aec-480e-ab64-63903fcf02a5
+  model: Role
+- fields:
+    name: Montserrat-School Coverage
+  id: a7723a3d-7a41-4098-801d-50d47bd4b1f7
+  model: Role
+- fields:
+    name: Montserrat-School QoS
+  id: 19164e54-715f-4f81-ab7a-9dcd70d81386
+  model: Role
+- fields:
+    name: Morocco-School Geolocation
+  id: 85ceedc2-bb4f-4376-82b5-e1078b3d25df
+  model: Role
+- fields:
+    name: Morocco-School Coverage
+  id: 415352d7-a56b-4095-99e7-6e752ae173de
+  model: Role
+- fields:
+    name: Morocco-School QoS
+  id: a332ea47-ea5b-46e3-a4f4-f1835a404de3
+  model: Role
+- fields:
+    name: Mozambique-School Geolocation
+  id: a8e10604-57c2-496b-9925-91f8abb41513
+  model: Role
+- fields:
+    name: Mozambique-School Coverage
+  id: a7272d27-2e33-4e6a-b5b0-41e792b7f776
+  model: Role
+- fields:
+    name: Mozambique-School QoS
+  id: c36eda38-8a29-4fd0-9874-2a94ee45ab66
+  model: Role
+- fields:
+    name: Myanmar-School Geolocation
+  id: f3f4076e-8ca1-4078-b0df-f5ff7869cab3
+  model: Role
+- fields:
+    name: Myanmar-School Coverage
+  id: e6ce1810-b349-44d8-b159-77e25b64af32
+  model: Role
+- fields:
+    name: Myanmar-School QoS
+  id: b5883210-e5fd-4eb2-8a41-b3dada34f30e
+  model: Role
+- fields:
+    name: Namibia-School Geolocation
+  id: c0aea9d9-13ed-4fee-a5f7-323144107efa
+  model: Role
+- fields:
+    name: Namibia-School Coverage
+  id: 8a88d780-42db-4add-9c09-26180cf58966
+  model: Role
+- fields:
+    name: Namibia-School QoS
+  id: 7cdf316f-0aa3-4ff9-ab13-d19353e5efc5
+  model: Role
+- fields:
+    name: Nauru-School Geolocation
+  id: ec2c389c-2741-40d7-9971-ea8062bf8c2b
+  model: Role
+- fields:
+    name: Nauru-School Coverage
+  id: defddd95-fb38-476f-9711-9d2c7c965615
+  model: Role
+- fields:
+    name: Nauru-School QoS
+  id: 9d2dae82-c177-4b03-adaa-f4b33addc6af
+  model: Role
+- fields:
+    name: Nepal-School Geolocation
+  id: 2034820a-ce4f-42b1-b37d-b92fe32d2d74
+  model: Role
+- fields:
+    name: Nepal-School Coverage
+  id: 2a5fc4f4-a4cb-459c-b776-9011d4a18399
+  model: Role
+- fields:
+    name: Nepal-School QoS
+  id: 1cfeb5a4-43ea-45a2-83d4-d10dbdb982b4
+  model: Role
+- fields:
+    name: Netherlands-School Geolocation
+  id: 508527b9-6d2a-4b02-b787-ce43ac0b053e
+  model: Role
+- fields:
+    name: Netherlands-School Coverage
+  id: 96dcf344-69dd-4140-bde0-a7d2e498aa50
+  model: Role
+- fields:
+    name: Netherlands-School QoS
+  id: f362dc1c-c4cb-4f04-a5c2-4a6504d3f37c
+  model: Role
+- fields:
+    name: New Caledonia-School Geolocation
+  id: de3e6d2a-e7c2-4786-83f6-af2abc79ed6d
+  model: Role
+- fields:
+    name: New Caledonia-School Coverage
+  id: 60e4f9a2-74b6-4da5-be40-b5d5b9183d58
+  model: Role
+- fields:
+    name: New Caledonia-School QoS
+  id: 0aceff18-ce64-4673-b862-1cb88cd17054
+  model: Role
+- fields:
+    name: New Zealand-School Geolocation
+  id: ab83b1e6-769d-4e64-b941-154df1755931
+  model: Role
+- fields:
+    name: New Zealand-School Coverage
+  id: 6d200130-4587-4840-bd75-d7af69ed1b57
+  model: Role
+- fields:
+    name: New Zealand-School QoS
+  id: a89f3653-164e-4500-b4f7-440d96e73676
+  model: Role
+- fields:
+    name: Nicaragua-School Geolocation
+  id: 0457168e-565a-484b-bc01-ecd9156831bb
+  model: Role
+- fields:
+    name: Nicaragua-School Coverage
+  id: 42243b1a-d084-478b-b32d-abc4b04f9c5f
+  model: Role
+- fields:
+    name: Nicaragua-School QoS
+  id: fbccb9a3-af21-41c9-ae24-181039fd0ad3
+  model: Role
+- fields:
+    name: Niger-School Geolocation
+  id: 57286762-54a5-4def-8476-8d857ca62ecc
+  model: Role
+- fields:
+    name: Niger-School Coverage
+  id: 6c1a30f6-169d-412e-9f6d-a429b542999f
+  model: Role
+- fields:
+    name: Niger-School QoS
+  id: bbef2733-9305-49bd-aeea-f230d4f0256e
+  model: Role
+- fields:
+    name: Nigeria-School Geolocation
+  id: ce5eecb7-d50f-4a8a-b5ab-0398520cd286
+  model: Role
+- fields:
+    name: Nigeria-School Coverage
+  id: 306fa67c-3cc0-4274-a6ed-3ad771b19729
+  model: Role
+- fields:
+    name: Nigeria-School QoS
+  id: ade17ced-1c9f-45c3-8618-f472b9daeb1c
+  model: Role
+- fields:
+    name: Niue-School Geolocation
+  id: 7fa1cadb-219a-47d4-a06d-7559a7f2e6b6
+  model: Role
+- fields:
+    name: Niue-School Coverage
+  id: 35c159cf-59c6-45a3-8519-5ab756114f53
+  model: Role
+- fields:
+    name: Niue-School QoS
+  id: cdd41d59-e63d-4f29-8234-299de1a69458
+  model: Role
+- fields:
+    name: Norfolk Island-School Geolocation
+  id: 0cd746b8-45be-4947-8334-5dcaa33d0b5c
+  model: Role
+- fields:
+    name: Norfolk Island-School Coverage
+  id: 15b5ab29-8b17-4e85-a810-00dc7e8007b8
+  model: Role
+- fields:
+    name: Norfolk Island-School QoS
+  id: 063867d4-f339-4d04-8db2-260fe5b2aefe
+  model: Role
+- fields:
+    name: North Korea-School Geolocation
+  id: fd12ae33-63a6-4de6-a44d-666f49d95beb
+  model: Role
+- fields:
+    name: North Korea-School Coverage
+  id: 852d567f-e09b-4680-a266-51e6e68ab5f4
+  model: Role
+- fields:
+    name: North Korea-School QoS
+  id: a0b4d072-f627-4b9b-888b-ee92690c0a32
+  model: Role
+- fields:
+    name: Northern Mariana Islands-School Geolocation
+  id: e9f2767f-b353-49d4-9039-84804192012c
+  model: Role
+- fields:
+    name: Northern Mariana Islands-School Coverage
+  id: d9cefb86-0c88-4a02-9a6b-a9904f30febc
+  model: Role
+- fields:
+    name: Northern Mariana Islands-School QoS
+  id: f02a6023-b62a-4e1b-be5b-d13f5a8ae9dd
+  model: Role
+- fields:
+    name: Norway-School Geolocation
+  id: 9bb47153-54e8-467d-bd26-b53ef4a00b31
+  model: Role
+- fields:
+    name: Norway-School Coverage
+  id: 34262cad-128d-4dec-83e6-3a6ea0fe4d62
+  model: Role
+- fields:
+    name: Norway-School QoS
+  id: 1a1c82a1-b50c-413c-9adf-23d3d55907b0
+  model: Role
+- fields:
+    name: Oman-School Geolocation
+  id: a88c46e6-61b7-4c02-90c0-63b3a37c9555
+  model: Role
+- fields:
+    name: Oman-School Coverage
+  id: f3b70606-b16a-425b-a45d-08460dd9ddbf
+  model: Role
+- fields:
+    name: Oman-School QoS
+  id: 08355cc5-0d5f-465b-afc9-f9c576d6debe
+  model: Role
+- fields:
+    name: Pakistan-School Geolocation
+  id: 9d822a01-33c4-4aa0-b42f-bcfe53cb7bea
+  model: Role
+- fields:
+    name: Pakistan-School Coverage
+  id: 54a4751c-cf7d-4931-af6a-36927b760685
+  model: Role
+- fields:
+    name: Pakistan-School QoS
+  id: 1f13e5c2-c5ac-486c-af1b-ef8c602b2ade
+  model: Role
+- fields:
+    name: Palau-School Geolocation
+  id: c5db5ea5-b225-4228-9439-e2784fe4ae69
+  model: Role
+- fields:
+    name: Palau-School Coverage
+  id: aaf1d33b-59ae-4021-a59c-b79ecd0f13e0
+  model: Role
+- fields:
+    name: Palau-School QoS
+  id: a512e84f-f012-4504-9a1b-20a868ee9a55
+  model: Role
+- fields:
+    name: Palestine-School Geolocation
+  id: 4b61634d-1902-49cb-b7d7-0ea97f519203
+  model: Role
+- fields:
+    name: Palestine-School Coverage
+  id: 9cc9f4b4-d45a-48a9-aa85-13e52b312365
+  model: Role
+- fields:
+    name: Palestine-School QoS
+  id: 0f277c6e-722b-4fd5-b0e0-b163afb83f71
+  model: Role
+- fields:
+    name: Panama-School Geolocation
+  id: 694c1dbb-3d47-4c5d-8f3a-b4ebbf5cee51
+  model: Role
+- fields:
+    name: Panama-School Coverage
+  id: 12af1ad0-8052-48dc-8010-43c387177be1
+  model: Role
+- fields:
+    name: Panama-School QoS
+  id: e4b516d5-5c02-4a54-b7f1-d87a8d1715d2
+  model: Role
+- fields:
+    name: Papua New Guinea-School Geolocation
+  id: d0e1f449-d1e2-42ae-b03f-5ee9be48132f
+  model: Role
+- fields:
+    name: Papua New Guinea-School Coverage
+  id: 814f1fb0-6f34-45bb-94b2-d0f37c866fad
+  model: Role
+- fields:
+    name: Papua New Guinea-School QoS
+  id: c0f76db5-51b6-4b2a-992a-323b9903415b
+  model: Role
+- fields:
+    name: Paraguay-School Geolocation
+  id: 41ccc5d8-d96a-446c-9fda-cddaecdf079f
+  model: Role
+- fields:
+    name: Paraguay-School Coverage
+  id: d48d2dcd-b6cb-43bf-83e6-9d5a15feff0e
+  model: Role
+- fields:
+    name: Paraguay-School QoS
+  id: 9925828e-5910-43ed-88ed-c450403055cb
+  model: Role
+- fields:
+    name: Peru-School Geolocation
+  id: 6c2fe230-e13d-42e2-bb20-6ebc2c7d945b
+  model: Role
+- fields:
+    name: Peru-School Coverage
+  id: 3c510009-8bf4-400d-bce8-a82bce535a95
+  model: Role
+- fields:
+    name: Peru-School QoS
+  id: ba1cd4af-a6ae-4ee3-857b-2a4d41889af6
+  model: Role
+- fields:
+    name: Philippines-School Geolocation
+  id: 5ec76733-8c5a-41ad-ab7b-071b34ed97d0
+  model: Role
+- fields:
+    name: Philippines-School Coverage
+  id: 6611c3aa-d489-4aae-9486-fc94e89617bb
+  model: Role
+- fields:
+    name: Philippines-School QoS
+  id: 5460ffd7-36ae-4d30-817c-145411fe30a6
+  model: Role
+- fields:
+    name: Pitcairn-School Geolocation
+  id: 01aa54db-7555-42d0-9f0f-1ffb756211c2
+  model: Role
+- fields:
+    name: Pitcairn-School Coverage
+  id: ead009b5-a29b-4a35-860b-fb83467a7dd5
+  model: Role
+- fields:
+    name: Pitcairn-School QoS
+  id: 49d5681f-6f2c-4516-9a2d-28a91c170738
+  model: Role
+- fields:
+    name: Poland-School Geolocation
+  id: ea473168-313c-4e8c-8a98-3bf8a98959b6
+  model: Role
+- fields:
+    name: Poland-School Coverage
+  id: 607eb4ba-46ad-469a-81b9-c1a12a0d1124
+  model: Role
+- fields:
+    name: Poland-School QoS
+  id: 769d0bc2-1b90-4ca1-b20c-d731eda8b694
+  model: Role
+- fields:
+    name: Portugal-School Geolocation
+  id: d4b0bd3c-3e44-48eb-a3a0-8e3e22aed283
+  model: Role
+- fields:
+    name: Portugal-School Coverage
+  id: 33653af1-aab4-4a36-8111-7e58270f66ec
+  model: Role
+- fields:
+    name: Portugal-School QoS
+  id: 26c65b01-c4ed-4784-92cb-051ca6165e64
+  model: Role
+- fields:
+    name: Puerto Rico-School Geolocation
+  id: 19e95d52-da15-422f-b3e5-9542cd15e51e
+  model: Role
+- fields:
+    name: Puerto Rico-School Coverage
+  id: 0efbbc32-1731-40c3-a4b6-307daf37d673
+  model: Role
+- fields:
+    name: Puerto Rico-School QoS
+  id: fd347a48-1b4d-4cf6-b383-38df7baa0912
+  model: Role
+- fields:
+    name: Qatar-School Geolocation
+  id: 0de06a91-38df-4588-a709-be17dd5c1512
+  model: Role
+- fields:
+    name: Qatar-School Coverage
+  id: 61b02f02-7566-4904-a434-9bc7a815ab56
+  model: Role
+- fields:
+    name: Qatar-School QoS
+  id: d9481ac7-1391-4f39-a23b-5485422f5cdc
+  model: Role
+- fields:
+    name: Reunion-School Geolocation
+  id: 14682803-9711-4362-b628-b53ba388fde4
+  model: Role
+- fields:
+    name: Reunion-School Coverage
+  id: dc82ff26-fe9f-4903-bd18-cc4e6ddc844f
+  model: Role
+- fields:
+    name: Reunion-School QoS
+  id: f5cb0bdf-eb21-45da-b18e-2da9dabdc6df
+  model: Role
+- fields:
+    name: Romania-School Geolocation
+  id: 702d4b95-7649-43fc-91a7-0f0baa48099b
+  model: Role
+- fields:
+    name: Romania-School Coverage
+  id: 37abe9e3-07f7-4a44-9c50-be89c6203b81
+  model: Role
+- fields:
+    name: Romania-School QoS
+  id: 8922a3a5-d570-4055-af08-f8c439483356
+  model: Role
+- fields:
+    name: Russia-School Geolocation
+  id: dfbb752e-dae9-4b8b-9388-2f1c04933782
+  model: Role
+- fields:
+    name: Russia-School Coverage
+  id: 611c6cc4-801a-4e39-83bb-a20c5dbf83eb
+  model: Role
+- fields:
+    name: Russia-School QoS
+  id: bad46e71-864b-4d50-95d4-0387ac0ebd68
+  model: Role
+- fields:
+    name: Rwanda-School Geolocation
+  id: bad92d08-003d-4f2f-84a3-ab91b5671c5c
+  model: Role
+- fields:
+    name: Rwanda-School Coverage
+  id: 1c42f847-3d72-4c0e-b04d-09cf11aa9642
+  model: Role
+- fields:
+    name: Rwanda-School QoS
+  id: 5c9c9f5f-4c9c-41ee-9dc0-b93941376968
+  model: Role
+- fields:
+    name: Saint-Martin-School Geolocation
+  id: 6edc0ae0-448a-41e5-8aa9-8769758e118b
+  model: Role
+- fields:
+    name: Saint-Martin-School Coverage
+  id: 9e3dabb8-9b70-49c4-a102-2d0ffaa75d26
+  model: Role
+- fields:
+    name: Saint-Martin-School QoS
+  id: 888022a3-b1e1-44a4-9ff9-87e7c7dde0d6
+  model: Role
+- fields:
+    name: Samoa-School Geolocation
+  id: 48894a63-50c1-4999-90b3-2ddba2272bb5
+  model: Role
+- fields:
+    name: Samoa-School Coverage
+  id: 918e4b56-91d6-4aa3-88a6-0f439f315517
+  model: Role
+- fields:
+    name: Samoa-School QoS
+  id: 4dd5ca59-5264-4469-bf1d-998ab3e46682
+  model: Role
+- fields:
+    name: San Marino-School Geolocation
+  id: 280dbd10-19f6-4f63-bab4-49a3660dbafe
+  model: Role
+- fields:
+    name: San Marino-School Coverage
+  id: 3acc4d26-a5f5-4f6e-b5d8-356d3e09bf93
+  model: Role
+- fields:
+    name: San Marino-School QoS
+  id: 01fc3dbf-a923-4ed5-b9d5-b368dd01bd8a
+  model: Role
+- fields:
+    name: Sao Tome and Principe-School Geolocation
+  id: f78a7196-9c82-43cb-a59b-941ecdbd0ebc
+  model: Role
+- fields:
+    name: Sao Tome and Principe-School Coverage
+  id: b9472293-d322-4380-861b-43eeecef72a2
+  model: Role
+- fields:
+    name: Sao Tome and Principe-School QoS
+  id: 8414e03f-dfa6-4888-a89d-502e53393271
+  model: Role
+- fields:
+    name: Saudi Arabia-School Geolocation
+  id: c0d96382-4f8d-4775-9f6f-1c7e0b7e1d1e
+  model: Role
+- fields:
+    name: Saudi Arabia-School Coverage
+  id: 7849baac-a14d-429a-bb3d-0663729dae09
+  model: Role
+- fields:
+    name: Saudi Arabia-School QoS
+  id: 3ec572ec-0fd3-4343-8dd1-a4ef49045d41
+  model: Role
+- fields:
+    name: Senegal-School Geolocation
+  id: 56ef0f3b-ecc4-427a-b398-f738ae35c6e9
+  model: Role
+- fields:
+    name: Senegal-School Coverage
+  id: 9255deb5-2f56-4ae2-92f7-31542b8b2fe7
+  model: Role
+- fields:
+    name: Senegal-School QoS
+  id: f8d83f25-8022-4984-8c67-b50e968ba426
+  model: Role
+- fields:
+    name: Serbia-School Geolocation
+  id: b87d14bb-aa03-4ad5-9579-4699427fefc0
+  model: Role
+- fields:
+    name: Serbia-School Coverage
+  id: 9bbcfcdb-bc64-41cc-860e-2031083b7338
+  model: Role
+- fields:
+    name: Serbia-School QoS
+  id: f5e67cd3-bad2-482d-965c-993caf84a32d
+  model: Role
+- fields:
+    name: Seychelles-School Geolocation
+  id: 4ce0646b-751d-4d2a-9960-66612d887a29
+  model: Role
+- fields:
+    name: Seychelles-School Coverage
+  id: 290a3ac0-6aa1-45a5-8f22-0f4a54dc3bf3
+  model: Role
+- fields:
+    name: Seychelles-School QoS
+  id: 5de3997c-9f51-4000-a5ff-42ae13f22c30
+  model: Role
+- fields:
+    name: Sierra Leone-School Geolocation
+  id: 9167058b-e084-4d4b-8574-eba392ba44a4
+  model: Role
+- fields:
+    name: Sierra Leone-School Coverage
+  id: 7b670ddd-681b-4422-a012-2d5ac49b2a90
+  model: Role
+- fields:
+    name: Sierra Leone-School QoS
+  id: e188d388-4979-4bfd-aa3b-4158ffc8ac39
+  model: Role
+- fields:
+    name: Singapore-School Geolocation
+  id: 0b60882b-3a53-485c-90d9-f8e49c1eec4d
+  model: Role
+- fields:
+    name: Singapore-School Coverage
+  id: a2f89165-c6d1-44d2-af5e-3f6c5dadfb51
+  model: Role
+- fields:
+    name: Singapore-School QoS
+  id: c0f27678-f33d-4e6c-9474-c3697ec24918
+  model: Role
+- fields:
+    name: Sint Maarten-School Geolocation
+  id: 3e8310e9-3b90-4448-b630-6c748cbf5a55
+  model: Role
+- fields:
+    name: Sint Maarten-School Coverage
+  id: ec821359-9cbb-4c6e-93f1-cbf12d08e31b
+  model: Role
+- fields:
+    name: Sint Maarten-School QoS
+  id: 3b9f05c4-a016-4ca9-a59a-6053682e807f
+  model: Role
+- fields:
+    name: Slovakia-School Geolocation
+  id: cde05030-ba39-45a4-9f30-22a895bedbe2
+  model: Role
+- fields:
+    name: Slovakia-School Coverage
+  id: ebf3cee8-3dc9-4a07-9df8-4e811fb0deca
+  model: Role
+- fields:
+    name: Slovakia-School QoS
+  id: 8cad54b2-441a-4335-898e-508fda21d9d8
+  model: Role
+- fields:
+    name: Slovenia-School Geolocation
+  id: 00a66efb-f1af-4d15-8902-462dc278050a
+  model: Role
+- fields:
+    name: Slovenia-School Coverage
+  id: 3731b58b-8591-425e-a0af-ac51e83a1940
+  model: Role
+- fields:
+    name: Slovenia-School QoS
+  id: 2b49d82e-19fe-4e62-bc6a-b309e5062669
+  model: Role
+- fields:
+    name: Solomon Islands-School Geolocation
+  id: 4bb6acbf-9bff-49cf-9240-1d23787713e2
+  model: Role
+- fields:
+    name: Solomon Islands-School Coverage
+  id: 4f9d23d8-6222-4910-8926-c384e962ab85
+  model: Role
+- fields:
+    name: Solomon Islands-School QoS
+  id: 06c42aa1-6bb0-4135-b595-966fe5b13a30
+  model: Role
+- fields:
+    name: Somalia-School Geolocation
+  id: e8de4fb0-974f-44db-b5ca-9b3df749bd89
+  model: Role
+- fields:
+    name: Somalia-School Coverage
+  id: 067b3969-a4a5-48ad-a40d-6c8daee64004
+  model: Role
+- fields:
+    name: Somalia-School QoS
+  id: 99971ef8-3c57-41e9-ad38-4f74aef35159
+  model: Role
+- fields:
+    name: South Africa-School Geolocation
+  id: 7e689aa0-34b9-40df-80c9-52f2f057170b
+  model: Role
+- fields:
+    name: South Africa-School Coverage
+  id: 1a966c2e-a065-4ebb-a639-f837d017b85a
+  model: Role
+- fields:
+    name: South Africa-School QoS
+  id: 4a2381d4-99d5-409b-970a-bdbf8d937b4c
+  model: Role
+- fields:
+    name: South Georgia and South Sandwich Is.-School Geolocation
+  id: 6cf0010e-4ee6-4bf1-9adc-1f0fa10e42cf
+  model: Role
+- fields:
+    name: South Georgia and South Sandwich Is.-School Coverage
+  id: efe4db1c-c3da-4051-896e-b378ec9a0d45
+  model: Role
+- fields:
+    name: South Georgia and South Sandwich Is.-School QoS
+  id: 5898407a-c0f5-4436-afe7-16ec29afa5a8
+  model: Role
+- fields:
+    name: South Korea-School Geolocation
+  id: 84c961d8-a2aa-4ccd-b54b-3213676ac10a
+  model: Role
+- fields:
+    name: South Korea-School Coverage
+  id: 74732875-a807-4948-8d38-179e5a85e5fe
+  model: Role
+- fields:
+    name: South Korea-School QoS
+  id: cda4e0d7-40b0-412d-abba-de05b4d9a1c2
+  model: Role
+- fields:
+    name: South Sudan-School Geolocation
+  id: a3ec559f-c222-47af-b03a-4dc4f3092ebc
+  model: Role
+- fields:
+    name: South Sudan-School Coverage
+  id: aa476126-b540-4da5-9f3e-f4c845bac6e4
+  model: Role
+- fields:
+    name: South Sudan-School QoS
+  id: d168b0cb-60fa-4aa5-85ee-5e05cd42f9fc
+  model: Role
+- fields:
+    name: Spain-School Geolocation
+  id: f9f294de-ed7c-46b7-8bde-17c018109d9f
+  model: Role
+- fields:
+    name: Spain-School Coverage
+  id: a70d7637-0346-41df-bfad-06fa3421f7c4
+  model: Role
+- fields:
+    name: Spain-School QoS
+  id: 2059c92a-f193-407d-a46c-0eef3ef17632
+  model: Role
+- fields:
+    name: Sri Lanka-School Geolocation
+  id: 6bc275d4-0f0d-4d1d-bc41-b4b09cd6a435
+  model: Role
+- fields:
+    name: Sri Lanka-School Coverage
+  id: 0fbe67f3-9e84-429f-9a61-dcb4dbc1decb
+  model: Role
+- fields:
+    name: Sri Lanka-School QoS
+  id: 08f4fc5d-4eea-465c-8dc8-6cce89804126
+  model: Role
+- fields:
+    name: St. Barths-School Geolocation
+  id: 6041c7ab-1fce-453f-a4eb-9dcab3329ab0
+  model: Role
+- fields:
+    name: St. Barths-School Coverage
+  id: 671ed4e1-ae41-4369-b011-49fd12a21243
+  model: Role
+- fields:
+    name: St. Barths-School QoS
+  id: 4efe1a12-449f-4640-ab04-3e22d738ce58
+  model: Role
+- fields:
+    name: St. Helena-School Geolocation
+  id: fd007894-1841-4ffc-bccd-425f95c09910
+  model: Role
+- fields:
+    name: St. Helena-School Coverage
+  id: 96c9ebc9-89b8-4c05-ab55-a781103dda41
+  model: Role
+- fields:
+    name: St. Helena-School QoS
+  id: 301fd3ee-6481-403c-8990-8380dfb25c86
+  model: Role
+- fields:
+    name: St. Kitts and Nevis-School Geolocation
+  id: c46f8999-1d0b-417a-91c8-2d41096dcea0
+  model: Role
+- fields:
+    name: St. Kitts and Nevis-School Coverage
+  id: 055747e5-3876-4e34-b691-193ed3178077
+  model: Role
+- fields:
+    name: St. Kitts and Nevis-School QoS
+  id: 692fa399-c288-4d2b-b699-1a6dd38ba434
+  model: Role
+- fields:
+    name: St. Lucia-School Geolocation
+  id: fc8629b5-4da4-401e-b7b2-e6f0125ae3d2
+  model: Role
+- fields:
+    name: St. Lucia-School Coverage
+  id: 5d289b86-e716-486d-af43-d26317f9f6f5
+  model: Role
+- fields:
+    name: St. Lucia-School QoS
+  id: 46aefe83-64bc-46e6-9aec-ae51d3004a00
+  model: Role
+- fields:
+    name: St. Pierre and Miquelon-School Geolocation
+  id: 9126746a-ce32-434e-ac36-ce5227b210ae
+  model: Role
+- fields:
+    name: St. Pierre and Miquelon-School Coverage
+  id: a289a230-78f2-47f4-8598-77205d743a66
+  model: Role
+- fields:
+    name: St. Pierre and Miquelon-School QoS
+  id: 6859a27e-456b-4a83-a78e-d7a7cd70561a
+  model: Role
+- fields:
+    name: St. Vincent and the Grenadines-School Geolocation
+  id: 0f9b1682-dcb5-4f4d-b649-b9fef6ea3a0a
+  model: Role
+- fields:
+    name: St. Vincent and the Grenadines-School Coverage
+  id: 77226461-86fa-4e51-adb8-66b59697b46e
+  model: Role
+- fields:
+    name: St. Vincent and the Grenadines-School QoS
+  id: 0511ece9-7f6a-4c0a-a05b-5a120a33baa9
+  model: Role
+- fields:
+    name: Sudan-School Geolocation
+  id: ec6aa891-7916-4333-ae76-9a525d1df01c
+  model: Role
+- fields:
+    name: Sudan-School Coverage
+  id: 51373cdd-9445-4111-b4e0-88fafd392704
+  model: Role
+- fields:
+    name: Sudan-School QoS
+  id: fed1883d-6f0a-4831-8b32-086c762d4f6a
+  model: Role
+- fields:
+    name: Suriname-School Geolocation
+  id: 1d1dfc36-ddd5-46d3-b0e2-8b30a6dfa094
+  model: Role
+- fields:
+    name: Suriname-School Coverage
+  id: 8d23ac55-dd7a-41fa-bad0-218989468fb1
+  model: Role
+- fields:
+    name: Suriname-School QoS
+  id: 1012d928-ec24-4e09-8103-3737d11c1c0c
+  model: Role
+- fields:
+    name: Svalbard and Jan Mayen Islands-School Geolocation
+  id: bc377ca2-a03b-4d17-882a-af6cb464983e
+  model: Role
+- fields:
+    name: Svalbard and Jan Mayen Islands-School Coverage
+  id: 22e1e293-837f-4ab9-bfd2-002bae632c3b
+  model: Role
+- fields:
+    name: Svalbard and Jan Mayen Islands-School QoS
+  id: 506efa77-e8b8-4369-b911-b6fe0761cf9c
+  model: Role
+- fields:
+    name: Sweden-School Geolocation
+  id: 51ba4ace-72dd-45a5-91aa-f8724fc0e6c8
+  model: Role
+- fields:
+    name: Sweden-School Coverage
+  id: 95ef2d13-01d0-44e2-9ecc-4b1ab0df7e2f
+  model: Role
+- fields:
+    name: Sweden-School QoS
+  id: 433a4395-d461-485b-a0a7-a484f670a9f7
+  model: Role
+- fields:
+    name: Switzerland-School Geolocation
+  id: 08d325e3-9fae-42a0-bc44-790f8c5abf49
+  model: Role
+- fields:
+    name: Switzerland-School Coverage
+  id: ca3f23db-b784-4d99-82fa-c317d2d70f59
+  model: Role
+- fields:
+    name: Switzerland-School QoS
+  id: f6635091-dd36-4794-a438-f07046531fb7
+  model: Role
+- fields:
+    name: Syria-School Geolocation
+  id: 5e955b39-6f76-44ad-b46a-964c24d936bb
+  model: Role
+- fields:
+    name: Syria-School Coverage
+  id: 3d208f03-848a-47b9-bac8-778fa4cd7607
+  model: Role
+- fields:
+    name: Syria-School QoS
+  id: 3913e5a8-5890-49a3-bcdc-2fd3d66f795d
+  model: Role
+- fields:
+    name: Taiwan-School Geolocation
+  id: c29d655d-2d03-4d23-912d-df5218355fb0
+  model: Role
+- fields:
+    name: Taiwan-School Coverage
+  id: 9d9e3545-18d4-47cc-8b86-0a51b9ae0c60
+  model: Role
+- fields:
+    name: Taiwan-School QoS
+  id: 974764e9-dccc-4e48-9db7-fe88416326e6
+  model: Role
+- fields:
+    name: Tajikistan-School Geolocation
+  id: 6f0d6dba-d464-4dbf-9a82-bd430789a890
+  model: Role
+- fields:
+    name: Tajikistan-School Coverage
+  id: 722954fe-2aaa-4243-9642-2f93f9f25e5c
+  model: Role
+- fields:
+    name: Tajikistan-School QoS
+  id: 2a95efa7-c7e8-4b77-9bef-6ca84940e9d0
+  model: Role
+- fields:
+    name: Tanzania-School Geolocation
+  id: 6e962604-333b-4d7c-adfa-2c755f250576
+  model: Role
+- fields:
+    name: Tanzania-School Coverage
+  id: 476f91b8-5af7-4f74-af94-a4938f3cd9b4
+  model: Role
+- fields:
+    name: Tanzania-School QoS
+  id: 112a384e-07b5-4600-b5d6-5187e5059185
+  model: Role
+- fields:
+    name: Thailand-School Geolocation
+  id: e47fa430-5a46-4afe-aefa-c5dff2694ec3
+  model: Role
+- fields:
+    name: Thailand-School Coverage
+  id: 9d69dcd0-e355-448a-843b-aab7a155ed7e
+  model: Role
+- fields:
+    name: Thailand-School QoS
+  id: 1c7971ad-cee5-4a3e-bb2a-7c49c7f29407
+  model: Role
+- fields:
+    name: Timor-Leste-School Geolocation
+  id: 31dd29b3-5cdb-4a37-8889-b4456a46bc00
+  model: Role
+- fields:
+    name: Timor-Leste-School Coverage
+  id: 8dc73500-bea5-44a1-a20f-4c47f0c27009
+  model: Role
+- fields:
+    name: Timor-Leste-School QoS
+  id: 1340805d-b2e6-454d-9ae8-3255b6840b01
+  model: Role
+- fields:
+    name: Togo-School Geolocation
+  id: 96af2a71-d109-4557-8a51-5afc21d92767
+  model: Role
+- fields:
+    name: Togo-School Coverage
+  id: 4467aced-2ea9-4710-8645-568cdbbdd66e
+  model: Role
+- fields:
+    name: Togo-School QoS
+  id: ee42349b-a3cf-4007-9a32-fa449d6d3c99
+  model: Role
+- fields:
+    name: Tokelau-School Geolocation
+  id: 8a3d0f64-e162-4068-b634-7b87c5db5ea6
+  model: Role
+- fields:
+    name: Tokelau-School Coverage
+  id: 4d79662d-5c8b-42b9-a8bd-5b88647aeffe
+  model: Role
+- fields:
+    name: Tokelau-School QoS
+  id: 799dbe61-3bf8-4f75-95a4-21a4cdadebb8
+  model: Role
+- fields:
+    name: Tonga-School Geolocation
+  id: 63940deb-056f-4c21-bc77-bcb092e1c754
+  model: Role
+- fields:
+    name: Tonga-School Coverage
+  id: f9c361c9-ef36-46e7-b2ca-356b9e86a407
+  model: Role
+- fields:
+    name: Tonga-School QoS
+  id: 9c3e4e69-fc11-4707-93cd-1871c4e46e70
+  model: Role
+- fields:
+    name: Trinidad and Tobago-School Geolocation
+  id: 657aca8a-cb35-416d-a549-79b7948d5c1a
+  model: Role
+- fields:
+    name: Trinidad and Tobago-School Coverage
+  id: 7072ccdb-3f4e-447e-b330-67985b66b94c
+  model: Role
+- fields:
+    name: Trinidad and Tobago-School QoS
+  id: bc79b5a9-740e-4d6a-8e0c-8692d37dd859
+  model: Role
+- fields:
+    name: Tunisia-School Geolocation
+  id: c332089e-b47c-41b2-8edf-e3708e13fa3f
+  model: Role
+- fields:
+    name: Tunisia-School Coverage
+  id: 17924b12-1f81-4fdd-89e0-d69c689b7279
+  model: Role
+- fields:
+    name: Tunisia-School QoS
+  id: dd789d8e-8aea-4d8e-9ded-700e36b25ef1
+  model: Role
+- fields:
+    name: Türkiye-School Geolocation
+  id: c42e0466-0645-400e-9077-c39451935472
+  model: Role
+- fields:
+    name: Türkiye-School Coverage
+  id: 63926aa4-5538-4e5c-8822-3d3b2729e564
+  model: Role
+- fields:
+    name: Türkiye-School QoS
+  id: 803a4458-0799-489d-aebf-72ed841a0d49
+  model: Role
+- fields:
+    name: Turkmenistan-School Geolocation
+  id: aad091a6-7d4d-4f8b-9fb4-395421b2e762
+  model: Role
+- fields:
+    name: Turkmenistan-School Coverage
+  id: a3acbbd2-0730-4897-85d2-562a7a78d714
+  model: Role
+- fields:
+    name: Turkmenistan-School QoS
+  id: e403298f-d389-49e0-bdcc-843ae4f0b849
+  model: Role
+- fields:
+    name: Turks and Caicos Islands-School Geolocation
+  id: 9b57601c-7e02-447a-93d5-6d3ae15c701d
+  model: Role
+- fields:
+    name: Turks and Caicos Islands-School Coverage
+  id: 53eb8173-e3e7-4f97-98c6-d799fff5533f
+  model: Role
+- fields:
+    name: Turks and Caicos Islands-School QoS
+  id: 0f92d661-76a9-47d8-aba1-758d314fcdd1
+  model: Role
+- fields:
+    name: Tuvalu-School Geolocation
+  id: b183db1d-16e2-41f2-899a-19a10f7d3c18
+  model: Role
+- fields:
+    name: Tuvalu-School Coverage
+  id: 0564947d-e736-4145-8ed2-aa00f162ca47
+  model: Role
+- fields:
+    name: Tuvalu-School QoS
+  id: 5d332c30-66a3-4261-9e12-360fcb6e3ee8
+  model: Role
+- fields:
+    name: Uganda-School Geolocation
+  id: a39b99c9-872a-493e-a3bd-2df34538cf29
+  model: Role
+- fields:
+    name: Uganda-School Coverage
+  id: 29bc5ab6-6527-4335-824a-68975e3efc0c
+  model: Role
+- fields:
+    name: Uganda-School QoS
+  id: 22ae6b07-9b0b-41ef-9706-653cf65665b4
+  model: Role
+- fields:
+    name: Ukraine-School Geolocation
+  id: fe180344-3f82-493b-a5c6-07d4c726a478
+  model: Role
+- fields:
+    name: Ukraine-School Coverage
+  id: 4d6bd582-d533-454f-8526-e816d4e08446
+  model: Role
+- fields:
+    name: Ukraine-School QoS
+  id: 985f5885-51b3-4280-8033-4a1e3083aa26
+  model: Role
+- fields:
+    name: United Arab Emirates-School Geolocation
+  id: f4eb791c-4e70-46d9-8aab-76fbeb043479
+  model: Role
+- fields:
+    name: United Arab Emirates-School Coverage
+  id: 676f3983-0bb4-4eef-9bdc-2f4b3a1a869a
+  model: Role
+- fields:
+    name: United Arab Emirates-School QoS
+  id: f32eaf34-5fe3-4878-8655-0bf86550811b
+  model: Role
+- fields:
+    name: United Kingdom-School Geolocation
+  id: 863132a6-0c32-47a5-9b44-beb9d3d8ccb3
+  model: Role
+- fields:
+    name: United Kingdom-School Coverage
+  id: 6ae743e3-d31c-4568-94af-967fda11761d
+  model: Role
+- fields:
+    name: United Kingdom-School QoS
+  id: ab73492d-bf35-4aed-a7d1-229d54a0bed1
+  model: Role
+- fields:
+    name: United States-School Geolocation
+  id: d20fee4e-dac5-41da-a589-50d03d1f0c26
+  model: Role
+- fields:
+    name: United States-School Coverage
+  id: 297b66bd-626a-433d-be81-a616c2737547
+  model: Role
+- fields:
+    name: United States-School QoS
+  id: 48a09139-4013-4d4d-9295-1d88a865c09b
+  model: Role
+- fields:
+    name: United States Minor Outlying Islands-School Geolocation
+  id: 2420a77d-b0e9-4043-9125-0d6d3f0d7bff
+  model: Role
+- fields:
+    name: United States Minor Outlying Islands-School Coverage
+  id: a16bedd2-4630-4998-863c-37576e09811a
+  model: Role
+- fields:
+    name: United States Minor Outlying Islands-School QoS
+  id: 6dcb9d1c-0dc1-4a12-83bc-bcef69f72410
+  model: Role
+- fields:
+    name: United States Virgin Islands-School Geolocation
+  id: ce384916-c5c5-465c-9f80-d0886238361e
+  model: Role
+- fields:
+    name: United States Virgin Islands-School Coverage
+  id: 1a350b0a-11b6-4884-bf13-c36d42a55dc2
+  model: Role
+- fields:
+    name: United States Virgin Islands-School QoS
+  id: d822f1b3-bf38-434c-a251-53d146a34a17
+  model: Role
+- fields:
+    name: Uruguay-School Geolocation
+  id: b2734a45-6f3c-49b6-8536-2e38d6201c80
+  model: Role
+- fields:
+    name: Uruguay-School Coverage
+  id: ba62355e-c99f-4f48-8026-668f56ce75be
+  model: Role
+- fields:
+    name: Uruguay-School QoS
+  id: 77bc82c2-2cc2-4f20-b89e-0f3e6425febb
+  model: Role
+- fields:
+    name: Uzbekistan-School Geolocation
+  id: b928a9ba-e3e9-469e-ad6a-98bb403b2739
+  model: Role
+- fields:
+    name: Uzbekistan-School Coverage
+  id: e652a848-666e-4415-85ba-12e3a754b746
+  model: Role
+- fields:
+    name: Uzbekistan-School QoS
+  id: 0b56ac15-8acc-44e0-880b-a922ccd8ac33
+  model: Role
+- fields:
+    name: Vanuatu-School Geolocation
+  id: 8ad55652-ff07-45cb-97cb-95914d3d373c
+  model: Role
+- fields:
+    name: Vanuatu-School Coverage
+  id: 749b081e-5059-4bbd-b779-589bc2ae81d8
+  model: Role
+- fields:
+    name: Vanuatu-School QoS
+  id: af37e582-56be-4297-b8b6-922ef8375deb
+  model: Role
+- fields:
+    name: Vatican-School Geolocation
+  id: 784e8a3e-a7e8-4d91-b42d-47b892640630
+  model: Role
+- fields:
+    name: Vatican-School Coverage
+  id: 40f342da-c1b6-464e-b52b-d31797b55ef4
+  model: Role
+- fields:
+    name: Vatican-School QoS
+  id: 06145573-daf7-4de9-b713-d0a891e2e734
+  model: Role
+- fields:
+    name: Venezuela-School Geolocation
+  id: 7d9e29e9-7a9b-4e1d-a2ea-46fd325f0286
+  model: Role
+- fields:
+    name: Venezuela-School Coverage
+  id: e5fc06ab-febb-4c0f-806e-ff10a655b37e
+  model: Role
+- fields:
+    name: Venezuela-School QoS
+  id: 38ff1072-30b0-445d-8d01-10f2a06cb05a
+  model: Role
+- fields:
+    name: Vietnam-School Geolocation
+  id: 1cc6b145-d8db-4fb0-a932-e2a6db31697f
+  model: Role
+- fields:
+    name: Vietnam-School Coverage
+  id: ad7ae895-f4e3-45f5-925e-9bbde8adad4b
+  model: Role
+- fields:
+    name: Vietnam-School QoS
+  id: 05807117-796b-4ced-831e-34f0c5e912f8
+  model: Role
+- fields:
+    name: Wallis and Futuna Islands-School Geolocation
+  id: b2f611c2-234a-47a0-8739-4efe84ffc359
+  model: Role
+- fields:
+    name: Wallis and Futuna Islands-School Coverage
+  id: fec00d24-e8cb-416d-8a30-772d617e136f
+  model: Role
+- fields:
+    name: Wallis and Futuna Islands-School QoS
+  id: 7f761c1c-db40-4d0c-9c14-459d196d0f07
+  model: Role
+- fields:
+    name: Western Sahara-School Geolocation
+  id: f702ce2f-7498-447b-a3f6-b824442533c2
+  model: Role
+- fields:
+    name: Western Sahara-School Coverage
+  id: edfb8053-6e96-4c37-8573-77150e2c3158
+  model: Role
+- fields:
+    name: Western Sahara-School QoS
+  id: a523c711-33b9-4039-9bae-c425ca3bf860
+  model: Role
+- fields:
+    name: Yemen-School Geolocation
+  id: e472c67f-a676-4a26-b26e-cc10a087769e
+  model: Role
+- fields:
+    name: Yemen-School Coverage
+  id: 479eba0e-f123-4db4-a1ff-bca2ec8276c7
+  model: Role
+- fields:
+    name: Yemen-School QoS
+  id: 142af648-5d6a-4f51-a056-580467948835
+  model: Role
+- fields:
+    name: Zambia-School Geolocation
+  id: 85e34cee-27d9-4f4d-9c82-812c113b388e
+  model: Role
+- fields:
+    name: Zambia-School Coverage
+  id: 3ea65c41-50d3-445a-b783-50ca78f9ef87
+  model: Role
+- fields:
+    name: Zambia-School QoS
+  id: c5a6bb3d-5c77-42ac-9d7f-461ba1f16364
+  model: Role
+- fields:
+    name: Zimbabwe-School Geolocation
+  id: 3390dafa-dd7e-4335-82c1-92faf9dfb25c
+  model: Role
+- fields:
+    name: Zimbabwe-School Coverage
+  id: 2c6f2208-45ff-461d-bf0c-d449e3e31f5c
+  model: Role
+- fields:
+    name: Zimbabwe-School QoS
+  id: cbbc389f-4c78-48f5-81d4-279e11022d2d
+  model: Role
