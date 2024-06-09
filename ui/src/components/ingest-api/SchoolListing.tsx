@@ -88,8 +88,8 @@ function SchoolListing({ isEditing = false, defaultData }: SchoolListingProps) {
       return;
     }
 
-    const user = users.find(user => user.id === data.user_id);
-    const dataWithUserEmail = { ...data, user_email: user?.mail ?? "" };
+    const user = users.find(user => user.sub === data.user_id);
+    const dataWithUserEmail = { ...data, user_email: user?.email ?? "" };
 
     const autoColumnMapping: Record<string, string> = {};
     schema.forEach(column => {

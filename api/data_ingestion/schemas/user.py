@@ -2,7 +2,7 @@ from typing import Literal
 
 from pydantic import UUID4, BaseModel, EmailStr, model_validator
 
-from .group import GraphGroup
+from .group import DatabaseRole, GraphGroup
 
 
 class User(BaseModel):
@@ -65,10 +65,13 @@ class GraphUserInviteAndAddGroupsRequest(BaseModel):
 
 
 class DatabaseUser(BaseModel):
-    id: UUID4
+    id: str
     sub: UUID4
     email: str
     given_name: str | None = None
     surname: str | None = None
     enabled: bool = True
-    roles: list[str]
+
+
+class DatabaseUserWithRoles(DatabaseUser):
+    roles: list[DatabaseRole]

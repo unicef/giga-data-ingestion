@@ -1,11 +1,15 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, Security, status
-from fastapi_azure_auth.user import User
+from fastapi_azure_auth.user import User as AzureUser
 from pydantic import UUID4
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from data_ingestion.db.primary import get_db
 from data_ingestion.internal import email
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
 from data_ingestion.internal.users import UsersApi
+from data_ingestion.models import User
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.group import ModifyUserAccessRequest
 from data_ingestion.schemas.invitation import (
@@ -14,6 +18,7 @@ from data_ingestion.schemas.invitation import (
     InviteEmailRenderRequest,
 )
 from data_ingestion.schemas.user import (
+    DatabaseUser,
     GraphUser,
     GraphUserCreateRequest,
     GraphUserInviteAndAddGroupsRequest,
@@ -29,11 +34,11 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=list[GraphUser],
+    response_model=list[DatabaseUser],
     dependencies=[Security(IsPrivileged())],
 )
-async def list_users():
-    return await UsersApi.list_users()
+async def list_users(db: AsyncSession = Depends(get_db)):
+    return await db.scalars(select(User))
 
 
 @router.post("", response_model=GraphUser, dependencies=[Security(IsPrivileged())])
@@ -102,19 +107,19 @@ async def invite_user_and_add_groups(body: GraphUserInviteAndAddGroupsRequest):
     await UsersApi.edit_user(result.invited_user.id, edit_user_body)
 
 
-@router.get("/me", response_model=User)
-async def get_current_user(user: User = Depends(azure_scheme)):
+@router.get("/me", response_model=AzureUser)
+async def get_current_user(user: AzureUser = Depends(azure_scheme)):
     return user
 
 
 @router.get("/me/groups")
-async def get_current_user_groups(user: User = Depends(azure_scheme)):
+async def get_current_user_groups(user: AzureUser = Depends(azure_scheme)):
     groups = await UsersApi.get_group_memberships(user.sub)
     return [g.display_name for g in groups]
 
 
 @router.get("/email", response_model=GraphUser)
-async def get_groups_from_email(azure_user: User = Depends(azure_scheme)):
+async def get_groups_from_email(azure_user: AzureUser = Depends(azure_scheme)):
     all_users = await UsersApi.list_users()
     groups = [user for user in all_users if user.mail == azure_user.preferred_username][
         0

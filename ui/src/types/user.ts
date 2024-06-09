@@ -24,3 +24,11 @@ export interface CreateUserRequest {
   email: string;
   groups: GraphGroup[];
 }
+
+export interface DatabaseUser {
+  given_name: string | null;
+  surname: string | null;
+  email: string;
+  id: string;
+  sub: string;
+}

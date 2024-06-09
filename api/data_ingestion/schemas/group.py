@@ -38,6 +38,6 @@ class ModifyUserAccessRequest(BaseModel):
 
 
 class DatabaseRole(BaseModel):
-    id: UUID4
+    id: str
     sub: UUID4
     name: str
