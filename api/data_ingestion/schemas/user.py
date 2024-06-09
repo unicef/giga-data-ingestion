@@ -32,8 +32,7 @@ class GraphUser(BaseModel):
 
 
 class GraphUserUpdateRequest(BaseModel):
-    account_enabled: bool | None = None
-    display_name: str | None = None
+    enabled: bool | None = None
     given_name: str | None = None
     surname: str | None = None
 

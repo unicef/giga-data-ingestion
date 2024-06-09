@@ -1,7 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 from fastapi_azure_auth.user import User as AzureUser
-from pydantic import UUID4
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -151,7 +150,7 @@ async def get_user(id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{id}/groups", dependencies=[Security(IsPrivileged())])
-async def get_user_groups(id: UUID4):
+async def get_user_groups(id: str):
     groups = await UsersApi.get_group_memberships(id)
     return [g.display_name for g in groups]
 
@@ -161,5 +160,12 @@ async def get_user_groups(id: UUID4):
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Security(IsPrivileged())],
 )
-async def edit_user(id: UUID4, body: GraphUserUpdateRequest):
-    await UsersApi.edit_user(id, body)
+async def edit_user(
+    id: str, body: GraphUserUpdateRequest, db: AsyncSession = Depends(get_db)
+):
+    await db.execute(
+        update(User)
+        .where(User.id == id)
+        .values({k: v for k, v in body.model_dump().items() if v is not None})
+    )
+    await db.commit()

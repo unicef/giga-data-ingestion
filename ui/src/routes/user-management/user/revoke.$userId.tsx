@@ -1,7 +1,11 @@
 import { useCallback, useState } from "react";
 
 import { InlineNotification, Modal, ToastNotification } from "@carbon/react";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useMutation,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
@@ -9,14 +13,17 @@ import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
+const userQueryOptions = (userId: string) =>
+  queryOptions({
+    queryKey: ["user", userId],
+    queryFn: () => api.users.get(userId),
+  });
+
 export const Route = createFileRoute("/user-management/user/revoke/$userId")({
   component: RevokeUser,
   validateSearch: validateSearchParams,
   loader: ({ params: { userId }, context: { queryClient } }) => {
-    return queryClient.ensureQueryData({
-      queryKey: ["user", userId],
-      queryFn: () => api.users.get(userId),
-    });
+    return queryClient.ensureQueryData(userQueryOptions(userId));
   },
   pendingComponent: PendingComponent,
   errorComponent: ErrorComponent,
@@ -24,26 +31,29 @@ export const Route = createFileRoute("/user-management/user/revoke/$userId")({
 
 function RevokeUser() {
   const navigate = useNavigate({ from: Route.fullPath });
+  const { queryClient } = Route.useRouteContext();
   const { userId } = Route.useParams();
   const { page, page_size } = Route.useSearch();
   const {
     data: { data: initialValues },
-  } = useSuspenseQuery({
-    queryKey: ["user", userId],
-    queryFn: () => api.users.get(userId),
-  });
+  } = useSuspenseQuery(userQueryOptions(userId));
 
   const [error, setError] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
 
   const revokeUser = useMutation({
-    mutationFn: api.users.editUser,
+    mutationFn: api.users.edit,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+    },
   });
 
   const handleSubmit = useCallback(async () => {
     try {
       await revokeUser.mutateAsync({
-        account_enabled: false,
+        enabled: false,
         id: initialValues.id,
       });
 

@@ -23,6 +23,7 @@ export const Route = createFileRoute("/user-management/user/enable/$userId")({
 function EnableUser() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { userId } = Route.useParams();
+  const { queryClient } = Route.useRouteContext();
   const {
     data: { data: initialValues },
   } = useSuspenseQuery({
@@ -33,13 +34,18 @@ function EnableUser() {
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
 
   const enableUser = useMutation({
-    mutationFn: api.users.editUser,
+    mutationFn: api.users.edit,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+    },
   });
 
   const handleSubmit = useCallback(async () => {
     try {
       await enableUser.mutateAsync({
-        account_enabled: true,
+        enabled: true,
         id: initialValues.id,
       });
 
@@ -65,7 +71,7 @@ function EnableUser() {
         <div>
           <p>
             This will re-enable access of the user with email{" "}
-            <b>{initialValues.mail}</b> to the whole Giga platform
+            <b>{initialValues.email}</b> to the whole Giga platform
           </p>
           <br />
 

@@ -467,7 +467,7 @@ function EditUser() {
         <Modal
           aria-label="confirm edit user modal"
           loadingStatus={modifyUserAccess.isPending ? "active" : "inactive"}
-          modalHeading="Confirm New User"
+          modalHeading="Confirm Edit User"
           open={swapModal}
           primaryButtonText="Confirm"
           secondaryButtonText="Cancel"
