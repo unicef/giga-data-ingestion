@@ -28,7 +28,6 @@ from data_ingestion.schemas.approval_requests import (
     UploadApprovedRowsRequest,
 )
 from data_ingestion.schemas.core import PagedResponseSchema
-from data_ingestion.utils.user import get_user_email
 
 router = APIRouter(
     prefix="/api/approval-requests",
@@ -282,7 +281,7 @@ async def upload_approved_rows(
 
     filename = f"{country_iso3}_{dataset}_{timestamp}.json"
     approve_location = f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/{dataset}/{country_iso3}/{filename}"
-    email = await get_user_email(user)
+    email = user.claims.get("emails")[0]
 
     approve_client = storage_client.get_blob_client(approve_location)
     try:
