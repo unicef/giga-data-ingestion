@@ -2,12 +2,13 @@ from fastapi import APIRouter, Depends, Security
 from fastapi_azure_auth.user import User as AzureUser
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.roles import get_user_roles as _get_user_roles
 from data_ingestion.models import Role
-from data_ingestion.schemas.group import DatabaseRole
+from data_ingestion.schemas.user import DatabaseRole, DatabaseRoleWithMembers
 
 router = APIRouter(
     prefix="/api/roles",
@@ -27,3 +28,10 @@ async def get_current_user_roles(
 @router.get("", response_model=list[DatabaseRole])
 async def list_roles(db: AsyncSession = Depends(get_db)):
     return await db.scalars(select(Role).order_by(Role.name))
+
+
+@router.get("/{id}/members", response_model=list[DatabaseRoleWithMembers])
+async def get_role_members(id: str, db: AsyncSession = Depends(get_db)):
+    return await db.scalars(
+        select(Role).where(Role.id == id).options(selectinload(Role.users))
+    )
