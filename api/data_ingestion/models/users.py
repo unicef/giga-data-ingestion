@@ -1,26 +1,30 @@
-from sqlalchemy import Column, ForeignKey, Table
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import BaseModel
 
-user_role_association_table = Table(
-    "user_role_association_table",
-    BaseModel.metadata,
-    Column("user_id", ForeignKey("users.id")),
-    Column("role_id", ForeignKey("roles.id")),
-)
+
+class UserRoleAssociation(BaseModel):
+    __tablename__ = "user_role_association_table"
+
+    user_id: Mapped[str] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    role_id: Mapped[str] = mapped_column(
+        ForeignKey("roles.id", ondelete="CASCADE"), nullable=False
+    )
 
 
 class User(BaseModel):
     __tablename__ = "users"
 
-    sub: Mapped[str] = mapped_column(nullable=False, index=True, unique=True)
     email: Mapped[str] = mapped_column(nullable=False, index=True, unique=True)
     given_name: Mapped[str] = mapped_column(nullable=True)
     surname: Mapped[str] = mapped_column(nullable=True)
     enabled: Mapped[bool] = mapped_column(default=True)
-    roles: Mapped[list["Role"]] = relationship(
-        secondary=user_role_association_table, back_populates="users"
+    roles: Mapped[set["Role"]] = relationship(
+        secondary=UserRoleAssociation.__table__,
+        back_populates="users",
     )
 
 
@@ -28,6 +32,7 @@ class Role(BaseModel):
     __tablename__ = "roles"
 
     name: Mapped[str] = mapped_column(nullable=False, index=True, unique=True)
-    users: Mapped[list[User]] = relationship(
-        secondary=user_role_association_table, back_populates="roles"
+    users: Mapped[set[User]] = relationship(
+        secondary=UserRoleAssociation.__table__,
+        back_populates="roles",
     )

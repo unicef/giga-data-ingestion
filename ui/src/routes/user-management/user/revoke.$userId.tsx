@@ -52,7 +52,7 @@ function RevokeUser() {
     } catch (err) {
       setError(true);
     }
-  }, [revokeUser, initialValues.id, navigate]);
+  }, [revokeUser, initialValues.id, navigate, page, page_size]);
 
   return (
     <>
@@ -71,8 +71,8 @@ function RevokeUser() {
         <div>
           <p>
             This will revoke access of the user with email{" "}
-            <b>{initialValues.mail}</b> to the whole Giga platform, meaning they
-            won't be able to access any part of the Giga platform
+            <b>{initialValues.email}</b>, meaning they won't be able to access
+            any part of Giga Sync.
           </p>
           <br />
 

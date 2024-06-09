@@ -6,7 +6,7 @@ import { api } from "@/api";
 
 function useRoles() {
   const { data: rolesQuery, isFetching } = useQuery({
-    queryKey: ["roles"],
+    queryKey: ["roles", "me"],
     queryFn: api.roles.getForCurrentUser,
     staleTime: 60 * 5 * 1000,
   });

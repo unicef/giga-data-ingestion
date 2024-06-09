@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, constr
+from pydantic import BaseModel, EmailStr
 
 
 class GraphInvitation(BaseModel):
@@ -18,5 +18,4 @@ class GraphInvitationCreateRequest(BaseModel):
 class InviteEmailRenderRequest(BaseModel):
     displayName: str
     email: EmailStr
-    temporaryPassword: constr(min_length=8)
     groups: list[str]

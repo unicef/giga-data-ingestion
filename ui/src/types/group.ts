@@ -16,3 +16,8 @@ export interface Dataset {
   name: string;
   id: string;
 }
+
+export interface DatabaseRole {
+  id: string;
+  name: string;
+}

@@ -22,27 +22,31 @@ import {
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
+import { listCountriesQueryOptions } from "@/api/queryOptions.ts";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Select } from "@/components/forms/Select.tsx";
-import countries from "@/constants/countries.ts";
-import { GraphGroup } from "@/types/group.ts";
+import { DatabaseRole } from "@/types/group.ts";
 import { CreateUserRequest } from "@/types/user.ts";
 import { filterRoles, matchNamesWithIds } from "@/utils/group.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
+const rolesQueryOptions = queryOptions({
+  queryKey: ["roles"],
+  queryFn: api.roles.list,
+});
+
 export const Route = createFileRoute("/user-management/user/add")({
   component: AddUser,
-  loader: ({ context: { queryClient } }) =>
-    queryClient.ensureQueryData(groupsQueryOptions),
+  loader: ({ context: { queryClient } }) => {
+    return Promise.all([
+      queryClient.ensureQueryData(rolesQueryOptions),
+      queryClient.ensureQueryData(listCountriesQueryOptions),
+    ]);
+  },
   validateSearch: validateSearchParams,
   pendingComponent: PendingComponent,
   errorComponent: ErrorComponent,
-});
-
-const groupsQueryOptions = queryOptions({
-  queryKey: ["groups"],
-  queryFn: api.groups.list,
 });
 
 type CountryDataset = {
@@ -99,17 +103,21 @@ function AddUser() {
   const watchedCountryDatasets = watch("countryDatasets");
   const watchedRoles = watch("roles");
 
+  const {
+    data: { data: countries },
+  } = useSuspenseQuery(listCountriesQueryOptions);
+
   const countryOptions = countries.map(country => ({
-    value: country.name,
-    label: country.name,
+    value: country.name_short,
+    label: country.name_short,
   }));
 
-  const { data: groupsData } = useSuspenseQuery(groupsQueryOptions);
+  const { data: groupsData } = useSuspenseQuery(rolesQueryOptions);
 
   const rawGroups = groupsData?.data ?? [];
   const groups =
     rawGroups.map(group => {
-      return { id: group.id, name: group.display_name };
+      return { id: group.id, name: group.name };
     }) ?? [];
   const roles = filterRoles(groups.map(group => group.name));
 
@@ -196,9 +204,9 @@ function AddUser() {
       ...addedRolesWithIds.map(addedRoleWithId => addedRoleWithId.id ?? ""),
     ];
     const addGroupsPayload: CreateUserRequest = {
-      groups: groupIdsToAdd
+      roles: groupIdsToAdd
         .map(id => rawGroups.find(group => group.id === id))
-        .filter(Boolean) as GraphGroup[],
+        .filter(Boolean) as DatabaseRole[],
       given_name: givenName,
       surname,
       email,

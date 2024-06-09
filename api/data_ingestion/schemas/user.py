@@ -66,7 +66,6 @@ class GraphUserInviteAndAddGroupsRequest(BaseModel):
 
 class DatabaseUser(BaseModel):
     id: str
-    sub: UUID4
     email: str
     given_name: str | None = None
     surname: str | None = None
@@ -74,4 +73,11 @@ class DatabaseUser(BaseModel):
 
 
 class DatabaseUserWithRoles(DatabaseUser):
+    roles: list[DatabaseRole]
+
+
+class DatabaseUserCreateRequest(BaseModel):
+    given_name: str
+    surname: str
+    email: EmailStr
     roles: list[DatabaseRole]

@@ -1,4 +1,4 @@
-import { GraphGroup } from "@/types/group.ts";
+import { DatabaseRole, GraphGroup } from "@/types/group.ts";
 
 export interface User {
   name: string;
@@ -22,13 +22,18 @@ export interface CreateUserRequest {
   given_name: string;
   surname: string;
   email: string;
-  groups: GraphGroup[];
+  roles: DatabaseRole[];
 }
 
 export interface DatabaseUser {
-  given_name: string | null;
-  surname: string | null;
+  given_name: string;
+  surname: string;
   email: string;
   id: string;
   sub: string;
+  enabled: boolean;
+}
+
+export interface DatabaseUserWithRoles extends DatabaseUser {
+  roles: DatabaseRole[];
 }
