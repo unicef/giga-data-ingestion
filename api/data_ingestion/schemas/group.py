@@ -35,8 +35,3 @@ class ModifyUserAccessRequest(BaseModel):
     groups_to_remove: list[UUID4]
     given_name: str
     surname: str
-
-
-class DatabaseRole(BaseModel):
-    id: str
-    name: str
