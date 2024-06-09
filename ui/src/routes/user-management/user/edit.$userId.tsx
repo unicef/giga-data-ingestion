@@ -15,30 +15,27 @@ import MultiSelect from "@carbon/react/lib/components/MultiSelect/MultiSelect";
 import {
   queryOptions,
   useMutation,
-  useQuery,
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AxiosResponse } from "axios";
 
 import { api, queryClient } from "@/api";
+import {
+  listCountriesQueryOptions,
+  listRolesQueryOptions,
+} from "@/api/queryOptions.ts";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Select } from "@/components/forms/Select.tsx";
 import ToastNotification from "@/components/user-management/ToastNotification.tsx";
-import countries from "@/constants/countries.ts";
-import { GraphUser } from "@/types/user";
+import { DatabaseUser } from "@/types/user";
 import {
   filterCountries,
   filterRoles,
   matchNamesWithIds,
 } from "@/utils/group.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
-import {
-  getUniqueDatasets,
-  pluralizeCountries,
-  pluralizeDatasets,
-} from "@/utils/string.ts";
 
 export const Route = createFileRoute("/user-management/user/edit/$userId")({
   component: EditUser,
@@ -47,7 +44,11 @@ export const Route = createFileRoute("/user-management/user/edit/$userId")({
       queryKey: ["user", userId],
       queryFn: () => api.users.get(userId),
     });
-    return queryClient.ensureQueryData(userQueryOptions);
+    return Promise.all([
+      queryClient.ensureQueryData(userQueryOptions),
+      queryClient.ensureQueryData(listCountriesQueryOptions),
+      queryClient.ensureQueryData(listRolesQueryOptions),
+    ]);
   },
   validateSearch: validateSearchParams,
   pendingComponent: PendingComponent,
@@ -86,21 +87,16 @@ function EditUser() {
   const initialId = initialValues.id;
   const givenName = initialValues.given_name;
   const surname = initialValues.surname;
-  const initialEmail = initialValues.mail;
-  const initialGroups = initialValues.member_of.map(
-    group => group.display_name,
-  );
+  const initialEmail = initialValues.email;
+  const initialGroups = initialValues.roles.map(role => role.name);
 
   const [swapModal, setSwapModal] = useState<boolean>(false);
 
-  const { data: groupsData } = useQuery({
-    queryKey: ["groups"],
-    queryFn: api.groups.list,
-  });
+  const { data: groupsData } = useSuspenseQuery(listRolesQueryOptions);
 
   const groups =
     groupsData?.data.map(group => {
-      return { id: group.id, name: group.display_name };
+      return { id: group.id, name: group.name };
     }) ?? [];
 
   const modifyUserAccess = useMutation({
@@ -112,8 +108,9 @@ function EditUser() {
 
       const previousUsers = queryClient.getQueryData(["users"]);
 
-      queryClient.setQueryData(["users"], (old: AxiosResponse<GraphUser[]>) => {
-        const newData = {
+      queryClient.setQueryData(
+        ["users"],
+        (old: AxiosResponse<DatabaseUser[]>) => ({
           ...old,
           data: old.data.map(item =>
             item.id === modifiedUser.user_id
@@ -124,15 +121,13 @@ function EditUser() {
                 }
               : item,
           ),
-        };
-
-        return newData;
-      });
+        }),
+      );
 
       return { previousUsers };
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({
+    onSettled: async () => {
+      await queryClient.invalidateQueries({
         queryKey: ["users"],
       });
     },
@@ -219,9 +214,13 @@ function EditUser() {
     setValue("countryDatasets", countryDatasets);
   };
 
+  const {
+    data: { data: countries },
+  } = useSuspenseQuery(listCountriesQueryOptions);
+
   const countryOptions = countries.map(country => ({
-    value: country.name,
-    label: country.name,
+    value: country.name_short,
+    label: country.name_short,
   }));
 
   const dataSetOptions = [
@@ -365,7 +364,7 @@ function EditUser() {
         onRequestClose={() => handleModalCancel("EditModal")}
         onRequestSubmit={() => setSwapModal(true)}
       >
-        <form aria-label="edit user form">
+        <form aria-label="edit user form" className="mb-12">
           <Stack gap={4}>
             <TextInput
               id="givenName"
@@ -476,28 +475,22 @@ function EditUser() {
           onRequestSubmit={handleSubmit(onSubmit)}
         >
           <form aria-label="confirm edit user form">
-            {(() => {
-              const countries = getUniqueDatasets(
-                getValues("email"),
-                deriveAddedValues().addedDatasetsWithIds,
-              ).countries;
-              const datasets = pluralizeDatasets(
-                getUniqueDatasets(
-                  getValues("email"),
-                  deriveAddedValues().addedDatasetsWithIds,
-                ).uniqueDatasets,
-              );
-
-              return (
-                <p>
-                  This will give the user with email <b>{getValues("email")}</b>{" "}
-                  access to Giga data for <b>{datasets}</b> across{" "}
-                  {countries.length}{" "}
-                  {countries.length === 1 ? "country" : "countries"}:{" "}
-                  <b>{pluralizeCountries(countries)}</b>.
-                </p>
-              );
-            })()}
+            <p>
+              This will give the user with email <b>{getValues("email")}</b> the
+              following privileges and access to Giga data:
+              <ul className="list-disc pl-6">
+                {getValues("roles").selectedItems.map(role => (
+                  <li key={role.value}>{role.label}</li>
+                ))}
+                {getValues("countryDatasets").map(({ country, dataset }) =>
+                  dataset.selectedItems.map(ds => (
+                    <li key={`${country}-${ds.value}`}>
+                      {country}-{ds.label}
+                    </li>
+                  )),
+                )}
+              </ul>
+            </p>
 
             {modifyUserAccess.isError && (
               <InlineNotification

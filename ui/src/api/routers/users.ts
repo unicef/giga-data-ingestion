@@ -1,19 +1,20 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
-import { CreateUserRequest, DatabaseUser, GraphUser } from "@/types/user.ts";
+import {
+  CreateUserRequest,
+  DatabaseUser,
+  DatabaseUserWithRoles,
+} from "@/types/user.ts";
 
 export default function routes(axi: AxiosInstance) {
   return {
-    list: (): Promise<AxiosResponse<DatabaseUser[]>> => {
+    list: (): Promise<AxiosResponse<DatabaseUserWithRoles[]>> => {
       return axi.get("/users");
     },
-    get: (id: string): Promise<AxiosResponse<GraphUser>> => {
+    get: (id: string): Promise<AxiosResponse<DatabaseUserWithRoles>> => {
       return axi.get(`/users/${id}`);
     },
-    get_groups_from_email: (): Promise<AxiosResponse<GraphUser>> => {
-      return axi.get("/users/email");
-    },
-    create: (body: CreateUserRequest): Promise<AxiosResponse<GraphUser>> => {
+    create: (body: CreateUserRequest): Promise<AxiosResponse<DatabaseUser>> => {
       return axi.post("/users", body);
     },
     inviteAndAddGroups: ({

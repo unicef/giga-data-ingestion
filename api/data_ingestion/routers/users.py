@@ -1,15 +1,16 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, Security, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 from fastapi_azure_auth.user import User as AzureUser
 from pydantic import UUID4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal import email
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
 from data_ingestion.internal.users import UsersApi
-from data_ingestion.models import User
+from data_ingestion.models import Role, User
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.group import ModifyUserAccessRequest
 from data_ingestion.schemas.invitation import (
@@ -19,8 +20,9 @@ from data_ingestion.schemas.invitation import (
 )
 from data_ingestion.schemas.user import (
     DatabaseUser,
+    DatabaseUserCreateRequest,
+    DatabaseUserWithRoles,
     GraphUser,
-    GraphUserCreateRequest,
     GraphUserInviteAndAddGroupsRequest,
     GraphUserUpdateRequest,
 )
@@ -34,37 +36,51 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=list[DatabaseUser],
+    response_model=list[DatabaseUserWithRoles],
     dependencies=[Security(IsPrivileged())],
 )
 async def list_users(db: AsyncSession = Depends(get_db)):
-    return await db.scalars(select(User))
-
-
-@router.post("", response_model=GraphUser, dependencies=[Security(IsPrivileged())])
-async def create_user(body: GraphUserCreateRequest, background_tasks: BackgroundTasks):
-    user_response = await UsersApi.create_user(body)
-    user = user_response.user
-    await GroupsApi.modify_user_access(
-        user.id,
-        ModifyUserAccessRequest(
-            given_name=body.given_name,
-            surname=body.surname,
-            groups_to_add=[g.id for g in body.groups],
-            groups_to_remove=[],
-        ),
+    return await db.scalars(
+        select(User)
+        .order_by(User.given_name, User.surname, User.email)
+        .options(selectinload(User.roles))
     )
+
+
+@router.post("", response_model=DatabaseUser, dependencies=[Security(IsPrivileged())])
+async def create_user(
+    body: DatabaseUserCreateRequest,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+):
+    existing_user = await db.scalar(select(User).where(User.email == body.email))
+    if existing_user is not None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User already exists"
+        )
+
+    user = User(
+        given_name=body.given_name,
+        surname=body.surname,
+        email=body.email,
+    )
+    roles = await db.scalars(
+        select(Role).where(Role.name.in_([r.name for r in body.roles]))
+    )
+    roles = set(roles)
+    user.roles = roles
+    db.add(user)
+    await db.commit()
 
     background_tasks.add_task(
         email.invite_user,
         InviteEmailRenderRequest(
-            displayName=user.display_name,
-            email=user.mail,
-            temporaryPassword=user_response.temporary_password,
-            groups=[g.display_name for g in body.groups],
+            displayName=f"{user.given_name} {user.surname}",
+            email=user.email,
+            groups=[r.name for r in roles],
         ),
     )
-    return user_response.user
+    return user
 
 
 @router.post(
@@ -127,9 +143,11 @@ async def get_groups_from_email(azure_user: AzureUser = Depends(azure_scheme)):
     return groups
 
 
-@router.get("/{id}", response_model=GraphUser)
-async def get_user(id: UUID4):
-    return await UsersApi.get_user(id)
+@router.get("/{id}", response_model=DatabaseUserWithRoles)
+async def get_user(id: str, db: AsyncSession = Depends(get_db)):
+    return await db.scalar(
+        select(User).where(User.id == id).options(selectinload(User.roles))
+    )
 
 
 @router.get("/{id}/groups", dependencies=[Security(IsPrivileged())])

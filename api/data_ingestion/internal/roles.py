@@ -7,20 +7,20 @@ from data_ingestion.models import Role, User
 
 
 async def get_user_roles(user: AzureUser, db: AsyncSession) -> list[str]:
-    matched = await db.scalar(
-        select(User)
-        .where(User.sub == user.sub)
-        .options(joinedload(User.roles, innerjoin=True))
-    )
     emails = user.claims.get("emails", [])
     if len(emails) == 0:
         email = ""
     else:
         email = emails[0]
 
+    matched = await db.scalar(
+        select(User)
+        .where(User.email == email)
+        .options(joinedload(User.roles, innerjoin=True))
+    )
+
     if matched is None and email:
         new_user = User(
-            sub=user.sub,
             email=email,
             given_name=user.given_name,
             surname=user.family_name,
@@ -33,7 +33,7 @@ async def get_user_roles(user: AzureUser, db: AsyncSession) -> list[str]:
             ]
         ):
             admin_role = await db.scalar(select(Role).where(Role.name == "Admin"))
-            new_user.roles.append(admin_role)
+            new_user.roles.add(admin_role)
 
         db.add(new_user)
         await db.commit()
