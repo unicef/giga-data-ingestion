@@ -1,10 +1,10 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
-import { CreateUserRequest, GraphUser } from "@/types/user.ts";
+import { CreateUserRequest, DatabaseUser, GraphUser } from "@/types/user.ts";
 
 export default function routes(axi: AxiosInstance) {
   return {
-    list: (): Promise<AxiosResponse<GraphUser[]>> => {
+    list: (): Promise<AxiosResponse<DatabaseUser[]>> => {
       return axi.get("/users");
     },
     get: (id: string): Promise<AxiosResponse<GraphUser>> => {

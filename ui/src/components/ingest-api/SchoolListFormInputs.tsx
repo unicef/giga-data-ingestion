@@ -11,10 +11,10 @@ import {
   RequestMethodEnum,
   SendQueryInEnum,
 } from "@/types/qos";
-import { GraphUser } from "@/types/user";
+import { DatabaseUser } from "@/types/user";
 
 interface SchoolListFormInputsProps {
-  users: GraphUser[];
+  users: DatabaseUser[];
   countries: Country[];
 }
 

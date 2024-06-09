@@ -188,7 +188,7 @@ export function SelectFromArray<MappingType>({
         ? mapping.options.map(user => (
             <SelectItem
               key={user.id}
-              text={`${user.display_name} (${user.mail})`}
+              text={`${user.given_name} ${user.surname} (${user.email})`}
               value={user.id}
             />
           ))
