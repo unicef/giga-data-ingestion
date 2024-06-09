@@ -78,6 +78,7 @@ const initialCountryDataset: CountryDataset = {
 function AddUser() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { page, page_size } = Route.useSearch();
+  const { queryClient } = Route.useRouteContext();
   const [swapModal, setSwapModal] = useState<boolean>(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [showErrorNotification, setShowErrorNotification] = useState(false);
@@ -132,6 +133,11 @@ function AddUser() {
     isError: isCreateUserError,
   } = useMutation({
     mutationFn: api.users.create,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["users"],
+      });
+    },
   });
 
   const dataSetOptions = [

@@ -20,7 +20,7 @@ import {
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AxiosResponse } from "axios";
 
-import { api, queryClient } from "@/api";
+import { api } from "@/api";
 import {
   listCountriesQueryOptions,
   listRolesQueryOptions,
@@ -72,6 +72,7 @@ function EditUser() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { userId } = Route.useParams();
   const { page, page_size } = Route.useSearch();
+  const { queryClient } = Route.useRouteContext();
   const {
     data: { data: initialValues },
   } = useSuspenseQuery({
