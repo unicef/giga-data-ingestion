@@ -234,7 +234,7 @@ function AddUser() {
         onRequestClose={() => handleModalCancel("AddModal")}
         onRequestSubmit={() => setSwapModal(true)}
       >
-        <form aria-label="add user form">
+        <form aria-label="add user form" className="mb-12">
           <Stack gap={4}>
             <TextInput
               id="givenName"
