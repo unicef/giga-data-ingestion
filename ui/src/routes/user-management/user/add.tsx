@@ -30,11 +30,6 @@ import { GraphGroup } from "@/types/group.ts";
 import { CreateUserRequest } from "@/types/user.ts";
 import { filterRoles, matchNamesWithIds } from "@/utils/group.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
-import {
-  getUniqueDatasets,
-  pluralizeCountries,
-  pluralizeDatasets,
-} from "@/utils/string.ts";
 
 export const Route = createFileRoute("/user-management/user/add")({
   component: AddUser,
@@ -342,28 +337,22 @@ function AddUser() {
           onRequestSubmit={handleSubmit(onSubmit)}
         >
           <Form aria-label="confirm new user form" className="">
-            {(() => {
-              const countries = getUniqueDatasets(
-                getValues("email"),
-                deriveAddedValues().addedDatasetsWithIds,
-              ).countries;
-              const datasets = pluralizeDatasets(
-                getUniqueDatasets(
-                  getValues("email"),
-                  deriveAddedValues().addedDatasetsWithIds,
-                ).uniqueDatasets,
-              );
-
-              return (
-                <p>
-                  This will give the user with email <b>{getValues("email")}</b>{" "}
-                  access to Giga data for <b>{datasets}</b> across{" "}
-                  {countries.length}{" "}
-                  {countries.length === 1 ? "country" : "countries"}:{" "}
-                  <b>{pluralizeCountries(countries)}</b>.
-                </p>
-              );
-            })()}
+            <p>
+              This will give the user with email <b>{getValues("email")}</b> the
+              following privileges and access to Giga data:
+              <ul className="list-disc pl-6">
+                {getValues("roles").selectedItems.map(role => (
+                  <li key={role.value}>{role.label}</li>
+                ))}
+                {getValues("countryDatasets").map(({ country, dataset }) =>
+                  dataset.selectedItems.map(ds => (
+                    <li key={`${country}-${ds.value}`}>
+                      {country}-{ds.label}
+                    </li>
+                  )),
+                )}
+              </ul>
+            </p>
 
             {isCreateUserError && (
               <InlineNotification

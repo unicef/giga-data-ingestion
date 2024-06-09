@@ -43,7 +43,8 @@ async def create_user(body: GraphUserCreateRequest, background_tasks: Background
     await GroupsApi.modify_user_access(
         user.id,
         ModifyUserAccessRequest(
-            email=user.mail,
+            given_name=body.given_name,
+            surname=body.surname,
             groups_to_add=[g.id for g in body.groups],
             groups_to_remove=[],
         ),
