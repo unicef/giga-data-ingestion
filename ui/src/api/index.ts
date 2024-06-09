@@ -14,8 +14,9 @@ import useGetToken from "@/hooks/useGetToken.ts";
 import approvalRequestsRouter from "./routers/approvalRequests.ts";
 import deleteRouter from "./routers/delete.ts";
 import externalRequestsRouter from "./routers/externalRequests.ts";
-import rolesRouter from "./routers/groups.ts";
+import groupsRouter from "./routers/groups.ts";
 import qosRouter from "./routers/qos.ts";
+import rolesRouter from "./routers/roles.ts";
 import schemaRouter from "./routers/schema.ts";
 import uploadsRouter from "./routers/uploads.ts";
 import usersRouter from "./routers/users.ts";
@@ -32,7 +33,8 @@ export const api = {
   approvalRequests: approvalRequestsRouter(axi),
   delete: deleteRouter(axi),
   externalRequests: externalRequestsRouter(),
-  groups: rolesRouter(axi),
+  groups: groupsRouter(axi),
+  roles: rolesRouter(axi),
   qos: qosRouter(axi),
   schema: schemaRouter(axi),
   uploads: uploadsRouter(axi),

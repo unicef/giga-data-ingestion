@@ -82,7 +82,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - python -m scripts.load_fixtures approval_requests
+            - python -m scripts.load_fixtures roles approval_requests
           {{- with .Values.envFrom }}
           envFrom:
             {{- toYaml . | nindent 12 }}
