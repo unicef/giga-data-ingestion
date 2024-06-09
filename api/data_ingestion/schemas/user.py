@@ -62,3 +62,13 @@ class GraphUserInviteAndAddGroupsRequest(BaseModel):
     invited_user_email_address: EmailStr
     invited_user_given_name: str | None = None
     invited_user_surname: str | None = None
+
+
+class DatabaseUser(BaseModel):
+    id: UUID4
+    sub: UUID4
+    email: str
+    given_name: str | None = None
+    surname: str | None = None
+    enabled: bool = True
+    roles: list[str]
