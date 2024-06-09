@@ -16,6 +16,8 @@ class User(BaseModel):
 
     sub: Mapped[str] = mapped_column(nullable=False, index=True, unique=True)
     email: Mapped[str] = mapped_column(nullable=False, index=True, unique=True)
+    given_name: Mapped[str] = mapped_column(nullable=True)
+    surname: Mapped[str] = mapped_column(nullable=True)
     enabled: Mapped[bool] = mapped_column(default=True)
     roles: Mapped[list["Role"]] = relationship(
         secondary=user_role_association_table, back_populates="users"
