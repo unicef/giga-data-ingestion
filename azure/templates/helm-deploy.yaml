@@ -15,13 +15,6 @@ jobs:
                 arguments: add bitnami https://charts.bitnami.com/bitnami
                 namespace: $(kubernetesNamespace)
 
-            - task: Kubernetes@1
-              displayName: Delete old resources in namespace
-              inputs:
-                command: delete
-                arguments: sts postgres-redis-master postgres-redis-replicas --ignore-not-found
-                namespace: $(kubernetesNamespace)
-
             - task: HelmDeploy@0
               displayName: Helm deploy PostgreSQL dev
               condition: eq(variables.environment, 'dev')
