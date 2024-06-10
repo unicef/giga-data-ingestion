@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import orjson
 from asgiref.sync import async_to_sync
 from fastapi.encoders import jsonable_encoder
@@ -75,7 +77,7 @@ def update_schemas():  # noqa: C901
             schemas[name] = schema
 
         if "school_geolocation" in schemas.keys():
-            schemas["school_geolocation_qos"] = [*schemas["school_geolocation"]]
+            schemas["school_geolocation_qos"] = deepcopy(schemas["school_geolocation"])
             for col in schemas["school_geolocation_qos"]:
                 if col.name in [
                     "education_level_govt",
