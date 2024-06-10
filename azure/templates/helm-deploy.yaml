@@ -44,6 +44,13 @@ jobs:
                 arguments: --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
+              displayName: Helm uninstall Redis
+              inputs:
+                namespace: $(kubernetesNamespace)
+                command: uninstall
+                arguments: redis --ignore-not-found
+
+            - task: HelmDeploy@0
               displayName: Helm deploy Redis dev
               condition: eq(variables.environment, 'dev')
               inputs:
