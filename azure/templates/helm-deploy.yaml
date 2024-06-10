@@ -16,6 +16,13 @@ jobs:
                 namespace: $(kubernetesNamespace)
 
             - task: HelmDeploy@0
+              displayName: Helm uninstall Postgres
+              inputs:
+                namespace: $(kubernetesNamespace)
+                command: uninstall
+                arguments: postgres --ignore-not-found
+
+            - task: HelmDeploy@0
               displayName: Helm deploy PostgreSQL dev
               condition: eq(variables.environment, 'dev')
               inputs:
@@ -42,13 +49,6 @@ jobs:
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/pg-values.yaml
                 arguments: --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
-
-            - task: HelmDeploy@0
-              displayName: Helm uninstall Redis
-              inputs:
-                namespace: $(kubernetesNamespace)
-                command: uninstall
-                arguments: redis --ignore-not-found
 
             - task: HelmDeploy@0
               displayName: Helm deploy Redis dev
