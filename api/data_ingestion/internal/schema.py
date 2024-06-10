@@ -63,7 +63,7 @@ async def get_schema(
 
         logger.info(metaschema.model_dump())
 
-        if is_qos and metaschema.name in [
+        if metaschema.name in [
             "education_level_govt",
             "school_id_govt_type",
         ]:
