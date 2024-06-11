@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
+  CodeSnippet,
   DataTableHeader,
   ListItem,
   Stack,
@@ -202,6 +203,13 @@ function UploadColumnMapping() {
                   <ListItem>longitude </ListItem>
                   <ListItem>education_level_govt </ListItem>
                 </UnorderedList>
+                <span>
+                  For updating datasets, make sure that the{" "}
+                  <CodeSnippet hideCopyButton={true} type="inline">
+                    school_id_govt
+                  </CodeSnippet>{" "}
+                  is included
+                </span>
               </div>
             </Tile>
           </section>
