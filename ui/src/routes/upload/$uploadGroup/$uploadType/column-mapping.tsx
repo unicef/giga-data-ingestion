@@ -2,7 +2,16 @@ import { useMemo, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
-import { Button, ButtonSet, DataTableHeader, Stack, Tag } from "@carbon/react";
+import {
+  Button,
+  ButtonSet,
+  DataTableHeader,
+  ListItem,
+  Stack,
+  Tag,
+  Tile,
+  UnorderedList,
+} from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
@@ -168,7 +177,7 @@ function UploadColumnMapping() {
     <FormProvider {...hookForm}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Stack gap={8}>
-          <section className="flex flex-col gap-8">
+          <section className="flex flex-col gap-6">
             <h2 className="text-[23px] capitalize">Configure Columns</h2>
             <div>{DESCRIPTION}</div>
             <div className="flex gap-4">
@@ -179,6 +188,22 @@ function UploadColumnMapping() {
                 </div>
               </Tag>
             </div>
+            <Tile>
+              <div className="flex-col p-6">
+                <div className="flex align-middle text-lg">
+                  <span className="text-2xl text-red-600">*</span>
+                  For adding new datasets, make sure that the following fields
+                  are in place:
+                </div>
+                <UnorderedList>
+                  <ListItem>school_id_govt </ListItem>
+                  <ListItem>school_name </ListItem>
+                  <ListItem>latitude </ListItem>
+                  <ListItem>longitude </ListItem>
+                  <ListItem>education_level_govt </ListItem>
+                </UnorderedList>
+              </div>
+            </Tile>
           </section>
 
           <section className="w-3/4">
