@@ -53,7 +53,9 @@ async def get_schema(
     )
 
     schema = []
-    for mapping in res.mappings().all():
+    mappings = res.mappings().all()
+
+    for mapping in mappings:
         metaschema = Schema(**mapping)
         if metaschema.primary_key:
             metaschema.is_nullable = True
@@ -63,16 +65,29 @@ async def get_schema(
 
         logger.info(metaschema.model_dump())
 
-        if metaschema.name in [
+        if is_qos and metaschema.name in [
             "education_level_govt",
             "school_id_govt_type",
         ]:
             metaschema.is_nullable = True
             metaschema.is_important = True
 
-        if metaschema.name == "education_level":
+        if not is_qos:
+            metaschema.is_important = False
             metaschema.is_nullable = True
-            metaschema.is_important = True
+
+            if metaschema.name in ["school_id_govt"]:
+                metaschema.is_important = True
+                metaschema.is_nullable = False
+
+            if metaschema.name in [
+                "school_name",
+                "latitude",
+                "longitude",
+                "education_level_govt",
+                "education_level",
+            ]:
+                metaschema.is_important = True
 
         schema.append(metaschema)
 
