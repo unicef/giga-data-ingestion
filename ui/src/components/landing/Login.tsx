@@ -79,16 +79,20 @@ function Login() {
         ))}
       </div>
 
-      <div />
-
-      <Button
-        className="w-full"
-        renderIcon={ArrowRight}
-        onClick={handleLogin}
-        isExpressive
-      >
-        Log in
-      </Button>
+      <div className="inline-flex flex-col">
+        <Button
+          className="w-full"
+          renderIcon={ArrowRight}
+          onClick={handleLogin}
+          isExpressive
+        >
+          Log in
+        </Button>
+        <div className="w-72 p-2 text-xs text-red-600">
+          Warning: Do not use Enter key to proceed with the log-in. Please click
+          on the buttons instead.
+        </div>
+      </div>
     </div>
   );
 }
