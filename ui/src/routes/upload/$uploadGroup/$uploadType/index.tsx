@@ -139,6 +139,7 @@ export default function Index() {
       setDetectedColumns,
       type: validTypes[file.type as keyof typeof validTypes],
     });
+    detector.validateFileSize();
     detector.detect();
 
     setUploadSliceState({

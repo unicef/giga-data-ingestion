@@ -7,7 +7,9 @@ import {
   AcceptedFileTypes,
   AcceptedUnstructuredFileTypes,
   AcceptedUnstructuredMimeTypes,
+  MAX_UPLOAD_FILE_SIZE_BYTES,
 } from "@/constants/upload.ts";
+import { convertBytesToMegabytes } from "@/lib/utils.ts";
 import { MetaSchema } from "@/types/schema.ts";
 
 interface DetectHeadersOptions {
@@ -54,6 +56,21 @@ export class HeaderDetector {
       default:
       // do nothing
     }
+  }
+
+  public validateFileSize() {
+    const passed = this.options.file.size <= MAX_UPLOAD_FILE_SIZE_BYTES;
+    if (!passed) {
+      this.options.setError(
+        `Your file size (${convertBytesToMegabytes(
+          this.options.file.size,
+        ).toFixed(
+          2,
+        )} MB) exceeds the limit of 10 MB, please try a smaller file.`,
+      );
+      this.options.setIsParsing(false);
+    }
+    return passed;
   }
 
   private commonProcess(detectedColumns: string[]) {
@@ -176,7 +193,7 @@ export class ColumnValidator {
 
   public validate() {
     // 10 megabytes
-    if (this.options.file.size >= 10000000) {
+    if (this.options.file.size >= MAX_UPLOAD_FILE_SIZE_BYTES) {
       this.options.setError("File size is too big, please try again");
       return;
     }

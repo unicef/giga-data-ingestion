@@ -22,3 +22,8 @@ export const AcceptedUnstructuredMimeTypes = [
   "image/png",
   "image/tiff",
 ];
+
+export const MAX_UPLOAD_FILE_SIZE_MB = 10;
+
+export const MAX_UPLOAD_FILE_SIZE_BYTES =
+  MAX_UPLOAD_FILE_SIZE_MB * (2 ** 10) ** 2;

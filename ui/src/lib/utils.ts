@@ -14,5 +14,9 @@ export function truncateString(string: string, toWords: number) {
 }
 
 export function convertMegabytesToBytes(mb: number) {
-  return mb * 2 ** 20;
+  return mb * (2 ** 10) ** 2;
+}
+
+export function convertBytesToMegabytes(b: number) {
+  return b / (2 ** 10) ** 2;
 }
