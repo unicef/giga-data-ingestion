@@ -59,7 +59,7 @@ export class HeaderDetector {
   private commonProcess(detectedColumns: string[]) {
     const { options } = this;
 
-    options.setDetectedColumns(detectedColumns);
+    options.setDetectedColumns(detectedColumns.filter(col => col.length > 0));
 
     if (options.schema) {
       const autoColumnMapping: Record<string, string> = {};
