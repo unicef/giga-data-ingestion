@@ -328,7 +328,7 @@
           <LocalizedString ElementType="ErrorMessage" StringId="ServiceThrottled">There are too many requests at this
             moment. Please wait for some time and try again.
           </LocalizedString>
-          <LocalizedString ElementType="ErrorMessage" StringId="UserMessageIfClaimNotVerified">Claim not verified: {0}
+          <LocalizedString ElementType="ErrorMessage" StringId="UserMessageIfClaimNotVerified">Email not verified
           </LocalizedString>
           <LocalizedString ElementType="ErrorMessage" StringId="UserMessageIfClaimsPrincipalAlreadyExists">A user with
             the specified ID already exists. Please choose a different one.
