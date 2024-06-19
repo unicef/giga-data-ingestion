@@ -269,7 +269,7 @@ async def upload_file(
 
 
 @router.post("/unstructured", status_code=status.HTTP_201_CREATED)
-async def upload_unstructured(
+async def upload_unstructured(  # noqa: C901
     response: Response,
     user: User = Depends(azure_scheme),
     form: UnstructuredFileUploadRequest = Depends(),
@@ -308,6 +308,9 @@ async def upload_unstructured(
         )
 
     country_code = coco.convert(form.country, to="ISO3")
+    if country_code == "not found":
+        country_code = "N/A"
+
     email = user.email or user.claims.get("email")
     if email is None:
         email = (await UsersApi.get_user(user.sub)).mail

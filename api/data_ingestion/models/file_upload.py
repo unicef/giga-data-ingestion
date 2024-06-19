@@ -51,7 +51,8 @@ class FileUpload(BaseModel):
     def filename(self) -> str:
         timestamp = self.created.strftime("%Y%m%d-%H%M%S")
         ext = Path(self.original_filename).suffix
-        filename_elements = [self.id, self.country, self.dataset]
+        country = "N-A" if self.country == "N/A" else self.country
+        filename_elements = [self.id, country, self.dataset]
         if self.source is not None:
             filename_elements.append(self.source)
 
@@ -66,7 +67,7 @@ class FileUpload(BaseModel):
             self.dataset
             if self.dataset == "unstructured"
             else f"school-{self.dataset}",
-            self.country,
+            "$NA" if self.country == "N/A" else self.country,
             self.filename,
         ]
         return "/".join(filename_parts)

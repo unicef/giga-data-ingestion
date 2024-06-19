@@ -187,7 +187,10 @@ function Metadata() {
       ),
     ];
   }, [allGroupsQuery?.data]);
-  const countryOptions = isPrivileged ? allCountryNames : userCountryNames;
+  let countryOptions = isPrivileged ? allCountryNames : userCountryNames;
+  if (isUnstructured) {
+    countryOptions = ["N/A", ...countryOptions];
+  }
 
   const onSubmit: SubmitHandler<MetadataForm> = async data => {
     if (Object.keys(errors).length > 0) {
