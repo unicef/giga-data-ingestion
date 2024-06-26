@@ -100,7 +100,13 @@ function UsersTable() {
         (currentPage - 1) * pageSize + pageSize,
       )
       .map(originalUser => {
-        const user = { ...originalUser } as TableDatabaseUser;
+        const user = {
+          ...originalUser,
+          email_tag: null,
+          countries: "",
+          roles: "",
+          actions: null,
+        } as TableDatabaseUser;
 
         user.email_tag = (
           <>
@@ -112,9 +118,6 @@ function UsersTable() {
             )}
           </>
         );
-
-        user.countries = "";
-        user.roles = "";
 
         user.actions = (
           <div className="flex gap-2">
