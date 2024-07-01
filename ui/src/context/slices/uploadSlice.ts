@@ -11,6 +11,7 @@ export interface UploadSliceState {
     uploadId: string;
     stepIndex: number;
     source: string | null;
+    mode: "Create" | "Update" | "";
   };
 }
 
@@ -53,6 +54,7 @@ export const initialUploadSliceState: UploadSliceState = {
     uploadDate: null,
     uploadId: "",
     source: null,
+    mode: "",
   },
 };
 

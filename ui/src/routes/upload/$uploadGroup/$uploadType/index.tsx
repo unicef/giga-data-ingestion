@@ -5,6 +5,8 @@ import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
+  Dropdown,
+  OnChangeData,
   SelectItem,
   SkeletonPlaceholder,
   Stack,
@@ -20,6 +22,8 @@ import { Select } from "@/components/forms/Select.tsx";
 import {
   AcceptedFileTypes,
   AcceptedUnstructuredFileTypes,
+  UPLOAD_MODE_OPTIONS,
+  UploadModeOptions,
 } from "@/constants/upload.ts";
 import { useStore } from "@/context/store";
 import { sourceOptions } from "@/mocks/metadataFormValues.tsx";
@@ -29,6 +33,12 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
   component: Index,
   pendingComponent: PendingComponent,
   errorComponent: ErrorComponent,
+  beforeLoad: () => {
+    const {
+      uploadSliceActions: { resetUploadSliceState },
+    } = useStore.getState();
+    resetUploadSliceState();
+  },
 });
 
 const validStructuredTypes = {
@@ -80,6 +90,7 @@ export default function Index() {
   } = useStore();
   const { file, source: storeSource } = uploadSlice;
   const hasUploadedFile = file != null;
+  const hasMode = uploadSlice.mode != "";
 
   const { register, watch } = useForm<{ source: string | null }>({
     mode: "onChange",
@@ -115,7 +126,8 @@ export default function Index() {
     (isCoverage && !source) ||
     isSchemaFetching ||
     isParsing ||
-    hasParsingError;
+    hasParsingError ||
+    !hasMode;
   const isSchemaLoading = !(
     (!isCoverage && !isSchemaFetching) ||
     (isCoverage && !!source && !isSchemaFetching)
@@ -150,6 +162,14 @@ export default function Index() {
       },
     });
   }
+  function handleOnChangeDropDown(item: OnChangeData<UploadModeOptions>) {
+    setUploadSliceState({
+      uploadSlice: {
+        ...uploadSlice,
+        mode: item.selectedItem ?? "",
+      },
+    });
+  }
 
   return (
     <Stack gap={10}>
@@ -177,7 +197,15 @@ export default function Index() {
           <SkeletonPlaceholder />
         ) : null
       ) : (
-        <div className="w-1/4">
+        <div className="flex w-1/4 flex-col gap-4">
+          <Dropdown
+            id="default"
+            titleText="Are you updating existing schools or uploading data for new schools?"
+            label="Select an option..."
+            items={[...UPLOAD_MODE_OPTIONS]}
+            itemToString={item => (item ? item : "")}
+            onChange={handleOnChangeDropDown}
+          />
           <FileUploaderDropContainer
             accept={Object.keys(validTypes)}
             name="file"
