@@ -282,6 +282,7 @@ function Metadata() {
                       {formItems.map(formItem =>
                         formItem.name === "country" ? (
                           <CountrySelect
+                            key={formItem.name}
                             countryOptions={countryOptions}
                             isLoading={isLoading}
                             errors={errors}
@@ -289,6 +290,7 @@ function Metadata() {
                           />
                         ) : (
                           <RenderFormItem
+                            key={formItem.name}
                             formItem={formItem}
                             errors={errors}
                             register={register}
