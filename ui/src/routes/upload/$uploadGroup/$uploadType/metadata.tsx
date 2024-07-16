@@ -221,7 +221,7 @@ function Metadata() {
     });
 
     const body: UploadParams = {
-      metadata: JSON.stringify(metadata),
+      metadata: JSON.stringify({ ...metadata, mode: uploadSlice.mode }),
       country,
       column_to_schema_mapping: JSON.stringify(correctedColumnMapping),
       column_license: JSON.stringify(uploadSlice.columnLicense),
