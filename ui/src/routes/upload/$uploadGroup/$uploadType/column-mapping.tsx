@@ -2,7 +2,14 @@ import { useMemo, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
-import { Button, ButtonSet, DataTableHeader, Stack, Tag } from "@carbon/react";
+import {
+  Button,
+  ButtonSet,
+  DataTableHeader,
+  Loading,
+  Stack,
+  Tag,
+} from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
@@ -64,7 +71,7 @@ function UploadColumnMapping() {
     uploadSliceActions: { setStepIndex, setColumnMapping, setColumnLicense },
   } = useStore();
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
-
+  const [isNavigating, setIsNavigating] = useState(false);
   const [selectedColumns, setSelectedColumns] =
     useState<Record<string, string>>(columnMapping);
 
@@ -91,7 +98,6 @@ function UploadColumnMapping() {
     shouldFocusError: true,
   });
   const { handleSubmit } = hookForm;
-
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
     const dataWithNullsReplaced: ConfigureColumnsForm = {
       mapping: Object.fromEntries(
@@ -104,6 +110,7 @@ function UploadColumnMapping() {
     setColumnMapping(dataWithNullsReplaced.mapping);
     setColumnLicense(dataWithNullsReplaced.license);
     setStepIndex(2);
+    setIsNavigating(true);
     void navigate({ to: "../metadata" });
   };
 
@@ -203,8 +210,15 @@ function UploadColumnMapping() {
             </Button>
             <Button
               className="w-full"
+              disabled={isNavigating}
               isExpressive
-              renderIcon={ArrowRight}
+              renderIcon={
+                isNavigating
+                  ? props => (
+                      <Loading small={true} withOverlay={false} {...props} />
+                    )
+                  : ArrowRight
+              }
               type="submit"
             >
               Proceed

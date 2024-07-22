@@ -221,7 +221,7 @@ function Metadata() {
     });
 
     const body: UploadParams = {
-      metadata: JSON.stringify(metadata),
+      metadata: JSON.stringify({ ...metadata, mode: uploadSlice.mode }),
       country,
       column_to_schema_mapping: JSON.stringify(correctedColumnMapping),
       column_license: JSON.stringify(uploadSlice.columnLicense),
@@ -282,6 +282,7 @@ function Metadata() {
                       {formItems.map(formItem =>
                         formItem.name === "country" ? (
                           <CountrySelect
+                            key={formItem.name}
                             countryOptions={countryOptions}
                             isLoading={isLoading}
                             errors={errors}
@@ -289,6 +290,7 @@ function Metadata() {
                           />
                         ) : (
                           <RenderFormItem
+                            key={formItem.name}
                             formItem={formItem}
                             errors={errors}
                             register={register}
