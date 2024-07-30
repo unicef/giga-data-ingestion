@@ -29,7 +29,11 @@ async def get_schemas(
         .order_by(column("table_name"))
     )
     mappings = res.mappings().all()
-    schemas = [m["table_name"] for m in mappings]
+    schemas = [
+        *[m["table_name"] for m in mappings],
+        "school_geolocation_qos",
+        "school_geolocation_update",
+    ]
 
     background_tasks.add_task(set_cache_list, SCHEMAS_KEY, schemas)
     return schemas
