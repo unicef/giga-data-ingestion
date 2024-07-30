@@ -82,7 +82,7 @@ async def get_schema(
     ):
         return orjson.loads(schema)
 
-    return _get_schema(name, db, background_tasks, is_update=is_update, is_qos=is_qos)
+    return _get_schema(name, db, background_tasks)
 
 
 @router.get("/{name}/download", response_class=Response)
