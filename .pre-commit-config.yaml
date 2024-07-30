@@ -25,34 +25,12 @@ repos:
           - ./api/pyproject.toml
         additional_dependencies:
           - 'bandit[toml]'
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v8.45.0
+  - repo: https://github.com/biomejs/pre-commit
+    rev: v0.4.0
     hooks:
-      - id: eslint
-        types: [ file ]
-        files: ui/.+[^(\.d)]\.[jt]sx?
-        args: [ '--config', 'ui/.eslintrc.cjs', '--fix', '--quiet' ]
-        exclude: ".+\\.gen\\.ts$"
-        additional_dependencies:
-          - eslint@8.45.0
-          - eslint-plugin-react-hooks@4.6.0
-          - eslint-plugin-react-refresh@0.4.3
-          - '@typescript-eslint/eslint-plugin@6.0.0'
-          - '@typescript-eslint/parser@6.0.0'
-          - '@tanstack/eslint-plugin-query@5.8.4'
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.7.1
-    hooks:
-      - id: prettier
-        files: ui/.+\.(json|jsx?|tsx?|html|css|scss)$
-        exclude: ".+\\.gen\\.ts$"
-        additional_dependencies:
-          - prettier@2.7.1
-          - '@trivago/prettier-plugin-sort-imports@3.4.0'
-          - prettier-plugin-tailwindcss@0.4.1
-          - tailwindcss@3.3.3
-          - tailwindcss-animate@1.0.7
-        args: [ '--config', 'ui/.prettierrc.json' ]
+      - id: biome-check
+        args: [ '--config-path', './ui/biome.json' ]
+        additional_dependencies: [ '@biomejs/biome@1.8.3' ]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
