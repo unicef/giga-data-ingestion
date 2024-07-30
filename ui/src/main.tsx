@@ -3,8 +3,8 @@ import ReactDOM from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 
 import {
-  AuthenticationResult,
-  EventMessage,
+  type AuthenticationResult,
+  type EventMessage,
   EventType,
 } from "@azure/msal-browser";
 import { MsalProvider } from "@azure/msal-react";
@@ -33,9 +33,7 @@ if (import.meta.env.SENTRY_DSN && import.meta.env.PROD) {
     tracesSampleRate: 1.0,
     profilesSampleRate: 1.0,
     environment: import.meta.env.VITE_DEPLOY_ENV,
-    release: `github.com/unicef/giga-data-ingestion:${
-      import.meta.env.VITE_COMMIT_SHA
-    }`,
+    release: `github.com/unicef/giga-data-ingestion:${import.meta.env.VITE_COMMIT_SHA}`,
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
   });

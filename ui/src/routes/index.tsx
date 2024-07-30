@@ -8,10 +8,7 @@ import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import UploadBreadcrumbs from "@/components/upload/UploadBreadcrumbs.tsx";
 import UploadLanding from "@/components/upload/UploadLanding.tsx";
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
+import { DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE } from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 import { validateSearchParams } from "@/utils/pagination.ts";
 

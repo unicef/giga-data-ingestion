@@ -1,12 +1,12 @@
-import { PropsWithChildren, useEffect, useRef } from "react";
+import { type PropsWithChildren, useEffect, useRef } from "react";
 
 import { InteractionStatus } from "@azure/msal-browser";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
 import { QueryClient, keepPreviousData } from "@tanstack/react-query";
 import axios, {
-  AxiosError,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
+  type AxiosError,
+  type AxiosResponse,
+  type InternalAxiosRequestConfig,
 } from "axios";
 
 import useGetToken from "@/hooks/useGetToken.ts";
@@ -58,9 +58,7 @@ export function AxiosProvider({ children }: PropsWithChildren) {
     ),
   );
 
-  async function requestFulFilledInterceptor(
-    config: InternalAxiosRequestConfig,
-  ) {
+  async function requestFulFilledInterceptor(config: InternalAxiosRequestConfig) {
     if (!isAuthenticated && inProgress === InteractionStatus.Startup) {
       try {
         const { accessToken } = await getToken();

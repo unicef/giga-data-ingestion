@@ -1,7 +1,7 @@
 import cronParser from "cron-parser";
 import { z } from "zod";
 
-import {
+import type {
   CommonApiIngestionFormSchema,
   SchoolConnectivityFormSchema,
   TestApiSchema,
@@ -21,8 +21,7 @@ export function validateAuthType(
       if (!val.api_auth_api_key) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "API Key Name is required when Authorization Type is API Key",
+          message: "API Key Name is required when Authorization Type is API Key",
           path: ["api_auth_api_key"],
         });
       }
@@ -30,8 +29,7 @@ export function validateAuthType(
       if (!val.api_auth_api_value) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "API Key Value is required when Authorization Type is API KEY",
+          message: "API Key Value is required when Authorization Type is API KEY",
           path: ["api_auth_api_value"],
         });
       }
@@ -41,8 +39,7 @@ export function validateAuthType(
       if (!val.bearer_auth_bearer_token) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "Bearer Token is required when Authorization Type is BEARER TOKEN",
+          message: "Bearer Token is required when Authorization Type is BEARER TOKEN",
           path: ["bearer_auth_bearer_token"],
         });
       }
@@ -84,23 +81,18 @@ export function validatePaginationType(
       if (!val.page_size_key) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "Page Size Key is required when Pagination Method is LIMIT OFFSET",
+          message: "Page Size Key is required when Pagination Method is LIMIT OFFSET",
           path: ["page_size_key"],
         });
       }
       if (!val.page_offset_key) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "Page Offset Key is required when Pagination Method is LIMIT OFFSET",
+          message: "Page Offset Key is required when Pagination Method is LIMIT OFFSET",
           path: ["page_offset_key"],
         });
       }
-      if (
-        !val.page_send_query_in ||
-        val.page_send_query_in === SendQueryInEnum.NONE
-      ) {
+      if (!val.page_send_query_in || val.page_send_query_in === SendQueryInEnum.NONE) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message:
@@ -121,16 +113,14 @@ export function validatePaginationType(
       if (!val.page_size_key) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "Page Size Key is required when Pagination Method is PAGE NUMBER",
+          message: "Page Size Key is required when Pagination Method is PAGE NUMBER",
           path: ["page_size_key"],
         });
       }
       if (!val.page_number_key) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "Page Number Key is required when Pagination Method is PAGE NUMBER",
+          message: "Page Number Key is required when Pagination Method is PAGE NUMBER",
           path: ["page_number_key"],
         });
       }
@@ -142,10 +132,7 @@ export function validatePaginationType(
           path: ["page_starts_with"],
         });
       }
-      if (
-        !val.page_send_query_in ||
-        val.page_send_query_in === SendQueryInEnum.NONE
-      ) {
+      if (!val.page_send_query_in || val.page_send_query_in === SendQueryInEnum.NONE) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message:
@@ -165,17 +152,13 @@ export function validateSchoolId(
   if (!!val.school_id_key && !val.school_id_send_query_in) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message:
-        "School ID Send Query In is required when School ID Key is provided",
+      message: "School ID Send Query In is required when School ID Key is provided",
       path: ["school_id_send_query_in"],
     });
   }
 }
 
-export function validateCron(
-  val: SchoolConnectivityFormSchema,
-  ctx: z.RefinementCtx,
-) {
+export function validateCron(val: SchoolConnectivityFormSchema, ctx: z.RefinementCtx) {
   try {
     const interval = cronParser.parseExpression(val.ingestion_frequency);
     const date1 = interval.next().toDate();

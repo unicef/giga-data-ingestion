@@ -1,6 +1,6 @@
-import { Check } from "../types/data-quality-checks";
-import { getChecksWithFailures } from "../utils/dq-report";
 import { Hr, Section } from "@react-email/components";
+import type { Check } from "../types/data-quality-checks";
+import { getChecksWithFailures } from "../utils/dq-report";
 interface CheckWithErrorProps {
   checks: Check[];
   title: string;
@@ -16,7 +16,7 @@ const CheckWithError = ({ checks, title }: CheckWithErrorProps) => {
       <span className="text-2xl px-2">{title}</span>
       <Hr className="border border-solid border-giga-light-gray my-2 mx-0 w-full" />
       <ul className=" list-decimal gap-4 px-20">
-        {failedChecks.map((check) => (
+        {failedChecks.map(check => (
           <li>
             {check.description}
             <ul className="list-disc">
@@ -42,9 +42,7 @@ const CheckWithError = ({ checks, title }: CheckWithErrorProps) => {
               </li>
               <li>
                 Failure Rate:{" "}
-                <span className="text-md font-semibold">
-                  {check.percent_failed}%
-                </span>
+                <span className="text-md font-semibold">{check.percent_failed}%</span>
               </li>
             </ul>
           </li>

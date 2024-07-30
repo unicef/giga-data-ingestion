@@ -3,7 +3,7 @@ import { useState } from "react";
 import {
   Button,
   DataTable,
-  DataTableHeader,
+  type DataTableHeader,
   DefinitionTooltip,
   PaginationNav,
   Table,
@@ -15,8 +15,8 @@ import {
   TableRow,
 } from "@carbon/react";
 
-import { MasterSchema, masterSchemaData } from "@/constants/school-data";
-import {
+import { type MasterSchema, masterSchemaData } from "@/constants/school-data";
+import type {
   Check,
   DqFailedRowValues,
   DqFailedRowsFirstFiveRows,
@@ -52,9 +52,9 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
   const [page, setPage] = useState(0);
   const [selectedAssertion, setSelctedAssertion] = useState<string>("");
   const [selectedColumn, setSelectedColumn] = useState<string>("");
-  const [selectedPreviewData, setSelectedPreviewData] = useState<
-    DqFailedRowValues[]
-  >([{}]);
+  const [selectedPreviewData, setSelectedPreviewData] = useState<DqFailedRowValues[]>([
+    {},
+  ]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const rows = data.map(check => {

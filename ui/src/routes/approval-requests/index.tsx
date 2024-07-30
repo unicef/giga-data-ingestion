@@ -1,9 +1,9 @@
-import { ReactElement, useMemo } from "react";
+import { type ReactElement, useMemo } from "react";
 
 import { CheckmarkFilled } from "@carbon/icons-react";
 import {
   Button,
-  DataTableHeader,
+  type DataTableHeader,
   DataTableSkeleton,
   Loading,
 } from "@carbon/react";
@@ -17,7 +17,7 @@ import DataTable from "@/components/common/DataTable.tsx";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { useStore } from "@/context/store";
 import { SENTINEL_PAGED_RESPONSE } from "@/types/api.ts";
-import { ApprovalRequestListing } from "@/types/approvalRequests";
+import type { ApprovalRequestListing } from "@/types/approvalRequests";
 import { commaNumber } from "@/utils/number.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
@@ -124,9 +124,7 @@ function ApprovalRequests() {
             to="./$subpath"
             renderIcon={
               isLoading
-                ? props => (
-                    <Loading small={true} withOverlay={false} {...props} />
-                  )
+                ? props => <Loading small={true} withOverlay={false} {...props} />
                 : CheckmarkFilled
             }
             params={{
@@ -137,10 +135,7 @@ function ApprovalRequests() {
             Approve Rows
           </Button>
         ),
-        last_modified: format(
-          new Date(request.last_modified),
-          DEFAULT_DATETIME_FORMAT,
-        ),
+        last_modified: format(new Date(request.last_modified), DEFAULT_DATETIME_FORMAT),
       })),
     [approvalRequests.data, isLoading, resetApproveRowState],
   );

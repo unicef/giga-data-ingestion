@@ -55,9 +55,7 @@ export function getTestSchoolId(
 ) {
   if (dataKey) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (responsePreview as Record<string, any>)[dataKey][0][
-      schoolIdKey
-    ] as string;
+    return (responsePreview as Record<string, any>)[dataKey][0][schoolIdKey] as string;
   } else {
     return (responsePreview as unknown as Record<string, unknown>[])[0][
       schoolIdKey

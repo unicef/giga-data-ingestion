@@ -18,9 +18,7 @@ export const DataQualityCheckSuccessProps = z.object({
   checkDate: z.string(),
 });
 
-export type DataQualityCheckSuccessProps = z.infer<
-  typeof DataQualityCheckSuccessProps
->;
+export type DataQualityCheckSuccessProps = z.infer<typeof DataQualityCheckSuccessProps>;
 
 export const DataQualityReportEmailProps = z.object({
   dataQualityCheck: z.optional(DataQualityCheck),
@@ -29,6 +27,4 @@ export const DataQualityReportEmailProps = z.object({
   uploadId: z.string(),
 });
 
-export type DataQualityReportEmailProps = z.infer<
-  typeof DataQualityReportEmailProps
->;
+export type DataQualityReportEmailProps = z.infer<typeof DataQualityReportEmailProps>;

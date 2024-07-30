@@ -31,14 +31,13 @@ function UploadLanding(props: UploadLandingProps) {
             <Heading>What will you be uploading today?</Heading>
             <div>
               <p>
-                Giga is an international project, focused on building the
-                world's largest, most comprehensive database of schools mapped
-                around the world. It relies on collaboration and data
-                contributions from a number of sources, such as Governments,
-                Internet Service Providers (ISPs), Ministries of Education and
-                private companies. As such, your contributions are highly valued
-                and essential to us achieving our mission of connecting every
-                school to the internet by 2030.
+                Giga is an international project, focused on building the world's
+                largest, most comprehensive database of schools mapped around the world.
+                It relies on collaboration and data contributions from a number of
+                sources, such as Governments, Internet Service Providers (ISPs),
+                Ministries of Education and private companies. As such, your
+                contributions are highly valued and essential to us achieving our
+                mission of connecting every school to the internet by 2030.
               </p>
               <p>
                 Please review our{" "}
@@ -59,8 +58,8 @@ function UploadLanding(props: UploadLandingProps) {
                 >
                   data privacy and sharing framework
                 </a>{" "}
-                to answer any questions you may have regarding what data can be
-                shared and in which context.
+                to answer any questions you may have regarding what data can be shared
+                and in which context.
               </p>
             </div>
             <div className="grid grid-cols-4">

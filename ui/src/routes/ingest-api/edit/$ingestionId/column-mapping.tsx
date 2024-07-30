@@ -4,9 +4,7 @@ import { qosGeolocationSchemaQueryOptions } from "@/api/queryOptions.ts";
 import ColumnMapping from "@/components/ingest-api/ColumnMapping";
 import { useStore } from "@/context/store";
 
-export const Route = createFileRoute(
-  "/ingest-api/edit/$ingestionId/column-mapping",
-)({
+export const Route = createFileRoute("/ingest-api/edit/$ingestionId/column-mapping")({
   component: ColumnMapping,
   loaderDeps: () => {
     const {
@@ -15,10 +13,7 @@ export const Route = createFileRoute(
     } = useStore.getState();
     return { detectedColumns, setStepIndex };
   },
-  loader: ({
-    context: { queryClient },
-    deps: { detectedColumns, setStepIndex },
-  }) => {
+  loader: ({ context: { queryClient }, deps: { detectedColumns, setStepIndex } }) => {
     if (detectedColumns.length === 0) {
       setStepIndex(0);
       throw redirect({ to: ".." });

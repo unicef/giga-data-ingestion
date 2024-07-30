@@ -11,11 +11,11 @@ import {
   Switch,
   TextInputWithAction,
 } from "@/components/ingest-api/IngestApiInputs.tsx";
-import {
+import type {
   SchoolConnectivityFormSchema,
   SchoolListFormSchema,
 } from "@/forms/ingestApi.ts";
-import { IngestApiFormMapping } from "@/types/ingestApi.ts";
+import type { IngestApiFormMapping } from "@/types/ingestApi.ts";
 
 interface IngestApiFormInputsProps {
   formMappings: Record<
@@ -79,9 +79,7 @@ function FormItem({ mapping }: FormItemProps) {
   }
 }
 
-export function IngestApiFormInputs({
-  formMappings,
-}: IngestApiFormInputsProps) {
+export function IngestApiFormInputs({ formMappings }: IngestApiFormInputsProps) {
   const { watch } = useFormContext<
     SchoolListFormSchema | SchoolConnectivityFormSchema
   >();
@@ -101,20 +99,18 @@ export function IngestApiFormInputs({
                     ),
                   )
                 : mapping.dependsOnValue != null
-                ? mapping.dependsOnValue.includes(
-                    watch(
-                      mapping.dependsOnName as keyof (
-                        | SchoolListFormSchema
-                        | SchoolConnectivityFormSchema
-                      ),
-                    ) as string,
-                  )
-                : true;
+                  ? mapping.dependsOnValue.includes(
+                      watch(
+                        mapping.dependsOnName as keyof (
+                          | SchoolListFormSchema
+                          | SchoolConnectivityFormSchema
+                        ),
+                      ) as string,
+                    )
+                  : true;
 
             return (
-              checkDependencies && (
-                <FormItem mapping={mapping} key={mapping.name} />
-              )
+              checkDependencies && <FormItem mapping={mapping} key={mapping.name} />
             );
           })}
         </section>

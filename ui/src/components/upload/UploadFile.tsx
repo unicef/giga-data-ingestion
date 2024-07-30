@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import Dropzone from "react-dropzone";
 
 import { Document, Upload } from "@carbon/icons-react";
@@ -6,12 +6,10 @@ import { parse } from "papaparse";
 
 import { useStore } from "@/context/store.ts";
 import { cn, convertMegabytesToBytes } from "@/lib/utils.ts";
-import { MetaSchema } from "@/types/schema.ts";
+import type { MetaSchema } from "@/types/schema.ts";
 
 const FILE_UPLOAD_SIZE_LIMIT_MB = 10;
-const FILE_UPLOAD_SIZE_LIMIT = convertMegabytesToBytes(
-  FILE_UPLOAD_SIZE_LIMIT_MB,
-);
+const FILE_UPLOAD_SIZE_LIMIT = convertMegabytesToBytes(FILE_UPLOAD_SIZE_LIMIT_MB);
 
 interface UploadFileProps {
   file: File | null;
@@ -29,9 +27,7 @@ const DEFAULT_ACCEPT_TYPE = {
   "application/json": [".json"],
   "application/octet-stream": [".parquet"],
   "application/vnd.ms-excel": [".xls"],
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
-    ".xlsx  ",
-  ],
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx  "],
   "text/csv": [".csv"],
 };
 

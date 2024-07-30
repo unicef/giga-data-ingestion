@@ -1,4 +1,4 @@
-import { ComponentProps } from "react";
+import type { ComponentProps } from "react";
 
 import { Checkmark, QX } from "@carbon/icons-react";
 import {
@@ -17,11 +17,11 @@ import {
   TableSelectRow,
   TableToolbar,
 } from "@carbon/react";
-import { DataTable as CarbonDataTable } from "@carbon/react/lib/components/DataTable";
+import type { DataTable as CarbonDataTable } from "@carbon/react/lib/components/DataTable";
 import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
 
 import { cn } from "@/lib/utils.ts";
-import { ApprovalRequestInfo } from "@/types/approvalRequests.ts";
+import type { ApprovalRequestInfo } from "@/types/approvalRequests.ts";
 import { getValueByHeader } from "@/utils/approval_requests.ts";
 import { transformSelectedRowsToKeyValArray } from "@/utils/datatable.ts";
 
@@ -75,7 +75,7 @@ function CDFDataTable({
             const batchActionProps = {
               ...getBatchActionProps({
                 onSelectAll: () => {
-                  rows.map(row => {
+                  rows.forEach(row => {
                     if (!row.isSelected) {
                       selectRow(row.id);
                     }
@@ -92,11 +92,11 @@ function CDFDataTable({
                       {info.country} - {info.dataset}
                     </div>
                     <p>
-                      Select rows to approve or reject below. You may opt to
-                      approve only a subset of the rows. Note that when
-                      approving multiple entries that correspond to the same{" "}
-                      <code>school_id_giga</code>, only the entry with the
-                      latest <code>_commit_version</code> will be kept.
+                      Select rows to approve or reject below. You may opt to approve
+                      only a subset of the rows. Note that when approving multiple
+                      entries that correspond to the same <code>school_id_giga</code>,
+                      only the entry with the latest <code>_commit_version</code> will
+                      be kept.
                     </p>
                   </>
                 }
@@ -105,9 +105,7 @@ function CDFDataTable({
                 <TableToolbar {...getToolbarProps()}>
                   <TableBatchActions {...batchActionProps}>
                     <TableBatchAction
-                      tabIndex={
-                        batchActionProps.shouldShowBatchActions ? 0 : -1
-                      }
+                      tabIndex={batchActionProps.shouldShowBatchActions ? 0 : -1}
                       renderIcon={Checkmark}
                       onClick={() => {
                         const keyValueObject =
@@ -118,9 +116,7 @@ function CDFDataTable({
                       Approve Rows
                     </TableBatchAction>
                     <TableBatchAction
-                      tabIndex={
-                        batchActionProps.shouldShowBatchActions ? 0 : -1
-                      }
+                      tabIndex={batchActionProps.shouldShowBatchActions ? 0 : -1}
                       renderIcon={QX}
                       onClick={() => {
                         const keyValueObject =
@@ -143,6 +139,7 @@ function CDFDataTable({
                           {...getHeaderProps({
                             header,
                           })}
+                          key={header.key}
                         >
                           {header.header}
                         </TableHeader>
@@ -151,10 +148,7 @@ function CDFDataTable({
                   </TableHead>
                   <TableBody>
                     {rows.map(row => {
-                      const changeType = getValueByHeader(
-                        row.cells,
-                        "_change_type",
-                      );
+                      const changeType = getValueByHeader(row.cells, "_change_type");
 
                       return (
                         <TableRow
@@ -166,6 +160,7 @@ function CDFDataTable({
                           {...getRowProps({
                             row,
                           })}
+                          key={row.id}
                         >
                           {/* @ts-expect-error radio buttons bad type  https://github.com/carbon-design-system/carbon/issues/14831 */}
                           <TableSelectRow

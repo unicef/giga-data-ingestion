@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import { Modal } from "@carbon/react";
 
@@ -27,10 +27,7 @@ const InfoIngestionModal = ({
       onRequestClose={handleRequestclose}
       passiveModal
     >
-      <p>
-        Run on{" "}
-        {ingestionDate ? new Date(ingestionDate).toLocaleString() : "N/A"}
-      </p>
+      <p>Run on {ingestionDate ? new Date(ingestionDate).toLocaleString() : "N/A"}</p>
       <p>{errorMessage}</p>
     </Modal>
   );

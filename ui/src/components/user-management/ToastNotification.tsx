@@ -1,8 +1,8 @@
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import {
   ToastNotification as CarbonToastNotification,
-  ToastNotificationProps,
+  type ToastNotificationProps,
 } from "@carbon/react";
 
 type ToastProps = {
@@ -13,13 +13,7 @@ type ToastProps = {
   title: string;
 };
 
-function ToastNotification({
-  show,
-  setShow,
-  kind,
-  caption,
-  title,
-}: ToastProps) {
+function ToastNotification({ show, setShow, kind, caption, title }: ToastProps) {
   return (
     show && (
       <CarbonToastNotification

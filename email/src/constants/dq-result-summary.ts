@@ -58,8 +58,7 @@ export const dqResultSummary = {
     {
       assertion: "is_not_alphanumeric",
       column: "cellular_coverage_availability",
-      description:
-        "Checks if column cellular_coverage_availability is alphanumeric.",
+      description: "Checks if column cellular_coverage_availability is alphanumeric.",
       count_failed: 0,
       count_passed: 100,
       count_overall: 100,
@@ -109,8 +108,7 @@ export const dqResultSummary = {
     {
       assertion: "is_not_alphanumeric",
       column: "school_data_collection_modality",
-      description:
-        "Checks if column school_data_collection_modality is alphanumeric.",
+      description: "Checks if column school_data_collection_modality is alphanumeric.",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -130,8 +128,7 @@ export const dqResultSummary = {
     {
       assertion: "is_not_numeric",
       column: "connectivity_RT_ingestion_timestamp",
-      description:
-        "Checks if column connectivity_RT_ingestion_timestamp is numeric.",
+      description: "Checks if column connectivity_RT_ingestion_timestamp is numeric.",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -141,8 +138,7 @@ export const dqResultSummary = {
     {
       assertion: "is_not_numeric",
       column: "connectivity_govt_collection_year",
-      description:
-        "Checks if column connectivity_govt_collection_year is numeric.",
+      description: "Checks if column connectivity_govt_collection_year is numeric.",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -312,8 +308,7 @@ export const dqResultSummary = {
     {
       assertion: "is_not_numeric",
       column: "connectivity_govt_ingestion_timestamp",
-      description:
-        "Checks if column connectivity_govt_ingestion_timestamp is numeric.",
+      description: "Checks if column connectivity_govt_ingestion_timestamp is numeric.",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -383,8 +378,7 @@ export const dqResultSummary = {
     {
       assertion: "is_not_alphanumeric",
       column: "connectivity_RT_datasource",
-      description:
-        "Checks if column connectivity_RT_datasource is alphanumeric.",
+      description: "Checks if column connectivity_RT_datasource is alphanumeric.",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -504,8 +498,7 @@ export const dqResultSummary = {
     {
       assertion: "is_not_numeric",
       column: "school_location_ingestion_timestamp",
-      description:
-        "Checks if column school_location_ingestion_timestamp is numeric.",
+      description: "Checks if column school_location_ingestion_timestamp is numeric.",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -577,8 +570,7 @@ export const dqResultSummary = {
     {
       assertion: "is_null_optional",
       column: "download_speed_contracted",
-      description:
-        "Checks if nullable column download_speed_contracted is null",
+      description: "Checks if nullable column download_speed_contracted is null",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -608,8 +600,7 @@ export const dqResultSummary = {
     {
       assertion: "is_null_optional",
       column: "school_establishment_year",
-      description:
-        "Checks if nullable column school_establishment_year is null",
+      description: "Checks if nullable column school_establishment_year is null",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -700,8 +691,7 @@ export const dqResultSummary = {
     {
       assertion: "is_null_optional",
       column: "school_data_collection_year",
-      description:
-        "Checks if nullable column school_data_collection_year is null",
+      description: "Checks if nullable column school_data_collection_year is null",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -821,8 +811,7 @@ export const dqResultSummary = {
     {
       assertion: "is_null_optional",
       column: "connectivity_RT_datasource",
-      description:
-        "Checks if nullable column connectivity_RT_datasource is null",
+      description: "Checks if nullable column connectivity_RT_datasource is null",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -832,8 +821,7 @@ export const dqResultSummary = {
     {
       assertion: "is_null_optional",
       column: "school_data_collection_modality",
-      description:
-        "Checks if nullable column school_data_collection_modality is null",
+      description: "Checks if nullable column school_data_collection_modality is null",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -943,8 +931,7 @@ export const dqResultSummary = {
     {
       assertion: "is_null_optional",
       column: "cellular_coverage_availability",
-      description:
-        "Checks if nullable column cellular_coverage_availability is null",
+      description: "Checks if nullable column cellular_coverage_availability is null",
       count_failed: 0,
       count_passed: 100,
       count_overall: 100,
@@ -1142,8 +1129,7 @@ export const dqResultSummary = {
     {
       assertion: "is_invalid_domain",
       column: "cellular_coverage_availability",
-      description:
-        "Checks if column cellular_coverage_availability is within yes, no",
+      description: "Checks if column cellular_coverage_availability is within yes, no",
       count_failed: 0,
       count_passed: 100,
       count_overall: 100,
@@ -1164,8 +1150,7 @@ export const dqResultSummary = {
     {
       assertion: "is_invalid_domain",
       column: "electricity_availability",
-      description:
-        "Checks if column electricity_availability is within yes, no",
+      description: "Checks if column electricity_availability is within yes, no",
       count_failed: 0,
       count_passed: 100,
       count_overall: 100,
@@ -1249,8 +1234,7 @@ export const dqResultSummary = {
     {
       assertion: "is_invalid_range",
       column: "num_computers_desired",
-      description:
-        "Checks if column num_computers_desired is between 0 and 1000",
+      description: "Checks if column num_computers_desired is between 0 and 1000",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -1300,8 +1284,7 @@ export const dqResultSummary = {
     {
       assertion: "is_invalid_range",
       column: "microwave_node_distance",
-      description:
-        "Checks if column microwave_node_distance is between 0 and 10000000",
+      description: "Checks if column microwave_node_distance is between 0 and 10000000",
       count_failed: 0,
       count_passed: 100,
       count_overall: 100,
@@ -1331,8 +1314,7 @@ export const dqResultSummary = {
     {
       assertion: "is_invalid_range",
       column: "download_speed_contracted",
-      description:
-        "Checks if column download_speed_contracted is between 1 and 500",
+      description: "Checks if column download_speed_contracted is between 1 and 500",
       count_failed: 100,
       count_passed: 0,
       count_overall: 100,
@@ -1363,8 +1345,7 @@ export const dqResultSummary = {
     {
       assertion: "is_invalid_range",
       column: "fiber_node_distance",
-      description:
-        "Checks if column fiber_node_distance is between 0 and 10000000",
+      description: "Checks if column fiber_node_distance is between 0 and 10000000",
       count_failed: 0,
       count_passed: 100,
       count_overall: 100,
@@ -1417,8 +1398,7 @@ export const dqResultSummary = {
     {
       assertion: "duplicate_all_except_school_code",
       column: "",
-      description:
-        "Checks if there are duplicates across all columns except School ID",
+      description: "Checks if there are duplicates across all columns except School ID",
       count_failed: 0,
       count_passed: 100,
       count_overall: 100,

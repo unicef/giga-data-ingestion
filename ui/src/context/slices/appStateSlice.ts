@@ -1,8 +1,8 @@
-import { StateCreator } from "zustand";
+import type { StateCreator } from "zustand";
 
-import { User } from "@/types/user";
+import type { User } from "@/types/user";
 
-import { UploadSliceState } from "./uploadSlice";
+import type { UploadSliceState } from "./uploadSlice";
 
 interface AppStateSliceState {
   appState: {
@@ -18,9 +18,7 @@ interface AppStateSliceActions {
   };
 }
 
-export interface AppStateSlice
-  extends AppStateSliceState,
-    AppStateSliceActions {}
+export interface AppStateSlice extends AppStateSliceState, AppStateSliceActions {}
 
 const initialAppState: AppStateSliceState = {
   appState: {

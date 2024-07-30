@@ -1,6 +1,6 @@
-import { SyntheticEvent } from "react";
+import type { SyntheticEvent } from "react";
 
-import { GraphUser } from "@/types/user.ts";
+import type { GraphUser } from "@/types/user.ts";
 
 export type IngestApiFormMapping<T> = {
   name: Extract<keyof T, string>;

@@ -4,17 +4,17 @@ import {
   Container,
   Head,
   Heading,
-  Img,
   Html,
+  Img,
   Preview,
   Section,
   Text,
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
-import tailwindConfig from "../styles/tailwind.config";
-import { DataQualityCheckSuccessProps } from "../types/dq-report";
-import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Header from "../components/Header";
+import tailwindConfig from "../styles/tailwind.config";
+import type { DataQualityCheckSuccessProps } from "../types/dq-report";
 
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
@@ -79,8 +79,8 @@ export const DataQualityReportCheckSuccess = ({
 
               <Footer>
                 <>
-                  Your file successfully completed data checks. You may view the
-                  checks performed on Giga Sync.
+                  Your file successfully completed data checks. You may view the checks
+                  performed on Giga Sync.
                 </>
               </Footer>
             </div>

@@ -1,13 +1,13 @@
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import { Modal } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
-import { AxiosResponse } from "axios";
+import type { AxiosResponse } from "axios";
 
 import { api, queryClient } from "@/api";
-import { PagedSchoolListResponse } from "@/types/qos";
+import type { PagedSchoolListResponse } from "@/types/qos";
 
-import { LoadingStates } from "./IngestTable";
+import type { LoadingStates } from "./IngestTable";
 
 interface ConfirmEnableIngestionModalProps {
   ingestionName: string;
@@ -105,11 +105,10 @@ const ConfirmToggleIngestionEnabledModal = ({
   const ENABLE_MESSAGE = (
     <>
       <p>
-        Activating an API ingestion will run the ingestion immediately, and it
-        will rerun based on the input frequency until it is stopped. All runs
-        will incur the corresponding costs in the databases. Please make sure
-        that the API ingestion has been correctly set up before triggering an
-        ingestion.
+        Activating an API ingestion will run the ingestion immediately, and it will
+        rerun based on the input frequency until it is stopped. All runs will incur the
+        corresponding costs in the databases. Please make sure that the API ingestion
+        has been correctly set up before triggering an ingestion.
       </p>
       <p>Are you sure you want to proceed?</p>
     </>
@@ -118,9 +117,9 @@ const ConfirmToggleIngestionEnabledModal = ({
   const DISABLE_MESSAGE = (
     <>
       <p>
-        Deactivating an API ingestion will stop the ingestion from running
-        automatically based on the input frequency. It will not run again until
-        it is manually activated again by a user.
+        Deactivating an API ingestion will stop the ingestion from running automatically
+        based on the input frequency. It will not run again until it is manually
+        activated again by a user.
       </p>
       <p>Are you sure you want to proceed?</p>
     </>

@@ -99,13 +99,11 @@ export const masterSchemaData: MasterSchema = {
     data_relevance: DataRelevanceEnum.Required,
   },
   education_level: {
-    description:
-      "Level of education taught at the school, standardized by Giga",
+    description: "Level of education taught at the school, standardized by Giga",
     data_relevance: DataRelevanceEnum.Required,
   },
   school_location_ingestion_timestamp: {
-    description:
-      "Timestamp when school locations were mapped/ingested in Giga system",
+    description: "Timestamp when school locations were mapped/ingested in Giga system",
     data_relevance: DataRelevanceEnum.Required,
   },
   school_data_collection_year: {
@@ -149,8 +147,7 @@ export const masterSchemaData: MasterSchema = {
     data_relevance: DataRelevanceEnum.Optional,
   },
   connectivity_RT_ingestion_timestamp: {
-    description:
-      "Timestamp when we first ingested RT connectivity data in Giga system",
+    description: "Timestamp when we first ingested RT connectivity data in Giga system",
     data_relevance: DataRelevanceEnum.Optional,
   },
   connectivity_type_govt: {
@@ -211,8 +208,7 @@ export const masterSchemaData: MasterSchema = {
     data_relevance: DataRelevanceEnum.Optional,
   },
   computer_lab: {
-    description:
-      "Availability of a functional computer laboratory in the school",
+    description: "Availability of a functional computer laboratory in the school",
     data_relevance: DataRelevanceEnum.Optional,
   },
   electricity_availability: {
@@ -380,8 +376,7 @@ export interface CoverageSchema
 
 export const coverageSchemaData: CoverageSchema = {
   school_id_giga: masterSchemaData.school_id_giga,
-  cellular_coverage_availability:
-    masterSchemaData.cellular_coverage_availability,
+  cellular_coverage_availability: masterSchemaData.cellular_coverage_availability,
   cellular_coverage_type: masterSchemaData.cellular_coverage_type,
   fiber_node_distance: masterSchemaData.fiber_node_distance,
   microwave_node_distance: masterSchemaData.microwave_node_distance,
@@ -452,8 +447,7 @@ export const geolocationSchemaData: GeolocationSchema = {
   admin1: masterSchemaData.admin1,
   admin2: masterSchemaData.admin2,
   computer_lab: masterSchemaData.computer_lab,
-  connectivity_govt_collection_year:
-    masterSchemaData.connectivity_govt_collection_year,
+  connectivity_govt_collection_year: masterSchemaData.connectivity_govt_collection_year,
   connectivity_govt_ingestion_timestamp:
     masterSchemaData.connectivity_govt_ingestion_timestamp,
   connectivity_govt: masterSchemaData.connectivity_govt,
@@ -476,8 +470,7 @@ export const geolocationSchemaData: GeolocationSchema = {
   num_teachers: masterSchemaData.num_teachers,
   school_address: masterSchemaData.school_address,
   school_area_type: masterSchemaData.school_area_type,
-  school_data_collection_modality:
-    masterSchemaData.school_data_collection_modality,
+  school_data_collection_modality: masterSchemaData.school_data_collection_modality,
   school_data_collection_year: masterSchemaData.school_data_collection_year,
   school_data_source: masterSchemaData.school_data_source,
   school_establishment_year: masterSchemaData.school_establishment_year,

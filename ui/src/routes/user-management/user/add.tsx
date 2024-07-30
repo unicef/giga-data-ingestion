@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 
 import { Add } from "@carbon/icons-react";
 import {
@@ -14,11 +14,7 @@ import {
   ToastNotification,
 } from "@carbon/react";
 import MultiSelect from "@carbon/react/lib/components/MultiSelect/MultiSelect";
-import {
-  queryOptions,
-  useMutation,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { queryOptions, useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
@@ -26,8 +22,8 @@ import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Select } from "@/components/forms/Select.tsx";
 import countries from "@/constants/countries.ts";
-import { GraphGroup } from "@/types/group.ts";
-import { CreateUserRequest } from "@/types/user.ts";
+import type { GraphGroup } from "@/types/group.ts";
+import type { CreateUserRequest } from "@/types/user.ts";
 import { filterRoles, matchNamesWithIds } from "@/utils/group.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
@@ -126,14 +122,12 @@ function AddUser() {
     mutationFn: api.users.create,
   });
 
-  const dataSetOptions = [
-    "School Coverage",
-    "School Geolocation",
-    "School QoS",
-  ].map(dataset => ({
-    value: dataset,
-    label: dataset,
-  }));
+  const dataSetOptions = ["School Coverage", "School Geolocation", "School QoS"].map(
+    dataset => ({
+      value: dataset,
+      label: dataset,
+    }),
+  );
 
   const handleModalCancel = async (modalName: "AddModal" | "ConfirmModal") => {
     setSwapModal(false);
@@ -190,9 +184,7 @@ function AddUser() {
 
     const { addedDatasetsWithIds, addedRolesWithIds } = deriveAddedValues();
     const groupIdsToAdd = [
-      ...addedDatasetsWithIds.map(
-        addedDatasetWithId => addedDatasetWithId.id ?? "",
-      ),
+      ...addedDatasetsWithIds.map(addedDatasetWithId => addedDatasetWithId.id ?? ""),
       ...addedRolesWithIds.map(addedRoleWithId => addedRoleWithId.id ?? ""),
     ];
     const addGroupsPayload: CreateUserRequest = {
@@ -314,11 +306,7 @@ function AddUser() {
               </FormGroup>
             ))}
 
-            <Button
-              kind="ghost"
-              renderIcon={Add}
-              onClick={handleAddCountryDataset}
-            >
+            <Button kind="ghost" renderIcon={Add} onClick={handleAddCountryDataset}>
               Add country
             </Button>
           </Stack>

@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import {
-  FieldErrors,
-  SubmitHandler,
-  UseFormRegister,
+  type FieldErrors,
+  type SubmitHandler,
+  type UseFormRegister,
   useForm,
 } from "react-hook-form";
 
@@ -20,12 +20,7 @@ import {
 } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import {
-  Link,
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from "@tanstack/react-router";
+import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import {
@@ -39,18 +34,13 @@ import {
 import { metadataMapping, yearList } from "@/constants/metadata";
 import { useStore } from "@/context/store";
 import useRoles from "@/hooks/useRoles.ts";
-import { MetadataFormMapping } from "@/types/metadata.ts";
-import { UploadParams } from "@/types/upload.ts";
+import type { MetadataFormMapping } from "@/types/metadata.ts";
+import type { UploadParams } from "@/types/upload.ts";
 import { capitalizeFirstLetter } from "@/utils/string.ts";
 
-export const Route = createFileRoute(
-  "/upload/$uploadGroup/$uploadType/metadata",
-)({
+export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/metadata")({
   component: Metadata,
-  loader: ({
-    context: { queryClient },
-    params: { uploadGroup, uploadType },
-  }) => {
+  loader: ({ context: { queryClient }, params: { uploadGroup, uploadType } }) => {
     const {
       uploadSlice: { file, columnMapping },
       uploadSliceActions: { setStepIndex },
@@ -58,10 +48,7 @@ export const Route = createFileRoute(
 
     if (uploadGroup === "other" && uploadType === "unstructured") {
       setStepIndex(1);
-    } else if (
-      !file ||
-      Object.values(columnMapping).filter(Boolean).length === 0
-    ) {
+    } else if (!file || Object.values(columnMapping).filter(Boolean).length === 0) {
       setStepIndex(1);
       throw redirect({ from: Route.fullPath, to: "../column-mapping" });
     }
@@ -119,11 +106,7 @@ const RenderFormItem = ({
     }
     case "month-year": {
       return (
-        <MonthYearSelect
-          formItem={formItem}
-          errors={errors}
-          register={register}
-        />
+        <MonthYearSelect formItem={formItem} errors={errors} register={register} />
       );
     }
     default: {
@@ -140,8 +123,7 @@ function Metadata() {
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType, uploadGroup } = Route.useParams();
 
-  const isUnstructured =
-    uploadGroup === "other" && uploadType === "unstructured";
+  const isUnstructured = uploadGroup === "other" && uploadType === "unstructured";
 
   const { countryDatasets, isPrivileged } = useRoles();
 
@@ -236,7 +218,7 @@ function Metadata() {
         setUploadDate(uploadSlice.timeStamp);
       } else {
         const {
-          data: { id: uploadId, created: created },
+          data: { id: uploadId, created },
         } = await uploadFile.mutateAsync(body);
         setUploadId(uploadId);
         setUploadDate(new Date(created));
@@ -246,10 +228,7 @@ function Metadata() {
       setStepIndex(3);
       void navigate({ to: "../success" });
     } catch {
-      console.error(
-        "uploadFile.error.message",
-        uploadFile.error?.message ?? "",
-      );
+      console.error("uploadFile.error.message", uploadFile.error?.message ?? "");
       setIsUploadError(true);
       setIsUploading(false);
     }
@@ -265,9 +244,9 @@ function Metadata() {
             metadata sheet below.
           </p>
           <p>
-            Not all metadata information is made visible on Project Connect but
-            does allow the Giga team to understand where the data has come from,
-            and how it can be best integrated into our dataset.
+            Not all metadata information is made visible on Project Connect but does
+            allow the Giga team to understand where the data has come from, and how it
+            can be best integrated into our dataset.
           </p>
           <Tag type="red">*Required</Tag>
         </div>
@@ -319,9 +298,7 @@ function Metadata() {
                 disabled={isUploading}
                 renderIcon={
                   isUploading
-                    ? props => (
-                        <Loading small={true} withOverlay={false} {...props} />
-                      )
+                    ? props => <Loading small={true} withOverlay={false} {...props} />
                     : ArrowRight
                 }
                 type="submit"

@@ -1,7 +1,7 @@
-import { DataTableHeader } from "@carbon/react";
-import { StateCreator } from "zustand";
+import type { DataTableHeader } from "@carbon/react";
+import type { StateCreator } from "zustand";
 
-import { KeyValueObject } from "@/types/datatable";
+import type { KeyValueObject } from "@/types/datatable";
 
 interface ApproveRowSliceState {
   approveRowState: {
@@ -15,9 +15,7 @@ interface ApproveRowSliceState {
 
 interface ApproveRowSliceActions {
   approveRowActions: {
-    setHeaders: (
-      header: ApproveRowSliceState["approveRowState"]["headers"],
-    ) => void;
+    setHeaders: (header: ApproveRowSliceState["approveRowState"]["headers"]) => void;
     setRows: (row: ApproveRowSliceState["approveRowState"]["rows"]) => void;
     setApprovedRows: (
       approvedRows: ApproveRowSliceState["approveRowState"]["approvedRows"],
@@ -30,9 +28,7 @@ interface ApproveRowSliceActions {
   };
 }
 
-export interface ApproveRowSlice
-  extends ApproveRowSliceState,
-    ApproveRowSliceActions {}
+export interface ApproveRowSlice extends ApproveRowSliceState, ApproveRowSliceActions {}
 
 const initialAppState: ApproveRowSliceState = {
   approveRowState: {

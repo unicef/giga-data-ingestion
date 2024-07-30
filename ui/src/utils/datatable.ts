@@ -1,6 +1,6 @@
-import { DataTableRow } from "@carbon/react";
+import type { DataTableRow } from "@carbon/react";
 
-import { KeyValueObject } from "@/types/datatable";
+import type { KeyValueObject } from "@/types/datatable";
 
 export const transformSelectedRowsToKeyValArray = (
   /* eslint-disable @typescript-eslint/no-explicit-any */

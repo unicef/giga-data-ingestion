@@ -1,10 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 
 import { api } from "@/api/index.ts";
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
+import { DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE } from "@/constants/pagination.ts";
 
 export const uploadsQueryOptions = queryOptions({
   queryFn: () =>

@@ -14,10 +14,7 @@ function useRoles() {
 
   const isSuperAdmin = useMemo(() => roles.includes("Super"), [roles]);
 
-  const isPrivileged = useMemo(
-    () => isAdmin || isSuperAdmin,
-    [isAdmin, isSuperAdmin],
-  );
+  const isPrivileged = useMemo(() => isAdmin || isSuperAdmin, [isAdmin, isSuperAdmin]);
 
   const hasRoles = useMemo(() => {
     return roles.length > 0;

@@ -32,18 +32,11 @@ export default function DeleteBreadCrumbs() {
   const breadcrumbItems = getBreadcrumbItems();
 
   return (
-    <Breadcrumb
-      style={{ viewTransitionName: "delete-breadcrumbs" }}
-      noTrailingSlash
-    >
+    <Breadcrumb style={{ viewTransitionName: "delete-breadcrumbs" }} noTrailingSlash>
       {breadcrumbItems.map((item, index) => (
         <BreadcrumbItem key={item.label} className="capitalize">
           {item.path && index + 1 < breadcrumbItems.length ? (
-            <Link
-              to={item.path}
-              params={item.params ?? {}}
-              search={item.search ?? {}}
-            >
+            <Link to={item.path} params={item.params ?? {}} search={item.search ?? {}}>
               {item.label}
             </Link>
           ) : (

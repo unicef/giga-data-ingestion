@@ -1,4 +1,4 @@
-import { ReactElement, useMemo } from "react";
+import { type ReactElement, useMemo } from "react";
 
 import { useMsal } from "@azure/msal-react";
 import {
@@ -11,7 +11,7 @@ import {
 import {
   Button,
   DataTable,
-  DataTableHeader,
+  type DataTableHeader,
   DataTableSkeleton,
   Pagination,
   Table,
@@ -29,11 +29,8 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 
 import { api } from "@/api";
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
-import { GraphUser } from "@/types/user.ts";
+import { DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE } from "@/constants/pagination.ts";
+import type { GraphUser } from "@/types/user.ts";
 
 const columns: DataTableHeader[] = [
   {
@@ -95,10 +92,7 @@ function UsersTable() {
 
   const filteredUsersData = useMemo(() => {
     return usersData
-      .slice(
-        (currentPage - 1) * pageSize,
-        (currentPage - 1) * pageSize + pageSize,
-      )
+      .slice((currentPage - 1) * pageSize, (currentPage - 1) * pageSize + pageSize)
       .map(originalUser => {
         const user = { ...originalUser } as TableGraphUser;
 

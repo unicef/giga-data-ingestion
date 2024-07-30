@@ -1,4 +1,4 @@
-import { PropsWithChildren, useMemo } from "react";
+import { type PropsWithChildren, useMemo } from "react";
 
 import AuthenticatedView from "@/components/utils/AuthenticatedView.tsx";
 import Forbidden from "@/components/utils/Forbidden.tsx";
@@ -8,10 +8,7 @@ interface AuthenticatedRBACViewProps extends PropsWithChildren {
   roles?: string[];
 }
 
-function AuthenticatedRBACView({
-  roles = [],
-  children,
-}: AuthenticatedRBACViewProps) {
+function AuthenticatedRBACView({ roles = [], children }: AuthenticatedRBACViewProps) {
   const { roles: userRoles } = useRoles();
 
   const hasPermissions = useMemo(() => {
@@ -23,9 +20,7 @@ function AuthenticatedRBACView({
   }, [roles, userRoles]);
 
   return (
-    <AuthenticatedView>
-      {hasPermissions ? children : <Forbidden />}
-    </AuthenticatedView>
+    <AuthenticatedView>{hasPermissions ? children : <Forbidden />}</AuthenticatedView>
   );
 }
 

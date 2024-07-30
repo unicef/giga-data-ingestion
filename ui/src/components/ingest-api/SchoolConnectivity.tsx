@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { FormProvider, type SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, Loading, Section, Tag } from "@carbon/react";
@@ -12,10 +12,7 @@ import ConfirmAddIngestionModal from "@/components/ingest-api/ConfirmAddIngestio
 import ConfirmEditIngestionModal from "@/components/ingest-api/ConfirmEditIngestionModal.tsx";
 import SchoolConnectivityFormInputs from "@/components/ingest-api/SchoolConnectivityFormInputs.tsx";
 import { useStore } from "@/context/store.ts";
-import {
-  SchoolConnectivityFormSchema,
-  TestApiSchema,
-} from "@/forms/ingestApi.ts";
+import { SchoolConnectivityFormSchema, TestApiSchema } from "@/forms/ingestApi.ts";
 import { useTestApi } from "@/hooks/useTestApi.ts";
 
 type SchoolConnectivityProps =
@@ -40,8 +37,7 @@ function SchoolConnectivity({
   const [isValidResponse, setIsValidResponse] = useState<boolean>(false);
   const [isValidResponseDateFormat, setIsValidResponseDateFormat] =
     useState<boolean>(false);
-  const [isValidSchoolIdGigaGovtKey, setIsValidSchoolIdGigaGovtKey] =
-    useState(false);
+  const [isValidSchoolIdGigaGovtKey, setIsValidSchoolIdGigaGovtKey] = useState(false);
   const [open, setOpen] = useState<boolean>(false);
   const [responsePreview, setResponsePreview] = useState<
     Record<string, unknown> | Record<string, unknown>[] | string
@@ -97,8 +93,7 @@ function SchoolConnectivity({
     ];
     const currentForm = Object.fromEntries(
       Object.entries(getValues()).filter(
-        ([key]) =>
-          !excludedFields.includes(key as keyof SchoolConnectivityFormSchema),
+        ([key]) => !excludedFields.includes(key as keyof SchoolConnectivityFormSchema),
       ),
     );
 
@@ -144,9 +139,7 @@ function SchoolConnectivity({
   return (
     <Section className="container py-6">
       <header className="gap-2">
-        <p className="my-0 py-1 text-2xl">
-          Step 3: Configure school connectivity API
-        </p>
+        <p className="my-0 py-1 text-2xl">Step 3: Configure school connectivity API</p>
       </header>
 
       <div className="grid grid-cols-2 gap-10">
@@ -202,12 +195,8 @@ function SchoolConnectivity({
               Test
             </Button>
           </div>
-          {isResponseError && (
-            <Tag type="red">Invalid Output from API request</Tag>
-          )}
-          {responsePreview === "invalid" && (
-            <Tag type="red">Invalid Data Key</Tag>
-          )}
+          {isResponseError && <Tag type="red">Invalid Output from API request</Tag>}
+          {responsePreview === "invalid" && <Tag type="red">Invalid Data Key</Tag>}
           {!isValidResponseDateFormat && (
             <Tag type="red">Response date format mismatch</Tag>
           )}

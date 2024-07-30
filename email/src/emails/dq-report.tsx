@@ -3,20 +3,20 @@ import {
   Button,
   Container,
   Head,
-  Section,
-  Preview,
   Html,
-  Text,
   Link,
+  Preview,
+  Section,
+  Text,
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
-import tailwindConfig from "../styles/tailwind.config";
-import { DataQualityReportEmailProps } from "../types/dq-report";
-import { dqResultSummary } from "../constants/dq-result-summary";
 import CheckWithError from "../components/CheckWithError";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 import DqReportHeading from "../components/DqReportHeading";
+import Footer from "../components/Footer";
+import Header from "../components/Header";
+import { dqResultSummary } from "../constants/dq-result-summary";
+import tailwindConfig from "../styles/tailwind.config";
+import type { DataQualityReportEmailProps } from "../types/dq-report";
 import { isSummaryCheck } from "../utils/dq-report";
 
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
@@ -36,12 +36,12 @@ const DataQualityReport = ({
     : "Data Check Warnings: Action Required!";
 
   const checks = Object.keys(dataQualityCheck)
-    .filter((key) => {
+    .filter(key => {
       if (key === "summary") return false;
       if (key === "critical_error_check") return false;
       return true;
     })
-    .map((key) => {
+    .map(key => {
       const check = dataQualityCheck[key];
       if (isSummaryCheck(check)) {
         return (
@@ -83,10 +83,7 @@ const DataQualityReport = ({
           <Container className="border border-solid border-giga-light-gray rounded my-10 mx-auto p-5 max-w-2xl">
             <Header />
             <div className="p-6 mx-auto">
-              <DqReportHeading
-                hasCriticalError={hasCriticalError}
-                title={title}
-              />
+              <DqReportHeading hasCriticalError={hasCriticalError} title={title} />
               <Text className="my-1">
                 Upload Id <strong>{uploadId}</strong>
               </Text>
@@ -108,8 +105,8 @@ const DataQualityReport = ({
               </Section>
               <Footer>
                 <Text className="text-[#666666] text-[12px] leading-[24px]">
-                  This is an auto-generated email. Please do not reply. For
-                  inquiries, you may submit a ticket{" "}
+                  This is an auto-generated email. Please do not reply. For inquiries,
+                  you may submit a ticket{" "}
                   <Link
                     href={`https://github.com/unicef/giga-data-ingestion/issues/new`}
                     className="text-blue"

@@ -1,4 +1,4 @@
-import { Controller, UseFormReturn } from "react-hook-form";
+import { Controller, type UseFormReturn } from "react-hook-form";
 
 import {
   Button,
@@ -12,11 +12,11 @@ import {
 
 import { Select } from "@/components/forms/Select.tsx";
 import { TextInput } from "@/components/forms/TextInput.tsx";
-import {
+import type {
   SchoolConnectivityFormSchema,
   SchoolListFormSchema,
 } from "@/forms/ingestApi.ts";
-import { IngestApiFormMapping } from "@/types/ingestApi.ts";
+import type { IngestApiFormMapping } from "@/types/ingestApi.ts";
 
 interface BaseInputProps<MappingType> {
   mapping: IngestApiFormMapping<MappingType>;
@@ -46,9 +46,7 @@ export function FreeTextInput<MappingType>({
         </>
       }
       placeholder={mapping.placeholder}
-      helperText={
-        <span className="whitespace-pre-line">{mapping.helperText}</span>
-      }
+      helperText={<span className="whitespace-pre-line">{mapping.helperText}</span>}
       invalid={name in errors}
       invalidText={
         <span className="whitespace-pre-line">
@@ -127,9 +125,7 @@ export function CodeInput<MappingType>({
           {mapping.required && <sup className="text-giga-red">*</sup>}
         </>
       }
-      helperText={
-        <span className="whitespace-pre-line">{mapping.helperText}</span>
-      }
+      helperText={<span className="whitespace-pre-line">{mapping.helperText}</span>}
       invalid={name in errors}
       invalidText={
         <span className="whitespace-pre-line">
@@ -193,20 +189,16 @@ export function SelectFromArray<MappingType>({
             />
           ))
         : mapping.type === "select"
-        ? mapping.options.map(option => (
-            <Select id={option} key={option} value={option} />
-          ))
-        : null}
+          ? mapping.options.map(option => (
+              <Select id={option} key={option} value={option} />
+            ))
+          : null}
     </Select>
   );
 }
 
-interface SelectFromObjectArrayProps<MappingType>
-  extends BaseInputProps<MappingType> {
-  mapping: Extract<
-    IngestApiFormMapping<MappingType>,
-    { type: "select-object" }
-  >;
+interface SelectFromObjectArrayProps<MappingType> extends BaseInputProps<MappingType> {
+  mapping: Extract<IngestApiFormMapping<MappingType>, { type: "select-object" }>;
 }
 
 export function SelectFromObjectArray<MappingType>({
@@ -306,8 +298,7 @@ export function SelectFromEnum<MappingType>({
   );
 }
 
-interface TextInputWithActionProps<MappingType>
-  extends BaseInputProps<MappingType> {
+interface TextInputWithActionProps<MappingType> extends BaseInputProps<MappingType> {
   onAction: () => void;
   actionLabel: string;
   isActionLoading?: boolean;
@@ -375,10 +366,7 @@ interface SwitchProps<MappingType> extends BaseInputProps<MappingType> {
   mapping: Extract<IngestApiFormMapping<MappingType>, { type: "toggle" }>;
 }
 
-export function Switch<MappingType>({
-  mapping,
-  hookForm,
-}: SwitchProps<MappingType>) {
+export function Switch<MappingType>({ mapping, hookForm }: SwitchProps<MappingType>) {
   const { control, setValue } = hookForm;
   const name = mapping.name as keyof (
     | SchoolListFormSchema
@@ -443,12 +431,12 @@ export function NumberInput<MappingType>({
       {...registerReturn}
       min={
         typeof registerReturn.min === "string"
-          ? parseInt(registerReturn.min, 10)
+          ? Number.parseInt(registerReturn.min, 10)
           : registerReturn.min
       }
       max={
         typeof registerReturn.max === "string"
-          ? parseInt(registerReturn.max, 10)
+          ? Number.parseInt(registerReturn.max, 10)
           : registerReturn.max
       }
     />

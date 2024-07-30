@@ -1,4 +1,4 @@
-import { Check } from "@/types/upload";
+import type { Check } from "@/types/upload";
 
 export const countAssertions = (checks: Check[]) => {
   return checks.reduce(

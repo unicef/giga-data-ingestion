@@ -23,10 +23,7 @@ import { Link, getRouteApi, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { HEADERS } from "@/constants/ingest-api";
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
+import { DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE } from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 
 import StatusIndicator from "../upload/StatusIndicator";
@@ -47,16 +44,14 @@ function IngestTable() {
   const navigate = useNavigate({ from: "/ingest-api/" });
 
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({});
-  const [selectedIngestionName, setSelectedIngestionName] =
-    useState<string>("");
+  const [selectedIngestionName, setSelectedIngestionName] = useState<string>("");
   const [selectedIngestionId, setSelectedIngestionId] = useState<string>("");
   const [selectedIngestionEnabled, setSelectedIngestionEnabled] =
     useState<boolean>(false);
 
   const [isOpenConfirmModal, setIsOpenConfirmModal] = useState<boolean>(false);
   const [isOpenInfoModal, setIsOpenInfoModal] = useState<boolean>(false);
-  const [infoModalErrorMessage, setInfoModalErrorMessage] =
-    useState<string>("");
+  const [infoModalErrorMessage, setInfoModalErrorMessage] = useState<string>("");
   const [selectedIngestionLastModified, setSelectedIngestionLastModified] =
     useState<Date>(new Date());
 

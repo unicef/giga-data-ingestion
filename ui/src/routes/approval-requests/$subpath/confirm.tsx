@@ -5,7 +5,7 @@ import {
   Button,
   ButtonSet,
   DataTable,
-  DataTableHeader,
+  type DataTableHeader,
   Loading,
   Section,
   Table,
@@ -22,8 +22,8 @@ import { api } from "@/api";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
-import { CarbonDataTableRow } from "@/types/datatable";
-import { KeyValueObject } from "@/types/datatable";
+import type { CarbonDataTableRow } from "@/types/datatable";
+import type { KeyValueObject } from "@/types/datatable";
 import { getValueByHeader } from "@/utils/approval_requests";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
@@ -100,17 +100,12 @@ function Confirm() {
               </TableHead>
               <TableBody>
                 {rows.map(row => {
-                  const changeType = getValueByHeader(
-                    row.cells,
-                    "_change_type",
-                  );
+                  const changeType = getValueByHeader(row.cells, "_change_type");
                   return (
                     <TableRow
                       className={cn({
                         "bg-green-300": changeType === "insert",
-                        "bg-yellow-200": (changeType as string).startsWith(
-                          "update_",
-                        ),
+                        "bg-yellow-200": (changeType as string).startsWith("update_"),
                         "bg-red-300": changeType === "delete",
                       })}
                       {...getRowProps({
@@ -121,9 +116,7 @@ function Confirm() {
                         <TableCell key={cell.id}>
                           {typeof cell.value === "object" ? (
                             <>
-                              <p className="line-through">
-                                {cell.value.old ?? "NULL"}
-                              </p>
+                              <p className="line-through">{cell.value.old ?? "NULL"}</p>
                               <p className="">{cell.value.update ?? "NULL"}</p>
                             </>
                           ) : (
@@ -165,9 +158,9 @@ function Confirm() {
       </Accordion>
       <Section level={8}>
         <p className="py-4">
-          The approved rows above will be scheduled for merging to the School
-          Master dataset, and the rejected rows will be dropped. Please double
-          check and click submit to complete the review process.
+          The approved rows above will be scheduled for merging to the School Master
+          dataset, and the rejected rows will be dropped. Please double check and click
+          submit to complete the review process.
         </p>
       </Section>
       <ButtonSet className="w-full">

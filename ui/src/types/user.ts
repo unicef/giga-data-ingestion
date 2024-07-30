@@ -1,4 +1,4 @@
-import { GraphGroup } from "@/types/group.ts";
+import type { GraphGroup } from "@/types/group.ts";
 
 export interface User {
   name: string;

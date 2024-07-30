@@ -1,4 +1,4 @@
-import { ComponentProps } from "react";
+import type { ComponentProps } from "react";
 
 import {
   DataTable as CarbonDataTable,
@@ -65,7 +65,11 @@ function DataTable({
               <TableRow>
                 {headers.map(header => (
                   // @ts-expect-error onclick bad type https://github.com/carbon-design-system/carbon/issues/14831
-                  <TableHeader colSpan={1} {...getHeaderProps({ header })}>
+                  <TableHeader
+                    colSpan={1}
+                    {...getHeaderProps({ header })}
+                    key={header.key}
+                  >
                     {header.header}
                   </TableHeader>
                 ))}
@@ -73,7 +77,7 @@ function DataTable({
             </TableHead>
             <TableBody>
               {rows.map(row => (
-                <TableRow {...getRowProps({ row })}>
+                <TableRow {...getRowProps({ row })} key={row.id}>
                   {row.cells.map(cell => (
                     <TableCell key={cell.id}>{cell.value}</TableCell>
                   ))}

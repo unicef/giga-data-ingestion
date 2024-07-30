@@ -1,4 +1,4 @@
-import { ComponentProps, memo, useMemo } from "react";
+import { type ComponentProps, memo, useMemo } from "react";
 
 import {
   ArrowLeft,
@@ -19,12 +19,7 @@ import {
   Tag,
 } from "@carbon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  Link,
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from "@tanstack/react-router";
+import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
 
 import { api } from "@/api";
@@ -35,10 +30,10 @@ import SummaryChecks from "@/components/check-file-uploads/SummaryChecks";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils";
 import {
-  Check,
+  type Check,
   DQStatus,
-  DataQualityCheck,
-  UploadResponse,
+  type DataQualityCheck,
+  type UploadResponse,
   initialDataQualityCheck,
   initialUploadResponse,
 } from "@/types/upload";
@@ -46,9 +41,7 @@ import { basicCheckSchema } from "@/types/upload";
 import { sumAsertions } from "@/utils/data_quality";
 import { saveFile } from "@/utils/download";
 
-export const Route = createFileRoute(
-  "/upload/$uploadGroup/$uploadType/success",
-)({
+export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/success")({
   component: Success,
   loader: ({ params: { uploadGroup, uploadType } }) => {
     const {
@@ -58,10 +51,7 @@ export const Route = createFileRoute(
 
     if (uploadGroup === "other" && uploadType === "unstructured") {
       //do nothing
-    } else if (
-      !file ||
-      Object.values(columnMapping).filter(Boolean).length === 0
-    ) {
+    } else if (!file || Object.values(columnMapping).filter(Boolean).length === 0) {
       setStepIndex(0);
       throw redirect({ to: ".." });
     }
@@ -81,15 +71,9 @@ const SuccessDataQualityChecks = memo(
     uploadId: string;
   }) => {
     if (status === DQStatus.COMPLETED) {
-      const {
-        summary: _,
-        critical_error_check = [],
-        ...checks
-      } = dqResult.dq_summary;
+      const { summary: _, critical_error_check = [], ...checks } = dqResult.dq_summary;
 
-      const typedChecks = Object.keys(checks).map(
-        key => checks[key] as Check[],
-      );
+      const typedChecks = Object.keys(checks).map(key => checks[key] as Check[]);
 
       const { passed: totalPassedAssertions, failed: totalFailedAssertions } =
         sumAsertions(typedChecks);
@@ -145,8 +129,7 @@ function Success() {
 
   const navigate = useNavigate({ from: "/upload/$uploadId" });
 
-  const isUnstructured =
-    uploadGroup === "other" && uploadType === "unstructured";
+  const isUnstructured = uploadGroup === "other" && uploadType === "unstructured";
 
   const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
     queryFn: () => api.uploads.list_basic_checks(uploadType, source),
@@ -186,10 +169,9 @@ function Success() {
     status === DQStatus.SKIPPED ||
     status === DQStatus.TIMEOUT;
 
-  const { mutateAsync: downloadFile, isPending: isPendingDownloadFile } =
-    useMutation({
-      mutationFn: api.uploads.download_data_quality_check,
-    });
+  const { mutateAsync: downloadFile, isPending: isPendingDownloadFile } = useMutation({
+    mutationFn: api.uploads.download_data_quality_check,
+  });
 
   const basicCheckItems = Object.entries(basicCheck).map(([key, value]) => {
     const basicCheckArraySchema = z.array(basicCheckSchema);
@@ -285,32 +267,28 @@ function Success() {
             </div>
             {status == DQStatus.IN_PROGRESS && (
               <div className="py-6 text-blue-400">
-                Congratulations! Your data file has been uploaded and data
-                quality checks are <b> in progress.</b> Data quality report can
-                be accessed below and also, in the Home page, searchable by the
-                following Upload ID:
+                Congratulations! Your data file has been uploaded and data quality
+                checks are <b> in progress.</b> Data quality report can be accessed
+                below and also, in the Home page, searchable by the following Upload ID:
               </div>
             )}
             <div>
               {status == DQStatus.COMPLETED && (
                 <>
-                  Congratulations! Your data file has been uploaded and data
-                  quality checks are successful with{" "}
-                  <span className="text-green-600">
-                    {" "}
-                    warning/are successful.
-                  </span>{" "}
-                  Data quality report can be accessed below and also, in the
-                  Home page, searchable by the following Upload ID:
+                  Congratulations! Your data file has been uploaded and data quality
+                  checks are successful with{" "}
+                  <span className="text-green-600"> warning/are successful.</span> Data
+                  quality report can be accessed below and also, in the Home page,
+                  searchable by the following Upload ID:
                 </>
               )}
 
               {isError && (
                 <>
                   Your data file has been uploaded and data quality checks{" "}
-                  <span className="text-orange-400">have failed.</span> Data
-                  quality report can be accessed below and also, in the Home
-                  page, searchable by the following Upload ID:
+                  <span className="text-orange-400">have failed.</span> Data quality
+                  report can be accessed below and also, in the Home page, searchable by
+                  the following Upload ID:
                 </>
               )}
             </div>
@@ -349,13 +327,7 @@ function Success() {
                   />
                 </>
               ) : (
-                <>
-                  {isBasicCheckFetching ? (
-                    <AccordionSkeleton />
-                  ) : (
-                    basicCheckItems
-                  )}
-                </>
+                <>{isBasicCheckFetching ? <AccordionSkeleton /> : basicCheckItems}</>
               )}
             </Accordion>
             <ButtonSet className="w-full">
@@ -370,8 +342,7 @@ function Success() {
               </Button>
               <Button
                 className={cn({
-                  "bg-green-600 hover:bg-green-800":
-                    status === DQStatus.COMPLETED,
+                  "bg-green-600 hover:bg-green-800": status === DQStatus.COMPLETED,
                   "bg-orange-400 hover:bg-orange-600": isError,
                 })}
                 disabled={status === DQStatus.IN_PROGRESS}
@@ -379,8 +350,7 @@ function Success() {
                 onClick={handleSubmit}
                 renderIcon={ArrowRight}
               >
-                {status === DQStatus.IN_PROGRESS ||
-                status === DQStatus.COMPLETED
+                {status === DQStatus.IN_PROGRESS || status === DQStatus.COMPLETED
                   ? "Submit"
                   : "Reupload"}
               </Button>

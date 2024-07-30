@@ -19,11 +19,7 @@ export interface ApprovalRequestInfo {
   timestamp: string;
 }
 
-export type ChangeType =
-  | "insert"
-  | "delete"
-  | "update_preimage"
-  | "update_postimage";
+export type ChangeType = "insert" | "delete" | "update_preimage" | "update_postimage";
 
 export type ApprovalRequestData = Record<string, null> & {
   _change_type: ChangeType;

@@ -1,4 +1,4 @@
-import { StateCreator } from "zustand";
+import type { StateCreator } from "zustand";
 
 export interface UploadSliceState {
   uploadSlice: {
@@ -22,20 +22,14 @@ export interface UploadSliceActions {
     resetUploadSliceState: () => void;
     setStepIndex: (value: UploadSliceState["uploadSlice"]["stepIndex"]) => void;
     setUploadSliceState: (upload: UploadSliceState) => void;
-    setColumnMapping: (
-      value: UploadSliceState["uploadSlice"]["columnMapping"],
-    ) => void;
-    setColumnLicense: (
-      value: UploadSliceState["uploadSlice"]["columnLicense"],
-    ) => void;
+    setColumnMapping: (value: UploadSliceState["uploadSlice"]["columnMapping"]) => void;
+    setColumnLicense: (value: UploadSliceState["uploadSlice"]["columnLicense"]) => void;
     setDetectedColumns: (
       value: UploadSliceState["uploadSlice"]["detectedColumns"],
     ) => void;
     setFile: (value: UploadSliceState["uploadSlice"]["file"]) => void;
     setTimeStamp: (value: UploadSliceState["uploadSlice"]["timeStamp"]) => void;
-    setUploadDate: (
-      value: UploadSliceState["uploadSlice"]["uploadDate"],
-    ) => void;
+    setUploadDate: (value: UploadSliceState["uploadSlice"]["uploadDate"]) => void;
     setUploadId: (value: UploadSliceState["uploadSlice"]["uploadId"]) => void;
     setSource: (value: UploadSliceState["uploadSlice"]["source"]) => void;
   };

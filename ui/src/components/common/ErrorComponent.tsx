@@ -1,9 +1,6 @@
 import { Link } from "@tanstack/react-router";
 
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
+import { DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE } from "@/constants/pagination.ts";
 
 export function ErrorComponent() {
   return (

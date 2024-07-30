@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, SelectItem, Stack } from "@carbon/react";
@@ -112,12 +112,10 @@ function Index() {
     <form onSubmit={handleSubmit(onSubmit)}>
       <Stack gap={10}>
         <Stack gap={1}>
-          <h2 className="text-[23px] capitalize">
-            What will you be deleting today?
-          </h2>
+          <h2 className="text-[23px] capitalize">What will you be deleting today?</h2>
           <p>
-            School data is the dataset of schools location & their attributes
-            like name, education level, internet connection, computer count etc.
+            School data is the dataset of schools location & their attributes like name,
+            education level, internet connection, computer count etc.
           </p>
         </Stack>
 
@@ -142,9 +140,7 @@ function Index() {
             accept={Object.keys(validTypes)}
             name="file"
             labelText={
-              hasUploadedFile
-                ? file.name
-                : "Click or drag a file here to upload"
+              hasUploadedFile ? file.name : "Click or drag a file here to upload"
             }
             onAddFiles={(_, { addedFiles }: { addedFiles: File[] }) =>
               handleOnAddFiles(addedFiles)

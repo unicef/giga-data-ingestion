@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
-  DataTableHeader,
+  type DataTableHeader,
   DataTableSkeleton,
   Modal,
   Section,
@@ -14,10 +14,7 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import CDFDataTable from "@/components/approval-requests/CDFDataTable";
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
+import { DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE } from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests";
 import { validateSearchParams } from "@/utils/pagination.ts";
@@ -51,8 +48,7 @@ export const Route = createFileRoute("/approval-requests/$subpath/")({
   loader: ({ params: { subpath }, context: { queryClient } }) => {
     return queryClient.ensureQueryData(
       queryOptions({
-        queryFn: () =>
-          api.approvalRequests.get(subpath, { page: 1, page_size: 10 }),
+        queryFn: () => api.approvalRequests.get(subpath, { page: 1, page_size: 10 }),
         queryKey: ["approval-requests", subpath, 1, 10],
       }),
     );
@@ -85,10 +81,8 @@ export const Route = createFileRoute("/approval-requests/$subpath/")({
 function ApproveRejectTable() {
   const [isOpen, setOpen] = useState<boolean>(false);
 
-  const {
-    page = DEFAULT_PAGE_NUMBER,
-    page_size: pageSize = DEFAULT_PAGE_SIZE,
-  } = Route.useSearch();
+  const { page = DEFAULT_PAGE_NUMBER, page_size: pageSize = DEFAULT_PAGE_SIZE } =
+    Route.useSearch();
   const { subpath } = Route.useParams();
   const navigate = useNavigate({ from: Route.fullPath });
 
@@ -159,8 +153,8 @@ function ApproveRejectTable() {
         approval_status: approvedRows.includes(row.change_id!)
           ? "Approved"
           : rejectedRows.includes(row.change_id!)
-          ? "Rejected"
-          : "",
+            ? "Rejected"
+            : "",
       };
       return formattedRow;
     });
@@ -292,8 +286,8 @@ function ApproveRejectTable() {
         onRequestClose={() => setOpen(false)}
         onRequestSubmit={handleProceed}
       >
-        You have {total_count - approvedRows.length} unapproved rows. These rows
-        will be automatically rejected. Proceed?
+        You have {total_count - approvedRows.length} unapproved rows. These rows will be
+        automatically rejected. Proceed?
       </Modal>
     </>
   );

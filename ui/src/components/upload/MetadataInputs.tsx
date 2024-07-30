@@ -1,4 +1,4 @@
-import {
+import type {
   FieldError,
   FieldErrors,
   UseFormRegister,
@@ -10,12 +10,8 @@ import { z } from "zod";
 
 import { Select } from "@/components/forms/Select.tsx";
 import { TextInput } from "@/components/forms/TextInput.tsx";
-import {
-  futureyearList,
-  metadataMapping,
-  monthList,
-} from "@/constants/metadata.ts";
-import { MetadataFormMapping } from "@/types/metadata.ts";
+import { futureyearList, metadataMapping, monthList } from "@/constants/metadata.ts";
+import type { MetadataFormMapping } from "@/types/metadata.ts";
 
 export const MetadataForm = z.object({
   ...Object.fromEntries(
@@ -87,9 +83,7 @@ export function FreeTextInput({
           {formItem.required && <sup className="text-giga-red">*</sup>}
         </>
       }
-      helperText={
-        <span className="whitespace-pre-line">{formItem.helperText}</span>
-      }
+      helperText={<span className="whitespace-pre-line">{formItem.helperText}</span>}
       invalid={formItem.name in errors}
       invalidText={
         <span className="whitespace-pre-line">
@@ -107,11 +101,7 @@ interface SelectFromEnumProps extends BaseInputProps {
   formItem: Extract<MetadataFormMapping, { type: "enum" }>;
 }
 
-export function SelectFromEnum({
-  formItem,
-  errors,
-  register,
-}: SelectFromEnumProps) {
+export function SelectFromEnum({ formItem, errors, register }: SelectFromEnumProps) {
   return (
     <Select
       id={formItem.name}
@@ -152,8 +142,7 @@ export function SelectFromArray({
 }: SelectFromArrayProps) {
   const invalidText = (
     subpath
-      ? (errors[formItem.name] as Record<string, FieldError>)?.[subpath]
-          ?.message ??
+      ? (errors[formItem.name] as Record<string, FieldError>)?.[subpath]?.message ??
         (errors[formItem.name] as Record<string, FieldError>)?.root?.message
       : errors[formItem.name]?.message
   ) as string;
@@ -178,11 +167,7 @@ type MonthYearSelectProps = Omit<BaseInputProps, "register"> & {
   register: UseFormRegister<MetadataForm>;
 };
 
-export function MonthYearSelect({
-  formItem,
-  errors,
-  register,
-}: MonthYearSelectProps) {
+export function MonthYearSelect({ formItem, errors, register }: MonthYearSelectProps) {
   return (
     <div className="flex">
       <SelectFromArray

@@ -1,4 +1,4 @@
-import { ClassValue, clsx } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -8,9 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function truncateString(string: string, toWords: number) {
   const split = string.split(" ");
 
-  return split.length > toWords
-    ? `${split.slice(0, toWords).join(" ")}...`
-    : string;
+  return split.length > toWords ? `${split.slice(0, toWords).join(" ")}...` : string;
 }
 
 export function convertMegabytesToBytes(mb: number) {

@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import {
   DataTable,
-  DataTableHeader,
+  type DataTableHeader,
   DefinitionTooltip,
   PaginationNav,
   Table,
@@ -14,8 +14,8 @@ import {
   TableRow,
 } from "@carbon/react";
 
-import { MasterSchema, masterSchemaData } from "@/constants/school-data";
-import { BasicCheck } from "@/types/upload";
+import { type MasterSchema, masterSchemaData } from "@/constants/school-data";
+import type { BasicCheck } from "@/types/upload";
 
 const dqResultHeaders: DataTableHeader[] = [
   { key: "column", header: "Column Name" },

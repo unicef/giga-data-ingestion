@@ -1,8 +1,8 @@
-import { PropsWithChildren, Suspense, useEffect } from "react";
+import { type PropsWithChildren, Suspense, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
 import { useAccount, useMsal } from "@azure/msal-react";
-import { QueryClient } from "@tanstack/react-query";
+import type { QueryClient } from "@tanstack/react-query";
 import {
   Outlet,
   ScrollRestoration,

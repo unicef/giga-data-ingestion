@@ -1,10 +1,7 @@
-import { AxiosInstance, AxiosResponse } from "axios";
+import type { AxiosInstance, AxiosResponse } from "axios";
 
-import { PagedResponse, PaginationRequest } from "@/types/api.ts";
-import {
-  ApprovalRequest,
-  ApprovalRequestListing,
-} from "@/types/approvalRequests";
+import type { PagedResponse, PaginationRequest } from "@/types/api.ts";
+import type { ApprovalRequest, ApprovalRequestListing } from "@/types/approvalRequests";
 
 export default function routes(axi: AxiosInstance) {
   return {

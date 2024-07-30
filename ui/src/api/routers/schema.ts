@@ -1,13 +1,10 @@
-import { AxiosInstance, AxiosResponse } from "axios";
+import type { AxiosInstance, AxiosResponse } from "axios";
 
-import { MetaSchema } from "@/types/schema.ts";
+import type { MetaSchema } from "@/types/schema.ts";
 
 export default function routes(axi: AxiosInstance) {
   return {
-    get: (
-      name: string,
-      is_qos = false,
-    ): Promise<AxiosResponse<MetaSchema[]>> => {
+    get: (name: string, is_qos = false): Promise<AxiosResponse<MetaSchema[]>> => {
       return axi.get(`/schema/${name}`, {
         params: { is_qos },
       });

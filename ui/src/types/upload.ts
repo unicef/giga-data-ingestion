@@ -1,6 +1,6 @@
-import { ComponentProps } from "react";
+import type { ComponentProps } from "react";
 
-import { Tag } from "@carbon/react";
+import type { Tag } from "@carbon/react";
 import { z } from "zod";
 
 export enum DQStatus {
@@ -88,16 +88,14 @@ export interface UploadUnstructuredParams {
   metadata: string;
 }
 
-export const DQStatusTagMapping: Record<
-  DQStatus,
-  ComponentProps<typeof Tag>["type"]
-> = {
-  [DQStatus.IN_PROGRESS]: "gray",
-  [DQStatus.COMPLETED]: "blue",
-  [DQStatus.ERROR]: "red",
-  [DQStatus.TIMEOUT]: "red",
-  [DQStatus.SKIPPED]: "gray",
-};
+export const DQStatusTagMapping: Record<DQStatus, ComponentProps<typeof Tag>["type"]> =
+  {
+    [DQStatus.IN_PROGRESS]: "gray",
+    [DQStatus.COMPLETED]: "blue",
+    [DQStatus.ERROR]: "red",
+    [DQStatus.TIMEOUT]: "red",
+    [DQStatus.SKIPPED]: "gray",
+  };
 
 export interface UploadResponse {
   id: string;

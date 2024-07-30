@@ -1,6 +1,6 @@
 import { AccordionItem } from "@carbon/react";
 
-import { Check, DqFailedRowsFirstFiveRows } from "@/types/upload";
+import type { Check, DqFailedRowsFirstFiveRows } from "@/types/upload";
 import { sumAsertions } from "@/utils/data_quality";
 
 import DataQualityChecks from "./ColumnChecks";

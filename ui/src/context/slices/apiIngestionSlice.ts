@@ -1,9 +1,9 @@
-import { StateCreator } from "zustand";
+import type { StateCreator } from "zustand";
 
 import {
-  ConfigureColumnsForm,
-  SchoolConnectivityFormSchema,
-  SchoolListFormSchema,
+  type ConfigureColumnsForm,
+  type SchoolConnectivityFormSchema,
+  type SchoolListFormSchema,
   schoolConnectivityFormInitialValues,
   schoolListFormInitialValues,
 } from "@/forms/ingestApi.ts";

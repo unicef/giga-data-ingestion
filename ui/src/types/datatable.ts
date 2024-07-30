@@ -1,6 +1,6 @@
-import { ComponentProps } from "react";
+import type { ComponentProps } from "react";
 
-import { DataTable } from "@carbon/react";
+import type { DataTable } from "@carbon/react";
 
 export type CarbonDataTableRow = ComponentProps<typeof DataTable>["rows"];
 export type KeyValueObject = {

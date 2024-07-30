@@ -1,6 +1,6 @@
-import { AxiosInstance, AxiosResponse } from "axios";
+import type { AxiosInstance, AxiosResponse } from "axios";
 
-import { DeleteRowsResponse } from "@/types/delete";
+import type { DeleteRowsResponse } from "@/types/delete";
 
 export default function routes(axi: AxiosInstance) {
   return {

@@ -1,3 +1,4 @@
+import { hostname } from "os";
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { render } from "@react-email/render";
@@ -6,17 +7,16 @@ import { ProfilingIntegration } from "@sentry/profiling-node";
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { secureHeaders } from "hono/secure-headers";
-import { hostname } from "os";
 
-import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
-import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
 import DataQualityReport from "./emails/dq-report";
-import MasterDataReleaseNotification from "./emails/master-data-release-notification";
+import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
+import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
 import InviteUser from "./emails/invite-user";
+import MasterDataReleaseNotification from "./emails/master-data-release-notification";
 import {
-  DataQualityUploadSuccessProps,
   DataQualityCheckSuccessProps,
   DataQualityReportEmailProps,
+  DataQualityUploadSuccessProps,
 } from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
 import { MasterDataReleaseNotificationProps } from "./types/master-data-release-notification";
@@ -43,11 +43,11 @@ app.use(
   bearerAuth({ token: process.env.EMAIL_RENDERER_BEARER_TOKEN ?? "" }),
 );
 
-app.get("/", (ctx) => {
+app.get("/", ctx => {
   return ctx.text("ok");
 });
 
-app.post("/email/invite-user", zValidator("json", InviteUserProps), (ctx) => {
+app.post("/email/invite-user", zValidator("json", InviteUserProps), ctx => {
   const json = ctx.req.valid("json") as InviteUserProps;
   const html = render(<InviteUser {...json} />);
   const text = render(<InviteUser {...json} />, {
@@ -59,7 +59,7 @@ app.post("/email/invite-user", zValidator("json", InviteUserProps), (ctx) => {
 app.post(
   "/email/dq-report-upload-success",
   zValidator("json", DataQualityUploadSuccessProps),
-  (ctx) => {
+  ctx => {
     const json = ctx.req.valid("json") as DataQualityUploadSuccessProps;
     const html = render(<DataQualityReportUploadSuccess {...json} />);
     const text = render(<DataQualityReportUploadSuccess {...json} />, {
@@ -72,7 +72,7 @@ app.post(
 app.post(
   "/email/dq-report-check-success",
   zValidator("json", DataQualityCheckSuccessProps),
-  (ctx) => {
+  ctx => {
     const json = ctx.req.valid("json") as DataQualityCheckSuccessProps;
     const html = render(<DataQualityReportCheckSuccess {...json} />);
     const text = render(<DataQualityReportCheckSuccess {...json} />, {
@@ -82,30 +82,26 @@ app.post(
   },
 );
 
-app.post(
-  "/email/dq-report",
-  zValidator("json", DataQualityReportEmailProps),
-  (ctx) => {
-    const json = ctx.req.valid("json") as DataQualityReportEmailProps;
-    const html = render(<DataQualityReport {...json} />);
-    const text = render(<DataQualityReport {...json} />, {
-      plainText: true,
-    });
-    return ctx.json({ html, text });
-  },
-);
+app.post("/email/dq-report", zValidator("json", DataQualityReportEmailProps), ctx => {
+  const json = ctx.req.valid("json") as DataQualityReportEmailProps;
+  const html = render(<DataQualityReport {...json} />);
+  const text = render(<DataQualityReport {...json} />, {
+    plainText: true,
+  });
+  return ctx.json({ html, text });
+});
 
 app.post(
   "/email/master-data-release-notification",
   zValidator("json", MasterDataReleaseNotificationProps),
-  (ctx) => {
+  ctx => {
     const json = ctx.req.valid("json") as MasterDataReleaseNotificationProps;
     const html = render(<MasterDataReleaseNotification {...json} />);
     const text = render(<MasterDataReleaseNotification {...json} />, {
       plainText: true,
     });
     return ctx.json({ html, text });
-  }
+  },
 );
 
 const port = 3020;

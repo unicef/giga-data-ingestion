@@ -1,9 +1,9 @@
-import { ComponentProps } from "react";
-import { Control, FieldPath, useController } from "react-hook-form";
+import type { ComponentProps } from "react";
+import { type Control, type FieldPath, useController } from "react-hook-form";
 
 import { DatePicker, DatePickerInput } from "@carbon/react";
 
-import { MetadataFormValues } from "@/types/metadata.ts";
+import type { MetadataFormValues } from "@/types/metadata.ts";
 
 type DatePickerProps = Omit<ComponentProps<typeof DatePicker>, "children">;
 

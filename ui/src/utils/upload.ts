@@ -5,12 +5,12 @@ import { z } from "zod";
 
 import {
   AcceptedFileTypes,
-  AcceptedUnstructuredFileTypes,
+  type AcceptedUnstructuredFileTypes,
   AcceptedUnstructuredMimeTypes,
   MAX_UPLOAD_FILE_SIZE_BYTES,
 } from "@/constants/upload.ts";
 import { convertBytesToMegabytes } from "@/lib/utils.ts";
-import { MetaSchema } from "@/types/schema.ts";
+import type { MetaSchema } from "@/types/schema.ts";
 
 interface DetectHeadersOptions {
   type: AcceptedFileTypes | AcceptedUnstructuredFileTypes;
@@ -62,9 +62,7 @@ export class HeaderDetector {
     const passed = this.options.file.size <= MAX_UPLOAD_FILE_SIZE_BYTES;
     if (!passed) {
       this.options.setError(
-        `Your file size (${convertBytesToMegabytes(
-          this.options.file.size,
-        ).toFixed(
+        `Your file size (${convertBytesToMegabytes(this.options.file.size).toFixed(
           2,
         )} MB) exceeds the limit of 10 MB, please try a smaller file.`,
       );
@@ -167,9 +165,7 @@ export class HeaderDetector {
           return;
         }
 
-        const detectedColumns = Object.keys(
-          data[0] as Record<string, unknown>[],
-        );
+        const detectedColumns = Object.keys(data[0] as Record<string, unknown>[]);
         this.commonProcess(detectedColumns);
       })
       .catch(e => {
@@ -221,9 +217,7 @@ export class ColumnValidator {
       if (err instanceof z.ZodError) {
         console.log(err);
 
-        const uniqueErrors = [
-          ...new Set(err.issues.map(err => `"${err.message}"`)),
-        ];
+        const uniqueErrors = [...new Set(err.issues.map(err => `"${err.message}"`))];
         const uniqueErrorMessage = uniqueErrors.join(", ");
         const message = `Uploaded file contained the following errors on some of the rows: ${uniqueErrorMessage}`;
 

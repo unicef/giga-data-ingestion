@@ -1,8 +1,8 @@
 import {
-  Configuration,
-  EndSessionRequest,
+  type Configuration,
+  type EndSessionRequest,
   LogLevel,
-  PopupRequest,
+  type PopupRequest,
   PublicClientApplication,
 } from "@azure/msal-browser";
 
@@ -11,8 +11,7 @@ const {
   VITE_AZURE_TENANT_NAME: AZURE_TENANT_NAME,
   VITE_AZURE_SUSI_AUTH_POLICY_NAME: AZURE_SUSI_AUTH_POLICY_NAME,
   VITE_AZURE_EDIT_PROFILE_AUTH_POLICY_NAME: AZURE_EDIT_PROFILE_AUTH_POLICY_NAME,
-  VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME:
-    AZURE_PASSWORD_RESET_AUTH_POLICY_NAME,
+  VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME: AZURE_PASSWORD_RESET_AUTH_POLICY_NAME,
   VITE_REDIRECT_URL: REDIRECT_URL,
 } = import.meta.env;
 

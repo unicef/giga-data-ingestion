@@ -9,10 +9,7 @@ import {
 import { useIsFetching } from "@tanstack/react-query";
 import { Link, useRouterState } from "@tanstack/react-router";
 
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
+import { DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE } from "@/constants/pagination.ts";
 import useLogout from "@/hooks/useLogout.ts";
 import useRoles from "@/hooks/useRoles.ts";
 
@@ -41,10 +38,7 @@ export default function Navbar() {
         <b>sync</b>
       </HeaderName>
       <AuthenticatedTemplate>
-        <HeaderNavigation
-          aria-label="Main Navigation"
-          aria-labelledby="main-nav-label"
-        >
+        <HeaderNavigation aria-label="Main Navigation" aria-labelledby="main-nav-label">
           <HeaderMenuItem
             as={Link}
             to="/upload"
@@ -54,8 +48,7 @@ export default function Navbar() {
             }}
             disabled={!hasRoles}
             isActive={
-              location.pathname.startsWith("/upload") ||
-              location.pathname === "/"
+              location.pathname.startsWith("/upload") || location.pathname === "/"
             }
           >
             File uploads

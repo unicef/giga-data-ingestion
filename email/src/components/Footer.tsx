@@ -1,5 +1,5 @@
 import { Hr, Text } from "@react-email/components";
-import { ReactElement } from "react";
+import type { ReactElement } from "react";
 
 interface FooterProps {
   children: ReactElement;

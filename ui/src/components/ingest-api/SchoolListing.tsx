@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { FormProvider, type SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import { Button, ButtonSet, Loading, Section, Tag } from "@carbon/react";
@@ -152,17 +152,15 @@ function SchoolListing({ isEditing = false, defaultData }: SchoolListingProps) {
   ) : (
     <Section className="container py-6">
       <header className="gap-2">
-        <p className="my-0 py-1 text-2xl">
-          Step 1: Configure school listing API
-        </p>
+        <p className="my-0 py-1 text-2xl">Step 1: Configure school listing API</p>
       </header>
 
       <div className="grid grid-cols-2 gap-10">
         <div>
           <p>
-            Enter the details for a school listing API. The API must be tested
-            and should return a success response with valid parameters before
-            you can proceed.
+            Enter the details for a school listing API. The API must be tested and
+            should return a success response with valid parameters before you can
+            proceed.
           </p>
           <FormProvider {...hookForm}>
             <form onSubmit={handleSubmit(onSubmit)}>
@@ -183,9 +181,7 @@ function SchoolListing({ isEditing = false, defaultData }: SchoolListingProps) {
                   </Button>
                   <Button
                     className="w-full"
-                    disabled={
-                      !isValidResponse || !isValidDataKey || isResponseError
-                    }
+                    disabled={!isValidResponse || !isValidDataKey || isResponseError}
                     isExpressive
                     renderIcon={ArrowRight}
                     type="submit"
@@ -214,9 +210,7 @@ function SchoolListing({ isEditing = false, defaultData }: SchoolListingProps) {
               Test
             </Button>
           </div>
-          {isResponseError && (
-            <Tag type="red">Invalid Output from API request</Tag>
-          )}
+          {isResponseError && <Tag type="red">Invalid Output from API request</Tag>}
           {!isValidDataKey && <Tag type="red">Invalid Data Key</Tag>}
           <Editor
             height="100%"

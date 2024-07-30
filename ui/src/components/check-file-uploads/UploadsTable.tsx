@@ -1,9 +1,9 @@
-import { ReactElement, useMemo } from "react";
+import { type ReactElement, useMemo } from "react";
 
 import {
   Button,
   DataTable,
-  DataTableHeader,
+  type DataTableHeader,
   DataTableSkeleton,
   DefinitionTooltip,
   Pagination,
@@ -22,12 +22,8 @@ import { format } from "date-fns";
 
 import { api } from "@/api";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
-import { PagedResponse } from "@/types/api.ts";
-import {
-  DQStatus,
-  DQStatusTagMapping,
-  UploadResponse,
-} from "@/types/upload.ts";
+import type { PagedResponse } from "@/types/api.ts";
+import { DQStatus, DQStatusTagMapping, type UploadResponse } from "@/types/upload.ts";
 
 const columns: DataTableHeader[] = [
   {
@@ -85,11 +81,7 @@ interface UploadsTableProps {
   }) => void;
 }
 
-function UploadsTable({
-  page,
-  pageSize,
-  handlePaginationChange,
-}: UploadsTableProps) {
+function UploadsTable({ page, pageSize, handlePaginationChange }: UploadsTableProps) {
   const { data: uploadsQuery, isLoading } = useSuspenseQuery({
     queryFn: () => api.uploads.list_uploads({ page, page_size: pageSize }),
     queryKey: ["uploads", page, pageSize],
@@ -120,16 +112,11 @@ function UploadsTable({
         dataset: (
           <>
             <span className="capitalize">{upload.dataset}</span>
-            {upload.source && (
-              <span className="uppercase"> ({upload.source})</span>
-            )}
+            {upload.source && <span className="uppercase"> ({upload.source})</span>}
           </>
         ),
         status: (
-          <Tag
-            type={DQStatusTagMapping[upload.dq_status]}
-            className="capitalize"
-          >
+          <Tag type={DQStatusTagMapping[upload.dq_status]} className="capitalize">
             {statusText}
           </Tag>
         ),

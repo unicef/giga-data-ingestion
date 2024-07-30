@@ -1,13 +1,13 @@
-import { AxiosInstance, AxiosResponse } from "axios";
+import type { AxiosInstance, AxiosResponse } from "axios";
 
-import { PagedResponse } from "@/types/api.ts";
-import {
+import type { PagedResponse } from "@/types/api.ts";
+import type {
   BasicChecks,
   DataQualityCheck,
   UploadParams,
   UploadUnstructuredParams,
 } from "@/types/upload";
-import { UploadResponse } from "@/types/upload.ts";
+import type { UploadResponse } from "@/types/upload.ts";
 
 export default function routes(axi: AxiosInstance) {
   return {
@@ -51,9 +51,7 @@ export default function routes(axi: AxiosInstance) {
       return axi.post("/upload/unstructured", formData);
     },
 
-    download_data_quality_check: (
-      upload_id: string,
-    ): Promise<AxiosResponse<Blob>> => {
+    download_data_quality_check: (upload_id: string): Promise<AxiosResponse<Blob>> => {
       return axi.get(`upload/data_quality_check/${upload_id}/download`, {
         responseType: "blob",
       });

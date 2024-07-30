@@ -6,7 +6,7 @@ import {
   Button,
   ButtonSet,
   Dropdown,
-  OnChangeData,
+  type OnChangeData,
   SelectItem,
   SkeletonPlaceholder,
   Stack,
@@ -23,7 +23,7 @@ import {
   AcceptedFileTypes,
   AcceptedUnstructuredFileTypes,
   UPLOAD_MODE_OPTIONS,
-  UploadModeOptions,
+  type UploadModeOptions,
 } from "@/constants/upload.ts";
 import { useStore } from "@/context/store";
 import { sourceOptions } from "@/mocks/metadataFormValues.tsx";
@@ -51,15 +51,9 @@ const validStructuredTypes = {
 const validUnstructuredTypes = {
   "image/bmp": AcceptedUnstructuredFileTypes.BMP,
   "image/gif": AcceptedUnstructuredFileTypes.GIF,
-  "image/jpeg": [
-    AcceptedUnstructuredFileTypes.JPEG,
-    AcceptedUnstructuredFileTypes.JPG,
-  ],
+  "image/jpeg": [AcceptedUnstructuredFileTypes.JPEG, AcceptedUnstructuredFileTypes.JPG],
   "image/png": AcceptedUnstructuredFileTypes.PNG,
-  "image/tiff": [
-    AcceptedUnstructuredFileTypes.TIF,
-    AcceptedUnstructuredFileTypes.TIFF,
-  ],
+  "image/tiff": [AcceptedUnstructuredFileTypes.TIF, AcceptedUnstructuredFileTypes.TIFF],
 };
 
 export default function Index() {
@@ -71,12 +65,9 @@ export default function Index() {
   const [parsingError, setParsingError] = useState("");
   const navigate = useNavigate({ from: Route.fullPath });
   const hasParsingError = !!parsingError;
-  const isUnstructured =
-    uploadGroup === "other" && uploadType === "unstructured";
+  const isUnstructured = uploadGroup === "other" && uploadType === "unstructured";
 
-  const validTypes = isUnstructured
-    ? validUnstructuredTypes
-    : validStructuredTypes;
+  const validTypes = isUnstructured ? validUnstructuredTypes : validStructuredTypes;
   const {
     uploadSlice,
     uploadSliceActions: {
@@ -183,11 +174,7 @@ export default function Index() {
         >
           <SelectItem value="" text="" />
           {sourceOptions.map(option => (
-            <SelectItem
-              key={option.value}
-              text={option.label}
-              value={option.value}
-            />
+            <SelectItem key={option.value} text={option.label} value={option.value} />
           ))}
         </Select>
       )}
@@ -209,17 +196,12 @@ export default function Index() {
           <FileUploaderDropContainer
             accept={Object.keys(validTypes)}
             name="file"
-            labelText={
-              hasUploadedFile ? file.name : "Click or drag a file to upload"
-            }
+            labelText={hasUploadedFile ? file.name : "Click or drag a file to upload"}
             onAddFiles={(_, { addedFiles }: { addedFiles: File[] }) =>
               handleOnAddFiles(addedFiles)
             }
           />
-          <p>
-            File formats: {Object.values(validTypes).flat().join(", ")} up to
-            10MB
-          </p>
+          <p>File formats: {Object.values(validTypes).flat().join(", ")} up to 10MB</p>
           {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
         </div>
       )}

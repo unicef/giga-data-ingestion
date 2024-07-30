@@ -14,15 +14,11 @@ import {
 import { Tailwind } from "@react-email/tailwind";
 
 import tailwindConfig from "../styles/tailwind.config";
-import { InviteUserProps } from "../types/invite-user";
+import type { InviteUserProps } from "../types/invite-user";
 
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
-export const InviteUserEmail = ({
-  displayName,
-  email,
-  groups,
-}: InviteUserProps) => {
+export const InviteUserEmail = ({ displayName, email, groups }: InviteUserProps) => {
   const previewText = "Welcome to Giga Sync";
 
   return (
@@ -49,10 +45,10 @@ export const InviteUserEmail = ({
             </Heading>
             <Text>Hello {displayName},</Text>
             <Text>
-              You have been invited to <strong>Giga Sync</strong> with the
-              following roles:
+              You have been invited to <strong>Giga Sync</strong> with the following
+              roles:
               <ul>
-                {groups.map((group) => (
+                {groups.map(group => (
                   <li key={group}>
                     <Text>{group}</Text>
                   </li>
@@ -81,8 +77,8 @@ export const InviteUserEmail = ({
               <Link href={`mailto:${email}`} className="text-black">
                 {displayName}
               </Link>
-              . If you were not expecting this invitation, please disregard and
-              discard this email.
+              . If you were not expecting this invitation, please disregard and discard
+              this email.
             </Text>
           </Container>
         </Body>
@@ -94,11 +90,7 @@ export const InviteUserEmail = ({
 InviteUserEmail.PreviewProps = {
   displayName: "Giga Chad",
   email: "gigachad@example.com",
-  groups: [
-    "Admin",
-    "Philippines-School Coverage",
-    "Philippines-School Geolocation",
-  ],
+  groups: ["Admin", "Philippines-School Coverage", "Philippines-School Geolocation"],
 } satisfies InviteUserProps;
 
 export default InviteUserEmail;

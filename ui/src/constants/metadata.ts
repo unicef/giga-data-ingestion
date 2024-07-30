@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { z } from "zod";
 
-import { MetadataFormMapping } from "@/types/metadata.ts";
+import type { MetadataFormMapping } from "@/types/metadata.ts";
 
 const currentYear = new Date().getFullYear();
 const futureYearStart = currentYear + 10;
@@ -53,8 +53,7 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     {
       name: "description",
       label: "Description",
-      helperText:
-        "Description of the upload (e.g. change notes, additional context)",
+      helperText: "Description of the upload (e.g. change notes, additional context)",
       type: "text",
       required: true,
       validator: z.string().min(1, { message: requiredFieldErrorMessage }),
@@ -104,8 +103,7 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     {
       name: "modality_of_data_collection",
       label: "Modality of data collection",
-      helperText:
-        "How was the data collected (online, phone, written, in-person)?",
+      helperText: "How was the data collected (online, phone, written, in-person)?",
       type: "enum",
       enum: modalityCollectionOptions,
       required: false,

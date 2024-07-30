@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 
 import IngestApiFormInputs from "@/components/ingest-api/IngestApiFormInputs.tsx";
-import { SchoolConnectivityFormSchema } from "@/forms/ingestApi.ts";
-import { IngestApiFormMapping } from "@/types/ingestApi.ts";
+import type { SchoolConnectivityFormSchema } from "@/forms/ingestApi.ts";
+import type { IngestApiFormMapping } from "@/types/ingestApi.ts";
 import {
   AuthorizationTypeEnum,
   PaginationTypeEnum,
@@ -105,8 +105,7 @@ export function SchoolConnectivityFormInputs() {
           type: "code",
           required: false,
           helperText: "",
-          placeholder:
-            'Input query parameters in JSON format, e.g. {"key": "value"}',
+          placeholder: 'Input query parameters in JSON format, e.g. {"key": "value"}',
         },
         {
           name: "request_body",
@@ -114,8 +113,7 @@ export function SchoolConnectivityFormInputs() {
           type: "code",
           required: false,
           helperText: "",
-          placeholder:
-            'Input request body in JSON format, e.g. {"key": "value"}',
+          placeholder: 'Input request body in JSON format, e.g. {"key": "value"}',
           dependsOnName: "request_method",
           dependsOnValue: [RequestMethodEnum.POST],
         },
@@ -294,8 +292,7 @@ export function SchoolConnectivityFormInputs() {
           label: "Response date key",
           type: "text",
           required: true,
-          helperText:
-            "The key in the API response body that contains the timestamp.",
+          helperText: "The key in the API response body that contains the timestamp.",
         },
         {
           name: "response_date_format",

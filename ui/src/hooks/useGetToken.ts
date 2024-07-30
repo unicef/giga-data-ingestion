@@ -8,20 +8,16 @@ import { loginRequest } from "@/lib/auth.ts";
 function useGetToken() {
   const { instance } = useMsal();
 
-  async function getToken() {
+  return useCallback(async () => {
     try {
       const result = await instance.acquireTokenSilent(loginRequest);
-      axi.defaults.headers.common[
-        "Authorization"
-      ] = `Bearer ${result.accessToken}`;
+      axi.defaults.headers.common.Authorization = `Bearer ${result.accessToken}`;
       return result;
     } catch (err) {
       console.error(err);
       throw err;
     }
-  }
-
-  return useCallback(getToken, [instance]);
+  }, [instance]);
 }
 
 export default useGetToken;

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { Controller, type SubmitHandler, useForm } from "react-hook-form";
 
 import { Add } from "@carbon/icons-react";
 import {
@@ -19,7 +19,7 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { AxiosResponse } from "axios";
+import type { AxiosResponse } from "axios";
 
 import { api, queryClient } from "@/api";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
@@ -27,12 +27,8 @@ import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Select } from "@/components/forms/Select.tsx";
 import ToastNotification from "@/components/user-management/ToastNotification.tsx";
 import countries from "@/constants/countries.ts";
-import { GraphUser } from "@/types/user";
-import {
-  filterCountries,
-  filterRoles,
-  matchNamesWithIds,
-} from "@/utils/group.ts";
+import type { GraphUser } from "@/types/user";
+import { filterCountries, filterRoles, matchNamesWithIds } from "@/utils/group.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
 import {
   getUniqueDatasets,
@@ -87,9 +83,7 @@ function EditUser() {
   const givenName = initialValues.given_name;
   const surname = initialValues.surname;
   const initialEmail = initialValues.mail;
-  const initialGroups = initialValues.member_of.map(
-    group => group.display_name,
-  );
+  const initialGroups = initialValues.member_of.map(group => group.display_name);
 
   const [swapModal, setSwapModal] = useState<boolean>(false);
 
@@ -138,9 +132,7 @@ function EditUser() {
     },
   });
 
-  const deriveInitialCountryDataset = (
-    countryDataset: string[],
-  ): CountryDataset[] => {
+  const deriveInitialCountryDataset = (countryDataset: string[]): CountryDataset[] => {
     return countryDataset
       .map(item => {
         const [country, dataset] = item.split("-");
@@ -224,14 +216,12 @@ function EditUser() {
     label: country.name,
   }));
 
-  const dataSetOptions = [
-    "School Coverage",
-    "School Geolocation",
-    "School QoS",
-  ].map(dataset => ({
-    value: dataset,
-    label: dataset,
-  }));
+  const dataSetOptions = ["School Coverage", "School Geolocation", "School QoS"].map(
+    dataset => ({
+      value: dataset,
+      label: dataset,
+    }),
+  );
 
   const roleOptions = roles.map(role => ({
     value: role,
@@ -323,18 +313,14 @@ function EditUser() {
     } = deriveAddedValues();
     const editGroupsPayload = {
       groups_to_add: [
-        ...addedDatasetsWithIds.map(
-          addedDatasetWithId => addedDatasetWithId.id ?? "",
-        ),
+        ...addedDatasetsWithIds.map(addedDatasetWithId => addedDatasetWithId.id ?? ""),
         ...addedRolesWithIds.map(addedRoleWithId => addedRoleWithId.id ?? ""),
       ],
       groups_to_remove: [
         ...removedDatasetsWithIds.map(
           removedDatasetWithId => removedDatasetWithId.id ?? "",
         ),
-        ...removedRolesWithIds.map(
-          removedRoleWithId => removedRoleWithId.id ?? "",
-        ),
+        ...removedRolesWithIds.map(removedRoleWithId => removedRoleWithId.id ?? ""),
       ],
       given_name: data.givenName,
       surname: data.surname,
@@ -436,9 +422,7 @@ function EditUser() {
                       <MultiSelect
                         id={`dataset.${i}`}
                         label="Select datasets"
-                        initialSelectedItems={
-                          countryDataset.dataset.selectedItems
-                        }
+                        initialSelectedItems={countryDataset.dataset.selectedItems}
                         items={dataSetOptions}
                         itemToString={item => item.label}
                         {...field}
@@ -453,11 +437,7 @@ function EditUser() {
               </FormGroup>
             ))}
 
-            <Button
-              kind="ghost"
-              renderIcon={Add}
-              onClick={handleAddCountryDataset}
-            >
+            <Button kind="ghost" renderIcon={Add} onClick={handleAddCountryDataset}>
               Add country
             </Button>
           </Stack>
@@ -490,9 +470,8 @@ function EditUser() {
 
               return (
                 <p>
-                  This will give the user with email <b>{getValues("email")}</b>{" "}
-                  access to Giga data for <b>{datasets}</b> across{" "}
-                  {countries.length}{" "}
+                  This will give the user with email <b>{getValues("email")}</b> access
+                  to Giga data for <b>{datasets}</b> across {countries.length}{" "}
                   {countries.length === 1 ? "country" : "countries"}:{" "}
                   <b>{pluralizeCountries(countries)}</b>.
                 </p>

@@ -13,10 +13,7 @@ export const Route = createFileRoute("/ingest-api/add/column-mapping")({
     } = useStore.getState();
     return { detectedColumns, setStepIndex };
   },
-  loader: ({
-    context: { queryClient },
-    deps: { detectedColumns, setStepIndex },
-  }) => {
+  loader: ({ context: { queryClient }, deps: { detectedColumns, setStepIndex } }) => {
     if (detectedColumns.length === 0) {
       setStepIndex(0);
       throw redirect({ to: ".." });

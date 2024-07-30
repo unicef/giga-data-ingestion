@@ -6,9 +6,7 @@ export function filterCountryDatasetFromGroup(
   groups: string[],
   dataset: string,
 ): string[] {
-  const countryGroups = groups.filter(
-    group => group.split("-School").length > 1,
-  );
+  const countryGroups = groups.filter(group => group.split("-School").length > 1);
 
   const countryDatasets = countryGroups.filter(group => {
     return group.endsWith(`${dataset}`);

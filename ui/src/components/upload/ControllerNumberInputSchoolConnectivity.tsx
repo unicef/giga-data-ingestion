@@ -1,9 +1,9 @@
-import { ComponentProps } from "react";
-import { Control, FieldPath, useController } from "react-hook-form";
+import type { ComponentProps } from "react";
+import { type Control, type FieldPath, useController } from "react-hook-form";
 
 import { NumberInput } from "@carbon/react";
 
-import { SchoolConnectivityFormValues } from "@/types/qos";
+import type { SchoolConnectivityFormValues } from "@/types/qos";
 
 type NumberInputProps = ComponentProps<typeof NumberInput>;
 
@@ -31,7 +31,7 @@ const ControllerNumberInputSchoolConnectivity = ({
       onChange={(_, value) => {
         field.onChange(
           typeof value.value === "string"
-            ? parseInt(value.value, 10)
+            ? Number.parseInt(value.value, 10)
             : value.value,
         );
       }}

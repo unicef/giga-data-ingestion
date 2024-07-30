@@ -1,12 +1,12 @@
-import { ChangeEvent, useMemo, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { type ChangeEvent, useCallback, useMemo, useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
   DataTable,
-  DataTableHeader,
+  type DataTableHeader,
   DefinitionTooltip,
   Select,
   SelectItem,
@@ -25,7 +25,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 
 import { qosGeolocationSchemaQueryOptions } from "@/api/queryOptions.ts";
 import { useStore } from "@/context/store.ts";
-import { ConfigureColumnsForm } from "@/forms/ingestApi.ts";
+import type { ConfigureColumnsForm } from "@/forms/ingestApi.ts";
 
 const headers: DataTableHeader[] = [
   { key: "masterColumn", header: "Expected Columns" },
@@ -75,22 +75,22 @@ function ColumnMapping() {
     void navigate({ to: "../school-connectivity" });
   };
 
-  const handleSelectOnChange = (
-    selectedColumn: string,
-    expectedColumn: string,
-  ) => {
-    if (selectedColumn === "") {
-      setSelectedColumns(old => {
-        const copy = { ...old };
-        delete copy[expectedColumn];
-        return copy;
-      });
-    } else {
-      setSelectedColumns(old => {
-        return { ...old, [expectedColumn]: selectedColumn };
-      });
-    }
-  };
+  const handleSelectOnChange = useCallback(
+    (selectedColumn: string, expectedColumn: string) => {
+      if (selectedColumn === "") {
+        setSelectedColumns(old => {
+          const copy = { ...old };
+          delete copy[expectedColumn];
+          return copy;
+        });
+      } else {
+        setSelectedColumns(old => {
+          return { ...old, [expectedColumn]: selectedColumn };
+        });
+      }
+    },
+    [],
+  );
 
   const rows = useMemo(() => {
     return schema.map(column => {
@@ -161,7 +161,14 @@ function ColumnMapping() {
         ),
       };
     });
-  }, [schema, errors, register, detectedColumns, selectedColumns]);
+  }, [
+    schema,
+    errors,
+    register,
+    detectedColumns,
+    selectedColumns,
+    handleSelectOnChange,
+  ]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -180,20 +187,14 @@ function ColumnMapping() {
         </section>
         <section className="w-3/4">
           <DataTable headers={headers} rows={rows}>
-            {({
-              rows,
-              headers,
-              getHeaderProps,
-              getRowProps,
-              getTableProps,
-            }) => (
+            {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
               <TableContainer>
                 <Table {...getTableProps()}>
                   <TableHead>
                     <TableRow>
                       {headers.map(header => (
                         // @ts-expect-error onclick bad type https://github.com/carbon-design-system/carbon/issues/14831
-                        <TableHeader {...getHeaderProps({ header })}>
+                        <TableHeader {...getHeaderProps({ header })} key={header.key}>
                           {header.header}
                         </TableHeader>
                       ))}
@@ -201,7 +202,7 @@ function ColumnMapping() {
                   </TableHead>
                   <TableBody>
                     {rows.map(row => (
-                      <TableRow {...getRowProps({ row })}>
+                      <TableRow {...getRowProps({ row })} key={row.id}>
                         {row.cells.map(cell => (
                           <TableCell key={cell.id}>{cell.value}</TableCell>
                         ))}
@@ -225,12 +226,7 @@ function ColumnMapping() {
           >
             Cancel
           </Button>
-          <Button
-            className="w-full"
-            isExpressive
-            renderIcon={ArrowRight}
-            type="submit"
-          >
+          <Button className="w-full" isExpressive renderIcon={ArrowRight} type="submit">
             Proceed
           </Button>
         </ButtonSet>

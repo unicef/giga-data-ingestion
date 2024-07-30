@@ -8,10 +8,10 @@ import {
   Text,
 } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
-import tailwindConfig from "../styles/tailwind.config";
-import { DataQualityUploadSuccessProps } from "../types/dq-report";
-import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Header from "../components/Header";
+import tailwindConfig from "../styles/tailwind.config";
+import type { DataQualityUploadSuccessProps } from "../types/dq-report";
 
 export const DataQualityReportUploadSuccess = ({
   uploadId,
@@ -56,10 +56,9 @@ export const DataQualityReportUploadSuccess = ({
 
               <Footer>
                 <>
-                  Your file has been successfully uploaded. After a round of
-                  checks, your file will undergo a review process before being
-                  merged into the Master dataset. You may view the checks
-                  performed on Giga Sync.
+                  Your file has been successfully uploaded. After a round of checks,
+                  your file will undergo a review process before being merged into the
+                  Master dataset. You may view the checks performed on Giga Sync.
                 </>
               </Footer>
             </div>

@@ -22,8 +22,7 @@ const cards: { title: string; description: React.ReactNode }[] = [
     title: "Configure API",
     description: (
       <p className="cds--label-description">
-        Integrate your data using our Ingest API and send data directly to
-        Project Giga.
+        Integrate your data using our Ingest API and send data directly to Project Giga.
       </p>
     ),
   },
@@ -31,9 +30,8 @@ const cards: { title: string; description: React.ReactNode }[] = [
     title: "Check data quality",
     description: (
       <p className="cds--label-description">
-        Over 150 data validation checks are performed on ingest before data is
-        added to the platform in order to ensure all data meets the standards
-        required.
+        Over 150 data validation checks are performed on ingest before data is added to
+        the platform in order to ensure all data meets the standards required.
       </p>
     ),
   },

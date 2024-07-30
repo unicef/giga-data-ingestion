@@ -1,7 +1,7 @@
-import { ChangeEvent, Dispatch, SetStateAction, memo } from "react";
+import { type ChangeEvent, type Dispatch, type SetStateAction, memo } from "react";
 import {
-  FieldValues,
-  UseFormResetField,
+  type FieldValues,
+  type UseFormResetField,
   useFormContext,
 } from "react-hook-form";
 
@@ -9,7 +9,7 @@ import { Warning } from "@carbon/icons-react";
 import { DefinitionTooltip, Select, SelectItem } from "@carbon/react";
 
 import { licenseOptions } from "@/mocks/metadataFormValues.tsx";
-import { MetaSchema } from "@/types/schema.ts";
+import type { MetaSchema } from "@/types/schema.ts";
 
 export interface ConfigureColumnsForm {
   mapping: Record<string, string>;
@@ -26,11 +26,7 @@ export const MasterColumn = memo(({ column }: MasterColumnProps) => {
   return (
     <div className="flex items-center gap-4">
       {column.description ? (
-        <DefinitionTooltip
-          align="right"
-          definition={column.description}
-          openOnHover
-        >
+        <DefinitionTooltip align="right" definition={column.description} openOnHover>
           <div className="flex items-center gap-1">
             <div>{column.name}</div>
             <div>
@@ -155,15 +151,14 @@ export const ColumnLicense = memo(({ column }: ColumnLicenseProps) => {
         invalid={column.name in (errors.license ?? {})}
         labelText=""
         {...register(`license.${column.name}`, {
-          validate: (value, formValues) =>
-            !!value && !!formValues.mapping[column.name],
+          validate: (value, formValues) => !!value && !!formValues.mapping[column.name],
           disabled: disabled,
           deps: [`mapping.${column.name}`],
         })}
       >
         <SelectItem text={licenseOptions[0]} value={licenseOptions[0]} />
         {licenseOptions.map((license, index) => {
-          if (index == 0) return null;
+          if (index === 0) return null;
 
           return <SelectItem key={license} text={license} value={license} />;
         })}

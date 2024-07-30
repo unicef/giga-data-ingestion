@@ -70,9 +70,9 @@ function RevokeUser() {
       >
         <div>
           <p>
-            This will revoke access of the user with email{" "}
-            <b>{initialValues.mail}</b> to the whole Giga platform, meaning they
-            won't be able to access any part of the Giga platform
+            This will revoke access of the user with email <b>{initialValues.mail}</b>{" "}
+            to the whole Giga platform, meaning they won't be able to access any part of
+            the Giga platform
           </p>
           <br />
 

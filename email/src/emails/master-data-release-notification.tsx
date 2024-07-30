@@ -1,16 +1,9 @@
-import {
-  Body,
-  Container,
-  Head,
-  Html,
-  Preview,
-  Text,
-} from "@react-email/components";
+import { Body, Container, Head, Html, Preview, Text } from "@react-email/components";
 import { Tailwind } from "@react-email/tailwind";
-import tailwindConfig from "../styles/tailwind.config";
-import { MasterDataReleaseNotificationProps } from "../types/master-data-release-notification";
-import Header from "../components/Header";
 import Footer from "../components/Footer";
+import Header from "../components/Header";
+import tailwindConfig from "../styles/tailwind.config";
+import type { MasterDataReleaseNotificationProps } from "../types/master-data-release-notification";
 
 export const MasterDataReleaseNotification = ({
   added,
@@ -46,8 +39,8 @@ export const MasterDataReleaseNotification = ({
 
             <div className="p-6 mx-auto">
               <Text className="text-black text-sm leading-6">
-                The School Master data for <strong>{country}</strong> has been
-                updated with the following details:
+                The School Master data for <strong>{country}</strong> has been updated
+                with the following details:
               </Text>
               <ul>
                 <li>
@@ -69,9 +62,9 @@ export const MasterDataReleaseNotification = ({
 
               <Footer>
                 <>
-                  School Master data updated at <strong>{updateDate}</strong>.
-                  This notification is sent automatically because you are
-                  assigned to the relevant country.
+                  School Master data updated at <strong>{updateDate}</strong>. This
+                  notification is sent automatically because you are assigned to the
+                  relevant country.
                 </>
               </Footer>
             </div>

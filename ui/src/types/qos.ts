@@ -1,4 +1,4 @@
-import {
+import type {
   SchoolConnectivityFormSchema,
   SchoolListFormSchema,
 } from "@/forms/ingestApi.ts";
@@ -142,8 +142,7 @@ export interface CreateSchoolListRequest extends SchoolListFormSchema {
   error_message: string | null;
 }
 
-export interface CreateSchoolConnectivityRequest
-  extends SchoolConnectivityFormSchema {
+export interface CreateSchoolConnectivityRequest extends SchoolConnectivityFormSchema {
   error_message: string | null;
 }
 

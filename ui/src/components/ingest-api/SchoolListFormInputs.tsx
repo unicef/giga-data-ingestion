@@ -2,26 +2,23 @@ import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 
 import IngestApiFormInputs from "@/components/ingest-api/IngestApiFormInputs.tsx";
-import { SchoolListFormSchema } from "@/forms/ingestApi.ts";
-import { Country } from "@/types/country.ts";
-import { IngestApiFormMapping } from "@/types/ingestApi.ts";
+import type { SchoolListFormSchema } from "@/forms/ingestApi.ts";
+import type { Country } from "@/types/country.ts";
+import type { IngestApiFormMapping } from "@/types/ingestApi.ts";
 import {
   AuthorizationTypeEnum,
   PaginationTypeEnum,
   RequestMethodEnum,
   SendQueryInEnum,
 } from "@/types/qos";
-import { GraphUser } from "@/types/user";
+import type { GraphUser } from "@/types/user";
 
 interface SchoolListFormInputsProps {
   users: GraphUser[];
   countries: Country[];
 }
 
-export function SchoolListFormInputs({
-  users,
-  countries,
-}: SchoolListFormInputsProps) {
+export function SchoolListFormInputs({ users, countries }: SchoolListFormInputsProps) {
   const { resetField } = useFormContext<SchoolListFormSchema>();
 
   const schoolListFormMapping = useMemo<
@@ -144,8 +141,7 @@ export function SchoolListFormInputs({
           type: "code",
           required: false,
           helperText: "",
-          placeholder:
-            'Input query parameters in JSON format, e.g. {"key": "value"}',
+          placeholder: 'Input query parameters in JSON format, e.g. {"key": "value"}',
         },
         {
           name: "request_body",
@@ -153,8 +149,7 @@ export function SchoolListFormInputs({
           type: "code",
           required: false,
           helperText: "",
-          placeholder:
-            'Input request body in JSON format, e.g. {"key": "value"}',
+          placeholder: 'Input request body in JSON format, e.g. {"key": "value"}',
           dependsOnName: "request_method",
           dependsOnValue: [RequestMethodEnum.POST],
         },

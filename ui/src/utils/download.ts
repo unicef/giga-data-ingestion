@@ -1,4 +1,4 @@
-import { AxiosResponse } from "axios";
+import type { AxiosResponse } from "axios";
 import { saveAs } from "file-saver";
 
 import { api } from "@/api";

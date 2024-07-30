@@ -1,8 +1,8 @@
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 import {
   DataTable,
-  DataTableHeader,
+  type DataTableHeader,
   Modal,
   Table,
   TableBody,
@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@carbon/react";
 
-import { DqFailedRowValues } from "@/types/upload";
+import type { DqFailedRowValues } from "@/types/upload";
 
 interface ViewDetailsModalProps {
   assertion: string;

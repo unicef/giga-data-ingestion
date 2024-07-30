@@ -4,10 +4,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { uploadsQueryOptions } from "@/api/queryOptions.ts";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import UploadLanding from "@/components/upload/UploadLanding.tsx";
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
+import { DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE } from "@/constants/pagination.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
 export const Route = createFileRoute("/upload/")({

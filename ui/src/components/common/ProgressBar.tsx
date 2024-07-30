@@ -1,9 +1,8 @@
-import { ComponentProps } from "react";
+import type { ComponentProps } from "react";
 
 import { ProgressBar as CarbonProgressBar } from "@carbon/react";
 
-interface ProgressBarProps
-  extends Partial<ComponentProps<typeof CarbonProgressBar>> {
+interface ProgressBarProps extends Partial<ComponentProps<typeof CarbonProgressBar>> {
   isLoading?: boolean;
 }
 

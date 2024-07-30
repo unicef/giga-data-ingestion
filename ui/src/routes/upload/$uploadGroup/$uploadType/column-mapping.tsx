@@ -1,22 +1,17 @@
 import { useMemo, useState } from "react";
-import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
+import { FormProvider, type SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
-  DataTableHeader,
+  type DataTableHeader,
   Loading,
   Stack,
   Tag,
 } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import {
-  Link,
-  createFileRoute,
-  redirect,
-  useNavigate,
-} from "@tanstack/react-router";
+import { Link, createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import DataTable from "@/components/common/DataTable.tsx";
@@ -24,7 +19,7 @@ import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import {
   ColumnLicense,
-  ConfigureColumnsForm,
+  type ConfigureColumnsForm,
   DetectedColumn,
   MasterColumn,
 } from "@/components/upload/ColumnMapping.tsx";
@@ -32,32 +27,32 @@ import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
 import { getDataPrivacyDocument } from "@/utils/download.ts";
 
-export const Route = createFileRoute(
-  "/upload/$uploadGroup/$uploadType/column-mapping",
-)({
-  component: UploadColumnMapping,
-  loader: ({ params: { uploadType }, context: { queryClient } }) => {
-    const {
-      uploadSlice: { file, source },
-      uploadSliceActions: { setStepIndex },
-    } = useStore.getState();
+export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/column-mapping")(
+  {
+    component: UploadColumnMapping,
+    loader: ({ params: { uploadType }, context: { queryClient } }) => {
+      const {
+        uploadSlice: { file, source },
+        uploadSliceActions: { setStepIndex },
+      } = useStore.getState();
 
-    if (!file || (uploadType === "coverage" && !source)) {
-      setStepIndex(0);
-      throw redirect({ to: ".." });
-    }
+      if (!file || (uploadType === "coverage" && !source)) {
+        setStepIndex(0);
+        throw redirect({ to: ".." });
+      }
 
-    const metaschemaName =
-      uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
+      const metaschemaName =
+        uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
 
-    return queryClient.ensureQueryData({
-      queryFn: () => api.schema.get(metaschemaName),
-      queryKey: ["schema", metaschemaName],
-    });
+      return queryClient.ensureQueryData({
+        queryFn: () => api.schema.get(metaschemaName),
+        queryKey: ["schema", metaschemaName],
+      });
+    },
+    pendingComponent: PendingComponent,
+    errorComponent: ErrorComponent,
   },
-  pendingComponent: PendingComponent,
-  errorComponent: ErrorComponent,
-});
+);
 
 const headers: DataTableHeader[] = [
   { key: "masterColumn", header: "Master Data Columns" },
@@ -135,23 +130,23 @@ function UploadColumnMapping() {
   const DESCRIPTION = (
     <>
       <p>
-        Below is a list of all possible columns which can be created from your
-        data upload.
+        Below is a list of all possible columns which can be created from your data
+        upload.
       </p>
       <p>
-        Please fill in and map each column from your file to the expected field
-        names. It is important to complete this page as accurately as possible,
-        any incorrect mappings will result in the failure of data validation
-        checks and your data not being uploaded correctly.{" "}
+        Please fill in and map each column from your file to the expected field names.
+        It is important to complete this page as accurately as possible, any incorrect
+        mappings will result in the failure of data validation checks and your data not
+        being uploaded correctly.{" "}
       </p>
       <p>
-        Finally select the applicable licence for each field. Please note that
-        the licence selected will determine who can access this data via the
-        Giga Sharing API .{" "}
+        Finally select the applicable licence for each field. Please note that the
+        licence selected will determine who can access this data via the Giga Sharing
+        API .{" "}
       </p>
       <p>
-        If you are unsure on which licence to provide, please consult our data
-        sharing and privacy framework by clicking{" "}
+        If you are unsure on which licence to provide, please consult our data sharing
+        and privacy framework by clicking{" "}
         <a
           onClick={async () => {
             if (isPrivacyLoading) return;
@@ -214,9 +209,7 @@ function UploadColumnMapping() {
               isExpressive
               renderIcon={
                 isNavigating
-                  ? props => (
-                      <Loading small={true} withOverlay={false} {...props} />
-                    )
+                  ? props => <Loading small={true} withOverlay={false} {...props} />
                   : ArrowRight
               }
               type="submit"

@@ -1,12 +1,6 @@
 import { useMemo } from "react";
 
-import {
-  Accordion,
-  AccordionItem,
-  Button,
-  Heading,
-  Section,
-} from "@carbon/react";
+import { Accordion, AccordionItem, Button, Heading, Section } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
@@ -17,10 +11,10 @@ import SummaryChecks from "@/components/check-file-uploads/SummaryChecks";
 import UploadCheckSkeleton from "@/components/check-file-uploads/UploadCheckSkeleton";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
-import { Check } from "@/types/upload";
+import type { Check } from "@/types/upload";
 import {
-  DataQualityCheck,
-  UploadResponse,
+  type DataQualityCheck,
+  type UploadResponse,
   initialDataQualityCheck,
   initialUploadResponse,
 } from "@/types/upload";
@@ -74,19 +68,10 @@ function Index() {
     [uploadQuery],
   );
 
-  if (
-    dqResultIsLoading ||
-    dqResultIsFetching ||
-    uploadIsLoading ||
-    uploadIsFetching
-  )
+  if (dqResultIsLoading || dqResultIsFetching || uploadIsLoading || uploadIsFetching)
     return <UploadCheckSkeleton />;
 
-  const {
-    summary: _,
-    critical_error_check = [],
-    ...checks
-  } = dqResultData.dq_summary;
+  const { summary: _, critical_error_check = [], ...checks } = dqResultData.dq_summary;
 
   const typedChecks = Object.keys(checks).map(key => checks[key] as Check[]);
 
@@ -114,41 +99,36 @@ function Index() {
           <div>
             <Section>
               <Section>
-                <Heading className="capitalize">
-                  School {uploadData.dataset}
-                </Heading>
+                <Heading className="capitalize">School {uploadData.dataset}</Heading>
                 <>
                   <p className="cds--label-description">
-                    This page can be used to check on the progress of all 156
-                    data quality checks or “assertions” being performed on your
-                    data.
+                    This page can be used to check on the progress of all 156 data
+                    quality checks or “assertions” being performed on your data.
                   </p>
                   <p className="cds--label-description">
-                    It will label each assertion and provide an overall summary
-                    of those that have been successful, those with errors and
-                    those with critical errors. Data which contains any critical
-                    errors will not pass these validation checks and will not be
-                    loaded to Project Connect.
+                    It will label each assertion and provide an overall summary of those
+                    that have been successful, those with errors and those with critical
+                    errors. Data which contains any critical errors will not pass these
+                    validation checks and will not be loaded to Project Connect.
                   </p>{" "}
                   <p className="cds--label-description">
-                    This page can be used to identify which, if any, quality
-                    tests your data has failed on, the values causing the
-                    failure and a suggestion as to what is needed to fix it. A
-                    full summary report will be emailed to but, and is also
-                    available to be downloaded as a .csv file for use offline.
-                    In the event your data contains critical errors which need
-                    to be fixed, this page is designed to help assist you with
-                    those necessary changes before re-uploading your data again.
+                    This page can be used to identify which, if any, quality tests your
+                    data has failed on, the values causing the failure and a suggestion
+                    as to what is needed to fix it. A full summary report will be
+                    emailed to but, and is also available to be downloaded as a .csv
+                    file for use offline. In the event your data contains critical
+                    errors which need to be fixed, this page is designed to help assist
+                    you with those necessary changes before re-uploading your data
+                    again.
                   </p>{" "}
                   <p className="cds--label-description">
-                    Users can expect a wait time of approx.15 minutes for all
-                    checks to be carried out successfully, at which time an
-                    email will be sent with a full report and the “DQ Check
-                    Status” will show as “Completed” in the File Uploads table.
-                    Once all data checks have been completed with 0 critical
-                    errors, a final approval request will be made to ingest your
-                    data into Project Connect. Data will not be displayed on the
-                    live site until this process is complete.”
+                    Users can expect a wait time of approx.15 minutes for all checks to
+                    be carried out successfully, at which time an email will be sent
+                    with a full report and the “DQ Check Status” will show as
+                    “Completed” in the File Uploads table. Once all data checks have
+                    been completed with 0 critical errors, a final approval request will
+                    be made to ingest your data into Project Connect. Data will not be
+                    displayed on the live site until this process is complete.”
                   </p>
                 </>
               </Section>
@@ -175,8 +155,7 @@ function Index() {
             </Accordion>
             <div className="flex flex-col gap-4 pt-4">
               <p>
-                After addressing the above checks, you may try to reupload your
-                file
+                After addressing the above checks, you may try to reupload your file
               </p>
               <Button as={Link} to="/upload">
                 Reupload

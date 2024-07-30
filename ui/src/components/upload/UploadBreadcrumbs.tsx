@@ -3,19 +3,14 @@ import { useCallback } from "react";
 import { Breadcrumb, BreadcrumbItem } from "@carbon/react";
 import { Link, useParams, useRouterState } from "@tanstack/react-router";
 
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
+import { DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE } from "@/constants/pagination.ts";
 
 export default function UploadBreadcrumbs() {
   const {
     location: { pathname },
   } = useRouterState();
-  const {
-    uploadGroup,
-    uploadType,
-  }: { uploadGroup: string; uploadType: string } = useParams({ strict: false });
+  const { uploadGroup, uploadType }: { uploadGroup: string; uploadType: string } =
+    useParams({ strict: false });
 
   const getBreadcrumbItems = useCallback(() => {
     const breadcrumbItems: {
@@ -63,7 +58,7 @@ export default function UploadBreadcrumbs() {
           },
           {
             label: "Success",
-            path: `/upload/$uploadGroup/$uploadType/success`,
+            path: "/upload/$uploadGroup/$uploadType/success",
             params: { uploadGroup, uploadType },
           },
         ],
@@ -76,18 +71,11 @@ export default function UploadBreadcrumbs() {
   const breadcrumbItems = getBreadcrumbItems();
 
   return (
-    <Breadcrumb
-      style={{ viewTransitionName: "upload-breadcrumbs" }}
-      noTrailingSlash
-    >
+    <Breadcrumb style={{ viewTransitionName: "upload-breadcrumbs" }} noTrailingSlash>
       {breadcrumbItems.map((item, index) => (
         <BreadcrumbItem key={item.label} className="capitalize">
           {item.path && index + 1 < breadcrumbItems.length ? (
-            <Link
-              to={item.path}
-              params={item.params ?? {}}
-              search={item.search ?? {}}
-            >
+            <Link to={item.path} params={item.params ?? {}} search={item.search ?? {}}>
               {item.label}
             </Link>
           ) : (

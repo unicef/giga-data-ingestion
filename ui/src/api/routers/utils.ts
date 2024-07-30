@@ -1,6 +1,6 @@
-import { AxiosInstance, AxiosResponse } from "axios";
+import type { AxiosInstance, AxiosResponse } from "axios";
 
-import { Country } from "@/types/country.ts";
+import type { Country } from "@/types/country.ts";
 
 export default function routers(axi: AxiosInstance) {
   return {

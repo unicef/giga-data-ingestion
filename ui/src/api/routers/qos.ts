@@ -1,6 +1,6 @@
-import { AxiosInstance, AxiosResponse } from "axios";
+import type { AxiosInstance, AxiosResponse } from "axios";
 
-import {
+import type {
   CreateApiIngestionRequest,
   EditApiIngestionRequest,
   PagedSchoolListResponse,
@@ -21,9 +21,7 @@ export default function route(axi: AxiosInstance) {
         },
       });
     },
-    get_school_list: (
-      id: string,
-    ): Promise<AxiosResponse<SchoolListResponse>> => {
+    get_school_list: (id: string): Promise<AxiosResponse<SchoolListResponse>> => {
       return axi.get(`/qos/school_list/${id}`);
     },
     get_school_connectivity: (

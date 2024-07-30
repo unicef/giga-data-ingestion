@@ -22,13 +22,11 @@ const SummaryCheck = z.object({
 
 export type SummaryCheck = z.infer<typeof SummaryCheck>;
 
-export const DataQualityCheck = z
-  .record(z.union([z.array(Check), SummaryCheck]))
-  .and(
-    z.object({
-      summary: z.optional(SummaryCheck),
-    }),
-  );
+export const DataQualityCheck = z.record(z.union([z.array(Check), SummaryCheck])).and(
+  z.object({
+    summary: z.optional(SummaryCheck),
+  }),
+);
 
 export interface DataQualityCheck {
   [key: string]: Check[] | SummaryCheck;

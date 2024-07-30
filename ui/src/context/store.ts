@@ -3,15 +3,12 @@ import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
 import {
-  ApiIngestionSlice,
+  type ApiIngestionSlice,
   createApiIngestionSlice,
 } from "./slices/apiIngestionSlice";
-import { AppStateSlice, createAppStateSlice } from "./slices/appStateSlice";
-import {
-  ApproveRowSlice,
-  createApproveRowSlice,
-} from "./slices/approveRowSlice";
-import { UploadSlice, createUploadSlice } from "./slices/uploadSlice";
+import { type AppStateSlice, createAppStateSlice } from "./slices/appStateSlice";
+import { type ApproveRowSlice, createApproveRowSlice } from "./slices/approveRowSlice";
+import { type UploadSlice, createUploadSlice } from "./slices/uploadSlice";
 
 export const useStore = create<
   ApiIngestionSlice & AppStateSlice & ApproveRowSlice & UploadSlice

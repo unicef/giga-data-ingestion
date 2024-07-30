@@ -1,4 +1,4 @@
-import { ComponentProps, PropsWithChildren } from "react";
+import type { ComponentProps, PropsWithChildren } from "react";
 
 import {
   FileUploaderDropContainer as CarbonFileUploaderDropContainer,
@@ -13,15 +13,10 @@ export function HeaderName({ children, ...props }: HeaderNameProps) {
   return <CarbonHeaderName {...props}>{children}</CarbonHeaderName>;
 }
 
-type HeaderNavigationProps = Partial<
-  ComponentProps<typeof CarbonHeaderNavigation>
-> &
+type HeaderNavigationProps = Partial<ComponentProps<typeof CarbonHeaderNavigation>> &
   PropsWithChildren;
 
-export function HeaderNavigation({
-  children,
-  ...props
-}: HeaderNavigationProps) {
+export function HeaderNavigation({ children, ...props }: HeaderNavigationProps) {
   return <CarbonHeaderNavigation {...props}>{children}</CarbonHeaderNavigation>;
 }
 
@@ -29,8 +24,6 @@ type FileUploaderDropContainerProps = Partial<
   ComponentProps<typeof CarbonFileUploaderDropContainer>
 >;
 
-export function FileUploaderDropContainer(
-  props: FileUploaderDropContainerProps,
-) {
+export function FileUploaderDropContainer(props: FileUploaderDropContainerProps) {
   return <CarbonFileUploaderDropContainer {...props} />;
 }

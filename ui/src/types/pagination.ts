@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
+import { DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE } from "@/constants/pagination.ts";
 
 export const PaginationSearchParams = z.object({
   page: z.number().int().gt(0).optional().catch(DEFAULT_PAGE_NUMBER),

@@ -11,13 +11,20 @@
     "rules": {
       "recommended": true,
       "style": {
-        "useEnumInitializers": "off"
+        "useEnumInitializers": "off",
+        "noNonNullAssertion": "warn"
+      },
+      "complexity": {
+        "noForEach": "warn"
       },
       "suspicious": {
         "noExplicitAny": "warn"
       },
       "nursery": {
         "useSortedClasses": "warn"
+      },
+      "a11y": {
+        "useValidAnchor": "warn"
       }
     }
   },

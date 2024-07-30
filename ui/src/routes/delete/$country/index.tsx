@@ -69,12 +69,12 @@ function Confirmation() {
     <Stack gap={8}>
       <Stack gap={1}>
         <h2 className="text-[23px] ">
-          Confirm that the following school IDs from the provided country will
-          be deleted
+          Confirm that the following school IDs from the provided country will be
+          deleted
         </h2>
         <p>
-          School data is the dataset of schools location & their attributes like
-          name, education level, internet connection, computer count etc.
+          School data is the dataset of schools location & their attributes like name,
+          education level, internet connection, computer count etc.
         </p>
       </Stack>
 
@@ -116,9 +116,7 @@ function Confirmation() {
           Confirm
         </Button>
       </ButtonSet>
-      {isError && (
-        <div className="cds--label-description text-giga-red">{error}</div>
-      )}
+      {isError && <div className="cds--label-description text-giga-red">{error}</div>}
     </Stack>
   );
 }

@@ -1,4 +1,4 @@
-import axios, { AxiosResponse, Method } from "axios";
+import axios, { type AxiosResponse, type Method } from "axios";
 
 export default function route() {
   const axi = axios.create();
@@ -12,8 +12,7 @@ export default function route() {
       requestBody?: Record<string, unknown>;
       url: string;
     }): Promise<AxiosResponse> => {
-      const { apiKeyName, apiKeyValue, method, queryParams, requestBody, url } =
-        params;
+      const { apiKeyName, apiKeyValue, method, queryParams, requestBody, url } = params;
       return await axi({
         method: method,
         data: requestBody,
@@ -30,8 +29,7 @@ export default function route() {
       requestBody?: Record<string, unknown>;
       url: string;
     }): Promise<AxiosResponse> => {
-      const { username, password, method, queryParams, requestBody, url } =
-        params;
+      const { username, password, method, queryParams, requestBody, url } = params;
 
       return await axi({
         method: method,

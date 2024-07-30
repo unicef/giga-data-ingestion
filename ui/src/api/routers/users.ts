@@ -1,6 +1,6 @@
-import { AxiosInstance, AxiosResponse } from "axios";
+import type { AxiosInstance, AxiosResponse } from "axios";
 
-import { CreateUserRequest, GraphUser } from "@/types/user.ts";
+import type { CreateUserRequest, GraphUser } from "@/types/user.ts";
 
 export default function routes(axi: AxiosInstance) {
   return {
