@@ -48,13 +48,13 @@ export const Route = createFileRoute(
 )({
   component: Metadata,
   loader: ({
-    context: { queryClient },
+    context: { queryClient, getState },
     params: { uploadGroup, uploadType },
   }) => {
     const {
       uploadSlice: { file, columnMapping },
       uploadSliceActions: { setStepIndex },
-    } = useStore.getState();
+    } = getState();
 
     if (uploadGroup === "other" && uploadType === "unstructured") {
       setStepIndex(1);

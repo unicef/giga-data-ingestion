@@ -46,9 +46,14 @@ def get_schema(
     db: Session,
     background_tasks: BackgroundTasks = None,
 ) -> list[Schema]:
+    table_name = name
+
+    if name.startswith("school_geolocation"):
+        table_name = "school_geolocation"
+
     res = db.execute(
         select("*")
-        .select_from(text(f"schemas.{name}"))
+        .select_from(text(f"schemas.{table_name}"))
         .where(
             column("is_system_generated").is_(None)
             | (column("is_system_generated") == False)  # noqa: E712
