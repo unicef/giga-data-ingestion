@@ -323,7 +323,7 @@ export function SchoolConnectivityFormInputs() {
         },
       ],
     }),
-    [],
+    [resetField],
   );
 
   return <IngestApiFormInputs formMappings={schoolConnectivityFormMapping} />;

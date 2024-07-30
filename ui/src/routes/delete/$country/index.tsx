@@ -85,7 +85,7 @@ function Confirmation() {
         <p className="cds--file--label">School IDs</p>
         <UnorderedList>
           {ids.map(id => (
-            <ListItem>{id}</ListItem>
+            <ListItem key={id}>{id}</ListItem>
           ))}
         </UnorderedList>
       </Stack>

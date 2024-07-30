@@ -14,9 +14,8 @@ function AuthenticatedRBACView({ roles = [], children }: AuthenticatedRBACViewPr
   const hasPermissions = useMemo(() => {
     if (roles.length === 0) {
       return userRoles.length > 0;
-    } else {
-      return roles.some(role => userRoles.includes(role));
     }
+    return roles.some(role => userRoles.includes(role));
   }, [roles, userRoles]);
 
   return (

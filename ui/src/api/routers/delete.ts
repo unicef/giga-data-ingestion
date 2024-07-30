@@ -8,7 +8,7 @@ export default function routes(axi: AxiosInstance) {
       country: string;
       ids: string[];
     }): Promise<AxiosResponse<DeleteRowsResponse>> => {
-      return axi.post(`/delete`, {
+      return axi.post("/delete", {
         country: params.country,
         ids: params.ids,
       });

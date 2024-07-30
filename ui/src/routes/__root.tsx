@@ -1,7 +1,7 @@
 import { type PropsWithChildren, Suspense, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 
-import { useAccount, useMsal } from "@azure/msal-react";
+import { useAccount } from "@azure/msal-react";
 import type { QueryClient } from "@tanstack/react-query";
 import {
   Outlet,
@@ -74,7 +74,6 @@ function Layout() {
     appStateActions: { setUser, setNotificiation },
     appState: { notification },
   } = useStore();
-  const { instance } = useMsal();
   const account = useAccount();
   const getToken = useGetToken();
   const logout = useLogout();
@@ -97,7 +96,7 @@ function Layout() {
         }
       }
     })();
-  }, [account, getToken, instance, logout, setUser]);
+  }, [account, getToken, logout, setUser]);
 
   return (
     <Base>

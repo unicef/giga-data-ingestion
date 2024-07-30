@@ -28,7 +28,7 @@ export default function routes(axi: AxiosInstance) {
       approved_rows: string[];
       subpath: string;
     }): Promise<AxiosResponse<void>> => {
-      return axi.post(`approval-requests/upload`, { approved_rows, subpath });
+      return axi.post("approval-requests/upload", { approved_rows, subpath });
     },
   };
 }

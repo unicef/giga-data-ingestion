@@ -18,13 +18,15 @@
         "noForEach": "warn"
       },
       "suspicious": {
-        "noExplicitAny": "warn"
+        "noExplicitAny": "warn",
+        "noAssignInExpressions": "warn"
       },
       "nursery": {
         "useSortedClasses": "warn"
       },
       "a11y": {
-        "useValidAnchor": "warn"
+        "useValidAnchor": "warn",
+        "useKeyWithClickEvents": "off"
       }
     }
   },

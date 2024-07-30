@@ -257,6 +257,7 @@ function AddUser() {
             </FormGroup>
 
             {watchedCountryDatasets.map((_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey:
               <FormGroup key={i} legendText="">
                 <Select
                   id={`country.${i}`}
@@ -365,7 +366,7 @@ function AddUser() {
           statusIconDescription="success"
           timeout={5000}
           title="Create user success"
-          className="absolute right-0 top-0 mx-6 my-16"
+          className="absolute top-0 right-0 mx-6 my-16"
         />
       )}
       {showErrorNotification && (
@@ -378,7 +379,7 @@ function AddUser() {
           statusIconDescription="error"
           timeout={5000}
           title="Create user error"
-          className="absolute right-0 top-0 mx-6 my-16"
+          className="absolute top-0 right-0 mx-6 my-16"
         />
       )}
     </>

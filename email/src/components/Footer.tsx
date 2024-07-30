@@ -8,8 +8,8 @@ interface FooterProps {
 function Footer({ children }: FooterProps) {
   return (
     <>
-      <Hr className="border border-solid border-giga-light-gray my-7 mx-0 w-full" />
-      <Text className="text-giga-gray text-xs leading-6]">{children}</Text>
+      <Hr className="mx-0 my-7 w-full border border-giga-light-gray border-solid" />
+      <Text className="leading-6] text-giga-gray text-xs">{children}</Text>
     </>
   );
 }

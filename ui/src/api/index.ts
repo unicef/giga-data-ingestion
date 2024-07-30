@@ -62,7 +62,7 @@ export function AxiosProvider({ children }: PropsWithChildren) {
     if (!isAuthenticated && inProgress === InteractionStatus.Startup) {
       try {
         const { accessToken } = await getToken();
-        config.headers["Authorization"] = `Bearer ${accessToken}`;
+        config.headers.Authorization = `Bearer ${accessToken}`;
         return Promise.resolve(config);
       } catch (err) {
         console.error(err);
@@ -123,7 +123,7 @@ export function AxiosProvider({ children }: PropsWithChildren) {
       if (reqIntId) axi.interceptors.request.eject(reqIntId);
       if (resIntId) axi.interceptors.response.eject(resIntId);
 
-      delete axi.defaults.headers.common["Authorization"];
+      axi.defaults.headers.common.Authorization = undefined;
     };
   }, []);
 

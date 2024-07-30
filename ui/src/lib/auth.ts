@@ -61,20 +61,19 @@ export const msalConfig: Configuration = {
 
         if (import.meta.env.PROD) {
           if (level === LogLevel.Error) return console.error(message);
-          else return;
-        } else {
-          switch (level) {
-            case LogLevel.Error:
-              return console.error(message);
-            case LogLevel.Info:
-              return console.info(message);
-            // case LogLevel.Verbose:
-            //   return console.debug(message);
-            case LogLevel.Warning:
-              return console.warn(message);
-            default:
-              return;
-          }
+          return;
+        }
+        switch (level) {
+          case LogLevel.Error:
+            return console.error(message);
+          case LogLevel.Info:
+            return console.info(message);
+          // case LogLevel.Verbose:
+          //   return console.debug(message);
+          case LogLevel.Warning:
+            return console.warn(message);
+          default:
+            return;
         }
       },
     },

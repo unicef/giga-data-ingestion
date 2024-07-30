@@ -44,13 +44,13 @@ export const DataQualityReportCheckSuccess = ({
         </Head>
         <Preview>{previewText}</Preview>
         <Body className=" bg-white px-2 font-sans">
-          <Container className="border border-solid border-giga-light-gray rounded my-10 mx-auto p-5 max-w-md">
+          <Container className="mx-auto my-10 max-w-md rounded border border-giga-light-gray border-solid p-5">
             <Header />
 
-            <div className="p-6 mx-auto">
-              <Heading className="flex align-middle p-0 text-2xl font-normal text-giga-green">
+            <div className="mx-auto p-6">
+              <Heading className="flex p-0 align-middle font-normal text-2xl text-giga-green">
                 <Img
-                  className="w-10 h-10 mr-2 -mt-1"
+                  className="-mt-1 mr-2 h-10 w-10"
                   src="https://storage.googleapis.com/giga-test-app-static-assets/CheckmarkOutlineGreen.png"
                 />
                 <strong>Data check successful</strong>
@@ -68,9 +68,9 @@ export const DataQualityReportCheckSuccess = ({
                 Checks performed at <strong>{checkDate}</strong>
               </Text>
 
-              <Section className="text-center my-8">
+              <Section className="my-8 text-center">
                 <Button
-                  className="bg-primary px-6 py-4 text-sm font-semibold text-white no-underline text-center"
+                  className="bg-primary px-6 py-4 text-center font-semibold text-sm text-white no-underline"
                   href={`${baseUrl}/upload/${uploadId}`}
                 >
                   View Complete Report
@@ -78,10 +78,8 @@ export const DataQualityReportCheckSuccess = ({
               </Section>
 
               <Footer>
-                <>
-                  Your file successfully completed data checks. You may view the checks
-                  performed on Giga Sync.
-                </>
+                Your file successfully completed data checks. You may view the checks
+                performed on Giga Sync.
               </Footer>
             </div>
           </Container>

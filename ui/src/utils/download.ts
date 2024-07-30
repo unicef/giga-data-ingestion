@@ -9,7 +9,7 @@ export function saveFile(blob: AxiosResponse<Blob>) {
     /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
   );
   let filename = "file.csv"; // Default filename
-  if (filenameMatch != null && filenameMatch[1]) {
+  if (filenameMatch?.[1]) {
     filename = filenameMatch[1].replace(/['"]/g, "");
   }
 

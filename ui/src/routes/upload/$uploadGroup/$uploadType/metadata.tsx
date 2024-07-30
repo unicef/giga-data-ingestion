@@ -185,7 +185,7 @@ function Metadata() {
 
     const metadata = { ...data };
     const country = metadata.country;
-    delete metadata.country;
+    metadata.country = undefined;
 
     const columnMapping = uploadSlice.columnMapping;
     const correctedColumnMapping = Object.fromEntries(

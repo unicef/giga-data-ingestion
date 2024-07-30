@@ -200,7 +200,7 @@ function EditUser() {
   };
 
   const handleModalCancel = async (modalName: "EditModal" | "ConfirmModal") => {
-    if (modalName == "EditModal")
+    if (modalName === "EditModal")
       await navigate({ to: "../../..", search: { page, page_size } });
     setSwapModal(false);
   };
@@ -276,7 +276,7 @@ function EditUser() {
     const addedRoles = roles.filter(
       role =>
         !initialRoles.selectedItems.some(
-          initialRole => role.value == initialRole.value,
+          initialRole => role.value === initialRole.value,
         ),
     );
     const addedRolesWithIds = matchNamesWithIds(
@@ -285,7 +285,7 @@ function EditUser() {
     );
 
     const removedRoles = initialRoles.selectedItems.filter(
-      initialRole => !roles.some(role => role.value == initialRole.value),
+      initialRole => !roles.some(role => role.value === initialRole.value),
     );
     const removedRolesWithIds = matchNamesWithIds(
       removedRoles.map(role => role.value),
@@ -387,6 +387,7 @@ function EditUser() {
             />
 
             {watchedCountryDatasets.map((countryDataset, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey:
               <FormGroup key={i} legendText="">
                 <Select
                   id={`country.${i}`}

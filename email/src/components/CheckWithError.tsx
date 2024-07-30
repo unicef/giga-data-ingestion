@@ -13,8 +13,8 @@ const CheckWithError = ({ checks, title }: CheckWithErrorProps) => {
 
   return (
     <Section>
-      <span className="text-2xl px-2">{title}</span>
-      <Hr className="border border-solid border-giga-light-gray my-2 mx-0 w-full" />
+      <span className="px-2 text-2xl">{title}</span>
+      <Hr className="mx-0 my-2 w-full border border-giga-light-gray border-solid" />
       <ul className=" list-decimal gap-4 px-20">
         {failedChecks.map(check => (
           <li>
@@ -23,26 +23,26 @@ const CheckWithError = ({ checks, title }: CheckWithErrorProps) => {
               {check.column && (
                 <li>
                   Column:{" "}
-                  <span className="font-mono text-md font-semibold">
+                  <span className="font-mono font-semibold text-md">
                     {check.column}
                   </span>
                 </li>
               )}
               <li>
                 Check:{" "}
-                <span className="font-mono text-md font-semibold">
+                <span className="font-mono font-semibold text-md">
                   {check.assertion}
                 </span>
               </li>
               <li>
                 Failures:{" "}
-                <span className="text-md font-semibold">
+                <span className="font-semibold text-md">
                   {check.count_failed}/{check.count_overall}
                 </span>
               </li>
               <li>
                 Failure Rate:{" "}
-                <span className="text-md font-semibold">{check.percent_failed}%</span>
+                <span className="font-semibold text-md">{check.percent_failed}%</span>
               </li>
             </ul>
           </li>

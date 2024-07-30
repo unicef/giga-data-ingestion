@@ -25,7 +25,7 @@ function ToastNotification({ show, setShow, kind, caption, title }: ToastProps) 
         statusIconDescription={kind}
         timeout={5000}
         title={title}
-        className="absolute right-0 top-0 z-50 mx-6 my-16"
+        className="absolute top-0 right-0 z-50 mx-6 my-16"
       />
     )
   );

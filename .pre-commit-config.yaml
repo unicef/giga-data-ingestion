@@ -32,7 +32,9 @@ repos:
         args:
           - --config-path
           - ./ui/biome.json
-        #          - --apply-unsafe
+          - --unsafe
+          - --diagnostic-level=error
+        files: 'ui/.+'
         additional_dependencies: [ '@biomejs/biome@1.8.3' ]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0

@@ -40,6 +40,7 @@ const Datatable = ({ headers, rows }: DatatableProps) => {
                       {...getHeaderProps({
                         header,
                       })}
+                      key={header.key}
                     >
                       <div className="p-4">{header.header}</div>
                     </TableHeader>
@@ -52,6 +53,7 @@ const Datatable = ({ headers, rows }: DatatableProps) => {
                     {...getRowProps({
                       row,
                     })}
+                    key={row.id}
                   >
                     {row.cells.map(cell => (
                       <TableCell key={cell.id}>{cell.value}</TableCell>

@@ -39,7 +39,7 @@ export const InviteUserEmail = ({ displayName, email, groups }: InviteUserProps)
         </Head>
         <Preview>{previewText}</Preview>
         <Body className="mx-auto my-auto bg-white px-2 font-sans">
-          <Container className="border-gray-4 mx-auto my-8 max-w-[512px] border border-solid p-6">
+          <Container className="mx-auto my-8 max-w-[512px] border border-gray-4 border-solid p-6">
             <Heading className="mx-0 my-[30px] p-0 text-center font-normal">
               Welcome to <strong>Giga Sync</strong>
             </Heading>
@@ -71,7 +71,7 @@ export const InviteUserEmail = ({ displayName, email, groups }: InviteUserProps)
                 {baseUrl}
               </Link>
             </Text>
-            <Hr className="border-gray-4 mx-0 my-6 w-full border border-solid" />
+            <Hr className="mx-0 my-6 w-full border border-gray-4 border-solid" />
             <Text className="text-gray-4 text-xs">
               This invitation was intended for{" "}
               <Link href={`mailto:${email}`} className="text-black">

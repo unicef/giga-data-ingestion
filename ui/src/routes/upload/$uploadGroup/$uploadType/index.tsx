@@ -81,7 +81,7 @@ export default function Index() {
   } = useStore();
   const { file, source: storeSource } = uploadSlice;
   const hasUploadedFile = file != null;
-  const hasMode = uploadSlice.mode != "";
+  const hasMode = uploadSlice.mode !== "";
 
   const { register, watch } = useForm<{ source: string | null }>({
     mode: "onChange",

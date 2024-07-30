@@ -92,6 +92,7 @@ function Confirm() {
                       {...getHeaderProps({
                         header,
                       })}
+                      key={header.key}
                     >
                       {header.header}
                     </TableHeader>
@@ -111,6 +112,7 @@ function Confirm() {
                       {...getRowProps({
                         row,
                       })}
+                      key={row.id}
                     >
                       {row.cells.map(cell => (
                         <TableCell key={cell.id}>

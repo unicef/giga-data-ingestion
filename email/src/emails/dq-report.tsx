@@ -28,7 +28,7 @@ const DataQualityReport = ({
   uploadId,
 }: DataQualityReportEmailProps) => {
   const hasCriticalError = Boolean(
-    dataQualityCheck["critical_error_check"]?.[0]?.percent_failed > 0,
+    dataQualityCheck.critical_error_check?.[0]?.percent_failed > 0,
   );
 
   const title = hasCriticalError
@@ -57,9 +57,8 @@ const DataQualityReport = ({
             </Text>
           </>
         );
-      } else {
-        return <CheckWithError checks={check} title={key} />;
       }
+      return <CheckWithError checks={check} title={key} key={key} />;
     });
 
   return (
@@ -80,9 +79,9 @@ const DataQualityReport = ({
         </Head>
         <Preview>{title}</Preview>
         <Body className=" bg-white px-2 font-sans">
-          <Container className="border border-solid border-giga-light-gray rounded my-10 mx-auto p-5 max-w-2xl">
+          <Container className="mx-auto my-10 max-w-2xl rounded border border-giga-light-gray border-solid p-5">
             <Header />
-            <div className="p-6 mx-auto">
+            <div className="mx-auto p-6">
               <DqReportHeading hasCriticalError={hasCriticalError} title={title} />
               <Text className="my-1">
                 Upload Id <strong>{uploadId}</strong>
@@ -95,9 +94,9 @@ const DataQualityReport = ({
               </Text>
 
               <Section className="py-4">{checks}</Section>
-              <Section className="text-center my-8 ">
+              <Section className="my-8 text-center ">
                 <Button
-                  className="bg-primary px-6 py-4 text-sm font-semibold text-white no-underline text-center"
+                  className="bg-primary px-6 py-4 text-center font-semibold text-sm text-white no-underline"
                   href={`${baseUrl}/upload/${uploadId}`}
                 >
                   View Complete Report
@@ -108,7 +107,7 @@ const DataQualityReport = ({
                   This is an auto-generated email. Please do not reply. For inquiries,
                   you may submit a ticket{" "}
                   <Link
-                    href={`https://github.com/unicef/giga-data-ingestion/issues/new`}
+                    href={"https://github.com/unicef/giga-data-ingestion/issues/new"}
                     className="text-blue"
                   >
                     here

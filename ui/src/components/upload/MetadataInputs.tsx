@@ -48,7 +48,7 @@ export function CountrySelect({
       }
       placeholder="Country"
       invalid={!!errors.country}
-      invalidText={errors["country"]?.message as string}
+      invalidText={errors.country?.message as string}
       {...register}
     >
       <SelectItem value="" text="" />

@@ -96,7 +96,7 @@ const UploadFile = ({
             "rounded border-2 border-dashed transition-colors",
             "cursor-pointer hover:bg-giga-light-gray active:bg-giga-gray",
             {
-              "border border-solid border-primary hover:bg-primary/10 active:bg-primary/20":
+              "border border-primary border-solid hover:bg-primary/10 active:bg-primary/20":
                 hasUploadedFile,
             },
           )}
@@ -104,7 +104,7 @@ const UploadFile = ({
           <input {...getInputProps()} />
           <div
             className={cn(
-              "text-gray-3 flex flex-col items-center justify-center gap-2 p-6 text-center",
+              "flex flex-col items-center justify-center gap-2 p-6 text-center text-gray-3",
               {
                 "text-primary": hasUploadedFile,
               },
@@ -122,7 +122,7 @@ const UploadFile = ({
               </>
             )}
           </div>
-          <p className="text-gray-4 px-6 text-center text-xs opacity-25">
+          <p className="px-6 text-center text-gray-4 text-xs opacity-25">
             {description}
           </p>
         </div>

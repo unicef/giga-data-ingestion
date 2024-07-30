@@ -129,7 +129,7 @@ function Index() {
         >
           <SelectItem value="" text="" />
           {allCountryNames.map(country => {
-            return <SelectItem value={country} text={country} />;
+            return <SelectItem value={country} text={country} key={country} />;
           })}
         </Select>
 

@@ -33,11 +33,11 @@ export const MasterDataReleaseNotification = ({
           />
         </Head>
         <Preview>{previewText}</Preview>
-        <Body className=" bg-white my-auto mx-auto font-sans px-2">
-          <Container className="border border-solid border-giga-light-gray rounded my-10 mx-auto p-5 max-w-md">
+        <Body className=" mx-auto my-auto bg-white px-2 font-sans">
+          <Container className="mx-auto my-10 max-w-md rounded border border-giga-light-gray border-solid p-5">
             <Header />
 
-            <div className="p-6 mx-auto">
+            <div className="mx-auto p-6">
               <Text className="text-black text-sm leading-6">
                 The School Master data for <strong>{country}</strong> has been updated
                 with the following details:

@@ -1,4 +1,4 @@
-import { hostname } from "os";
+import { hostname } from "node:os";
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { render } from "@react-email/render";

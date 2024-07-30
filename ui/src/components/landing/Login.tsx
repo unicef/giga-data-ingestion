@@ -69,7 +69,7 @@ function Login() {
             className="flex flex-col justify-between gap-4 bg-giga-light-gray p-4 text-black hover:bg-giga-light-gray hover:text-black"
           >
             <div className="flex flex-col gap-4">
-              <div className="text-2xl font-semibold">{card.title}</div>
+              <div className="font-semibold text-2xl">{card.title}</div>
               <div>{card.description}</div>
             </div>
             <DocumentAdd size={60} className="text-giga-dark-gray" />

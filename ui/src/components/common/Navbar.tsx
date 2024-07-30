@@ -108,7 +108,7 @@ export default function Navbar() {
           )}
         </HeaderNavigation>
         <HeaderGlobalBar className="flex items-center">
-          <div className="text-sm text-giga-dark-gray">
+          <div className="text-giga-dark-gray text-sm">
             {(account?.idTokenClaims?.email as string) ?? ""}
           </div>
           <HeaderGlobalAction aria-label="Logout" onClick={logout}>

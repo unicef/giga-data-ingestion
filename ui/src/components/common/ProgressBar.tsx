@@ -9,7 +9,7 @@ interface ProgressBarProps extends Partial<ComponentProps<typeof CarbonProgressB
 function ProgressBar({ isLoading = false, ...props }: ProgressBarProps) {
   return isLoading ? (
     <CarbonProgressBar
-      className="absolute left-0 top-0 z-10 w-full"
+      className="absolute top-0 left-0 z-10 w-full"
       type="default"
       label="Loading"
       hideLabel

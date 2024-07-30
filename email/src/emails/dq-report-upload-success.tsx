@@ -38,10 +38,10 @@ export const DataQualityReportUploadSuccess = ({
         </Head>
         <Preview>{previewText}</Preview>
         <Body className=" bg-white px-2 font-sans">
-          <Container className="border border-solid border-giga-light-gray rounded my-10 mx-auto p-5 max-w-md">
+          <Container className="mx-auto my-10 max-w-md rounded border border-giga-light-gray border-solid p-5">
             <Header />
-            <div className="p-6 mx-auto">
-              <Heading className="mx-0 my-[30px] p-0 text-2xl font-normal text-giga-green">
+            <div className="mx-auto p-6">
+              <Heading className="mx-0 my-[30px] p-0 font-normal text-2xl text-giga-green">
                 <strong>Your data quality review is in progress</strong>
               </Heading>
               <Text className="my-1">
@@ -55,11 +55,9 @@ export const DataQualityReportUploadSuccess = ({
               </Text>
 
               <Footer>
-                <>
-                  Your file has been successfully uploaded. After a round of checks,
-                  your file will undergo a review process before being merged into the
-                  Master dataset. You may view the checks performed on Giga Sync.
-                </>
+                Your file has been successfully uploaded. After a round of checks, your
+                file will undergo a review process before being merged into the Master
+                dataset. You may view the checks performed on Giga Sync.
               </Footer>
             </div>
           </Container>

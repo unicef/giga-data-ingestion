@@ -21,7 +21,7 @@ export default function routes(axi: AxiosInstance) {
       description?: string;
       display_name: string;
     }): Promise<AxiosResponse<GraphGroup>> => {
-      return axi.post(`/groups`, {
+      return axi.post("/groups", {
         description: description,
         display_names: display_name,
       });

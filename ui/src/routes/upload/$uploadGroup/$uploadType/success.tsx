@@ -89,6 +89,7 @@ const SuccessDataQualityChecks = memo(
             previewData={dqResult.dq_failed_rows_first_five_rows}
             title={key}
             uploadId={uploadId}
+            key={key}
           />
         );
       });
@@ -114,9 +115,8 @@ const SuccessDataQualityChecks = memo(
           {dataCheckItems}
         </>
       );
-    } else {
-      return null;
     }
+    return null;
   },
 );
 
@@ -165,7 +165,7 @@ function Success() {
   const status = dqResult?.status;
 
   const isError =
-    status == DQStatus.ERROR ||
+    status === DQStatus.ERROR ||
     status === DQStatus.SKIPPED ||
     status === DQStatus.TIMEOUT;
 
@@ -183,9 +183,8 @@ function Success() {
           <BasicDataQualityCheck data={check.data} />
         </AccordionItem>
       );
-    } else {
-      return null;
     }
+    return null;
   });
 
   async function handleDownloadFullChecks() {
@@ -234,8 +233,8 @@ function Success() {
         <>
           <section className="flex flex-col gap-4">
             <div className="flex gap-6">
-              <div className="flex border-b-2 border-gray-300">
-                <div className=" bg-gray-100 py-4 pl-4 pr-28 text-base font-semibold">
+              <div className="flex border-gray-300 border-b-2">
+                <div className=" bg-gray-100 py-4 pr-28 pl-4 font-semibold text-base">
                   Data Quality Review
                 </div>
                 <Button
@@ -259,13 +258,13 @@ function Success() {
                     <Loading small={true} withOverlay={false} />
                     Refreshing Automatically
                   </div>
-                  <div className="flex items-center text-xs text-slate-600">
+                  <div className="flex items-center text-slate-600 text-xs">
                     <div>Estimated running time: 10-15 mins</div>
                   </div>
                 </>
               )}
             </div>
-            {status == DQStatus.IN_PROGRESS && (
+            {status === DQStatus.IN_PROGRESS && (
               <div className="py-6 text-blue-400">
                 Congratulations! Your data file has been uploaded and data quality
                 checks are <b> in progress.</b> Data quality report can be accessed
@@ -273,7 +272,7 @@ function Success() {
               </div>
             )}
             <div>
-              {status == DQStatus.COMPLETED && (
+              {status === DQStatus.COMPLETED && (
                 <>
                   Congratulations! Your data file has been uploaded and data quality
                   checks are successful with{" "}
@@ -292,7 +291,7 @@ function Success() {
                 </>
               )}
             </div>
-            <div className="flex items-center gap-2 text-[33px] font-bold text-primary">
+            <div className="flex items-center gap-2 font-bold text-[33px] text-primary">
               {uploadId}
               <CopyButton
                 onClick={() => {
@@ -311,7 +310,7 @@ function Success() {
                 className="flex cursor-pointer items-center"
                 onClick={handleDownloadFullChecks}
                 renderIcon={isPendingDownloadFile ? InlineLoading : Download}
-                disabled={isPendingDownloadFile || status != DQStatus.COMPLETED}
+                disabled={isPendingDownloadFile || status !== DQStatus.COMPLETED}
               >
                 Download
               </Button>

@@ -8,9 +8,9 @@ interface DqReportHeaderProps {
 
 function DqReportHeading({ hasCriticalError, title }: DqReportHeaderProps) {
   return (
-    <Heading className="flex align-middle p-0 text-2xl font-normal ">
+    <Heading className="flex p-0 align-middle font-normal text-2xl ">
       <Img
-        className="w-10 h-10 mr-2 -mt-1"
+        className="-mt-1 mr-2 h-10 w-10"
         src={`${
           hasCriticalError
             ? "https://storage.googleapis.com/giga-test-app-static-assets/MisuseOutlineRed.png"

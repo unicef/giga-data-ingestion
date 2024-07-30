@@ -12,7 +12,7 @@ function Header() {
         />
       </Column>
       <Column>
-        <Text className="text-white text-2xl">
+        <Text className="text-2xl text-white">
           <span className="font-light">giga</span>
           <span className="font-bold">sync</span>
         </Text>

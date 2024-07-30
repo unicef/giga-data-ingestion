@@ -39,7 +39,7 @@ const SummaryBanner = ({
   }
 
   return (
-    <div className="flex h-12 items-center gap-4 border-b-2 border-gray-200">
+    <div className="flex h-12 items-center gap-4 border-gray-200 border-b-2">
       <div className="flex h-full items-center bg-carbon-datatable-grey px-6 font-semibold">
         Data Quality Review ({totalAssertions} assertions)
       </div>
@@ -67,7 +67,7 @@ const SummaryBanner = ({
           </Tag>
         </div>
       )}
-      <div className="flex-grow"></div>
+      <div className="flex-grow" />
       {hasDownloadButton && (
         <Button
           kind="ghost"

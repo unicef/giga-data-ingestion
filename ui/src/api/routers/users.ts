@@ -29,7 +29,7 @@ export default function routes(axi: AxiosInstance) {
       invited_user_given_name: string;
       invited_user_surname: string;
     }): Promise<AxiosResponse<null>> => {
-      return axi.post(`/users/invite_and_add_groups`, {
+      return axi.post("/users/invite_and_add_groups", {
         groups_to_add,
         invited_user_display_name,
         invited_user_email_address,
