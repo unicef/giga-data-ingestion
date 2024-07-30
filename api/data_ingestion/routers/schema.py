@@ -1,4 +1,5 @@
 import io
+from typing import Annotated
 
 import orjson
 import pandas as pd
@@ -6,6 +7,7 @@ from fastapi import (
     APIRouter,
     BackgroundTasks,
     Depends,
+    Header,
     HTTPException,
     Response,
     Security,
@@ -32,18 +34,37 @@ router = APIRouter(
 
 @router.get("", response_model=list[str])
 async def list_schemas(
-    background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    cache_control: Annotated[str, Header()] = None,
 ):
-    return await get_schemas(db, background_tasks)
+    bypass_cache = cache_control == "no-cache"
+    return await get_schemas(db, background_tasks, bypass_cache=bypass_cache)
 
 
 @router.get("/{name}", response_model=list[MetaSchema])
 async def get_schema(
     name: str,
     background_tasks: BackgroundTasks,
-    is_qos: bool = False,
     db: Session = Depends(get_db),
+    cache_control: Annotated[str, Header()] = None,
+    is_update: bool = False,
+    is_qos: bool = False,
 ):
+    if is_qos and is_update:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="is_qos cannot be used with is_update",
+        )
+
+    if is_qos and name != "school_geolocation":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="is_qos can only be used with school_geolocation schema",
+        )
+
+    bypass_cache = cache_control == "no-cache"
+
     schemas = await get_schemas(db, background_tasks)
 
     if name not in schemas:
@@ -51,13 +72,17 @@ async def get_schema(
 
     if is_qos:
         schema_cache_key = f"{name}_qos"
+    elif is_update:
+        schema_cache_key = f"{name}_update"
     else:
         schema_cache_key = name
 
-    if (schema := await get_cache_string(get_schema_key(schema_cache_key))) is not None:
+    if not bypass_cache and (
+        (schema := await get_cache_string(get_schema_key(schema_cache_key))) is not None
+    ):
         return orjson.loads(schema)
 
-    return await _get_schema(name, db, background_tasks, is_qos=is_qos)
+    return _get_schema(name, db, background_tasks, is_update=is_update, is_qos=is_qos)
 
 
 @router.get("/{name}/download", response_class=Response)
