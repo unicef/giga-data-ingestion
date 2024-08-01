@@ -23,7 +23,7 @@ from data_ingestion.internal.schema import (
     get_schema as _get_schema,
     get_schemas,
 )
-from data_ingestion.schemas.schema import Schema as MetaSchema
+from data_ingestion.schemas.schema_column import SchemaColumn as MetaSchema
 
 router = APIRouter(
     prefix="/api/schema",

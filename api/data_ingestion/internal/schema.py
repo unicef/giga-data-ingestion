@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from data_ingestion.cache.keys import SCHEMAS_KEY, get_schema_key
 from data_ingestion.cache.serde import get_cache_list, set_cache_list, set_cache_string
-from data_ingestion.schemas.schema import Schema
+from data_ingestion.schemas.schema_column import SchemaColumn
 from data_ingestion.utils.schema import sort_schema_columns_key
 
 
@@ -45,7 +45,7 @@ def get_schema(
     name: str,
     db: Session,
     background_tasks: BackgroundTasks = None,
-) -> list[Schema]:
+) -> list[SchemaColumn]:
     table_name = name
 
     if name.startswith("school_geolocation"):
@@ -69,25 +69,31 @@ def get_schema(
 
     schema = []
     for mapping in res.mappings().all():
-        metaschema = Schema(**mapping)
-        logger.info(metaschema.model_dump())
+        schema_column = SchemaColumn(**mapping)
+        logger.info(schema_column.model_dump())
 
-        if metaschema.is_important is None:
-            metaschema.is_important = False
+        if schema_column.name == "school_id_giga":
+            continue
 
-        if metaschema.primary_key is None:
-            metaschema.primary_key = False
+        if schema_column.is_important is None:
+            schema_column.is_important = False
+
+        if schema_column.primary_key is None:
+            schema_column.primary_key = False
 
         if (
             name == "school_geolocation_qos"
-            and metaschema.name == "education_level_govt"
+            and schema_column.name == "education_level_govt"
         ):
-            metaschema.is_nullable = True
+            schema_column.is_nullable = True
 
-        if name == "school_geolocation_update" and metaschema.name != "school_id_govt":
-            metaschema.is_nullable = True
+        if (
+            name == "school_geolocation_update"
+            and schema_column.name != "school_id_govt"
+        ):
+            schema_column.is_nullable = True
 
-        schema.append(metaschema)
+        schema.append(schema_column)
 
     schema = sorted(schema, key=sort_schema_columns_key)
 
