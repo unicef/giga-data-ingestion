@@ -4,7 +4,6 @@ import {
   Button,
   DataTable,
   DataTableHeader,
-  DefinitionTooltip,
   PaginationNav,
   Table,
   TableBody,
@@ -15,23 +14,18 @@ import {
   TableRow,
 } from "@carbon/react";
 
-import { MasterSchema, masterSchemaData } from "@/constants/school-data";
+import { cn } from "@/lib/utils.ts";
 import {
   Check,
   DqFailedRowValues,
   DqFailedRowsFirstFiveRows,
 } from "@/types/upload";
 
-import StatusIndicator from "../upload/StatusIndicator";
 import ViewDetailsModal from "./ViewDetailsModal";
 
 const dqResultHeaders: DataTableHeader[] = [
-  { key: "column", header: "Column Name" },
-  { key: "assertion", header: "Assertion" },
+  { key: "description", header: "Check" },
   { key: "count_failed", header: "Count Failed" },
-  { key: "percent_failed", header: "Percent Failed" },
-  { key: "count_passed", header: "Count Passed" },
-  { key: "percent_passed", header: "Percent Passed" },
   { key: "actions", header: "Actions" },
 ];
 
@@ -48,6 +42,7 @@ const INVALID_VALUES = [
     errorMessage: "the values of these columns seem to be invalid",
   },
 ];
+
 const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
   const [page, setPage] = useState(0);
   const [selectedAssertion, setSelctedAssertion] = useState<string>("");
@@ -63,54 +58,22 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
       column = "NO_COLUMN",
       description,
       count_failed,
-      count_passed,
       count_overall,
-      percent_failed,
       percent_passed,
     } = check;
 
     const columnValue = column === "" ? "NO_COLUMN" : column;
 
-    const definition =
-      masterSchemaData[columnValue as keyof MasterSchema]?.description ||
-      "NO DESCRIPTION";
-
     return {
       id: `${assertion}-${column}`,
-      column: (
-        <div className="min-w-64">
-          <DefinitionTooltip align="right" definition={definition} openOnHover>
-            {columnValue}
-          </DefinitionTooltip>
-        </div>
-      ),
-      assertion: (
-        <div className="min-w-64 ">
-          <DefinitionTooltip align="right" definition={description} openOnHover>
-            {assertion}
-          </DefinitionTooltip>
-        </div>
-      ),
+      description: <div className="min-w-64">{description}</div>,
       count_failed: (
-        <div className="flex">
+        <div
+          className={cn("flex", {
+            "text-giga-dark-red": count_failed > 0,
+          })}
+        >
           {count_failed}/{count_overall}
-        </div>
-      ),
-      percent_failed: (
-        <div className="flex">
-          <StatusIndicator className="mr-1" type="error" />
-          {percent_failed.toFixed(2)}%
-        </div>
-      ),
-      count_passed: (
-        <div className="flex">
-          {count_passed}/{count_overall}
-        </div>
-      ),
-      percent_passed: (
-        <div className="flex">
-          <StatusIndicator className="mr-1" type="success" />
-          {percent_passed.toFixed(2)}%
         </div>
       ),
       actions: (
@@ -128,7 +91,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
             setSelectedColumn(column);
           }}
         >
-          View Details
+          View Error rows
         </Button>
       ),
     };
@@ -138,6 +101,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
   const startIndex = page * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const rowSlice = rows.slice(startIndex, endIndex);
+
   return (
     <div>
       <DataTable headers={dqResultHeaders} rows={rowSlice}>
