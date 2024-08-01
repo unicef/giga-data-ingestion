@@ -141,7 +141,7 @@ function Index() {
                     those necessary changes before re-uploading your data again.
                   </p>{" "}
                   <p className="cds--label-description">
-                    Users can expect a wait time of approx.15 minutes for all
+                    Users can expect a wait time of approx. 15 minutes for all
                     checks to be carried out successfully, at which time an
                     email will be sent with a full report and the “DQ Check
                     Status” will show as “Completed” in the File Uploads table.
