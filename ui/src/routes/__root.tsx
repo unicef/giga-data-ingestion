@@ -28,6 +28,7 @@ import info from "@/info.json";
 
 interface RouteContext {
   queryClient: QueryClient;
+  getState: typeof useStore.getState;
 }
 
 export const Route = createRootRouteWithContext<RouteContext>()({

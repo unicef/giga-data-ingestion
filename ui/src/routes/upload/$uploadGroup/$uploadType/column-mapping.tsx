@@ -36,13 +36,17 @@ export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/column-mapping",
 )({
   component: UploadColumnMapping,
-  loader: ({ params: { uploadType }, context: { queryClient } }) => {
+  loader: ({ params: { uploadType }, context: { queryClient, getState } }) => {
     const {
-      uploadSlice: { file, source },
+      uploadSlice: { file, source, mode },
       uploadSliceActions: { setStepIndex },
-    } = useStore.getState();
+    } = getState();
 
-    if (!file || (uploadType === "coverage" && !source)) {
+    if (
+      !file ||
+      (uploadType === "coverage" && !source) ||
+      (uploadType === "geolocation" && !mode)
+    ) {
       setStepIndex(0);
       throw redirect({ to: ".." });
     }
@@ -51,8 +55,8 @@ export const Route = createFileRoute(
       uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
 
     return queryClient.ensureQueryData({
-      queryFn: () => api.schema.get(metaschemaName),
-      queryKey: ["schema", metaschemaName],
+      queryFn: () => api.schema.get(metaschemaName, mode === "Update"),
+      queryKey: ["schema", metaschemaName, mode, false],
     });
   },
   pendingComponent: PendingComponent,
@@ -67,7 +71,13 @@ const headers: DataTableHeader[] = [
 
 function UploadColumnMapping() {
   const {
-    uploadSlice: { detectedColumns, columnMapping, source, columnLicense },
+    uploadSlice: {
+      detectedColumns,
+      columnMapping,
+      source,
+      columnLicense,
+      mode,
+    },
     uploadSliceActions: { setStepIndex, setColumnMapping, setColumnLicense },
   } = useStore();
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
@@ -82,8 +92,8 @@ function UploadColumnMapping() {
   const {
     data: { data: schema },
   } = useSuspenseQuery({
-    queryFn: () => api.schema.get(metaschemaName),
-    queryKey: ["schema", metaschemaName],
+    queryFn: () => api.schema.get(metaschemaName, mode === "Update"),
+    queryKey: ["schema", metaschemaName, mode, false],
   });
 
   const navigate = useNavigate({ from: Route.fullPath });

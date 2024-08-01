@@ -1,14 +1,16 @@
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 
 import { queryClient } from "@/api";
+import { useStore } from "@/context/store.ts";
 import { routeTree } from "@/routeTree.gen.ts";
 
 const router = createRouter({
   routeTree,
   context: {
     queryClient,
+    getState: useStore.getState,
   },
-  defaultPreload: "intent",
+  // defaultPreload: "intent",
   defaultPreloadStaleTime: 0,
 });
 

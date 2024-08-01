@@ -50,11 +50,11 @@ export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/success",
 )({
   component: Success,
-  loader: ({ params: { uploadGroup, uploadType } }) => {
+  loader: ({ context: { getState }, params: { uploadGroup, uploadType } }) => {
     const {
       uploadSlice: { file, columnMapping },
       uploadSliceActions: { setStepIndex },
-    } = useStore.getState();
+    } = getState();
 
     if (uploadGroup === "other" && uploadType === "unstructured") {
       //do nothing

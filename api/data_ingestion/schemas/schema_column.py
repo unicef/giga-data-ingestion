@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 
 
-class Schema(BaseModel):
+class SchemaColumn(BaseModel):
     id: str
     name: str
     data_type: str

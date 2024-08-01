@@ -5,8 +5,6 @@ import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
-  Dropdown,
-  OnChangeData,
   SelectItem,
   SkeletonPlaceholder,
   Stack,
@@ -23,7 +21,6 @@ import {
   AcceptedFileTypes,
   AcceptedUnstructuredFileTypes,
   UPLOAD_MODE_OPTIONS,
-  UploadModeOptions,
 } from "@/constants/upload.ts";
 import { useStore } from "@/context/store";
 import { sourceOptions } from "@/mocks/metadataFormValues.tsx";
@@ -33,10 +30,10 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
   component: Index,
   pendingComponent: PendingComponent,
   errorComponent: ErrorComponent,
-  beforeLoad: () => {
+  beforeLoad: ({ context: { getState } }) => {
     const {
       uploadSliceActions: { resetUploadSliceState },
-    } = useStore.getState();
+    } = getState();
     resetUploadSliceState();
   },
 });
@@ -65,6 +62,7 @@ const validUnstructuredTypes = {
 export default function Index() {
   const { uploadType, uploadGroup } = Route.useParams();
   const isCoverage = uploadType === "coverage";
+  const isGeolocation = uploadType === "geolocation";
 
   const [isParsing, setIsParsing] = useState(false);
 
@@ -84,31 +82,37 @@ export default function Index() {
       resetUploadSliceState,
       setUploadSliceState,
       setSource,
+      setMode,
       setDetectedColumns,
       setColumnMapping,
     },
   } = useStore();
-  const { file, source: storeSource } = uploadSlice;
+  const { file, source: storeSource, mode: storeMode } = uploadSlice;
   const hasUploadedFile = file != null;
-  const hasMode = uploadSlice.mode != "";
 
-  const { register, watch } = useForm<{ source: string | null }>({
+  const { register, watch } = useForm<{
+    source: string | null;
+    mode: typeof storeMode;
+  }>({
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
       source: storeSource,
+      mode: storeMode,
     },
   });
 
   const source = watch("source");
+  const mode = watch("mode");
 
-  const metaschemaName =
-    uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
+  const metaschemaName = isCoverage
+    ? `coverage_${source}`
+    : `school_${uploadType}`;
 
   const { data: schemaQuery, isFetching: isSchemaFetching } = useQuery({
-    queryFn: () => api.schema.get(metaschemaName),
-    queryKey: ["schema", metaschemaName],
-    enabled: isCoverage ? !!source : !isUnstructured,
+    queryFn: () => api.schema.get(metaschemaName, mode === "Update"),
+    queryKey: ["schema", metaschemaName, mode, false],
+    enabled: isCoverage ? !!source : isGeolocation ? !!mode : !isUnstructured,
   });
 
   const schema = schemaQuery?.data ?? [];
@@ -116,6 +120,7 @@ export default function Index() {
   const handleProceedToNextStep = () => {
     if (file) {
       setSource(source ?? null);
+      setMode(mode);
       setStepIndex(1);
     }
     void navigate({ to: isUnstructured ? "./metadata" : "./column-mapping" });
@@ -124,16 +129,20 @@ export default function Index() {
   const isProceedDisabled =
     !hasUploadedFile ||
     (isCoverage && !source) ||
+    (isGeolocation && !mode) ||
     isSchemaFetching ||
     isParsing ||
-    hasParsingError ||
-    !hasMode;
+    hasParsingError;
   const isSchemaLoading = !(
     (!isCoverage && !isSchemaFetching) ||
-    (isCoverage && !!source && !isSchemaFetching)
+    (!isGeolocation && !isSchemaFetching) ||
+    (isCoverage && !!source && !isSchemaFetching) ||
+    (isGeolocation && !!mode && !isSchemaFetching)
   );
   const shouldShowSkeleton =
-    (!isCoverage && isSchemaLoading) || (isCoverage && !!source);
+    (!isCoverage && isSchemaLoading) ||
+    (isCoverage && !!source) ||
+    (isGeolocation && !!mode);
 
   function handleOnAddFiles(addedFiles: File[]) {
     const file = addedFiles.at(0) ?? null;
@@ -162,14 +171,6 @@ export default function Index() {
       },
     });
   }
-  function handleOnChangeDropDown(item: OnChangeData<UploadModeOptions>) {
-    setUploadSliceState({
-      uploadSlice: {
-        ...uploadSlice,
-        mode: item.selectedItem ?? "",
-      },
-    });
-  }
 
   return (
     <Stack gap={10}>
@@ -192,20 +193,27 @@ export default function Index() {
         </Select>
       )}
 
+      {uploadType === "geolocation" && (
+        <Select
+          id="mode"
+          labelText="Are you updating existing schools or uploading data for new schools?"
+          placeholder="Select an option..."
+          className="w-1/4"
+          {...register("mode", { required: true })}
+        >
+          <SelectItem value="" text="" />
+          {UPLOAD_MODE_OPTIONS.map(option => (
+            <SelectItem key={option} text={option} value={option} />
+          ))}
+        </Select>
+      )}
+
       {isSchemaLoading ? (
         shouldShowSkeleton ? (
           <SkeletonPlaceholder />
         ) : null
       ) : (
         <div className="flex w-1/4 flex-col gap-4">
-          <Dropdown
-            id="default"
-            titleText="Are you updating existing schools or uploading data for new schools?"
-            label="Select an option..."
-            items={[...UPLOAD_MODE_OPTIONS]}
-            itemToString={item => (item ? item : "")}
-            onChange={handleOnChangeDropDown}
-          />
           <FileUploaderDropContainer
             accept={Object.keys(validTypes)}
             name="file"

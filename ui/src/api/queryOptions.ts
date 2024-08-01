@@ -40,7 +40,7 @@ export const listApprovalRequestQueryOptions = queryOptions({
 
 export const qosGeolocationSchemaQueryOptions = queryOptions({
   queryFn: () => api.schema.get("school_geolocation", true),
-  queryKey: ["schema", "school_geolocation"],
+  queryKey: ["schema", "school_geolocation", "", true],
 });
 
 export const listCountriesQueryOptions = queryOptions({

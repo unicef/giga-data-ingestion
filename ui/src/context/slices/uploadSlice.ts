@@ -38,6 +38,7 @@ export interface UploadSliceActions {
     ) => void;
     setUploadId: (value: UploadSliceState["uploadSlice"]["uploadId"]) => void;
     setSource: (value: UploadSliceState["uploadSlice"]["source"]) => void;
+    setMode: (value: UploadSliceState["uploadSlice"]["mode"]) => void;
   };
 }
 
@@ -117,6 +118,10 @@ export const createUploadSlice: StateCreator<
     setSource: source =>
       set(state => {
         state.uploadSlice.source = source;
+      }),
+    setMode: mode =>
+      set(state => {
+        state.uploadSlice.mode = mode;
       }),
     resetUploadSliceState: () =>
       set(state => {
