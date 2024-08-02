@@ -16,7 +16,7 @@ from data_ingestion.schemas.group import (
     ModifyUserAccessRequest,
     UpdateGroupRequest,
 )
-from data_ingestion.schemas.user import DatabaseUser, GraphUser
+from data_ingestion.schemas.user import DatabaseRole, DatabaseUser, GraphUser
 
 router = APIRouter(
     prefix="/api/groups",
@@ -25,9 +25,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[GraphGroup])
-async def list_groups():
-    return await GroupsApi.list_groups()
+@router.get("", response_model=list[DatabaseRole])
+async def list_groups(
+    db: AsyncSession = Depends(get_db),
+):
+    return await GroupsApi.list_groups(db)
 
 
 @router.post(

@@ -11,8 +11,11 @@ from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.models.reference_create import ReferenceCreate
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from data_ingestion.internal.utils import chunks
+from data_ingestion.models.users import Role
 from data_ingestion.schemas.group import (
     CreateGroupRequest,
     GraphGroup,
@@ -58,26 +61,12 @@ class GroupsApi:
     )
 
     @classmethod
-    async def list_groups(cls) -> list[GraphGroup]:
+    async def list_groups(cls, db: AsyncSession) -> list[Role]:
         try:
-            groups_out = []
-            groups = await graph_client.groups.get(
-                request_configuration=cls.group_request_config
-            )
-            while True:
-                if groups and groups.value:
-                    groups_out.extend(
-                        [GraphGroup(**jsonable_encoder(val)) for val in groups.value]
-                    )
+            get_roles_stmnt = select(Role)
+            roles = await db.scalars(get_roles_stmnt)
 
-                if groups.odata_next_link is None:
-                    break
-
-                groups = await graph_client.groups.with_url(groups.odata_next_link).get(
-                    request_configuration=cls.group_request_config
-                )
-
-            return sorted(groups_out, key=lambda g: g.display_name)
+            return roles
         except ODataError as err:
             raise HTTPException(
                 detail=err.error.message, status_code=err.response_status_code
