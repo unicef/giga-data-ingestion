@@ -30,7 +30,6 @@ export interface DatabaseUser {
   surname: string;
   email: string;
   id: string;
-  sub: string;
   enabled: boolean;
 }
 
