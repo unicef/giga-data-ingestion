@@ -72,7 +72,7 @@ def get_schema(
         schema_column = SchemaColumn(**mapping)
         logger.info(schema_column.model_dump())
 
-        if schema_column.name == "school_id_giga":
+        if "geolocation" in name and schema_column.name == "school_id_giga":
             continue
 
         if schema_column.is_important is None:
