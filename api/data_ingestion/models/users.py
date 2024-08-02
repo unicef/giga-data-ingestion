@@ -13,9 +13,7 @@ class UserRoleAssociation(BaseModel):
     role_id: Mapped[str] = mapped_column(
         ForeignKey("roles.id", ondelete="CASCADE"), nullable=False
     )
-    __table_args__ = (
-        UniqueConstraint('user_id', 'role_id', name='_user_role_uc'),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "role_id", name="_user_role_uc"),)
 
 
 class User(BaseModel):
