@@ -1,5 +1,5 @@
 from fastapi_azure_auth.user import User as AzureUser
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -19,6 +19,8 @@ async def get_user_roles(user: AzureUser, db: AsyncSession) -> list[str]:
         .options(joinedload(User.roles, innerjoin=True))
     )
 
+    is_users_empty = not await db.scalar(select(exists().where(User.id.isnot(None))))
+
     if matched is None and email:
         new_user = User(
             email=email,
@@ -26,14 +28,20 @@ async def get_user_roles(user: AzureUser, db: AsyncSession) -> list[str]:
             surname=user.family_name,
         )
 
-        if any(
-            [
-                email.endswith("@thinkingmachin.es"),
-                email.endswith("@unicef.org"),
-            ]
+        if (
+            any(
+                [
+                    email.endswith("@thinkingmachin.es"),
+                    email.endswith("@unicef.org"),
+                ]
+            )
+            and is_users_empty
         ):
             admin_role = await db.scalar(select(Role).where(Role.name == "Admin"))
             new_user.roles.add(admin_role)
+        else:
+            regular_role = await db.scalar(select(Role).where(Role.name == "Regular"))
+            new_user.roles.add(regular_role)
 
         db.add(new_user)
         await db.commit()
