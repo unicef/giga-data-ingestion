@@ -14,6 +14,9 @@ export default function routes(axi: AxiosInstance) {
     get: (id: string): Promise<AxiosResponse<DatabaseUserWithRoles>> => {
       return axi.get(`/users/${id}`);
     },
+    getCurrentUser: (): Promise<AxiosResponse<DatabaseUser>> => {
+      return axi.get(`/users/me`);
+    },
     create: (body: CreateUserRequest): Promise<AxiosResponse<DatabaseUser>> => {
       return axi.post("/users", body);
     },

@@ -122,9 +122,18 @@ async def invite_user_and_add_groups(body: GraphUserInviteAndAddGroupsRequest):
     await UsersApi.edit_user(result.invited_user.id, edit_user_body)
 
 
-@router.get("/me", response_model=AzureUser)
-async def get_current_user(user: AzureUser = Depends(azure_scheme)):
-    return user
+@router.get("/me", response_model=DatabaseUser)
+async def get_current_user(azure_user: AzureUser = Depends(azure_scheme), db: AsyncSession = Depends(get_db)):
+    emails = azure_user.claims.get("emails", [])
+    if len(emails) == 0:
+        email = ""
+    else:
+        email = emails[0]
+
+    return await db.scalar(
+        select(User).where(User.email == email)
+    )
+
 
 
 @router.get("/me/groups")
