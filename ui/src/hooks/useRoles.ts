@@ -5,7 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api";
 
 function useRoles() {
-  const { data: rolesQuery, isFetching } = useQuery({
+  const {
+    data: rolesQuery,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: ["roles", "me"],
     queryFn: api.roles.getForCurrentUser,
     staleTime: 60 * 5 * 1000,
@@ -42,6 +46,7 @@ function useRoles() {
   }, [roles]);
 
   return {
+    refetch,
     roles,
     hasRoles,
     isAdmin,
