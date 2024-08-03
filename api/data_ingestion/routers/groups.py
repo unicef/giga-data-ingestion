@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Security, status
 from pydantic import UUID4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import joinedload, selectinload
 
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
@@ -16,7 +16,7 @@ from data_ingestion.schemas.group import (
     ModifyUserAccessRequest,
     UpdateGroupRequest,
 )
-from data_ingestion.schemas.user import DatabaseRole, DatabaseUser, GraphUser
+from data_ingestion.schemas.user import DatabaseRole, GraphUser
 
 router = APIRouter(
     prefix="/api/groups",
@@ -94,7 +94,7 @@ async def remove_user_from_group(id: UUID4, user_id: UUID4):
 
 @router.post(
     "/{user_id}",
-    response_model=DatabaseUser,
+    response_model=list[str],
     dependencies=[Security(IsPrivileged())],
 )
 async def modify_user_access(
@@ -126,4 +126,10 @@ async def modify_user_access(
     user.surname = body.surname
     await db.commit()
 
-    return user
+    country_dataset = await db.scalar(
+        select(User).where(User.id == user_id).options(joinedload(User.roles))
+    )
+
+    filtered_country_dataset = [role.name for role in country_dataset.roles]
+
+    return filtered_country_dataset

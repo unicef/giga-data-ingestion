@@ -62,7 +62,7 @@ export default function routes(axi: AxiosInstance) {
       groups_to_remove: string[];
       given_name: string;
       surname: string;
-    }): Promise<AxiosResponse<null>> => {
+    }): Promise<AxiosResponse<string[]>> => {
       return axi.post(`/groups/${user_id}`, {
         groups_to_add,
         groups_to_remove,

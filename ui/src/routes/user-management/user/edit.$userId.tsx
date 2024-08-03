@@ -341,7 +341,21 @@ function EditUser() {
       user_id: initialId,
     };
     try {
-      await modifyUserAccess.mutateAsync(editGroupsPayload);
+      const result = await modifyUserAccess.mutateAsync(editGroupsPayload);
+
+      const derivedCountryData = deriveInitialCountryDataset(
+        filterCountries(result.data),
+      );
+      setValue("countryDatasets", derivedCountryData);
+
+      const updatedRoles = {
+        selectedItems: filterRoles(result.data).map(role => ({
+          label: role,
+          value: role,
+        })),
+      };
+      setValue("roles", updatedRoles);
+
       setShowEditUserSuccessNotification(true);
       reset();
       setSwapModal(false);
