@@ -3,48 +3,63 @@ from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from data_ingestion.models import Role, User
+from data_ingestion.models import Role, User, UserRoleAssociation
 
 
-async def get_user_roles(user: AzureUser, db: AsyncSession) -> list[str]:
-    emails = user.claims.get("emails", [])
+async def create_user_if_not_exist_and_assign_roles(
+    email: str, given_name: str, surname: str, db: AsyncSession
+):
+    new_user = User(
+        email=email,
+        given_name=given_name,
+        surname=surname,
+    )
+
+    does_admin_exist = not await db.scalar(
+        select(
+            exists().where(UserRoleAssociation.role_id == Role.id, Role.name == "Admin")
+        )
+    )
+
+    if (
+        any(
+            [
+                email.endswith("@thinkingmachin.es"),
+                email.endswith("@unicef.org"),
+            ]
+        )
+        and does_admin_exist
+    ):
+        admin_role = await db.scalar(select(Role).where(Role.name == "Admin"))
+        new_user.roles.add(admin_role)
+
+    db.add(new_user)
+    await db.commit()
+
+
+async def get_user_roles(azure_user: AzureUser, db: AsyncSession) -> list[str]:
+    emails = azure_user.claims.get("emails", [])
     if len(emails) == 0:
         email = ""
     else:
         email = emails[0]
 
-    matched = await db.scalar(
-        select(User)
-        .where(User.email == email)
-        .options(joinedload(User.roles, innerjoin=True))
+    user = await db.scalar(
+        select(User).where(User.email == email).options(joinedload(User.roles))
     )
 
-    is_users_empty = not await db.scalar(select(exists().where(User.id.isnot(None))))
-
-    if matched is None and email:
-        new_user = User(
+    if user is None and email:
+        await create_user_if_not_exist_and_assign_roles(
             email=email,
-            given_name=user.given_name,
-            surname=user.family_name,
+            given_name=azure_user.given_name,
+            surname=azure_user.family_name,
+            db=db,
         )
 
-        if (
-            any(
-                [
-                    email.endswith("@thinkingmachin.es"),
-                    email.endswith("@unicef.org"),
-                ]
-            )
-            and is_users_empty
-        ):
-            admin_role = await db.scalar(select(Role).where(Role.name == "Admin"))
-            new_user.roles.add(admin_role)
-        else:
-            regular_role = await db.scalar(select(Role).where(Role.name == "Regular"))
-            new_user.roles.add(regular_role)
+        newly_committed_user = await db.scalar(
+            select(User).where(User.email == email).options(joinedload(User.roles))
+        )
 
-        db.add(new_user)
-        await db.commit()
-        return [r.name for r in new_user.roles]
+        return [r.name for r in newly_committed_user.roles]
 
-    return [r.name for r in matched.roles]
+    return [r.name for r in user.roles]
