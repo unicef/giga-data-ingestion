@@ -32,7 +32,10 @@ from data_ingestion.internal.data_quality_checks import (
 )
 from data_ingestion.internal.roles import get_user_roles
 from data_ingestion.internal.storage import storage_client
-from data_ingestion.models import FileUpload
+from data_ingestion.models import (
+    FileUpload,
+    User as DatabaseUser,
+)
 from data_ingestion.models.file_upload import DQStatusEnum
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
@@ -225,10 +228,13 @@ async def upload_file(
 
     country_code = coco.convert(form.country, to="ISO3")
     email = user.claims.get("emails")[0]
+    database_user = await db.scalar(
+        select(DatabaseUser).where(DatabaseUser.email == email)
+    )
 
     file_upload = FileUpload(
-        uploader_id=user.sub,
-        uploader_email=email,
+        uploader_id=database_user.id,
+        uploader_email=database_user.email,
         country=country_code,
         dataset=dataset,
         source=form.source,
@@ -317,10 +323,13 @@ async def upload_unstructured(  # noqa: C901
         country_code = "N/A"
 
     email = user.claims.get("emails")[0]
+    database_user = await db.scalar(
+        select(DatabaseUser).where(DatabaseUser.email == email)
+    )
 
     file_upload = FileUpload(
-        uploader_id=user.sub,
-        uploader_email=email,
+        uploader_id=database_user.id,
+        uploader_email=database_user.email,
         country=country_code,
         dataset="unstructured",
         original_filename=file.filename,
