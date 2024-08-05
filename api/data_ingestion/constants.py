@@ -14,6 +14,7 @@ class Constants(BaseSettings):
     UPLOAD_FILE_SIZE_LIMIT_MB: int | float = 10
     UPLOAD_PATH_PREFIX: str = "raw/uploads"
     API_INGESTION_SCHEMA_UPLOAD_PATH: str = "schemas/qos/school-connectivity"
+
     VALID_UPLOAD_TYPES: dict[str, list[str]] = {
         "application/json": [".json"],
         "application/octet-stream": [".parquet"],
