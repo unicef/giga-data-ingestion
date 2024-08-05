@@ -36,7 +36,7 @@ logger.addHandler(stream_handler)
 initialize_sentry()
 
 app = FastAPI(
-    title="GigaSync Data Ingestion Portal",
+    title="Giga Sync API",
     version=__version__,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
