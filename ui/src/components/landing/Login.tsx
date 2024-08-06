@@ -3,6 +3,7 @@ import { ArrowRight, DocumentAdd } from "@carbon/icons-react";
 import { Button, Heading } from "@carbon/react";
 
 import useRoles from "@/hooks/useRoles";
+import useUser from "@/hooks/useUser";
 import { loginRequest } from "@/lib/auth.ts";
 
 const cards: { title: string; description: React.ReactNode }[] = [
@@ -42,12 +43,14 @@ const cards: { title: string; description: React.ReactNode }[] = [
 
 function Login() {
   const { instance } = useMsal();
-  const { refetch } = useRoles();
+  const { refetch: refetchRoles } = useRoles();
+  const { refetch: refetchUser } = useUser();
 
   async function handleLogin() {
     try {
       await instance.loginPopup(loginRequest);
-      refetch();
+      await refetchRoles();
+      await refetchUser();
     } catch (error) {
       console.error(error);
     }

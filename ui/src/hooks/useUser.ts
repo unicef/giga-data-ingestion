@@ -5,7 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api";
 
 function useUser() {
-  const { data: userQuery, isFetching } = useQuery({
+  const {
+    data: userQuery,
+    isFetching,
+    refetch,
+  } = useQuery({
     queryKey: ["user", "me"],
     queryFn: api.users.getCurrentUser,
     staleTime: 60 * 5 * 1000,
@@ -18,6 +22,7 @@ function useUser() {
 
   return {
     enabled,
+    refetch,
     isFetching,
   };
 }
