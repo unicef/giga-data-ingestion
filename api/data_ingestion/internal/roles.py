@@ -1,8 +1,10 @@
+from uuid import uuid4
+
 from fastapi_azure_auth.user import User as AzureUser
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
-from  uuid import uuid4
+
 from data_ingestion.models import Role, User, UserRoleAssociation
 
 
@@ -10,7 +12,7 @@ async def create_user_if_not_exist_and_assign_roles(
     email: str, given_name: str, surname: str, db: AsyncSession
 ):
     new_user = User(
-        id = str(uuid4()),
+        id=str(uuid4()),
         email=email,
         given_name=given_name,
         surname=surname,
