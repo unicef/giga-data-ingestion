@@ -16,45 +16,45 @@ jobs:
 
             - task: Kubernetes@1
               displayName: Kubernetes login
-              condition: eq(variables.environment, 'prd')
+              #              condition: eq(variables.environment, 'prd')
               inputs:
                 namespace: $(kubernetesNamespace)
                 command: login
 
             - task: Bash@3
               displayName: Get Azure client ID from secret
-              condition: eq(variables.environment, 'prd')
+              #              condition: eq(variables.environment, 'prd')
               inputs:
                 targetType: inline
                 script: |
-                  pipelineAzureClientId=$(kubectl get secret --namespace ictd-ooi-ingestionportal-prd oi-ingestionportal-secrets-prd -o jsonpath="{.data.AZURE_CLIENT_ID}" | base64 --decode)
+                  pipelineAzureClientId=$(kubectl get secret --namespace ictd-ooi-ingestionportal-$(environment) oi-ingestionportal-secrets-$(environment) -o jsonpath="{.data.AZURE_CLIENT_ID}" | base64 --decode)
                   echo "##vso[task.setvariable variable=pipelineAzureClientId]$pipelineAzureClientId"
 
-            - task: Docker@2
-              displayName: Build Docker image dev/stg
-              condition: or(eq(variables.environment, 'dev'), eq(variables.environment, 'stg'))
-              inputs:
-                command: build
-                repository: giga-ingestion-portal
-                dockerfile: $(Build.SourcesDirectory)/Dockerfile.prod
-                arguments: >
-                  --build-arg "VITE_AZURE_CLIENT_ID=$(azureAdClientId)"
-                  --build-arg "VITE_AZURE_TENANT_ID=$(azureAdTenantId)"
-                  --build-arg "VITE_AZURE_TENANT_NAME=$(azureAdTenantName)"
-                  --build-arg "VITE_AZURE_SUSI_AUTH_POLICY_NAME=$(azureAdSuSiAuthPolicyName)"
-                  --build-arg "VITE_AZURE_EDIT_PROFILE_AUTH_POLICY_NAME=$(azureEditProfileAuthPolicyName)"
-                  --build-arg "VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME=$(azureAdPasswordResetAuthPolicyName)"
-                  --build-arg "VITE_DATAHUB_URL=https://$(datahubIngressHost)"
-                  --build-arg "VITE_SENTRY_DSN=$(sentryDsn)"
-                  --build-arg "VITE_DEPLOY_ENV=$(deployEnv)"
-                  --build-arg "VITE_COMMIT_SHA=$(Build.SourceVersion)"
-                  --build-arg "VITE_REDIRECT_URL=https://$(ingressHost)"
-                tags: |
-                  $(deployEnv)-$(Build.SourceVersion)
+            #            - task: Docker@2
+            #              displayName: Build Docker image dev/stg
+            #              condition: or(eq(variables.environment, 'dev'), eq(variables.environment, 'stg'))
+            #              inputs:
+            #                command: build
+            #                repository: giga-ingestion-portal
+            #                dockerfile: $(Build.SourcesDirectory)/Dockerfile.prod
+            #                arguments: >
+            #                  --build-arg "VITE_AZURE_CLIENT_ID=$(azureAdClientId)"
+            #                  --build-arg "VITE_AZURE_TENANT_ID=$(azureAdTenantId)"
+            #                  --build-arg "VITE_AZURE_TENANT_NAME=$(azureAdTenantName)"
+            #                  --build-arg "VITE_AZURE_SUSI_AUTH_POLICY_NAME=$(azureAdSuSiAuthPolicyName)"
+            #                  --build-arg "VITE_AZURE_EDIT_PROFILE_AUTH_POLICY_NAME=$(azureEditProfileAuthPolicyName)"
+            #                  --build-arg "VITE_AZURE_PASSWORD_RESET_AUTH_POLICY_NAME=$(azureAdPasswordResetAuthPolicyName)"
+            #                  --build-arg "VITE_DATAHUB_URL=https://$(datahubIngressHost)"
+            #                  --build-arg "VITE_SENTRY_DSN=$(sentryDsn)"
+            #                  --build-arg "VITE_DEPLOY_ENV=$(deployEnv)"
+            #                  --build-arg "VITE_COMMIT_SHA=$(Build.SourceVersion)"
+            #                  --build-arg "VITE_REDIRECT_URL=https://$(ingressHost)"
+            #                tags: |
+            #                  $(deployEnv)-$(Build.SourceVersion)
 
             - task: Docker@2
               displayName: Build Docker image prd
-              condition: eq(variables.environment, 'prd')
+              #              condition: eq(variables.environment, 'prd')
               inputs:
                 command: build
                 repository: giga-ingestion-portal

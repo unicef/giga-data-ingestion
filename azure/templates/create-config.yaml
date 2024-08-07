@@ -56,8 +56,6 @@ jobs:
                     DEPLOY_ENV: "$(deployEnv)"
                     SECRET_KEY: "$(applicationSecretKey)"
                     SENTRY_DSN: "$(sentryDsn)"
-                    AZURE_CLIENT_ID: "$(azureAdClientId)"
-                    AZURE_CLIENT_SECRET: "$(azureAdClientSecret)"
                     AZURE_TENANT_ID: "$(azureAdTenantId)"
                     AZURE_APPLICATION_ID: "$(azureAdApplicationId)"
                     AZURE_TENANT_NAME: "$(azureAdTenantName)"
