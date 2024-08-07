@@ -142,7 +142,9 @@ async def list_approval_requests(
         queries.append(query)
 
     if len(queries) > 0:
-        res = db.execute(union_all(*queries))
+        res = db.execute(
+            union_all(*queries).order_by(column("table_name"), column("table_schema"))
+        )
         stats = res.mappings().all()
 
         for stat in stats:
@@ -156,10 +158,12 @@ async def list_approval_requests(
                 .title()
                 .rstrip()
             )
-            enabled = settings.get(f"{country_iso3}-{dataset}", False) and (
-                stat["rows_added"] > 0
-                or stat["rows_updated"] > 0
-                or stat["rows_deleted"] > 0
+            enabled = settings.get(f"{country_iso3}-{dataset}", False) and any(
+                [
+                    stat["rows_added"] > 0,
+                    stat["rows_updated"] > 0,
+                    stat["rows_deleted"] > 0,
+                ]
             )
 
             body.append(
@@ -180,8 +184,8 @@ async def list_approval_requests(
 
     return {
         "data": body,
-        "page": 1,
-        "page_size": 10,
+        "page": page,
+        "page_size": page_size,
         "total_count": total_count,
     }
 
