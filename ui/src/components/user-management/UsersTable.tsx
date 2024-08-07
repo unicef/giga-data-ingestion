@@ -33,7 +33,7 @@ import {
   DEFAULT_PAGE_NUMBER,
   DEFAULT_PAGE_SIZE,
 } from "@/constants/pagination.ts";
-import { GraphUser } from "@/types/user.ts";
+import { DatabaseUser } from "@/types/user.ts";
 
 const columns: DataTableHeader[] = [
   {
@@ -54,7 +54,7 @@ const columns: DataTableHeader[] = [
   },
 ];
 
-interface TableGraphUser extends GraphUser {
+interface TableDatabaseUser extends DatabaseUser {
   email_tag: ReactElement | null;
   countries: string;
   roles: string;
@@ -100,27 +100,24 @@ function UsersTable() {
         (currentPage - 1) * pageSize + pageSize,
       )
       .map(originalUser => {
-        const user = { ...originalUser } as TableGraphUser;
+        const user = {
+          ...originalUser,
+          email_tag: null,
+          countries: "",
+          roles: "",
+          actions: null,
+        } as TableDatabaseUser;
 
         user.email_tag = (
           <>
-            {user.mail ?? user.user_principal_name}
-            {user.external_user_state === "PendingAcceptance" && (
-              <Tag className="uppercase" type="warm-gray">
-                pending
+            {user.email}
+            {!user.enabled && (
+              <Tag className="uppercase" type="gray">
+                Disabled
               </Tag>
             )}
-            {!user.account_enabled &&
-              user.external_user_state !== "PendingAcceptance" && (
-                <Tag className="uppercase" type="gray">
-                  Disabled
-                </Tag>
-              )}
           </>
         );
-
-        user.countries = "";
-        user.roles = "";
 
         user.actions = (
           <div className="flex gap-2">
@@ -136,7 +133,7 @@ function UsersTable() {
               Edit
             </Button>
 
-            {originalUser.account_enabled ? (
+            {originalUser.enabled ? (
               <Button
                 kind="tertiary"
                 disabled={originalUser.id === accounts[0].idTokenClaims?.sub}

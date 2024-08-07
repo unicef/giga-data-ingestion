@@ -30,9 +30,12 @@ from data_ingestion.internal.data_quality_checks import (
     get_data_quality_summary,
     get_first_n_error_rows_for_data_quality_check,
 )
+from data_ingestion.internal.roles import get_user_roles
 from data_ingestion.internal.storage import storage_client
-from data_ingestion.internal.users import UsersApi
-from data_ingestion.models import FileUpload
+from data_ingestion.models import (
+    FileUpload,
+    User as DatabaseUser,
+)
 from data_ingestion.models.file_upload import DQStatusEnum
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
@@ -129,7 +132,9 @@ async def list_uploads(
 ):
     query = select(FileUpload)
     if not is_privileged:
-        query = query.where(FileUpload.uploader_id == user.sub)
+        query = query.where(
+            FileUpload.uploader_email == user.claims.get("emails", ["NONE"])[0]
+        )
 
     if id_search:
         query = query.where(func.starts_with(FileUpload.id, id_search))
@@ -167,7 +172,10 @@ async def get_upload(
             detail="File Upload ID does not exist",
         )
 
-    if not is_privileged and file_upload.uploader_id != user.sub:
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to access details for this file.",
@@ -189,7 +197,8 @@ async def upload_file(
 
     if not is_privileged:
         country_dataset = f"{form.country}-School {dataset.capitalize()}"
-        if country_dataset not in user.groups:
+        roles = await get_user_roles(user, db)
+        if country_dataset not in roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User does not have permissions on this dataset",
@@ -218,13 +227,14 @@ async def upload_file(
         )
 
     country_code = coco.convert(form.country, to="ISO3")
-    email = user.email or user.claims.get("email")
-    if email is None:
-        email = (await UsersApi.get_user(user.sub)).mail
+    email = user.claims.get("emails")[0]
+    database_user = await db.scalar(
+        select(DatabaseUser).where(DatabaseUser.email == email)
+    )
 
     file_upload = FileUpload(
-        uploader_id=user.sub,
-        uploader_email=email,
+        uploader_id=database_user.id,
+        uploader_email=database_user.email,
         country=country_code,
         dataset=dataset,
         source=form.source,
@@ -279,7 +289,8 @@ async def upload_unstructured(  # noqa: C901
     file = form.file
 
     if not is_privileged:
-        if not any(group.rsplit("-")[0] == form.country for group in user.groups):
+        roles = await get_user_roles(user, db)
+        if not any(role.rsplit("-")[0] == form.country for role in roles):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User does not have permissions on this dataset",
@@ -311,13 +322,14 @@ async def upload_unstructured(  # noqa: C901
     if country_code == "not found":
         country_code = "N/A"
 
-    email = user.email or user.claims.get("email")
-    if email is None:
-        email = (await UsersApi.get_user(user.sub)).mail
+    email = user.claims.get("emails")[0]
+    database_user = await db.scalar(
+        select(DatabaseUser).where(DatabaseUser.email == email)
+    )
 
     file_upload = FileUpload(
-        uploader_id=user.sub,
-        uploader_email=email,
+        uploader_id=database_user.id,
+        uploader_email=database_user.email,
         country=country_code,
         dataset="unstructured",
         original_filename=file.filename,
@@ -373,7 +385,10 @@ async def get_data_quality_check(
             detail="File Upload ID does not exist",
         )
 
-    if not is_privileged and file_upload.uploader_id != user.sub:
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to access details for this file.",
@@ -420,7 +435,7 @@ async def download_data_quality_check(
         )
 
     if not is_privileged:
-        if file_upload.uploader_id != user.sub:
+        if file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not have permission to access details for this file.",

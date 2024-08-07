@@ -1,14 +1,20 @@
 import { useMemo } from "react";
 
-import { useAccount } from "@azure/msal-react";
+import { useQuery } from "@tanstack/react-query";
+
+import { api } from "@/api";
 
 function useRoles() {
-  const account = useAccount();
-
-  const roles = useMemo(
-    () => (account?.idTokenClaims?.groups ?? []) as string[],
-    [account?.idTokenClaims?.groups],
-  );
+  const {
+    data: rolesQuery,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: ["roles", "me"],
+    queryFn: api.roles.getForCurrentUser,
+    staleTime: 60 * 5 * 1000,
+  });
+  const roles = useMemo(() => rolesQuery?.data ?? [], [rolesQuery?.data]);
 
   const isAdmin = useMemo(() => roles.includes("Admin"), [roles]);
 
@@ -40,12 +46,14 @@ function useRoles() {
   }, [roles]);
 
   return {
+    refetch,
     roles,
     hasRoles,
     isAdmin,
     isSuperAdmin,
     isPrivileged,
     countryDatasets,
+    isFetching,
   };
 }
 

@@ -177,7 +177,7 @@ function Metadata() {
   });
   const allCountryNames = useMemo(() => {
     const allGroups = allGroupsQuery?.data ?? [];
-    const allGroupNames = allGroups.map(group => group.display_name);
+    const allGroupNames = allGroups.map(group => group.name);
     return [
       ...new Set(
         allGroupNames

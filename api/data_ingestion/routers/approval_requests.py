@@ -20,7 +20,10 @@ from data_ingestion.db.primary import get_db as get_primary_db
 from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
-from data_ingestion.models import ApprovalRequest
+from data_ingestion.models import (
+    ApprovalRequest,
+    User as DatabaseUser,
+)
 from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
@@ -28,7 +31,6 @@ from data_ingestion.schemas.approval_requests import (
     UploadApprovedRowsRequest,
 )
 from data_ingestion.schemas.core import PagedResponseSchema
-from data_ingestion.utils.user import get_user_email
 
 router = APIRouter(
     prefix="/api/approval-requests",
@@ -282,7 +284,11 @@ async def upload_approved_rows(
 
     filename = f"{country_iso3}_{dataset}_{timestamp}.json"
     approve_location = f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/{dataset}/{country_iso3}/{filename}"
-    email = await get_user_email(user)
+    email = user.claims.get("emails")[0]
+
+    database_user = await primary_db.scalar(
+        select(DatabaseUser).where(DatabaseUser.email == email)
+    )
 
     approve_client = storage_client.get_blob_client(approve_location)
     try:
@@ -315,8 +321,8 @@ async def upload_approved_rows(
             primary_db.add(
                 ApprovalRequestAuditLog(
                     approval_request_id=obj.first().id,
-                    approved_by_id=user.sub,
-                    approved_by_email=email,
+                    approved_by_id=database_user.id,
+                    approved_by_email=database_user.email,
                 )
             )
 

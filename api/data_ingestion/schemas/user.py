@@ -32,8 +32,7 @@ class GraphUser(BaseModel):
 
 
 class GraphUserUpdateRequest(BaseModel):
-    account_enabled: bool | None = None
-    display_name: str | None = None
+    enabled: bool | None = None
     given_name: str | None = None
     surname: str | None = None
 
@@ -62,3 +61,33 @@ class GraphUserInviteAndAddGroupsRequest(BaseModel):
     invited_user_email_address: EmailStr
     invited_user_given_name: str | None = None
     invited_user_surname: str | None = None
+
+
+class DatabaseUser(BaseModel):
+    id: str
+    email: str
+    given_name: str | None = None
+    surname: str | None = None
+    enabled: bool = True
+
+
+class DatabaseRole(BaseModel):
+    id: str
+    name: str
+
+
+class DatabaseRoleWithMembers(BaseModel):
+    id: str
+    name: str
+    users: list[DatabaseUser]
+
+
+class DatabaseUserWithRoles(DatabaseUser):
+    roles: list[DatabaseRole]
+
+
+class DatabaseUserCreateRequest(BaseModel):
+    given_name: str
+    surname: str
+    email: EmailStr
+    roles: list[DatabaseRole]

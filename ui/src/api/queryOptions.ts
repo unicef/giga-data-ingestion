@@ -47,3 +47,8 @@ export const listCountriesQueryOptions = queryOptions({
   queryKey: ["countries"],
   queryFn: api.utils.listCountries,
 });
+
+export const listRolesQueryOptions = queryOptions({
+  queryKey: ["roles"],
+  queryFn: api.roles.list,
+});

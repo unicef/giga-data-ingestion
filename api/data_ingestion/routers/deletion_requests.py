@@ -4,6 +4,7 @@ from datetime import datetime
 import country_converter as coco
 from fastapi import APIRouter, Depends, HTTPException, Security
 from fastapi_azure_auth.user import User
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from azure.core.exceptions import HttpResponseError
@@ -12,7 +13,10 @@ from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
-from data_ingestion.models import DeletionRequest
+from data_ingestion.models import (
+    DeletionRequest,
+    User as DatabaseUser,
+)
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.deletion_requests import DeleteRowsRequest, DeleteRowsSchema
 from data_ingestion.utils.user import get_user_email
@@ -34,6 +38,10 @@ async def delete_rows(
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     email = await get_user_email(user)
 
+    database_user = await db.scalar(
+        select(DatabaseUser).where(DatabaseUser.email == email)
+    )
+
     filename = f"{country_iso3}_{timestamp}.json"
 
     approve_location = (
@@ -47,7 +55,7 @@ async def delete_rows(
         approve_client.upload_blob(
             json.dumps(body.ids),
             overwrite=True,
-            metadata={"requester_email": email},
+            metadata={"requester_email": database_user.email},
             content_settings=ContentSettings(content_type="application/json"),
         )
     except HttpResponseError as err:
@@ -58,8 +66,8 @@ async def delete_rows(
     async with db.begin():
         db.add(
             DeletionRequest(
-                requested_by_email=email,
-                requested_by_id=user.sub,
+                requested_by_email=database_user.email,
+                requested_by_id=database_user.id,
                 country=country_iso3,
             )
         )

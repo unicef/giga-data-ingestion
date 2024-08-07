@@ -17,6 +17,7 @@ from data_ingestion.routers import (
     email,
     groups,
     qos,
+    roles,
     schema,
     upload,
     users,
@@ -77,6 +78,7 @@ app.include_router(deletion_requests.router)
 app.include_router(email.router)
 app.include_router(groups.router)
 app.include_router(qos.router)
+app.include_router(roles.router)
 app.include_router(schema.router)
 app.include_router(upload.router)
 app.include_router(users.router)

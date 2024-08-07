@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
@@ -17,6 +17,11 @@ import { ColumnValidator } from "@/utils/upload";
 
 export const Route = createFileRoute("/delete/")({
   component: Index,
+  loader: ({ context: { queryClient } }) =>
+    queryClient.ensureQueryData({
+      queryKey: ["countries"],
+      queryFn: api.utils.listCountries,
+    }),
   pendingComponent: PendingComponent,
   errorComponent: ErrorComponent,
 });
@@ -56,22 +61,12 @@ function Index() {
 
   const country = watch("country");
 
-  const { data: allGroupsQuery } = useSuspenseQuery({
-    queryKey: ["groups"],
-    queryFn: api.groups.list,
+  const {
+    data: { data: allCountryNames },
+  } = useSuspenseQuery({
+    queryKey: ["countries"],
+    queryFn: api.utils.listCountries,
   });
-  const allCountryNames = useMemo(() => {
-    const allGroups = allGroupsQuery?.data ?? [];
-    const allGroupNames = allGroups.map(group => group.display_name);
-    return [
-      ...new Set(
-        allGroupNames
-          .map(name => name.split("-School"))
-          .filter(split => split.length > 1)
-          .map(split => split[0]),
-      ),
-    ];
-  }, [allGroupsQuery?.data]);
 
   function handleOnAddFiles(addedFiles: File[]) {
     const file = addedFiles.at(0) ?? null;
@@ -131,7 +126,12 @@ function Index() {
         >
           <SelectItem value="" text="" />
           {allCountryNames.map(country => {
-            return <SelectItem value={country} text={country} />;
+            return (
+              <SelectItem
+                value={country.name_short}
+                text={country.name_short}
+              />
+            );
           })}
         </Select>
 

@@ -1,6 +1,6 @@
 import { SyntheticEvent } from "react";
 
-import { GraphUser } from "@/types/user.ts";
+import { DatabaseUser } from "@/types/user.ts";
 
 export type IngestApiFormMapping<T> = {
   name: Extract<keyof T, string>;
@@ -35,7 +35,7 @@ export type IngestApiFormMapping<T> = {
     }
   | {
       type: "select-user";
-      options: GraphUser[];
+      options: DatabaseUser[];
     }
   | {
       type: "text-action";
