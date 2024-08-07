@@ -56,9 +56,9 @@ def send_email_base(
     )
     result = client.send.create(data=message)
     try:
-        logger.info(result.json())
+        logger.info(f"Send email result: {result.json()}")
     except JSONDecodeError:
-        logger.info(result.text)
+        logger.info(f"Send email result: {result.text}")
 
 
 def send_rendered_email(
@@ -80,6 +80,8 @@ def send_rendered_email(
             raise HTTPError(res.json())
         except JSONDecodeError:
             raise HTTPError(res.text) from None
+
+    logger.info(f"Email renderer response: {res.status_code} {res.text}")
 
     data = res.json()
     html = data.get("html")
