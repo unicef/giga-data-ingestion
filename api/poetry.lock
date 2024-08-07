@@ -874,13 +874,13 @@ all = ["email-validator (>=2.0.0)", "httpx (>=0.23.0)", "itsdangerous (>=1.1.0)"
 
 [[package]]
 name = "fastapi-azure-auth"
-version = "4.4.0"
+version = "5.0.0"
 description = "Easy and secure implementation of Azure AD for your FastAPI APIs"
 optional = false
 python-versions = "<4.0,>=3.8"
 files = [
-    {file = "fastapi_azure_auth-4.4.0-py3-none-any.whl", hash = "sha256:55199d0f19a71f684b990686a20c3994d357e5076f835f47d4779a182ed233d6"},
-    {file = "fastapi_azure_auth-4.4.0.tar.gz", hash = "sha256:0cb5052658ac64b4a4977846d785fa078c6f7c0e527752fa5ac2e6a7c9c389b3"},
+    {file = "fastapi_azure_auth-5.0.0-py3-none-any.whl", hash = "sha256:3af910cbbc8b1a5168821bb6fba4910ccfddfd75b0b908d5706b8d19701e93e1"},
+    {file = "fastapi_azure_auth-5.0.0.tar.gz", hash = "sha256:8ba861e44cd189e0a06bb194ea40bd3b45970ff931c946108c134e4af001e6db"},
 ]
 
 [package.dependencies]
@@ -3741,4 +3741,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "14033160d442e6d73fec042ca1e938fe74de762596772d7821e67a43355c744b"
+content-hash = "35bf2ed67b2a2215e18950ac09d5adea460addedc236048a7013bad917f883e6"

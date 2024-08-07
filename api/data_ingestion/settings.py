@@ -3,7 +3,6 @@ from datetime import timedelta
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
 
 import sentry_sdk
 from loguru import logger
@@ -64,7 +63,6 @@ class Settings(BaseSettings):
     BASE_DIR: Path = Path(__file__).parent.parent
     ALLOWED_HOSTS: list[str] = ["*"]
     CORS_ALLOWED_ORIGINS: list[str] = ["*"]
-    AZURE_SCOPE_DESCRIPTION: Literal["User.Impersonate"] = "User.Impersonate"
     AZURE_EDIT_PROFILE_AUTH_POLICY_NAME: str = ""
     AZURE_PASSWORD_RESET_AUTH_POLICY_NAME: str = ""
     DB_HOST: str = "db"
@@ -93,16 +91,6 @@ class Settings(BaseSettings):
     @property
     def AUTHORITY_DOMAIN(self) -> str:
         return f"{self.AZURE_TENANT_NAME}.onmicrosoft.com"
-
-    @computed_field
-    @property
-    def AZURE_SCOPE_NAME(self) -> str:
-        return f"https://{self.AUTHORITY_DOMAIN}/{self.AZURE_CLIENT_ID}/{self.AZURE_SCOPE_DESCRIPTION}"
-
-    @computed_field
-    @property
-    def AZURE_SCOPES(self) -> dict[str, str]:
-        return {self.AZURE_SCOPE_NAME: self.AZURE_SCOPE_DESCRIPTION}
 
     @computed_field
     @property

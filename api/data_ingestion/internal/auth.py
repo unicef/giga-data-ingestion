@@ -10,7 +10,11 @@ azure_scheme = B2CMultiTenantAuthorizationCodeBearer(
     openid_config_url=settings.OPENID_CONFIG_URL,
     openapi_authorization_url=settings.OPENAPI_AUTHORIZATION_URL,
     openapi_token_url=settings.OPENAPI_TOKEN_URL,
-    scopes=settings.AZURE_SCOPES,
+    scopes={
+        "openid": "openid",
+        "profile": "profile",
+        "offline_access": "offline_access",
+    },
     validate_iss=False,
     leeway=60,
 )

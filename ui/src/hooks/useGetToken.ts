@@ -11,10 +11,10 @@ function useGetToken() {
   async function getToken() {
     try {
       const result = await instance.acquireTokenSilent(loginRequest);
-      axi.defaults.headers.common[
-        "Authorization"
-      ] = `Bearer ${result.accessToken}`;
-      return result;
+      const bearer = !!result.accessToken ? result.accessToken : result.idToken;
+
+      axi.defaults.headers.common["Authorization"] = `Bearer ${bearer}`;
+      return bearer;
     } catch (err) {
       console.error(err);
       throw err;

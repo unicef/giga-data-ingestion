@@ -65,8 +65,8 @@ export function AxiosProvider({ children }: PropsWithChildren) {
   ) {
     if (!isAuthenticated && inProgress === InteractionStatus.Startup) {
       try {
-        const { accessToken } = await getToken();
-        config.headers["Authorization"] = `Bearer ${accessToken}`;
+        const bearer = await getToken();
+        config.headers["Authorization"] = `Bearer ${bearer}`;
         return Promise.resolve(config);
       } catch (err) {
         console.error(err);
@@ -94,14 +94,14 @@ export function AxiosProvider({ children }: PropsWithChildren) {
       inProgress !== InteractionStatus.None
     ) {
       try {
-        const { accessToken } = await getToken();
+        const bearer = await getToken();
 
         try {
           const res = await axi.request({
             ...originalRequest,
             headers: {
               ...originalRequest.headers,
-              Authorization: `Bearer ${accessToken}`,
+              Authorization: `Bearer ${bearer}`,
             },
           });
           return Promise.resolve(res);

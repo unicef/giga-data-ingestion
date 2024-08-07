@@ -10,6 +10,7 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   plugins: ["react-refresh", "@tanstack/query"],
   rules: {
+    "no-extra-boolean-cast": 0,
     "react-refresh/only-export-components": [
       "warn",
       { allowConstantExport: true },

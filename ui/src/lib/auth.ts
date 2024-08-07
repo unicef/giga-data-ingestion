@@ -37,9 +37,7 @@ export const b2cPolicies = {
 };
 
 export const apiConfig = {
-  b2cScopes: [
-    `https://${AZURE_TENANT_NAME}.onmicrosoft.com/${AZURE_CLIENT_ID}/User.Impersonate`,
-  ],
+  b2cScopes: ["openid", "profile", "offline_access"],
 };
 
 export const msalConfig: Configuration = {
