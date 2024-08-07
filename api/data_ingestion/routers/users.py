@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 from fastapi_azure_auth.user import User as AzureUser
 from sqlalchemy import select, update
@@ -59,6 +61,7 @@ async def create_user(
         )
 
     user = User(
+        id=str(uuid4()),
         given_name=body.given_name,
         surname=body.surname,
         email=body.email,
