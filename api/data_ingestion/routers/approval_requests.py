@@ -307,28 +307,27 @@ async def upload_approved_rows(
 
         formatted_dataset = dataset.replace("-", " ").title()
 
-        async with primary_db.begin():
-            obj = await primary_db.execute(
-                update(ApprovalRequest)
-                .where(
-                    (ApprovalRequest.country == country_iso3)
-                    & (ApprovalRequest.dataset == formatted_dataset)
-                )
-                .values(
-                    {
-                        ApprovalRequest.enabled: False,
-                        ApprovalRequest.is_merge_processing: True,
-                    }
-                )
-                .returning(column("id"))
+        obj = await primary_db.execute(
+            update(ApprovalRequest)
+            .where(
+                (ApprovalRequest.country == country_iso3)
+                & (ApprovalRequest.dataset == formatted_dataset)
             )
-            primary_db.add(
-                ApprovalRequestAuditLog(
-                    approval_request_id=obj.first().id,
-                    approved_by_id=database_user.id,
-                    approved_by_email=database_user.email,
-                )
+            .values(
+                {
+                    ApprovalRequest.enabled: False,
+                    ApprovalRequest.is_merge_processing: True,
+                }
             )
+            .returning(column("id"))
+        )
+        primary_db.add(
+            ApprovalRequestAuditLog(
+                approval_request_id=obj.first().id,
+                approved_by_id=database_user.id,
+                approved_by_email=database_user.email,
+            )
+        )
 
     except HttpResponseError as err:
         raise HTTPException(

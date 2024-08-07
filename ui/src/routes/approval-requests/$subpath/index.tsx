@@ -9,7 +9,11 @@ import {
   Modal,
   Section,
 } from "@carbon/react";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  queryOptions,
+  useMutation,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
@@ -69,6 +73,8 @@ export const Route = createFileRoute("/approval-requests/$subpath/")({
       handleApproveRows={() => {}}
       handleRejectRows={() => {}}
       handlePaginationChange={() => {}}
+      handleApproveAll={() => {}}
+      handleRejectAll={() => {}}
       info={{
         dataset: "",
         timestamp: "",
@@ -83,7 +89,9 @@ export const Route = createFileRoute("/approval-requests/$subpath/")({
 });
 
 function ApproveRejectTable() {
-  const [isOpen, setOpen] = useState<boolean>(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
+  const [isApproveAllModalOpen, setIsApproveAllModalOpen] = useState(false);
+  const [isRejectAllModalOpen, setIsRejectAllModalOpen] = useState(false);
 
   const {
     page = DEFAULT_PAGE_NUMBER,
@@ -166,10 +174,14 @@ function ApproveRejectTable() {
     });
   }, [approvalRequests, approvedRows, rejectedRows]);
 
-  const handleApproveRows = (rows: Record<string, string | null>[]) => {
-    console.log(rows);
+  const { mutateAsync: upload, isPending } = useMutation({
+    mutationKey: ["approval-request-upload", subpath],
+    mutationFn: api.approvalRequests.upload_approved_rows,
+  });
 
+  const handleApproveRows = (rows: Record<string, string | null>[]) => {
     const newApprovedRows = new Set(approvedRows);
+    newApprovedRows.delete("__all__");
 
     for (const row of rows) {
       newApprovedRows.add(row.change_id!);
@@ -180,6 +192,8 @@ function ApproveRejectTable() {
 
     // Remove ids from rejected rows
     const newRejectedRows = new Set(rejectedRows);
+    newRejectedRows.delete("__all__");
+
     for (const id of ids) {
       if (newApprovedRows.has(id)) {
         newRejectedRows.delete(id);
@@ -192,6 +206,8 @@ function ApproveRejectTable() {
 
   const handleRejectRows = (rows: Record<string, string | null>[]) => {
     const newRejectedRows = new Set(rejectedRows);
+    newRejectedRows.delete("__all__");
+
     for (const row of rows) {
       newRejectedRows.add(row.change_id!);
     }
@@ -200,6 +216,8 @@ function ApproveRejectTable() {
     const ids = rows.map(row => row.change_id ?? "").filter(Boolean);
     // Remove ids from approved rows
     const newApprovedRows = new Set(approvedRows);
+    newApprovedRows.delete("__all__");
+
     for (const id of ids) {
       if (newRejectedRows.has(id)) {
         newApprovedRows.delete(id);
@@ -208,6 +226,20 @@ function ApproveRejectTable() {
     setApprovedRows([...newApprovedRows]);
 
     setHeaders(headers);
+  };
+
+  const handleApproveAll = () => {
+    setApprovedRows(["__all__"]);
+    setRejectedRows([]);
+    setHeaders(headers);
+    setIsApproveAllModalOpen(true);
+  };
+
+  const handleRejectAll = () => {
+    setRejectedRows(["__all__"]);
+    setApprovedRows([]);
+    setHeaders(headers);
+    setIsRejectAllModalOpen(true);
   };
 
   const handlePaginationChange = ({
@@ -229,7 +261,7 @@ function ApproveRejectTable() {
 
   const handleSubmit = () => {
     if (Object.keys(approvedRows).length < total_count) {
-      setOpen(true);
+      setIsConfirmModalOpen(true);
     } else {
       void handleProceed();
     }
@@ -245,6 +277,11 @@ function ApproveRejectTable() {
     });
   };
 
+  const handleProceedAll = async () => {
+    await upload({ approved_rows: approvedRows, subpath });
+    await navigate({ to: "/approval-requests" });
+  };
+
   return (
     <>
       <CDFDataTable
@@ -253,6 +290,8 @@ function ApproveRejectTable() {
         handleApproveRows={handleApproveRows}
         handleRejectRows={handleRejectRows}
         handlePaginationChange={handlePaginationChange}
+        handleApproveAll={handleApproveAll}
+        handleRejectAll={handleRejectAll}
         page={page}
         pageSize={pageSize}
         count={total_count}
@@ -284,16 +323,55 @@ function ApproveRejectTable() {
           </Button>
         </ButtonSet>
       </div>
+
       <Modal
         modalHeading="Confirm Selection"
-        open={isOpen}
+        open={isConfirmModalOpen}
         primaryButtonText="Proceed"
         secondaryButtonText="Cancel"
-        onRequestClose={() => setOpen(false)}
+        onRequestClose={() => setIsConfirmModalOpen(false)}
         onRequestSubmit={handleProceed}
       >
         You have {total_count - approvedRows.length} unapproved rows. These rows
         will be automatically rejected. Proceed?
+      </Modal>
+
+      <Modal
+        modalHeading="Confirm Approve All"
+        open={isApproveAllModalOpen}
+        primaryButtonText="Proceed"
+        secondaryButtonText="Cancel"
+        primaryButtonDisabled={isPending}
+        loadingStatus={isPending ? "active" : "inactive"}
+        onRequestClose={() => {
+          setIsApproveAllModalOpen(false);
+          setApprovedRows([]);
+          setRejectedRows([]);
+        }}
+        onRequestSubmit={handleProceedAll}
+      >
+        You are approving all {total_count} rows, which will be merged shortly
+        into the school master dataset for {info.country}. Note that rows
+        corresponding to the same <code>school_id_giga</code> will automatically
+        be deduplicated based on the latest <code>_commit_version</code>.
+        Proceed?
+      </Modal>
+
+      <Modal
+        modalHeading="Confirm Reject All"
+        open={isRejectAllModalOpen}
+        primaryButtonText="Proceed"
+        secondaryButtonText="Cancel"
+        primaryButtonDisabled={isPending}
+        loadingStatus={isPending ? "active" : "inactive"}
+        onRequestClose={() => {
+          setIsRejectAllModalOpen(false);
+          setApprovedRows([]);
+          setRejectedRows([]);
+        }}
+        onRequestSubmit={handleProceedAll}
+      >
+        You are rejecting all {total_count} rows. Proceed?
       </Modal>
     </>
   );

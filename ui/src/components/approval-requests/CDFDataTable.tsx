@@ -2,6 +2,7 @@ import { ComponentProps } from "react";
 
 import { Checkmark, QX } from "@carbon/icons-react";
 import {
+  Button,
   DataTable,
   Section,
   Table,
@@ -16,6 +17,7 @@ import {
   TableSelectAll,
   TableSelectRow,
   TableToolbar,
+  TableToolbarContent,
 } from "@carbon/react";
 import { DataTable as CarbonDataTable } from "@carbon/react/lib/components/DataTable";
 import Pagination from "@carbon/react/lib/components/Pagination/Pagination";
@@ -31,6 +33,8 @@ interface CDFDataTableProps {
   info: ApprovalRequestInfo;
   handleApproveRows: (rows: Record<string, string | null>[]) => void;
   handleRejectRows: (rows: Record<string, string | null>[]) => void;
+  handleApproveAll: () => void;
+  handleRejectAll: () => void;
   handlePaginationChange: ({
     pageSize,
     page,
@@ -50,6 +54,8 @@ function CDFDataTable({
   info,
   handleApproveRows,
   handleRejectRows,
+  handleApproveAll,
+  handleRejectAll,
   handlePaginationChange,
   page,
   pageSize,
@@ -83,6 +89,7 @@ function CDFDataTable({
                 },
               }),
             };
+
             return (
               <TableContainer
                 title="Approve Rows"
@@ -103,6 +110,14 @@ function CDFDataTable({
                 {...getTableContainerProps()}
               >
                 <TableToolbar {...getToolbarProps()}>
+                  <TableToolbarContent>
+                    <Button kind="primary" onClick={handleApproveAll}>
+                      Approve All
+                    </Button>
+                    <Button kind="secondary" onClick={handleRejectAll}>
+                      Reject All
+                    </Button>
+                  </TableToolbarContent>
                   <TableBatchActions {...batchActionProps}>
                     <TableBatchAction
                       tabIndex={
