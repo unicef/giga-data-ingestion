@@ -36,6 +36,14 @@ jobs:
                 configuration: $(Build.SourcesDirectory)/infra/k8s/configmap-prd.yaml
 
             - task: Kubernetes@1
+              displayName: Delete secret
+              continueOnError: true
+              inputs:
+                namespace: $(kubernetesNamespace)
+                command: delete
+                arguments: "secret giga-ingestion-portal-secrets-$(deployEnv)"
+
+            - task: Kubernetes@1
               displayName: Create secret
               condition: not(eq(variables.environment, 'prd'))
               inputs:
