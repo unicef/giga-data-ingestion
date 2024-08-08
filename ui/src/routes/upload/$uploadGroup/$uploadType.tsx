@@ -6,11 +6,14 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import { api } from "@/api";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
+import UploadBreadcrumbs from "@/components/upload/UploadBreadcrumbs";
+import Forbidden from "@/components/utils/Forbidden";
 import {
   DEFAULT_PAGE_NUMBER,
   DEFAULT_PAGE_SIZE,
 } from "@/constants/pagination.ts";
 import { useStore } from "@/context/store.ts";
+import useRoles from "@/hooks/useRoles";
 import { cn } from "@/lib/utils.ts";
 import { saveFile } from "@/utils/download.ts";
 
@@ -65,6 +68,12 @@ const UNSTRUCTURED_DESCRIPTION = (
 );
 function Layout() {
   const { uploadType, uploadGroup } = Route.useParams();
+  const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
+  const isCoverage = uploadType === "coverage";
+  const isGeolocation = uploadType === "geolocation";
+  const hasPermissions =
+    (isCoverage && hasCoverage) || (isGeolocation && hasGeolocation) || isAdmin;
+
   const title = uploadType.replace(/-/g, " ");
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
@@ -148,63 +157,70 @@ function Layout() {
     </>
   );
 
-  return (
-    <Stack gap={10}>
-      <Stack gap={1}>
-        <h2 className="text-[23px] capitalize">{title}</h2>
-        <div>
-          {title === "geolocation"
-            ? GEOLOCATION_DESCRIPTION
-            : title === "coverage"
-            ? COVERAGE_DESCRIPTION
-            : UNSTRUCTURED_DESCRIPTION}
-        </div>
+  return hasPermissions ? (
+    <>
+      <Stack gap={6}>
+        <UploadBreadcrumbs />
+        <Stack gap={10}>
+          <Stack gap={1}>
+            <h2 className="text-[23px] capitalize">{title}</h2>
+            <div>
+              {title === "geolocation"
+                ? GEOLOCATION_DESCRIPTION
+                : title === "coverage"
+                ? COVERAGE_DESCRIPTION
+                : UNSTRUCTURED_DESCRIPTION}
+            </div>
+          </Stack>
+
+          {isUnstructured ? (
+            <ProgressIndicator currentIndex={stepIndex} spaceEqually>
+              <ProgressStep
+                label="1"
+                description="Upload"
+                secondaryLabel="Upload"
+              />
+              <ProgressStep
+                label="2"
+                description="Add metadata"
+                secondaryLabel="Add metadata"
+              />
+              <ProgressStep
+                label="3"
+                description="Submit"
+                secondaryLabel="Submit"
+              />
+            </ProgressIndicator>
+          ) : (
+            <ProgressIndicator currentIndex={stepIndex} spaceEqually>
+              <ProgressStep
+                label="1"
+                description="Upload"
+                secondaryLabel="Upload"
+              />
+              <ProgressStep
+                label="2"
+                description="Configure columns"
+                secondaryLabel="Configure columns"
+              />
+              <ProgressStep
+                label="3"
+                description="Add metadata"
+                secondaryLabel="Add metadata"
+              />
+              <ProgressStep
+                label="4"
+                description="Submit"
+                secondaryLabel="Submit"
+              />
+            </ProgressIndicator>
+          )}
+
+          <Outlet />
+        </Stack>
       </Stack>
-
-      {isUnstructured ? (
-        <ProgressIndicator currentIndex={stepIndex} spaceEqually>
-          <ProgressStep
-            label="1"
-            description="Upload"
-            secondaryLabel="Upload"
-          />
-          <ProgressStep
-            label="2"
-            description="Add metadata"
-            secondaryLabel="Add metadata"
-          />
-          <ProgressStep
-            label="3"
-            description="Submit"
-            secondaryLabel="Submit"
-          />
-        </ProgressIndicator>
-      ) : (
-        <ProgressIndicator currentIndex={stepIndex} spaceEqually>
-          <ProgressStep
-            label="1"
-            description="Upload"
-            secondaryLabel="Upload"
-          />
-          <ProgressStep
-            label="2"
-            description="Configure columns"
-            secondaryLabel="Configure columns"
-          />
-          <ProgressStep
-            label="3"
-            description="Add metadata"
-            secondaryLabel="Add metadata"
-          />
-          <ProgressStep
-            label="4"
-            description="Submit"
-            secondaryLabel="Submit"
-          />
-        </ProgressIndicator>
-      )}
-
-      <Outlet />
-    </Stack>
+    </>
+  ) : (
+    <Forbidden />
   );
 }
