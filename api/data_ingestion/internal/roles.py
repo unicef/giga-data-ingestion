@@ -1,11 +1,11 @@
 from uuid import uuid4
 
 from fastapi_azure_auth.user import User as AzureUser
-from sqlalchemy import exists, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from data_ingestion.models import Role, User, UserRoleAssociation
+from data_ingestion.models import Role, User
 
 
 async def create_user_if_not_exist_and_assign_roles(
@@ -18,20 +18,11 @@ async def create_user_if_not_exist_and_assign_roles(
         surname=surname,
     )
 
-    does_admin_exist = not await db.scalar(
-        select(
-            exists().where(UserRoleAssociation.role_id == Role.id, Role.name == "Admin")
-        )
-    )
-
-    if (
-        any(
-            [
-                email.endswith("@thinkingmachin.es"),
-                email.endswith("@unicef.org"),
-            ]
-        )
-        and does_admin_exist
+    if any(
+        [
+            email.endswith("@thinkingmachin.es"),
+            email.endswith("@unicef.org"),
+        ]
     ):
         admin_role = await db.scalar(select(Role).where(Role.name == "Admin"))
         new_user.roles.add(admin_role)
