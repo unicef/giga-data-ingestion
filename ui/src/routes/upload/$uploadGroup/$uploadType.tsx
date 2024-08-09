@@ -69,10 +69,9 @@ const UNSTRUCTURED_DESCRIPTION = (
 function Layout() {
   const { uploadType, uploadGroup } = Route.useParams();
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
+
   const isCoverage = uploadType === "coverage";
   const isGeolocation = uploadType === "geolocation";
-  const hasPermissions =
-    (isCoverage && hasCoverage) || (isGeolocation && hasGeolocation) || isAdmin;
 
   const title = uploadType.replace(/-/g, " ");
   const isUnstructured =
@@ -82,6 +81,14 @@ function Layout() {
     uploadSliceActions: { resetUploadSliceState },
   } = useStore();
   const [isSchemaDownloading, setIsSchemaDownloading] = useState(false);
+
+  const hasAccess = hasCoverage || hasGeolocation;
+
+  const hasPermissions =
+    (isCoverage && hasCoverage) ||
+    (isGeolocation && hasGeolocation) ||
+    isAdmin ||
+    (isUnstructured && hasAccess);
 
   useEffect(() => {
     return resetUploadSliceState;
