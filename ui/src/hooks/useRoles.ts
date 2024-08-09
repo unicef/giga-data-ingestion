@@ -24,14 +24,10 @@ function useRoles() {
     () => roles.some(role => role.includes("Geolocation")),
     [roles],
   );
-  console.log("🚀 ~ useRoles ~ roles:", roles);
-  console.log("🚀 ~ useRoles ~ hasGeolocation:", hasGeolocation);
   const hasCoverage = useMemo(
     () => roles.some(role => role.includes("Coverage")),
     [roles],
   );
-
-  console.log("🚀 ~ useRoles ~ hasCoverage:", hasCoverage);
 
   const isPrivileged = useMemo(
     () => isAdmin || isSuperAdmin,
