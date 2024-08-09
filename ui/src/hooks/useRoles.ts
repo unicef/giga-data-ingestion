@@ -20,6 +20,15 @@ function useRoles() {
 
   const isSuperAdmin = useMemo(() => roles.includes("Super"), [roles]);
 
+  const hasGeolocation = useMemo(
+    () => roles.some(role => role.includes("Geolocation")),
+    [roles],
+  );
+  const hasCoverage = useMemo(
+    () => roles.some(role => role.includes("Coverage")),
+    [roles],
+  );
+
   const isPrivileged = useMemo(
     () => isAdmin || isSuperAdmin,
     [isAdmin, isSuperAdmin],
@@ -48,6 +57,8 @@ function useRoles() {
   return {
     refetch,
     roles,
+    hasCoverage,
+    hasGeolocation,
     hasRoles,
     isAdmin,
     isSuperAdmin,

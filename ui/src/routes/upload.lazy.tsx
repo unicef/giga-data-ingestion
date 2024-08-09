@@ -1,9 +1,7 @@
 import { useEffect } from "react";
 
-import { Stack } from "@carbon/react";
 import { Outlet, createLazyFileRoute } from "@tanstack/react-router";
 
-import UploadBreadcrumbs from "@/components/upload/UploadBreadcrumbs.tsx";
 import AuthenticatedRBACView from "@/components/utils/AuthenticatedRBACView.tsx";
 import { useStore } from "@/context/store";
 
@@ -24,12 +22,12 @@ function UploadLayout() {
 
   return (
     <AuthenticatedRBACView>
-      <div className="container py-6">
-        <Stack gap={6}>
-          <UploadBreadcrumbs />
-          <Outlet />
-        </Stack>
+      <div className="container h-full py-6">
+        {/* <Stack gap={6}> */}
+        {/* <UploadBreadcrumbs /> */}
+        <Outlet />
       </div>
+      {/* </Stack> */}
     </AuthenticatedRBACView>
   );
 }
