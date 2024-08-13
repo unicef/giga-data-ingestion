@@ -1,3 +1,4 @@
+import io
 import json
 import os
 from typing import Annotated
@@ -5,6 +6,7 @@ from typing import Annotated
 import country_converter as coco
 import magic
 import orjson
+import pandas as pd
 from fastapi import (
     APIRouter,
     Depends,
@@ -116,6 +118,97 @@ async def list_basic_checks(
     dq_report_summary_dict: dict = json.loads(dq_report_summary)
 
     return dq_report_summary_dict
+
+
+@router.get("/basic_check/{dataset}/download")
+async def download_basic_check(
+    dataset: str = "geolocation",
+    source: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    path = ""
+
+    is_completed_query = (
+        select(FileUpload)
+        .where(FileUpload.is_processed_in_staging == True)  # noqa: E712
+        .where(FileUpload.dataset == dataset)
+        .where(FileUpload.dq_status == DQStatusEnum.COMPLETED)
+        .where(FileUpload.dq_report_path != None)  # noqa: E711
+        .where(FileUpload.dq_full_path != None)  # noqa: E711
+        .order_by(FileUpload.created.desc())
+    )
+
+    if dataset == "geolocation":
+        result = await db.scalars(is_completed_query)
+        file_upload = result.first()
+
+        if file_upload is not None:
+            path = file_upload.dq_report_path
+        else:
+            path = (
+                "data-quality-results/school-geolocation/"
+                "sample-data-check/geolocation.json"
+            )
+
+    if dataset == "coverage":
+        if source not in ["fb", "itu"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Schema does not exist"
+            )
+
+        is_completed_coverage_query = is_completed_query.where(
+            FileUpload.source == source
+        )
+
+        result = await db.scalars(is_completed_coverage_query)
+        file_upload = result.first()
+
+        if file_upload is not None:
+            path = file_upload.dq_report_path
+        else:
+            path = (
+                "data-quality-results/school-coverage/"
+                f"sample-data-check/{source}.json"
+            )
+
+    blob = storage_client.get_blob_client(path)
+    if not blob.exists():
+        logger.error("DQ report summary still does not exist")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Not Found",
+        )
+
+    blob_data = blob.download_blob().readall()
+    dq_report_summary = blob_data.decode("utf-8")
+    dq_report_summary_dict: dict = json.loads(dq_report_summary)
+
+    dq_result_df = pd.DataFrame(
+        {
+            "column": [],
+            "assertion": [],
+            "description": [],
+        }
+    )
+
+    for checks_key in dq_report_summary_dict.keys():
+        if checks_key == "summary":
+            continue
+
+        for check in dq_report_summary_dict[checks_key]:
+            dq_result_df.loc[len(dq_result_df)] = [
+                check["column"],
+                check["assertion"],
+                check["description"],
+            ]
+
+    dq_result_df = dq_result_df.sort_values(by=["assertion", "column"])
+    csv = dq_result_df.to_csv(index=False)
+    return StreamingResponse(
+        io.StringIO(csv),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=data_quality_checks.csv"},
+    )
 
 
 @router.get("", response_model=PagedResponseSchema[FileUploadSchema])
