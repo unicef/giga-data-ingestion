@@ -51,6 +51,16 @@ export default function routes(axi: AxiosInstance) {
       return axi.post("/upload/unstructured", formData);
     },
 
+    download_data_quality_check: (params: {
+      dataset: string;
+      source: string | null;
+    }): Promise<AxiosResponse<Blob>> => {
+      const { dataset, source } = params;
+
+      return axi.get(`upload/basic_check/${dataset}/download`, {
+        params: { source: source },
+      });
+    },
 
     download_data_quality_check_results: (
       upload_id: string,

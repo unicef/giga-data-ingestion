@@ -192,6 +192,8 @@ function Success() {
   } = useMutation({
     mutationFn: api.uploads.download_data_quality_check_results,
   });
+
+  const { mutateAsync: downloadDataQualityCheck } = useMutation({
       mutationFn: api.uploads.download_data_quality_check,
     });
 
@@ -209,6 +211,16 @@ function Success() {
       return null;
     }
   });
+
+  async function handleDownloadCheckPreview() {
+    const blob = await downloadDataQualityCheck({
+      dataset: uploadType,
+      source: source,
+    });
+    if (blob) {
+      saveFile(blob);
+    }
+  }
 
   async function handleDownloadFullChecks() {
     const blob = await downloadDataQualityResult(uploadId);
@@ -331,6 +343,15 @@ function Success() {
                 You will receive an email with the quality report of data file{" "}
                 {uploadId}
               </div>
+
+              <Button
+                kind="tertiary"
+                className="flex cursor-pointer items-center"
+                onClick={handleDownloadCheckPreview}
+                renderIcon={isPendingDownloadFile ? InlineLoading : Download}
+              >
+                Data Quality Check Descriptions{" "}
+              </Button>
 
               <Button
                 kind="tertiary"
