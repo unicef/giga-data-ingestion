@@ -186,8 +186,12 @@ function Success() {
     status === DQStatus.SKIPPED ||
     status === DQStatus.TIMEOUT;
 
-  const { mutateAsync: downloadFile, isPending: isPendingDownloadFile } =
-    useMutation({
+  const {
+    mutateAsync: downloadDataQualityResult,
+    isPending: isPendingDownloadFile,
+  } = useMutation({
+    mutationFn: api.uploads.download_data_quality_check_results,
+  });
       mutationFn: api.uploads.download_data_quality_check,
     });
 
@@ -207,7 +211,7 @@ function Success() {
   });
 
   async function handleDownloadFullChecks() {
-    const blob = await downloadFile(uploadId);
+    const blob = await downloadDataQualityResult(uploadId);
     if (blob) {
       saveFile(blob);
     }
