@@ -194,8 +194,8 @@ function Success() {
   });
 
   const { mutateAsync: downloadDataQualityCheck } = useMutation({
-      mutationFn: api.uploads.download_data_quality_check,
-    });
+    mutationFn: api.uploads.download_data_quality_check,
+  });
 
   const basicCheckItems = Object.entries(basicCheck).map(([key, value]) => {
     const basicCheckArraySchema = z.array(basicCheckSchema);
@@ -350,7 +350,7 @@ function Success() {
                 onClick={handleDownloadCheckPreview}
                 renderIcon={isPendingDownloadFile ? InlineLoading : Download}
               >
-                Data Quality Check Descriptions{" "}
+                Data Quality Check Descriptions
               </Button>
 
               <Button
