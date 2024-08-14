@@ -7,7 +7,16 @@ import pandas as pd
 from country_converter import country_converter as coco
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi_azure_auth.user import User
-from sqlalchemy import column, func, literal, select, text, union_all, update
+from sqlalchemy import (
+    column,
+    func,
+    literal,
+    literal_column,
+    select,
+    text,
+    union_all,
+    update,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.functions import count
@@ -109,6 +118,11 @@ async def list_approval_requests(
             .order_by(column("timestamp").desc())
             .limit(1)
         ).cte(f"timestamp_{table['table_schema']}_{table['table_name']}")
+        max_version_cte = (
+            select(func.max(column("_commit_version")).label("max_version"))
+            .select_from(change_types_cte)
+            .limit(1)
+        ).cte(f"max_version_{table['table_schema']}_{table['table_name']}")
         query = select(
             literal(table["table_schema"]).label("table_schema"),
             literal(table["table_name"]).label("table_name"),
@@ -119,10 +133,43 @@ async def list_approval_requests(
             ).label("rows_count"),
             (
                 select(count())
-                .select_from(change_types_cte)
+                .select_from(
+                    change_types_cte.alias(
+                        f"ct_{table['table_schema']}_{table['table_name']}"
+                    ),
+                    max_version_cte.alias(
+                        f"mv_{table['table_schema']}_{table['table_name']}"
+                    ),
+                )
                 .where(
-                    (column("_change_type") == literal("insert"))
-                    & (column("_commit_version") > 1)
+                    (
+                        (
+                            literal_column(
+                                f"ct_{table['table_schema']}_{table['table_name']}._change_type"
+                            )
+                            == literal("insert")
+                        )
+                        & (
+                            literal_column(
+                                f"ct_{table['table_schema']}_{table['table_name']}._commit_version"
+                            )
+                            > 1
+                        )
+                    )
+                    | (
+                        (
+                            literal_column(
+                                f"ct_{table['table_schema']}_{table['table_name']}._change_type"
+                            )
+                            == literal("insert")
+                        )
+                        & (
+                            literal_column(
+                                f"mv_{table['table_schema']}_{table['table_name']}.max_version"
+                            )
+                            == 1
+                        )
+                    )
                 )
             ).label("rows_added"),
             (
@@ -158,13 +205,7 @@ async def list_approval_requests(
                 .title()
                 .rstrip()
             )
-            enabled = settings.get(f"{country_iso3}-{dataset}", False) and any(
-                [
-                    stat["rows_added"] > 0,
-                    stat["rows_updated"] > 0,
-                    stat["rows_deleted"] > 0,
-                ]
-            )
+            enabled = settings.get(f"{country_iso3}-{dataset}", False)
 
             body.append(
                 ApprovalRequestListing(
@@ -222,19 +263,25 @@ async def get_approval_request(
                 )
             )
         )
-        .where(
-            (column("_commit_version") == 2)
-            | (
-                (column("_commit_version") > 2)
-                & (column("_change_type") != "update_preimage")
-            )
-        )
         .cte("changes")
     )
+    max_version_cte = (
+        select(func.max(column("_commit_version")).label("max_version"))
+        .select_from(data_cte)
+        .limit(1)
+    ).cte("max_version")
     cdf = (
         db.execute(
             select("*", select(count()).select_from(data_cte).label("row_count"))
-            .select_from(data_cte)
+            .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
+            .where(
+                (literal_column("mv.max_version") == 1)
+                | (literal_column("d._commit_version") == 2)
+                | (
+                    (literal_column("d._commit_version") > 2)
+                    & (literal_column("d._change_type") != "update_preimage")
+                )
+            )
             .order_by(
                 column("school_id_giga"),
                 column("_commit_version").desc(),
@@ -328,6 +375,7 @@ async def upload_approved_rows(
                 approved_by_email=database_user.email,
             )
         )
+        await primary_db.commit()
 
     except HttpResponseError as err:
         raise HTTPException(
