@@ -13,7 +13,9 @@ const CheckWithError = ({ checks, title }: CheckWithErrorProps) => {
 
   return (
     <Section>
-      <span className="text-2xl px-2">{title}</span>
+      <span className="text-2xl px-2 capitalize">
+        {title.replace(/_/g, " ")}
+      </span>
       <Hr className="border border-solid border-giga-light-gray my-2 mx-0 w-full" />
       <ul className=" list-decimal gap-4 px-20">
         {failedChecks.map((check) => (

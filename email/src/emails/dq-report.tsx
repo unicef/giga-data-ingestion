@@ -97,7 +97,6 @@ const DataQualityReport = ({
                 File Uploaded at <strong>{uploadDate}</strong>
               </Text>
 
-              <Section className="py-4">{checks}</Section>
               <Section className="text-center my-8 ">
                 <Button
                   className="bg-primary px-6 py-4 text-sm font-semibold text-white no-underline text-center"
@@ -106,6 +105,9 @@ const DataQualityReport = ({
                   View Complete Report
                 </Button>
               </Section>
+
+              <Section className="py-4">{checks}</Section>
+
               <Footer>
                 <Text className="text-[#666666] text-[12px] leading-[24px]">
                   This is an auto-generated email. Please do not reply. For
