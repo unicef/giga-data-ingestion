@@ -13,6 +13,7 @@ from fastapi import (
     HTTPException,
     Query,
     Response,
+    Security,
     status,
 )
 from fastapi_azure_auth.user import User
@@ -49,7 +50,7 @@ from data_ingestion.schemas.upload import (
 router = APIRouter(
     prefix="/api/upload",
     tags=["upload"],
-    # dependencies=[Security(azure_scheme)],
+    dependencies=[Security(azure_scheme)],
 )
 
 
