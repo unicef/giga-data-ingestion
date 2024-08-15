@@ -13,7 +13,6 @@ from fastapi import (
     HTTPException,
     Query,
     Response,
-    Security,
     status,
 )
 from fastapi_azure_auth.user import User
@@ -50,7 +49,7 @@ from data_ingestion.schemas.upload import (
 router = APIRouter(
     prefix="/api/upload",
     tags=["upload"],
-    dependencies=[Security(azure_scheme)],
+    # dependencies=[Security(azure_scheme)],
 )
 
 
@@ -191,16 +190,16 @@ async def download_basic_check(
         }
     )
 
-    for checks_key in dq_report_summary_dict.keys():
-        if checks_key == "summary":
+    all_checks = []
+    for key, value in dq_report_summary_dict.items():
+        if key == "summary":
             continue
 
-        for check in dq_report_summary_dict[checks_key]:
-            dq_result_df.loc[len(dq_result_df)] = [
-                check["column"],
-                check["assertion"],
-                check["description"],
-            ]
+        all_checks.extend(value)
+
+    dq_result_df = pd.DataFrame(all_checks)
+    print(dq_result_df)
+    dq_result_df = dq_result_df[["column", "assertion", "description"]]
 
     dq_result_df = dq_result_df.sort_values(by=["assertion", "column"])
     csv = dq_result_df.to_csv(index=False)
