@@ -118,5 +118,5 @@ def send_generic_email(
     return {
         "MAILJET_API_URL": settings.MAILJET_API_URL,
         "MAILJET_API_KEY": settings.MAILJET_API_KEY,
-        "MAILJET_SECRET_KEY": settings.MAILJET_SECRET_KEY,
+        "MAILJET_SECRET_KEY": settings.CLEAN_MAILJET_SECRET,
     }

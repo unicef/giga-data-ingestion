@@ -189,6 +189,13 @@ class Settings(BaseSettings):
             )
         )
 
+    @computed_field
+    @property
+    def CLEAN_MAILJET_SECRET(self) -> str:
+        dirty = self.MAILJET_SECRET_KEY
+
+        return dirty.replace("\n", "")
+
 
 @lru_cache
 def get_settings():

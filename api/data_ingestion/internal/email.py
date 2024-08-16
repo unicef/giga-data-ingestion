@@ -51,7 +51,7 @@ def send_email_base(
         message["Recipients"] = formatted_recipients
 
     client = Client(
-        auth=(settings.MAILJET_API_KEY, settings.MAILJET_SECRET_KEY),
+        auth=(settings.MAILJET_API_KEY, settings.CLEAN_MAILJET_SECRET),
         api_url=settings.MAILJET_API_URL,
     )
     result = client.send.create(data=message)
