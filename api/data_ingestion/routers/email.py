@@ -105,7 +105,7 @@ async def send_master_data_release_notification(
     )
 
 
-@router.post("/send-email", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/send-email", status_code=status.HTTP_200_OK)
 def send_generic_email(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(email_header)],
     body: GenericEmailRequest,
@@ -114,3 +114,9 @@ def send_generic_email(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
     send_email_base(**body.model_dump())
+    print("LOGGERS")
+    return {
+        "MAILJET_API_URL": settings.MAILJET_API_URL,
+        "MAILJET_API_KEY": settings.MAILJET_API_KEY,
+        "MAILJET_SECRET_KEY": settings.MAILJET_SECRET_KEY,
+    }
