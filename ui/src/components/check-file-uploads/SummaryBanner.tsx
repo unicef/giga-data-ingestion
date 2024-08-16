@@ -27,7 +27,7 @@ const SummaryBanner = ({
   hasDownloadButton = true,
 }: AccordionSummaryProps) => {
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: api.uploads.download_data_quality_check,
+    mutationFn: api.uploads.download_data_quality_check_results,
   });
 
   async function handleDownloadFullChecks() {

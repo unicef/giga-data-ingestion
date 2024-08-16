@@ -186,10 +186,16 @@ function Success() {
     status === DQStatus.SKIPPED ||
     status === DQStatus.TIMEOUT;
 
-  const { mutateAsync: downloadFile, isPending: isPendingDownloadFile } =
-    useMutation({
-      mutationFn: api.uploads.download_data_quality_check,
-    });
+  const {
+    mutateAsync: downloadDataQualityResult,
+    isPending: isPendingDownloadFile,
+  } = useMutation({
+    mutationFn: api.uploads.download_data_quality_check_results,
+  });
+
+  const { mutateAsync: downloadDataQualityCheck } = useMutation({
+    mutationFn: api.uploads.download_data_quality_check,
+  });
 
   const basicCheckItems = Object.entries(basicCheck).map(([key, value]) => {
     const basicCheckArraySchema = z.array(basicCheckSchema);
@@ -206,8 +212,18 @@ function Success() {
     }
   });
 
+  async function handleDownloadCheckPreview() {
+    const blob = await downloadDataQualityCheck({
+      dataset: uploadType,
+      source: source,
+    });
+    if (blob) {
+      saveFile(blob);
+    }
+  }
+
   async function handleDownloadFullChecks() {
-    const blob = await downloadFile(uploadId);
+    const blob = await downloadDataQualityResult(uploadId);
     if (blob) {
       saveFile(blob);
     }
@@ -327,6 +343,15 @@ function Success() {
                 You will receive an email with the quality report of data file{" "}
                 {uploadId}
               </div>
+
+              <Button
+                kind="tertiary"
+                className="flex cursor-pointer items-center"
+                onClick={handleDownloadCheckPreview}
+                renderIcon={isPendingDownloadFile ? InlineLoading : Download}
+              >
+                Data Quality Check Descriptions
+              </Button>
 
               <Button
                 kind="tertiary"
