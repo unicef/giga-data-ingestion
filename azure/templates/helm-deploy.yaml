@@ -181,5 +181,5 @@ jobs:
                   --set ingress.hosts[0].paths[0].path="/"
                   --set ingress.hosts[0].paths[0].pathType=Prefix
                   --set ingress.annotations."appgw\.ingress\.kubernetes\.io/appgw-ssl-certificate"=kv-cert-gigaglobal
-                  --set envFrom[1].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
-                  --set envFrom[2].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
+                  --set envFrom[1].secretRef.name="oi-ingestionportal-secrets-$(deployEnv)"
+                  --set envFrom[2].secretRef.name="giga-ingestion-portal-secrets-$(deployEnv)"
