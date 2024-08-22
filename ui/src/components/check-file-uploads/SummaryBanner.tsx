@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+
 import {
   CheckmarkOutline,
   Download,
@@ -5,9 +7,10 @@ import {
   Warning,
 } from "@carbon/icons-react";
 import { Button, InlineLoading, Tag } from "@carbon/react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 
 import { api } from "@/api";
+import { UploadResponse, initialUploadResponse } from "@/types/upload";
 import { saveFile } from "@/utils/download";
 
 interface AccordionSummaryProps {
@@ -29,6 +32,30 @@ const SummaryBanner = ({
   const { mutateAsync, isPending } = useMutation({
     mutationFn: api.uploads.download_data_quality_check_results,
   });
+
+  const { data: uploadQuery } = useSuspenseQuery({
+    queryKey: ["upload", uploadId],
+    queryFn: () => api.uploads.get_upload(uploadId),
+  });
+
+  const uploadData = useMemo<UploadResponse>(
+    () => uploadQuery?.data ?? initialUploadResponse,
+    [uploadQuery],
+  );
+
+  const { mutateAsync: downloadDataQualityCheck } = useMutation({
+    mutationFn: api.uploads.download_data_quality_check,
+  });
+
+  async function handleDownloadCheckPreview() {
+    const blob = await downloadDataQualityCheck({
+      dataset: uploadData.dataset,
+      source: uploadData.source,
+    });
+    if (blob) {
+      saveFile(blob);
+    }
+  }
 
   async function handleDownloadFullChecks() {
     const blob = await mutateAsync(uploadId);
@@ -68,6 +95,17 @@ const SummaryBanner = ({
         </div>
       )}
       <div className="flex-grow"></div>
+      {hasDownloadButton && (
+        <Button
+          kind="ghost"
+          className="flex cursor-pointer items-center"
+          onClick={handleDownloadCheckPreview}
+          renderIcon={Download}
+        >
+          Data Quality Check Descriptions
+        </Button>
+      )}
+
       {hasDownloadButton && (
         <Button
           kind="ghost"
