@@ -103,6 +103,7 @@ function Index() {
         previewData={dqResultData.dq_failed_rows_first_five_rows}
         title={key}
         uploadId={uploadId}
+        hasDownloadButton={false}
       />
     );
   });
