@@ -153,6 +153,22 @@ async def get_groups_from_email(azure_user: AzureUser = Depends(azure_scheme)):
     return groups
 
 
+@router.get(
+    "/admins",
+    dependencies=[Security(IsPrivileged())],
+)
+async def get_admins(db: AsyncSession = Depends(get_db)):
+    admins = await db.scalars(
+        select(User)
+        .join(User.roles)
+        .where(Role.name == "Admin")
+        .options(selectinload(User.roles))
+    )
+    admin_str = [u.email for u in admins]
+
+    return admin_str
+
+
 @router.get("/{id}", response_model=DatabaseUserWithRoles)
 async def get_user(id: str, db: AsyncSession = Depends(get_db)):
     return await db.scalar(
