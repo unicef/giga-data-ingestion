@@ -1,6 +1,7 @@
 variables:
   containerRegistryName: $(ACR_NAME)
   containerRegistryServiceConnection: $(ACR_SERVICE_CONNECTION)
+  adminEmail: ${ADMIN_EMAIL}
   kubernetesEnvironment: $(KUBERNETES_ENVIRONMENT)
   kubernetesNamespace: $(KUBERNETES_NAMESPACE)
   azureSasToken: $(AZURE_SAS_TOKEN)
