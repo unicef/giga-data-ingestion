@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 from fastapi_azure_auth.user import User as AzureUser
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -179,4 +179,16 @@ async def edit_user(
         .where(User.id == id)
         .values({k: v for k, v in body.model_dump().items() if v is not None})
     )
+    await db.commit()
+
+
+@router.delete(
+    "/{email}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
+async def delete_user(
+    email: str, body: GraphUserUpdateRequest, db: AsyncSession = Depends(get_db)
+):
+    await db.execute(delete(User).where(User.email == email))
     await db.commit()
