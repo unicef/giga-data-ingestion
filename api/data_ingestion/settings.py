@@ -79,6 +79,11 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
+    def ADMIN_EMAIL_LIST(self) -> list[str]:
+        return self.ADMIN_EMAIL.strip("[]").replace('"', "").split(",")
+
+    @computed_field
+    @property
     def IN_PRODUCTION(self) -> bool:
         return self.PYTHON_ENV != Environment.LOCAL
 

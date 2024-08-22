@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from data_ingestion.models import Role, User
+from data_ingestion.settings import settings
 
 
 async def create_user_if_not_exist_and_assign_roles(
@@ -18,12 +19,7 @@ async def create_user_if_not_exist_and_assign_roles(
         surname=surname,
     )
 
-    if any(
-        [
-            email.endswith("@thinkingmachin.es"),
-            email.endswith("@unicef.org"),
-        ]
-    ):
+    if email in settings.ADMIN_EMAIL_LIST:
         admin_role = await db.scalar(select(Role).where(Role.name == "Admin"))
         new_user.roles.add(admin_role)
 
