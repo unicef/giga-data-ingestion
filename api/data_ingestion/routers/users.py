@@ -203,8 +203,6 @@ async def edit_user(
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Security(IsPrivileged())],
 )
-async def delete_user(
-    email: str, body: GraphUserUpdateRequest, db: AsyncSession = Depends(get_db)
-):
+async def delete_user(email: str, db: AsyncSession = Depends(get_db)):
     await db.execute(delete(User).where(User.email == email))
     await db.commit()
