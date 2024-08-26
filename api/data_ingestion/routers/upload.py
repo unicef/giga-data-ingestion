@@ -1,6 +1,7 @@
 import io
 import json
 import os
+from pathlib import Path
 from typing import Annotated
 
 import country_converter as coco
@@ -540,7 +541,6 @@ async def download_data_quality_check(
     upload_filename = path.name
 
     download_path = f"data-quality-results/{dataset}/dq-human-readeable-descriptions/{country_code}/{upload_filename}"
-    print('➡ api/data_ingestion/routers/upload.py:543 download_path:', download_path)
     blob = storage_client.get_blob_client(download_path)
     stream = blob.download_blob()
     headers = {"Content-Disposition": f"attachment; filename={upload_filename}"}
