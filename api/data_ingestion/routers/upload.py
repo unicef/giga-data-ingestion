@@ -534,9 +534,14 @@ async def download_data_quality_check(
                 detail="You do not have permission to access details for this file.",
             )
 
-    upload_path_parts = file_upload.dq_full_path.split("/")
-    upload_filename = upload_path_parts[-1]
-    blob = storage_client.get_blob_client(file_upload.dq_full_path)
+    path = Path(file_upload.dq_full_path)
+    dataset = path.parts[1]
+    country_code = path.parts[3]
+    upload_filename = path.name
+
+    download_path = f"data-quality-results/{dataset}/dq-human-readeable-descriptions/{country_code}/{upload_filename}"
+    print('➡ api/data_ingestion/routers/upload.py:543 download_path:', download_path)
+    blob = storage_client.get_blob_client(download_path)
     stream = blob.download_blob()
     headers = {"Content-Disposition": f"attachment; filename={upload_filename}"}
 
