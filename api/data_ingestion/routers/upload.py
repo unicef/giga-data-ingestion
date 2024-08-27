@@ -540,7 +540,7 @@ async def download_data_quality_check(
     country_code = path.parts[3]
     upload_filename = path.name
 
-    download_path_human_readable = f"data-quality-results/{dataset}/dq-human-readeabSDAle-descriptions/{country_code}/{upload_filename}"
+    download_path_human_readable = f"data-quality-results/{dataset}/dq-human-readable-descriptions/{country_code}/{upload_filename}"
     blob = storage_client.get_blob_client(download_path_human_readable)
 
     if not blob.exists():
