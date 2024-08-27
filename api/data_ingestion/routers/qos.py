@@ -196,58 +196,56 @@ async def create_api_ingestion(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="File extension does not match file type.",
             )
-    async with db.begin() as trans:
-        try:
-            school_connectivity_data = data.get_school_connectivity_model()
-            school_list_data = data.get_school_list_model()
+    try:
+        school_connectivity_data = data.get_school_connectivity_model()
+        school_list_data = data.get_school_list_model()
 
-            school_list = SchoolList(**school_list_data.model_dump())
-            db.add(school_list)
-            await db.flush()
+        school_list = SchoolList(**school_list_data.model_dump())
+        db.add(school_list)
+        await db.flush()
 
-            upload_path = None
-            if file is not None:
-                timestamp = school_list.date_created.strftime("%Y%m%d-%H%M%S")
-                ext = Path(file.filename).suffix
-                filename_elements = [school_list.id, timestamp]
-                filename = "_".join(filename_elements)
-                upload_path = (
-                    f"{constants.API_INGESTION_SCHEMA_UPLOAD_PATH}/{filename}{ext}"
-                )
-
-                client = storage_client.get_blob_client(upload_path)
-                try:
-                    client.upload_blob(await file.read())
-                    response.status_code = status.HTTP_201_CREATED
-                except HttpResponseError as err:
-                    raise HTTPException(
-                        detail=err.message, status_code=err.response.status_code
-                    ) from err
-                except Exception as err:
-                    raise HTTPException(
-                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    ) from err
-            school_connectivity = SchoolConnectivity(
-                **{
-                    **school_connectivity_data.model_dump(),
-                    "schema_url": upload_path,
-                    "school_list_id": school_list.id,
-                    "send_date_in": None
-                    if school_connectivity_data.send_date_in == "NONE"
-                    else school_connectivity_data.send_date_in,
-                    "date_key": None
-                    if school_connectivity_data.send_date_in == "NONE"
-                    else school_connectivity_data.date_key,
-                }
+        upload_path = None
+        if file is not None:
+            timestamp = school_list.date_created.strftime("%Y%m%d-%H%M%S")
+            ext = Path(file.filename).suffix
+            filename_elements = [school_list.id, timestamp]
+            filename = "_".join(filename_elements)
+            upload_path = (
+                f"{constants.API_INGESTION_SCHEMA_UPLOAD_PATH}/{filename}{ext}"
             )
 
-            db.add(school_connectivity)
+            client = storage_client.get_blob_client(upload_path)
+            try:
+                client.upload_blob(await file.read())
+                response.status_code = status.HTTP_201_CREATED
+            except HttpResponseError as err:
+                raise HTTPException(
+                    detail=err.message, status_code=err.response.status_code
+                ) from err
+            except Exception as err:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                ) from err
+        school_connectivity = SchoolConnectivity(
+            **{
+                **school_connectivity_data.model_dump(),
+                "schema_url": upload_path,
+                "school_list_id": school_list.id,
+                "send_date_in": None
+                if school_connectivity_data.send_date_in == "NONE"
+                else school_connectivity_data.send_date_in,
+                "date_key": None
+                if school_connectivity_data.send_date_in == "NONE"
+                else school_connectivity_data.date_key,
+            }
+        )
 
-        except Exception as err:
-            await trans.rollback()
-            raise HTTPException(
-                detail=err.message, status_code=err.response.status_code
-            ) from err
+        db.add(school_connectivity)
+        await db.commit()
+    except Exception as err:
+        raise HTTPException(
+            detail=err.message, status_code=err.response.status_code
+        ) from err
 
     return {
         "school_list": school_list,
