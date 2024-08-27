@@ -1,6 +1,7 @@
 import io
 import json
 import os
+from pathlib import Path
 from typing import Annotated
 
 import country_converter as coco
@@ -534,9 +535,18 @@ async def download_data_quality_check(
                 detail="You do not have permission to access details for this file.",
             )
 
-    upload_path_parts = file_upload.dq_full_path.split("/")
-    upload_filename = upload_path_parts[-1]
-    blob = storage_client.get_blob_client(file_upload.dq_full_path)
+    path = Path(file_upload.dq_full_path)
+    dataset = path.parts[1]
+    country_code = path.parts[3]
+    upload_filename = path.name
+
+    download_path_human_readable = f"data-quality-results/{dataset}/dq-human-readable-descriptions/{country_code}/{upload_filename}"
+    blob = storage_client.get_blob_client(download_path_human_readable)
+
+    if not blob.exists():
+        download_path_original_dq = f"data-quality-results/{dataset}/dq-overall/{country_code}/{upload_filename}"
+        blob = storage_client.get_blob_client(download_path_original_dq)
+
     stream = blob.download_blob()
     headers = {"Content-Disposition": f"attachment; filename={upload_filename}"}
 
