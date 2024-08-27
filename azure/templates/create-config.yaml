@@ -84,7 +84,7 @@ jobs:
                     TRINO_PASSWORD: ""
                     TRINO_HOST: "trino.ictd-ooi-trino-$(deployEnv).svc.cluster.local"
                     REDIS_PASSWORD: "$(redisPassword)"
-                    ADMIN_EMAIL: "$(adminEmail)"
+                    ADMIN_EMAIL: '$(adminEmail)'
 
 
             - task: Kubernetes@1
@@ -128,4 +128,4 @@ jobs:
                     TRINO_PASSWORD: ""
                     TRINO_HOST: "trino.ictd-ooi-trino-$(deployEnv).svc.cluster.local"
                     REDIS_PASSWORD: "$(redisPassword)"
-                    ADMIN_EMAIL: "$(adminEmail)"
+                    ADMIN_EMAIL: '$(adminEmail)'
