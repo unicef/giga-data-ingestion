@@ -243,6 +243,7 @@ async def create_api_ingestion(
         db.add(school_connectivity)
         await db.commit()
     except Exception as err:
+        await db.rollback()
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
