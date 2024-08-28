@@ -1,3 +1,5 @@
+import { commaNumber } from "@/utils/number";
+
 interface SummaryChecksProps {
   name: string;
   uploadTimestamp: string;
@@ -25,19 +27,19 @@ const SummaryChecks = ({
       {rows && (
         <span>
           Count of schools in raw file:{" "}
-          <span className="font-bold">{rows}</span>
+          <span className="font-bold">{commaNumber(rows)}</span>
         </span>
       )}
       {rowsPassed && (
         <span>
           Count of schools for approval (Uploaded Schools):{" "}
-          <span className="font-bold">{rowsPassed}</span>
+          <span className="font-bold">{commaNumber(rowsPassed)}</span>
         </span>
       )}
       {rowsFailed && (
         <span>
           Count of schools dropped (Not Uploaded):{" "}
-          <span className="font-bold">{rowsFailed}</span>
+          <span className="font-bold">{commaNumber(rowsFailed)}</span>
         </span>
       )}
     </div>
