@@ -26,6 +26,8 @@ export interface Summary {
   rows: number;
   columns: number;
   timestamp: Date;
+  rows_passed?: number;
+  rows_failed?: number;
 }
 
 export interface DataQualityCheckSummary {
