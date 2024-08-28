@@ -168,6 +168,9 @@ function Index() {
                     checkTimestamp={dqResultData.creation_time}
                     name={uploadData.original_filename}
                     uploadTimestamp={uploadData.created}
+                    rows={dqResultData.dq_summary.summary.rows}
+                    rowsPassed={dqResultData.dq_summary.summary.rows_passed}
+                    rowsFailed={dqResultData.dq_summary.summary.rows_failed}
                   />
                 </div>
               </AccordionItem>
