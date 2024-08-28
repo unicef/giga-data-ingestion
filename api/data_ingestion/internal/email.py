@@ -45,10 +45,7 @@ def send_email_base(
 
     formatted_recipients = [{"Email": r} for r in recipients]
 
-    if len(recipients) > 1:
-        message["Bcc"] = formatted_recipients
-    else:
-        message["Recipients"] = formatted_recipients
+    message["Recipients"] = formatted_recipients
 
     client = Client(
         auth=(settings.MAILJET_API_KEY, settings.CLEAN_MAILJET_SECRET),
