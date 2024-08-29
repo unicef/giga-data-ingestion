@@ -89,7 +89,7 @@ async def list_approval_requests(
     res = db.execute(
         select(
             "*",
-            select(count(distinct("full_name")))
+            select(count(distinct(column("full_name"))))
             .select_from(data_cte)
             .label("total_count"),
         )
