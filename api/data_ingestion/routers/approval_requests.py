@@ -73,7 +73,10 @@ async def list_approval_requests(
 
     data_cte = (
         select(
-            "*", func.concat_WS(".", "table_schema", "table_name").label("full_name")
+            "*",
+            func.concat_WS(".", column("table_schema"), column("table_name")).label(
+                "full_name"
+            ),
         )
         .select_from(text("information_schema.tables"))
         .where(
