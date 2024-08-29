@@ -287,18 +287,26 @@ async def get_approval_request(
         .select_from(data_cte)
         .limit(1)
     ).cte("max_version")
+
+    cdf_cte = (
+        select("*")
+        .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
+        .where(
+            (literal_column("mv.max_version") == 1)
+            | (literal_column("d._commit_version") == 2)
+            | (
+                (literal_column("d._commit_version") > 2)
+                & (literal_column("d._change_type") != "update_preimage")
+            )
+        )
+    )
+
+    total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
+
     cdf = (
         db.execute(
-            select("*", select(count()).select_from(data_cte).label("row_count"))
-            .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
-            .where(
-                (literal_column("mv.max_version") == 1)
-                | (literal_column("d._commit_version") == 2)
-                | (
-                    (literal_column("d._commit_version") > 2)
-                    & (literal_column("d._change_type") != "update_preimage")
-                )
-            )
+            select("*")
+            .select_from(cdf_cte)
             .order_by(
                 column("school_id_giga"),
                 column("_commit_version").desc(),
@@ -322,8 +330,7 @@ async def get_approval_request(
     )
 
     df = pd.DataFrame(cdf)
-    total_count = int(df.at[0, "row_count"])
-    df = df.drop(columns=["row_count", "signature"]).fillna("NULL")
+    df = df.drop(columns=["signature"]).fillna("NULL")
     return {
         "info": {
             "country": country,
