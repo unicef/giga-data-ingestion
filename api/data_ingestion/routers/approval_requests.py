@@ -79,6 +79,9 @@ async def list_approval_requests(
         )
         .cte("tables")
     )
+    res_out = db.execute(select("*").select_from(data_cte)).mappings().all()
+    print("➡ api/data_ingestion/routers/approval_requests.py:81 res_out:", res_out)
+
     res = db.execute(
         select("*", select(count()).select_from(data_cte).label("total_count"))
         .select_from(data_cte)
@@ -86,7 +89,12 @@ async def list_approval_requests(
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
+
     staging_tables = res.mappings().all()
+    print(
+        "➡ api/data_ingestion/routers/approval_requests.py:93 staging_tables:",
+        staging_tables,
+    )
     if len(staging_tables) == 0:
         total_count = 0
     else:
