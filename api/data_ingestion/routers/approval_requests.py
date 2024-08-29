@@ -82,6 +82,16 @@ async def list_approval_requests(
     res_out = db.execute(select("*").select_from(data_cte)).mappings().all()
     print("➡ api/data_ingestion/routers/approval_requests.py:81 res_out:", res_out)
 
+    total_count_query = select(count()).select_from(data_cte)
+    total_count = db.execute(total_count_query).scalar()
+    print("EXTRA QUERIES")
+    print('➡ api/data_ingestion/routers/approval_requests.py:85 total_count:', total_count)
+    print('➡ api/data_ingestion/routers/approval_requests.py:80 data_cte:', str(data_cte))
+    print('➡ api/data_ingestion/routers/approval_requests.py:84 total_count_query:', str(total_count_query))
+    print("After QUERIES")
+
+
+
     res = db.execute(
         select("*", select(count()).select_from(data_cte).label("total_count"))
         .select_from(data_cte)
