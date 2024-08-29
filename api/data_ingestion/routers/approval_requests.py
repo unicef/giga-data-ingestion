@@ -95,6 +95,44 @@ async def list_approval_requests(
         "➡ api/data_ingestion/routers/approval_requests.py:84 total_count_query:",
         str(total_count_query),
     )
+
+    simplified_data_cte = (
+        select("*")
+        .select_from(text("information_schema.tables"))
+        .where(column("table_schema").like(literal("school%staging")))
+        .cte("tables")
+    )
+    simplified_data_cte_out = (
+        db.execute(select("*").select_from(simplified_data_cte)).mappings().all()
+    )
+    print(
+        "➡ api/data_ingestion/routers/approval_requests.py:109 simplified_data_cte_out:",
+        simplified_data_cte_out,
+    )
+
+    simplified_data_cte = (
+        select("*")
+        .select_from(text("information_schema.tables"))
+        .where(column("table_name").in_(table_names))
+        .cte("tables")
+    )
+    simplified_data_cte_out = (
+        db.execute(select("*").select_from(simplified_data_cte)).mappings().all()
+    )
+    print(
+        "➡ api/data_ingestion/routers/approval_requests.py:109 simplified_data_cte_out2:",
+        simplified_data_cte_out,
+    )
+
+    full_cte = (
+        select("*")
+        .select_from(text("information_schema.tables"))
+        .where(column("table_schema").like(literal("school%staging")))
+        .cte("tables")
+    )
+    full_cte = db.execute(select("*").select_from(full_cte)).mappings().all()
+    print("➡ api/data_ingestion/routers/approval_requests.py:131 full_cte:", full_cte)
+
     print("After QUERIES")
 
     res = db.execute(
