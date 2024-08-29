@@ -100,10 +100,7 @@ async def list_approval_requests(
     )
 
     staging_tables = res.mappings().all()
-    print(
-        "➡ api/data_ingestion/routers/approval_requests.py:93 staging_tables:",
-        staging_tables,
-    )
+
     if len(staging_tables) == 0:
         total_count = 0
     else:
