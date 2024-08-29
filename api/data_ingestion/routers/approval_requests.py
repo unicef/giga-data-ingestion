@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi_azure_auth.user import User
 from sqlalchemy import (
     column,
+    distinct,
     func,
     literal,
     literal_column,
@@ -71,7 +72,9 @@ async def list_approval_requests(
         table_names.append(item.country.lower())
 
     data_cte = (
-        select("*")
+        select(
+            "*", func.concat_WS(".", "table_schema", "table_name").label("full_name")
+        )
         .select_from(text("information_schema.tables"))
         .where(
             (column("table_schema").like(literal("school%staging")))
@@ -81,7 +84,12 @@ async def list_approval_requests(
     )
 
     res = db.execute(
-        select("*", select(count()).select_from(data_cte).label("total_count"))
+        select(
+            "*",
+            select(count(distinct("full_name")))
+            .select_from(data_cte)
+            .label("total_count"),
+        )
         .select_from(data_cte)
         .order_by(column("table_name"), column("table_schema"))
         .offset((page - 1) * page_size)
