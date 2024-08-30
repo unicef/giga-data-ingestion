@@ -131,7 +131,7 @@ const DataQualityReport = ({
 
 DataQualityReport.PreviewProps = {
   dataQualityCheck: dqResultSummary,
-  dataset: "School Geolocaiotn",
+  dataset: "School Geolocation",
   uploadDate: new Date().toLocaleString(undefined, {
     timeZoneName: "short",
   }),
