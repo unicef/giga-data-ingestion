@@ -2,7 +2,7 @@ import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { render } from "@react-email/render";
 import * as Sentry from "@sentry/node";
-import { ProfilingIntegration } from "@sentry/profiling-node";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { secureHeaders } from "hono/secure-headers";
@@ -26,10 +26,9 @@ if (process.env.SENTRY_DSN && process.env.NODE_ENV !== "development") {
     dsn: process.env.NODE_SENTRY_DSN,
     environment: process.env.DEPLOY_ENV ?? "local",
     serverName: `ingestion-portal-email-${process.env.DEPLOY_ENV}@${hostname()}`,
-    integrations: [new ProfilingIntegration()],
+    integrations: [nodeProfilingIntegration()],
     release: `github.com/unicef/giga-data-ingestion:${process.env.COMMIT_SHA}`,
     sampleRate: 1.0,
-    enableTracing: true,
     tracesSampleRate: 1.0,
     profilesSampleRate: 1.0,
   });
@@ -105,7 +104,7 @@ app.post(
       plainText: true,
     });
     return ctx.json({ html, text });
-  }
+  },
 );
 
 const port = 3020;
