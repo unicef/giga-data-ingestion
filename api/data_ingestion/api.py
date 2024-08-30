@@ -49,6 +49,9 @@ app = FastAPI(
         "clientId": settings.AZURE_CLIENT_ID,
         "scopes": "openid profile offline_access",
     },
+    swagger_ui_parameters={
+        "persistAuthorization": True,
+    },
 )
 
 app.add_middleware(
