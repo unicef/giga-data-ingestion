@@ -5,6 +5,7 @@ import * as Sentry from "@sentry/node";
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
+import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import { hostname } from "os";
 
@@ -37,31 +38,36 @@ if (process.env.SENTRY_DSN && process.env.NODE_ENV !== "development") {
 const app = new Hono();
 
 app.use("*", secureHeaders());
+app.use(logger());
 app.use(
   "/email/*",
   bearerAuth({ token: process.env.EMAIL_RENDERER_BEARER_TOKEN ?? "" }),
 );
 
-app.get("/", (ctx) => {
+app.get("/", async (ctx) => {
   return ctx.text("ok");
 });
 
-app.post("/email/invite-user", zValidator("json", InviteUserProps), (ctx) => {
-  const json = ctx.req.valid("json") as InviteUserProps;
-  const html = render(<InviteUser {...json} />);
-  const text = render(<InviteUser {...json} />, {
-    plainText: true,
-  });
-  return ctx.json({ html, text });
-});
+app.post(
+  "/email/invite-user",
+  zValidator("json", InviteUserProps),
+  async (ctx) => {
+    const json = ctx.req.valid("json") as InviteUserProps;
+    const html = await render(<InviteUser {...json} />);
+    const text = await render(<InviteUser {...json} />, {
+      plainText: true,
+    });
+    return ctx.json({ html, text });
+  },
+);
 
 app.post(
   "/email/dq-report-upload-success",
   zValidator("json", DataQualityUploadSuccessProps),
-  (ctx) => {
+  async (ctx) => {
     const json = ctx.req.valid("json") as DataQualityUploadSuccessProps;
-    const html = render(<DataQualityReportUploadSuccess {...json} />);
-    const text = render(<DataQualityReportUploadSuccess {...json} />, {
+    const html = await render(<DataQualityReportUploadSuccess {...json} />);
+    const text = await render(<DataQualityReportUploadSuccess {...json} />, {
       plainText: true,
     });
     return ctx.json({ html, text });
@@ -71,10 +77,10 @@ app.post(
 app.post(
   "/email/dq-report-check-success",
   zValidator("json", DataQualityCheckSuccessProps),
-  (ctx) => {
+  async (ctx) => {
     const json = ctx.req.valid("json") as DataQualityCheckSuccessProps;
-    const html = render(<DataQualityReportCheckSuccess {...json} />);
-    const text = render(<DataQualityReportCheckSuccess {...json} />, {
+    const html = await render(<DataQualityReportCheckSuccess {...json} />);
+    const text = await render(<DataQualityReportCheckSuccess {...json} />, {
       plainText: true,
     });
     return ctx.json({ html, text });
@@ -84,10 +90,10 @@ app.post(
 app.post(
   "/email/dq-report",
   zValidator("json", DataQualityReportEmailProps),
-  (ctx) => {
+  async (ctx) => {
     const json = ctx.req.valid("json") as DataQualityReportEmailProps;
-    const html = render(<DataQualityReport {...json} />);
-    const text = render(<DataQualityReport {...json} />, {
+    const html = await render(<DataQualityReport {...json} />);
+    const text = await render(<DataQualityReport {...json} />, {
       plainText: true,
     });
     return ctx.json({ html, text });
@@ -97,10 +103,10 @@ app.post(
 app.post(
   "/email/master-data-release-notification",
   zValidator("json", MasterDataReleaseNotificationProps),
-  (ctx) => {
+  async (ctx) => {
     const json = ctx.req.valid("json") as MasterDataReleaseNotificationProps;
-    const html = render(<MasterDataReleaseNotification {...json} />);
-    const text = render(<MasterDataReleaseNotification {...json} />, {
+    const html = await render(<MasterDataReleaseNotification {...json} />);
+    const text = await render(<MasterDataReleaseNotification {...json} />, {
       plainText: true,
     });
     return ctx.json({ html, text });
