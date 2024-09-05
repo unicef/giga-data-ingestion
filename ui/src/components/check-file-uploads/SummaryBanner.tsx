@@ -12,6 +12,7 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { api } from "@/api";
 import { UploadResponse, initialUploadResponse } from "@/types/upload";
 import { saveFile } from "@/utils/download";
+import { commaNumber } from "@/utils/number.ts";
 
 interface AccordionSummaryProps {
   totalAssertions: number;
@@ -72,25 +73,24 @@ const SummaryBanner = ({
       </div>
       <div className="flex">
         <Tag className="flex w-auto gap-2 px-3 py-2" type="green">
-          <CheckmarkOutline className="align-middle" /> {totalPassedAssertions}
-          {"      "}
-          Successful assertions
+          <CheckmarkOutline className="align-middle" />{" "}
+          {commaNumber(totalPassedAssertions)} Successful assertion
+          {totalPassedAssertions > 1 && "s"}
         </Tag>
       </div>
       <div className="flex">
         <Tag className="flex w-auto gap-2 px-3 py-2" type="red">
-          <Warning className="align-middle" /> {totalFailedAssertions}
-          {"      "}
-          Assertions with warnings
+          <Warning className="align-middle" />{" "}
+          {commaNumber(totalFailedAssertions)} Assertion
+          {totalFailedAssertions > 1 && "s"} with warnings
         </Tag>
       </div>
       {criticalErrors > 0 && (
         <div className="flex ">
           <Tag className="flex w-auto gap-2 px-3 py-2" type="magenta">
-            <MisuseOutline className="align-middle" />
-            {criticalErrors > 1
-              ? `${criticalErrors} Critical Errors`
-              : `${criticalErrors} Critical Error`}
+            <MisuseOutline className="align-middle" />{" "}
+            {commaNumber(criticalErrors)} Critical Error
+            {criticalErrors > 1 && "s"}
           </Tag>
         </div>
       )}

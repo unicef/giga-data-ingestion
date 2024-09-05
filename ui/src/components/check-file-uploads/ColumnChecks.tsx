@@ -20,6 +20,7 @@ import {
   DqFailedRowValues,
   DqFailedRowsFirstFiveRows,
 } from "@/types/upload";
+import { commaNumber } from "@/utils/number.ts";
 
 import ViewDetailsModal from "./ViewDetailsModal";
 
@@ -73,7 +74,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
             "text-giga-dark-red": count_failed > 0,
           })}
         >
-          {count_failed}/{count_overall}
+          {commaNumber(count_failed)}/{commaNumber(count_overall)}
         </div>
       ),
       actions: (
