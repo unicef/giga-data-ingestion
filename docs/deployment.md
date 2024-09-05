@@ -1,18 +1,18 @@
 # Deployment Procedure
 
-## Dev Deployment
+CI/CD has been set up with Azure DevOps. To deploy, simply merge changes into the
+relevant branch:
 
-### Pre-requisites
-``` @TODO: Fill with pre-reqs such as access, CI/CD setup, variables used for deployment etc ```
+`main` > DEV
 
-### How-to-Guide
-``` @TODO: Fill with steps to deploy. Feel free to subdivide to sections or multiple MD files through mkdocs.yml ```
+`staging` > STG
 
+`production` > PRD
 
-## Production Deployment
+To manually trigger deployments, go to
+the [Pipelines](https://unicef.visualstudio.com/OI-GIGA/_build) page and trigger
+the relevant pipeline:
 
-### Pre-requisites
-``` @TODO: Fill with pre-reqs such as access, CI/CD setup, variables used for deployment etc ```
-
-### How-to-Guide
-``` @TODO: Fill with steps to deploy. Feel free to subdivide to sections or multiple MD files through mkdocs.yml ```
+- giga-data-ingestion-deploy-dev
+- giga-data-ingestion-deploy-stg
+- giga-data-ingestion-deploy-prd
