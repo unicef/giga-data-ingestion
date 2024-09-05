@@ -2,23 +2,27 @@
 
 ## Trunk Based Development
 
-![Trunk Based Development](https://trunkbaseddevelopment.com/trunk1b.png)
+![Trunk-Based Development](images/trunk-dev.png)
 
-The giga-data-ingestion project follows the concept of Trunk-based Development,
+The Giga DataOps Platform project follows the concept of Trunk-Based Development,
 wherein User Stories are worked on PRs. PRs then get merged to `main` once approved by
-the team.
+another developer.
 
-The main branch serves as the most up-to-date version of the code base.
+The `main` branch serves as the most up-to-date version of the code base.
 
-### Naming Format
+### Naming Conventions
 
-**Branch Names:**
+#### Branch Names
 
 Refer to [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-**PR Title:** `[<Feature/Fix/Release/Hotfix>](<issue-id>) <Short desc>`
+#### PR Title
 
-**PR Template:** [pull_request_template.md](../.github/pull_request_template.md)
+`[<Feature/Fix/Release/Hotfix>](<issue-id>) <Short desc>`
+
+#### PR Template
+
+[pull_request_template.md](../.github/pull_request_template.md)
 
 ### Development Workflow
 
@@ -28,76 +32,94 @@ Refer to [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
   as much as possible.
 - Push your commits, open a PR and fill in the PR template.
 - Request a review from 1 other developer.
-- Once approved, rebase/squash your commits into `main`.
+- Once approved, rebase/squash your commits into `main`. Rule of thumb:
+    - If the PR contains 1 or 2 commits, perform a **Rebase**.
+    - If the PR contains several commits that build toward a larger feature, perform a
+      **Squash**.
+    - If the PR contains several commits that are relatively unrelated (e.g., an
+      assortment of bug fixes), perform a **Rebase**.
 
 ## Local Development
 
-### Prerequisites
-
-- [ ] [Docker](https://docs.docker.com/engine/)
-- [ ] [Kubernetes](https://kubernetes.io/docs/tasks/tools/)
-- [ ] [Helm](https://helm.sh/docs/intro/install/)
-- [ ] [pyenv](https://github.com/pyenv/pyenv)
-- [ ] [Poetry](https://python-poetry.org/docs/#installation)
-- [ ] [Task](https://taskfile.dev/installation/#install-script)
-- [ ] [ADR Tools](https://github.com/npryce/adr-tools)
-
-### Install backend dependencies
-
-```shell
-cd api
-pyenv install 3.11
-poetry env use 3.11
-poetry install
-```
-
-### Install frontend dependencies
-
-```shell
-cd ui
-nvm install 18
-nvm use
-npm i
-```
-
-### Install pre-commit
-
-```shell
-pip install pre-commit
-pre-commit install
-```
-
 ### File Structure Walkthrough
 
-- `docs/` - This folder contains all Markdown files for creating Backstage TechDocs.
+- `azure/` - Contains all configuration for Azure DevOps pipelines.
+- `api/` - Contains all custom backend API code.
+- `docs/` - This folder contains all Markdown files for documentation.
+- `email/` - Contains all custom email API code.
+- `infra/` - Contains all Kubernetes & Helm configuration.
+- `ui/` - Contains all custom frontend code.
 
 ### Pre-requisites
 
-`@TODO: Fill with pre-reqs such as access to Cloud Platform, Bitwarden Collection, Github etc`
+#### Required
+
+- [ ] [Docker](https://docs.docker.com/engine/)
+- [ ] [Task](https://taskfile.dev/installation/#install-script)
+- [ ] [asdf](https://asdf-vm.com/guide/getting-started.html)
+- [ ] [Poetry](https://python-poetry.org/docs/#installation)
+- [ ] [Python 3.11](https://www.python.org/downloads/)
+- [ ] [Node 20](https://nodejs.org)
+
+#### As-needed
+
+- [ ] [Kubernetes](https://kubernetes.io/docs/tasks/tools/)
+    - If you are using Docker Desktop on Windows, you can use the bundled Kubernetes
+      distribution.
+- [ ] [Helm](https://helm.sh/docs/intro/install/)
+
+Refer to the Development section in the docs of unicef/giga-dagster.
+
+Additional setup:
+
+#### Node
+
+1. Install Node
+    ```shell
+    asdf add plugin nodejs
+    asdf install nodejs 20.17.0
+    asdf global nodejs 20.17.0
+    ```
+2. Update package manager
+   ```shell
+   npm i -g npm
+   ```
 
 ### Cloning and Installation
 
-`@TODO: Fill with set-up/installation guide. Feel free to subdivide to sections or multiple MD files through mkdocs.yml`
+1. `git clone` the repository to your workstation.
+2. Run initial setup:
+    ```shell
+    task setup
+    ```
 
 ### Environment Setup
 
-`@TODO: Fill with instructions for exporting local env variables. Distinguish variables being used in local vs dev vs prod`
+**API**, and **UI** have their own respective `.env` files. The
+contents of these files can be provided upon request. There are also `.env.example`
+files which you can use as reference. Copy the contents of this file into a new file
+named `.env` in the same directory, then supply your own values.
+
+Ensure that the Pre-requisites have already been set up and all the necessary
+command-line executables are in your `PATH`.
 
 ### Running the Application
 
-`@TODO: Fill with steps on running the app locally. Feel free to subdivide to sections or multiple MD files through mkdocs.yml`
+```shell
+# spin up Docker containers
+task
 
+# Follow Docker logs
+task logs
 
+# List all tasks (inspect Taskfile.yml to see the actual commands being run)
+task -l
+```
 
+#### Housekeeping
 
-#### Common Issues
+At the end of your development tasks, stop the containers to free resources:
 
-
-###### Updating the schema
-When making changes to the models you will need to also update the fixtures:
-
-0. `[Only do this if running step 1 does not work]`. You might need to manually add in temporary values to the fixtures you updated. [sample fixtures file](api/data_ingestion/fixtures/qos_school_list.yaml). If you updated the migrations and are spinning up a new database, the container will continuously try to load up the old fixtures file which will cause it to continuously error.
-1. Update the actual fixtures file [sample fixture file](api/scripts/generate_qos_fixtures.py)
-2. Run `task load-fixtures -- [YOUR_FIXTURE_NAME]`
-
-###### [Adding non nullable columns to existing table](https://stackoverflow.com/questions/33705697/alembic-integrityerror-column-contains-null-values-when-adding-non-nullable)
+```shell
+task stop
+```

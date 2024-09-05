@@ -1,130 +1,71 @@
-# Project Architecture and Access to Production
+# Architecture
 
-``` @TODO: Summary of Architecture and steps to access each component ```
+![](./images/subarchitecture.png)
 
-The `giga-data-ingestion` project is meant as a base repository template; it should be
-a basis for other projects.
+## Backend
 
-`giga-data-ingestion` is hosted on GitHub, and is available as
-a [Template in Backstage]([url](https://catalog.tm8.dev/create?filters%5Bkind%5D=template&filters%5Buser%5D=all)****)
+### Framework
 
-## Architecture Details
+The application uses [FastAPI](https://fastapi.tiangolo.com/) as the backend framework
+and PostgreSQL as the database which essentially serves as the file uploads metastore.
+This is used to keep track of other aspects of the portal such as approval requests,
+deletion requests, and API ingestion configurations. Other notable software used in the
+backend stack are:
 
-```Note: Structure of this document assumes Dev and Prod are in different Cloud Platform projects. You can reduce the sections for architecture if redundant. Just note the datasets, vms, buckets, etc. being used in Dev vs Prod ```
+- [SQLAlchemy](https://www.sqlalchemy.org/) to interact with the database
+- [Alembic](https://alembic.sqlalchemy.org/en/latest/) to handle database migrations
+- [Pydantic](https://docs.pydantic.dev/latest/) for data modeling and validation
 
-- Provider: Azure
-- Dev Environment: ``` @TODO: Link to dev env ```
-- Prod Environment: ``` @TODO: Link to prod env ```
-- Technology: Python / FastAPI / TypeScript / React
+### Email Service
 
-### Implementation Notes
+The service used to generate and render emails is decoupled from the main backend
+service. For this, a lightweight [Hono](https://hono.dev/) server is used, which in
+turn, makes calls to [React Email](https://react.email/) to render the emails as both
+HTML and plaintext.
 
-``` @TODO: Note down known limitations, possible issues, or known quirks with the project. The following questions might help: ``` <br>
-``` 1. Which component needs most attention? ie. Usually the first thing that needs tweaks ``` <br>
-``` 2. Are the parts of the project that might break in the future? (eg. Filling up of disk space, memory issues if input data size increases, a web scraper, etc.)``` <br>
-``` 3. What are some known limitations for the project? (eg. Input data schema has to remain the same, etc.)```
+### Trino connector
 
-## Dev Architecture
+A Trino connector also backed by SQLAlchemy is used to query the Trino service. This is
+primarily used for retrieving the current version of the school geolocation and coverage
+schemas.
 
-``` @TODO: Dev architecture diagram and description. Please include any OAuth or similar Applications.```
-``` @TODO: List out main components being used and their descriptions.```
+### Redis/Celery
 
-### Virtual Machines
+Redis is used as both a cache and a task queue/broker for Celery. The main cached items
+are the schemas, which is used heavily for the column mapping feature in the frontend.
+Celery runs a periodic tasks to refresh the cache.
 
-``` @TODO: List VMs used and what they host```
+## Frontend
 
-### Datasets
+### Routing
 
-``` @TODO: List datasets given following format```
+This project
+uses [TanStack Router's](https://tanstack.com/router/latest/docs/framework/react/guide/file-based-routing)
+file-based routing for our routing needs.
 
-#### Dataset A
+### Context Store
 
-- Description: PSGC Data
-- File Location: GCS Uri / GDrive link / etc
-- Retention Policy: 3 months
+This project uses [Zustand](https://docs.pmnd.rs/zustand/getting-started/introduction)
+for managing global state. We use a single store located in the `src/context/store.ts`
+file and split into multiple smaller stores using
+Zustand's [slices pattern](https://docs.pmnd.rs/zustand/guides/slices-pattern).
 
-### Tokens and Accounts
+### UI Library and Styling
 
-``` @TODO: Please fill out all Tokens and Accounts being used in the project given the format below. Include tokens from client used in the project.```
+[Carbon Design System](https://carbondesignsystem.com/) is the preferred library of
+choice since it is what Giga's Brand and UI design guide is based on. As a developer,
+you will be referencing Carbon's official
+[React Storybook](https://react.carbondesignsystem.com/) page often when trying to pick
+out components to use for future features.
 
-**Dev GitHub Service Account Token**
+For styling, we use [TailwindCSS](https://tailwindcss.com/). If you need to override
+styles of some elements of the Carbon Library, you can use the classic CSS approach of
+adding/looking for the classnames held by these components and modifying their styles
+directly via the `carbon.scss` file.
 
-- Location: Bitwarden GitHub Collection
-- Person in charge: Client Name (client@email.com)
-- Validity: 30 Days
-- Description: This token is used to call the GitHub API using the account ``
-  sample-account@thinkingmachin.es`
-- How to Refresh:
-    1. Go to github.com
-    2. Click refresh
+### Authentication
 
-## Production Architecture
-
-``` @TODO: Prod architecture diagram and description. Please include any OAuth or similar Applications.```
-``` @TODO: List out main components being used and their descriptions.```
-
-### Virtual Machines
-
-``` @TODO: List VMs used and what they host```
-
-### Datasets
-
-``` @TODO: List datasets given following format```
-
-#### Dataset A
-
-- Description: PSGC Data
-- File Location: GCS Uri / GDrive link / etc
-- Retention Policy: 3 months
-
-### Tokens and Accounts
-
-``` @TODO: Please fill out all Tokens and Accounts being used in the project given the format below. Include tokens from client used in the project.```
-
-**Prod GitHub Service Account Token**
-
-- Location: Bitwarden GitHub Collection
-- Person in charge: Client Name (client@email.com)
-- Validity: 30 Days
-- Description: This token is used to call the GitHub API using the account ``
-  sample-account@thinkingmachin.es`
-- How to Refresh:
-    1. Go to github.com
-    2. Click refresh
-
-## Accessing Cloud Platform Environments
-
-```@TODO: Describe the steps to access the prod VMs/platform```
-
-**Get access to Client AWS Platform**
-
-- Person in charge: Client Name/Dev Name
-- Bitwarden Credentials:
-
-1. Install AWS CLI
-2. Run `aws configure` - ID and Secret from Bitwarden
-
-**Accessing Prod VM**
-
-1. Update your ssh config to have the following:
-
-```
-Host project-vpn
-   Hostname xx.xxx.xxx.xxx
-   User ubuntu
-   
-# Use the Private IP for the rest
-Host dev-project-app
-   Hostname xxx.xx.xx.xx
-   User ubuntu
-   ProxyJump project-vpn
-```
-
-2. Run `ssh dev-project-app`
-
-**Access Prod App in UI**
-
-1. Install `sshuttle`
-2. Run `sshuttle -r dev-project-app xxx.xx.0.0/16`
-3. Open web browser using the Private IP found in you SSH config (http:xxx.xx.xx.xx:
-    3000) 
+Both backend and frontend routes are protected by Azure AD B2C authentication.
+Role-based access control (RBAC) is handled in-app. Generally, Admin users have full
+authorization on all actions, while Regular users can only perform basic tasks
+like uploads for specific country-dataset combinations.
