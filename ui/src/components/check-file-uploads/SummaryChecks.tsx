@@ -24,24 +24,24 @@ const SummaryChecks = ({
       </span>
       <span>File uploaded at {uploadTimestamp}</span>
       <span>Checks performed at {checkTimestamp}</span>
-      {rows && (
+      {rows ? (
         <span>
           Count of schools in raw file:{" "}
           <span className="font-bold">{commaNumber(rows)}</span>
         </span>
-      )}
-      {rowsPassed && (
+      ) : null}
+      {rowsPassed ? (
         <span>
           Count of schools for approval (Uploaded Schools):{" "}
           <span className="font-bold">{commaNumber(rowsPassed)}</span>
         </span>
-      )}
-      {rowsFailed && (
+      ) : null}
+      {rowsFailed ? (
         <span>
           Count of schools dropped (Not Uploaded):{" "}
           <span className="font-bold">{commaNumber(rowsFailed)}</span>
         </span>
-      )}
+      ) : null}
     </div>
   );
 };
