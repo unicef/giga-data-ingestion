@@ -68,7 +68,8 @@ Refer to [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
       distribution.
 - [ ] [Helm](https://helm.sh/docs/intro/install/)
 
-Refer to the Development section in the docs of unicef/giga-dagster.
+Refer to the Development section in the docs
+of [unicef/giga-dagster](https://github.com/unicef/giga-dagster/blob/main/docs/development.md#local-development).
 
 Additional setup:
 
@@ -77,8 +78,7 @@ Additional setup:
 1. Install Node
     ```shell
     asdf add plugin nodejs
-    asdf install nodejs 20.17.0
-    asdf global nodejs 20.17.0
+    asdf install nodejs 20.10.0
     ```
 2. Update package manager
    ```shell

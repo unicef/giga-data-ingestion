@@ -1,35 +1,30 @@
-# Troubleshooting
+# Support
 
-## Unit Testing
+For any questions/help needed regarding this project, you may contact the project team:
 
-### How-to-Guide
-``` @TODO: Fill with steps to run unit tests ```
+**UNICEF Giga**
 
-```sh
-{command}
-{command}
-```
+- [Shilpa Arora](mailto:sharora@unicef.org) - Product Owner
+- [Rishabh Raj](mailto:riraj@unicef.org) - Platform Engineer
+- [Brian Musisi](mailto:bmusisi@unicef.org) - Data Engineer
 
-### Code Coverage
-``` @TODO: Update command and data ```
+**Thinking Machines**
 
-To check code coverage, run: `pytest --cov=src --cov-report term-missing test/`
+- [Billie Zulueta](mailto:billie@thinkingmachin.es) - Project Manager
+- [AJ Tamayo](mailto:aj@thinkingmachin.es) - Project Lead
+- [Gerlito Chagas](mailto:ger@thinkingmachin.es) - Data Operations Engineer/Software
+  Engineer
 
-```
-Name                 Stmts   Miss  Cover   Missing
-----------------------------------------------------------
-src/config.py        46      0     100%
-src/script.py        84      33    61%     25-46, 60-62, 80-81, 145, 173-186, 207-213
-----------------------------------------------------------
-TOTAL                130     33    75%
+**Former project team members**
 
-```
-
-
-## Debugging
-
-### Logs Location
-``` @TODO: Fill with links, paths, etc to logs ```
-
-### Common Issues
-``` @TODO: Add if there are any ```
+- Lia Mabaquiao - Project Manager
+- Kenneth Domingo - Tech Lead/Software Engineer
+- Flo Barot - Senior Data Engineer
+- Dana Redeña - Senior Enterprise Solutions Engineer
+- Bianca Caugma - Data Strategy Consultant
+- Renz Jaranilla - Data Strategy Consultant
+- Erin Cheng - Data Engineer
+- Renz Togonon - Analytics Engineer
+- Sofia Pineda - Data Engineer/Enterprise Solutions Engineer
+- Tiff Gamboa - Data Engineer
+- Aveline Germar - Analytics Engineer
