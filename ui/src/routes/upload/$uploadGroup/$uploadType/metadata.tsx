@@ -152,6 +152,7 @@ function Metadata() {
 
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [isUploadError, setIsUploadError] = useState<boolean>(false);
+  const [isNullFile, setIsNullFile] = useState<boolean>(false);
 
   const {
     register,
@@ -193,6 +194,10 @@ function Metadata() {
   }
 
   const onSubmit: SubmitHandler<MetadataForm> = async data => {
+    if (uploadSlice.file === null) {
+      setIsNullFile(true);
+    }
+
     if (Object.keys(errors).length > 0) {
       // form has errors, don't submit
       return;
@@ -335,6 +340,11 @@ function Metadata() {
             {isUploadError && (
               <div className="text-giga-dark-red">
                 Error occurred during file upload. Please try again
+              </div>
+            )}
+            {isNullFile && (
+              <div className="text-giga-red">
+                File is missing at this step, please upload the file again
               </div>
             )}
           </Stack>
