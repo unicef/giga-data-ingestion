@@ -51,7 +51,7 @@ export const DataQualityReportCheckSuccess = ({
               <Heading className="flex align-middle p-0 text-2xl font-normal text-giga-green">
                 <Img
                   className="w-10 h-10 mr-2 -mt-1"
-                  src="https://storage.googleapis.com/giga-test-app-static-assets/CheckmarkOutlineGreen.png"
+                  src="https://storage.googleapis.com/giga-assets/CheckmarkOutlineGreen.png"
                 />
                 <strong>Data check successful</strong>
               </Heading>
