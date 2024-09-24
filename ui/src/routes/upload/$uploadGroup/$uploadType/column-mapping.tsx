@@ -72,6 +72,7 @@ const headers: DataTableHeader[] = [
 function UploadColumnMapping() {
   const {
     uploadSlice: {
+      file,
       detectedColumns,
       columnMapping,
       source,
@@ -82,6 +83,7 @@ function UploadColumnMapping() {
   } = useStore();
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isNullFile, setIsNullFile] = useState(false);
   const [selectedColumns, setSelectedColumns] =
     useState<Record<string, string>>(columnMapping);
 
@@ -121,6 +123,11 @@ function UploadColumnMapping() {
     setColumnLicense(dataWithNullsReplaced.license);
     setStepIndex(2);
     setIsNavigating(true);
+
+    if (file == null) {
+      setIsNullFile(true);
+    }
+
     void navigate({ to: "../metadata" });
   };
 
@@ -234,6 +241,11 @@ function UploadColumnMapping() {
               Proceed
             </Button>
           </ButtonSet>
+          {isNullFile && (
+            <div className="text-giga-red">
+              File is missing at this step, please upload the file again
+            </div>
+          )}
         </Stack>
       </form>
     </FormProvider>
