@@ -63,13 +63,13 @@ async def delete_rows(
             detail=err.message, status_code=err.response.status_code
         ) from err
 
-    async with db.begin():
-        db.add(
-            DeletionRequest(
-                requested_by_email=database_user.email,
-                requested_by_id=database_user.id,
-                country=country_iso3,
-            )
+    db.add(
+        DeletionRequest(
+            requested_by_email=database_user.email,
+            requested_by_id=database_user.id,
+            country=country_iso3,
         )
+    )
+    await db.commit()
 
     return {"filename": filename}
