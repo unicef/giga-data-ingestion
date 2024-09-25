@@ -19,7 +19,6 @@ from data_ingestion.models import (
 )
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.deletion_requests import DeleteRowsRequest, DeleteRowsSchema
-from data_ingestion.utils.user import get_user_email
 
 router = APIRouter(
     prefix="/api/delete",
@@ -39,23 +38,21 @@ async def delete_rows(
 
     email = user.claims.get("emails")[0]
 
-
-
     database_user = await db.scalar(
         select(DatabaseUser).where(DatabaseUser.email == email)
     )
 
     filename = f"{country_iso3}_{timestamp}.json"
 
-    approve_location = (
+    delete_location = (
         f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
         f"/delete-row-ids/{country_iso3}/{filename}"
     )
 
-    approve_client = storage_client.get_blob_client(approve_location)
+    delete_client = storage_client.get_blob_client(delete_location)
 
     try:
-        approve_client.upload_blob(
+        delete_client.upload_blob(
             json.dumps(body.ids),
             overwrite=True,
             metadata={"requester_email": database_user.email},
