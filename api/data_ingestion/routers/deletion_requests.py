@@ -19,7 +19,6 @@ from data_ingestion.models import (
 )
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.deletion_requests import DeleteRowsRequest, DeleteRowsSchema
-from data_ingestion.utils.user import get_user_email
 
 router = APIRouter(
     prefix="/api/delete",
@@ -36,7 +35,8 @@ async def delete_rows(
 ):
     country_iso3 = coco.convert(body.country, to="ISO3")
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    email = await get_user_email(user)
+
+    email = user.claims.get("emails")[0]
 
     database_user = await db.scalar(
         select(DatabaseUser).where(DatabaseUser.email == email)
@@ -44,15 +44,15 @@ async def delete_rows(
 
     filename = f"{country_iso3}_{timestamp}.json"
 
-    approve_location = (
+    delete_location = (
         f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}"
         f"/delete-row-ids/{country_iso3}/{filename}"
     )
 
-    approve_client = storage_client.get_blob_client(approve_location)
+    delete_client = storage_client.get_blob_client(delete_location)
 
     try:
-        approve_client.upload_blob(
+        delete_client.upload_blob(
             json.dumps(body.ids),
             overwrite=True,
             metadata={"requester_email": database_user.email},
@@ -63,13 +63,13 @@ async def delete_rows(
             detail=err.message, status_code=err.response.status_code
         ) from err
 
-    async with db.begin():
-        db.add(
-            DeletionRequest(
-                requested_by_email=database_user.email,
-                requested_by_id=database_user.id,
-                country=country_iso3,
-            )
+    db.add(
+        DeletionRequest(
+            requested_by_email=database_user.email,
+            requested_by_id=database_user.id,
+            country=country_iso3,
         )
+    )
+    await db.commit()
 
     return {"filename": filename}
