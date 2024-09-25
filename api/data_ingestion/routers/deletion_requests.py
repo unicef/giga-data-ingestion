@@ -36,7 +36,10 @@ async def delete_rows(
 ):
     country_iso3 = coco.convert(body.country, to="ISO3")
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    email = await get_user_email(user)
+
+    email = user.claims.get("emails")[0]
+
+
 
     database_user = await db.scalar(
         select(DatabaseUser).where(DatabaseUser.email == email)
