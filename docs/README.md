@@ -1,7 +1,6 @@
 # Giga DataOps Platform: Giga Sync
 
-The Giga DataOps Platform is a data platform developed by Thinking Machines Data Science
-in coordination with UNICEF Giga. The objective of the platform is to ingest school data
+The objective of the platform is to ingest school data
 from various sources, applying concepts from master data management and data governance
 in order to produce a single source of truth—the **School Master Data**—which will then
 be used by consumers and downstream applications.
