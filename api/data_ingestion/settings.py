@@ -201,6 +201,15 @@ class Settings(BaseSettings):
 
         return dirty.replace("\n", "")
 
+    @computed_field
+    @property
+    def LAKEHOUSE_PATH(self) -> str:
+        if self.PYTHON_ENV == Environment.LOCAL:
+            if self.LAKEHOUSE_USERNAME:
+                return f"lakehouse-local-{self.LAKEHOUSE_USERNAME}"
+            return "lakehouse-local"
+        return ""
+
 
 @lru_cache
 def get_settings():
