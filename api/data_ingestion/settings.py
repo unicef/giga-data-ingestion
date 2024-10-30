@@ -76,6 +76,7 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_CACHE_DEFAULT_TTL_SECONDS: int = int(timedelta(minutes=10).total_seconds())
     ADMIN_EMAIL: str = ""
+    LAKEHOUSE_USERNAME: str = ""
 
     @computed_field
     @property
