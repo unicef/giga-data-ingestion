@@ -109,6 +109,11 @@ async def list_approval_requests(
     body: list[ApprovalRequestListing] = []
     queries = []
     for table in staging_tables:
+        min_version = db.execute(
+            select(func.min(column("version")))
+            .select_from(text(f'''delta_lake.{table['table_schema']}."{table['table_name']}$history"'''))
+        ).scalar()
+
         change_types_cte = (
             select(
                 column("school_id_giga"),
@@ -117,7 +122,9 @@ async def list_approval_requests(
             ).select_from(
                 func.table(
                     func.delta_lake.system.table_changes(
-                        literal(table["table_schema"]), literal(table["table_name"]), 0
+                        literal(table["table_schema"]),
+                        literal(table["table_name"]),
+                        literal(min_version)
                     )
                 )
             )
