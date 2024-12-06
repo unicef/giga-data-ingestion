@@ -5,8 +5,11 @@ import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
+  Checkbox,
   DataTableHeader,
   Loading,
+  Select,
+  SelectItem,
   Stack,
   Tag,
 } from "@carbon/react";
@@ -30,6 +33,7 @@ import {
 } from "@/components/upload/ColumnMapping.tsx";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
+import { licenseOptions } from "@/mocks/metadataFormValues.tsx";
 import { getDataPrivacyDocument } from "@/utils/download.ts";
 
 export const Route = createFileRoute(
@@ -86,6 +90,8 @@ function UploadColumnMapping() {
   const [isNullFile, setIsNullFile] = useState(false);
   const [selectedColumns, setSelectedColumns] =
     useState<Record<string, string>>(columnMapping);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [selectedLicense, setSelectedLicense] = useState<string>("");
 
   const { uploadType } = Route.useParams();
   const metaschemaName =
@@ -109,7 +115,7 @@ function UploadColumnMapping() {
     },
     shouldFocusError: true,
   });
-  const { handleSubmit } = hookForm;
+  const { handleSubmit, setValue } = hookForm;
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
     const dataWithNullsReplaced: ConfigureColumnsForm = {
       mapping: Object.fromEntries(
@@ -133,21 +139,68 @@ function UploadColumnMapping() {
 
   const rows = useMemo(
     () =>
-      schema.map(column => ({
-        id: column.id,
-        masterColumn: <MasterColumn column={column} />,
-        detectedColumns: (
-          <DetectedColumn
-            column={column}
-            detectedColumns={detectedColumns}
-            selectedColumns={selectedColumns}
-            setSelectedColumns={setSelectedColumns}
-          />
-        ),
-        license: <ColumnLicense column={column} />,
-      })),
-    [detectedColumns, schema, selectedColumns],
+      schema.map(column => {
+        const hasDetectedColumn = Boolean(selectedColumns[column.name]);
+        return {
+          id: column.id,
+          masterColumn: (
+            <MasterColumn
+              isSelected={selectedRows.includes(column.name)}
+              onSelect={(columnName, isChecked) => {
+                if (isChecked) {
+                  setSelectedRows(prev => [...prev, columnName]);
+                } else {
+                  setSelectedRows(prev =>
+                    prev.filter(row => row !== columnName),
+                  );
+                }
+              }}
+              column={column}
+              hasDetectedColumn={hasDetectedColumn}
+            />
+          ),
+          detectedColumns: (
+            <DetectedColumn
+              column={column}
+              detectedColumns={detectedColumns}
+              selectedColumns={selectedColumns}
+              setSelectedColumns={setSelectedColumns}
+            />
+          ),
+          license: (
+            <ColumnLicense column={column} disabled={!hasDetectedColumn} />
+          ),
+        };
+      }),
+    [detectedColumns, schema, selectedColumns, selectedRows],
   );
+
+  const handleBulkLicenseChange = (license: string) => {
+    setSelectedLicense(license);
+  };
+
+  const handleApplyLicense = () => {
+    if (selectedLicense) {
+      selectedRows.forEach(columnName => {
+        setValue(`license.${columnName}`, selectedLicense);
+      });
+    }
+    // Clear everything
+    setSelectedRows([]);
+    setSelectedLicense("");
+  };
+
+  const handleSelectAll = (isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedRows(
+        schema
+          .filter(column => Boolean(selectedColumns[column.name]))
+          .map(column => column.name),
+      ); // Select only rows with detected columns
+    } else {
+      setSelectedRows([]); // Deselect all rows
+    }
+  };
 
   const DESCRIPTION = (
     <>
@@ -164,7 +217,7 @@ function UploadColumnMapping() {
       <p>
         Finally select the applicable licence for each field. Please note that
         the licence selected will determine who can access this data via the
-        Giga Sharing API .{" "}
+        Giga Sharing API.{" "}
       </p>
       <p>
         If you are unsure on which licence to provide, please consult our data
@@ -206,12 +259,51 @@ function UploadColumnMapping() {
           </section>
 
           <section className="w-3/4">
+            <div className="mb-4 flex items-center justify-between">
+              <Checkbox
+                id="select-all"
+                labelText="Select All"
+                checked={
+                  selectedRows.length ===
+                  schema.filter(column => Boolean(selectedColumns[column.name]))
+                    .length
+                }
+                indeterminate={
+                  selectedRows.length > 0 &&
+                  selectedRows.length <
+                    schema.filter(column =>
+                      Boolean(selectedColumns[column.name]),
+                    ).length
+                }
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleSelectAll(e.target.checked)
+                }
+              />
+              {selectedRows.length > 0 && (
+                <div className="flex items-center gap-4">
+                  <Select
+                    id="bulk-license"
+                    labelText="Select License"
+                    value={selectedLicense}
+                    onChange={e => handleBulkLicenseChange(e.target.value)}
+                  >
+                    <SelectItem text="" value="" />
+                    {licenseOptions.map(license => (
+                      <SelectItem
+                        key={license}
+                        text={license}
+                        value={license}
+                      />
+                    ))}
+                  </Select>
+                  <Button kind="primary" onClick={handleApplyLicense}>
+                    Apply License to Selected Rows
+                  </Button>
+                </div>
+              )}
+            </div>
             <DataTable columns={headers} rows={rows} />
           </section>
-          {/* 
-          <Suspense>
-            <ReactHookFormDevTools control={control as unknown as Control} />
-          </Suspense> */}
 
           <ButtonSet className="w-full">
             <Button
