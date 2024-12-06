@@ -1,7 +1,13 @@
 import { ChangeEvent, Dispatch, SetStateAction, memo } from "react";
-import { FieldValues, UseFormResetField, useFormContext } from "react-hook-form";
+import {
+  FieldValues,
+  UseFormResetField,
+  useFormContext,
+} from "react-hook-form";
+
 import { Warning } from "@carbon/icons-react";
-import { DefinitionTooltip, Select, SelectItem, Checkbox } from "@carbon/react";
+import { Checkbox, DefinitionTooltip, Select, SelectItem } from "@carbon/react";
+
 import { licenseOptions } from "@/mocks/metadataFormValues.tsx";
 import { MetaSchema } from "@/types/schema.ts";
 
@@ -21,14 +27,19 @@ interface SelectableColumnProps extends BaseColumnProps {
 }
 
 export const MasterColumn = memo(
-  ({ column, isSelected, onSelect, hasDetectedColumn }: SelectableColumnProps) => {
+  ({
+    column,
+    isSelected,
+    onSelect,
+    hasDetectedColumn,
+  }: SelectableColumnProps) => {
     return (
       <div className="flex items-center gap-4">
         <Checkbox
           id={`select-${column.name}`}
           labelText=""
           checked={isSelected}
-          disabled={!hasDetectedColumn} 
+          disabled={!hasDetectedColumn}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             const { checked } = event.target;
             onSelect(column.name, checked);
@@ -148,35 +159,36 @@ export const DetectedColumn = memo(
 
 type ColumnLicenseProps = BaseColumnProps & { disabled: boolean };
 
-export const ColumnLicense = memo(({ column, disabled }: ColumnLicenseProps) => {
-  const {
-    formState: { errors },
-    register,
-    watch,
-  } = useFormContext();
+export const ColumnLicense = memo(
+  ({ column, disabled }: ColumnLicenseProps) => {
+    const {
+      formState: { errors },
+      register,
+      watch,
+    } = useFormContext();
 
-  const isDisabled = disabled || !watch(`mapping.${column.name}`);
+    const isDisabled = disabled || !watch(`mapping.${column.name}`);
 
-  return (
-    <div className="w-full">
-      <Select
-        id={`license.${column.name}`}
-        invalid={column.name in (errors.license ?? {})}
-        labelText=""
-        {...register(`license.${column.name}`, {
-          validate: (value, formValues) =>
-            !!value && !!formValues.mapping[column.name],
-          disabled: isDisabled,
-          deps: [`mapping.${column.name}`],
-        })}
-      >
-        <SelectItem text={licenseOptions[0]} value={licenseOptions[0]} />
-        {licenseOptions.map((license, index) => {
-          if (index === 0) return null;
-          return <SelectItem key={license} text={license} value={license} />;
-        })}
-      </Select>
-    </div>
-  );
-});
-
+    return (
+      <div className="w-full">
+        <Select
+          id={`license.${column.name}`}
+          invalid={column.name in (errors.license ?? {})}
+          labelText=""
+          {...register(`license.${column.name}`, {
+            validate: (value, formValues) =>
+              !!value && !!formValues.mapping[column.name],
+            disabled: isDisabled,
+            deps: [`mapping.${column.name}`],
+          })}
+        >
+          <SelectItem text={licenseOptions[0]} value={licenseOptions[0]} />
+          {licenseOptions.map((license, index) => {
+            if (index === 0) return null;
+            return <SelectItem key={license} text={license} value={license} />;
+          })}
+        </Select>
+      </div>
+    );
+  },
+);

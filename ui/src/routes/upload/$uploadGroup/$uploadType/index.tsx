@@ -57,14 +57,14 @@ const validUnstructuredTypes = {
     AcceptedUnstructuredFileTypes.TIF,
     AcceptedUnstructuredFileTypes.TIFF,
   ],
-  "text/csv": AcceptedUnstructuredFileTypes.CSV, 
-  "application/vnd.ms-excel": AcceptedUnstructuredFileTypes.EXCEL_LEGACY, 
+  "text/csv": AcceptedUnstructuredFileTypes.CSV,
+  "application/vnd.ms-excel": AcceptedUnstructuredFileTypes.EXCEL_LEGACY,
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-    AcceptedUnstructuredFileTypes.EXCEL, 
-  "application/pdf": AcceptedUnstructuredFileTypes.PDF, 
+    AcceptedUnstructuredFileTypes.EXCEL,
+  "application/pdf": AcceptedUnstructuredFileTypes.PDF,
   "application/msword": AcceptedUnstructuredFileTypes.DOC,
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-    AcceptedUnstructuredFileTypes.DOCX, 
+    AcceptedUnstructuredFileTypes.DOCX,
 };
 
 export default function Index() {

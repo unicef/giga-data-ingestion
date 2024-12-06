@@ -5,13 +5,13 @@ import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
+  Checkbox,
   DataTableHeader,
   Loading,
-  Stack,
-  Tag,
-  Checkbox,
   Select,
   SelectItem,
+  Stack,
+  Tag,
 } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -33,8 +33,8 @@ import {
 } from "@/components/upload/ColumnMapping.tsx";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
-import { getDataPrivacyDocument } from "@/utils/download.ts";
 import { licenseOptions } from "@/mocks/metadataFormValues.tsx";
+import { getDataPrivacyDocument } from "@/utils/download.ts";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/column-mapping",
@@ -139,7 +139,7 @@ function UploadColumnMapping() {
 
   const rows = useMemo(
     () =>
-      schema.map((column: any) => {
+      schema.map(column => {
         const hasDetectedColumn = Boolean(selectedColumns[column.name]);
         return {
           id: column.id,
@@ -156,7 +156,7 @@ function UploadColumnMapping() {
                 }
               }}
               column={column}
-              hasDetectedColumn={hasDetectedColumn} 
+              hasDetectedColumn={hasDetectedColumn}
             />
           ),
           detectedColumns: (
@@ -194,8 +194,8 @@ function UploadColumnMapping() {
     if (isChecked) {
       setSelectedRows(
         schema
-          .filter((column: any) => Boolean(selectedColumns[column.name]))
-          .map((column: any) => column.name),
+          .filter(column => Boolean(selectedColumns[column.name]))
+          .map(column => column.name),
       ); // Select only rows with detected columns
     } else {
       setSelectedRows([]); // Deselect all rows
@@ -265,14 +265,13 @@ function UploadColumnMapping() {
                 labelText="Select All"
                 checked={
                   selectedRows.length ===
-                  schema.filter((column: any) =>
-                    Boolean(selectedColumns[column.name]),
-                  ).length
+                  schema.filter(column => Boolean(selectedColumns[column.name]))
+                    .length
                 }
                 indeterminate={
                   selectedRows.length > 0 &&
                   selectedRows.length <
-                    schema.filter((column: any) =>
+                    schema.filter(column =>
                       Boolean(selectedColumns[column.name]),
                     ).length
                 }
@@ -286,17 +285,18 @@ function UploadColumnMapping() {
                     id="bulk-license"
                     labelText="Select License"
                     value={selectedLicense}
-                    onChange={(e) => handleBulkLicenseChange(e.target.value)}
+                    onChange={e => handleBulkLicenseChange(e.target.value)}
                   >
                     <SelectItem text="" value="" />
                     {licenseOptions.map(license => (
-                      <SelectItem key={license} text={license} value={license} />
+                      <SelectItem
+                        key={license}
+                        text={license}
+                        value={license}
+                      />
                     ))}
                   </Select>
-                  <Button
-                    kind="primary"
-                    onClick={handleApplyLicense}
-                  >
+                  <Button kind="primary" onClick={handleApplyLicense}>
                     Apply License to Selected Rows
                   </Button>
                 </div>

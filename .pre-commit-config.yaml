@@ -3,7 +3,7 @@ repos:
     rev: v3.0.0
     hooks:
       - id: conventional-pre-commit
-        stages: [ commit-msg ]
+        stages: [commit-msg]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.12
     hooks:
@@ -14,7 +14,7 @@ repos:
           - ./api/pyproject.toml
         exclude: migrations/.*$
       - id: ruff-format
-        args: [ --config, ./api/pyproject.toml ]
+        args: [--config, ./api/pyproject.toml]
         exclude: migrations/.*$
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.8
@@ -24,22 +24,22 @@ repos:
           - -c
           - ./api/pyproject.toml
         additional_dependencies:
-          - 'bandit[toml]'
+          - "bandit[toml]"
   - repo: https://github.com/pre-commit/mirrors-eslint
     rev: v8.45.0
     hooks:
       - id: eslint
-        types: [ file ]
+        types: [file]
         files: ui/.+[^(\.d)]\.[jt]sx?
-        args: [ '--config', 'ui/.eslintrc.cjs', '--fix', '--quiet' ]
+        args: ["--config", "ui/.eslintrc.cjs", "--fix", "--quiet"]
         exclude: ".+\\.gen\\.ts$"
         additional_dependencies:
           - eslint@8.45.0
           - eslint-plugin-react-hooks@4.6.0
           - eslint-plugin-react-refresh@0.4.3
-          - '@typescript-eslint/eslint-plugin@6.0.0'
-          - '@typescript-eslint/parser@6.0.0'
-          - '@tanstack/eslint-plugin-query@5.8.4'
+          - "@typescript-eslint/eslint-plugin@6.0.0"
+          - "@typescript-eslint/parser@6.0.0"
+          - "@tanstack/eslint-plugin-query@5.8.4"
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.7.1
     hooks:
@@ -48,19 +48,19 @@ repos:
         exclude: ".+\\.gen\\.ts$"
         additional_dependencies:
           - prettier@2.7.1
-          - '@trivago/prettier-plugin-sort-imports@3.4.0'
+          - "@trivago/prettier-plugin-sort-imports@3.4.0"
           - prettier-plugin-tailwindcss@0.4.1
           - tailwindcss@3.3.3
           - tailwindcss-animate@1.0.7
-        args: [ '--config', 'ui/.prettierrc.json' ]
+        args: ["--config", "ui/.prettierrc.json"]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
       - id: check-added-large-files
-        args: [ '--maxkb=500' ]
+        args: ["--maxkb=500"]
       - id: end-of-file-fixer
       - id: mixed-line-ending
-        args: [ '--fix=lf' ]
+        args: ["--fix=lf"]
       - id: check-merge-conflict
       - id: check-yaml
         exclude: infra/helm/.+/templates/.*
@@ -68,7 +68,7 @@ repos:
     rev: v8.18.0
     hooks:
       - id: gitleaks
-        args: [ '--verbose' ]
+        args: ["--verbose"]
   - repo: https://github.com/hadolint/hadolint
     rev: v2.12.0
     hooks:
