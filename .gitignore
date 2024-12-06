@@ -8,3 +8,4 @@ node_modules/
 myenv/
 env/
 .python-version
+envv/
