@@ -262,7 +262,7 @@ function UploadColumnMapping() {
             <div className="mb-4 flex items-center justify-between">
               <Checkbox
                 id="select-all"
-                labelText="Select All"
+                labelText="Select All (Apply the same license to all columns)"
                 checked={
                   selectedRows.length ===
                   schema.filter(column => Boolean(selectedColumns[column.name]))
@@ -280,11 +280,13 @@ function UploadColumnMapping() {
                 }
               />
               {selectedRows.length > 0 && (
-                <div className="flex items-center gap-4">
+                <div className="mb-4 flex items-center justify-end space-x-2">
+                  <span className="font-medium text-gray-700">License:</span>
                   <Select
                     id="bulk-license"
-                    labelText="Select License"
+                    labelText=""
                     value={selectedLicense}
+                    className="font-medium text-gray-700"
                     onChange={e => handleBulkLicenseChange(e.target.value)}
                   >
                     <SelectItem text="" value="" />
@@ -296,8 +298,11 @@ function UploadColumnMapping() {
                       />
                     ))}
                   </Select>
-                  <Button kind="primary" onClick={handleApplyLicense}>
-                    Apply License to Selected Rows
+                  <Button
+                    className="rounded-md bg-blue-600   px-6  py-2 text-base font-medium text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onClick={handleApplyLicense}
+                  >
+                    Apply
                   </Button>
                 </div>
               )}
