@@ -284,7 +284,7 @@ function UploadColumnMapping() {
                   <select
                     id="bulk-license"
                     value={selectedLicense}
-                    className="h-10 font-medium text-gray-700"
+                    className="w-50 h-12 font-medium text-gray-700"
                     onChange={e => handleBulkLicenseChange(e.target.value)}
                   >
                     <SelectItem text="" value="" />
@@ -298,7 +298,7 @@ function UploadColumnMapping() {
                   </select>
                   <button
                     onClick={handleApplyLicense}
-                    className="h-10 w-12 bg-blue-500 text-white hover:bg-blue-600"
+                    className="h-12 w-20 bg-blue-500 text-white hover:bg-blue-600"
                   >
                     Apply
                   </button>
