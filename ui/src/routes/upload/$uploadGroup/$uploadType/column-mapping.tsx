@@ -299,8 +299,9 @@ function UploadColumnMapping() {
                     ))}
                   </Select>
                   <Button
-                    className="rounded-md bg-blue-600   px-6  py-2 text-base font-medium text-white transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     onClick={handleApplyLicense}
+                    className="w-12"
+                    kind="primary"
                   >
                     Apply
                   </Button>
