@@ -8,7 +8,6 @@ import {
   Checkbox,
   DataTableHeader,
   Loading,
-  Select,
   SelectItem,
   Stack,
   Tag,
@@ -282,11 +281,10 @@ function UploadColumnMapping() {
               {selectedRows.length > 0 && (
                 <div className="mb-4 flex items-center justify-end space-x-2">
                   <span className="font-medium text-gray-700">License:</span>
-                  <Select
+                  <select
                     id="bulk-license"
-                    labelText=""
                     value={selectedLicense}
-                    className="font-medium text-gray-700"
+                    className="h-10 font-medium text-gray-700"
                     onChange={e => handleBulkLicenseChange(e.target.value)}
                   >
                     <SelectItem text="" value="" />
@@ -297,14 +295,13 @@ function UploadColumnMapping() {
                         value={license}
                       />
                     ))}
-                  </Select>
-                  <Button
+                  </select>
+                  <button
                     onClick={handleApplyLicense}
-                    className="w-12"
-                    kind="primary"
+                    className="h-10 w-12 bg-blue-500 text-white hover:bg-blue-600"
                   >
                     Apply
-                  </Button>
+                  </button>
                 </div>
               )}
             </div>
