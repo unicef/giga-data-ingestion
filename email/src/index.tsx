@@ -1,11 +1,11 @@
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { render } from "@react-email/render";
-import * as Sentry from "@sentry/node";
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { logger } from "hono/logger";
+import { sentry } from '@hono/sentry';
 import { secureHeaders } from "hono/secure-headers";
 import { hostname } from "os";
 
@@ -22,8 +22,11 @@ import {
 import { InviteUserProps } from "./types/invite-user";
 import { MasterDataReleaseNotificationProps } from "./types/master-data-release-notification";
 
-if (process.env.SENTRY_DSN && process.env.NODE_ENV !== "development") {
-  Sentry.init({
+const app = new Hono();
+
+app.use("*", secureHeaders());
+if (process.env.NODE_SENTRY_DSN && process.env.NODE_ENV !== "development") {
+  app.use("*", sentry({
     dsn: process.env.NODE_SENTRY_DSN,
     environment: process.env.DEPLOY_ENV ?? "local",
     serverName: `ingestion-portal-email-${process.env.DEPLOY_ENV}@${hostname()}`,
@@ -32,12 +35,8 @@ if (process.env.SENTRY_DSN && process.env.NODE_ENV !== "development") {
     sampleRate: 1.0,
     tracesSampleRate: 1.0,
     profilesSampleRate: 1.0,
-  });
+  }));
 }
-
-const app = new Hono();
-
-app.use("*", secureHeaders());
 app.use(logger());
 app.use(
   "/email/*",
