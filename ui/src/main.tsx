@@ -21,7 +21,7 @@ import App from "@/app.tsx";
 import { msalInstance } from "@/lib/auth.ts";
 import "@/styles/index.scss";
 
-if (import.meta.env.SENTRY_DSN && import.meta.env.PROD) {
+if (import.meta.env.VITE_SENTRY_DSN && import.meta.env.PROD) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
     integrations: [
