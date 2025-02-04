@@ -30,6 +30,7 @@ celery.conf.update(
             "schedule": timedelta(minutes=10),
         },
     },
+    result_expires=timedelta(minutes=10),
 )
 
 
