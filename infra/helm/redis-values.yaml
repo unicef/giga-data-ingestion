@@ -124,7 +124,7 @@ image:
 
 ## @param architecture Redis&reg; architecture. Allowed values: `standalone` or `replication`
 ##
-architecture: replication
+architecture: standalone
 ## Redis&reg; Authentication parameters
 ## ref: https://github.com/bitnami/containers/tree/main/bitnami/redis#setting-the-server-password-on-first-run
 ##
@@ -171,8 +171,8 @@ commonConfiguration: |-
   tcp-keepalive 300
   
   # Memory optimization
-  # 9gb memory limit; 6gb for redis + 1gb for metrics + 2gb for system
-  maxmemory 6gb
+  # 2gb memory limit; 1gb for redis + 500mb for metrics + 500mb for system
+  maxmemory 1gb
   maxmemory-policy allkeys-lru
   maxmemory-samples 10
   activerehashing yes
@@ -305,10 +305,10 @@ master:
   resources:
     requests:
       cpu: 50m
-      memory: 6Gi
+      memory: 1Gi
     limits:
       cpu: 500m
-      memory: 9Gi
+      memory: 6Gi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param master.podSecurityContext.enabled Enabled Redis&reg; master pods' Security Context
@@ -663,7 +663,7 @@ replica:
   kind: StatefulSet
   ## @param replica.replicaCount Number of Redis&reg; replicas to deploy
   ##
-  replicaCount: 2
+  replicaCount: 0
   ## @param replica.configuration Configuration for Redis&reg; replicas nodes
   ## ref: https://redis.io/topics/config
   ##
