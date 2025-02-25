@@ -5,3 +5,7 @@ secrets.yaml
 
 node_modules/
 .venv/
+myenv/
+env/
+.python-version
+envv/
