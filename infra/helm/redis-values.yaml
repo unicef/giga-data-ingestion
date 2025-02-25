@@ -124,7 +124,7 @@ image:
 
 ## @param architecture Redis&reg; architecture. Allowed values: `standalone` or `replication`
 ##
-architecture: replication
+architecture: standalone
 ## Redis&reg; Authentication parameters
 ## ref: https://github.com/bitnami/containers/tree/main/bitnami/redis#setting-the-server-password-on-first-run
 ##
@@ -161,6 +161,21 @@ commonConfiguration: |-
   appendonly yes
   # Disable RDB persistence, AOF persistence already enabled.
   save ""
+  
+  # Optimize for performance
+  io-threads 4
+  io-threads-do-reads yes
+  
+  # Connection settings
+  timeout 0
+  tcp-keepalive 300
+  
+  # Memory optimization
+  # 2gb memory limit; 1gb for redis + 500mb for metrics + 500mb for system
+  maxmemory 1gb
+  maxmemory-policy allkeys-lru
+  maxmemory-samples 10
+  activerehashing yes
 ## @param existingConfigmap The name of an existing ConfigMap with your custom configuration for Redis&reg; nodes
 ##
 existingConfigmap: ""
@@ -181,6 +196,7 @@ master:
   disableCommands:
     - FLUSHDB
     - FLUSHALL
+    - DEBUG
   ## @param master.command Override default container command (useful when using custom images)
   ##
   command: [ ]
@@ -286,7 +302,13 @@ master:
   ##     cpu: 3
   ##     memory: 1024Mi
   ##
-  resources: { }
+  resources:
+    requests:
+      cpu: 50m
+      memory: 1Gi
+    limits:
+      cpu: 500m
+      memory: 6Gi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param master.podSecurityContext.enabled Enabled Redis&reg; master pods' Security Context
@@ -396,7 +418,25 @@ master:
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ## NOTE: `master.podAffinityPreset`, `master.podAntiAffinityPreset`, and `master.nodeAffinityPreset` will be ignored when it's set
   ##
-  affinity: { }
+  ## @param master.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution.labelSelector.matchExpressions.key Key to match on.
+  ## @param master.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution.labelSelector.matchExpressions.operator Operator to match on.
+  ## @param master.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution.labelSelector.matchExpressions.values Values to match on.
+  ## @param master.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution.topologyKey Topology key to match on.
+  ##
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - redis
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                  - master
+          topologyKey: kubernetes.io/hostname
   ## @param master.nodeSelector Node labels for Redis&reg; master pods assignment
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
   ##
@@ -623,7 +663,7 @@ replica:
   kind: StatefulSet
   ## @param replica.replicaCount Number of Redis&reg; replicas to deploy
   ##
-  replicaCount: 2
+  replicaCount: 0
   ## @param replica.configuration Configuration for Redis&reg; replicas nodes
   ## ref: https://redis.io/topics/config
   ##
@@ -635,6 +675,7 @@ replica:
   disableCommands:
     - FLUSHDB
     - FLUSHALL
+    - DEBUG
   ## @param replica.command Override default container command (useful when using custom images)
   ##
   command: [ ]
@@ -748,7 +789,13 @@ replica:
   ##     cpu: 3
   ##     memory: 1024Mi
   ##
-  resources: { }
+  resources:
+    requests:
+      cpu: 50m
+      memory: 6Gi
+    limits:
+      cpu: 500m
+      memory: 9Gi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param replica.podSecurityContext.enabled Enabled Redis&reg; replicas pods' Security Context
@@ -858,7 +905,25 @@ replica:
   ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ## NOTE: `replica.podAffinityPreset`, `replica.podAntiAffinityPreset`, and `replica.nodeAffinityPreset` will be ignored when it's set
   ##
-  affinity: { }
+  ## @param replica.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution.labelSelector.matchExpressions.key Key to match on.
+  ## @param replica.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution.labelSelector.matchExpressions.operator Operator to match on.
+  ## @param replica.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution.labelSelector.matchExpressions.values Values to match on.
+  ## @param replica.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution.topologyKey Topology key to match on.
+  ##
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - redis
+              - key: app.kubernetes.io/component
+                operator: In
+                values:
+                  - replica
+          topologyKey: kubernetes.io/hostname
   ## @param replica.nodeSelector Node labels for Redis&reg; replicas pods assignment
   ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
   ##
@@ -1062,13 +1127,13 @@ replica:
     minReplicas: 1
     ## @param replica.autoscaling.maxReplicas Maximum replicas for the pod autoscaling
     ##
-    maxReplicas: 11
+    maxReplicas: 2
     ## @param replica.autoscaling.targetCPU Percentage of CPU to consider when autoscaling
     ##
-    targetCPU: ""
+    targetCPU: "75"
     ## @param replica.autoscaling.targetMemory Percentage of Memory to consider when autoscaling
     ##
-    targetMemory: ""
+    targetMemory: "75"
   ## ServiceAccount configuration
   ##
   serviceAccount:
@@ -1587,7 +1652,7 @@ tls:
 metrics:
   ## @param metrics.enabled Start a sidecar prometheus exporter to expose Redis&reg; metrics
   ##
-  enabled: false
+  enabled: true
   ## Bitnami Redis&reg; Exporter image
   ## ref: https://hub.docker.com/r/bitnami/redis-exporter/tags/
   ## @param metrics.image.registry [default: REGISTRY_NAME] Redis&reg; Exporter image registry
@@ -1796,7 +1861,7 @@ metrics:
     port: http-metrics
     ## @param metrics.serviceMonitor.enabled Create ServiceMonitor resource(s) for scraping metrics using PrometheusOperator
     ##
-    enabled: false
+    enabled: true
     ## @param metrics.serviceMonitor.namespace The namespace in which the ServiceMonitor will be created
     ##
     namespace: ""
