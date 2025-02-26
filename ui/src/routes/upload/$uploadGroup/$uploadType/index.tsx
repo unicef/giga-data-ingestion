@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
@@ -116,6 +116,23 @@ export default function Index() {
   });
 
   const schema = schemaQuery?.data ?? [];
+
+  useEffect(() => {
+    const { file } = uploadSlice;
+    if (schema.length && file) {
+      const detector = new HeaderDetector({
+        file,
+        schema,
+        setIsParsing: setIsParsing,
+        setError: setParsingError,
+        setColumnMapping,
+        setDetectedColumns,
+        type: validTypes[file.type as keyof typeof validTypes],
+      });
+      detector.validateFileSize();
+      detector.detect();
+    }
+  }, [schema]);
 
   const handleProceedToNextStep = () => {
     if (file) {
