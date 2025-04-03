@@ -225,9 +225,7 @@ def initialize_sentry():
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
             sample_rate=1.0,
-            enable_tracing=True,
             traces_sample_rate=1.0,
-            profiles_sample_rate=1.0,
             environment=settings.DEPLOY_ENV,
             release=f"github.com/unicef/giga-data-ingestion:{settings.COMMIT_SHA}",
             server_name=f"ingestion-portal-api-{settings.DEPLOY_ENV.name}@{socket.gethostname()}",
