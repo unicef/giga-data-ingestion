@@ -1,10 +1,14 @@
-import { AccordionItem } from "@carbon/react";
+import React, { useState } from "react";
+import {
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel
+} from "@carbon/react";
 
 import { Check, DqFailedRowsFirstFiveRows } from "@/types/upload";
-import { sumAsertions } from "@/utils/data_quality";
-
 import DataQualityChecks from "./ColumnChecks";
-import SummaryBanner from "./SummaryBanner";
 
 interface DataCheckItemProps {
   data: Check[];
@@ -13,26 +17,31 @@ interface DataCheckItemProps {
   uploadId: string;
   hasDownloadButton?: boolean;
 }
+
 const DataCheckItem = ({
   data,
   previewData,
   title,
-  uploadId,
-  hasDownloadButton = true,
 }: DataCheckItemProps) => {
-  const { passed, failed } = sumAsertions([data]);
-
+  const [selectedTab, setSelectedTab] = useState(0);
   return (
-    <AccordionItem title={title}>
-      <SummaryBanner
-        hasDownloadButton={hasDownloadButton}
-        totalAssertions={data.length}
-        totalFailedAssertions={failed}
-        totalPassedAssertions={passed}
-        uploadId={uploadId}
-      />
-      <DataQualityChecks data={data} previewData={previewData} />
-    </AccordionItem>
+    <Tabs 
+      selectedIndex={selectedTab} 
+      onChange={({ selectedIndex }: { selectedIndex: number }) => setSelectedTab(selectedIndex)}
+    >
+      <TabList aria-label="Data Quality Check Tabs">
+        <Tab>{title}</Tab>
+      </TabList>
+
+      <TabPanels>
+        <TabPanel>
+          <DataQualityChecks 
+            data={data} 
+            previewData={previewData} 
+          />
+        </TabPanel>
+      </TabPanels>
+    </Tabs>
   );
 };
 

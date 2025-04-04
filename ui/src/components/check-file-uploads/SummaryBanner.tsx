@@ -67,33 +67,7 @@ const SummaryBanner = ({
   }
 
   return (
-    <div className="flex h-12 items-center gap-4 border-b-2 border-gray-200">
-      <div className="flex h-full items-center bg-carbon-datatable-grey px-6 font-semibold">
-        Data Quality Review ({totalAssertions} assertions)
-      </div>
-      <div className="flex">
-        <Tag className="flex w-auto gap-2 px-3 py-2" type="green">
-          <CheckmarkOutline className="align-middle" />{" "}
-          {commaNumber(totalPassedAssertions)} Successful assertion
-          {totalPassedAssertions > 1 && "s"}
-        </Tag>
-      </div>
-      <div className="flex">
-        <Tag className="flex w-auto gap-2 px-3 py-2" type="red">
-          <Warning className="align-middle" />{" "}
-          {commaNumber(totalFailedAssertions)} Assertion
-          {totalFailedAssertions > 1 && "s"} with warnings
-        </Tag>
-      </div>
-      {criticalErrors > 0 && (
-        <div className="flex ">
-          <Tag className="flex w-auto gap-2 px-3 py-2" type="magenta">
-            <MisuseOutline className="align-middle" />{" "}
-            {commaNumber(criticalErrors)} Critical Error
-            {criticalErrors > 1 && "s"}
-          </Tag>
-        </div>
-      )}
+    <div className="flex items-center">
       <div className="flex-grow"></div>
       {hasDownloadButton && (
         <Button
