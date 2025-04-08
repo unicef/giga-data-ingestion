@@ -127,7 +127,7 @@ services:
     entrypoint:
       - /bin/sh
       - -c
-      - "npm install && exec npm run dev"
+      - "npm install && exec npx tsx watch src/index.tsx"
     volumes:
       - ./email:/app
     ports:
