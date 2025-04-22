@@ -51,6 +51,7 @@ class Constants(BaseSettings):
         "coverage_itu",
         "coverage_fb",
     ]
+
     FILENAME_TIMESTAMP_FORMAT: str = "%Y%m%d-%H%M%S"
     DATA_PRIVACY_DOCUMENT_PATH: str = "staticfiles/2023-11_School_data_request_FNL.pdf"
 
