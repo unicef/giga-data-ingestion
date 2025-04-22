@@ -17,4 +17,4 @@ export const sourceOptions = [
   { label: "Meta", value: "fb" },
 ];
 
-export const licenseOptions = ["ODBL","Giga Analysis"];
+export const licenseOptions = ["ODBL", "Giga Analysis"];
