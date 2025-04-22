@@ -63,7 +63,8 @@ const validUnstructuredTypes = {
     AcceptedUnstructuredFileTypes.EXCEL,
   "application/pdf": AcceptedUnstructuredFileTypes.PDF,
   "application/msword": AcceptedUnstructuredFileTypes.DOC,
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":AcceptedUnstructuredFileTypes.DOCX,
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    AcceptedUnstructuredFileTypes.DOCX,
 };
 
 export default function Index() {
