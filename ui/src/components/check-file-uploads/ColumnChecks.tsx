@@ -1,8 +1,11 @@
-import  { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+
+import { ChevronDown, ChevronUp, Warning } from "@carbon/icons-react";
 import {
   Button,
   DataTable,
   DataTableHeader,
+  Search,
   Table,
   TableBody,
   TableCell,
@@ -10,13 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  Search,
 } from "@carbon/react";
-import {
-  ChevronUp,
-  ChevronDown,
-  Warning,
-} from "@carbon/icons-react";
 
 import { cn } from "@/lib/utils.ts";
 import {
@@ -67,7 +64,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
   };
 
   const filteredAndSortedRows = useMemo(() => {
-    let result = data.filter((check) => {
+    const result = data.filter(check => {
       const searchString = searchTerm.toLowerCase();
       return (
         check.column.toLowerCase().includes(searchString) ||
@@ -109,13 +106,13 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
     const isActive = sortConfig.key === key;
 
     return (
-      <div className="flex flex-col absolute right-1 top-1/2 -translate-y-1/2">
+      <div className="absolute right-1 top-1/2 flex -translate-y-1/2 flex-col">
         <ChevronUp
           className={cn(
             "cursor-pointer transition-colors duration-150",
             isActive && sortConfig.direction === "ascending"
               ? "text-blue-600"
-              : "text-gray-400 hover:text-gray-600"
+              : "text-gray-400 hover:text-gray-600",
           )}
           size={16}
           onClick={() => handleUpSort(key)}
@@ -125,7 +122,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
             "cursor-pointer transition-colors duration-150",
             isActive && sortConfig.direction === "descending"
               ? "text-blue-600"
-              : "text-gray-400 hover:text-gray-600"
+              : "text-gray-400 hover:text-gray-600",
           )}
           size={16}
           onClick={() => handleDownSort(key)}
@@ -134,7 +131,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
     );
   };
 
-  const rows = filteredAndSortedRows.map((check) => {
+  const rows = filteredAndSortedRows.map(check => {
     const {
       assertion,
       column = "NO_COLUMN",
@@ -152,11 +149,11 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
       result_with_errors: (
         <div className="flex items-center">
           {count_failed > 0 ? (
-            <span className="text-red-600 mr-2">
+            <span className="mr-2 text-red-600">
               {commaNumber(count_failed)}
             </span>
           ) : (
-            <span className="text-green-600 mr-2">0</span>
+            <span className="mr-2 text-green-600">0</span>
           )}
         </div>
       ),
@@ -231,12 +228,12 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
         <Search
           labelText="Search columns and validation rules"
           placeholder="Search columns and validation rules"
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <div className="bg-white border rounded-lg shadow-sm">
-        <div className="px-4 py-3 border-b">
+      <div className="rounded-lg border bg-white shadow-sm">
+        <div className="border-b px-4 py-3">
           <h3 className="text-lg font-semibold text-gray-800">
             Overview of all fields sorted by type
           </h3>
@@ -248,12 +245,12 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
               <Table {...getTableProps()}>
                 <TableHead>
                   <TableRow>
-                    {headers.map((header) => (
+                    {headers.map(header => (
                       <TableHeader
-                        className={cn("bg-blue-50 text-gray-700 relative")}
+                        className={cn("relative bg-blue-50 text-gray-700")}
                         {...getHeaderProps({ header })}
                       >
-                        <div className="flex items-center justify-between w-full">
+                        <div className="flex w-full items-center justify-between">
                           <span>{header.header}</span>
                           {(header as ExtendedDataTableHeader).sortable &&
                             renderSortControls(header.key)}
@@ -263,9 +260,9 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.map((row) => (
+                  {rows.map(row => (
                     <TableRow {...getRowProps({ row })}>
-                      {row.cells.map((cell) => (
+                      {row.cells.map(cell => (
                         <TableCell key={cell.id}>{cell.value}</TableCell>
                       ))}
                     </TableRow>
@@ -289,4 +286,3 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
 };
 
 export default DataQualityChecks;
-

@@ -14,7 +14,7 @@ from data_ingestion.utils.data_quality import process_n_columns
 
 
 def get_data_quality_summary(dq_report_path: str):
-    blob = storage_client.get_blob_client(dq_report_path)  
+    blob = storage_client.get_blob_client(dq_report_path)
 
     if not blob.exists():
         logger.error("DQ report summary still does not exist")
@@ -66,7 +66,6 @@ def get_first_n_error_rows_for_data_quality_check(
     df = pd.read_csv(data_io)
 
     for column in df.columns:
-       
         column_result = process_n_columns(column, df, rows_to_process)
         if column_result:
             print(f"Error rows for column '{column}':")

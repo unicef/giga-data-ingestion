@@ -70,7 +70,6 @@ export default function routes(axi: AxiosInstance) {
       });
     },
 
-
     download_failed_rows: (params: {
       dataset: string;
       country_code: string;
@@ -92,7 +91,7 @@ export default function routes(axi: AxiosInstance) {
       filename: string;
     }): Promise<AxiosResponse<Blob>> => {
       const { dataset, country_code, filename } = params;
-    
+
       return axi.get(
         `upload/passed_rows/${dataset}/${country_code}/${filename}`,
         {
@@ -106,7 +105,7 @@ export default function routes(axi: AxiosInstance) {
       filename: string;
     }): Promise<AxiosResponse<Blob>> => {
       const { dataset, country_code, filename } = params;
-    
+
       return axi.get(
         `upload/dq_summary/${dataset}/${country_code}/${filename}`,
         {
@@ -114,8 +113,6 @@ export default function routes(axi: AxiosInstance) {
         },
       );
     },
-    
-    
 
     list_basic_checks: (
       dataset: string,

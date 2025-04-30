@@ -556,23 +556,23 @@ async def download_data_quality_check(
         headers=headers,
     )
 
+
 @router.get("/failed_rows/{dataset}/{country_code}/{filename}")
 async def download_failed_rows_direct(
     dataset: str,
     country_code: str,
     filename: str,
 ):
-   
     path = f"data-quality-results/{dataset}/dq-failed-rows-human-readable/{country_code}/{filename}"
     blob = storage_client.get_blob_client(path)
-    
+
     if not blob.exists():
         logger.error(f"File not found at path: {path}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Failed rows file not found at path: {path}",
         )
-    
+
     try:
         stream = blob.download_blob()
         return StreamingResponse(
@@ -585,26 +585,26 @@ async def download_failed_rows_direct(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error downloading file: {str(e)}",
-        )
+        ) from e
+
+
 @router.get("/passed_rows/{dataset}/{country_code}/{filename}")
 async def download_passed_rows_direct(
     dataset: str,
     country_code: str,
     filename: str,
 ):
-    
     path = f"data-quality-results/{dataset}/dq-passed-rows-human-readable/{country_code}/{filename}"
-   
-    
+
     blob = storage_client.get_blob_client(path)
-    
+
     if not blob.exists():
         logger.error(f"File not found at path: {path}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Passed rows file not found at path: {path}",
         )
-    
+
     try:
         stream = blob.download_blob()
         return StreamingResponse(
@@ -617,14 +617,18 @@ async def download_passed_rows_direct(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error downloading file: {str(e)}",
-        )
+        ) from e
+
+
 @router.get("/dq_summary/{dataset}/{country_code}/{filename}")
 async def download_dq_summary_direct(
     dataset: str,
     country_code: str,
     filename: str,
 ):
-    logger.info(f"Downloading dq-summary: dataset={dataset}, country={country_code}, file={filename}")
+    logger.info(
+        f"Downloading dq-summary: dataset={dataset}, country={country_code}, file={filename}"
+    )
 
     path = f"data-quality-results/{dataset}/dq-report/{country_code}/{filename}"
     logger.info(f"Attempting to download from path: {path}")
@@ -650,4 +654,4 @@ async def download_dq_summary_direct(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error downloading file: {str(e)}",
-        )
+        ) from e
