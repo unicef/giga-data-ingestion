@@ -555,3 +555,99 @@ async def download_data_quality_check(
         media_type="application/octet-stream",
         headers=headers,
     )
+
+@router.get("/failed_rows/{dataset}/{country_code}/{filename}")
+async def download_failed_rows_direct(
+    dataset: str,
+    country_code: str,
+    filename: str,
+):
+   
+    path = f"data-quality-results/{dataset}/dq-failed-rows-human-readable/{country_code}/{filename}"
+    blob = storage_client.get_blob_client(path)
+    
+    if not blob.exists():
+        logger.error(f"File not found at path: {path}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Failed rows file not found at path: {path}",
+        )
+    
+    try:
+        stream = blob.download_blob()
+        return StreamingResponse(
+            stream.chunks(),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    except Exception as e:
+        logger.error(f"Error downloading blob: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error downloading file: {str(e)}",
+        )
+@router.get("/passed_rows/{dataset}/{country_code}/{filename}")
+async def download_passed_rows_direct(
+    dataset: str,
+    country_code: str,
+    filename: str,
+):
+    
+    path = f"data-quality-results/{dataset}/dq-passed-rows-human-readable/{country_code}/{filename}"
+   
+    
+    blob = storage_client.get_blob_client(path)
+    
+    if not blob.exists():
+        logger.error(f"File not found at path: {path}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Passed rows file not found at path: {path}",
+        )
+    
+    try:
+        stream = blob.download_blob()
+        return StreamingResponse(
+            stream.chunks(),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    except Exception as e:
+        logger.error(f"Error downloading blob: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error downloading file: {str(e)}",
+        )
+@router.get("/dq_summary/{dataset}/{country_code}/{filename}")
+async def download_dq_summary_direct(
+    dataset: str,
+    country_code: str,
+    filename: str,
+):
+    logger.info(f"Downloading dq-summary: dataset={dataset}, country={country_code}, file={filename}")
+
+    path = f"data-quality-results/{dataset}/dq-report/{country_code}/{filename}"
+    logger.info(f"Attempting to download from path: {path}")
+
+    blob = storage_client.get_blob_client(path)
+
+    if not blob.exists():
+        logger.error(f"File not found at path: {path}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"DQ summary file not found at path: {path}",
+        )
+
+    try:
+        stream = blob.download_blob()
+        return StreamingResponse(
+            stream.chunks(),
+            media_type="text/plain",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    except Exception as e:
+        logger.error(f"Error downloading blob: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error downloading file: {str(e)}",
+        )

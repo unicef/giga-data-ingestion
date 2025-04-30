@@ -7,6 +7,8 @@ import {
   TabPanel,
   Button,
 } from "@carbon/react";
+import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
+
 import { Download } from "@carbon/icons-react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
@@ -68,6 +70,8 @@ function Index() {
     critical_error_check = [],
     ...checks
   } = dqResultData.dq_summary;
+  const { handleDownloadFailedRows, handleDownloadPassedRows,handleDownloadDqSummary } =
+    useDownloadHelpers(uploadData);
 
   return (
     <>
@@ -97,6 +101,14 @@ function Index() {
         }}>
           <h5 style={{ marginBottom: '0.5rem' }}>Total Schools Uploaded</h5>
           <p style={{ fontSize: '1.5rem', fontWeight: 600 }}>100</p>
+          <Button 
+            kind="primary" 
+            size="sm"
+            renderIcon={Download}
+            onClick={handleDownloadDqSummary}
+          >
+            Download Summary
+          </Button>
         </div>
 
         <div style={{ 
@@ -116,6 +128,7 @@ function Index() {
             kind="primary" 
             size="sm"
             renderIcon={Download}
+            onClick={handleDownloadPassedRows}
           >
             Download Passed Schools
           </Button>
@@ -136,6 +149,7 @@ function Index() {
             kind="primary" 
             size="sm"
             renderIcon={Download}
+            onClick={handleDownloadFailedRows}
           >
             Download Rejected Schools
           </Button>
