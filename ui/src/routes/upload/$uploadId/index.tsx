@@ -58,7 +58,12 @@ function Index() {
     [uploadQuery],
   );
 
-  const { ...checks } = dqResultData.dq_summary;
+  const {
+    summary: _summaryStats,
+    critical_error_check: _critical_error_check = [],
+    ...checks
+  } = dqResultData.dq_summary;
+
   const {
     handleDownloadFailedRows,
     handleDownloadPassedRows,

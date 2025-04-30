@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@carbon/react";
 

@@ -211,11 +211,6 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
       sortable: true,
     },
     {
-      key: "records_with_errors",
-      header: "Records with Errors",
-      sortable: true,
-    },
-    {
       key: "actions",
       header: "Actions",
       sortable: false,
@@ -240,15 +235,16 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
         </div>
 
         <DataTable headers={dqResultHeaders} rows={rows}>
-          {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
+          {({ rows, headers, getRowProps, getTableProps }) => (
             <TableContainer>
               <Table {...getTableProps()}>
                 <TableHead>
                   <TableRow>
                     {headers.map(header => (
                       <TableHeader
+                        key={header.key}
+                        isSortable={false}
                         className={cn("relative bg-blue-50 text-gray-700")}
-                        {...getHeaderProps({ header })}
                       >
                         <div className="flex w-full items-center justify-between">
                           <span>{header.header}</span>
