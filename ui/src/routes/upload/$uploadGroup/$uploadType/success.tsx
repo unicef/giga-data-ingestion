@@ -326,71 +326,67 @@ function Success() {
                 {new Date(uploadData.created).toDateString()}
               </p>
             </div>
+            {status === DQStatus.COMPLETED && (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "1rem",
+                    marginBottom: "2rem",
+                    alignItems: "stretch",
+                  }}
+                >
+                  <div style={cardStyle}>
+                    <h5 style={cardHeaderStyle}>Total Schools Uploaded</h5>
+                    <p style={cardValueStyle}>{commaNumber(rows)}</p>
+                    <div style={cardButtonContainerStyle}>
+                      <Button
+                        kind="primary"
+                        size="sm"
+                        renderIcon={Download}
+                        disabled={rows == 0}
+                        onClick={handleDownloadDqSummary}
+                      >
+                        Download Summary
+                      </Button>
+                    </div>
+                  </div>
 
-            <div
-              style={{
-                display: "flex",
-                gap: "1rem",
-                marginBottom: "2rem",
-                alignItems: "stretch",
-              }}
-            >
-              <div style={cardStyle}>
-                <h5 style={cardHeaderStyle}>Total Schools Uploaded</h5>
-                <p style={cardValueStyle}>{commaNumber(rows)}</p>
-                <div style={cardButtonContainerStyle}>
-                  <Button
-                    kind="primary"
-                    size="sm"
-                    renderIcon={Download}
-                    disabled={rows == 0}
-                    onClick={handleDownloadDqSummary}
-                  >
-                    Download Summary
-                  </Button>
-                </div>
-              </div>
+                  <div style={cardStyle}>
+                    <h5 style={cardHeaderStyle}>Total Schools Passed</h5>
+                    <p style={cardValueStyle}>{commaNumber(rowsPassed)}</p>
+                    <div style={cardButtonContainerStyle}>
+                      <Button
+                        kind="primary"
+                        size="sm"
+                        renderIcon={Download}
+                        disabled={rowsPassed == 0}
+                        onClick={handleDownloadPassedRows}
+                      >
+                        Download Passed Schools
+                      </Button>
+                    </div>
+                  </div>
 
-              <div style={cardStyle}>
-                <h5 style={cardHeaderStyle}>Total Schools Passed</h5>
-                <p style={cardValueStyle}>{commaNumber(rowsPassed)}</p>
-                <div style={cardButtonContainerStyle}>
-                  <Button
-                    kind="primary"
-                    size="sm"
-                    renderIcon={Download}
-                    disabled={rowsPassed == 0}
-                    onClick={handleDownloadPassedRows}
-                  >
-                    Download Passed Schools
-                  </Button>
+                  <div style={cardStyle}>
+                    <h5 style={cardHeaderStyle}>Total Schools Rejected</h5>
+                    <p style={cardValueStyle}>{commaNumber(rowsFailed)}</p>
+                    <div style={cardButtonContainerStyle}>
+                      <Button
+                        kind="primary"
+                        size="sm"
+                        renderIcon={Download}
+                        disabled={rowsFailed == 0}
+                        onClick={handleDownloadFailedRows}
+                      >
+                        Download Rejected Schools
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <div style={cardStyle}>
-                <h5 style={cardHeaderStyle}>Total Schools Rejected</h5>
-                <p style={cardValueStyle}>{commaNumber(rowsFailed)}</p>
-                <div style={cardButtonContainerStyle}>
-                  <Button
-                    kind="primary"
-                    size="sm"
-                    renderIcon={Download}
-                    disabled={rowsFailed == 0}
-                    onClick={handleDownloadFailedRows}
-                  >
-                    Download Rejected Schools
-                  </Button>
-                </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
-          <div
-            style={{
-              background: "#fff",
-              padding: "1.5rem",
-              borderRadius: "4px",
-            }}
-          ></div>
           {status === DQStatus.COMPLETED ? (
             <SuccessDataQualityChecks
               dqResult={dqResult}
