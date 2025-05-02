@@ -631,7 +631,7 @@ async def download_dq_summary_direct(
     if not filename.endswith(".txt"):
         filename = filename.split(".")[0] + ".txt"
     # Build path to the .txt file only
-    path = f"lakehouse-local-brenda/data-quality-results/{dataset}/dq-report/{country_code}/{filename}"
+    path = f"data-quality-results/{dataset}/dq-report/{country_code}/{filename}"
     logger.info(f"Attempting to download from path: {path}")
 
     blob = storage_client.get_blob_client(path)
