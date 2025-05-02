@@ -26,8 +26,6 @@ def get_data_quality_summary(dq_report_path: str):
     blob_data = blob.download_blob().readall()
     dq_report_summary = blob_data.decode("utf-8")
     dq_report_summary_dict: dict = json.loads(dq_report_summary)
-    print("DQ Summary:")
-    print(json.dumps(dq_report_summary_dict, indent=2))
 
     for group in dq_report_summary_dict.keys():
         if group == "summary":
@@ -68,8 +66,6 @@ def get_first_n_error_rows_for_data_quality_check(
     for column in df.columns:
         column_result = process_n_columns(column, df, rows_to_process)
         if column_result:
-            print(f"Error rows for column '{column}':")
-            print(json.dumps(column_result, indent=2))
             results.update(column_result)
 
     return blob_properties, results

@@ -9,7 +9,7 @@ import DataQualityChecks from "./ColumnChecks";
 interface DataCheckItemProps {
   data: Check[];
   previewData: DqFailedRowsFirstFiveRows;
-  title: string;
+  title?: string;
   uploadId: string;
   hasDownloadButton?: boolean;
 }

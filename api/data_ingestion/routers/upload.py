@@ -200,7 +200,6 @@ async def download_basic_check(
         all_checks.extend(value)
 
     dq_result_df = pd.DataFrame(all_checks)
-    print(dq_result_df)
     dq_result_df = dq_result_df[["column", "assertion", "description"]]
 
     dq_result_df = dq_result_df.sort_values(by=["assertion", "column"])
@@ -629,8 +628,10 @@ async def download_dq_summary_direct(
     logger.info(
         f"Downloading dq-summary: dataset={dataset}, country={country_code}, file={filename}"
     )
-
-    path = f"data-quality-results/{dataset}/dq-report/{country_code}/{filename}"
+    if not filename.endswith(".txt"):
+        filename = filename.split(".")[0] + ".txt"
+    # Build path to the .txt file only
+    path = f"lakehouse-local-brenda/data-quality-results/{dataset}/dq-report/{country_code}/{filename}"
     logger.info(f"Attempting to download from path: {path}")
 
     blob = storage_client.get_blob_client(path)

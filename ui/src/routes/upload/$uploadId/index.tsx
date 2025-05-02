@@ -17,6 +17,7 @@ import {
   initialDataQualityCheck,
   initialUploadResponse,
 } from "@/types/upload";
+import { commaNumber } from "@/utils/number";
 
 export const Route = createFileRoute("/upload/$uploadId/")({
   component: Index,
@@ -58,11 +59,12 @@ function Index() {
     [uploadQuery],
   );
 
+  const summaryStats = dqResultData.dq_summary.summary || {};
   const {
-    summary: _summaryStats,
-    critical_error_check: _critical_error_check = [],
-    ...checks
-  } = dqResultData.dq_summary;
+    rows = 0,
+    rows_passed: rowsPassed = 0,
+    rows_failed: rowsFailed = 0,
+  } = summaryStats;
 
   const {
     handleDownloadFailedRows,
@@ -70,53 +72,85 @@ function Index() {
     handleDownloadDqSummary,
   } = useDownloadHelpers(uploadData);
 
+  // Extract checks from dqResultData
+  const {
+    summary: _summaryStats,
+    critical_error_check: _critical_error_check = [],
+    ...checks
+  } = dqResultData.dq_summary;
+
+  // Common card styles
+  const cardStyle = {
+    flex: 1,
+    border: "1px solid #e0e0e0",
+    borderRadius: "4px",
+    padding: "1.5rem",
+    background: "#fff",
+    display: "flex",
+    flexDirection: "column" as const,
+    height: "100%",
+  };
+
+  const cardHeaderStyle = {
+    fontSize: "0.875rem",
+    fontWeight: 600,
+    marginBottom: "1rem",
+  };
+
+  const cardValueStyle = {
+    fontSize: "1.5rem",
+    fontWeight: 600,
+    marginBottom: "1rem",
+  };
+
+  const cardButtonContainerStyle = {
+    marginTop: "auto",
+  };
+
   return (
-    <>
-      <div
-        style={{ background: "#f4f4f4", padding: "2rem", minHeight: "100vh" }}
-      >
-        <div>
-          <div
+    <div style={{ background: "#f4f4f4", padding: "2rem", minHeight: "100vh" }}>
+      <div>
+        <div
+          style={{
+            marginBottom: "2rem",
+            background: "#fff",
+            padding: "1.5rem",
+            borderRadius: "4px",
+          }}
+        >
+          <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
+            File: <a className="bx--link">{uploadData.original_filename}</a>
+          </p>
+
+          <p
             style={{
-              marginBottom: "2rem",
-              background: "#fff",
-              padding: "1rem",
-              borderRadius: "4px",
+              fontSize: "0.875rem",
+              color: "#6f6f6f",
+              marginBottom: "1rem",
             }}
           >
-            <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
-              File: <a className="bx--link">{uploadData.original_filename}</a>
-            </p>
+            Uploaded: {uploadData.uploader_email}
+            <br />
+            UploadID: {uploadId}
+            <br />
+            {new Date(uploadData.created).toLocaleTimeString()} GMT
+            <br />
+            {new Date(uploadData.created).toDateString()}
+          </p>
+        </div>
 
-            <p
-              style={{
-                fontSize: "0.875rem",
-                color: "#6f6f6f",
-                marginBottom: "2rem",
-              }}
-            >
-              Uploaded: {uploadData.uploader_email}
-              <br />
-              {new Date(uploadData.created).toLocaleTimeString()} GMT
-              <br />
-              {new Date(uploadData.created).toDateString()}
-            </p>
-          </div>
-
-          <div style={{ display: "flex", gap: "1rem", marginBottom: "2rem" }}>
-            <div
-              style={{
-                flex: 1,
-                border: "1px solid #e0e0e0",
-                borderRadius: "4px",
-                padding: "1rem",
-                display: "flex",
-                background: "#fff",
-                flexDirection: "column",
-              }}
-            >
-              <h5 style={{ marginBottom: "0.5rem" }}>Total Schools Uploaded</h5>
-              <p style={{ fontSize: "1.5rem", fontWeight: 600 }}>100</p>
+        <div
+          style={{
+            display: "flex",
+            gap: "1rem",
+            marginBottom: "2rem",
+            alignItems: "stretch", // Ensures all cards have the same height
+          }}
+        >
+          <div style={cardStyle}>
+            <h5 style={cardHeaderStyle}>Total Schools Uploaded</h5>
+            <p style={cardValueStyle}>{commaNumber(rows)}</p>
+            <div style={cardButtonContainerStyle}>
               <Button
                 kind="primary"
                 size="sm"
@@ -126,24 +160,12 @@ function Index() {
                 Download Summary
               </Button>
             </div>
+          </div>
 
-            <div
-              style={{
-                flex: 1,
-                border: "1px solid #e0e0e0",
-                borderRadius: "4px",
-                padding: "1rem",
-                display: "flex",
-                background: "#fff",
-                flexDirection: "column",
-              }}
-            >
-              <h5 style={{ marginBottom: "0.5rem" }}>Total Schools Passed</h5>
-              <div style={{ marginBottom: "0.5rem" }}>
-                <p>
-                  With Success: <strong>100</strong>
-                </p>
-              </div>
+          <div style={cardStyle}>
+            <h5 style={cardHeaderStyle}>Total Schools Passed</h5>
+            <p style={cardValueStyle}>{commaNumber(rowsPassed)}</p>
+            <div style={cardButtonContainerStyle}>
               <Button
                 kind="primary"
                 size="sm"
@@ -153,28 +175,12 @@ function Index() {
                 Download Passed Schools
               </Button>
             </div>
+          </div>
 
-            <div
-              style={{
-                flex: 1,
-                border: "1px solid #e0e0e0",
-                borderRadius: "4px",
-                padding: "1rem",
-                display: "flex",
-                background: "#fff",
-                flexDirection: "column",
-              }}
-            >
-              <h5 style={{ marginBottom: "0.5rem" }}>Total Schools Rejected</h5>
-              <p
-                style={{
-                  fontSize: "1.5rem",
-                  fontWeight: 600,
-                  marginBottom: "0.5rem",
-                }}
-              >
-                1
-              </p>
+          <div style={cardStyle}>
+            <h5 style={cardHeaderStyle}>Total Schools Rejected</h5>
+            <p style={cardValueStyle}>{commaNumber(rowsFailed)}</p>
+            <div style={cardButtonContainerStyle}>
               <Button
                 kind="primary"
                 size="sm"
@@ -186,34 +192,34 @@ function Index() {
             </div>
           </div>
         </div>
-        <div
-          style={{ background: "#fff", padding: "1rem", borderRadius: "4px" }}
-        >
-          <Tabs>
-            <TabList
-              aria-label="Check Types"
-              className="mb-4"
-              style={{ overflowX: "auto" }}
-            >
-              {Object.keys(checks).map(key => (
-                <Tab key={key}>{key.replace(/_/g, " ")}</Tab>
-              ))}
-            </TabList>
-
-            <TabPanels>
-              {Object.keys(checks).map(key => (
-                <TabPanel key={key}>
-                  <DataQualityChecks
-                    data={checks[key] as Check[]}
-                    previewData={dqResultData.dq_failed_rows_first_five_rows}
-                  />
-                </TabPanel>
-              ))}
-            </TabPanels>
-          </Tabs>
-        </div>
       </div>
-    </>
+      <div
+        style={{ background: "#fff", padding: "1.5rem", borderRadius: "4px" }}
+      >
+        <Tabs>
+          <TabList
+            aria-label="Check Types"
+            className="mb-4"
+            style={{ overflowX: "auto" }}
+          >
+            {Object.keys(checks).map(key => (
+              <Tab key={key}>{key.replace(/_/g, " ")}</Tab>
+            ))}
+          </TabList>
+
+          <TabPanels>
+            {Object.keys(checks).map(key => (
+              <TabPanel key={key}>
+                <DataQualityChecks
+                  data={checks[key] as Check[]}
+                  previewData={dqResultData.dq_failed_rows_first_five_rows}
+                />
+              </TabPanel>
+            ))}
+          </TabPanels>
+        </Tabs>
+      </div>
+    </div>
   );
 }
 
