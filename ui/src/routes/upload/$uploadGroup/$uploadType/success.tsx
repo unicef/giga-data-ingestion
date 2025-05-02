@@ -343,6 +343,7 @@ function Success() {
                     kind="primary"
                     size="sm"
                     renderIcon={Download}
+                    disabled={rows == 0}
                     onClick={handleDownloadDqSummary}
                   >
                     Download Summary
@@ -358,6 +359,7 @@ function Success() {
                     kind="primary"
                     size="sm"
                     renderIcon={Download}
+                    disabled={rowsPassed == 0}
                     onClick={handleDownloadPassedRows}
                   >
                     Download Passed Schools
@@ -373,6 +375,7 @@ function Success() {
                     kind="primary"
                     size="sm"
                     renderIcon={Download}
+                    disabled={rowsFailed == 0}
                     onClick={handleDownloadFailedRows}
                   >
                     Download Rejected Schools
@@ -413,15 +416,17 @@ function Success() {
           )}
 
           <ButtonSet className="w-full">
-            <Button
-              as={Link}
-              isExpressive
-              kind="secondary"
-              renderIcon={ArrowLeft}
-              to=".."
-            >
-              Back
-            </Button>
+            {status !== DQStatus.COMPLETED && (
+              <Button
+                as={Link}
+                isExpressive
+                kind="secondary"
+                renderIcon={ArrowLeft}
+                to=".."
+              >
+                Back
+              </Button>
+            )}
             <Button
               className={cn({
                 "bg-green-600 hover:bg-green-800":

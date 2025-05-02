@@ -155,6 +155,7 @@ function Index() {
                 kind="primary"
                 size="sm"
                 renderIcon={Download}
+                disabled={rows === 0}
                 onClick={handleDownloadDqSummary}
               >
                 Download Summary
@@ -170,6 +171,7 @@ function Index() {
                 kind="primary"
                 size="sm"
                 renderIcon={Download}
+                disabled={rowsPassed === 0}
                 onClick={handleDownloadPassedRows}
               >
                 Download Passed Schools
@@ -185,6 +187,7 @@ function Index() {
                 kind="primary"
                 size="sm"
                 renderIcon={Download}
+                disabled={rowsFailed === 0}
                 onClick={handleDownloadFailedRows}
               >
                 Download Rejected Schools
