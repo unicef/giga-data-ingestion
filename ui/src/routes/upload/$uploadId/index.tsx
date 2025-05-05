@@ -1,22 +1,15 @@
 import { useMemo } from "react";
 
-import {
-  Accordion,
-  AccordionItem,
-  Button,
-  Heading,
-  Section,
-} from "@carbon/react";
+import { Download } from "@carbon/icons-react";
+import { Button, Tab, TabList, TabPanel, TabPanels, Tabs } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
 import { api } from "@/api";
-import DataCheckItem from "@/components/check-file-uploads/DataCheckItem";
-import SummaryBanner from "@/components/check-file-uploads/SummaryBanner";
-import SummaryChecks from "@/components/check-file-uploads/SummaryChecks";
-import UploadCheckSkeleton from "@/components/check-file-uploads/UploadCheckSkeleton";
-import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
-import { PendingComponent } from "@/components/common/PendingComponent.tsx";
+import DataQualityChecks from "@/components/check-file-uploads/ColumnChecks";
+import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
+import { ErrorComponent } from "@/components/common/ErrorComponent";
+import { PendingComponent } from "@/components/common/PendingComponent";
 import { Check } from "@/types/upload";
 import {
   DataQualityCheck,
@@ -24,7 +17,7 @@ import {
   initialDataQualityCheck,
   initialUploadResponse,
 } from "@/types/upload";
-import { sumAsertions } from "@/utils/data_quality";
+import { commaNumber } from "@/utils/number";
 
 export const Route = createFileRoute("/upload/$uploadId/")({
   component: Index,
@@ -46,11 +39,7 @@ export const Route = createFileRoute("/upload/$uploadId/")({
 function Index() {
   const { uploadId } = Route.useParams();
 
-  const {
-    data: dqResultQuery,
-    isLoading: dqResultIsLoading,
-    isFetching: dqResultIsFetching,
-  } = useSuspenseQuery({
+  const { data: dqResultQuery } = useSuspenseQuery({
     queryKey: ["dq_check", uploadId],
     queryFn: () => api.uploads.get_data_quality_check(uploadId),
   });
@@ -60,11 +49,7 @@ function Index() {
     [dqResultQuery],
   );
 
-  const {
-    data: uploadQuery,
-    isLoading: uploadIsLoading,
-    isFetching: uploadIsFetching,
-  } = useSuspenseQuery({
+  const { data: uploadQuery } = useSuspenseQuery({
     queryKey: ["upload", uploadId],
     queryFn: () => api.uploads.get_upload(uploadId),
   });
@@ -74,121 +59,171 @@ function Index() {
     [uploadQuery],
   );
 
-  if (
-    dqResultIsLoading ||
-    dqResultIsFetching ||
-    uploadIsLoading ||
-    uploadIsFetching
-  )
-    return <UploadCheckSkeleton />;
+  const summaryStats = dqResultData.dq_summary.summary || {};
+  const {
+    rows = 0,
+    rows_passed: rowsPassed = 0,
+    rows_failed: rowsFailed = 0,
+  } = summaryStats;
 
   const {
-    summary: _,
-    critical_error_check = [],
+    handleDownloadFailedRows,
+    handleDownloadPassedRows,
+    handleDownloadDqSummary,
+  } = useDownloadHelpers(uploadData);
+
+  // Extract checks from dqResultData
+  const {
+    summary: _summaryStats,
+    critical_error_check: _critical_error_check = [],
     ...checks
   } = dqResultData.dq_summary;
 
-  const typedChecks = Object.keys(checks).map(key => checks[key] as Check[]);
+  // Common card styles
+  const cardStyle = {
+    flex: 1,
+    border: "1px solid #e0e0e0",
+    borderRadius: "4px",
+    padding: "1.5rem",
+    background: "#fff",
+    display: "flex",
+    flexDirection: "column" as const,
+    height: "100%",
+  };
 
-  const { passed: totalPassedAssertions, failed: totalFailedAssertions } =
-    sumAsertions(typedChecks);
+  const cardHeaderStyle = {
+    fontSize: "0.875rem",
+    fontWeight: 600,
+    marginBottom: "1rem",
+  };
 
-  const totalAssertions = typedChecks.flat().length;
+  const cardValueStyle = {
+    fontSize: "1.5rem",
+    fontWeight: 600,
+    marginBottom: "1rem",
+  };
 
-  const dataCheckItems = Object.keys(checks).map(key => {
-    const check = checks[key] as Check[];
-    return (
-      <DataCheckItem
-        data={check}
-        previewData={dqResultData.dq_failed_rows_first_five_rows}
-        title={key}
-        uploadId={uploadId}
-        hasDownloadButton={false}
-      />
-    );
-  });
+  const cardButtonContainerStyle = {
+    marginTop: "auto",
+  };
 
   return (
-    <div className="flex flex-col gap-8">
-      <div className="m-0 w-full">
-        <div className="px=28 ">
-          <div>
-            <Section>
-              <Section>
-                <Heading className="capitalize">
-                  School {uploadData.dataset}
-                </Heading>
-                <>
-                  <p className="cds--label-description">
-                    This page can be used to check on the progress of all 156
-                    data quality checks or “assertions” being performed on your
-                    data.
-                  </p>
-                  <p className="cds--label-description">
-                    It will label each assertion and provide an overall summary
-                    of those that have been successful, those with errors and
-                    those with critical errors. Data which contains any critical
-                    errors will not pass these validation checks and will not be
-                    loaded to Project Connect.
-                  </p>{" "}
-                  <p className="cds--label-description">
-                    This page can be used to identify which, if any, quality
-                    tests your data has failed on, the values causing the
-                    failure and a suggestion as to what is needed to fix it. A
-                    full summary report will be emailed to but, and is also
-                    available to be downloaded as a .csv file for use offline.
-                    In the event your data contains critical errors which need
-                    to be fixed, this page is designed to help assist you with
-                    those necessary changes before re-uploading your data again.
-                  </p>{" "}
-                  <p className="cds--label-description">
-                    Users can expect a wait time of approx. 15 minutes for all
-                    checks to be carried out successfully, at which time an
-                    email will be sent with a full report and the “DQ Check
-                    Status” will show as “Completed” in the File Uploads table.
-                    Once all data checks have been completed with 0 critical
-                    errors, a final approval request will be made to ingest your
-                    data into Project Connect. Data will not be displayed on the
-                    live site until this process is complete.”
-                  </p>
-                </>
-              </Section>
-            </Section>
-            <Accordion align="start">
-              <AccordionItem title="Summary">
-                <div className="flex flex-col gap-4">
-                  <SummaryBanner
-                    criticalErrors={critical_error_check[0].count_failed}
-                    totalAssertions={totalAssertions}
-                    totalFailedAssertions={totalFailedAssertions}
-                    totalPassedAssertions={totalPassedAssertions}
-                    uploadId={uploadId}
-                  />
-                  <SummaryChecks
-                    checkTimestamp={dqResultData.creation_time}
-                    name={uploadData.original_filename}
-                    uploadTimestamp={uploadData.created}
-                    rows={dqResultData.dq_summary.summary.rows}
-                    rowsPassed={dqResultData.dq_summary.summary.rows_passed}
-                    rowsFailed={dqResultData.dq_summary.summary.rows_failed}
-                  />
-                </div>
-              </AccordionItem>
+    <div style={{ background: "#f4f4f4", padding: "2rem", minHeight: "100vh" }}>
+      <div>
+        <div
+          style={{
+            marginBottom: "2rem",
+            background: "#fff",
+            padding: "1.5rem",
+            borderRadius: "4px",
+          }}
+        >
+          <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
+            File: <a className="bx--link">{uploadData.original_filename}</a>
+          </p>
 
-              {dataCheckItems}
-            </Accordion>
-            <div className="flex flex-col gap-4 pt-4">
-              <p>
-                After addressing the above checks, you may try to reupload your
-                file
-              </p>
-              <Button as={Link} to="/upload">
-                Reupload
+          <p
+            style={{
+              fontSize: "0.875rem",
+              color: "#6f6f6f",
+              marginBottom: "1rem",
+            }}
+          >
+            Uploaded: {uploadData.uploader_email}
+            <br />
+            UploadID: {uploadId}
+            <br />
+            {new Date(uploadData.created).toLocaleTimeString()} GMT
+            <br />
+            {new Date(uploadData.created).toDateString()}
+          </p>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "1rem",
+            marginBottom: "2rem",
+            alignItems: "stretch", // Ensures all cards have the same height
+          }}
+        >
+          <div style={cardStyle}>
+            <h5 style={cardHeaderStyle}>Total Schools Uploaded</h5>
+            <p style={cardValueStyle}>{commaNumber(rows)}</p>
+            <div style={cardButtonContainerStyle}>
+              <Button
+                kind="primary"
+                size="sm"
+                renderIcon={Download}
+                disabled={rows === 0}
+                onClick={handleDownloadDqSummary}
+              >
+                Download Summary
+              </Button>
+            </div>
+          </div>
+
+          <div style={cardStyle}>
+            <h5 style={cardHeaderStyle}>Total Schools Passed</h5>
+            <p style={cardValueStyle}>{commaNumber(rowsPassed)}</p>
+            <div style={cardButtonContainerStyle}>
+              <Button
+                kind="primary"
+                size="sm"
+                renderIcon={Download}
+                disabled={rowsPassed === 0}
+                onClick={handleDownloadPassedRows}
+              >
+                Download Passed Schools
+              </Button>
+            </div>
+          </div>
+
+          <div style={cardStyle}>
+            <h5 style={cardHeaderStyle}>Total Schools Rejected</h5>
+            <p style={cardValueStyle}>{commaNumber(rowsFailed)}</p>
+            <div style={cardButtonContainerStyle}>
+              <Button
+                kind="primary"
+                size="sm"
+                renderIcon={Download}
+                disabled={rowsFailed === 0}
+                onClick={handleDownloadFailedRows}
+              >
+                Download Rejected Schools
               </Button>
             </div>
           </div>
         </div>
       </div>
+      <div
+        style={{ background: "#fff", padding: "1.5rem", borderRadius: "4px" }}
+      >
+        <Tabs>
+          <TabList
+            aria-label="Check Types"
+            className="mb-4"
+            style={{ overflowX: "auto" }}
+          >
+            {Object.keys(checks).map(key => (
+              <Tab key={key}>{key.replace(/_/g, " ")}</Tab>
+            ))}
+          </TabList>
+
+          <TabPanels>
+            {Object.keys(checks).map(key => (
+              <TabPanel key={key}>
+                <DataQualityChecks
+                  data={checks[key] as Check[]}
+                  previewData={dqResultData.dq_failed_rows_first_five_rows}
+                />
+              </TabPanel>
+            ))}
+          </TabPanels>
+        </Tabs>
+      </div>
     </div>
   );
 }
+
+export default Index;

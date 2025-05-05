@@ -15,6 +15,7 @@ from data_ingestion.utils.data_quality import process_n_columns
 
 def get_data_quality_summary(dq_report_path: str):
     blob = storage_client.get_blob_client(dq_report_path)
+
     if not blob.exists():
         logger.error("DQ report summary still does not exist")
         raise HTTPException(

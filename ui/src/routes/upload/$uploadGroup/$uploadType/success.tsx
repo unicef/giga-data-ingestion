@@ -8,17 +8,17 @@ import {
   Restart,
 } from "@carbon/icons-react";
 import {
-  Accordion,
-  AccordionItem,
-  AccordionSkeleton,
   Button,
   ButtonSet,
-  CopyButton,
-  InlineLoading,
   Loading,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
   Tag,
 } from "@carbon/react";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Link,
   createFileRoute,
@@ -30,8 +30,7 @@ import { z } from "zod";
 import { api } from "@/api";
 import BasicDataQualityCheck from "@/components/check-file-uploads/BasicDataQualityCheck";
 import DataCheckItem from "@/components/check-file-uploads/DataCheckItem";
-import SummaryBanner from "@/components/check-file-uploads/SummaryBanner";
-import SummaryChecks from "@/components/check-file-uploads/SummaryChecks";
+import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils";
 import {
@@ -43,8 +42,7 @@ import {
   initialUploadResponse,
 } from "@/types/upload";
 import { basicCheckSchema } from "@/types/upload";
-import { sumAsertions } from "@/utils/data_quality";
-import { saveFile } from "@/utils/download";
+import { commaNumber } from "@/utils/number";
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/success",
@@ -57,7 +55,7 @@ export const Route = createFileRoute(
     } = getState();
 
     if (uploadGroup === "other" && uploadType === "unstructured") {
-      //do nothing
+      return;
     } else if (
       !file ||
       Object.values(columnMapping).filter(Boolean).length === 0
@@ -72,7 +70,6 @@ const SuccessDataQualityChecks = memo(
   ({
     dqResult,
     status,
-    uploadData,
     uploadId,
   }: {
     dqResult: DataQualityCheck;
@@ -80,59 +77,34 @@ const SuccessDataQualityChecks = memo(
     uploadData: UploadResponse;
     uploadId: string;
   }) => {
-    if (status === DQStatus.COMPLETED) {
-      const {
-        summary: _,
-        critical_error_check = [],
-        ...checks
-      } = dqResult.dq_summary;
+    if (status !== DQStatus.COMPLETED) return null;
+    const {
+      summary: _summary,
+      critical_error_check: _critical_error_check = [],
+      ...checks
+    } = dqResult.dq_summary ?? {};
 
-      const typedChecks = Object.keys(checks).map(
-        key => checks[key] as Check[],
-      );
-
-      const { passed: totalPassedAssertions, failed: totalFailedAssertions } =
-        sumAsertions(typedChecks);
-
-      const totalAssertions = typedChecks.flat().length;
-
-      const dataCheckItems = Object.keys(checks).map(key => {
-        const check = checks[key] as Check[];
-        return (
-          <DataCheckItem
-            data={check}
-            hasDownloadButton={false}
-            previewData={dqResult.dq_failed_rows_first_five_rows}
-            title={key}
-            uploadId={uploadId}
-          />
-        );
-      });
-
-      return (
-        <>
-          <AccordionItem title="Summary">
-            <div className="flex flex-col gap-4">
-              <SummaryBanner
-                criticalErrors={critical_error_check[0].count_failed}
-                totalAssertions={totalAssertions}
-                totalFailedAssertions={totalFailedAssertions}
-                totalPassedAssertions={totalPassedAssertions}
+    return (
+      <Tabs>
+        <TabList aria-label="Data Quality Tabs">
+          {Object.keys(checks).map(key => (
+            <Tab key={key}>{key.replace(/_/g, " ")}</Tab>
+          ))}
+        </TabList>
+        <TabPanels>
+          {Object.keys(checks).map(key => (
+            <TabPanel key={key}>
+              <DataCheckItem
+                data={checks[key] as Check[]}
+                hasDownloadButton={false}
+                previewData={dqResult.dq_failed_rows_first_five_rows}
                 uploadId={uploadId}
               />
-              <SummaryChecks
-                checkTimestamp={dqResult.creation_time}
-                name={uploadData.original_filename}
-                uploadTimestamp={uploadData.created}
-              />
-            </div>
-          </AccordionItem>
-          {dataCheckItems}
-        </>
-      );
-    } else {
-      return null;
-    }
+            </TabPanel>
+          ))}
+        </TabPanels>
+      </Tabs>
+    );
   },
 );
 
@@ -162,6 +134,11 @@ function Success() {
     () => uploadQuery?.data ?? initialUploadResponse,
     [uploadQuery],
   );
+  const {
+    handleDownloadFailedRows,
+    handleDownloadPassedRows,
+    handleDownloadDqSummary,
+  } = useDownloadHelpers(uploadData);
 
   const {
     data: dqResultQuery,
@@ -182,59 +159,34 @@ function Success() {
   const status = dqResult?.status;
 
   const isError =
-    status == DQStatus.ERROR ||
+    status === DQStatus.ERROR ||
     status === DQStatus.SKIPPED ||
     status === DQStatus.TIMEOUT;
 
-  const {
-    mutateAsync: downloadDataQualityResult,
-    isPending: isPendingDownloadFile,
-  } = useMutation({
-    mutationFn: api.uploads.download_data_quality_check_results,
-  });
-
-  const { mutateAsync: downloadDataQualityCheck } = useMutation({
-    mutationFn: api.uploads.download_data_quality_check,
-  });
-
-  const basicCheckItems = Object.entries(basicCheck).map(([key, value]) => {
-    const basicCheckArraySchema = z.array(basicCheckSchema);
-    const check = basicCheckArraySchema.safeParse(value);
-
-    if (check.success) {
-      return (
-        <AccordionItem title={key}>
-          <BasicDataQualityCheck data={check.data} />
-        </AccordionItem>
-      );
-    } else {
+  const basicCheckItems = Object.entries(basicCheck)
+    .map(([key, value]) => {
+      const basicCheckArraySchema = z.array(basicCheckSchema);
+      const check = basicCheckArraySchema.safeParse(value);
+      if (check.success) {
+        return {
+          key,
+          content: <BasicDataQualityCheck data={check.data} />,
+        };
+      }
       return null;
-    }
-  });
+    })
+    .filter(Boolean) as { key: string; content: JSX.Element }[];
 
-  async function handleDownloadCheckPreview() {
-    const blob = await downloadDataQualityCheck({
-      dataset: uploadType,
-      source: source,
-    });
-    if (blob) {
-      saveFile(blob);
-    }
-  }
-
-  async function handleDownloadFullChecks() {
-    const blob = await downloadDataQualityResult(uploadId);
-    if (blob) {
-      saveFile(blob);
-    }
-  }
+  const summaryStats = dqResult?.dq_summary?.summary ?? {};
+  const rows = summaryStats.rows ?? 0;
+  const rowsPassed = summaryStats.rows_passed ?? 0;
+  const rowsFailed = summaryStats.rows_failed ?? 0;
 
   const handleSubmit = () => {
-    if (status === DQStatus.COMPLETED) {
-      navigate({ to: "/upload/$uploadId", params: { uploadId } });
-    } else {
-      navigate({ to: ".." });
-    }
+    navigate({
+      to: status === DQStatus.COMPLETED ? "/upload/$uploadId" : "..",
+      params: { uploadId },
+    });
   };
 
   const unstructuredMessage =
@@ -250,10 +202,34 @@ function Success() {
     [DQStatus.TIMEOUT]: { color: "red", text: "Failed" },
   };
 
-  let tagProps = null;
-  if (status !== undefined) {
-    tagProps = statusTagMap[status];
-  }
+  const tagProps = status ? statusTagMap[status] : null;
+  // Common card styles
+  const cardStyle = {
+    flex: 1,
+    border: "1px solid #e0e0e0",
+    borderRadius: "4px",
+    padding: "1.5rem",
+    background: "#fff",
+    display: "flex",
+    flexDirection: "column" as const,
+    height: "100%",
+  };
+
+  const cardHeaderStyle = {
+    fontSize: "0.875rem",
+    fontWeight: 600,
+    marginBottom: "1rem",
+  };
+
+  const cardValueStyle = {
+    fontSize: "1.5rem",
+    fontWeight: 600,
+    marginBottom: "1rem",
+  };
+
+  const cardButtonContainerStyle = {
+    marginTop: "auto",
+  };
 
   return (
     <>
@@ -265,125 +241,178 @@ function Success() {
           </Button>
         </>
       ) : (
-        <>
-          <section className="flex flex-col gap-4">
-            <div className="flex gap-6">
-              <div className="flex border-b-2 border-gray-300">
-                <div className=" bg-gray-100 py-4 pl-4 pr-28 text-base font-semibold">
-                  Data Quality Review
-                </div>
-                <Button
-                  className="bg-gray-100"
-                  disabled={isRefetchingDqResultQuery}
-                  renderIcon={Restart}
-                  kind="ghost"
-                  onClick={async () => await refetchDqResultQuery()}
-                />
-                <div className="flex items-center ">
-                  {tagProps && (
-                    <Tag renderIcon={InProgress} type={tagProps.color}>
-                      {tagProps.text}
-                    </Tag>
-                  )}
-                </div>
+        <section className="flex flex-col gap-4">
+          <div className="flex gap-6">
+            <div className="flex border-b-2 border-gray-300">
+              <div className="bg-gray-100 py-4 pl-4 pr-28 text-base font-semibold">
+                Data Quality Review
               </div>
-              {status === DQStatus.IN_PROGRESS && (
-                <>
-                  <div className="flex items-center gap-2 text-xs">
-                    <Loading small={true} withOverlay={false} />
-                    Refreshing Automatically
-                  </div>
-                  <div className="flex items-center text-xs text-slate-600">
-                    <div>Estimated running time: 10-15 mins</div>
-                  </div>
-                </>
-              )}
-            </div>
-            {status == DQStatus.IN_PROGRESS && (
-              <div className="py-6 text-blue-400">
-                Congratulations! Your data file has been uploaded and data
-                quality checks are <b> in progress.</b> Data quality report can
-                be accessed below and also, in the Home page, searchable by the
-                following Upload ID:
-              </div>
-            )}
-            <div>
-              {status == DQStatus.COMPLETED && (
-                <>
-                  Congratulations! Your data file has been uploaded and data
-                  quality checks are successful with{" "}
-                  <span className="text-green-600">
-                    {" "}
-                    warning/are successful.
-                  </span>{" "}
-                  Data quality report can be accessed below and also, in the
-                  Home page, searchable by the following Upload ID:
-                </>
-              )}
-
-              {isError && (
-                <>
-                  Your data file has been uploaded and data quality checks{" "}
-                  <span className="text-orange-400">have failed.</span> Data
-                  quality report can be accessed below and also, in the Home
-                  page, searchable by the following Upload ID:
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-2 text-[33px] font-bold text-primary">
-              {uploadId}
-              <CopyButton
-                onClick={() => {
-                  navigator.clipboard.writeText(uploadId);
-                }}
+              <Button
+                className="bg-gray-100"
+                disabled={isRefetchingDqResultQuery}
+                renderIcon={Restart}
+                kind="ghost"
+                onClick={async () => await refetchDqResultQuery()}
               />
-            </div>
-            <div className="flex justify-between">
-              <div className="font-bold">
-                You will receive an email with the quality report of data file{" "}
-                {uploadId}
+              <div className="flex items-center">
+                {tagProps && (
+                  <Tag renderIcon={InProgress} type={tagProps.color}>
+                    {tagProps.text}
+                  </Tag>
+                )}
               </div>
-
-              <Button
-                kind="tertiary"
-                className="flex cursor-pointer items-center"
-                onClick={handleDownloadCheckPreview}
-                renderIcon={isPendingDownloadFile ? InlineLoading : Download}
-              >
-                Data Quality Check Descriptions
-              </Button>
-
-              <Button
-                kind="tertiary"
-                className="flex cursor-pointer items-center"
-                onClick={handleDownloadFullChecks}
-                renderIcon={isPendingDownloadFile ? InlineLoading : Download}
-                disabled={isPendingDownloadFile || status != DQStatus.COMPLETED}
-              >
-                Download
-              </Button>
             </div>
-            <Accordion align="start">
-              {status === DQStatus.COMPLETED ? (
-                <>
-                  <SuccessDataQualityChecks
-                    dqResult={dqResult}
-                    status={status}
-                    uploadData={uploadData}
-                    uploadId={uploadId}
-                  />
-                </>
-              ) : (
-                <>
-                  {isBasicCheckFetching ? (
-                    <AccordionSkeleton />
-                  ) : (
-                    basicCheckItems
-                  )}
-                </>
-              )}
-            </Accordion>
-            <ButtonSet className="w-full">
+            {status === DQStatus.IN_PROGRESS && (
+              <>
+                <div className="flex items-center gap-2 text-xs">
+                  <Loading small withOverlay={false} />
+                  Refreshing Automatically
+                </div>
+                <div className="flex items-center text-xs text-slate-600">
+                  Estimated running time: 10–15 mins
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="py-6 text-blue-400">
+            {status === DQStatus.IN_PROGRESS && (
+              <>
+                Congratulations! Your data file has been uploaded and data
+                quality checks are <b>in progress.</b>
+              </>
+            )}
+            {status === DQStatus.COMPLETED && (
+              <>
+                Congratulations! Your data file has been uploaded and data
+                quality checks are{" "}
+                <span className="text-green-600">successful.</span>
+              </>
+            )}
+            {isError && (
+              <>
+                Your data file has been uploaded and data quality checks{" "}
+                <span className="text-orange-400">have failed.</span>
+              </>
+            )}
+          </div>
+
+          <div>
+            <div
+              style={{
+                marginBottom: "2rem",
+                background: "#fff",
+                padding: "1.5rem",
+                borderRadius: "4px",
+              }}
+            >
+              <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
+                File: <a className="bx--link">{uploadData.original_filename}</a>
+              </p>
+
+              <p
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#6f6f6f",
+                  marginBottom: "1rem",
+                }}
+              >
+                Uploaded: {uploadData.uploader_email}
+                <br />
+                UploadID: {uploadId}
+                <br />
+                {new Date(uploadData.created).toLocaleTimeString()} GMT
+                <br />
+                {new Date(uploadData.created).toDateString()}
+              </p>
+            </div>
+            {status === DQStatus.COMPLETED && (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "1rem",
+                    marginBottom: "2rem",
+                    alignItems: "stretch",
+                  }}
+                >
+                  <div style={cardStyle}>
+                    <h5 style={cardHeaderStyle}>Total Schools Uploaded</h5>
+                    <p style={cardValueStyle}>{commaNumber(rows)}</p>
+                    <div style={cardButtonContainerStyle}>
+                      <Button
+                        kind="primary"
+                        size="sm"
+                        renderIcon={Download}
+                        disabled={rows == 0}
+                        onClick={handleDownloadDqSummary}
+                      >
+                        Download Summary
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div style={cardStyle}>
+                    <h5 style={cardHeaderStyle}>Total Schools Passed</h5>
+                    <p style={cardValueStyle}>{commaNumber(rowsPassed)}</p>
+                    <div style={cardButtonContainerStyle}>
+                      <Button
+                        kind="primary"
+                        size="sm"
+                        renderIcon={Download}
+                        disabled={rowsPassed == 0}
+                        onClick={handleDownloadPassedRows}
+                      >
+                        Download Passed Schools
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div style={cardStyle}>
+                    <h5 style={cardHeaderStyle}>Total Schools Rejected</h5>
+                    <p style={cardValueStyle}>{commaNumber(rowsFailed)}</p>
+                    <div style={cardButtonContainerStyle}>
+                      <Button
+                        kind="primary"
+                        size="sm"
+                        renderIcon={Download}
+                        disabled={rowsFailed == 0}
+                        onClick={handleDownloadFailedRows}
+                      >
+                        Download Rejected Schools
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          {status === DQStatus.COMPLETED ? (
+            <SuccessDataQualityChecks
+              dqResult={dqResult}
+              status={status}
+              uploadData={uploadData}
+              uploadId={uploadId}
+            />
+          ) : isBasicCheckFetching ? (
+            <p>Loading basic checks...</p>
+          ) : (
+            <Tabs>
+              <TabList aria-label="Basic Checks">
+                {basicCheckItems.map(({ key }) => (
+                  <Tab key={key}>{key.replace(/_/g, " ")}</Tab>
+                ))}
+              </TabList>
+              <TabPanels>
+                {basicCheckItems.map(({ key, content }) => (
+                  <TabPanel key={key}>{content}</TabPanel>
+                ))}
+              </TabPanels>
+            </Tabs>
+          )}
+
+          <ButtonSet className="w-full">
+            {status !== DQStatus.COMPLETED && (
               <Button
                 as={Link}
                 isExpressive
@@ -393,26 +422,27 @@ function Success() {
               >
                 Back
               </Button>
-              <Button
-                className={cn({
-                  "bg-green-600 hover:bg-green-800":
-                    status === DQStatus.COMPLETED,
-                  "bg-orange-400 hover:bg-orange-600": isError,
-                })}
-                disabled={status === DQStatus.IN_PROGRESS}
-                isExpressive
-                onClick={handleSubmit}
-                renderIcon={ArrowRight}
-              >
-                {status === DQStatus.IN_PROGRESS ||
-                status === DQStatus.COMPLETED
-                  ? "Submit"
-                  : "Reupload"}
-              </Button>
-            </ButtonSet>
-          </section>
-        </>
+            )}
+            <Button
+              className={cn({
+                "bg-green-600 hover:bg-green-800":
+                  status === DQStatus.COMPLETED,
+                "bg-orange-400 hover:bg-orange-600": isError,
+              })}
+              disabled={status === DQStatus.IN_PROGRESS}
+              isExpressive
+              onClick={handleSubmit}
+              renderIcon={ArrowRight}
+            >
+              {status === DQStatus.IN_PROGRESS || status === DQStatus.COMPLETED
+                ? "Submit"
+                : "Reupload"}
+            </Button>
+          </ButtonSet>
+        </section>
       )}
     </>
   );
 }
+
+export default Success;
