@@ -30,12 +30,12 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
   component: Index,
   pendingComponent: PendingComponent,
   errorComponent: ErrorComponent,
-  beforeLoad: ({ context: { getState } }) => {
-    const {
-      uploadSliceActions: { resetUploadSliceState },
-    } = getState();
-    resetUploadSliceState();
-  },
+  // beforeLoad: ({ context: { getState } }) => {
+  //   const {
+  //     uploadSliceActions: { resetUploadSliceState },
+  //   } = getState();
+  //   resetUploadSliceState();
+  // },
 });
 
 const validStructuredTypes = {

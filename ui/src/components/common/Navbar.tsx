@@ -13,6 +13,7 @@ import {
   DEFAULT_PAGE_NUMBER,
   DEFAULT_PAGE_SIZE,
 } from "@/constants/pagination.ts";
+import { useStore } from "@/context/store";
 import useLogout from "@/hooks/useLogout.ts";
 import useRoles from "@/hooks/useRoles.ts";
 
@@ -27,6 +28,10 @@ export default function Navbar() {
   const isFetching = useIsFetching();
 
   const isLoading = isFetching > 0;
+
+  const {
+    uploadSliceActions: { resetUploadSliceState },
+  } = useStore();
 
   return (
     <Header
@@ -57,6 +62,9 @@ export default function Navbar() {
               location.pathname.startsWith("/upload") ||
               location.pathname === "/"
             }
+            onClick={() => {
+              resetUploadSliceState();
+            }}
           >
             File uploads
           </HeaderMenuItem>
