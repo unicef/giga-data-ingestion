@@ -23,6 +23,7 @@ class Constants(BaseSettings):
         "application/json": [".json"],
         "application/octet-stream": [".parquet"],
         "application/vnd.ms-excel": [".xls"],
+        "application/x-ole-storage": [".xls"],
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
         "text/csv": [".csv"],
         "application/csv": [".csv"],
