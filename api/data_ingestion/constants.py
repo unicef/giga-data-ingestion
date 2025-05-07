@@ -34,6 +34,14 @@ class Constants(BaseSettings):
         "image/bmp": [".bmp"],
         "image/gif": [".gif"],
         "image/tiff": [".tif", ".tiff"],
+        "text/csv": [".csv"],
+        "application/vnd.ms-excel": [".xls"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+        "application/pdf": [".pdf"],
+        "application/msword": [".doc"],
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+            ".docx"
+        ],
     }
     ALLOWED_SCHEMA_NAMES: list[str] = [
         "qos",
@@ -44,6 +52,7 @@ class Constants(BaseSettings):
         "coverage_itu",
         "coverage_fb",
     ]
+
     FILENAME_TIMESTAMP_FORMAT: str = "%Y%m%d-%H%M%S"
     DATA_PRIVACY_DOCUMENT_PATH: str = "staticfiles/2023-11_School_data_request_FNL.pdf"
 

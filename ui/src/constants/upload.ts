@@ -13,6 +13,12 @@ export enum AcceptedUnstructuredFileTypes {
   PNG = ".png",
   TIF = ".tif",
   TIFF = ".tiff",
+  CSV = ".csv",
+  EXCEL_LEGACY = ".xls",
+  EXCEL = ".xlsx",
+  PDF = ".pdf",
+  DOC = ".doc",
+  DOCX = ".docx",
 }
 
 export const AcceptedUnstructuredMimeTypes = [
@@ -21,6 +27,11 @@ export const AcceptedUnstructuredMimeTypes = [
   "image/jpeg",
   "image/png",
   "image/tiff",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
 export const UPLOAD_MODE_OPTIONS = ["Create", "Update"] as const;
