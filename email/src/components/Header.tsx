@@ -8,7 +8,7 @@ function Header() {
           className="p-4"
           width={40}
           height={40}
-          src="https://storage.googleapis.com/giga-assets/GIGA_logo.png"
+          src="https://saunigigashare.blob.core.windows.net/assets/GIGA_logo.png"
         />
       </Column>
       <Column>
