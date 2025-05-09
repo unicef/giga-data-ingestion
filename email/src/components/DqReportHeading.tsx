@@ -13,8 +13,8 @@ function DqReportHeading({ hasCriticalError, title }: DqReportHeaderProps) {
         className="w-10 h-10 mr-2 -mt-1"
         src={`${
           hasCriticalError
-            ? "https://storage.googleapis.com/giga-assets/MisuseOutlineRed.png"
-            : "https://storage.googleapis.com/giga-assets/MisuseOutlineYellow.png"
+            ? "https://saunigigashare.blob.core.windows.net/assets/MisuseOutlineRed.png"
+            : "https://saunigigashare.blob.core.windows.net/assets/MisuseOutlineYellow.png"
         }`}
       />
       <strong
