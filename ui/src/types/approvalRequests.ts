@@ -10,6 +10,7 @@ export interface ApprovalRequestListing {
   rows_updated: number;
   rows_deleted: number;
   enabled: boolean;
+  is_delete_operation: boolean;
 }
 
 export interface ApprovalRequestInfo {

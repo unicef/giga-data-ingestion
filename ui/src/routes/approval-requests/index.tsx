@@ -1,11 +1,13 @@
 import { ReactElement, useMemo } from "react";
 
-import { CheckmarkFilled } from "@carbon/icons-react";
+import { CheckmarkFilled, Edit, TrashCan } from "@carbon/icons-react";
 import {
   Button,
   DataTableHeader,
   DataTableSkeleton,
   Loading,
+  Tag,
+  Tooltip,
 } from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -31,6 +33,10 @@ const columns: DataTableHeader[] = [
     header: "Dataset",
   },
   {
+    key: "operation_type",
+    header: "Operation Type",
+  },
+  {
     key: "last_modified",
     header: "Last Modified",
   },
@@ -40,15 +46,27 @@ const columns: DataTableHeader[] = [
   },
   {
     key: "rows_added",
-    header: "Rows Added",
+    header: (
+      <Tooltip label="Number of unique new records to be added">
+        <span>Rows Added</span>
+      </Tooltip>
+    ),
   },
   {
     key: "rows_updated",
-    header: "Rows Updated",
+    header: (
+      <Tooltip label="Number of unique records to be updated">
+        <span>Rows Updated</span>
+      </Tooltip>
+    ),
   },
   {
     key: "rows_deleted",
-    header: "Rows Deleted",
+    header: (
+      <Tooltip label="Number of unique records to be deleted">
+        <span>Rows Deleted</span>
+      </Tooltip>
+    ),
   },
   {
     key: "actions",
@@ -70,7 +88,7 @@ export const Route = createFileRoute("/approval-requests/")({
 type ApprovalRequestTableRow = Record<
   keyof ApprovalRequestListing,
   string | number | null | boolean | ReactElement
-> & { id: string; actions: ReactElement };
+> & { id: string; actions: ReactElement; operation_type: ReactElement };
 
 function ApprovalRequests() {
   const navigate = useNavigate({ from: Route.fullPath });
@@ -108,40 +126,63 @@ function ApprovalRequests() {
 
   const formattedApprovalRequests = useMemo<ApprovalRequestTableRow[]>(
     () =>
-      approvalRequests.data.map(request => ({
-        ...request,
-        rows_count: commaNumber(request.rows_count),
-        rows_added: commaNumber(request.rows_added),
-        rows_updated: commaNumber(request.rows_updated),
-        rows_deleted: commaNumber(request.rows_deleted),
-        country: `${request.country} (${request.country_iso3})`,
-        actions: (
-          <Button
-            disabled={isLoading || !request.enabled}
-            kind="tertiary"
-            size="sm"
-            as={Link}
-            to="./$subpath"
-            renderIcon={
-              isLoading
-                ? props => (
-                    <Loading small={true} withOverlay={false} {...props} />
-                  )
-                : CheckmarkFilled
-            }
-            params={{
-              subpath: encodeURIComponent(request.subpath),
-            }}
-            onClick={() => resetApproveRowState()}
-          >
-            Approve Rows
-          </Button>
-        ),
-        last_modified: format(
-          new Date(request.last_modified),
-          DEFAULT_DATETIME_FORMAT,
-        ),
-      })),
+      approvalRequests.data.map(request => {
+        let operationIcon = Edit;
+        let operationType = "Update";
+        let tagType: "blue" | "red" | "green" | "purple" = "blue";
+
+        if (request.is_delete_operation) {
+          operationIcon = TrashCan;
+          operationType = "Delete";
+          tagType = "red";
+        } else if (request.rows_added > 0 && request.rows_updated === 0) {
+          operationType = "Insert";
+          tagType = "green";
+        } else if (request.rows_added > 0 && request.rows_updated > 0) {
+          operationType = "Mixed";
+          tagType = "purple";
+        }
+
+        return {
+          ...request,
+          rows_count: commaNumber(request.rows_count),
+          rows_added: commaNumber(request.rows_added),
+          rows_updated: commaNumber(request.rows_updated),
+          rows_deleted: commaNumber(request.rows_deleted),
+          country: `${request.country} (${request.country_iso3})`,
+          operation_type: (
+            <Tag type={tagType} renderIcon={operationIcon}>
+              {operationType}
+            </Tag>
+          ),
+          actions: (
+            <Button
+              disabled={isLoading || !request.enabled}
+              kind="tertiary"
+              size="sm"
+              as={Link}
+              to="./$subpath"
+              renderIcon={
+                isLoading
+                  ? props => (
+                      <Loading small={true} withOverlay={false} {...props} />
+                    )
+                  : CheckmarkFilled
+              }
+              params={{
+                subpath: encodeURIComponent(request.subpath),
+              }}
+              onClick={() => resetApproveRowState()}
+            >
+              Approve Rows
+            </Button>
+          ),
+          last_modified: format(
+            new Date(request.last_modified),
+            DEFAULT_DATETIME_FORMAT,
+          ),
+        };
+      }),
     [approvalRequests.data, isLoading, resetApproveRowState],
   );
 

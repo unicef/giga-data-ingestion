@@ -15,6 +15,7 @@ class ApprovalRequestListing(BaseModel):
     rows_updated: int
     rows_deleted: int
     enabled: bool
+    is_delete_operation: bool = False
 
 
 class UploadApprovedRowsRequest(BaseModel):

@@ -12,10 +12,8 @@ from sqlalchemy import (
     distinct,
     func,
     literal,
-    literal_column,
     select,
     text,
-    union_all,
     update,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -107,32 +105,9 @@ async def list_approval_requests(
         total_count = staging_tables[0]["total_count"]
 
     body: list[ApprovalRequestListing] = []
-    queries = []
-    for table in staging_tables:
-        min_version = db.execute(
-            select(func.min(column("version"))).select_from(
-                text(
-                    f'''delta_lake.{table['table_schema']}."{table['table_name']}$history"'''
-                )
-            )
-        ).scalar()
 
-        change_types_cte = (
-            select(
-                column("school_id_giga"),
-                column("_change_type"),
-                column("_commit_version"),
-            ).select_from(
-                func.table(
-                    func.delta_lake.system.table_changes(
-                        literal(table["table_schema"]),
-                        literal(table["table_name"]),
-                        literal(min_version),
-                    )
-                )
-            )
-        ).cte(f"change_types_{table['table_schema']}_{table['table_name']}")
-        timestamp_cte = (
+    for table in staging_tables:
+        history_query = (
             select(column("timestamp"))
             .select_from(
                 text(
@@ -141,111 +116,88 @@ async def list_approval_requests(
             )
             .order_by(column("timestamp").desc())
             .limit(1)
-        ).cte(f"timestamp_{table['table_schema']}_{table['table_name']}")
-        max_version_cte = (
-            select(func.max(column("_commit_version")).label("max_version"))
-            .select_from(change_types_cte)
-            .limit(1)
-        ).cte(f"max_version_{table['table_schema']}_{table['table_name']}")
-        query = select(
-            literal(table["table_schema"]).label("table_schema"),
-            literal(table["table_name"]).label("table_name"),
-            (
-                select(count(column("school_id_giga").distinct())).select_from(
-                    change_types_cte
-                )
-            ).label("rows_count"),
-            (
-                select(count())
-                .select_from(
-                    change_types_cte.alias(
-                        f"ct_{table['table_schema']}_{table['table_name']}"
-                    ),
-                    max_version_cte.alias(
-                        f"mv_{table['table_schema']}_{table['table_name']}"
-                    ),
-                )
-                .where(
-                    (
-                        (
-                            literal_column(
-                                f"ct_{table['table_schema']}_{table['table_name']}._change_type"
-                            )
-                            == literal("insert")
-                        )
-                        & (
-                            literal_column(
-                                f"ct_{table['table_schema']}_{table['table_name']}._commit_version"
-                            )
-                            > 1
-                        )
-                    )
-                    | (
-                        (
-                            literal_column(
-                                f"ct_{table['table_schema']}_{table['table_name']}._change_type"
-                            )
-                            == literal("insert")
-                        )
-                        & (
-                            literal_column(
-                                f"mv_{table['table_schema']}_{table['table_name']}.max_version"
-                            )
-                            == 1
-                        )
-                    )
-                )
-            ).label("rows_added"),
-            (
-                select(count())
-                .select_from(change_types_cte)
-                .where(column("_change_type") == literal("update_postimage"))
-            ).label("rows_updated"),
-            (
-                select(count())
-                .select_from(change_types_cte)
-                .where(column("_change_type") == literal("delete"))
-            ).label("rows_deleted"),
-            (select(column("timestamp")).select_from(timestamp_cte)).label(
-                "last_modified"
-            ),
         )
-        queries.append(query)
+        last_modified = db.execute(history_query).scalar()
 
-    if len(queries) > 0:
-        res = db.execute(
-            union_all(*queries).order_by(column("table_name"), column("table_schema"))
-        )
-        stats = res.mappings().all()
-
-        for stat in stats:
-            country = coco.convert(stat["table_name"], to="name_short")
-            country_iso3 = coco.convert(stat["table_name"], to="ISO3")
-
-            dataset = (
-                stat["table_schema"]
-                .replace("staging", "")
-                .replace("_", " ")
-                .title()
-                .rstrip()
+        min_version_query = select(func.min(column("version"))).select_from(
+            text(
+                f'''delta_lake.{table['table_schema']}."{table['table_name']}$history"'''
             )
-            enabled = settings.get(f"{country_iso3}-{dataset}", False)
+        )
+        min_version = db.execute(min_version_query).scalar()
 
-            body.append(
-                ApprovalRequestListing(
-                    id=f'{stat["table_name"].upper()}-{dataset}',
-                    country=country,
-                    country_iso3=stat["table_name"].upper(),
-                    dataset=dataset,
-                    subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
-                    last_modified=stat["last_modified"],
-                    rows_count=stat["rows_count"],
-                    rows_added=stat["rows_added"],
-                    rows_updated=stat["rows_updated"],
-                    rows_deleted=stat["rows_deleted"],
-                    enabled=enabled,
+        changes_query = select(
+            column("school_id_giga"), column("_change_type"), column("_commit_version")
+        ).select_from(
+            func.table(
+                func.delta_lake.system.table_changes(
+                    literal(table["table_schema"]),
+                    literal(table["table_name"]),
+                    literal(min_version),
                 )
             )
+        )
+
+        changes = db.execute(changes_query).all()
+
+        true_max_version = 0
+        if changes:
+            true_max_version = max(c[2] for c in changes)
+
+        total_school_ids = set()
+        rows_added = set()
+        rows_updated = set()
+        rows_deleted = set()
+
+        for school_id, change_type, commit_version in changes:
+            is_approvable = (
+                (true_max_version == 1 and commit_version == 1)
+                or (commit_version == 2)
+                or (commit_version > 2 and change_type != "update_preimage")
+            )
+
+            if is_approvable:
+                total_school_ids.add(school_id)
+
+                if change_type == "insert":
+                    rows_added.add(school_id)
+                elif change_type == "update_postimage":
+                    rows_updated.add(school_id)
+                elif change_type == "delete":
+                    rows_deleted.add(school_id)
+
+        country = coco.convert(table["table_name"], to="name_short")
+        country_iso3 = coco.convert(table["table_name"], to="ISO3")
+
+        dataset = (
+            table["table_schema"]
+            .replace("staging", "")
+            .replace("_", " ")
+            .title()
+            .rstrip()
+        )
+        enabled = settings.get(f"{country_iso3}-{dataset}", False)
+
+        is_delete_operation = (
+            len(rows_deleted) > 0 and len(rows_added) == 0 and len(rows_updated) == 0
+        )
+
+        body.append(
+            ApprovalRequestListing(
+                id=f'{table["table_name"].upper()}-{dataset}',
+                country=country,
+                country_iso3=table["table_name"].upper(),
+                dataset=dataset,
+                subpath=f'{table["table_schema"]}/{table["table_name"]}',
+                last_modified=last_modified,
+                rows_count=len(total_school_ids),
+                rows_added=len(rows_added),
+                rows_updated=len(rows_updated),
+                rows_deleted=len(rows_deleted),
+                enabled=enabled,
+                is_delete_operation=is_delete_operation,
+            )
+        )
 
     return {
         "data": body,
@@ -269,52 +221,52 @@ async def get_approval_request(
     country = coco.convert(table_name, to="name_short")
     dataset = table_schema.replace("staging", "").replace("_", " ").title()
 
-    data_cte = (
-        select(
-            # Create an identifier that is unique across versions
-            func.concat_ws(
-                "|",
-                column("school_id_giga"),
-                column("_change_type"),
-                column("_commit_version").cast(String()),
-            ).label("change_id"),
-            "*",
+    changes_query = select(
+        func.concat_ws(
+            "|",
+            column("school_id_giga"),
+            column("_change_type"),
+            column("_commit_version").cast(String()),
+        ).label("change_id"),
+        "*",
+    ).select_from(
+        func.table(
+            func.delta_lake.system.table_changes(
+                literal(table_schema), literal(table_name), 0
+            )
         )
-        .select_from(
+    )
+
+    max_version = db.execute(
+        select(func.max(column("_commit_version"))).select_from(
             func.table(
                 func.delta_lake.system.table_changes(
                     literal(table_schema), literal(table_name), 0
                 )
             )
         )
-        .cte("changes")
-    )
-    max_version_cte = (
-        select(func.max(column("_commit_version")).label("max_version"))
-        .select_from(data_cte)
-        .limit(1)
-    ).cte("max_version")
+    ).scalar()
 
-    cdf_cte = (
+    filtered_query = (
         select("*")
-        .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
+        .select_from(changes_query.subquery())
         .where(
-            (literal_column("mv.max_version") == 1)
-            | (literal_column("d._commit_version") == 2)
+            (literal(max_version) == 1)
+            | (column("_commit_version") == 2)
             | (
-                (literal_column("d._commit_version") > 2)
-                & (literal_column("d._change_type") != "update_preimage")
+                (column("_commit_version") > 2)
+                & (column("_change_type") != "update_preimage")
             )
         )
     )
 
-    total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
+    total_count = db.execute(
+        select(count()).select_from(filtered_query.subquery())
+    ).scalar()
 
     cdf = (
         db.execute(
-            select("*")
-            .select_from(cdf_cte)
-            .order_by(
+            filtered_query.order_by(
                 column("school_id_giga"),
                 column("_commit_version").desc(),
                 column("_change_type").desc(),
@@ -325,6 +277,7 @@ async def get_approval_request(
         .mappings()
         .all()
     )
+
     detail = (
         db.execute(
             select("*")
