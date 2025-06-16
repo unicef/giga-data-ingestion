@@ -131,7 +131,17 @@ export class HeaderDetector {
           return;
         }
 
-        const detectedColumns = Object.keys(data[0]);
+        const allKeys = new Set<string>();
+        for (const item of data) {
+          if (typeof item === "object" && item !== null) {
+            for (const key in item) {
+              if (Object.prototype.hasOwnProperty.call(item, key)) {
+                allKeys.add(key);
+              }
+            }
+          }
+        }
+        const detectedColumns = Array.from(allKeys);
         this.commonProcess(detectedColumns);
       } catch (e) {
         console.error(e);
@@ -161,15 +171,16 @@ export class HeaderDetector {
 
         const firstSheet = workbook.SheetNames[0];
         const sheet = workbook.Sheets[firstSheet];
-        const data = xlsxUtils.sheet_to_json(sheet);
+        const data: unknown[][] = xlsxUtils.sheet_to_json(sheet, {
+          header: 1,
+          blankrows: false,
+        });
         if (data.length === 0) {
           options.setError("First sheet is empty");
           return;
         }
 
-        const detectedColumns = Object.keys(
-          data[0] as Record<string, unknown>[],
-        );
+        const detectedColumns = data[0] as string[];
         this.commonProcess(detectedColumns);
       })
       .catch(e => {
