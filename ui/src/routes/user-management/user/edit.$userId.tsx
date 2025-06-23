@@ -4,6 +4,7 @@ import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { Add } from "@carbon/icons-react";
 import {
   Button,
+  Checkbox,
   FormGroup,
   InlineNotification,
   Modal,
@@ -11,7 +12,6 @@ import {
   Stack,
   TextInput,
 } from "@carbon/react";
-import MultiSelect from "@carbon/react/lib/components/MultiSelect/MultiSelect";
 import {
   queryOptions,
   useMutation,
@@ -400,21 +400,40 @@ function EditUser() {
             <Controller
               name="roles"
               control={control}
-              render={({ field }) => (
-                <MultiSelect
-                  id="roles"
-                  initialSelectedItems={watchedRoles.selectedItems}
-                  items={roleOptions}
-                  itemToString={item => item.label}
-                  label="What level of access does this user have for Giga?"
-                  titleText="Role"
-                  {...field}
-                />
+              render={({ field: { onChange, value } }) => (
+                <FormGroup legendText="Role">
+                  <p className="cds--label">
+                    What level of access does this user have for Giga?
+                  </p>
+                  {roleOptions.map(option => (
+                    <Checkbox
+                      key={option.value}
+                      id={`role-${option.value}`}
+                      labelText={option.label}
+                      checked={value.selectedItems.some(
+                        item => item.value === option.value,
+                      )}
+                      onChange={(_, { checked }) => {
+                        const currentSelection = value.selectedItems;
+                        const newSelectedItems = checked
+                          ? [...currentSelection, option]
+                          : currentSelection.filter(
+                              item => item.value !== option.value,
+                            );
+                        onChange({ selectedItems: newSelectedItems });
+                      }}
+                    />
+                  ))}
+                </FormGroup>
               )}
-              rules={{ required: true, minLength: 1 }}
+              rules={{
+                validate: value =>
+                  (value.selectedItems?.length ?? 0) > 0 ||
+                  "Select at least one role",
+              }}
             />
 
-            {watchedCountryDatasets.map((countryDataset, i) => (
+            {watchedCountryDatasets.map((_, i) => (
               <FormGroup key={i} legendText="">
                 <Select
                   id={`country.${i}`}
@@ -446,19 +465,37 @@ function EditUser() {
                   <Controller
                     name={`countryDatasets.${i}.dataset`}
                     control={control}
-                    render={({ field }) => (
-                      <MultiSelect
-                        id={`dataset.${i}`}
-                        label="Select datasets"
-                        initialSelectedItems={
-                          countryDataset.dataset.selectedItems
-                        }
-                        items={dataSetOptions}
-                        itemToString={item => item.label}
-                        {...field}
-                      />
+                    render={({ field: { onChange, value } }) => (
+                      <FormGroup legendText="Select datasets">
+                        {dataSetOptions.map(option => (
+                          <Checkbox
+                            key={option.value}
+                            id={`dataset-${i}-${option.value.replace(
+                              /\s/g,
+                              "",
+                            )}`}
+                            labelText={option.label}
+                            checked={value.selectedItems.some(
+                              item => item.value === option.value,
+                            )}
+                            onChange={(_, { checked }) => {
+                              const currentSelection = value.selectedItems;
+                              const newSelectedItems = checked
+                                ? [...currentSelection, option]
+                                : currentSelection.filter(
+                                    item => item.value !== option.value,
+                                  );
+                              onChange({ selectedItems: newSelectedItems });
+                            }}
+                          />
+                        ))}
+                      </FormGroup>
                     )}
-                    rules={{ required: true, minLength: 1 }}
+                    rules={{
+                      validate: value =>
+                        (value.selectedItems?.length ?? 0) > 0 ||
+                        "Select at least one dataset",
+                    }}
                   />
                 </FormGroup>
                 {i + 1 < watchedCountryDatasets.length && (
