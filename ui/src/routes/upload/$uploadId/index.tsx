@@ -116,27 +116,43 @@ function Index() {
             background: "#fff",
             padding: "1.5rem",
             borderRadius: "4px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
           }}
         >
-          <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
-            File: <a className="bx--link">{uploadData.original_filename}</a>
-          </p>
+          <div>
+            <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
+              File: <a className="bx--link">{uploadData.original_filename}</a>
+            </p>
 
-          <p
-            style={{
-              fontSize: "0.875rem",
-              color: "#6f6f6f",
-              marginBottom: "1rem",
-            }}
-          >
-            Uploaded: {uploadData.uploader_email}
-            <br />
-            UploadID: {uploadId}
-            <br />
-            {new Date(uploadData.created).toLocaleTimeString()} GMT
-            <br />
-            {new Date(uploadData.created).toDateString()}
-          </p>
+            <p
+              style={{
+                fontSize: "0.875rem",
+                color: "#6f6f6f",
+                marginBottom: "1rem",
+              }}
+            >
+              Uploaded: {uploadData.uploader_email}
+              <br />
+              UploadID: {uploadId}
+              <br />
+              {new Date(uploadData.created).toLocaleTimeString()} GMT
+              <br />
+              {new Date(uploadData.created).toDateString()}
+            </p>
+          </div>
+
+          <div>
+            <Button
+              kind="secondary"
+              size="md"
+              renderIcon={Download}
+              onClick={handleDownloadDqSummary}
+            >
+              Download Data Quality Report
+            </Button>
+          </div>
         </div>
 
         <div
@@ -158,7 +174,7 @@ function Index() {
                 disabled={rows === 0}
                 onClick={handleDownloadDqSummary}
               >
-                Download Summary
+                Download uploaded dataset
               </Button>
             </div>
           </div>
