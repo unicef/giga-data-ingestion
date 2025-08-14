@@ -70,6 +70,7 @@ function Index() {
     handleDownloadFailedRows,
     handleDownloadPassedRows,
     handleDownloadDqSummary,
+    handleDownloadRawFile,
   } = useDownloadHelpers(uploadData);
 
   // Extract checks from dqResultData
@@ -145,12 +146,12 @@ function Index() {
 
           <div>
             <Button
-              kind="secondary"
+              kind="primary"
               size="md"
               renderIcon={Download}
               onClick={handleDownloadDqSummary}
             >
-              Download Data Quality Report
+              Download data quality report
             </Button>
           </div>
         </div>
@@ -172,7 +173,7 @@ function Index() {
                 size="sm"
                 renderIcon={Download}
                 disabled={rows === 0}
-                onClick={handleDownloadDqSummary}
+                onClick={handleDownloadRawFile}
               >
                 Download uploaded dataset
               </Button>

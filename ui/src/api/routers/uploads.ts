@@ -114,6 +114,18 @@ export default function routes(axi: AxiosInstance) {
       );
     },
 
+    download_raw_file: (params: {
+      dataset: string;
+      country_code: string;
+      filename: string;
+    }): Promise<AxiosResponse<Blob>> => {
+      const { dataset, country_code, filename } = params;
+
+      return axi.get(`upload/raw_file/${dataset}/${country_code}/${filename}`, {
+        responseType: "blob",
+      });
+    },
+
     list_basic_checks: (
       dataset: string,
       source: string | null,

@@ -17,6 +17,10 @@ export function useDownloadHelpers(uploadData: UploadResponse) {
     mutationFn: api.uploads.download_dq_summary,
   });
 
+  const { mutateAsync: downloadRawFile } = useMutation({
+    mutationFn: api.uploads.download_raw_file,
+  });
+
   function getFilenameFromFullPath(): string {
     const pathParts = uploadData.dq_full_path?.split("/") || [];
     return pathParts[pathParts.length - 1];
@@ -52,9 +56,19 @@ export function useDownloadHelpers(uploadData: UploadResponse) {
     if (blob) saveFile(blob);
   }
 
+  async function handleDownloadRawFile() {
+    const blob = await downloadRawFile({
+      dataset: `school-${uploadData.dataset}`,
+      country_code: uploadData.country,
+      filename: uploadData.filename,
+    });
+    if (blob) saveFile(blob);
+  }
+
   return {
     handleDownloadFailedRows,
     handleDownloadPassedRows,
     handleDownloadDqSummary,
+    handleDownloadRawFile,
   };
 }
