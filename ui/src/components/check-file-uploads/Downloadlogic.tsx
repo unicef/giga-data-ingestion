@@ -57,10 +57,14 @@ export function useDownloadHelpers(uploadData: UploadResponse) {
   }
 
   async function handleDownloadRawFile() {
+    // Extract filename from upload_path (e.g., "raw/uploads/school-geolocation/MOZ/filename.csv" -> "filename.csv")
+    const pathParts = uploadData.upload_path?.split("/") || [];
+    const filename = pathParts[pathParts.length - 1];
+
     const blob = await downloadRawFile({
-      dataset: `school-${uploadData.dataset}`,
+      dataset: uploadData.dataset,
       country_code: uploadData.country,
-      filename: uploadData.filename,
+      filename: filename,
     });
     if (blob) saveFile(blob);
   }
