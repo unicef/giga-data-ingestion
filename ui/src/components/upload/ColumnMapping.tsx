@@ -1,4 +1,4 @@
-import { ChangeEvent, Dispatch, SetStateAction, memo } from "react";
+import React, { ChangeEvent, Dispatch, SetStateAction, memo } from "react";
 import {
   FieldValues,
   UseFormResetField,
@@ -144,9 +144,19 @@ export const ColumnLicense = memo(({ column }: ColumnLicenseProps) => {
     formState: { errors },
     register,
     watch,
+    setValue,
   } = useFormContext();
 
-  const disabled = !watch(`mapping.${column.name}`);
+  const hasMapping = watch(`mapping.${column.name}`);
+  const isMandatory = !column.is_nullable;
+  const disabled = !hasMapping || isMandatory;
+
+  // Set default value to "ODBL" for mandatory columns
+  React.useEffect(() => {
+    if (isMandatory && hasMapping) {
+      setValue(`license.${column.name}`, licenseOptions[0]);
+    }
+  }, [isMandatory, hasMapping, column.name, setValue]);
 
   return (
     <div className="w-full">
