@@ -100,23 +100,42 @@ function UploadColumnMapping() {
 
   const navigate = useNavigate({ from: Route.fullPath });
 
+  // Initialize license values for mandatory columns to ODBL
+  const defaultLicenseValues = useMemo(() => {
+    const licenseDefaults = { ...columnLicense };
+    schema.forEach(column => {
+      if (!column.is_nullable && column.name in columnMapping) {
+        licenseDefaults[column.name] = "ODBL";
+      }
+    });
+    return licenseDefaults;
+  }, [columnLicense, columnMapping, schema]);
+
   const hookForm = useForm<ConfigureColumnsForm>({
     mode: "onSubmit",
     reValidateMode: "onBlur",
     defaultValues: {
       mapping: columnMapping,
-      license: columnLicense,
+      license: defaultLicenseValues,
     },
     shouldFocusError: true,
   });
   const { handleSubmit } = hookForm;
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
+    // Ensure mandatory columns are set to ODBL
+    const enforcedLicense = { ...data.license };
+    schema.forEach(column => {
+      if (!column.is_nullable && column.name in data.mapping) {
+        enforcedLicense[column.name] = "ODBL";
+      }
+    });
+
     const dataWithNullsReplaced: ConfigureColumnsForm = {
       mapping: Object.fromEntries(
         Object.entries(data.mapping).filter(([, value]) => Boolean(value)),
       ),
       license: Object.fromEntries(
-        Object.entries(data.license).filter(([, value]) => Boolean(value)),
+        Object.entries(enforcedLicense).filter(([, value]) => Boolean(value)),
       ),
     };
     setColumnMapping(dataWithNullsReplaced.mapping);

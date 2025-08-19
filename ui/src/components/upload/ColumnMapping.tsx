@@ -1,4 +1,4 @@
-import { ChangeEvent, Dispatch, SetStateAction, memo } from "react";
+import React, { ChangeEvent, Dispatch, SetStateAction, memo } from "react";
 import {
   FieldValues,
   UseFormResetField,
@@ -77,7 +77,7 @@ const handleSelectOnChange = ({
 }) => {
   if (selectedColumn === "") {
     setSelectedColumns(old => {
-      resetField(`license.${selectedColumn}`);
+      resetField(`license.${expectedColumn}`);
 
       const copy = { ...old };
       delete copy[expectedColumn];
@@ -144,9 +144,18 @@ export const ColumnLicense = memo(({ column }: ColumnLicenseProps) => {
     formState: { errors },
     register,
     watch,
+    setValue,
   } = useFormContext();
 
   const disabled = !watch(`mapping.${column.name}`);
+  const isMandatory = !column.is_nullable;
+
+  // Set mandatory columns to ODBL by default and disable changes
+  React.useEffect(() => {
+    if (isMandatory && watch(`mapping.${column.name}`)) {
+      setValue(`license.${column.name}`, "ODBL");
+    }
+  }, [isMandatory, column.name, setValue, watch]);
 
   return (
     <div className="w-full">
@@ -157,7 +166,7 @@ export const ColumnLicense = memo(({ column }: ColumnLicenseProps) => {
         {...register(`license.${column.name}`, {
           validate: (value, formValues) =>
             !!value && !!formValues.mapping[column.name],
-          disabled: disabled,
+          disabled: disabled || isMandatory,
           deps: [`mapping.${column.name}`],
         })}
       >
