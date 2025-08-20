@@ -39,7 +39,35 @@ export class HeaderDetector {
 
   public detect() {
     if (AcceptedUnstructuredMimeTypes.includes(this.options.file.type)) {
-      this.image();
+      // Handle both image and document files for unstructured uploads
+      if (this.options.file.type.startsWith("image/")) {
+        this.image();
+      } else if (
+        this.options.file.type === "text/csv" ||
+        this.options.file.type === "application/csv"
+      ) {
+        this.csv();
+      } else if (
+        this.options.file.type === "application/vnd.ms-excel" ||
+        this.options.file.type === "application/x-ole-storage"
+      ) {
+        this.excel();
+      } else if (
+        this.options.file.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      ) {
+        this.excel();
+      } else if (this.options.file.type === "application/pdf") {
+        this.pdf();
+      } else if (
+        this.options.file.type === "application/msword" ||
+        this.options.file.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ) {
+        this.doc();
+      } else {
+        this.image(); // fallback for other file types
+      }
       return;
     }
     switch (this.options.type) {
@@ -192,6 +220,24 @@ export class HeaderDetector {
   private image() {
     const { options } = this;
     options.setIsParsing(false);
+  }
+
+  private pdf() {
+    const { options } = this;
+    // For PDF files, we don't parse headers, just mark as ready
+    options.setIsParsing(false);
+    // Set empty columns since we can't parse PDF files for headers
+    options.setDetectedColumns([]);
+    options.setColumnMapping({});
+  }
+
+  private doc() {
+    const { options } = this;
+    // For DOC files, we don't parse headers, just mark as ready
+    options.setIsParsing(false);
+    // Set empty columns since we can't parse DOC files for headers
+    options.setDetectedColumns([]);
+    options.setColumnMapping({});
   }
 }
 
