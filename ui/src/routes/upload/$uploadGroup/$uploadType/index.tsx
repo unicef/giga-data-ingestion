@@ -252,7 +252,8 @@ export default function Index() {
             }
           />
           <p>
-            File formats: {Object.values(validTypes).flat().join(", ")} up to
+            File formats:{" "}
+            {[...new Set(Object.values(validTypes).flat())].join(", ")} up to
             10MB
           </p>
           {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
