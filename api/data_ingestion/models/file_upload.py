@@ -71,3 +71,15 @@ class FileUpload(BaseModel):
             self.filename,
         ]
         return "/".join(filename_parts)
+
+    @hybrid_property
+    def metadata_path(self) -> str:
+        filename_parts = [
+            constants.METADATA_PATH_PREFIX,
+            self.dataset
+            if self.dataset == "unstructured"
+            else f"school-{self.dataset}",
+            "$NA" if self.country == "N/A" else self.country,
+            self.filename,
+        ]
+        return "/".join(filename_parts)

@@ -353,10 +353,28 @@ async def upload_file(
         await file.seek(0)
         client.upload_blob(
             await file.read(),
-            metadata=metadata,
             content_settings=ContentSettings(content_type=file_type),
         )
+
+        # upload metadata separately
+        metadata_client = storage_client.get_blob_client(file_upload.metadata_path)
+
+        metadata = {
+            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            "country": form.country,
+            "uploader_email": email,
+        }
+
+        if form.source is not None:
+            metadata["source"] = form.source
+
+        await metadata_client.upload_blob(
+            orjson.dumps(metadata),
+            content_settings=ContentSettings(content_type="application/json"),
+        )
+
         response.status_code = status.HTTP_201_CREATED
+
     except HttpResponseError as err:
         await db.execute(delete(FileUpload).where(FileUpload.id == file_upload.id))
         await db.commit()
