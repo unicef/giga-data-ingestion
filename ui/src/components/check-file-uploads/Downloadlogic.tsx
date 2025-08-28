@@ -47,25 +47,10 @@ export function useDownloadHelpers(uploadData: UploadResponse) {
   }
 
   async function handleDownloadDqSummary() {
-    // Generate new filename: "DQ report_{original_filename}_{upload_id}_{current_timestamp}.txt"
-    const originalFilename = uploadData.original_filename;
-    const uploadId = uploadData.id;
-    const currentTimestamp =
-      new Date().toISOString().slice(0, 10).replace(/-/g, "") +
-      "-" +
-      new Date().toISOString().slice(11, 19).replace(/:/g, ""); // Format: YYYYMMDD-HHMMSS
-
-    // Remove file extension from original filename if it exists
-    const filenameWithoutExt = originalFilename
-      .split(".")
-      .slice(0, -1)
-      .join(".");
-    const newFilename = `DQ report_${filenameWithoutExt}_${uploadId}_${currentTimestamp}.txt`;
-
     const blob = await downloadDqSummary({
       dataset: `school-${uploadData.dataset}`,
       country_code: uploadData.country,
-      filename: newFilename,
+      filename: getFilenameFromFullPath().replace(".csv", ".json"),
     });
 
     if (blob) saveFile(blob);
