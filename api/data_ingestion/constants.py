@@ -34,6 +34,16 @@ class Constants(BaseSettings):
         "image/bmp": [".bmp"],
         "image/gif": [".gif"],
         "image/tiff": [".tif", ".tiff"],
+        "text/csv": [".csv"],
+        "application/csv": [".csv"],
+        "application/vnd.ms-excel": [".xls"],
+        "application/x-ole-storage": [".xls"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+        "application/pdf": [".pdf"],
+        "application/msword": [".doc"],
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+            ".docx"
+        ],
     }
     ALLOWED_SCHEMA_NAMES: list[str] = [
         "qos",

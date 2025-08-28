@@ -62,7 +62,8 @@ const UNSTRUCTURED_DESCRIPTION = (
     </p>
     <p>
       Any file uploaded must be no larger than 10MB and be in one of the
-      accepted file formats: [bmp, .gif, .jpeg, .jpg, .png, .tif, .tiff or .csv]
+      accepted file formats: [bmp, .gif, .jpeg, .jpg, .png, .tif, .tiff, .csv,
+      .xlsx, .xls, .pdf, .doc, .docx]
     </p>
   </>
 );
