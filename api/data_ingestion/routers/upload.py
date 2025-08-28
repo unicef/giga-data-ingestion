@@ -656,3 +656,47 @@ async def download_dq_summary_direct(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error downloading file: {str(e)}",
         ) from e
+
+
+@router.get("/raw_file/{dataset}/{country_code}/{filename}")
+async def download_raw_file_direct(
+    dataset: str,
+    country_code: str,
+    filename: str,
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    user: User = Depends(azure_scheme),
+):
+    """Download the raw uploaded file from blob storage."""
+    # Build the path to the raw file
+    path = f"raw/uploads/school-{dataset}/{country_code}/{filename}"
+    logger.info(f"Attempting to download raw file from path: {path}")
+
+    blob = storage_client.get_blob_client(path)
+
+    if not blob.exists():
+        logger.error(f"Raw file not found at path: {path}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Raw file not found",
+        )
+
+    try:
+        stream = blob.download_blob()
+        # Get the content type from blob properties or default to octet-stream
+        content_type = (
+            blob.get_blob_properties().content_settings.content_type
+            or "application/octet-stream"
+        )
+
+        return StreamingResponse(
+            stream.chunks(),
+            media_type=content_type,
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    except Exception as e:
+        logger.error(f"Error downloading raw file: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error downloading file: {str(e)}",
+        ) from e

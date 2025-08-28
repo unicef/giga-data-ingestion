@@ -70,6 +70,7 @@ function Index() {
     handleDownloadFailedRows,
     handleDownloadPassedRows,
     handleDownloadDqSummary,
+    handleDownloadRawFile,
   } = useDownloadHelpers(uploadData);
 
   // Extract checks from dqResultData
@@ -116,27 +117,43 @@ function Index() {
             background: "#fff",
             padding: "1.5rem",
             borderRadius: "4px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
           }}
         >
-          <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
-            File: <a className="bx--link">{uploadData.original_filename}</a>
-          </p>
+          <div>
+            <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
+              File: <a className="bx--link">{uploadData.original_filename}</a>
+            </p>
 
-          <p
-            style={{
-              fontSize: "0.875rem",
-              color: "#6f6f6f",
-              marginBottom: "1rem",
-            }}
-          >
-            Uploaded: {uploadData.uploader_email}
-            <br />
-            UploadID: {uploadId}
-            <br />
-            {new Date(uploadData.created).toLocaleTimeString()} GMT
-            <br />
-            {new Date(uploadData.created).toDateString()}
-          </p>
+            <p
+              style={{
+                fontSize: "0.875rem",
+                color: "#6f6f6f",
+                marginBottom: "1rem",
+              }}
+            >
+              Uploaded: {uploadData.uploader_email}
+              <br />
+              UploadID: {uploadId}
+              <br />
+              {new Date(uploadData.created).toLocaleTimeString()} GMT
+              <br />
+              {new Date(uploadData.created).toDateString()}
+            </p>
+          </div>
+
+          <div>
+            <Button
+              kind="primary"
+              size="md"
+              renderIcon={Download}
+              onClick={handleDownloadDqSummary}
+            >
+              Download data quality report
+            </Button>
+          </div>
         </div>
 
         <div
@@ -156,9 +173,9 @@ function Index() {
                 size="sm"
                 renderIcon={Download}
                 disabled={rows === 0}
-                onClick={handleDownloadDqSummary}
+                onClick={handleDownloadRawFile}
               >
-                Download Summary
+                Download uploaded dataset
               </Button>
             </div>
           </div>
