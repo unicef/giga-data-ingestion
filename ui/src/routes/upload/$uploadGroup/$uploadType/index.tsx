@@ -57,6 +57,16 @@ const validUnstructuredTypes = {
     AcceptedUnstructuredFileTypes.TIF,
     AcceptedUnstructuredFileTypes.TIFF,
   ],
+  "text/csv": AcceptedUnstructuredFileTypes.CSV,
+  "application/csv": AcceptedUnstructuredFileTypes.CSV,
+  "application/vnd.ms-excel": AcceptedUnstructuredFileTypes.XLS,
+  "application/x-ole-storage": AcceptedUnstructuredFileTypes.XLS,
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+    AcceptedUnstructuredFileTypes.XLSX,
+  "application/pdf": AcceptedUnstructuredFileTypes.PDF,
+  "application/msword": AcceptedUnstructuredFileTypes.DOC,
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    AcceptedUnstructuredFileTypes.DOCX,
 };
 
 export default function Index() {
@@ -242,7 +252,8 @@ export default function Index() {
             }
           />
           <p>
-            File formats: {Object.values(validTypes).flat().join(", ")} up to
+            File formats:{" "}
+            {[...new Set(Object.values(validTypes).flat())].join(", ")} up to
             10MB
           </p>
           {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
