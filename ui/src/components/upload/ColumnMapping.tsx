@@ -150,12 +150,16 @@ export const ColumnLicense = memo(({ column }: ColumnLicenseProps) => {
   const disabled = !watch(`mapping.${column.name}`);
   const isMandatory = !column.is_nullable;
 
-  // Set mandatory columns to ODBL by default and disable changes
+  // Allow school_id_govt to change license even though it's mandatory
+  const isSchoolIdGovt = column.name === "school_id_govt";
+  const shouldDisableLicense = disabled || (isMandatory && !isSchoolIdGovt);
+
+  // Set mandatory columns to ODBL by default and disable changes (except school_id_govt)
   React.useEffect(() => {
-    if (isMandatory && watch(`mapping.${column.name}`)) {
+    if (isMandatory && !isSchoolIdGovt && watch(`mapping.${column.name}`)) {
       setValue(`license.${column.name}`, "ODBL");
     }
-  }, [isMandatory, column.name, setValue, watch]);
+  }, [isMandatory, isSchoolIdGovt, column.name, setValue, watch]);
 
   return (
     <div className="w-full">
@@ -166,7 +170,7 @@ export const ColumnLicense = memo(({ column }: ColumnLicenseProps) => {
         {...register(`license.${column.name}`, {
           validate: (value, formValues) =>
             !!value && !!formValues.mapping[column.name],
-          disabled: disabled || isMandatory,
+          disabled: shouldDisableLicense,
           deps: [`mapping.${column.name}`],
         })}
       >

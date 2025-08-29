@@ -100,11 +100,15 @@ function UploadColumnMapping() {
 
   const navigate = useNavigate({ from: Route.fullPath });
 
-  // Initialize license values for mandatory columns to ODBL
+  // Initialize license values for mandatory columns to ODBL (except school_id_govt)
   const defaultLicenseValues = useMemo(() => {
     const licenseDefaults = { ...columnLicense };
     schema.forEach(column => {
-      if (!column.is_nullable && column.name in columnMapping) {
+      if (
+        !column.is_nullable &&
+        column.name in columnMapping &&
+        column.name !== "school_id_govt"
+      ) {
         licenseDefaults[column.name] = "ODBL";
       }
     });
@@ -122,10 +126,14 @@ function UploadColumnMapping() {
   });
   const { handleSubmit } = hookForm;
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
-    // Ensure mandatory columns are set to ODBL
+    // Ensure mandatory columns are set to ODBL (except school_id_govt)
     const enforcedLicense = { ...data.license };
     schema.forEach(column => {
-      if (!column.is_nullable && column.name in data.mapping) {
+      if (
+        !column.is_nullable &&
+        column.name in data.mapping &&
+        column.name !== "school_id_govt"
+      ) {
         enforcedLicense[column.name] = "ODBL";
       }
     });
