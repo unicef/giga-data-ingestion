@@ -107,7 +107,7 @@ function UploadLanding(props: UploadLandingProps) {
                 size="xl"
                 renderIcon={Add}
               >
-                Unstructured dataset
+                Schemaless dataset
               </Button>
             </div>
           </Stack>
