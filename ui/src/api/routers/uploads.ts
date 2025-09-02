@@ -5,6 +5,7 @@ import {
   BasicChecks,
   DataQualityCheck,
   UploadParams,
+  UploadStructuredParams,
   UploadUnstructuredParams,
 } from "@/types/upload";
 import { UploadResponse } from "@/types/upload.ts";
@@ -49,6 +50,19 @@ export default function routes(axi: AxiosInstance) {
       });
 
       return axi.post("/upload/unstructured", formData);
+    },
+
+    upload_structured: (
+      params: UploadStructuredParams,
+    ): Promise<AxiosResponse<null>> => {
+      const formData = new FormData();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value != null) {
+          formData.append(key, value);
+        }
+      });
+
+      return axi.post("/upload/structured", formData);
     },
 
     download_data_quality_check: (params: {

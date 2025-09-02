@@ -460,6 +460,103 @@ async def upload_unstructured(  # noqa: C901
         raise err
 
 
+@router.post("/structured", status_code=status.HTTP_201_CREATED)
+async def upload_structured(  # noqa: C901
+    response: Response,
+    user: User = Depends(azure_scheme),
+    form: UnstructuredFileUploadRequest = Depends(),
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    file = form.file
+
+    # For structured datasets, we don't validate country permissions since they're global
+    # Only check if user is privileged or has any upload permissions
+    if not is_privileged:
+        roles = await get_user_roles(user, db)
+        if not roles:  # If user has no roles at all, deny access
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have permissions to upload structured datasets",
+            )
+
+    if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds 10 MB limit",
+        )
+
+    file_content = await file.read(2048)
+    file_type = magic.from_buffer(file_content, mime=True)
+    file_extension = os.path.splitext(file.filename)[1]
+
+    # For structured datasets, we only accept CSV files
+    if file_type != "text/csv" and file_type != "application/csv":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Structured datasets only accept CSV files.",
+        )
+
+    if file_extension != ".csv":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File extension must be .csv for structured datasets.",
+        )
+
+    # For structured datasets, always use "N/A" as country
+    if form.country == "Global Dataset":
+        country_code = "N/A"
+    else:
+        country_code = coco.convert(form.country, to="ISO3")
+        if country_code == "not found":
+            country_code = "N/A"
+
+    email = user.claims.get("emails")[0]
+    database_user = await db.scalar(
+        select(DatabaseUser).where(DatabaseUser.email == email)
+    )
+
+    file_upload = FileUpload(
+        uploader_id=database_user.id,
+        uploader_email=database_user.email,
+        country=country_code,
+        dataset="structured",
+        original_filename=file.filename,
+        column_to_schema_mapping={},
+        column_license={},
+        dq_status=DQStatusEnum.SKIPPED,
+    )
+    db.add(file_upload)
+    await db.commit()
+
+    client = storage_client.get_blob_client(file_upload.upload_path)
+
+    try:
+        metadata = {
+            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            "country": form.country,
+            "uploader_email": email,
+            "dataset_type": "structured",
+        }
+
+        if form.source is not None:
+            metadata["source"] = form.source
+
+        await file.seek(0)
+        client.upload_blob(
+            await file.read(),
+            metadata=metadata,
+            content_settings=ContentSettings(content_type=file_type),
+        )
+        response.status_code = status.HTTP_201_CREATED
+    except HttpResponseError as err:
+        raise HTTPException(
+            detail=err.message, status_code=err.response.status_code
+        ) from err
+    except Exception as err:
+        raise err
+
+
 @router.get(
     "/data_quality_check/{upload_id}",
 )

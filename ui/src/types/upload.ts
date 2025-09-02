@@ -90,6 +90,13 @@ export interface UploadUnstructuredParams {
   metadata: string;
 }
 
+export interface UploadStructuredParams {
+  country: string;
+  file: File;
+  source?: string | null;
+  metadata: string;
+}
+
 export const DQStatusTagMapping: Record<
   DQStatus,
   ComponentProps<typeof Tag>["type"]

@@ -54,7 +54,18 @@ export const Route = createFileRoute(
       uploadSliceActions: { setStepIndex },
     } = getState();
 
-    if (uploadGroup === "other" && uploadType === "unstructured") {
+    const isUnstructured =
+      uploadGroup === "other" && uploadType === "unstructured";
+    const isStructured = uploadGroup === "other" && uploadType === "structured";
+
+    if (isUnstructured) {
+      return;
+    } else if (isStructured) {
+      // For structured datasets, we don't need column mapping
+      if (!file) {
+        setStepIndex(0);
+        throw redirect({ to: ".." });
+      }
       return;
     } else if (
       !file ||
