@@ -16,12 +16,13 @@ export const Route = createFileRoute(
 const STRUCTURED_DESCRIPTION = (
   <>
     <p>
-      Structured datasets are custom production datasets that will be dumped to
-      raw/custom-dataset/filename.csv in the data lake and will be accessible on
-      Superset via Trino.
+      Structured datasets are custom production datasets that follow a
+      predefined schema and structure, designed for analytical queries and
+      reporting.
     </p>
     <p>
-      This option is for datasets that follow a predefined schema and structure.
+      Once uploaded, these datasets will be available for querying and analysis
+      in Superset dashboards and reports.
     </p>
   </>
 );
