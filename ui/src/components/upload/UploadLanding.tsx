@@ -98,16 +98,16 @@ function UploadLanding(props: UploadLandingProps) {
               )}
               <Button
                 as={Link}
-                to="/upload/$uploadGroup/$uploadType"
+                to="/upload/$uploadGroup/options/$uploadType"
                 params={{
                   uploadGroup: "other",
-                  uploadType: "unstructured",
+                  uploadType: "schemaless",
                 }}
                 className="w-full"
                 size="xl"
                 renderIcon={Add}
               >
-                Unstructured dataset
+                Schemaless dataset
               </Button>
             </div>
           </Stack>

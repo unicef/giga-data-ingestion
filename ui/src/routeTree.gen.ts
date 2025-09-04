@@ -36,6 +36,7 @@ import { Route as IngestApiEditIngestionIdIndexImport } from './routes/ingest-ap
 import { Route as UserManagementUserRevokeUserIdImport } from './routes/user-management/user/revoke.$userId'
 import { Route as UserManagementUserEnableUserIdImport } from './routes/user-management/user/enable.$userId'
 import { Route as UserManagementUserEditUserIdImport } from './routes/user-management/user/edit.$userId'
+import { Route as UploadUploadGroupOptionsUploadTypeImport } from './routes/upload/$uploadGroup/options.$uploadType'
 import { Route as UploadUploadGroupUploadTypeSuccessImport } from './routes/upload/$uploadGroup/$uploadType/success'
 import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upload/$uploadGroup/$uploadType/metadata'
 import { Route as UploadUploadGroupUploadTypeColumnMappingImport } from './routes/upload/$uploadGroup/$uploadType/column-mapping'
@@ -197,6 +198,12 @@ const UserManagementUserEditUserIdRoute =
     getParentRoute: () => UserManagementRoute,
   } as any)
 
+const UploadUploadGroupOptionsUploadTypeRoute =
+  UploadUploadGroupOptionsUploadTypeImport.update({
+    path: '/$uploadGroup/options/$uploadType',
+    getParentRoute: () => UploadLazyRoute,
+  } as any)
+
 const UploadUploadGroupUploadTypeSuccessRoute =
   UploadUploadGroupUploadTypeSuccessImport.update({
     path: '/success',
@@ -339,6 +346,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeSuccessImport
       parentRoute: typeof UploadUploadGroupUploadTypeImport
     }
+    '/upload/$uploadGroup/options/$uploadType': {
+      preLoaderRoute: typeof UploadUploadGroupOptionsUploadTypeImport
+      parentRoute: typeof UploadLazyImport
+    }
     '/user-management/user/edit/$userId': {
       preLoaderRoute: typeof UserManagementUserEditUserIdImport
       parentRoute: typeof UserManagementImport
@@ -401,5 +412,6 @@ export const routeTree = rootRoute.addChildren([
       UploadUploadGroupUploadTypeIndexRoute,
     ]),
     UploadUploadIdIndexRoute,
+    UploadUploadGroupOptionsUploadTypeRoute,
   ]),
 ])

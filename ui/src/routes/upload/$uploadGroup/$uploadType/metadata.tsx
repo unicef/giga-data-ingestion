@@ -57,8 +57,16 @@ export const Route = createFileRoute(
       uploadSliceActions: { setStepIndex },
     } = getState();
 
-    if (uploadGroup === "other" && uploadType === "unstructured") {
+    const isUnstructured =
+      uploadGroup === "other" && uploadType === "unstructured";
+    const isStructured = uploadGroup === "other" && uploadType === "structured";
+
+    if (isUnstructured) {
       setStepIndex(1);
+    } else if (isStructured) {
+      // Structured datasets should not go through metadata step
+      setStepIndex(0);
+      throw redirect({ from: Route.fullPath, to: ".." });
     } else if (
       !file ||
       Object.values(columnMapping).filter(Boolean).length === 0
@@ -143,6 +151,7 @@ function Metadata() {
 
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
+  const isStructured = uploadGroup === "other" && uploadType === "structured";
 
   const { countryDatasets, isPrivileged } = useRoles();
 
@@ -173,6 +182,10 @@ function Metadata() {
     mutationFn: api.uploads.upload_unstructured,
   });
 
+  const uploadStructuredFile = useMutation({
+    mutationFn: api.uploads.upload_structured,
+  });
+
   const { data: allGroupsQuery, isLoading } = useSuspenseQuery({
     queryKey: ["groups"],
     queryFn: api.groups.list,
@@ -190,7 +203,7 @@ function Metadata() {
     ];
   }, [allGroupsQuery?.data]);
   let countryOptions = isPrivileged ? allCountryNames : userCountryNames;
-  if (isUnstructured) {
+  if (isUnstructured || isStructured) {
     countryOptions = ["N/A", ...countryOptions];
   }
 
@@ -233,7 +246,8 @@ function Metadata() {
     setIsUploadError(false);
 
     const metadata = { ...data };
-    const country = metadata.country;
+    // For structured datasets, use "N/A" as default country since they're global
+    const country = isStructured ? "N/A" : metadata.country;
     delete metadata.country;
 
     const columnMapping = uploadSlice.columnMapping;
@@ -264,6 +278,9 @@ function Metadata() {
     try {
       if (isUnstructured) {
         await uploadUnstructuredFile.mutateAsync(body);
+        setUploadDate(uploadSlice.timeStamp);
+      } else if (isStructured) {
+        await uploadStructuredFile.mutateAsync(body);
         setUploadDate(uploadSlice.timeStamp);
       } else {
         const {
@@ -317,7 +334,9 @@ function Metadata() {
                             countryOptions={countryOptions}
                             isLoading={isLoading}
                             errors={errors}
-                            register={register("country", { required: true })}
+                            register={register("country", {
+                              required: !isStructured,
+                            })}
                           />
                         ) : (
                           <RenderFormItem
@@ -338,7 +357,7 @@ function Metadata() {
               <Button
                 kind="secondary"
                 as={Link}
-                to={isUnstructured ? ".." : "../column-mapping"}
+                to={isUnstructured || isStructured ? ".." : "../column-mapping"}
                 onClick={() => setStepIndex(1)}
                 className="w-full"
                 renderIcon={ArrowLeft}

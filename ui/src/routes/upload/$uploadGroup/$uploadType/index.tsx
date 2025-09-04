@@ -9,7 +9,7 @@ import {
   SkeletonPlaceholder,
   Stack,
 } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
@@ -43,6 +43,11 @@ const validStructuredTypes = {
   "application/vnd.ms-excel": AcceptedFileTypes.EXCEL_LEGACY,
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
     AcceptedFileTypes.EXCEL,
+};
+
+const validCustomStructuredTypes = {
+  "text/csv": AcceptedFileTypes.CSV,
+  "application/csv": AcceptedFileTypes.CSV,
 };
 
 const validUnstructuredTypes = {
@@ -81,9 +86,12 @@ export default function Index() {
   const hasParsingError = !!parsingError;
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
+  const isStructured = uploadGroup === "other" && uploadType === "structured";
 
   const validTypes = isUnstructured
     ? validUnstructuredTypes
+    : isStructured
+    ? validCustomStructuredTypes
     : validStructuredTypes;
   const {
     uploadSlice,
@@ -95,10 +103,15 @@ export default function Index() {
       setMode,
       setDetectedColumns,
       setColumnMapping,
+      setUploadDate,
     },
   } = useStore();
   const { file, source: storeSource, mode: storeMode } = uploadSlice;
   const hasUploadedFile = file != null;
+
+  const uploadStructuredFile = useMutation({
+    mutationFn: api.uploads.upload_structured,
+  });
 
   const { register, watch } = useForm<{
     source: string | null;
@@ -122,7 +135,11 @@ export default function Index() {
   const { data: schemaQuery, isFetching: isSchemaFetching } = useQuery({
     queryFn: () => api.schema.get(metaschemaName, mode === "Update"),
     queryKey: ["schema", metaschemaName, mode, false],
-    enabled: isCoverage ? !!source : isGeolocation ? !!mode : !isUnstructured,
+    enabled: isCoverage
+      ? !!source
+      : isGeolocation
+      ? !!mode
+      : !isUnstructured && !isStructured,
   });
 
   const schema = schemaQuery?.data ?? [];
@@ -144,22 +161,44 @@ export default function Index() {
     }
   }, [schema]);
 
-  const handleProceedToNextStep = () => {
+  const handleProceedToNextStep = async () => {
     if (file) {
       setSource(source ?? null);
       setMode(mode);
       setStepIndex(1);
     }
-    void navigate({ to: isUnstructured ? "./metadata" : "./column-mapping" });
+
+    if (isStructured) {
+      // For structured datasets, upload directly without metadata
+      try {
+        const body = {
+          country: "Global Dataset",
+          file: file!,
+          source: source ?? null,
+          metadata: JSON.stringify({
+            dataset_type: "structured",
+            upload_timestamp: new Date().toISOString(),
+          }),
+        };
+
+        await uploadStructuredFile.mutateAsync(body);
+        setUploadDate(uploadSlice.timeStamp);
+        setStepIndex(2); // Step 2 for structured datasets (Submit step)
+        void navigate({ to: "../success" });
+      } catch (error) {
+        console.error("Upload failed:", error);
+        // Handle error appropriately
+      }
+    } else {
+      void navigate({ to: isUnstructured ? "./metadata" : "./column-mapping" });
+    }
   };
 
   const isProceedDisabled =
     !hasUploadedFile ||
     (isCoverage && !source) ||
     (isGeolocation && !mode) ||
-    isSchemaFetching ||
-    isParsing ||
-    hasParsingError;
+    (!isStructured && (isSchemaFetching || isParsing || hasParsingError));
   const isSchemaLoading = !(
     (!isCoverage && !isSchemaFetching) ||
     (!isGeolocation && !isSchemaFetching) ||
@@ -178,25 +217,45 @@ export default function Index() {
     setParsingError("");
     setIsParsing(true);
 
-    const detector = new HeaderDetector({
-      file,
-      schema,
-      setIsParsing: setIsParsing,
-      setError: setParsingError,
-      setColumnMapping,
-      setDetectedColumns,
-      type: validTypes[file.type as keyof typeof validTypes],
-    });
-    detector.validateFileSize();
-    detector.detect();
+    if (isStructured) {
+      // For structured datasets, just validate file size and set the file
+      if (file.size > 10 * 1024 * 1024) {
+        // 10MB limit
+        setParsingError("File size exceeds 10 MB limit");
+        setIsParsing(false);
+        return;
+      }
 
-    setUploadSliceState({
-      uploadSlice: {
-        ...uploadSlice,
-        file: file,
-        timeStamp: new Date(),
-      },
-    });
+      setUploadSliceState({
+        uploadSlice: {
+          ...uploadSlice,
+          file: file,
+          timeStamp: new Date(),
+        },
+      });
+      setIsParsing(false);
+    } else {
+      // For other datasets, use HeaderDetector
+      const detector = new HeaderDetector({
+        file,
+        schema,
+        setIsParsing: setIsParsing,
+        setError: setParsingError,
+        setColumnMapping,
+        setDetectedColumns,
+        type: validTypes[file.type as keyof typeof validTypes],
+      });
+      detector.validateFileSize();
+      detector.detect();
+
+      setUploadSliceState({
+        uploadSlice: {
+          ...uploadSlice,
+          file: file,
+          timeStamp: new Date(),
+        },
+      });
+    }
   }
 
   return (

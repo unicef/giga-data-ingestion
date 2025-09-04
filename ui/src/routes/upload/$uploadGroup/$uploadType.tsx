@@ -39,7 +39,10 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
       throw doRedirect;
     }
 
-    if (uploadGroup === "other" && uploadType !== "unstructured") {
+    if (
+      uploadGroup === "other" &&
+      !["unstructured", "structured", "schemaless"].includes(uploadType)
+    ) {
       throw doRedirect;
     }
 
@@ -67,6 +70,20 @@ const UNSTRUCTURED_DESCRIPTION = (
     </p>
   </>
 );
+
+const STRUCTURED_DESCRIPTION = (
+  <>
+    <p>
+      Structured datasets are custom production datasets that will be dumped to
+      raw/custom-dataset/filename.csv in the data lake and will be accessible on
+      Superset via Trino.
+    </p>
+    <p>
+      Only CSV files are accepted for structured datasets. Files must be no
+      larger than 10MB.
+    </p>
+  </>
+);
 function Layout() {
   const { uploadType, uploadGroup } = Route.useParams();
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
@@ -77,6 +94,10 @@ function Layout() {
   const title = uploadType.replace(/-/g, " ");
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
+  const isStructured = uploadGroup === "other" && uploadType === "structured";
+  const isSchemaless = isUnstructured || isStructured;
+  const isSchemalessOptions =
+    uploadGroup === "other" && uploadType === "schemaless";
   const {
     uploadSlice: { stepIndex },
     uploadSliceActions: { resetUploadSliceState },
@@ -89,7 +110,7 @@ function Layout() {
     (isCoverage && hasCoverage) ||
     (isGeolocation && hasGeolocation) ||
     isAdmin ||
-    (isUnstructured && hasAccess);
+    ((isSchemaless || isSchemalessOptions) && hasAccess);
 
   useEffect(() => {
     return resetUploadSliceState;
@@ -177,6 +198,8 @@ function Layout() {
                 ? GEOLOCATION_DESCRIPTION
                 : title === "coverage"
                 ? COVERAGE_DESCRIPTION
+                : title === "structured"
+                ? STRUCTURED_DESCRIPTION
                 : UNSTRUCTURED_DESCRIPTION}
             </div>
           </Stack>
@@ -195,6 +218,19 @@ function Layout() {
               />
               <ProgressStep
                 label="3"
+                description="Submit"
+                secondaryLabel="Submit"
+              />
+            </ProgressIndicator>
+          ) : isStructured ? (
+            <ProgressIndicator currentIndex={stepIndex} spaceEqually>
+              <ProgressStep
+                label="1"
+                description="Upload"
+                secondaryLabel="Upload"
+              />
+              <ProgressStep
+                label="2"
                 description="Submit"
                 secondaryLabel="Submit"
               />

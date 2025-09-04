@@ -51,23 +51,42 @@ class FileUpload(BaseModel):
     def filename(self) -> str:
         timestamp = self.created.strftime("%Y%m%d-%H%M%S")
         ext = Path(self.original_filename).suffix
-        country = "N-A" if self.country == "N/A" else self.country
-        filename_elements = [self.id, country, self.dataset]
-        if self.source is not None:
-            filename_elements.append(self.source)
 
-        filename_elements.append(timestamp)
+        if self.country == "N/A":
+            country = "N-A"
+        else:
+            country = self.country
+
+        if self.dataset == "structured":
+            # For structured datasets, use a simpler filename format
+            filename_elements = [self.id, country, timestamp]
+        else:
+            filename_elements = [self.id, country, self.dataset]
+            if self.source is not None:
+                filename_elements.append(self.source)
+            filename_elements.append(timestamp)
+
         filename = "_".join(filename_elements)
         return f"{filename}{ext}"
 
     @hybrid_property
     def upload_path(self) -> str:
-        filename_parts = [
-            constants.UPLOAD_PATH_PREFIX,
-            self.dataset
-            if self.dataset == "unstructured"
-            else f"school-{self.dataset}",
-            "$NA" if self.country == "N/A" else self.country,
-            self.filename,
-        ]
+        if self.dataset == "unstructured":
+            dataset_path = "unstructured"
+        elif self.dataset == "structured":
+            dataset_path = "raw/custom-dataset"
+        else:
+            dataset_path = f"school-{self.dataset}"
+
+        filename_parts = [constants.UPLOAD_PATH_PREFIX, dataset_path]
+
+        # Only add country to path for non-structured datasets
+        if self.dataset != "structured":
+            if self.country == "N/A":
+                country_path = "$NA"
+            else:
+                country_path = self.country
+            filename_parts.append(country_path)
+
+        filename_parts.append(self.filename)
         return "/".join(filename_parts)
