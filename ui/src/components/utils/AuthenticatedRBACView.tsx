@@ -30,13 +30,16 @@ function AuthenticatedRBACView({
 
   return (
     <AuthenticatedView>
-      {isFetching ? (
-        <FullPageLoading />
-      ) : isEnabledAndHasPermissions ? (
-        children
-      ) : (
-        <Forbidden />
-      )}
+      {isFetching && <FullPageLoading />}
+      {!isFetching && !isEnabledAndHasPermissions && <Forbidden />}
+      <div
+        style={{
+          display:
+            isFetching || !isEnabledAndHasPermissions ? "none" : undefined,
+        }}
+      >
+        {children}
+      </div>
     </AuthenticatedView>
   );
 }
