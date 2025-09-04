@@ -10,6 +10,7 @@ import {
   Stack,
   Tag,
 } from "@carbon/react";
+import * as Sentry from "@sentry/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
@@ -87,7 +88,7 @@ function UploadColumnMapping() {
   const [selectedColumns, setSelectedColumns] =
     useState<Record<string, string>>(columnMapping);
 
-  const { uploadType } = Route.useParams();
+  const { uploadType, uploadGroup } = Route.useParams();
   const metaschemaName =
     uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
 
@@ -152,6 +153,30 @@ function UploadColumnMapping() {
     setIsNavigating(true);
 
     if (file == null) {
+      // Log to Sentry with context
+      Sentry.captureException(
+        new Error("File upload attempted with missing file"),
+        {
+          tags: {
+            component: "ColumnMapping",
+            route: "upload-column-mapping",
+            uploadType,
+            uploadGroup,
+          },
+          extra: {
+            uploadSlice: {
+              hasFile: !!file,
+              hasColumnMapping: !!dataWithNullsReplaced.mapping,
+              stepIndex: 2,
+              mode: mode,
+              source: source,
+            },
+            formData: data,
+            timestamp: new Date().toISOString(),
+          },
+        },
+      );
+
       setIsNullFile(true);
     }
 
