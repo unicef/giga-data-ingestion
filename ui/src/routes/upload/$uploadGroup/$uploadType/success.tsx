@@ -355,7 +355,7 @@ function Success() {
                         kind="primary"
                         size="sm"
                         renderIcon={Download}
-                        disabled={rows == 0}
+                        disabled={rows === 0}
                         onClick={handleDownloadDqSummary}
                       >
                         Download Summary
