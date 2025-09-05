@@ -30,13 +30,13 @@ const STRUCTURED_DESCRIPTION = (
 const UNSTRUCTURED_DESCRIPTION = (
   <>
     <p>
-      Data such as geospatial and shape files, used to provide geographical
-      information and boundaries which represent the landscape of countries.
+      Structured datasets are custom production datasets that follow a
+      predefined schema and structure, designed for analytical queries and
+      reporting.
     </p>
     <p>
-      Any file uploaded must be no larger than 10MB and be in one of the
-      accepted file formats: [bmp, .gif, .jpeg, .jpg, .png, .tif, .tiff, .csv,
-      .xlsx, .xls, .pdf, .doc, .docx]
+      Once uploaded, these datasets will be available for querying and analysis
+      in Superset dashboards and reports.
     </p>
   </>
 );
