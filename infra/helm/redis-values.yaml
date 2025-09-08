@@ -171,7 +171,7 @@ commonConfiguration: |-
   tcp-keepalive 300
   
   # Memory optimization
-  # 2gb memory limit; 1gb for redis + 500mb for metrics + 500mb for system
+  # 1.2gb memory limit; 1gb for redis + 200mb for metrics + system
   maxmemory 1gb
   maxmemory-policy allkeys-lru
   maxmemory-samples 10
@@ -304,11 +304,11 @@ master:
   ##
   resources:
     requests:
-      cpu: 50m
-      memory: 1Gi
+      cpu: 10m
+      memory: 128Mi
     limits:
-      cpu: 500m
-      memory: 6Gi
+      cpu: 100m
+      memory: 1200Mi
   ## Configure Pods Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
   ## @param master.podSecurityContext.enabled Enabled Redis&reg; master pods' Security Context
