@@ -106,6 +106,7 @@ export default function Index() {
       setUploadDate,
     },
   } = useStore();
+
   const { file, source: storeSource, mode: storeMode } = uploadSlice;
   const hasUploadedFile = file != null;
 
@@ -162,14 +163,13 @@ export default function Index() {
   }, [schema]);
 
   const handleProceedToNextStep = async () => {
-    if (file) {
-      setSource(source ?? null);
-      setMode(mode);
-      setStepIndex(1);
-    }
-
     if (isStructured) {
       // For structured datasets, upload directly without metadata
+      if (file) {
+        setSource(source ?? null);
+        setMode(mode);
+      }
+
       try {
         const body = {
           country: "Global Dataset",
@@ -184,12 +184,18 @@ export default function Index() {
         await uploadStructuredFile.mutateAsync(body);
         setUploadDate(uploadSlice.timeStamp);
         setStepIndex(2); // Step 2 for structured datasets (Submit step)
-        void navigate({ to: "../success" });
+        void navigate({ to: "./success" });
       } catch (error) {
         console.error("Upload failed:", error);
-        // Handle error appropriately
+        // Handle error appropriately - don't navigate on error
+        return;
       }
     } else {
+      if (file) {
+        setSource(source ?? null);
+        setMode(mode);
+        setStepIndex(1);
+      }
       void navigate({ to: isUnstructured ? "./metadata" : "./column-mapping" });
     }
   };

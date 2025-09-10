@@ -74,9 +74,8 @@ const UNSTRUCTURED_DESCRIPTION = (
 const STRUCTURED_DESCRIPTION = (
   <>
     <p>
-      Structured datasets are custom production datasets that will be dumped to
-      raw/custom-dataset/filename.csv in the data lake and will be accessible on
-      Superset via Trino.
+      Structured datasets are custom production datasets that will be uploaded
+      and will be accessible on Superset.
     </p>
     <p>
       Only CSV files are accepted for structured datasets. Files must be no
