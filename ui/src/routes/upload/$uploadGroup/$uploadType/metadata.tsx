@@ -19,6 +19,7 @@ import {
   Tag,
 } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import * as Sentry from "@sentry/react";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
@@ -208,7 +209,32 @@ function Metadata() {
 
   const onSubmit: SubmitHandler<MetadataForm> = async data => {
     if (uploadSlice.file === null) {
+      // Log to Sentry with context
+      Sentry.captureException(
+        new Error("File upload attempted with missing file"),
+        {
+          tags: {
+            component: "Metadata",
+            route: "upload-metadata",
+            uploadType,
+            uploadGroup,
+          },
+          extra: {
+            uploadSlice: {
+              hasFile: !!uploadSlice.file,
+              hasColumnMapping: !!uploadSlice.columnMapping,
+              stepIndex: uploadSlice.stepIndex,
+              mode: uploadSlice.mode,
+              source: uploadSlice.source,
+            },
+            formData: data,
+            timestamp: new Date().toISOString(),
+          },
+        },
+      );
+
       setIsNullFile(true);
+      return;
     }
 
     if (Object.keys(errors).length > 0) {
