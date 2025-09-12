@@ -61,11 +61,7 @@ export const Route = createFileRoute(
     if (isUnstructured) {
       return;
     } else if (isStructured) {
-      // For structured datasets, we don't need column mapping
-      if (!file) {
-        setStepIndex(0);
-        throw redirect({ to: ".." });
-      }
+      // For structured datasets, allow access even without file since upload is already complete
       return;
     } else if (
       !file ||
@@ -126,20 +122,23 @@ function Success() {
     uploadSlice: { uploadId, source },
   } = useStore();
 
-  const navigate = useNavigate({ from: "/upload/$uploadId" });
+  const navigate = useNavigate({ from: Route.fullPath });
 
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
+  const isStructured = uploadGroup === "other" && uploadType === "structured";
 
   const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
     queryFn: () => api.uploads.list_basic_checks(uploadType, source),
     queryKey: ["basic_checks", uploadType, source],
+    enabled: !isStructured, // Don't query for structured datasets
   });
   const basicCheck = basicCheckQuery?.data ?? [];
 
   const { data: uploadQuery } = useQuery({
     queryKey: ["upload", uploadId],
     queryFn: () => api.uploads.get_upload(uploadId),
+    enabled: !isStructured && !!uploadId, // Don't query for structured datasets
   });
   const uploadData = useMemo<UploadResponse>(
     () => uploadQuery?.data ?? initialUploadResponse,
@@ -159,7 +158,7 @@ function Success() {
     queryKey: ["dq_check", uploadId],
     queryFn: () => api.uploads.get_data_quality_check(uploadId),
     refetchInterval: 7000,
-    enabled: !isUnstructured,
+    enabled: !isUnstructured && !isStructured, // Don't query for structured datasets
   });
 
   const dqResult = useMemo<DataQualityCheck>(
@@ -202,6 +201,9 @@ function Success() {
 
   const unstructuredMessage =
     "Your file has been uploaded! Note that no checks will be performed on this file.";
+
+  const structuredMessage =
+    "Your file has been uploaded and will be made available for query on Superset within 5 minutes.";
 
   type TagColors = ComponentProps<typeof Tag>["type"];
 
@@ -247,6 +249,13 @@ function Success() {
       {isUnstructured ? (
         <>
           {unstructuredMessage}
+          <Button as={Link} to="/" onClick={resetUploadSliceState} isExpressive>
+            Back to Home
+          </Button>
+        </>
+      ) : isStructured ? (
+        <>
+          {structuredMessage}
           <Button as={Link} to="/" onClick={resetUploadSliceState} isExpressive>
             Back to Home
           </Button>
