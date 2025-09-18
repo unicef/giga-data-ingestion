@@ -51,7 +51,7 @@ spec:
               --concurrency=1
               --hostname=celery@%n
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.celeryWorker.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -117,7 +117,7 @@ spec:
             - -c
             - celery -A data_ingestion.celery beat
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.celeryWorker.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
