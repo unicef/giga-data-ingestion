@@ -6,8 +6,11 @@ podDisruptionBudget:
 
 resources:
   requests:
-    cpu: 100m
-    memory: 256Mi
+    cpu: 0.75
+    memory: 2Gi
   limits:
-    cpu: 200m
-    memory: 512Mi
+    cpu: 1
+    memory: 3Gi
+
+celeryWorker:
+  resources: { }
