@@ -1,13 +1,13 @@
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { render } from "@react-email/render";
-import { nodeProfilingIntegration } from "@sentry/profiling-node";
+// import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { logger } from "hono/logger";
 import { sentry } from '@hono/sentry';
 import { secureHeaders } from "hono/secure-headers";
-import { hostname } from "os";
+// import { hostname } from "os";
 
 import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
 import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
@@ -21,6 +21,7 @@ import {
 } from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
 import { MasterDataReleaseNotificationProps } from "./types/master-data-release-notification";
+import { PDFGenerator } from "./lib/pdf-generator";
 
 const app = new Hono();
 
@@ -29,12 +30,10 @@ if (process.env.NODE_SENTRY_DSN && process.env.NODE_ENV !== "development") {
   app.use("*", sentry({
     dsn: process.env.NODE_SENTRY_DSN,
     environment: process.env.DEPLOY_ENV ?? "local",
-    serverName: `ingestion-portal-email-${process.env.DEPLOY_ENV}@${hostname()}`,
-    integrations: [nodeProfilingIntegration()],
+    // integrations: [nodeProfilingIntegration()],
     release: `github.com/unicef/giga-data-ingestion:${process.env.COMMIT_SHA}`,
     sampleRate: 1.0,
     tracesSampleRate: 1.0,
-    profilesSampleRate: 1.0,
   }));
 }
 app.use(logger());
@@ -91,11 +90,58 @@ app.post(
   zValidator("json", DataQualityReportEmailProps),
   async (ctx) => {
     const json = ctx.req.valid("json") as DataQualityReportEmailProps;
-    const html = await render(<DataQualityReport {...json} />);
-    const text = await render(<DataQualityReport {...json} />, {
+    
+    // Generate PDF attachment if data quality check is available
+    let pdfAttachment = null;
+    if (json.dataQualityCheck) {
+      try {
+        const pdfGenerator = new PDFGenerator();
+        const pdfData = {
+          country: json.country,
+          dataset: json.dataset,
+          uploadDate: json.uploadDate,
+          uploadId: json.uploadId,
+          dataQualityCheck: json.dataQualityCheck,
+          generatedDate: new Date().toLocaleString(),
+          fileName: `${json.country}_${json.dataset}_${json.uploadId}.csv`
+        };
+        
+        const pdfBuffer = await pdfGenerator.generateDQReportPDF(pdfData);
+        
+        if (pdfBuffer && pdfBuffer.length > 0) {
+          const base64Content = Buffer.from(pdfBuffer).toString('base64');
+          
+          pdfAttachment = {
+            filename: `DQ_Report_${json.country}_${json.uploadId}.pdf`,
+            content: base64Content,
+            contentType: 'application/pdf'
+          };
+        }
+        
+        await pdfGenerator.close();
+      } catch (error) {
+        console.error('Error generating PDF:', error);
+        console.error('PDF generation failed, continuing without attachment');
+        // Continue without PDF attachment if generation fails
+        pdfAttachment = null;
+      }
+    }
+    
+    const emailProps = {
+      ...json,
+      pdfAttachment
+    };
+    
+    const html = await render(<DataQualityReport {...emailProps} />);
+    const text = await render(<DataQualityReport {...emailProps} />, {
       plainText: true,
     });
-    return ctx.json({ html, text });
+    
+    return ctx.json({ 
+      html, 
+      text, 
+      attachments: pdfAttachment ? [pdfAttachment] : []
+    });
   },
 );
 

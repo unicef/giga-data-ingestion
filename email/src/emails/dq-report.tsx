@@ -26,14 +26,16 @@ const DataQualityReport = ({
   dataset,
   uploadDate,
   uploadId,
+  country,
+  pdfAttachment,
 }: DataQualityReportEmailProps) => {
   const hasCriticalError = Boolean(
     dataQualityCheck["critical_error_check"]?.[0]?.percent_failed > 0,
   );
 
   const title = hasCriticalError
-    ? "Data Check Error: Action Required!"
-    : "Data Check Warnings: Action Required!";
+    ? "Data Check Error"
+    : "Data Check Warnings";
 
   const checks = Object.keys(dataQualityCheck)
     .filter((key) => {
@@ -94,8 +96,21 @@ const DataQualityReport = ({
                 Dataset: <strong>{dataset}</strong>
               </Text>
               <Text className="my-1">
+                Country: <strong>{country}</strong>
+              </Text>
+              <Text className="my-1">
                 File Uploaded at <strong>{uploadDate}</strong>
               </Text>
+
+              {pdfAttachment && pdfAttachment.filename ? (
+                <Text className="my-1 text-giga-green">
+                  📎 <strong>Detailed PDF Report Attached:</strong> {pdfAttachment.filename}
+                </Text>
+              ) : (
+                <Text className="my-1 text-gray-500">
+                  📄 <strong>PDF Report:</strong> Not available for this upload
+                </Text>
+              )}
 
               <Section className="text-center my-8 ">
                 <Button
@@ -105,8 +120,6 @@ const DataQualityReport = ({
                   View Complete Report
                 </Button>
               </Section>
-
-              <Section className="py-4">{checks}</Section>
 
               <Footer>
                 <Text className="text-[#666666] text-[12px] leading-[24px]">
@@ -136,6 +149,7 @@ DataQualityReport.PreviewProps = {
     timeZoneName: "short",
   }),
   uploadId: "NjA5NzUy",
+  country: "KEN",
 } satisfies DataQualityReportEmailProps;
 
 export default DataQualityReport;
