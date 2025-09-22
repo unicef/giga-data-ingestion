@@ -1,7 +1,7 @@
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { render } from "@react-email/render";
-// import { nodeProfilingIntegration } from "@sentry/profiling-node";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { logger } from "hono/logger";
