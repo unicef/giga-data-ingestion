@@ -73,26 +73,29 @@ export class PDFGeneratorProfessional {
   }
 
   private addHeader(data: PDFReportData) {
-    // Add Giga Sync logo (placeholder text for now)
-    this.doc.setFontSize(16);
+    // Add Giga Sync logo area (left side)
+    this.doc.setFontSize(14);
     this.doc.setTextColor(0, 102, 204); // Blue color
-    this.doc.text('Giga Sync', this.margin, 15);
+    this.doc.setFont(undefined, 'bold');
+    this.doc.text('Giga Sync', this.margin, 20);
     
-    // Add giga global logo (placeholder text for now)
-    this.doc.text('giga global', this.pageWidth - this.margin - 30, 15);
+    // Add giga global logo area (right side)
+    this.doc.text('giga global', this.pageWidth - this.margin - 35, 20);
     
-    // Add main title
-    this.doc.setFontSize(24);
+    // Add main title with proper styling
+    this.doc.setFontSize(20);
     this.doc.setTextColor(0, 102, 204); // Blue color
-    this.doc.text(`Data Quality Report - ${data.country}`, this.pageWidth / 2, 35, { align: 'center' });
+    this.doc.setFont(undefined, 'bold');
+    this.doc.text(`Data Quality Report - ${data.country}`, this.pageWidth / 2, 40, { align: 'center' });
     
-    // Add generated date
-    this.doc.setFontSize(10);
+    // Add generated date and file info
+    this.doc.setFontSize(9);
     this.doc.setTextColor(100, 100, 100);
-    this.doc.text(`Generated on: ${data.generatedDate}`, this.margin, 45);
-    this.doc.text(`Uploaded File: ${data.fileName}`, this.margin, 50);
+    this.doc.setFont(undefined, 'normal');
+    this.doc.text(`Generated on: ${data.generatedDate}`, this.margin, 50);
+    this.doc.text(`Uploaded File: ${data.fileName}`, this.margin, 55);
     
-    this.currentY = 60;
+    this.currentY = 65;
   }
 
   private addFileOverview(data: PDFReportData) {
@@ -108,7 +111,7 @@ export class PDFGeneratorProfessional {
     this.addMetricRow('Count Of Schools That Failed The Critical Checks', failedSchools);
     this.addCommentRow(this.getFileOverviewComment(dq));
     
-    this.currentY += 10;
+    this.currentY += 8;
   }
 
   private addLocationQuality(data: PDFReportData) {
@@ -121,7 +124,7 @@ export class PDFGeneratorProfessional {
     this.addMetricRow('Low Precision Lat/Long (< 5 digits)', this.getMetricValue(dq, 'geospatial_checks', 'low_precision'));
     this.addCommentRow(this.getLocationQualityComment(dq));
     
-    this.currentY += 10;
+    this.currentY += 8;
   }
 
   private addSchoolIdChecks(data: PDFReportData) {
@@ -134,7 +137,7 @@ export class PDFGeneratorProfessional {
     this.addMetricRow('Missing School Names', this.getMetricValue(dq, 'completeness_checks', 'missing_school_name'));
     this.addCommentRow(this.getSchoolIdComment(dq));
     
-    this.currentY += 10;
+    this.currentY += 8;
   }
 
   private addEducationLevelData(data: PDFReportData) {
@@ -150,7 +153,7 @@ export class PDFGeneratorProfessional {
     this.addMetricRow('Special Needs', this.getMetricValue(dq, 'domain_checks', 'special_needs'));
     this.addCommentRow(this.getEducationLevelComment(dq));
     
-    this.currentY += 10;
+    this.currentY += 8;
   }
 
   private addConnectivityData(data: PDFReportData) {
@@ -163,7 +166,7 @@ export class PDFGeneratorProfessional {
     this.addMetricRow('Reported Internet Availability', this.getMetricValue(dq, 'domain_checks', 'reported_internet'));
     this.addCommentRow(this.getConnectivityComment(dq));
     
-    this.currentY += 10;
+    this.currentY += 8;
   }
 
   private addComputerAvailability(data: PDFReportData) {
@@ -174,7 +177,7 @@ export class PDFGeneratorProfessional {
     this.addMetricRow('Missing Computer Availability Data', this.getMetricValue(dq, 'completeness_checks', 'missing_computer_data'));
     this.addCommentRow(this.getComputerAvailabilityComment(dq));
     
-    this.currentY += 10;
+    this.currentY += 8;
   }
 
   private addDensityDuplicationChecks(data: PDFReportData) {
@@ -189,31 +192,38 @@ export class PDFGeneratorProfessional {
     this.addMetricRow('Same name + education level + geolocation within 110m + level', this.getMetricValue(dq, 'duplicate_rows_checks', 'same_name_education_geo_level'));
     this.addCommentRow(this.getDensityComment(dq));
     
-    this.currentY += 10;
+    this.currentY += 8;
   }
 
   private addNextSteps(data: PDFReportData) {
     this.addSectionHeader('Next Steps');
     
-    // Add empty text area (placeholder)
+    // Add empty text area (placeholder) - larger box like in the image
     this.doc.setDrawColor(200, 200, 200);
-    this.doc.rect(this.margin, this.currentY, this.pageWidth - 2 * this.margin, 40);
+    this.doc.setLineWidth(0.5);
+    this.doc.rect(this.margin, this.currentY, this.pageWidth - 2 * this.margin, 50);
     
-    this.currentY += 45;
+    // Add placeholder text inside the box
+    this.doc.setFontSize(8);
+    this.doc.setTextColor(150, 150, 150);
+    this.doc.setFont(undefined, 'normal');
+    this.doc.text('(Large empty text area for manual input)', this.margin + 5, this.currentY + 10);
+    
+    this.currentY += 55;
     
     this.addCommentRow(this.getNextStepsComment(data.dataQualityCheck));
   }
 
   private addSectionHeader(title: string) {
-    this.doc.setFontSize(14);
+    this.doc.setFontSize(12);
     this.doc.setTextColor(0, 102, 204); // Blue color
     this.doc.setFont(undefined, 'bold');
     this.doc.text(title, this.margin, this.currentY);
-    this.currentY += 8;
+    this.currentY += 6;
   }
 
   private addMetricRow(label: string, value: string) {
-    this.doc.setFontSize(10);
+    this.doc.setFontSize(9);
     this.doc.setTextColor(0, 0, 0);
     this.doc.setFont(undefined, 'normal');
     
@@ -224,31 +234,32 @@ export class PDFGeneratorProfessional {
     const valueWidth = this.doc.getTextWidth(value);
     this.doc.text(value, this.pageWidth - this.margin - valueWidth, this.currentY);
     
-    this.currentY += 5;
+    this.currentY += 4;
   }
 
   private addCommentRow(comment: string) {
     if (comment) {
-      this.doc.setFontSize(9);
+      this.doc.setFontSize(8);
       this.doc.setTextColor(100, 100, 100);
       this.doc.setFont(undefined, 'italic');
       this.doc.text(`Comment: ${comment}`, this.margin, this.currentY);
-      this.currentY += 5;
+      this.currentY += 4;
     }
   }
 
   private addFooter() {
-    const footerY = this.pageHeight - 20;
+    const footerY = this.pageHeight - 15;
     
     // Add page number
     this.doc.setFontSize(10);
     this.doc.setTextColor(100, 100, 100);
     this.doc.text('01', this.pageWidth / 2, footerY, { align: 'center' });
     
-    // Add logos (placeholder text)
+    // Add organization logos (placeholder text)
+    this.doc.setFontSize(8);
     this.doc.text('giga', this.margin, footerY);
-    this.doc.text('unicef for every child', this.pageWidth / 2 - 30, footerY);
-    this.doc.text('ITU', this.pageWidth - this.margin - 10, footerY);
+    this.doc.text('unicef for every child', this.pageWidth / 2 - 25, footerY);
+    this.doc.text('ITU', this.pageWidth - this.margin - 8, footerY);
   }
 
   // Helper methods (same as before)
