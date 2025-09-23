@@ -21,7 +21,7 @@ import {
 } from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
 import { MasterDataReleaseNotificationProps } from "./types/master-data-release-notification";
-import { PDFGeneratorSimple } from "./lib/pdf-generator-simple";
+import { PDFGeneratorProfessional } from "./lib/pdf-generator-professional";
 
 const app = new Hono();
 
@@ -95,7 +95,7 @@ app.post(
     let pdfAttachment = null;
     if (json.dataQualityCheck) {
       try {
-        const pdfGenerator = new PDFGeneratorSimple();
+        const pdfGenerator = new PDFGeneratorProfessional();
         const pdfData = {
           country: json.country,
           dataset: json.dataset,
@@ -112,9 +112,9 @@ app.post(
           const base64Content = Buffer.from(pdfBuffer).toString('base64');
           
           pdfAttachment = {
-            filename: `DQ_Report_${json.country}_${json.uploadId}.txt`,
+            filename: `DQ_Report_${json.country}_${json.uploadId}.pdf`,
             content: base64Content,
-            contentType: 'text/plain'
+            contentType: 'application/pdf'
           };
         }
       } catch (error) {
