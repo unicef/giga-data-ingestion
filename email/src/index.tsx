@@ -21,7 +21,7 @@ import {
 } from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
 import { MasterDataReleaseNotificationProps } from "./types/master-data-release-notification";
-import { PDFGenerator } from "./lib/pdf-generator";
+import { PDFGeneratorSimple } from "./lib/pdf-generator-simple";
 
 const app = new Hono();
 
@@ -95,7 +95,7 @@ app.post(
     let pdfAttachment = null;
     if (json.dataQualityCheck) {
       try {
-        const pdfGenerator = new PDFGenerator();
+        const pdfGenerator = new PDFGeneratorSimple();
         const pdfData = {
           country: json.country,
           dataset: json.dataset,
@@ -112,13 +112,11 @@ app.post(
           const base64Content = Buffer.from(pdfBuffer).toString('base64');
           
           pdfAttachment = {
-            filename: `DQ_Report_${json.country}_${json.uploadId}.pdf`,
+            filename: `DQ_Report_${json.country}_${json.uploadId}.txt`,
             content: base64Content,
-            contentType: 'application/pdf'
+            contentType: 'text/plain'
           };
         }
-        
-        await pdfGenerator.close();
       } catch (error) {
         console.error('Error generating PDF:', error);
         console.error('PDF generation failed, continuing without attachment');
