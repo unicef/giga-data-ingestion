@@ -398,10 +398,10 @@ primary:
   ##
   livenessProbe:
     enabled: true
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 10
+    failureThreshold: 5
     successThreshold: 1
   ## @param primary.readinessProbe.enabled Enable readinessProbe on PostgreSQL Primary containers
   ## @param primary.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
@@ -412,10 +412,10 @@ primary:
   ##
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 5
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 10
+    failureThreshold: 5
     successThreshold: 1
   ## @param primary.startupProbe.enabled Enable startupProbe on PostgreSQL Primary containers
   ## @param primary.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
@@ -459,7 +459,13 @@ primary:
   ##     cpu: 3
   ##     memory: 1024Mi
   ##
-  resources: { }
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
   ## Pod Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
   ## @param primary.podSecurityContext.enabled Enable security context
@@ -835,10 +841,10 @@ readReplicas:
   ##
   livenessProbe:
     enabled: true
-    initialDelaySeconds: 30
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 10
+    failureThreshold: 5
     successThreshold: 1
   ## @param readReplicas.readinessProbe.enabled Enable readinessProbe on PostgreSQL read only containers
   ## @param readReplicas.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
@@ -849,10 +855,10 @@ readReplicas:
   ##
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 5
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 10
+    failureThreshold: 5
     successThreshold: 1
   ## @param readReplicas.startupProbe.enabled Enable startupProbe on PostgreSQL read only containers
   ## @param readReplicas.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
@@ -896,7 +902,13 @@ readReplicas:
   ##     cpu: 3
   ##     memory: 1024Mi
   ##
-  resources: { }
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
   ## Pod Security Context
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
   ## @param readReplicas.podSecurityContext.enabled Enable security context
@@ -1564,10 +1576,10 @@ metrics:
   ##
   livenessProbe:
     enabled: true
-    initialDelaySeconds: 5
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 10
+    failureThreshold: 5
     successThreshold: 1
   ## @param metrics.readinessProbe.enabled Enable readinessProbe on PostgreSQL Prometheus exporter containers
   ## @param metrics.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
@@ -1578,10 +1590,10 @@ metrics:
   ##
   readinessProbe:
     enabled: true
-    initialDelaySeconds: 5
-    periodSeconds: 10
-    timeoutSeconds: 5
-    failureThreshold: 6
+    initialDelaySeconds: 60
+    periodSeconds: 15
+    timeoutSeconds: 10
+    failureThreshold: 5
     successThreshold: 1
   ## @param metrics.startupProbe.enabled Enable startupProbe on PostgreSQL Prometheus exporter containers
   ## @param metrics.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
