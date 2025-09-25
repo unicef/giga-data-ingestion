@@ -34,8 +34,8 @@ const DataQualityReport = ({
   );
 
   const title = hasCriticalError
-    ? "Data Check Error"
-    : "Data Check Warnings";
+    ? "Data Quality Issues"
+    : "Data Quality Warnings";
 
   const checks = Object.keys(dataQualityCheck)
     .filter((key) => {

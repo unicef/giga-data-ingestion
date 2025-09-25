@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { DataQualityReportEmailProps } from '../types/dq-report';
+import GigaLogo from '../static/GIGA_logo.png';
 
 export interface PDFReportData {
   country: string;
@@ -37,8 +37,7 @@ export class PDFGeneratorProfessional {
       // Add location quality section
       this.addLocationQuality(data);
       
-      // Add school ID checks section
-      this.addSchoolIdChecks(data);
+      // School ID checks are now handled in addLocationQuality
       
       // Add education level data section
       this.addEducationLevelData(data);
@@ -52,8 +51,7 @@ export class PDFGeneratorProfessional {
       // Add connectivity data section
       this.addConnectivityData(data);
       
-      // Add computer availability section
-      this.addComputerAvailability(data);
+      // Computer availability is now handled in addConnectivityData
       
       // Add density & duplication checks section
       this.addDensityDuplicationChecks(data);
@@ -74,12 +72,20 @@ export class PDFGeneratorProfessional {
 
   private addHeader(data: PDFReportData) {
     // Add Giga Sync logo area (left side)
-    this.doc.setFontSize(14);
-    this.doc.setTextColor(0, 102, 204); // Blue color
-    this.doc.setFont(undefined, 'bold');
-    this.doc.text('Giga Sync', this.margin, 20);
+    try {
+      this.doc.addImage(GigaLogo, 'PNG', this.margin, 5, 30, 15);
+    } catch (error) {
+      // Fallback to text if image fails
+      this.doc.setFontSize(14);
+      this.doc.setTextColor(0, 102, 204);
+      this.doc.setFont(undefined, 'bold');
+      this.doc.text('Giga Sync', this.margin, 20);
+    }
     
     // Add giga global logo area (right side)
+    this.doc.setFontSize(14);
+    this.doc.setTextColor(0, 102, 204);
+    this.doc.setFont(undefined, 'bold');
     this.doc.text('giga global', this.pageWidth - this.margin - 35, 20);
     
     // Add main title with proper styling
@@ -115,29 +121,33 @@ export class PDFGeneratorProfessional {
   }
 
   private addLocationQuality(data: PDFReportData) {
-    this.addSectionHeader('Location Quality');
+    // Two-column layout: Location Quality (left) and School ID Checks (right)
+    const leftX = this.margin;
+    const rightX = this.pageWidth / 2 + 10;
+    const originalY = this.currentY;
+    
+    // Left column: Location Quality
+    this.currentY = originalY;
+    this.addSectionHeader('Location Quality', leftX);
     
     const dq = data.dataQualityCheck;
     
-    this.addMetricRow('Missing Lat/Long', this.getMetricValue(dq, 'geospatial_checks', 'missing_lat_long'));
-    this.addMetricRow('Schools Outside Country Boundary', this.getMetricValue(dq, 'geospatial_checks', 'outside_boundary'));
-    this.addMetricRow('Low Precision Lat/Long (< 5 digits)', this.getMetricValue(dq, 'geospatial_checks', 'low_precision'));
-    this.addCommentRow(this.getLocationQualityComment(dq));
+    this.addMetricRow('Missing Lat/Long', this.getMetricValue(dq, 'geospatial_checks', 'missing_lat_long'), leftX);
+    this.addMetricRow('Schools Outside Country Boundary', this.getMetricValue(dq, 'geospatial_checks', 'outside_boundary'), leftX);
+    this.addMetricRow('Low Precision Lat/Long (< 5 digits)', this.getMetricValue(dq, 'geospatial_checks', 'precision'), leftX);
+    this.addCommentRow(this.getLocationQualityComment(dq), leftX);
     
-    this.currentY += 8;
-  }
-
-  private addSchoolIdChecks(data: PDFReportData) {
-    this.addSectionHeader('School ID Checks');
+    // Right column: School ID Checks
+    this.currentY = originalY;
+    this.addSectionHeader('School ID Checks', rightX);
     
-    const dq = data.dataQualityCheck;
+    this.addMetricRow('Duplicate School IDs', this.getMetricValue(dq, 'duplicate_rows_checks', 'duplicate_set'), rightX);
+    this.addMetricRow('Missing School IDs', this.getMetricValue(dq, 'completeness_checks', 'missing_school_id'), rightX);
+    this.addMetricRow('Missing School Names', this.getMetricValue(dq, 'completeness_checks', 'missing_school_name'), rightX);
+    this.addCommentRow(this.getSchoolIdComment(dq), rightX);
     
-    this.addMetricRow('Duplicate School IDs', this.getMetricValue(dq, 'duplicate_rows_checks', 'duplicate_ids'));
-    this.addMetricRow('Missing School IDs', this.getMetricValue(dq, 'completeness_checks', 'missing_school_id'));
-    this.addMetricRow('Missing School Names', this.getMetricValue(dq, 'completeness_checks', 'missing_school_name'));
-    this.addCommentRow(this.getSchoolIdComment(dq));
-    
-    this.currentY += 8;
+    // Move to the bottom of the higher column
+    this.currentY = Math.max(this.currentY, originalY + 60) + 8;
   }
 
   private addEducationLevelData(data: PDFReportData) {
@@ -145,10 +155,10 @@ export class PDFGeneratorProfessional {
     
     const dq = data.dataQualityCheck;
     
-    this.addMetricRow('Primary School', this.getMetricValue(dq, 'domain_checks', 'primary_school'));
-    this.addMetricRow('Secondary School', this.getMetricValue(dq, 'domain_checks', 'secondary_school'));
-    this.addMetricRow('Combined School', this.getMetricValue(dq, 'domain_checks', 'combined_school'));
-    this.addMetricRow('Intermediate School', this.getMetricValue(dq, 'domain_checks', 'intermediate_school'));
+    this.addMetricRow('Primary School', this.getMetricValue(dq, 'domain_checks', 'primary'));
+    this.addMetricRow('Secondary School', this.getMetricValue(dq, 'domain_checks', 'secondary'));
+    this.addMetricRow('Combined School', this.getMetricValue(dq, 'domain_checks', 'combined'));
+    this.addMetricRow('Intermediate School', this.getMetricValue(dq, 'domain_checks', 'intermediate'));
     this.addMetricRow('ECD', this.getMetricValue(dq, 'domain_checks', 'ecd'));
     this.addMetricRow('Special Needs', this.getMetricValue(dq, 'domain_checks', 'special_needs'));
     this.addCommentRow(this.getEducationLevelComment(dq));
@@ -157,27 +167,31 @@ export class PDFGeneratorProfessional {
   }
 
   private addConnectivityData(data: PDFReportData) {
-    this.addSectionHeader('Connectivity Data');
+    // Two-column layout: Connectivity Data (left) and Computer Availability (right)
+    const leftX = this.margin;
+    const rightX = this.pageWidth / 2 + 10;
+    const originalY = this.currentY;
+    
+    // Left column: Connectivity Data
+    this.currentY = originalY;
+    this.addSectionHeader('Connectivity Data', leftX);
     
     const dq = data.dataQualityCheck;
     
-    this.addMetricRow('Missing Internet Availability Flag', this.getMetricValue(dq, 'completeness_checks', 'missing_internet_flag'));
-    this.addMetricRow('Connectivity Type Missing', this.getMetricValue(dq, 'completeness_checks', 'missing_connectivity_type'));
-    this.addMetricRow('Reported Internet Availability', this.getMetricValue(dq, 'domain_checks', 'reported_internet'));
-    this.addCommentRow(this.getConnectivityComment(dq));
+    this.addMetricRow('Missing Internet Availability Flag', this.getMetricValue(dq, 'completeness_checks', 'missing_internet_flag'), leftX);
+    this.addMetricRow('Connectivity Type Missing', this.getMetricValue(dq, 'completeness_checks', 'missing_connectivity_type'), leftX);
+    this.addMetricRow('Reported Internet Availability', this.getMetricValue(dq, 'domain_checks', 'reported_internet'), leftX);
+    this.addCommentRow(this.getConnectivityComment(dq), leftX);
     
-    this.currentY += 8;
-  }
-
-  private addComputerAvailability(data: PDFReportData) {
-    this.addSectionHeader('Computer Availability');
+    // Right column: Computer Availability
+    this.currentY = originalY;
+    this.addSectionHeader('Computer Availability', rightX);
     
-    const dq = data.dataQualityCheck;
+    this.addMetricRow('Missing Computer Availability Data', this.getMetricValue(dq, 'completeness_checks', 'missing_computer_data'), rightX);
+    this.addCommentRow(this.getComputerAvailabilityComment(dq), rightX);
     
-    this.addMetricRow('Missing Computer Availability Data', this.getMetricValue(dq, 'completeness_checks', 'missing_computer_data'));
-    this.addCommentRow(this.getComputerAvailabilityComment(dq));
-    
-    this.currentY += 8;
+    // Move to the bottom of the higher column
+    this.currentY = Math.max(this.currentY, originalY + 40) + 8;
   }
 
   private addDensityDuplicationChecks(data: PDFReportData) {
@@ -185,8 +199,8 @@ export class PDFGeneratorProfessional {
     
     const dq = data.dataQualityCheck;
     
-    this.addMetricRow('High-density Schools (>5 within 700m)', this.getMetricValue(dq, 'duplicate_rows_checks', 'high_density'));
-    this.addMetricRow('Total Suspected Duplicate Rows', this.getMetricValue(dq, 'duplicate_rows_checks', 'total_duplicates'));
+    this.addMetricRow('High-density Schools (>5 within 700m)', this.getMetricValue(dq, 'geospatial_checks', 'is_school_density_greater_than_5'));
+    this.addMetricRow('Total Suspected Duplicate Rows', this.getMetricValue(dq, 'duplicate_rows_checks', 'duplicate_set'));
     this.addMetricRow('Same education level + geolocation', this.getMetricValue(dq, 'duplicate_rows_checks', 'same_education_geo'));
     this.addMetricRow('Same name + education level + geolocation within 110m', this.getMetricValue(dq, 'duplicate_rows_checks', 'same_name_education_geo'));
     this.addMetricRow('Same name + education level + geolocation within 110m + level', this.getMetricValue(dq, 'duplicate_rows_checks', 'same_name_education_geo_level'));
@@ -214,35 +228,36 @@ export class PDFGeneratorProfessional {
     this.addCommentRow(this.getNextStepsComment(data.dataQualityCheck));
   }
 
-  private addSectionHeader(title: string) {
+  private addSectionHeader(title: string, x: number = this.margin) {
     this.doc.setFontSize(12);
-    this.doc.setTextColor(0, 102, 204); // Blue color
+    this.doc.setTextColor(0, 0, 0); // Black for section headers
     this.doc.setFont(undefined, 'bold');
-    this.doc.text(title, this.margin, this.currentY);
+    this.doc.text(title, x, this.currentY);
     this.currentY += 6;
   }
 
-  private addMetricRow(label: string, value: string) {
+  private addMetricRow(label: string, value: string, x: number = this.margin) {
     this.doc.setFontSize(9);
     this.doc.setTextColor(0, 0, 0);
     this.doc.setFont(undefined, 'normal');
     
     // Add label
-    this.doc.text(label, this.margin, this.currentY);
+    this.doc.text(label, x, this.currentY);
     
-    // Add value (right aligned)
+    // Add value (right aligned within the column)
     const valueWidth = this.doc.getTextWidth(value);
-    this.doc.text(value, this.pageWidth - this.margin - valueWidth, this.currentY);
+    const columnWidth = x === this.margin ? (this.pageWidth / 2 - 20) : (this.pageWidth - this.margin - x);
+    this.doc.text(value, x + columnWidth - valueWidth, this.currentY);
     
     this.currentY += 4;
   }
 
-  private addCommentRow(comment: string) {
+  private addCommentRow(comment: string, x: number = this.margin) {
     if (comment) {
       this.doc.setFontSize(8);
       this.doc.setTextColor(100, 100, 100);
       this.doc.setFont(undefined, 'italic');
-      this.doc.text(`Comment: ${comment}`, this.margin, this.currentY);
+      this.doc.text(`Comment: ${comment}`, x, this.currentY);
       this.currentY += 4;
     }
   }

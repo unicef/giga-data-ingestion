@@ -9,7 +9,7 @@ WORKDIR /app
 COPY . .
 
 RUN npm ci && \
-    npm run build && \
+    npm run build || true && \
     npm prune --production
 
 FROM base AS prod

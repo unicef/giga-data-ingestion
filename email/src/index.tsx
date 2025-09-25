@@ -1,13 +1,13 @@
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { render } from "@react-email/render";
-// import { nodeProfilingIntegration } from "@sentry/profiling-node";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { logger } from "hono/logger";
 import { sentry } from '@hono/sentry';
 import { secureHeaders } from "hono/secure-headers";
-// import { hostname } from "os";
+import { hostname } from "os";
 
 import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
 import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
@@ -30,7 +30,7 @@ if (process.env.NODE_SENTRY_DSN && process.env.NODE_ENV !== "development") {
   app.use("*", sentry({
     dsn: process.env.NODE_SENTRY_DSN,
     environment: process.env.DEPLOY_ENV ?? "local",
-    // integrations: [nodeProfilingIntegration()],
+    integrations: [nodeProfilingIntegration() as any],
     release: `github.com/unicef/giga-data-ingestion:${process.env.COMMIT_SHA}`,
     sampleRate: 1.0,
     tracesSampleRate: 1.0,
