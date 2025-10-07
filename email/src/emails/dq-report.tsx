@@ -110,8 +110,6 @@ const DataQualityReport = ({
                 </Button>
               </Section>
 
-              <Section className="py-4">{checks}</Section>
-
               <Footer>
                 <Text className="text-[#666666] text-[12px] leading-[24px]">
                   This is an auto-generated email. Please do not reply. For

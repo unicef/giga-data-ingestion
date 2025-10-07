@@ -12,6 +12,8 @@ import { hostname } from "os";
 import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
 import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
 import DataQualityReport from "./emails/dq-report";
+import DqReportPDF from "./emails/dq-report-pdf";
+import DqReportDetailedPDF from "./emails/dq-report-detailed-pdf";
 import MasterDataReleaseNotification from "./emails/master-data-release-notification";
 import InviteUser from "./emails/invite-user";
 import {
@@ -21,6 +23,7 @@ import {
 } from "./types/dq-report";
 import { InviteUserProps } from "./types/invite-user";
 import { MasterDataReleaseNotificationProps } from "./types/master-data-release-notification";
+import { generatePDFBase64 } from "./lib/pdf-generator";
 
 const app = new Hono();
 
@@ -35,7 +38,7 @@ if (process.env.NODE_SENTRY_DSN && process.env.NODE_ENV !== "development") {
     sampleRate: 1.0,
     tracesSampleRate: 1.0,
     profilesSampleRate: 1.0,
-  }));
+  } as any));
 }
 app.use(logger());
 app.use(
@@ -82,7 +85,10 @@ app.post(
     const text = await render(<DataQualityReportCheckSuccess {...json} />, {
       plainText: true,
     });
-    return ctx.json({ html, text });
+    
+    // Generate PDF for DQ check results (optional, can be enabled if needed)
+    // For now, only sending PDF with full DQ reports that have errors
+    return ctx.json({ html, text, pdf: null });
   },
 );
 
@@ -95,7 +101,18 @@ app.post(
     const text = await render(<DataQualityReport {...json} />, {
       plainText: true,
     });
-    return ctx.json({ html, text });
+    
+    // Generate PDF attachment
+    let pdfBase64 = null;
+    try {
+      pdfBase64 = await generatePDFBase64(<DqReportDetailedPDF {...json} />);
+      console.log("PDF generated successfully");
+    } catch (error) {
+      console.error("Failed to generate PDF:", error);
+      // Continue without PDF if generation fails
+    }
+    
+    return ctx.json({ html, text, pdf: pdfBase64 });
   },
 );
 

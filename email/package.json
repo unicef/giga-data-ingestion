@@ -18,11 +18,14 @@
     "@sentry/node": "^5.5.0",
     "@sentry/profiling-node": "^8.37.1",
     "hono": "^4.5.9",
+    "puppeteer": "^24.15.0",
+    "react": "^18.3.1",
     "react-email": "^2.1.6",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",
+    "@types/react": "^18.3.0",
     "tsx": "^3.12.2",
     "typescript": "^5.3.3"
   },

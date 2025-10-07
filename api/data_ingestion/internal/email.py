@@ -22,6 +22,7 @@ def send_email_base(
     subject: str,
     html_part: str = None,
     text_part: str = None,
+    attachments: list[dict[str, Any]] = None,
 ):
     if len(recipients) == 0:
         logger.warning("No recipients provided, skipping email send")
@@ -47,6 +48,10 @@ def send_email_base(
 
     message["Recipients"] = formatted_recipients
 
+    # Add attachments if provided
+    if attachments and len(attachments) > 0:
+        message["Attachments"] = attachments
+
     client = Client(
         auth=(settings.MAILJET_API_KEY, settings.CLEAN_MAILJET_SECRET),
         api_url=settings.MAILJET_API_URL,
@@ -63,6 +68,7 @@ def send_rendered_email(
     json: dict[str, Any],
     recipients: list[str],
     subject: str,
+    attachment_filename: str = None,
 ):
     res = requests.post(
         f"{settings.EMAIL_RENDERER_SERVICE_URL}{endpoint}",
@@ -83,8 +89,21 @@ def send_rendered_email(
     data = res.json()
     html = data.get("html")
     text = data.get("text")
+    pdf_base64 = data.get("pdf")
 
-    send_email_base(recipients, subject, html, text)
+    # Prepare attachments if PDF is available
+    attachments = None
+    if pdf_base64 and attachment_filename:
+        attachments = [
+            {
+                "Content-type": "application/pdf",
+                "Filename": attachment_filename,
+                "content": pdf_base64,
+            }
+        ]
+        logger.info(f"PDF attachment prepared: {attachment_filename}")
+
+    send_email_base(recipients, subject, html, text, attachments)
 
 
 def invite_user(body: InviteEmailRenderRequest):
@@ -126,11 +145,19 @@ def send_dq_report_email(body: EmailRenderRequest[DqReportRenderRequest]):
     json_dump["dataQualityCheck"]["summary"]["timestamp"] = json_dump[
         "dataQualityCheck"
     ]["summary"]["timestamp"].isoformat()
+
+    # Generate PDF filename with country, dataset, and upload ID
+    country = json_dump.get("country", "Unknown")
+    dataset = json_dump.get("dataset", "report").replace(" ", "_")
+    upload_id = json_dump.get("uploadId", "")
+    pdf_filename = f"DQ_Report_{country}_{dataset}_{upload_id}.pdf"
+
     send_rendered_email(
         endpoint="email/dq-report",
         json=json_dump,
         recipients=[body.email],
         subject="DQ summary report",
+        attachment_filename=pdf_filename,
     )
 
 
