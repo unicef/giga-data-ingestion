@@ -23,6 +23,7 @@ export const DataQualityReportCheckSuccess = ({
   dataset,
   uploadDate,
   checkDate,
+  country,
 }: DataQualityCheckSuccessProps) => {
   const previewText = "Successful data quality checks";
 
@@ -57,6 +58,9 @@ export const DataQualityReportCheckSuccess = ({
               </Heading>
               <Text className="my-1">
                 Upload Id <strong>{uploadId}</strong>
+              </Text>
+              <Text className="my-1">
+                Country: <strong>{country}</strong>
               </Text>
               <Text className="my-1">
                 Dataset: <strong>{dataset}</strong>
@@ -100,6 +104,7 @@ DataQualityReportCheckSuccess.PreviewProps = {
   checkDate: new Date().toLocaleString(undefined, {
     timeZoneName: "short",
   }),
+  country: "BEN",
 } satisfies DataQualityCheckSuccessProps;
 
 export default DataQualityReportCheckSuccess;

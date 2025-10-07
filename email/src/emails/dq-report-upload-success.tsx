@@ -17,6 +17,7 @@ export const DataQualityReportUploadSuccess = ({
   uploadId,
   dataset,
   uploadDate,
+  country,
 }: DataQualityUploadSuccessProps) => {
   const previewText = "Successful file upload";
 
@@ -48,6 +49,9 @@ export const DataQualityReportUploadSuccess = ({
                 Upload Id <strong>{uploadId}</strong>
               </Text>
               <Text className="my-1">
+                Country: <strong>{country}</strong>
+              </Text>
+              <Text className="my-1">
                 Dataset: <strong>{dataset}</strong>
               </Text>
               <Text className="my-1">
@@ -76,6 +80,7 @@ DataQualityReportUploadSuccess.PreviewProps = {
   uploadDate: new Date().toLocaleString(undefined, {
     timeZoneName: "short",
   }),
+  country: "BEN",
 } satisfies DataQualityUploadSuccessProps;
 
 export default DataQualityReportUploadSuccess;

@@ -26,6 +26,7 @@ const DataQualityReport = ({
   dataset,
   uploadDate,
   uploadId,
+  country,
 }: DataQualityReportEmailProps) => {
   const hasCriticalError = Boolean(
     dataQualityCheck["critical_error_check"]?.[0]?.percent_failed > 0,
@@ -91,6 +92,9 @@ const DataQualityReport = ({
                 Upload Id <strong>{uploadId}</strong>
               </Text>
               <Text className="my-1">
+                Country: <strong>{country}</strong>
+              </Text>
+              <Text className="my-1">
                 Dataset: <strong>{dataset}</strong>
               </Text>
               <Text className="my-1">
@@ -136,6 +140,7 @@ DataQualityReport.PreviewProps = {
     timeZoneName: "short",
   }),
   uploadId: "NjA5NzUy",
+  country: "BEN",
 } satisfies DataQualityReportEmailProps;
 
 export default DataQualityReport;
