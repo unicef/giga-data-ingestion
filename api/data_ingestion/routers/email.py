@@ -87,6 +87,47 @@ async def send_dq_report_email(
 
 
 @router.post(
+    "/dq-report-pdf",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(IsPrivileged())],
+)
+async def generate_dq_report_pdf(
+    body: EmailRenderRequest[DqReportRenderRequest],
+):
+    props = DqReportRenderRequest(**body.model_dump()["props"])
+
+    # Generate PDF using the email service
+    pdf_data = await email.generate_dq_report_pdf(
+        EmailRenderRequest[DqReportRenderRequest](
+            email=body.email,
+            props=props,
+        )
+    )
+
+    return pdf_data
+
+
+@router.post(
+    "/dq-report-with-pdf",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
+async def send_dq_report_email_with_pdf(
+    body: EmailRenderRequest[DqReportRenderRequest],
+    background_tasks: BackgroundTasks,
+):
+    props = DqReportRenderRequest(**body.model_dump()["props"])
+
+    background_tasks.add_task(
+        email.send_dq_report_email_with_pdf,
+        EmailRenderRequest[DqReportRenderRequest](
+            email=body.email,
+            props=props,
+        ),
+    )
+
+
+@router.post(
     "/master-data-release-notification",
     dependencies=[Security(IsPrivileged())],
     status_code=status.HTTP_204_NO_CONTENT,
