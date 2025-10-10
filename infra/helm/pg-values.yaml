@@ -7,7 +7,7 @@
 global:
   ## @param global.imageRegistry Global Docker image registry
   ##
-  imageRegistry: ""
+  imageRegistry: "public.ecr.aws"
   ## @param global.imagePullSecrets Global Docker registry secret names as an array
   ## e.g.
   ## imagePullSecrets:
@@ -103,7 +103,6 @@ diagnosticMode:
 ## @param image.debug Specify if debug values should be set
 ##
 image:
-  registry: public.ecr.aws
   repository: bitnami/postgresql
   tag: 16.2.0-debian-11-r10
   digest: ""
@@ -1389,11 +1388,10 @@ volumePermissions:
   ## @param volumePermissions.image.pullSecrets Init container volume-permissions image pull secrets
   ##
   image:
-    registry: public.ecr.aws
     repository: bitnami/os-shell
     tag: 12-debian-12-r16
     digest: ""
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
     ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
@@ -1498,11 +1496,10 @@ metrics:
   ## @param metrics.image.pullSecrets Specify image pull secrets
   ##
   image:
-    registry: public.ecr.aws
     repository: bitnami/postgres-exporter
     tag: 0.15.0-debian-12-r14
     digest: ""
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     ## Optionally specify an array of imagePullSecrets.
     ## Secrets must be manually created in the namespace.
     ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
