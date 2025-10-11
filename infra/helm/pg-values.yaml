@@ -104,7 +104,7 @@ diagnosticMode:
 ##
 image:
   repository: bitnami/postgresql
-  tag: 16.2.0-debian-11-r20
+  tag: 16.2.0-debian-11-r10
   digest: ""
   ## Specify a imagePullPolicy
   ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
