@@ -1,13 +1,14 @@
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
 import { render } from "@react-email/render";
-import { nodeProfilingIntegration } from "@sentry/profiling-node";
+// import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import { Hono } from "hono";
 import { bearerAuth } from "hono/bearer-auth";
 import { logger } from "hono/logger";
 import { sentry } from '@hono/sentry';
 import { secureHeaders } from "hono/secure-headers";
 import { hostname } from "os";
+import { generateDataQualityReportPDF, formatDateForPDF } from "./lib/pdf-generator";
 
 import DataQualityReportUploadSuccess from "./emails/dq-report-upload-success";
 import DataQualityReportCheckSuccess from "./emails/dq-report-check-success";
@@ -29,12 +30,9 @@ if (process.env.NODE_SENTRY_DSN && process.env.NODE_ENV !== "development") {
   app.use("*", sentry({
     dsn: process.env.NODE_SENTRY_DSN,
     environment: process.env.DEPLOY_ENV ?? "local",
-    serverName: `ingestion-portal-email-${process.env.DEPLOY_ENV}@${hostname()}`,
-    integrations: [nodeProfilingIntegration()],
     release: `github.com/unicef/giga-data-ingestion:${process.env.COMMIT_SHA}`,
     sampleRate: 1.0,
     tracesSampleRate: 1.0,
-    profilesSampleRate: 1.0,
   }));
 }
 app.use(logger());
@@ -46,6 +44,7 @@ app.use(
 app.get("/", async (ctx) => {
   return ctx.text("ok");
 });
+
 
 app.post(
   "/email/invite-user",
@@ -96,6 +95,31 @@ app.post(
       plainText: true,
     });
     return ctx.json({ html, text });
+  },
+);
+
+app.post(
+  "/email/dq-report-pdf",
+  zValidator("json", DataQualityReportEmailProps),
+  async (ctx) => {
+    const json = ctx.req.valid("json") as DataQualityReportEmailProps;
+    
+    // Generate PDF with additional data
+    const pdfData = {
+      ...json,
+      generatedDate: formatDateForPDF(new Date()),
+      uploadedFileName: `upload_${json.uploadId}_${json.country}.csv`, // You might want to pass this from the API
+    };
+    
+    const pdfBuffer = await generateDataQualityReportPDF(pdfData);
+    
+    // Return PDF as base64 for easy attachment
+    const pdfBase64 = pdfBuffer.toString('base64');
+    
+    return ctx.json({ 
+      pdf: pdfBase64,
+      filename: `data-quality-report-${json.country}-${json.uploadId}.pdf`
+    });
   },
 );
 
