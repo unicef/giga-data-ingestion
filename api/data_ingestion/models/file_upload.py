@@ -74,7 +74,7 @@ class FileUpload(BaseModel):
         if self.dataset == "unstructured":
             dataset_path = "unstructured"
         elif self.dataset == "structured":
-            dataset_path = "raw/custom-dataset"
+            dataset_path = "custom-dataset"
         else:
             dataset_path = f"school-{self.dataset}"
 
