@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
+# File upload model for data ingestion
 from pydantic import UUID4, EmailStr
 from sqlalchemy import JSON, VARCHAR, DateTime, String, func
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -58,35 +59,40 @@ class FileUpload(BaseModel):
             country = self.country
 
         if self.dataset == "structured":
-            # For structured datasets, use a simpler filename format
-            filename_elements = [self.id, country, timestamp]
+            # For structured datasets, use original filename with upload ID
+            original_name = Path(self.original_filename).stem
+            filename = f"{original_name}_{self.id}"
+            return f"{filename}{ext}"
         else:
             filename_elements = [self.id, country, self.dataset]
             if self.source is not None:
                 filename_elements.append(self.source)
             filename_elements.append(timestamp)
 
-        filename = "_".join(filename_elements)
-        return f"{filename}{ext}"
+            filename = "_".join(filename_elements)
+            return f"{filename}{ext}"
 
     @hybrid_property
     def upload_path(self) -> str:
+        if self.dataset == "structured":
+            from data_ingestion.settings import settings
+
+            return f"{settings.LAKEHOUSE_PATH}/raw/custom-dataset/{self.filename}"
+
+        # For other datasets, use the uploads path
         if self.dataset == "unstructured":
             dataset_path = "unstructured"
-        elif self.dataset == "structured":
-            dataset_path = "raw/custom-dataset"
         else:
             dataset_path = f"school-{self.dataset}"
 
         filename_parts = [constants.UPLOAD_PATH_PREFIX, dataset_path]
 
-        # Only add country to path for non-structured datasets
-        if self.dataset != "structured":
-            if self.country == "N/A":
-                country_path = "$NA"
-            else:
-                country_path = self.country
-            filename_parts.append(country_path)
+        # Add country to path for non-structured datasets
+        if self.country == "N/A":
+            country_path = "$NA"
+        else:
+            country_path = self.country
+        filename_parts.append(country_path)
 
         filename_parts.append(self.filename)
         return "/".join(filename_parts)

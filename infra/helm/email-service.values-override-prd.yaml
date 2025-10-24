@@ -2,7 +2,7 @@ autoscaling:
   enabled: true
 
 podDisruptionBudget:
-  enabled: true
+  enabled: false
 
 resources:
   requests:
