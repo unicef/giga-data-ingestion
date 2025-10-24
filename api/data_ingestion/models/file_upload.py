@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
+# File upload model for data ingestion
 from pydantic import UUID4, EmailStr
 from sqlalchemy import JSON, VARCHAR, DateTime, String, func
 from sqlalchemy.ext.hybrid import hybrid_property
