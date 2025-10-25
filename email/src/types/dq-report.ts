@@ -5,6 +5,7 @@ export const DataQualityUploadSuccessProps = z.object({
   uploadId: z.string(),
   dataset: z.string(),
   uploadDate: z.string(),
+  country: z.string(),
 });
 
 export type DataQualityUploadSuccessProps = z.infer<
@@ -16,6 +17,7 @@ export const DataQualityCheckSuccessProps = z.object({
   dataset: z.string(),
   uploadDate: z.string(),
   checkDate: z.string(),
+  country: z.string(),
 });
 
 export type DataQualityCheckSuccessProps = z.infer<
@@ -27,6 +29,12 @@ export const DataQualityReportEmailProps = z.object({
   dataset: z.string(),
   uploadDate: z.string(),
   uploadId: z.string(),
+  country: z.string(),
+  pdfAttachment: z.object({
+    filename: z.string(),
+    content: z.string(), // base64 encoded PDF content
+    contentType: z.string(),
+  }).optional(),
 });
 
 export type DataQualityReportEmailProps = z.infer<
