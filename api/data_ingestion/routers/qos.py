@@ -181,9 +181,16 @@ async def create_api_ingestion(
 
         valid_types = {"text/csv": [".csv"], "application/csv": [".csv"]}
 
-        file_content = await file.read(2048)
+        file_content = await file.read(
+            8192
+        )  # Increased from 2048 to handle large cell values like POLYGON data
         file_type = magic.from_buffer(file_content, mime=True)
         file_extension = os.path.splitext(file.filename)[1]
+
+        # For CSV files with large cell values, magic might detect as text/plain
+        # If extension is .csv but detected as text/plain, treat as CSV
+        if file_extension.lower() == ".csv" and file_type == "text/plain":
+            file_type = "text/csv"
 
         if file_type not in valid_types:
             raise HTTPException(
