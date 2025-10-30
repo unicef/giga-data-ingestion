@@ -31,6 +31,7 @@ class DqReportRenderRequest(BaseModel):
     dataQualityCheck: DataQualityCheck
     uploadDate: datetime
     uploadId: str
+    country: str
 
 
 class MasterDataReleaseNotificationRenderRequest(BaseModel):
@@ -47,3 +48,4 @@ class GenericEmailRequest(BaseModel):
     subject: str
     html_part: str | None = Field(None)
     text_part: str | None = Field(None)
+    attachments: list[dict] | None = Field(None)

@@ -27,6 +27,7 @@ export const DataQualityReportEmailProps = z.object({
   dataset: z.string(),
   uploadDate: z.string(),
   uploadId: z.string(),
+  country: z.string(),
 });
 
 export type DataQualityReportEmailProps = z.infer<

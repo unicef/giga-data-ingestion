@@ -87,6 +87,47 @@ async def send_dq_report_email(
 
 
 @router.post(
+    "/dq-report-pdf",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(IsPrivileged())],
+)
+async def generate_dq_report_pdf(
+    body: EmailRenderRequest[DqReportRenderRequest],
+):
+    props = DqReportRenderRequest(**body.model_dump()["props"])
+
+    # Generate PDF using the email service
+    pdf_data = await email.generate_dq_report_pdf(
+        EmailRenderRequest[DqReportRenderRequest](
+            email=body.email,
+            props=props,
+        )
+    )
+
+    return pdf_data
+
+
+@router.post(
+    "/dq-report-with-pdf",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
+async def send_dq_report_email_with_pdf(
+    body: EmailRenderRequest[DqReportRenderRequest],
+    background_tasks: BackgroundTasks,
+):
+    props = DqReportRenderRequest(**body.model_dump()["props"])
+
+    background_tasks.add_task(
+        email.send_dq_report_email_with_pdf,
+        EmailRenderRequest[DqReportRenderRequest](
+            email=body.email,
+            props=props,
+        ),
+    )
+
+
+@router.post(
     "/master-data-release-notification",
     dependencies=[Security(IsPrivileged())],
     status_code=status.HTTP_204_NO_CONTENT,
@@ -113,4 +154,26 @@ def send_generic_email(
     if credentials.credentials != settings.EMAIL_RENDERER_BEARER_TOKEN:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    send_email_base(**body.model_dump())
+    # Ensure attachments are base64-encoded strings as required by Mailjet v3 send API
+    email_data = body.model_dump()
+    if email_data.get("attachments"):
+        import base64
+
+        normalized_attachments = []
+        for attachment in email_data["attachments"]:
+            normalized = attachment.copy()
+            content = normalized.get("content")
+            # If content is bytes, encode to base64 string
+            if isinstance(content, bytes | bytearray):
+                normalized["content"] = base64.b64encode(content).decode("ascii")
+            # If content is a data URL (e.g., data:application/pdf;base64,XXX), strip the prefix
+            elif isinstance(content, str) and content.startswith("data:"):
+                try:
+                    normalized["content"] = content.split(",", 1)[1]
+                except Exception:
+                    pass
+            # Otherwise assume it's already base64 string; leave as is
+            normalized_attachments.append(normalized)
+        email_data["attachments"] = normalized_attachments
+
+    send_email_base(**email_data)
