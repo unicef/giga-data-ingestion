@@ -1,4 +1,5 @@
 import json
+import logging
 import urllib.parse
 from datetime import datetime
 from pathlib import Path
@@ -27,7 +28,7 @@ from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db as get_primary_db
-from data_ingestion.db.trino import get_db
+from data_ingestion.db.trino import get_db, get_db_context
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
@@ -384,6 +385,104 @@ async def upload_approved_rows(
         )
 
         formatted_dataset = dataset.replace("-", " ").title()
+
+        # Setup logger for this function
+        logger = logging.getLogger(__name__)
+
+        # State check: Validate approved rows exist in Trino change feed BEFORE committing
+        table_schema = posix_path.parent.name
+        table_name = posix_path.name
+        try:
+            with get_db_context() as trino_db:
+                # Build change_id column similar to get_approval_request
+                change_id_expr = func.concat_ws(
+                    "|",
+                    column("school_id_giga"),
+                    column("_change_type"),
+                    column("_commit_version").cast(String()),
+                )
+                
+                # Query change feed for approved rows
+                approved_rows_set = set(body.approved_rows)
+                if len(approved_rows_set) == 0:
+                    # If no rows approved, skip validation
+                    pass
+                elif len(approved_rows_set) == 1 and "__all__" in approved_rows_set:
+                    # If all approved, verify staging table has changes
+                    cdf_query = select(count()).select_from(
+                        func.table(
+                            func.delta_lake.system.table_changes(
+                                literal(table_schema),
+                                literal(table_name),
+                                0,
+                            )
+                        )
+                    )
+                    change_count = trino_db.execute(cdf_query).scalar()
+                    if change_count == 0:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="No changes found in staging table. Cannot approve empty dataset.",
+                        )
+                else:
+                    # Verify specific approved rows exist in change feed
+                    cdf_cte = (
+                        select(
+                            change_id_expr.label("change_id"),
+                        )
+                        .select_from(
+                            func.table(
+                                func.delta_lake.system.table_changes(
+                                    literal(table_schema),
+                                    literal(table_name),
+                                    0,
+                                )
+                            )
+                        )
+                        .cte("changes")
+                    )
+                    
+                    max_version_cte = (
+                        select(func.max(column("_commit_version")).label("max_version"))
+                        .select_from(cdf_cte)
+                        .limit(1)
+                        .cte("max_version")
+                    )
+                    
+                    # Filter to latest version changes (similar to get_approval_request logic)
+                    cdf_filtered = (
+                        select(column("change_id"))
+                        .select_from(cdf_cte.alias("d"), max_version_cte.alias("mv"))
+                        .where(
+                            # Include version 1 changes when max_version is 1 (single commit scenario)
+                            (literal_column("mv.max_version") == 1)
+                            # Always include version 2 changes
+                            | (literal_column("d._commit_version") == 2)
+                            # Include version >2 changes that are not update_preimage
+                            | (
+                                (literal_column("d._commit_version") > 2)
+                                & (literal_column("d._change_type") != "update_preimage")
+                            )
+                        )
+                    )
+                    
+                    available_change_ids = {
+                        row[0] for row in trino_db.execute(cdf_filtered).fetchall()
+                    }
+                    
+                    # Check if all approved rows exist
+                    missing_rows = approved_rows_set - available_change_ids
+                    if missing_rows:
+                        raise HTTPException(
+                            status_code=status.HTTP_400_BAD_REQUEST,
+                            detail=f"Invalid approval data: {len(missing_rows)} approved row IDs not found in staging change feed. Missing: {list(missing_rows)[:10]}",
+                        )
+        except Exception as validation_err:
+            # Log validation error
+            logger.warning(
+                f"Failed to validate approved rows for {country_iso3} - {formatted_dataset}: {validation_err}"
+            )
+            # Continue anyway - validation is best-effort
 
         obj = await primary_db.execute(
             update(ApprovalRequest)
