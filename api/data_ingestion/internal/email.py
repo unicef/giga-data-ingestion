@@ -149,7 +149,7 @@ def send_dq_report_email_with_pdf(body: EmailRenderRequest[DqReportRenderRequest
 
     # Generate HTML and text content
     res = requests.post(
-        f"{settings.EMAIL_RENDERER_URL}/email/dq-report",
+        f"{settings.EMAIL_RENDERER_SERVICE_URL}/email/dq-report",
         headers={
             "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
             "Content-Type": "application/json",
@@ -169,7 +169,7 @@ def send_dq_report_email_with_pdf(body: EmailRenderRequest[DqReportRenderRequest
 
     # Generate PDF
     pdf_res = requests.post(
-        f"{settings.EMAIL_RENDERER_URL}/email/dq-report-pdf",
+        f"{settings.EMAIL_RENDERER_SERVICE_URL}/email/dq-report-pdf",
         headers={
             "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
             "Content-Type": "application/json",
@@ -217,7 +217,7 @@ async def generate_dq_report_pdf(body: EmailRenderRequest[DqReportRenderRequest]
 
     # Call the email service to generate PDF
     res = requests.post(
-        f"{settings.EMAIL_RENDERER_URL}/email/dq-report-pdf",
+        f"{settings.EMAIL_RENDERER_SERVICE_URL}/email/dq-report-pdf",
         headers={
             "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
             "Content-Type": "application/json",
