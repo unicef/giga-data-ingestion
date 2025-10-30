@@ -401,7 +401,7 @@ async def upload_approved_rows(
                     column("_change_type"),
                     column("_commit_version").cast(String()),
                 )
-                
+
                 # Query change feed for approved rows
                 approved_rows_set = set(body.approved_rows)
                 if len(approved_rows_set) == 0:
@@ -441,14 +441,14 @@ async def upload_approved_rows(
                         )
                         .cte("changes")
                     )
-                    
+
                     max_version_cte = (
                         select(func.max(column("_commit_version")).label("max_version"))
                         .select_from(cdf_cte)
                         .limit(1)
                         .cte("max_version")
                     )
-                    
+
                     # Filter to latest version changes (similar to get_approval_request logic)
                     cdf_filtered = (
                         select(column("change_id"))
@@ -461,15 +461,18 @@ async def upload_approved_rows(
                             # Include version >2 changes that are not update_preimage
                             | (
                                 (literal_column("d._commit_version") > 2)
-                                & (literal_column("d._change_type") != "update_preimage")
+                                & (
+                                    literal_column("d._change_type")
+                                    != "update_preimage"
+                                )
                             )
                         )
                     )
-                    
+
                     available_change_ids = {
                         row[0] for row in trino_db.execute(cdf_filtered).fetchall()
                     }
-                    
+
                     # Check if all approved rows exist
                     missing_rows = approved_rows_set - available_change_ids
                     if missing_rows:
