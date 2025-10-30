@@ -92,7 +92,7 @@ services:
       - "npm install && exec npm run dev"
 
   db:
-    image: bitnami/postgresql:16.2.0-debian-11-r10
+    image: public.ecr.aws/bitnami/postgresql:16.2.0-debian-11-r10
     restart: unless-stopped
     env_file: ./api/.env
     ports:
@@ -106,7 +106,7 @@ services:
       start_period: 3s
 
   redis:
-    image: bitnami/redis:7.2.4-debian-12-r10
+    image: public.ecr.aws/bitnami/redis:7.2.4-debian-12-r10
     restart: unless-stopped
     env_file: ./api/.env
     ports:
