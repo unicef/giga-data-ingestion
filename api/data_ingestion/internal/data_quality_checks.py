@@ -1,4 +1,5 @@
 import json
+from azure.core.exceptions import HttpResponseError
 from io import StringIO
 
 import pandas as pd
@@ -46,7 +47,7 @@ def get_data_quality_summary(dq_report_path: str):
 def get_first_n_error_rows_for_data_quality_check(
     dq_full_path: str,
     rows_to_process: int = 5,
-) -> tuple[BlobProperties, dict]:
+) -> tuple[dict, dict]:
     results = {}
 
     blob = storage_client.get_blob_client(dq_full_path)
@@ -57,7 +58,15 @@ def get_first_n_error_rows_for_data_quality_check(
             detail="Not Found",
         )
 
-    blob_properties = blob.get_blob_properties()
+    # Try reading metadata from sidecar, fallback to blob metadata
+    try:
+        sidecar_path = f"{dq_full_path}.metadata.json"
+        sidecar_blob = storage_client.get_blob_client(sidecar_path)
+        metadata = json.loads(sidecar_blob.download_blob().readall())
+    except HttpResponseError:
+        props = blob.get_blob_properties()
+        metadata = dict(props.metadata or {})
+
     blob_data = blob.download_blob().readall()
     data_str = blob_data.decode("utf-8")
     data_io = StringIO(data_str)
@@ -68,4 +77,4 @@ def get_first_n_error_rows_for_data_quality_check(
         if column_result:
             results.update(column_result)
 
-    return blob_properties, results
+    return metadata, results

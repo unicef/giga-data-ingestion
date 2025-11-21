@@ -335,9 +335,17 @@ async def upload_file(
         column_to_schema_mapping=orjson.loads(form.column_to_schema_mapping),
         column_license=orjson.loads(form.column_license),
     )
+
     db.add(file_upload)
     await db.commit()
+    await db.refresh(file_upload)
 
+    # compute ADLS path before commit
+    sidecar_path = f"{file_upload.upload_path}.metadata.json"
+    file_upload.metadata_json_path = sidecar_path
+
+    db.add(file_upload)
+    await db.commit()
     client = storage_client.get_blob_client(file_upload.upload_path)
 
     try:
@@ -353,9 +361,13 @@ async def upload_file(
         await file.seek(0)
         client.upload_blob(
             await file.read(),
-            metadata=metadata,
+            overwrite=True,
             content_settings=ContentSettings(content_type=file_type),
         )
+        # Upload metadata sidecar JSON
+        sidecar_client = storage_client.get_blob_client(file_upload.metadata_json_path)
+        sidecar_json_bytes = json.dumps(metadata, indent=2).encode()
+        sidecar_client.upload_blob(sidecar_json_bytes, overwrite=True)
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
         await db.execute(delete(FileUpload).where(FileUpload.id == file_upload.id))
