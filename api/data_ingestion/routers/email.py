@@ -36,6 +36,7 @@ async def send_upload_success_email(
         uploadId=body.props.uploadId,
         dataset=body.props.dataset,
         uploadDate=body.props.uploadDate,
+        country=body.props.country,
     )
     background_tasks.add_task(
         email.send_upload_success_email,
