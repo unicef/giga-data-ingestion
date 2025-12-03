@@ -8,24 +8,6 @@ import country_converter as coco
 import magic
 import orjson
 import pandas as pd
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Query,
-    Response,
-    Security,
-    status,
-)
-from fastapi_azure_auth.user import User
-from loguru import logger
-from pydantic import Field
-from sqlalchemy import delete, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import StreamingResponse
-
-from azure.core.exceptions import HttpResponseError
-from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
@@ -47,6 +29,24 @@ from data_ingestion.schemas.upload import (
     FileUploadRequest,
     UnstructuredFileUploadRequest,
 )
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    Response,
+    Security,
+    status,
+)
+from fastapi_azure_auth.user import User
+from loguru import logger
+from pydantic import Field
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import StreamingResponse
+
+from azure.core.exceptions import HttpResponseError
+from azure.storage.blob import ContentSettings
 
 router = APIRouter(
     prefix="/api/upload",
@@ -341,8 +341,8 @@ async def upload_file(
     await db.refresh(file_upload)
 
     # compute ADLS path before commit
-    sidecar_path = f"{file_upload.upload_path}.metadata.json"
-    file_upload.metadata_json_path = sidecar_path
+    metadata_file_path = f"{file_upload.upload_path}.metadata.json"
+    file_upload.metadata_json_path = metadata_file_path
 
     db.add(file_upload)
     await db.commit()
@@ -365,9 +365,11 @@ async def upload_file(
             content_settings=ContentSettings(content_type=file_type),
         )
         # Upload metadata sidecar JSON
-        sidecar_client = storage_client.get_blob_client(file_upload.metadata_json_path)
+        metadata_blob_client = storage_client.get_blob_client(
+            file_upload.metadata_json_path
+        )
         sidecar_json_bytes = json.dumps(metadata, indent=2).encode()
-        sidecar_client.upload_blob(sidecar_json_bytes, overwrite=True)
+        metadata_blob_client.upload_blob(sidecar_json_bytes, overwrite=True)
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
         await db.execute(delete(FileUpload).where(FileUpload.id == file_upload.id))
