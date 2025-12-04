@@ -9,12 +9,13 @@ Idempotent migration:
 
 import asyncio
 import json
+
+from data_ingestion.db.primary import get_db
+from data_ingestion.internal.storage import storage_client
+from data_ingestion.models.file_upload import FileUpload
 from loguru import logger
 from sqlalchemy import select, update
-from data_ingestion.db.primary import get_db
-from data_ingestion.models.file_upload import FileUpload
 
-from data_ingestion.internal.storage import storage_client
 
 async def migrate(dry_run: bool = True):
     db_gen = get_db()
@@ -22,7 +23,7 @@ async def migrate(dry_run: bool = True):
 
     try:
         result = await session.execute(
-            select(FileUpload).where(FileUpload.metadata_json_path == None)
+            select(FileUpload).where(FileUpload.metadata_json_path is None)
         )
         rows = result.scalars().all()
 
@@ -30,7 +31,7 @@ async def migrate(dry_run: bool = True):
 
         for upload in rows:
             upload_path = upload.upload_path
-            sidecar_path = f"{upload_path}.metadata.json"
+            metadata_file_path = f"{upload_path}.metadata.json"
 
             logger.info(f"Processing: {upload.id}  |  {upload_path}")
 
@@ -43,34 +44,40 @@ async def migrate(dry_run: bool = True):
                 logger.warning(f"No metadata for {upload_path}, skipping")
                 continue
 
-            sidecar_client = storage_client.get_blob_client(sidecar_path)
+            sidecar_client = storage_client.get_blob_client(metadata_file_path)
             if sidecar_client.exists():
-                logger.info(f"Sidecar already exists for {upload_path}; updating DB pointer only")
+                logger.info(
+                    f"Sidecar already exists for {upload_path}; updating DB pointer only"
+                )
                 if not dry_run:
                     await session.execute(
                         update(FileUpload)
                         .where(FileUpload.id == upload.id)
-                        .values(metadata_json_path=sidecar_path)
+                        .values(metadata_json_path=metadata_file_path)
                     )
                 continue
 
             sidecar_bytes = json.dumps(blob_meta, indent=2).encode()
 
             if dry_run:
-                logger.info(f"[DRY RUN] Would upload sidecar to {sidecar_path}")
+                logger.info(f"[DRY RUN] Would upload sidecar to {metadata_file_path}")
             else:
                 sidecar_client.upload_blob(sidecar_bytes, overwrite=True)
 
                 await session.execute(
                     update(FileUpload)
                     .where(FileUpload.id == upload.id)
-                    .values(metadata_json_path=sidecar_path)
+                    .values(metadata_json_path=metadata_file_path)
                 )
 
                 try:
-                    blob_client.set_blob_metadata(metadata={"metadata_json": sidecar_path})
+                    blob_client.set_blob_metadata(
+                        metadata={"metadata_json": metadata_file_path}
+                    )
                 except Exception as exc:
-                    logger.warning(f"Failed to set pointer on blob {upload_path}: {exc}")
+                    logger.warning(
+                        f"Failed to set pointer on blob {upload_path}: {exc}"
+                    )
 
         if not dry_run:
             await session.commit()
