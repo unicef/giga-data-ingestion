@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import pandas as pd
+from data_ingestion.constants import constants
 
 
 def process_n_columns(column_name: str, df: pd.DataFrame, rows: int) -> dict | None:
@@ -31,3 +34,22 @@ def process_n_columns(column_name: str, df: pd.DataFrame, rows: int) -> dict | N
         return {key: rows_with_error} if rows_with_error else None
     else:
         return None
+
+
+def get_metadata_path(filepath: str) -> str:
+    # Normalize paths by stripping leading slashes for comparison
+    normalized_filepath = filepath.lstrip("/")
+    normalized_prefix = constants.UPLOAD_PATH_PREFIX.lstrip("/")
+    normalized_metadata_prefix = constants.UPLOAD_METADATA_PATH_PREFIX.lstrip("/")
+
+    if normalized_filepath.startswith(normalized_prefix):
+        return (
+            normalized_filepath.replace(
+                normalized_prefix, normalized_metadata_prefix, 1
+            )
+            + ".metadata.json"
+        )
+
+    file_path = Path(filepath)
+    metadata_file_path = f"{file_path.stem}.metadata.json"
+    return str(file_path.parent / metadata_file_path)

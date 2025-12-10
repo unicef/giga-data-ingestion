@@ -3,7 +3,7 @@ from io import StringIO
 
 import pandas as pd
 from data_ingestion.internal.storage import storage_client
-from data_ingestion.utils.data_quality import process_n_columns
+from data_ingestion.utils.data_quality import get_metadata_path, process_n_columns
 from fastapi import (
     HTTPException,
     status,
@@ -57,9 +57,9 @@ def get_first_n_error_rows_for_data_quality_check(
             detail="Not Found",
         )
 
-    # Try reading metadata from sidecar, fallback to blob metadata
+    # Try reading metadata from metadata file, fallback to blob metadata
     try:
-        metadata_file_path = f"{dq_full_path}.metadata.json"
+        metadata_file_path = get_metadata_path(dq_full_path)
         metadata_blob_client = storage_client.get_blob_client(metadata_file_path)
         metadata = json.loads(metadata_blob_client.download_blob().readall())
     except HttpResponseError:

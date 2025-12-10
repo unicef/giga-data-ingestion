@@ -13,6 +13,7 @@ import json
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models.file_upload import FileUpload
+from data_ingestion.utils.data_quality import get_metadata_path
 from loguru import logger
 from sqlalchemy import select, update
 
@@ -31,7 +32,7 @@ async def migrate(dry_run: bool = True):
 
         for upload in rows:
             upload_path = upload.upload_path
-            metadata_file_path = f"{upload_path}.metadata.json"
+            metadata_file_path = get_metadata_path(upload_path)
 
             logger.info(f"Processing: {upload.id}  |  {upload_path}")
 
@@ -44,8 +45,8 @@ async def migrate(dry_run: bool = True):
                 logger.warning(f"No metadata for {upload_path}, skipping")
                 continue
 
-            sidecar_client = storage_client.get_blob_client(metadata_file_path)
-            if sidecar_client.exists():
+            metadata_client = storage_client.get_blob_client(metadata_file_path)
+            if metadata_client.exists():
                 logger.info(
                     f"Sidecar already exists for {upload_path}; updating DB pointer only"
                 )
@@ -57,12 +58,12 @@ async def migrate(dry_run: bool = True):
                     )
                 continue
 
-            sidecar_bytes = json.dumps(blob_meta, indent=2).encode()
+            metadata_bytes = json.dumps(blob_meta, indent=2).encode()
 
             if dry_run:
                 logger.info(f"[DRY RUN] Would upload sidecar to {metadata_file_path}")
             else:
-                sidecar_client.upload_blob(sidecar_bytes, overwrite=True)
+                metadata_client.upload_blob(metadata_bytes, overwrite=True)
 
                 await session.execute(
                     update(FileUpload)
