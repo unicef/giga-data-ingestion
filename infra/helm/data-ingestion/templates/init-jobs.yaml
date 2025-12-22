@@ -82,7 +82,9 @@ spec:
           command:
             - /bin/sh
             - -c
-            - python -m scripts.load_fixtures roles approval_requests
+            - |
+              python -m scripts.load_fixtures roles approval_requests;
+              python -m scripts.migrate_blob_metadata --apply
           {{- with .Values.envFrom }}
           envFrom:
             {{- toYaml . | nindent 12 }}
