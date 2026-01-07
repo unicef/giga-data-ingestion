@@ -24,7 +24,7 @@ async def migrate(dry_run: bool = True):
 
     try:
         result = await session.execute(
-            select(FileUpload).where(FileUpload.metadata_json_path is None)
+            select(FileUpload).where(FileUpload.metadata_json_path.is_(None))
         )
         rows = result.scalars().all()
 
