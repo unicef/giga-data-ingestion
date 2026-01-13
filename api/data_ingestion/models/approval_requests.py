@@ -1,14 +1,10 @@
 from datetime import datetime
-from typing import TYPE_CHECKING
 
 from pydantic import UUID4
 from sqlalchemy import VARCHAR, DateTime, ForeignKey, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import BaseModel
-
-if TYPE_CHECKING:
-    pass
 
 
 class ApprovalRequest(BaseModel):
