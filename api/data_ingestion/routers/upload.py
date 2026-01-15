@@ -2,7 +2,7 @@ import io
 import json
 import os
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import country_converter as coco
 import magic
@@ -27,7 +27,6 @@ from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
     FileUploadRequest,
-    PaginatedResponse,
     UnstructuredFileUploadRequest,
     UploadDetailsRequest,
     UploadDetailsResponse,
@@ -52,7 +51,6 @@ from starlette.responses import StreamingResponse
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
 from data_ingestion.utils.data_quality import get_metadata_path
-from data_ingestion.utils.data_quality import get_metadata_path
 
 router = APIRouter(
     prefix="/api/upload",
@@ -61,18 +59,9 @@ router = APIRouter(
 )
 
 
-@router.get("/by-country", response_model=PaginatedResponse)
+@router.get("/by-country", response_model=list[UploadSummaryResponse])
 async def list_uploads_by_country(
     country: str = Query(..., min_length=3, max_length=3),
-    dataset: str = Query(...),
-    upload_id: Optional[str] = Query(None, description="Filter by upload ID"),
-    uploaded_by: Optional[str] = Query(None, description="Filter by uploader email"),
-    sort_by: Optional[str] = Query("uploaded_at", description="Sort by field"),
-    sort_order: Optional[str] = Query(
-        "desc", regex="^(asc|desc)$", description="Sort order"
-    ),
-    page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
     user: User = Depends(azure_scheme),
     is_privileged: bool = Depends(IsPrivileged.raises(False)),
     db: AsyncSession = Depends(get_db),
@@ -91,55 +80,21 @@ async def list_uploads_by_country(
                 detail="User does not have permissions on this country",
             )
 
-    # Base query
     query = (
         select(FileUpload)
         .where(FileUpload.country == country)
-        .where(FileUpload.dataset == dataset.lower().split(" ")[1])
+        .order_by(FileUpload.created.desc())
     )
 
-    # Apply filters
-    if upload_id:
-        query = query.where(FileUpload.id == upload_id)
-
-    if uploaded_by:
-        query = query.where(FileUpload.uploader_email.ilike(f"%{uploaded_by}%"))
-    count_query = select(func.count()).select_from(query.subquery())
-    total = await db.scalar(count_query)
-    sort_mapping = {
-        "uploaded_at": FileUpload.created,
-        "uploader_email": FileUpload.uploader_email,
-    }
-    sort_column = sort_mapping.get(sort_by, FileUpload.created)
-
-    if sort_order == "asc":
-        query = query.order_by(sort_column.asc())
-    else:
-        query = query.order_by(sort_column.desc())
-
-    # Apply pagination
-    offset = (page - 1) * page_size
-    query = query.offset(offset).limit(page_size)
-
     results = await db.scalars(query)
-    items = [
+    return [
         UploadSummaryResponse(
             upload_id=row.id,
             created=row.created,
             file_name=row.original_filename,
-            dataset=row.dataset,
-            uploader_email=row.uploader_email,
         )
         for row in results.all()
     ]
-
-    return PaginatedResponse(
-        items=items,
-        total=total,
-        page=page,
-        page_size=page_size,
-        total_pages=(total + page_size - 1) // page_size,  # Ceiling division
-    )
 
 
 async def fetch_uploads_by_ids(
