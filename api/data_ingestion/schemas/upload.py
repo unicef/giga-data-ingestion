@@ -64,17 +64,7 @@ class UnstructuredFileUploadRequest:
 class UploadSummaryResponse(BaseModel):
     upload_id: str
     created: datetime
-    dataset: str
     file_name: str | None
-    uploader_email: EmailStr
-
-
-class PaginatedResponse(BaseModel):
-    items: list[UploadSummaryResponse]
-    total: int
-    page: int
-    page_size: int
-    total_pages: int
 
 
 class UploadDetailsRequest(BaseModel):
