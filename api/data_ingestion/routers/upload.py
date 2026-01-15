@@ -8,24 +8,6 @@ import country_converter as coco
 import magic
 import orjson
 import pandas as pd
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Query,
-    Response,
-    Security,
-    status,
-)
-from fastapi_azure_auth.user import User
-from loguru import logger
-from pydantic import Field
-from sqlalchemy import delete, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import StreamingResponse
-
-from azure.core.exceptions import HttpResponseError
-from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
@@ -46,13 +28,127 @@ from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
     FileUploadRequest,
     UnstructuredFileUploadRequest,
+    UploadDetailsRequest,
+    UploadDetailsResponse,
+    UploadSummaryResponse,
 )
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    Response,
+    Security,
+    status,
+)
+from fastapi_azure_auth.user import User
+from loguru import logger
+from pydantic import Field
+from sqlalchemy import delete, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import StreamingResponse
+
+from azure.core.exceptions import HttpResponseError
+from azure.storage.blob import ContentSettings
 
 router = APIRouter(
     prefix="/api/upload",
     tags=["upload"],
     dependencies=[Security(azure_scheme)],
 )
+
+
+@router.get("/by-country", response_model=list[UploadSummaryResponse])
+async def list_uploads_by_country(
+    country: str = Query(..., min_length=3, max_length=3),
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    db: AsyncSession = Depends(get_db),
+):
+    # Convert ISO3 → country short name for role matching
+    country_name = coco.convert(country, to="name_short")
+
+    if not is_privileged:
+        roles = await get_user_roles(user, db)
+
+        expected_prefix = f"{country_name}-School"
+        has_access = any(role.startswith(expected_prefix) for role in roles)
+        if not has_access:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have permissions on this country",
+            )
+
+    query = (
+        select(FileUpload)
+        .where(FileUpload.country == country)
+        .order_by(FileUpload.created.desc())
+    )
+
+    results = await db.scalars(query)
+    return [
+        UploadSummaryResponse(
+            upload_id=row.id,
+            created=row.created,
+            file_name=row.original_filename,
+        )
+        for row in results.all()
+    ]
+
+
+async def fetch_uploads_by_ids(
+    db: AsyncSession,
+    upload_ids: list[str],
+) -> list[FileUpload]:
+    query = (
+        select(FileUpload)
+        .where(FileUpload.id.in_(upload_ids))
+        .order_by(FileUpload.created.desc())
+    )
+
+    result = await db.scalars(query)
+    return result.all()
+
+
+@router.post("/details", response_model=list[UploadDetailsResponse])
+async def get_upload_details(
+    payload: UploadDetailsRequest,
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    db: AsyncSession = Depends(get_db),
+):
+    uploads = await fetch_uploads_by_ids(db, payload.upload_ids)
+
+    if not uploads:
+        return []
+
+    if not is_privileged:
+        roles = await get_user_roles(user, db)
+
+        def has_country_access(iso3: str) -> bool:
+            country_name = coco.convert(iso3, to="name_short")
+            expected_prefix = f"{country_name}-School"
+            return any(role.startswith(expected_prefix) for role in roles)
+
+        unauthorized = [
+            row.id for row in uploads if not has_country_access(row.country)
+        ]
+
+        if unauthorized:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to access one or more requested uploads.",
+            )
+
+    return [
+        UploadDetailsResponse(
+            upload_id=row.id,
+            country=row.country,
+            created=row.created,
+            file_name=row.original_filename,
+        )
+        for row in uploads
+    ]
 
 
 @router.get("/basic_check/{dataset}")

@@ -15,11 +15,15 @@ class ApprovalRequestListing(BaseModel):
     rows_updated: int
     rows_deleted: int
     enabled: bool
+    upload_id: str
+    uploaded_at: datetime | None
+    file_name: str | None
 
 
 class UploadApprovedRowsRequest(BaseModel):
     approved_rows: list[str]
     subpath: str
+    upload_id: str
 
 
 class ApprovalRequestAuditLogSchema(BaseModel):
@@ -39,3 +43,15 @@ class ApprovalRequestSchema(BaseModel):
     audit_logs: list[ApprovalRequestAuditLogSchema] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ApprovalFilterByUploadRequest(BaseModel):
+    upload_ids: list[str]
+
+
+class ApprovalByUploadResponse(BaseModel):
+    id: str
+    country: str
+    dataset: str
+    upload_id: str
+    enabled: bool

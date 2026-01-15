@@ -2,10 +2,9 @@ from dataclasses import dataclass
 from datetime import datetime
 
 import orjson
+from data_ingestion.models.file_upload import DQStatusEnum
 from fastapi import Form, UploadFile
 from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr, field_validator
-
-from data_ingestion.models.file_upload import DQStatusEnum
 
 
 class FileUpload(BaseModel):
@@ -60,3 +59,20 @@ class UnstructuredFileUploadRequest:
     country: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+
+
+class UploadSummaryResponse(BaseModel):
+    upload_id: str
+    created: datetime
+    file_name: str | None
+
+
+class UploadDetailsRequest(BaseModel):
+    upload_ids: list[str]
+
+
+class UploadDetailsResponse(BaseModel):
+    upload_id: str
+    country: str
+    created: datetime
+    file_name: str | None

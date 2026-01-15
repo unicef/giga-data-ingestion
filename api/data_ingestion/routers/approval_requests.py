@@ -6,6 +6,24 @@ from pathlib import Path
 
 import pandas as pd
 from country_converter import country_converter as coco
+from data_ingestion.constants import constants
+from data_ingestion.db.primary import get_db as get_primary_db
+from data_ingestion.db.trino import get_db, get_db_context
+from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.storage import storage_client
+from data_ingestion.models import (
+    ApprovalRequest,
+    User as DatabaseUser,
+)
+from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
+from data_ingestion.permissions.permissions import IsPrivileged
+from data_ingestion.schemas.approval_requests import (
+    ApprovalByUploadResponse,
+    ApprovalFilterByUploadRequest,
+    ApprovalRequestListing,
+    UploadApprovedRowsRequest,
+)
+from data_ingestion.schemas.core import PagedResponseSchema
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi_azure_auth.user import User
 from sqlalchemy import (
@@ -20,28 +38,12 @@ from sqlalchemy import (
     update,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql.functions import count
 from sqlalchemy.types import String
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
-from data_ingestion.constants import constants
-from data_ingestion.db.primary import get_db as get_primary_db
-from data_ingestion.db.trino import get_db, get_db_context
-from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.internal.storage import storage_client
-from data_ingestion.models import (
-    ApprovalRequest,
-    User as DatabaseUser,
-)
-from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
-from data_ingestion.permissions.permissions import IsPrivileged
-from data_ingestion.schemas.approval_requests import (
-    ApprovalRequestListing,
-    UploadApprovedRowsRequest,
-)
-from data_ingestion.schemas.core import PagedResponseSchema
 
 router = APIRouter(
     prefix="/api/approval-requests",
@@ -69,7 +71,7 @@ async def list_approval_requests(
     settings = {}
     table_names = []
     for item in items:
-        settings[f"{item.country}-{item.dataset}"] = item.enabled
+        settings[item.upload_id] = item.enabled
         table_names.append(item.country.lower())
 
     data_cte = (
@@ -218,7 +220,17 @@ async def list_approval_requests(
             union_all(*queries).order_by(column("table_name"), column("table_schema"))
         )
         stats = res.mappings().all()
-
+        approvals = await primary_db.scalars(
+            select(ApprovalRequest).options(joinedload(ApprovalRequest.file_upload))
+        )
+        approval_map = {
+            f"{a.country}-{a.dataset}": {
+                "upload_id": a.upload_id,
+                "uploaded_at": a.file_upload.created if a.file_upload else None,
+                "file_name": a.file_upload.file_name if a.file_upload else None,
+            }
+            for a in approvals.all()
+        }
         for stat in stats:
             country = coco.convert(stat["table_name"], to="name_short")
             country_iso3 = coco.convert(stat["table_name"], to="ISO3")
@@ -230,8 +242,9 @@ async def list_approval_requests(
                 .title()
                 .rstrip()
             )
-            enabled = settings.get(f"{country_iso3}-{dataset}", False)
+            approval_info = approval_map.get(f"{country_iso3}-{dataset}", {})
 
+            enabled = settings.get(approval_info.get("upload_id", ""), False)
             body.append(
                 ApprovalRequestListing(
                     id=f'{stat["table_name"].upper()}-{dataset}',
@@ -245,6 +258,9 @@ async def list_approval_requests(
                     rows_updated=stat["rows_updated"],
                     rows_deleted=stat["rows_deleted"],
                     enabled=enabled,
+                    upload_id=approval_info.get("upload_id"),
+                    uploaded_at=approval_info.get("uploaded_at"),
+                    file_name=approval_info.get("file_name"),
                 )
             )
 
@@ -256,9 +272,10 @@ async def list_approval_requests(
     }
 
 
-@router.get("/{subpath}")
+@router.get("/{subpath}/{upload_id}")
 async def get_approval_request(
     subpath: str,
+    upload_id: str,
     db: Session = Depends(get_db),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
@@ -269,7 +286,15 @@ async def get_approval_request(
     table_schema, table_name = splits
     country = coco.convert(table_name, to="name_short")
     dataset = table_schema.replace("staging", "").replace("_", " ").title()
+    approval = await db.scalar(
+        select(ApprovalRequest).where(ApprovalRequest.upload_id == upload_id)
+    )
 
+    if not approval:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Upload ID not found for approval request",
+        )
     data_cte = (
         select(
             # Create an identifier that is unique across versions
@@ -300,11 +325,14 @@ async def get_approval_request(
         select("*")
         .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
         .where(
-            (literal_column("mv.max_version") == 1)
-            | (literal_column("d._commit_version") == 2)
-            | (
-                (literal_column("d._commit_version") > 2)
-                & (literal_column("d._change_type") != "update_preimage")
+            (column("upload_id") == upload_id)
+            & (
+                (literal_column("mv.max_version") == 1)
+                | (literal_column("d._commit_version") == 2)
+                | (
+                    (literal_column("d._commit_version") > 2)
+                    & (literal_column("d._change_type") != "update_preimage")
+                )
             )
         )
     )
@@ -489,10 +517,7 @@ async def upload_approved_rows(
 
         obj = await primary_db.execute(
             update(ApprovalRequest)
-            .where(
-                (ApprovalRequest.country == country_iso3)
-                & (ApprovalRequest.dataset == formatted_dataset)
-            )
+            .where(ApprovalRequest.upload_id == body.upload_id)
             .values(
                 {
                     ApprovalRequest.enabled: False,
@@ -514,3 +539,30 @@ async def upload_approved_rows(
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
+
+
+@router.post(
+    "/by-upload",
+    response_model=list[ApprovalByUploadResponse],
+)
+async def get_approvals_by_upload_ids(
+    payload: ApprovalFilterByUploadRequest,
+    primary_db: AsyncSession = Depends(get_primary_db),
+):
+    query = select(ApprovalRequest).where(
+        ApprovalRequest.upload_id.in_(payload.upload_ids)
+    )
+
+    result = await primary_db.scalars(query)
+    rows = result.all()
+
+    return [
+        ApprovalByUploadResponse(
+            id=row.id,
+            country=row.country,
+            dataset=row.dataset,
+            upload_id=row.upload_id,
+            enabled=row.enabled,
+        )
+        for row in rows
+    ]
