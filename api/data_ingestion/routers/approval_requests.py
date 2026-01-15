@@ -291,37 +291,47 @@ async def get_approval_request(
     table_schema, table_name = splits
     country = coco.convert(table_name, to="name_short")
     dataset = table_schema.replace("staging", "").replace("_", " ").title()
+    approval = await db.scalar(
+        select(ApprovalRequest).where(ApprovalRequest.upload_id == upload_id)
+    )
 
-    try:
-        data_cte = (
-            select(
-                func.concat_ws(
-                    "|",
-                    column("school_id_giga"),
-                    column("_change_type"),
-                    column("_commit_version").cast(String()),
-                ).label("change_id"),
-                "*",
-            )
-            .select_from(
-                func.table(
-                    func.delta_lake.system.table_changes(
-                        literal(table_schema), literal(table_name), 0
-                    )
+    if not approval:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Upload ID not found for approval request",
+        )
+    data_cte = (
+        select(
+            # Create an identifier that is unique across versions
+            func.concat_ws(
+                "|",
+                column("school_id_giga"),
+                column("_change_type"),
+                column("_commit_version").cast(String()),
+            ).label("change_id"),
+            "*",
+        )
+        .select_from(
+            func.table(
+                func.delta_lake.system.table_changes(
+                    literal(table_schema), literal(table_name), 0
                 )
             )
-            .cte("changes")
         )
-        max_version_cte = (
-            select(func.max(column("_commit_version")).label("max_version"))
-            .select_from(data_cte)
-            .limit(1)
-        ).cte("max_version")
+        .cte("changes")
+    )
+    max_version_cte = (
+        select(func.max(column("_commit_version")).label("max_version"))
+        .select_from(data_cte)
+        .limit(1)
+    ).cte("max_version")
 
-        cdf_cte = (
-            select("*")
-            .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
-            .where(
+    cdf_cte = (
+        select("*")
+        .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
+        .where(
+            (column("upload_id") == upload_id)
+            & (
                 (literal_column("mv.max_version") == 1)
                 | (literal_column("d._commit_version") == 2)
                 | (
@@ -330,6 +340,7 @@ async def get_approval_request(
                 )
             )
         )
+    )
 
         # Apply upload_ids filter if provided
         if payload and payload.upload_ids:
@@ -579,7 +590,10 @@ async def upload_approved_rows(
 
         obj = await primary_db.execute(
             update(ApprovalRequest)
-            .where(ApprovalRequest.upload_id == body.upload_id)
+            .where(
+                (ApprovalRequest.country == country_iso3)
+                & (ApprovalRequest.dataset == formatted_dataset)
+            )
             .values(
                 {
                     ApprovalRequest.enabled: False,
