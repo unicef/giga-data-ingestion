@@ -2,13 +2,13 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
+from data_ingestion.constants import constants
+
 # File upload model for data ingestion
 from pydantic import UUID4, EmailStr
 from sqlalchemy import JSON, VARCHAR, DateTime, String, func
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column
-
-from data_ingestion.constants import constants
 
 from .base import BaseModel
 
@@ -35,6 +35,7 @@ class FileUpload(BaseModel):
     dq_status: Mapped[DQStatusEnum] = mapped_column(
         nullable=False, default=DQStatusEnum.IN_PROGRESS
     )
+    metadata_json_path: Mapped[str] = mapped_column(nullable=True)
     bronze_path: Mapped[str] = mapped_column(nullable=True, default=None)
     is_processed_in_staging: Mapped[bool] = mapped_column(nullable=False, default=False)
     country: Mapped[str] = mapped_column(VARCHAR(3), nullable=False)

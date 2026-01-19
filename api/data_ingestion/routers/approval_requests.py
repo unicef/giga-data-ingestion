@@ -6,6 +6,24 @@ from pathlib import Path
 
 import pandas as pd
 from country_converter import country_converter as coco
+from data_ingestion.constants import constants
+from data_ingestion.db.primary import get_db as get_primary_db
+from data_ingestion.db.trino import get_db, get_db_context
+from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.storage import storage_client
+from data_ingestion.models import (
+    ApprovalRequest,
+    FileUpload,
+    User as DatabaseUser,
+)
+from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
+from data_ingestion.permissions.permissions import IsPrivileged
+from data_ingestion.schemas.approval_requests import (
+    ApprovalRequestListing,
+    ApproveDatasetRequest,
+    UploadApprovedRowsRequest,
+)
+from data_ingestion.schemas.core import PagedResponseSchema
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi_azure_auth.user import User
 from sqlalchemy import (
@@ -26,22 +44,6 @@ from sqlalchemy.types import String
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
-from data_ingestion.constants import constants
-from data_ingestion.db.primary import get_db as get_primary_db
-from data_ingestion.db.trino import get_db, get_db_context
-from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.internal.storage import storage_client
-from data_ingestion.models import (
-    ApprovalRequest,
-    User as DatabaseUser,
-)
-from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
-from data_ingestion.permissions.permissions import IsPrivileged
-from data_ingestion.schemas.approval_requests import (
-    ApprovalRequestListing,
-    UploadApprovedRowsRequest,
-)
-from data_ingestion.schemas.core import PagedResponseSchema
 
 router = APIRouter(
     prefix="/api/approval-requests",
@@ -514,3 +516,42 @@ async def upload_approved_rows(
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
+
+
+@router.post(
+    "/approve",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Security(IsPrivileged())],
+)
+async def approve_dataset_without_merge(
+    payload: ApproveDatasetRequest,
+    user: User = Depends(azure_scheme),
+    primary_db: AsyncSession = Depends(get_primary_db),
+):
+    existing = await primary_db.scalar(
+        select(ApprovalRequest).where(ApprovalRequest.upload_id == payload.upload_id)
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Already approved or in process")
+
+    upload = await primary_db.scalar(
+        select(FileUpload).where(FileUpload.id == payload.upload_id)
+    )
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload ID not found")
+
+    approval = ApprovalRequest(
+        upload_id=payload.upload_id,
+        country=upload.country,
+        dataset=upload.dataset,
+        enabled=True,
+        is_merge_processing=False,
+        approved_by_id=user.claims["oid"],
+        approved_by_email=user.claims["emails"][0],
+        dq_mode=payload.dq_mode,
+    )
+
+    primary_db.add(approval)
+    await primary_db.commit()
+
+    return {"status": "approved", "upload_id": payload.upload_id}
