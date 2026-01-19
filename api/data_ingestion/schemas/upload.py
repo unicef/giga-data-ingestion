@@ -69,6 +69,14 @@ class UploadSummaryResponse(BaseModel):
     uploader_email: EmailStr
 
 
+class PaginatedResponse(BaseModel):
+    items: list[UploadSummaryResponse]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class UploadDetailsRequest(BaseModel):
     upload_ids: list[str]
 

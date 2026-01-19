@@ -27,6 +27,7 @@ from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
     FileUploadRequest,
+    PaginatedResponse,
     UnstructuredFileUploadRequest,
     UploadDetailsRequest,
     UploadDetailsResponse,
@@ -58,7 +59,7 @@ router = APIRouter(
 )
 
 
-@router.get("/by-country", response_model=list[UploadSummaryResponse])
+@router.get("/by-country", response_model=PaginatedResponse)
 async def list_uploads_by_country(
     country: str = Query(..., min_length=3, max_length=3),
     dataset: str = Query(...),
@@ -101,7 +102,8 @@ async def list_uploads_by_country(
 
     if uploaded_by:
         query = query.where(FileUpload.uploader_email.ilike(f"%{uploaded_by}%"))
-
+    count_query = select(func.count()).select_from(query.subquery())
+    total = await db.scalar(count_query)
     sort_mapping = {
         "uploaded_at": FileUpload.created,
         "uploader_email": FileUpload.uploader_email,
@@ -118,7 +120,7 @@ async def list_uploads_by_country(
     query = query.offset(offset).limit(page_size)
 
     results = await db.scalars(query)
-    return [
+    items = [
         UploadSummaryResponse(
             upload_id=row.id,
             created=row.created,
@@ -128,6 +130,14 @@ async def list_uploads_by_country(
         )
         for row in results.all()
     ]
+
+    return PaginatedResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,  # Ceiling division
+    )
 
 
 async def fetch_uploads_by_ids(
