@@ -1,8 +1,9 @@
 import json
 import logging
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 from country_converter import country_converter as coco
@@ -13,6 +14,7 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
     ApprovalRequest,
+    FileUpload,
     User as DatabaseUser,
 )
 from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
@@ -27,11 +29,13 @@ from data_ingestion.schemas.core import PagedResponseSchema
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi_azure_auth.user import User
 from sqlalchemy import (
+    and_,
     column,
     distinct,
     func,
     literal,
     literal_column,
+    or_,
     select,
     text,
     union_all,
@@ -272,11 +276,12 @@ async def list_approval_requests(
     }
 
 
-@router.get("/{subpath}/{upload_id}")
+@router.post("/{subpath}")
 async def get_approval_request(
     subpath: str,
-    upload_id: str,
+    payload: Optional[ApprovalFilterByUploadRequest] = None,
     db: Session = Depends(get_db),
+    primary_db: AsyncSession = Depends(get_primary_db),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
 ):
@@ -286,18 +291,9 @@ async def get_approval_request(
     table_schema, table_name = splits
     country = coco.convert(table_name, to="name_short")
     dataset = table_schema.replace("staging", "").replace("_", " ").title()
-    approval = await db.scalar(
-        select(ApprovalRequest).where(ApprovalRequest.upload_id == upload_id)
-    )
 
-    if not approval:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Upload ID not found for approval request",
-        )
     data_cte = (
         select(
-            # Create an identifier that is unique across versions
             func.concat_ws(
                 "|",
                 column("school_id_giga"),
@@ -325,17 +321,54 @@ async def get_approval_request(
         select("*")
         .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
         .where(
-            (column("upload_id") == upload_id)
-            & (
-                (literal_column("mv.max_version") == 1)
-                | (literal_column("d._commit_version") == 2)
-                | (
-                    (literal_column("d._commit_version") > 2)
-                    & (literal_column("d._change_type") != "update_preimage")
-                )
+            (literal_column("mv.max_version") == 1)
+            | (literal_column("d._commit_version") == 2)
+            | (
+                (literal_column("d._commit_version") > 2)
+                & (literal_column("d._change_type") != "update_preimage")
             )
         )
     )
+
+    # Apply upload_ids filter if provided
+    if payload and payload.upload_ids:
+        # Verify upload_ids exist in ApprovalRequest for this dataset
+        approval_requests = await primary_db.execute(
+            select(ApprovalRequest.upload_id, FileUpload.created)
+            .join(FileUpload, FileUpload.id == ApprovalRequest.upload_id)
+            .where(ApprovalRequest.upload_id.in_(payload.upload_ids))
+            .where(ApprovalRequest.country == table_name.split("_")[0].upper())
+            .where(ApprovalRequest.dataset == (dataset.split(" ")[1]).lower())
+        )
+        approval_requests = approval_requests.mappings().all()
+        if not approval_requests:
+            return {
+                "info": {
+                    "country": country,
+                    "dataset": dataset.replace("-", " ").title(),
+                    "version": None,
+                    "timestamp": None,
+                },
+                "total_count": 0,
+                "data": [],
+            }
+
+        # Get timestamp ranges for these uploads
+        upload_times = [req["created"] for req in approval_requests]
+
+        # Filter changes by commit timestamp
+        time_conditions = []
+        for upload_time in upload_times:
+            time_conditions.append(
+                and_(
+                    column("_commit_timestamp") >= upload_time - timedelta(minutes=5),
+                    column("_commit_timestamp") <= upload_time + timedelta(hours=2),
+                )
+            )
+
+        # Apply time filter
+        if time_conditions:
+            cdf_cte = select("*").select_from(cdf_cte).where(or_(*time_conditions))
 
     total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
 
@@ -354,6 +387,7 @@ async def get_approval_request(
         .mappings()
         .all()
     )
+
     detail = (
         db.execute(
             select("*")
@@ -367,12 +401,13 @@ async def get_approval_request(
 
     df = pd.DataFrame(cdf)
     df = df.drop(columns=["signature"]).fillna("NULL")
+
     return {
         "info": {
             "country": country,
-            "dataset": dataset.title(),
-            "version": detail["version"],
-            "timestamp": detail["timestamp"],
+            "dataset": dataset.replace("-", " ").title(),
+            "version": detail["version"] if detail else None,
+            "timestamp": detail["timestamp"] if detail else None,
         },
         "total_count": total_count,
         "data": df.to_dict(orient="records"),

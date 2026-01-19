@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import UUID4, AwareDatetime, BaseModel, ConfigDict, Field, constr
 
@@ -46,7 +47,7 @@ class ApprovalRequestSchema(BaseModel):
 
 
 class ApprovalFilterByUploadRequest(BaseModel):
-    upload_ids: list[str]
+    upload_ids: Optional[list[str]] = None
 
 
 class ApprovalByUploadResponse(BaseModel):
