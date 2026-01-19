@@ -70,6 +70,10 @@ class ApprovalRequestAuditLog(BaseModel):
     approved_date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    dq_mode: Mapped[DQModeEnum | None] = mapped_column(
+        SQLEnum(DQModeEnum, name="dqmodeenum"),
+        nullable=True,
+    )
 
 
 async def fetch_approvals_by_upload_ids(
