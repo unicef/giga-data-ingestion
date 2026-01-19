@@ -39,3 +39,8 @@ class ApprovalRequestSchema(BaseModel):
     audit_logs: list[ApprovalRequestAuditLogSchema] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ApproveDatasetRequest(BaseModel):
+    upload_id: str
+    dq_mode: str
