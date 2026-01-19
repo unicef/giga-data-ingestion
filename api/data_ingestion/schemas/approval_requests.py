@@ -20,6 +20,7 @@ class ApprovalRequestListing(BaseModel):
 class UploadApprovedRowsRequest(BaseModel):
     approved_rows: list[str]
     subpath: str
+    dq_mode: str = "uploaded"
 
 
 class ApprovalRequestAuditLogSchema(BaseModel):
@@ -27,6 +28,7 @@ class ApprovalRequestAuditLogSchema(BaseModel):
     approved_by_id: UUID4
     approved_by_email: str
     approved_date: datetime
+    dq_mode: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
