@@ -64,7 +64,9 @@ class UnstructuredFileUploadRequest:
 class UploadSummaryResponse(BaseModel):
     upload_id: str
     created: datetime
+    dataset: str
     file_name: str | None
+    uploader_email: EmailStr
 
 
 class UploadDetailsRequest(BaseModel):
