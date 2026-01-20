@@ -292,56 +292,138 @@ async def get_approval_request(
     country = coco.convert(table_name, to="name_short")
     dataset = table_schema.replace("staging", "").replace("_", " ").title()
 
-    data_cte = (
-        select(
-            func.concat_ws(
-                "|",
-                column("school_id_giga"),
-                column("_change_type"),
-                column("_commit_version").cast(String()),
-            ).label("change_id"),
-            "*",
+    try:
+        data_cte = (
+            select(
+                func.concat_ws(
+                    "|",
+                    column("school_id_giga"),
+                    column("_change_type"),
+                    column("_commit_version").cast(String()),
+                ).label("change_id"),
+                "*",
+            )
+            .select_from(
+                func.table(
+                    func.delta_lake.system.table_changes(
+                        literal(table_schema), literal(table_name), 0
+                    )
+                )
+            )
+            .cte("changes")
         )
-        .select_from(
-            func.table(
-                func.delta_lake.system.table_changes(
-                    literal(table_schema), literal(table_name), 0
+        max_version_cte = (
+            select(func.max(column("_commit_version")).label("max_version"))
+            .select_from(data_cte)
+            .limit(1)
+        ).cte("max_version")
+
+        cdf_cte = (
+            select("*")
+            .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
+            .where(
+                (literal_column("mv.max_version") == 1)
+                | (literal_column("d._commit_version") == 2)
+                | (
+                    (literal_column("d._commit_version") > 2)
+                    & (literal_column("d._change_type") != "update_preimage")
                 )
             )
         )
-        .cte("changes")
-    )
-    max_version_cte = (
-        select(func.max(column("_commit_version")).label("max_version"))
-        .select_from(data_cte)
-        .limit(1)
-    ).cte("max_version")
 
-    cdf_cte = (
-        select("*")
-        .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
-        .where(
-            (literal_column("mv.max_version") == 1)
-            | (literal_column("d._commit_version") == 2)
-            | (
-                (literal_column("d._commit_version") > 2)
-                & (literal_column("d._change_type") != "update_preimage")
+        # Apply upload_ids filter if provided
+        if payload and payload.upload_ids:
+            # Verify upload_ids exist in ApprovalRequest for this dataset
+            approval_requests = await primary_db.execute(
+                select(ApprovalRequest.upload_id, FileUpload.created)
+                .join(FileUpload, FileUpload.id == ApprovalRequest.upload_id)
+                .where(ApprovalRequest.upload_id.in_(payload.upload_ids))
+                .where(ApprovalRequest.country == table_name.split("_")[0].upper())
+                .where(ApprovalRequest.dataset == (dataset.split(" ")[1]).lower())
             )
-        )
-    )
+            approval_requests = approval_requests.mappings().all()
+            if not approval_requests:
+                return {
+                    "info": {
+                        "country": country,
+                        "dataset": dataset.replace("-", " ").title(),
+                        "version": None,
+                        "timestamp": None,
+                    },
+                    "page": page,
+                    "page_size": page_size,
+                    "total_count": 0,
+                    "total_pages": 0,
+                    "data": [],
+                }
 
-    # Apply upload_ids filter if provided
-    if payload and payload.upload_ids:
-        # Verify upload_ids exist in ApprovalRequest for this dataset
-        approval_requests = await primary_db.execute(
-            select(ApprovalRequest.upload_id, FileUpload.created)
-            .join(FileUpload, FileUpload.id == ApprovalRequest.upload_id)
-            .where(ApprovalRequest.upload_id.in_(payload.upload_ids))
-            .where(ApprovalRequest.country == table_name.split("_")[0].upper())
-            .where(ApprovalRequest.dataset == (dataset.split(" ")[1]).lower())
+            # Get timestamp ranges for these uploads
+            upload_times = [req["created"] for req in approval_requests]
+
+            # Filter changes by commit timestamp
+            time_conditions = []
+            for upload_time in upload_times:
+                time_conditions.append(
+                    and_(
+                        column("_commit_timestamp")
+                        >= upload_time - timedelta(minutes=5),
+                        column("_commit_timestamp") <= upload_time + timedelta(hours=2),
+                    )
+                )
+
+            # Apply time filter
+            if time_conditions:
+                cdf_cte = select("*").select_from(cdf_cte).where(or_(*time_conditions))
+
+        total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
+
+        cdf = (
+            db.execute(
+                select("*")
+                .select_from(cdf_cte)
+                .order_by(
+                    column("school_id_giga"),
+                    column("_commit_version").desc(),
+                    column("_change_type").desc(),
+                )
+                .offset((page - 1) * page_size)
+                .limit(page_size)
+            )
+            .mappings()
+            .all()
         )
-        approval_requests = approval_requests.mappings().all()
-        if not approval_requests:
+
+        detail = (
+            db.execute(
+                select("*")
+                .select_from(text(f'{table_schema}."{table_name}$history"'))
+                .order_by(column("version").desc())
+                .limit(1)
+            )
+            .mappings()
+            .first()
+        )
+
+        df = pd.DataFrame(cdf)
+        df = df.drop(columns=["signature"]).fillna("NULL")
+
+        return {
+            "info": {
+                "country": country,
+                "dataset": dataset.replace("-", " ").title(),
+                "version": detail["version"] if detail else None,
+                "timestamp": detail["timestamp"] if detail else None,
+            },
+            "page": page,
+            "page_size": page_size,
+            "total_count": total_count,
+            "total_pages": (total_count + page_size - 1) // page_size,
+            "data": df.to_dict(orient="records"),
+        }
+
+    except Exception as e:
+        # Handle Delta Lake missing log entries error
+        if "Delta Lake log entries are missing" in str(e):
             return {
                 "info": {
                     "country": country,
@@ -349,69 +431,14 @@ async def get_approval_request(
                     "version": None,
                     "timestamp": None,
                 },
+                "page": page,
+                "page_size": page_size,
                 "total_count": 0,
+                "total_pages": 0,
                 "data": [],
+                "error": "Delta Lake table has missing log entries. Please rebuild the table.",
             }
-
-        # Get timestamp ranges for these uploads
-        upload_times = [req["created"] for req in approval_requests]
-
-        # Filter changes by commit timestamp
-        time_conditions = []
-        for upload_time in upload_times:
-            time_conditions.append(
-                and_(
-                    column("_commit_timestamp") >= upload_time - timedelta(minutes=5),
-                    column("_commit_timestamp") <= upload_time + timedelta(hours=2),
-                )
-            )
-
-        # Apply time filter
-        if time_conditions:
-            cdf_cte = select("*").select_from(cdf_cte).where(or_(*time_conditions))
-
-    total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
-
-    cdf = (
-        db.execute(
-            select("*")
-            .select_from(cdf_cte)
-            .order_by(
-                column("school_id_giga"),
-                column("_commit_version").desc(),
-                column("_change_type").desc(),
-            )
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        )
-        .mappings()
-        .all()
-    )
-
-    detail = (
-        db.execute(
-            select("*")
-            .select_from(text(f'{table_schema}."{table_name}$history"'))
-            .order_by(column("version").desc())
-            .limit(1)
-        )
-        .mappings()
-        .first()
-    )
-
-    df = pd.DataFrame(cdf)
-    df = df.drop(columns=["signature"]).fillna("NULL")
-
-    return {
-        "info": {
-            "country": country,
-            "dataset": dataset.replace("-", " ").title(),
-            "version": detail["version"] if detail else None,
-            "timestamp": detail["timestamp"] if detail else None,
-        },
-        "total_count": total_count,
-        "data": df.to_dict(orient="records"),
-    }
+        raise
 
 
 @router.post(
