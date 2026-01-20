@@ -93,7 +93,7 @@ async def list_uploads_by_country(
     query = (
         select(FileUpload)
         .where(FileUpload.country == country)
-        .where(FileUpload.dataset == dataset)
+        .where(FileUpload.dataset == dataset.lower().split(" ")[1])
     )
 
     # Apply filters
