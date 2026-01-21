@@ -15,7 +15,7 @@ services:
     env_file: ./api/.env
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8080:8000"
     volumes:
       - ./api:/app
       - ./api/.venv-docker:/app/.venv
@@ -37,7 +37,7 @@ services:
       restart_policy:
         condition: on-failure
         delay: 3s
-    command: [ "/app/celery-docker-entrypoint.dev.sh" ]
+    command: ["/app/celery-docker-entrypoint.dev.sh"]
     volumes:
       - ./api:/app
       - ./api/.venv-docker:/app/.venv
@@ -51,7 +51,7 @@ services:
     init: true
     env_file: ./api/.env
     restart: unless-stopped
-    command: [ "/app/celery-beat-docker-entrypoint.dev.sh" ]
+    command: ["/app/celery-beat-docker-entrypoint.dev.sh"]
     volumes:
       - ./api:/app
       - ./api/.venv-docker:/app/.venv
@@ -69,7 +69,7 @@ services:
       - -c
       - exec poetry run celery -A data_ingestion.celery flower --port=5000
     ports:
-      - "5000:5000"
+      - "5555:5000"
     volumes:
       - ./api:/app
       - ./api/.venv-docker:/app/.venv
@@ -89,18 +89,30 @@ services:
     entrypoint:
       - /bin/sh
       - "-c"
-      - "npm install && exec npm run dev"
+      - "if [ ! -d node_modules ] || [ ! -f node_modules/.bin/vite ]; then echo 'Installing dependencies...' && npm install; else echo 'Dependencies already installed, skipping npm install'; fi && echo 'Starting Vite dev server...' && exec npm run dev"
 
   db:
     image: public.ecr.aws/bitnami/postgresql:16.2.0-debian-11-r10
     restart: unless-stopped
     env_file: ./api/.env
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - POSTGRESQL_USERNAME=${POSTGRESQL_USERNAME:-postgres}
+      - POSTGRESQL_DATABASE=${POSTGRESQL_DATABASE:-postgres}
     ports:
       - "5432:5432"
     volumes:
       - db-data:/bitnami/postgresql
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "$POSTGRESQL_USERNAME", "-d", "$POSTGRESQL_DATABASE" ]
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-U",
+          "$POSTGRESQL_USERNAME",
+          "-d",
+          "$POSTGRESQL_DATABASE",
+        ]
       retries: 3
       timeout: 5s
       start_period: 3s
@@ -109,16 +121,18 @@ services:
     image: public.ecr.aws/bitnami/redis:7.2.4-debian-12-r10
     restart: unless-stopped
     env_file: ./api/.env
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - "6379:6379"
     volumes:
       - cache-data:/bitnami/redis/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "--pass", "$REDIS_PASSWORD", "ping" ]
+      test: ["CMD", "redis-cli", "--pass", "$REDIS_PASSWORD", "ping"]
       retries: 3
       timeout: 5s
       start_period: 3s
-  
+
   email-api:
     image: node:20-alpine
     restart: unless-stopped

@@ -41,6 +41,9 @@ Refer to [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
 ## Local Development
 
+> 📖 **For detailed setup instructions**, including step-by-step configuration, troubleshooting,
+> and granting admin permissions, see the [Local Development Guide](local-development.md).
+
 ### File Structure Walkthrough
 
 - `azure/` - Contains all configuration for Azure DevOps pipelines.
@@ -99,6 +102,9 @@ Additional setup:
 contents of these files can be provided upon request. There are also `.env.example`
 files which you can use as reference. Copy the contents of this file into a new file
 named `.env` in the same directory, then supply your own values.
+
+> 📖 **For detailed environment configuration instructions**, including Azure B2C setup and
+> database configuration, see the [Local Development Guide](local-development.md).
 
 Ensure that the Pre-requisites have already been set up and all the necessary
 command-line executables are in your `PATH`.
