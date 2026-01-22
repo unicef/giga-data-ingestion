@@ -25,6 +25,7 @@ import { Route as IngestApiAddImport } from './routes/ingest-api/add'
 import { Route as UploadUploadIdIndexImport } from './routes/upload/$uploadId/index'
 import { Route as IngestApiAddIndexImport } from './routes/ingest-api/add/index'
 import { Route as DeleteCountryIndexImport } from './routes/delete/$country/index'
+import { Route as ApprovalRequestsUploadsIndexImport } from './routes/approval-requests/uploads/index'
 import { Route as ApprovalRequestsSubpathIndexImport } from './routes/approval-requests/$subpath/index'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
@@ -133,6 +134,12 @@ const DeleteCountryIndexRoute = DeleteCountryIndexImport.update({
   path: '/$country/',
   getParentRoute: () => DeleteLazyRoute,
 } as any)
+
+const ApprovalRequestsUploadsIndexRoute =
+  ApprovalRequestsUploadsIndexImport.update({
+    path: '/uploads/',
+    getParentRoute: () => ApprovalRequestsLazyRoute,
+  } as any)
 
 const ApprovalRequestsSubpathIndexRoute =
   ApprovalRequestsSubpathIndexImport.update({
@@ -314,6 +321,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApprovalRequestsSubpathIndexImport
       parentRoute: typeof ApprovalRequestsLazyImport
     }
+    '/approval-requests/uploads/': {
+      preLoaderRoute: typeof ApprovalRequestsUploadsIndexImport
+      parentRoute: typeof ApprovalRequestsLazyImport
+    }
     '/delete/$country/': {
       preLoaderRoute: typeof DeleteCountryIndexImport
       parentRoute: typeof DeleteLazyImport
@@ -388,6 +399,7 @@ export const routeTree = rootRoute.addChildren([
     ApprovalRequestsIndexRoute,
     ApprovalRequestsSubpathConfirmRoute,
     ApprovalRequestsSubpathIndexRoute,
+    ApprovalRequestsUploadsIndexRoute,
   ]),
   DeleteLazyRoute.addChildren([DeleteIndexRoute, DeleteCountryIndexRoute]),
   IngestApiLazyRoute.addChildren([

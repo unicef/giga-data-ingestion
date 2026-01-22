@@ -114,7 +114,29 @@ function ApprovalRequests() {
         rows_added: commaNumber(request.rows_added),
         rows_updated: commaNumber(request.rows_updated),
         rows_deleted: commaNumber(request.rows_deleted),
-        country: `${request.country} (${request.country_iso3})`,
+        country: (
+          <span
+            className={`${
+              request.enabled
+                ? "cursor-pointer text-blue-600 hover:underline"
+                : ""
+            }`}
+            onClick={() =>
+              request.enabled
+                ? navigate({
+                    to: "./uploads",
+                    search: {
+                      country: request.country_iso3,
+                      dataset: request.dataset,
+                    },
+                  })
+                : null
+            }
+          >
+            {request.country} ({request.country_iso3})
+          </span>
+        ),
+        dataset: request.dataset,
         actions: (
           <Button
             disabled={isLoading || !request.enabled}
