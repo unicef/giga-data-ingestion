@@ -89,16 +89,12 @@ services:
     entrypoint:
       - /bin/sh
       - "-c"
-      - "if [ ! -d node_modules ] || [ ! -f node_modules/.bin/vite ]; then echo 'Installing dependencies...' && npm install; else echo 'Dependencies already installed, skipping npm install'; fi && echo 'Starting Vite dev server...' && exec npm run dev"
+      - "npm install && exec npm run dev"
 
   db:
     image: public.ecr.aws/bitnami/postgresql:16.2.0-debian-11-r10
     restart: unless-stopped
     env_file: ./api/.env
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
-      - POSTGRESQL_USERNAME=${POSTGRESQL_USERNAME:-postgres}
-      - POSTGRESQL_DATABASE=${POSTGRESQL_DATABASE:-postgres}
     ports:
       - "5432:5432"
     volumes:
@@ -121,8 +117,6 @@ services:
     image: public.ecr.aws/bitnami/redis:7.2.4-debian-12-r10
     restart: unless-stopped
     env_file: ./api/.env
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
     ports:
       - "6379:6379"
     volumes:
