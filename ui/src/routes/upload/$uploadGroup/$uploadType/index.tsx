@@ -319,6 +319,14 @@ export default function Index() {
           ) : null
         ) : (
           <div className="flex w-full flex-col gap-4">
+            <h2 className="font-ibmplex text-base font-semibold">
+              Upload file
+            </h2>
+            <p className="-mt-1 font-ibmplex text-sm font-normal text-giga-gray">
+              File formats:{" "}
+              {[...new Set(Object.values(validTypes).flat())].join(", ")} up to
+              10MB
+            </p>
             <div className="h-[78px] w-full">
               {hasUploadedFile && file ? (
                 <FileUploaderItem
@@ -339,11 +347,7 @@ export default function Index() {
                 />
               )}
             </div>
-            <p>
-              File formats:{" "}
-              {[...new Set(Object.values(validTypes).flat())].join(", ")} up to
-              10MB
-            </p>
+
             {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
           </div>
         )}
