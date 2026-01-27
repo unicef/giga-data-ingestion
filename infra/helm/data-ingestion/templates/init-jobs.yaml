@@ -124,51 +124,51 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
 ---
-#apiVersion: batch/v1
-#kind: Job
-#metadata:
-#  name: "{{ include "data-ingestion.fullname" . }}-migrate-blob-metadata"
-#  labels:
-#      {{- include "data-ingestion.labels" . | nindent 4 }}
-#  annotations:
-#    helm.sh/hook: post-install,post-upgrade
-#    helm.sh/hook-weight: "5"
-#    helm.sh/hook-delete-policy: before-hook-creation
-#spec:
-#  activeDeadlineSeconds: 21600
-#  backoffLimit: 2
-#  template:
-#    spec:
-#      restartPolicy: OnFailure
-#      containers:
-#        - name: "{{ include "data-ingestion.fullname" . }}-migrate-blob-metadata"
-#          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-#          command:
-#            - /bin/sh
-#            - -c
-#            - |
-#              echo "Starting blob metadata migration..."
-#              echo "Total records to process: checking..."
-#              python -m scripts.migrate_blob_metadata --apply --batch-size 200 --concurrency 20
-#              EXIT_CODE=$?
-#              if [ $EXIT_CODE -eq 0 ]; then
-#                echo "Migration completed successfully!"
-#              else
-#                echo "Migration failed with exit code $EXIT_CODE"
-#                exit $EXIT_CODE
-#              fi
-#
-#          {{- with .Values.envFrom }}
-#          envFrom:
-#            {{- toYaml . | nindent 12 }}
-#          {{- end }}
-#
-#          # Resource limits for the migration job
-#          resources:
-#            requests:
-#              memory: "512Mi"
-#              cpu: "500m"
-#            limits:
-#              memory: "2Gi"
-#              cpu: "2000m"
-#---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ include "data-ingestion.fullname" . }}-migrate-blob-metadata"
+  labels:
+      {{- include "data-ingestion.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "5"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  activeDeadlineSeconds: 21600
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: "{{ include "data-ingestion.fullname" . }}-migrate-blob-metadata"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Starting blob metadata migration..."
+              echo "Total records to process: checking..."
+              python -m scripts.migrate_blob_metadata --apply --batch-size 200 --concurrency 20
+              EXIT_CODE=$?
+              if [ $EXIT_CODE -eq 0 ]; then
+                echo "Migration completed successfully!"
+              else
+                echo "Migration failed with exit code $EXIT_CODE"
+                exit $EXIT_CODE
+              fi
+
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          # Resource limits for the migration job
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+---
