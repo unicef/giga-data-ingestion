@@ -58,20 +58,21 @@ async def process_single_upload(upload: FileUpload, dry_run: bool) -> dict:
         metadata_bytes = json.dumps(blob_meta, indent=2).encode()
 
         if not dry_run:
-            await loop.run_in_executor(
-                None,
-                metadata_client.upload_blob,
-                metadata_bytes,
-                True,  # overwrite
-            )
+            # Define a wrapper function for upload_blob
+            def upload_metadata():
+                return metadata_client.upload_blob(data=metadata_bytes, overwrite=True)
+
+            await loop.run_in_executor(None, upload_metadata)
 
             # Set pointer on original blob (best effort)
             try:
-                await loop.run_in_executor(
-                    None,
-                    blob_client.set_blob_metadata,
-                    {"metadata_json": metadata_file_path},
-                )
+
+                def set_metadata():
+                    return blob_client.set_blob_metadata(
+                        metadata={"metadata_json": metadata_file_path}
+                    )
+
+                await loop.run_in_executor(None, set_metadata)
             except Exception as exc:
                 logger.warning(f"Failed to set pointer on {upload_path}: {exc}")
 
@@ -228,7 +229,7 @@ async def migrate(dry_run: bool = True, offset: int = 0):
         f"  Success:   {total_success:,}\n"
         f"  Errors:    {total_errors:,}\n"
         f"  Skipped:   {total_skipped:,}\n"
-        f"  Rate:      {total_processed/elapsed:.1f} records/sec"
+        f"  Rate:      {total_processed / elapsed:.1f} records/sec"
     )
 
 
