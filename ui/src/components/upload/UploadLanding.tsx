@@ -1,7 +1,17 @@
 import { useState } from "react";
 
 import { Add } from "@carbon/icons-react";
-import { Button, Heading, Section, Stack } from "@carbon/react";
+import {
+  Button,
+  Heading,
+  Section,
+  Stack,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+} from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
@@ -23,7 +33,20 @@ interface UploadLandingProps {
 
 function UploadLanding(props: UploadLandingProps) {
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
+  const [selectedTab, setSelectedTab] = useState(0);
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
+
+  // Tab 0 = "Giga Sync" (gigasync), Tab 1 = "API", Tab 2 = "Giga Meter" (gigameter)
+  const sourceFilter =
+    selectedTab === 0 ? "gigasync" : selectedTab === 1 ? "API" : "gigameter";
+
+  const handleTabChange = ({ selectedIndex }: { selectedIndex: number }) => {
+    setSelectedTab(selectedIndex);
+    // Reset to page 1 when switching tabs
+    if (props.page !== 1) {
+      props.handlePaginationChange({ page: 1, pageSize: props.pageSize });
+    }
+  };
 
   return (
     <Section>
@@ -112,7 +135,25 @@ function UploadLanding(props: UploadLandingProps) {
             </div>
           </Stack>
 
-          <UploadsTable {...props} />
+          <Tabs selectedIndex={selectedTab} onChange={handleTabChange}>
+            <TabList aria-label="File Uploads Tabs">
+              <Tab>Giga Sync</Tab>
+              <Tab>API</Tab>
+              <Tab>Giga Meter</Tab>
+            </TabList>
+
+            <TabPanels>
+              <TabPanel className="p-0">
+                <UploadsTable {...props} source={sourceFilter} />
+              </TabPanel>
+              <TabPanel className="p-0">
+                <UploadsTable {...props} source={sourceFilter} />
+              </TabPanel>
+              <TabPanel className="p-0">
+                <UploadsTable {...props} source={sourceFilter} />
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
         </Stack>
       </Section>
     </Section>
