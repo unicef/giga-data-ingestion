@@ -36,9 +36,24 @@ function UploadLanding(props: UploadLandingProps) {
   const [selectedTab, setSelectedTab] = useState(0);
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
 
-  // Tab 0 = "Giga Sync" (gigasync), Tab 1 = "API", Tab 2 = "Giga Meter" (gigameter)
-  const sourceFilter =
-    selectedTab === 0 ? "gigasync" : selectedTab === 1 ? "API" : "gigameter";
+  // Tab 0 = Giga Sync (source gigasync), 1 = API (source api), 2 = Giga Meter (source gigameter),
+  // 3 = Coverage (dataset coverage), 4 = Schemaless Dataset (dataset structured)
+  const tabFilter = (() => {
+    switch (selectedTab) {
+      case 0:
+        return { source: "gigasync" as const, dataset: null };
+      case 1:
+        return { source: "api" as const, dataset: null };
+      case 2:
+        return { source: "gigameter" as const, dataset: null };
+      case 3:
+        return { source: null, dataset: "coverage" as const };
+      case 4:
+        return { source: null, dataset: "structured" as const };
+      default:
+        return { source: null, dataset: null };
+    }
+  })();
 
   const handleTabChange = ({ selectedIndex }: { selectedIndex: number }) => {
     setSelectedTab(selectedIndex);
@@ -136,21 +151,53 @@ function UploadLanding(props: UploadLandingProps) {
           </Stack>
 
           <Tabs selectedIndex={selectedTab} onChange={handleTabChange}>
-            <TabList aria-label="File Uploads Tabs">
+            <TabList
+              aria-label="File Uploads Tabs"
+              fullWidth
+              className="w-full"
+            >
               <Tab>Giga Sync</Tab>
               <Tab>API</Tab>
               <Tab>Giga Meter</Tab>
+              <Tab>Coverage</Tab>
+              <Tab>Schemaless</Tab>
             </TabList>
 
             <TabPanels>
               <TabPanel className="p-0">
-                <UploadsTable {...props} source={sourceFilter} />
+                <UploadsTable
+                  {...props}
+                  source={tabFilter.source}
+                  dataset={tabFilter.dataset}
+                />
               </TabPanel>
               <TabPanel className="p-0">
-                <UploadsTable {...props} source={sourceFilter} />
+                <UploadsTable
+                  {...props}
+                  source={tabFilter.source}
+                  dataset={tabFilter.dataset}
+                />
               </TabPanel>
               <TabPanel className="p-0">
-                <UploadsTable {...props} source={sourceFilter} />
+                <UploadsTable
+                  {...props}
+                  source={tabFilter.source}
+                  dataset={tabFilter.dataset}
+                />
+              </TabPanel>
+              <TabPanel className="p-0">
+                <UploadsTable
+                  {...props}
+                  source={tabFilter.source}
+                  dataset={tabFilter.dataset}
+                />
+              </TabPanel>
+              <TabPanel className="p-0">
+                <UploadsTable
+                  {...props}
+                  source={tabFilter.source}
+                  dataset={tabFilter.dataset}
+                />
               </TabPanel>
             </TabPanels>
           </Tabs>

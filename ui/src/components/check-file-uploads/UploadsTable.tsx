@@ -84,24 +84,31 @@ interface UploadsTableProps {
     pageSize: number;
   }) => void;
   source?: string | null;
+  dataset?: string | null;
 }
+
+const hasFilter = (
+  s: string | null | undefined,
+  d: string | null | undefined,
+) => (s !== undefined && s !== null) || (d !== undefined && d !== null);
 
 function UploadsTable({
   page,
   pageSize,
   handlePaginationChange,
   source,
+  dataset,
 }: UploadsTableProps) {
-  // When filtering by source, fetch a large batch to filter client-side
+  // When filtering by source or dataset, fetch a large batch to filter client-side
   // Otherwise use normal pagination
-  const fetchPageSize =
-    source !== undefined && source !== null ? 1000 : pageSize;
-  const fetchPage = source !== undefined && source !== null ? 1 : page;
+  const filterActive = hasFilter(source, dataset);
+  const fetchPageSize = filterActive ? 1000 : pageSize;
+  const fetchPage = filterActive ? 1 : page;
 
   const { data: uploadsQuery, isLoading } = useSuspenseQuery({
     queryFn: () =>
       api.uploads.list_uploads({ page: fetchPage, page_size: fetchPageSize }),
-    queryKey: ["uploads", fetchPage, fetchPageSize, source],
+    queryKey: ["uploads", fetchPage, fetchPageSize, source, dataset],
   });
 
   const renderUploads = useMemo<PagedResponse<TableUpload>>(() => {
@@ -112,10 +119,12 @@ function UploadsTable({
       total_count: 0,
     };
 
-    // Filter by source if provided
+    // Filter by source or dataset if provided
     let filteredData = uploads.data;
     if (source !== undefined && source !== null) {
       filteredData = uploads.data.filter(upload => upload.source === source);
+    } else if (dataset !== undefined && dataset !== null) {
+      filteredData = uploads.data.filter(upload => upload.dataset === dataset);
     }
 
     // Recalculate pagination for filtered data
@@ -125,7 +134,7 @@ function UploadsTable({
 
     const _renderUploads = {
       data: [],
-      page: source !== undefined && source !== null ? page : uploads.page,
+      page: filterActive ? page : uploads.page,
       page_size: pageSize,
       total_count: filteredData.length,
     } as PagedResponse<TableUpload>;
@@ -169,7 +178,7 @@ function UploadsTable({
     });
 
     return _renderUploads;
-  }, [page, pageSize, uploadsQuery?.data, source]);
+  }, [page, pageSize, uploadsQuery?.data, source, dataset]);
 
   return isLoading ? (
     <DataTableSkeleton headers={columns} />
