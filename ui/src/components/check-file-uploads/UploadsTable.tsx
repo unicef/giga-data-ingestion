@@ -119,10 +119,16 @@ function UploadsTable({
       total_count: 0,
     };
 
-    // Filter by source or dataset if provided
+    // Filter by source or dataset if provided.
+    // When filtering by source (Geolocation, API, Giga Meter), exclude coverage and
+    // schemaless datasets so they only appear in Coverage and Schemaless tabs.
+    const datasetOnlyTabs = ["coverage", "structured"];
     let filteredData = uploads.data;
     if (source !== undefined && source !== null) {
-      filteredData = uploads.data.filter(upload => upload.source === source);
+      filteredData = uploads.data.filter(
+        upload =>
+          upload.source === source && !datasetOnlyTabs.includes(upload.dataset),
+      );
     } else if (dataset !== undefined && dataset !== null) {
       filteredData = uploads.data.filter(upload => upload.dataset === dataset);
     }

@@ -36,8 +36,8 @@ function UploadLanding(props: UploadLandingProps) {
   const [selectedTab, setSelectedTab] = useState(0);
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
 
-  // Tab 0 = Giga Sync (source gigasync), 1 = API (source api), 2 = Giga Meter (source gigameter),
-  // 3 = Coverage (dataset coverage), 4 = Schemaless Dataset (dataset structured)
+  // Tab 0 = Geolocation (source gigasync), 1 = API (source api), 2 = Giga Meter (source gigameter),
+  // 3 = Coverage (dataset coverage), 4 = Schemaless (dataset structured)
   const tabFilter = (() => {
     switch (selectedTab) {
       case 0:
@@ -156,7 +156,7 @@ function UploadLanding(props: UploadLandingProps) {
               fullWidth
               className="w-full"
             >
-              <Tab>Giga Sync</Tab>
+              <Tab>Geolocation</Tab>
               <Tab>API</Tab>
               <Tab>Giga Meter</Tab>
               <Tab>Coverage</Tab>
