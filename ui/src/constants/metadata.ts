@@ -52,15 +52,14 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     },
     {
       name: "description",
-      label: "Description",
-      helperText:
-        "Description of the upload (e.g. change notes, additional context)",
+      label: "Description about the upload",
+      helperText: "e.g. change notes, additional context",
       type: "text",
       required: true,
       validator: z.string().min(1, { message: requiredFieldErrorMessage }),
     },
   ],
-  "Background information on the school dataset": [
+  "Information about the school dataset": [
     {
       name: "focal_point_name",
       label: "Focal point name",
@@ -71,7 +70,7 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     },
     {
       name: "focal_point_contact",
-      label: "Focal point contact",
+      label: "Focal point email",
       helperText: "Email of the person who compiled the data",
       type: "text",
       required: true,
@@ -79,10 +78,8 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     },
     {
       name: "data_owner",
-      label: "Data owner(s)",
-      helperText: `Who is the entity owning and sharing this dataset?
-      e.g. Ministry of Education, Office of Statistics, other
-      `,
+      label: "Data owner/s",
+      helperText: "e.g. Ministry of Education, Office of Statistics, other",
       type: "text",
       required: true,
       validator: z.string().min(1, { message: requiredFieldErrorMessage }),
@@ -90,7 +87,7 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     {
       name: "year_of_data_collection",
       label: "Year of data collection",
-      helperText: "When was the data collected (month/year)?",
+      helperText: "Select year",
       type: "year",
       required: true,
       validator: z.union([
@@ -104,8 +101,7 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     {
       name: "modality_of_data_collection",
       label: "Modality of data collection",
-      helperText:
-        "How was the data collected (online, phone, written, in-person)?",
+      helperText: "Select an option",
       type: "enum",
       enum: modalityCollectionOptions,
       required: false,
@@ -113,9 +109,8 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     },
     {
       name: "school_ids_type",
-      label: "School IDs type",
-      helperText:
-        "What type of school IDs are provided in the dataset (e.g. EMIS IDs, examination codes, other)? Are they official school IDs?",
+      label: "School ID type",
+      helperText: "Select type of school IDs provided",
       type: "enum",
       enum: schoolIdTypeOptions,
       required: false,
@@ -124,22 +119,18 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     {
       name: "data_quality_issues",
       label: "Data gaps / quality issues",
-      helperText: `Are there any known gaps or issues in the school data that you are aware of?
-      For example:
-      Is the dataset exhaustive of all primary and secondary schools in the country? 
-      Are any mandatory data fields missing from the dataset? 
-      Is there uncertainty regarding the accuracy of school geolocation coordinates?
-      `,
+      helperText:
+        "Describe here if there are any gaps or issues in the school data, like missing fields, lack of comprehensiveness, or inaccuracies in geolocation",
       type: "text",
       required: false,
       validator: z.string().optional(),
     },
   ],
-  "Background information on school data collection practices in the country": [
+  "Information about national school data collection practices": [
     {
       name: "frequency_of_school_data_collection",
-      label: "Frequency of school data collection",
-      helperText: "How often is school data collected/updated?",
+      label: "Frequency of data collection or update",
+      helperText: "Select an option",
       type: "enum",
       enum: frequencyCollectionOptions,
       required: false,
@@ -147,8 +138,8 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     },
     {
       name: "next_school_data_collection",
-      label: "Next school data collection",
-      helperText: "When is the next school data collection planned for?",
+      label: "Date of the next scheduled data collection",
+      helperText: "MM / YYYY",
       type: "month-year",
       required: false,
       validator: z
@@ -172,9 +163,9 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     },
     {
       name: "emis_system",
-      label: "EMIS system",
-      helperText:
+      label:
         "Is there a functioning Education Management Information Systems (EMIS) in the country?",
+      helperText: "Select an option",
       type: "enum",
       enum: yesNoUnknownOptions,
       required: false,
@@ -182,9 +173,9 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
     },
     {
       name: "school_contacts",
-      label: "School contacts",
-      helperText:
-        "Does the Ministry of Education / data owner have access to school contacts such as a telephone number or an email?",
+      label:
+        "Does the MoE or Data owner have access to school contact details like phone numbers or emails?",
+      helperText: "Select an option",
       type: "enum",
       enum: yesNoUnknownOptions,
       required: false,

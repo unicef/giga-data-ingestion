@@ -82,6 +82,35 @@ export const Route = createFileRoute(
   },
 });
 
+function getFormRows(
+  groupKey: string,
+  formItems: MetadataFormMapping[],
+): MetadataFormMapping[][] {
+  if (groupKey === "") {
+    return formItems.map(item => [item]);
+  }
+  if (groupKey === "Information about the school dataset") {
+    const pairs: MetadataFormMapping[][] = [];
+    for (let i = 0; i < 6 && i < formItems.length; i += 2) {
+      pairs.push(formItems.slice(i, i + 2));
+    }
+    if (formItems.length > 6) {
+      pairs.push(...formItems.slice(6).map(item => [item]));
+    }
+    return pairs;
+  }
+  if (
+    groupKey === "Information about national school data collection practices"
+  ) {
+    const pairs: MetadataFormMapping[][] = [];
+    for (let i = 0; i < formItems.length; i += 2) {
+      pairs.push(formItems.slice(i, i + 2));
+    }
+    return pairs;
+  }
+  return formItems.map(item => [item]);
+}
+
 const RenderFormItem = ({
   formItem,
   errors,
@@ -321,37 +350,54 @@ function Metadata() {
         </div>
         <Form className="" onSubmit={handleSubmit(onSubmit)}>
           <Stack gap={8}>
-            {Object.entries(metadataMapping).map(([group, formItems]) => (
-              <Stack gap={5} key={group}>
-                <Section>
-                  <Heading>{group}</Heading>
-                  <FormGroup legendText="">
-                    <Stack gap={6}>
-                      {formItems.map(formItem =>
-                        formItem.name === "country" ? (
-                          <CountrySelect
-                            key={formItem.name}
-                            countryOptions={countryOptions}
-                            isLoading={isLoading}
-                            errors={errors}
-                            register={register("country", {
-                              required: !isStructured,
-                            })}
-                          />
-                        ) : (
-                          <RenderFormItem
-                            key={formItem.name}
-                            formItem={formItem}
-                            errors={errors}
-                            register={register}
-                          />
-                        ),
-                      )}
-                    </Stack>
-                  </FormGroup>
-                </Section>
-              </Stack>
-            ))}
+            {Object.entries(metadataMapping).map(([group, formItems]) => {
+              const rows = getFormRows(group, formItems);
+              return (
+                <Stack gap={5} key={group || "general"}>
+                  <Section>
+                    {group && <Heading>{group}</Heading>}
+                    <FormGroup legendText="">
+                      <Stack gap={6}>
+                        {rows.map((row, rowIndex) => (
+                          <div
+                            key={rowIndex}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                row.length === 2 ? "1fr 1fr" : "1fr",
+                              gap: "1rem",
+                            }}
+                          >
+                            {row.map(formItem =>
+                              formItem.name === "country" ? (
+                                <div key={formItem.name}>
+                                  <CountrySelect
+                                    countryOptions={countryOptions}
+                                    isLoading={isLoading}
+                                    errors={errors}
+                                    register={register("country", {
+                                      required: !isStructured,
+                                    })}
+                                  />
+                                </div>
+                              ) : (
+                                <div key={formItem.name}>
+                                  <RenderFormItem
+                                    formItem={formItem}
+                                    errors={errors}
+                                    register={register}
+                                  />
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        ))}
+                      </Stack>
+                    </FormGroup>
+                  </Section>
+                </Stack>
+              );
+            })}
 
             <ButtonSet>
               <Button
