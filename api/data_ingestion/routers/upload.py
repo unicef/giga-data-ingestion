@@ -840,7 +840,7 @@ VALID_SORT_COLUMNS = {
     "dataset_type",
     "country_code",
     "created_at",
-    "max(created_at)",  # For aggregated queries
+    "max(created_at)",
 }
 
 VALID_SORT_ORDERS = {"ASC", "DESC"}
@@ -866,32 +866,28 @@ async def list_rejected_uploads(
     Restricted to privileged users.
     """
     try:
-        # Mapping sort keys to column names
         sort_map = {
             "filename": "giga_sync_file_name",
             "upload_id": "giga_sync_file_id",
             "dataset": "dataset_type",
             "country": "country_code",
-            "created_at": "max(created_at)",  # Assuming we want latest
+            "created_at": "max(created_at)",
         }
 
         sort_col = sort_map.get(sort_by, "max(created_at)")
 
-        # Validate sort column to prevent SQL injection
         if sort_col not in VALID_SORT_COLUMNS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid sort column: {sort_by}",
             )
 
-        # Validate sort order
         if sort_order.upper() not in VALID_SORT_ORDERS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid sort order. Must be asc or desc",
             )
 
-        # Build query dynamically
         conditions = []
         params = {"limit": page_size, "offset": (page - 1) * page_size}
 
@@ -911,7 +907,6 @@ async def list_rejected_uploads(
 
         where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
 
-        # 1. Total Count Query
         # nosec B608: where_clause is built from parameterized conditions, sort_col is validated
         count_query = f"""
             SELECT COUNT(DISTINCT giga_sync_file_id)
@@ -920,7 +915,6 @@ async def list_rejected_uploads(
         """  # nosec B608
         total_count = trino.execute(text(count_query), params).scalar()
 
-        # 2. Data Query
         # We need to group by to get distinct uploads, but we also want sorting.
         # If sorting by metadata that is constant per file_id (filename, country, dataset), distinct is fine.
         # If sorting by created_at, we need aggregation.
@@ -996,21 +990,18 @@ async def query_errors(
         }
         sort_col = sort_map.get(sort_by, "created_at")
 
-        # Validate sort column to prevent SQL injection
         if sort_col not in VALID_SORT_COLUMNS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid sort column: {sort_by}",
             )
 
-        # Validate sort order
         if sort_order.upper() not in VALID_SORT_ORDERS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid sort order. Must be asc or desc",
             )
 
-        # Build query dynamically
         conditions = []
         params = {"limit": page_size, "offset": (page - 1) * page_size}
 
@@ -1028,7 +1019,6 @@ async def query_errors(
 
         where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
 
-        # 1. Total Count Query
         # nosec B608: where_clause is built from parameterized conditions
         count_query = f"""
             SELECT COUNT(*)
@@ -1037,7 +1027,6 @@ async def query_errors(
         """  # nosec B608
         total_count = trino.execute(text(count_query), params).scalar()
 
-        # 2. Data Query
         # nosec B608: where_clause uses parameterized queries, sort_col and sort_order are validated
         sql_query = f"""
             SELECT giga_sync_file_id, giga_sync_file_name, dataset_type, country_code, row_data, error_details, created_at
@@ -1093,7 +1082,6 @@ async def download_rejected_rows(
     Queries the school_master.upload_errors Delta table via Trino.
     Parses/Flattens the JSON columns (row_data, error_details) into a CSV.
     """
-    # 1. Verify permissions using Postgres DB
     query = select(FileUpload).where(FileUpload.id == upload_id)
     file_upload = await db.scalar(query)
 
@@ -1112,9 +1100,7 @@ async def download_rejected_rows(
             detail="You do not have permission to access details for this file.",
         )
 
-    # 2. Query Trino for failed rows
     try:
-        # Use a raw SQL query since we don't have a SQLAlchemy model for the Delta table
         req_query = text(
             "SELECT row_data, error_details FROM school_master.upload_errors WHERE giga_sync_file_id = :upload_id"
         )
@@ -1123,7 +1109,6 @@ async def download_rejected_rows(
 
         parsed_rows = []
         for row in rows:
-            # Merge row_data and error_details into a single flat dict
             row_dict = {}
             if row.row_data:
                 try:
@@ -1139,9 +1124,7 @@ async def download_rejected_rows(
 
             parsed_rows.append(row_dict)
 
-        # Convert to pandas DataFrame for easy CSV export
         if not parsed_rows:
-            # Return empty CSV
             df = pd.DataFrame()
         else:
             df = pd.DataFrame(parsed_rows)
