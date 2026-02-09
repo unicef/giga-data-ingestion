@@ -161,12 +161,12 @@ async def process_batch(
     }
 
 
-async def fetch_batch(offset: int, limit: int) -> list[dict]:
+async def fetch_batch(limit: int, last_id: Optional[str] = None) -> list[dict]:
     db_gen = get_db()
     session = await db_gen.__anext__()
 
     try:
-        result = await session.execute(
+        query = (
             select(
                 FileUpload.id,
                 FileUpload.created,
@@ -177,9 +177,13 @@ async def fetch_batch(offset: int, limit: int) -> list[dict]:
             )
             .where(FileUpload.metadata_json_path.is_(None))
             .order_by(FileUpload.id)
-            .offset(offset)
             .limit(limit)
         )
+
+        if last_id:
+            query = query.where(FileUpload.id > last_id)
+
+        result = await session.execute(query)
 
         return [
             {
@@ -220,17 +224,18 @@ async def migrate(dry_run: bool = True, limit: Optional[int] = None):
 
     total_success = total_errors = total_skipped = total_processed = 0
 
-    total = await get_total_count()
-    if limit:
-        total = min(total, limit)
+    last_id = None
+    processed_count = 0
 
-    batches = (total + BATCH_SIZE - 1) // BATCH_SIZE
+    while True:
+        current_limit = BATCH_SIZE
+        if limit and (processed_count + BATCH_SIZE > limit):
+            current_limit = limit - processed_count
 
-    for batch_num in range(batches):
-        offset = batch_num * BATCH_SIZE
-        size = min(BATCH_SIZE, total - offset)
+        if current_limit <= 0:
+            break
 
-        rows = await fetch_batch(offset, size)
+        rows = await fetch_batch(current_limit, last_id)
         if not rows:
             break
 
@@ -246,6 +251,9 @@ async def migrate(dry_run: bool = True, limit: Optional[int] = None):
             for row in rows
         ]
 
+        # Update last_id for next batch
+        last_id = rows[-1]["id"]
+
         db_gen = get_db()
         session = await db_gen.__anext__()
 
@@ -254,7 +262,7 @@ async def migrate(dry_run: bool = True, limit: Optional[int] = None):
                 uploads,
                 session,
                 dry_run,
-                batch_num + 1,
+                (processed_count // BATCH_SIZE) + 1,
             )
         finally:
             await db_gen.aclose()
@@ -262,6 +270,8 @@ async def migrate(dry_run: bool = True, limit: Optional[int] = None):
         total_success += stats["success"]
         total_errors += stats["errors"]
         total_skipped += stats["skipped"]
+        # Update our local processed count
+        processed_count += len(rows)
         total_processed += stats["total"]
 
     elapsed = (datetime.now() - start).total_seconds()
