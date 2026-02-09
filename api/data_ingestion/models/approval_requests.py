@@ -69,9 +69,10 @@ class ApprovalRequestAuditLog(BaseModel):
     approved_date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    dq_mode: Mapped[DQModeEnum | None] = mapped_column(
+    dq_mode: Mapped[DQModeEnum] = mapped_column(
         SQLEnum(DQModeEnum, name="dqmodeenum"),
-        nullable=True,
+        nullable=False,
+        default=DQModeEnum.uploaded,
     )
 
 

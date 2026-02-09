@@ -13,6 +13,7 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
     ApprovalRequest,
+    DQRun,
     FileUpload,
     User as DatabaseUser,
 )
@@ -366,9 +367,33 @@ async def upload_approved_rows(
     dataset = posix_path.parent.name.replace("_staging", "").replace("_", "-")
     country_iso3 = posix_path.name.split("_")[0].upper()
     timestamp = datetime.now().strftime(constants.FILENAME_TIMESTAMP_FORMAT)
+    approval = await primary_db.scalar(
+        select(ApprovalRequest).where(
+            (ApprovalRequest.country == country_iso3)
+            & (ApprovalRequest.dataset == dataset)
+            & (ApprovalRequest.enabled.is_(True))
+        )
+    )
 
+    if not approval:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Active approval request not found",
+        )
     filename = f"{country_iso3}_{dataset}_{timestamp}.json"
-    approve_location = f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/{dataset}/{country_iso3}/{filename}"
+    dq_run = DQRun(
+        upload_id=approval.upload_id,
+        dq_mode=DQModeEnum.master,
+        status="PENDING",
+    )
+
+    primary_db.add(dq_run)
+    await primary_db.commit()
+    await primary_db.refresh(dq_run)
+    approve_location = (
+        f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/"
+        f"{dq_run.id}/{filename}"
+    )
     email = user.claims.get("emails")[0]
 
     database_user = await primary_db.scalar(
@@ -378,11 +403,14 @@ async def upload_approved_rows(
     approve_client = storage_client.get_blob_client(approve_location)
     try:
         approve_client.upload_blob(
-            json.dumps(
-                body.approved_rows,
-            ),
+            json.dumps(body.approved_rows),
             overwrite=True,
-            metadata={"approver_email": email, "dq_mode": body.dq_mode},
+            metadata={
+                "approver_email": email,
+                "dq_mode": body.dq_mode,
+                "dq_run_id": str(dq_run.id),
+                "upload_id": str(body.upload_id),
+            },
             content_settings=ContentSettings(content_type="application/json"),
         )
 
