@@ -6,10 +6,8 @@ MODEL IS NOT MODIFIED.
 import asyncio
 import json
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
-from data_ingestion import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models.file_upload import FileUpload
@@ -20,74 +18,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 BATCH_SIZE = 100
 CONCURRENCY = 10
-
-
-# ---------------------------------------------------------------------
-# Pure Python reconstruction logic (mirrors hybrid properties)
-# ---------------------------------------------------------------------
-
-
-def _build_filename(
-    *,
-    upload_id: str,
-    created: datetime,
-    country: str,
-    dataset: str,
-    source: Optional[str],
-    original_filename: str,
-) -> str:
-    timestamp = created.strftime("%Y%m%d-%H%M%S")
-    ext = Path(original_filename).suffix
-
-    country_part = "N-A" if country == "N/A" else country
-
-    if dataset == "structured":
-        original_name = Path(original_filename).stem
-        return f"{original_name}_{upload_id}{ext}"
-
-    parts = [upload_id, country_part, dataset]
-    if source:
-        parts.append(source)
-    parts.append(timestamp)
-
-    return f"{'_'.join(parts)}{ext}"
-
-
-def build_upload_path(
-    *,
-    upload_id: str,
-    created: datetime,
-    country: str,
-    dataset: str,
-    source: Optional[str],
-    original_filename: str,
-) -> str:
-    filename = _build_filename(
-        upload_id=upload_id,
-        created=created,
-        country=country,
-        dataset=dataset,
-        source=source,
-        original_filename=original_filename,
-    )
-
-    if dataset == "structured":
-        from data_ingestion.settings import settings
-
-        return f"{settings.LAKEHOUSE_PATH}/raw/custom-dataset/{filename}"
-
-    dataset_path = "unstructured" if dataset == "unstructured" else f"school-{dataset}"
-
-    country_path = "$NA" if country == "N/A" else country
-
-    return "/".join(
-        [
-            constants.UPLOAD_PATH_PREFIX,
-            dataset_path,
-            country_path,
-            filename,
-        ]
-    )
 
 
 # ---------------------------------------------------------------------
@@ -307,14 +237,11 @@ async def migrate(dry_run: bool = True, limit: Optional[int] = None):
         uploads = [
             FileUpload(
                 id=row["id"],
-                upload_path=build_upload_path(
-                    upload_id=row["id"],
-                    created=row["created"],
-                    country=row["country"],
-                    dataset=row["dataset"],
-                    source=row["source"],
-                    original_filename=row["original_filename"],
-                ),
+                created=row["created"],
+                country=row["country"],
+                dataset=row["dataset"],
+                source=row["source"],
+                original_filename=row["original_filename"],
             )
             for row in rows
         ]
