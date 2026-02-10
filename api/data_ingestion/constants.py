@@ -15,6 +15,7 @@ class Constants(BaseSettings):
     APPROVAL_REQUESTS_RESULT_UPLOAD_PATH: str = f"{settings.LAKEHOUSE_PATH}/staging"
     UPLOAD_FILE_SIZE_LIMIT_MB: int | float = 10
     UPLOAD_PATH_PREFIX: str = f"{settings.LAKEHOUSE_PATH}/raw/uploads"
+    UPLOAD_METADATA_PATH_PREFIX: str = f"{settings.LAKEHOUSE_PATH}/raw/upload_metadata"
     API_INGESTION_SCHEMA_UPLOAD_PATH: str = (
         f"{settings.LAKEHOUSE_PATH}/schemas/qos/school-connectivity"
     )

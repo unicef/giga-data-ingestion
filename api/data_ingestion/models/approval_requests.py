@@ -22,7 +22,6 @@ class ApprovalRequest(BaseModel):
         nullable=True,
         index=True,
     )
-
     country: Mapped[str] = mapped_column(VARCHAR(3), nullable=False)
     dataset: Mapped[str] = mapped_column(nullable=False)
     enabled: Mapped[bool] = mapped_column(default=False)
