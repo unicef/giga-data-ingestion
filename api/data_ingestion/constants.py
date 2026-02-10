@@ -1,10 +1,11 @@
 import tomllib
 from functools import lru_cache
 
-from data_ingestion.internal.utils import megabytes_to_bytes
-from data_ingestion.settings import settings
 from pydantic import computed_field
 from pydantic_settings import BaseSettings
+
+from data_ingestion.internal.utils import megabytes_to_bytes
+from data_ingestion.settings import settings
 
 
 class Constants(BaseSettings):
