@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight, Warning } from "@carbon/icons-react";
@@ -69,6 +69,86 @@ const headers: DataTableHeader[] = [
   { key: "detectedColumns", header: "Detected Columns" },
   { key: "license", header: "License" },
 ];
+
+const COLUMN_WIDTHS = ["33.33%", "33.33%", "33.33%"];
+
+const SCHOOL_COLUMN_CATEGORIES: Record<string, string> = {
+  // School profile
+  school_id_govt: "School profile",
+  school_name: "School profile",
+  latitude: "School profile",
+  longitude: "School profile",
+  education_level_govt: "School profile",
+  source_lat_lon: "School profile",
+  school_address: "School profile",
+  school_establishment_year: "School profile",
+  is_school_open: "School profile",
+  school_area_type: "School profile",
+  school_funding_type: "School profile",
+  school_id_govt_type: "School profile",
+  building_id_govt: "School profile",
+
+  // School connectivity
+  connectivity_govt: "School connectivity",
+  connectivity_type_govt: "School connectivity",
+  download_speed_contracted: "School connectivity",
+  connectivity_govt_ingestion_timestamp: "School connectivity",
+  electricity_availability: "School connectivity",
+  electricity_type: "School connectivity",
+  download_speed_govt: "School connectivity",
+  download_speed_benchmark: "School connectivity",
+
+  // School ICT resources
+  computer_availability: "School ICT resources",
+  device_availability: "School ICT resources",
+  computer_lab: "School ICT resources",
+  num_computers: "School ICT resources",
+  num_tablets: "School ICT resources",
+  num_computers_desired: "School ICT resources",
+  teachers_trained: "School ICT resources",
+  num_robotic_equipment: "School ICT resources",
+  computer_govt_collection_year: "School ICT resources",
+
+  // School facilities
+  num_classrooms: "School Facilities",
+  num_latrines: "School Facilities",
+  water_availability: "School Facilities",
+  refugee_camp: "School Facilities",
+  num_schools_per_building: "School Facilities",
+
+  // Other
+  sustainable_business_model: "Other",
+
+  // Other metadata
+  school_data_collection_modality: "Other metadata",
+  school_data_collection_year: "Other metadata",
+  school_data_source: "Other metadata",
+};
+
+const SCHOOL_CATEGORY_ORDER: string[] = [
+  "School profile",
+  "School connectivity",
+  "School ICT resources",
+  "School Facilities",
+  "Other",
+  "Other metadata",
+];
+
+const REQUIRED_SCHOOL_COLUMNS = new Set<string>([
+  "school_id_govt",
+  "school_name",
+  "latitude",
+  "longitude",
+  "education_level_govt",
+]);
+
+const IMPORTANT_SCHOOL_COLUMNS = new Set<string>([
+  "source_lat_lon",
+  "connectivity_govt",
+  "dowload_speed_contracted",
+  "download_speed_contracted",
+  "electricity_availability",
+]);
 
 function UploadColumnMapping() {
   const {
@@ -183,23 +263,72 @@ function UploadColumnMapping() {
     void navigate({ to: "../metadata" });
   };
 
-  const rows = useMemo(
-    () =>
-      schema.map(column => ({
+  const isSchoolSchema = metaschemaName.startsWith("school_");
+
+  const categorizedRows = useMemo(() => {
+    const categoryRows: Record<
+      string,
+      {
+        id: string;
+        masterColumn: React.ReactNode;
+        detectedColumns: React.ReactNode;
+        license: React.ReactNode;
+      }[]
+    > = {};
+
+    const uncategorized: {
+      id: string;
+      masterColumn: React.ReactNode;
+      detectedColumns: React.ReactNode;
+      license: React.ReactNode;
+    }[] = [];
+
+    schema.forEach(column => {
+      const adjustedColumn =
+        isSchoolSchema &&
+        (REQUIRED_SCHOOL_COLUMNS.has(column.name) ||
+          IMPORTANT_SCHOOL_COLUMNS.has(column.name))
+          ? {
+              ...column,
+              is_nullable: REQUIRED_SCHOOL_COLUMNS.has(column.name)
+                ? false
+                : column.is_nullable,
+              is_important: IMPORTANT_SCHOOL_COLUMNS.has(column.name)
+                ? true
+                : column.is_important,
+            }
+          : column;
+
+      const row = {
         id: column.id,
-        masterColumn: <MasterColumn column={column} />,
+        masterColumn: <MasterColumn column={adjustedColumn} />,
         detectedColumns: (
           <DetectedColumn
-            column={column}
+            column={adjustedColumn}
             detectedColumns={detectedColumns}
             selectedColumns={selectedColumns}
             setSelectedColumns={setSelectedColumns}
           />
         ),
-        license: <ColumnLicense column={column} />,
-      })),
-    [detectedColumns, schema, selectedColumns],
-  );
+        license: <ColumnLicense column={adjustedColumn} />,
+      };
+
+      if (isSchoolSchema) {
+        const category = SCHOOL_COLUMN_CATEGORIES[column.name];
+        if (category) {
+          if (!categoryRows[category]) {
+            categoryRows[category] = [];
+          }
+          categoryRows[category].push(row);
+          return;
+        }
+      }
+
+      uncategorized.push(row);
+    });
+
+    return { categoryRows, uncategorized };
+  }, [detectedColumns, isSchoolSchema, schema, selectedColumns]);
 
   const DESCRIPTION = (
     <>
@@ -257,8 +386,45 @@ function UploadColumnMapping() {
             </div>
           </section>
 
-          <section className="w-3/4">
-            <DataTable columns={headers} rows={rows} />
+          <section className="w-full space-y-8">
+            {isSchoolSchema ? (
+              <>
+                {SCHOOL_CATEGORY_ORDER.map(category => {
+                  const rowsForCategory =
+                    categorizedRows.categoryRows[category];
+                  if (!rowsForCategory || rowsForCategory.length === 0) {
+                    return null;
+                  }
+
+                  return (
+                    <div key={category} className="space-y-2">
+                      <h3 className="text-lg font-semibold">{category}</h3>
+                      <DataTable
+                        columns={headers}
+                        rows={rowsForCategory}
+                        columnWidths={COLUMN_WIDTHS}
+                      />
+                    </div>
+                  );
+                })}
+                {categorizedRows.uncategorized.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold">Other fields</h3>
+                    <DataTable
+                      columns={headers}
+                      rows={categorizedRows.uncategorized}
+                      columnWidths={COLUMN_WIDTHS}
+                    />
+                  </div>
+                )}
+              </>
+            ) : (
+              <DataTable
+                columns={headers}
+                rows={categorizedRows.uncategorized}
+                columnWidths={COLUMN_WIDTHS}
+              />
+            )}
           </section>
           {/* 
           <Suspense>
@@ -283,7 +449,7 @@ function UploadColumnMapping() {
               isExpressive
               renderIcon={
                 isNavigating
-                  ? props => (
+                  ? (props: React.ComponentProps<typeof Loading>) => (
                       <Loading small={true} withOverlay={false} {...props} />
                     )
                   : ArrowRight
