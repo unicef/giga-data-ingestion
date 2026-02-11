@@ -12,7 +12,6 @@ class ApprovalRequest(BaseModel):
     __table_args__ = (
         UniqueConstraint("country", "dataset", name="uq_country_dataset"),
     )
-
     country: Mapped[str] = mapped_column(VARCHAR(3), nullable=False)
     dataset: Mapped[str] = mapped_column(nullable=False)
     enabled: Mapped[bool] = mapped_column(default=False)
