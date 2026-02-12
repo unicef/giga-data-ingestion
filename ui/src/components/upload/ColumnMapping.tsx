@@ -20,17 +20,20 @@ export interface ConfigureColumnsForm {
 const FIELD_FORMAT_INFO: Record<string, { type: string; examples?: string }> = {
   // ── School profile ──────────────────────────────────────────────────
   school_id_giga: { type: "string" },
-  school_id_govt: { type: "integer" },
+  school_id_govt: { type: "string" },
   school_id_govt_type: {
     type: "string",
     examples: 'e.g., "EMIS", "Examination Board"',
   },
   school_name: { type: "string" },
-  latitude: { type: "number" },
-  longitude: { type: "number" },
+  latitude: { type: "float" },
+  longitude: { type: "float" },
   source_lat_lon: { type: "string" },
   school_address: { type: "string" },
-  education_level: { type: "string", examples: 'e.g., "Primary", "Secondary"' },
+  education_level: {
+    type: "string",
+    examples: 'e.g., "Primary", "Secondary", "Post-Secondary"',
+  },
   education_level_govt: {
     type: "string",
     examples: 'e.g., "Primary", "Secondary"',
@@ -140,16 +143,28 @@ const FIELD_FORMAT_INFO: Record<string, { type: string; examples?: string }> = {
 };
 
 function buildTooltipDefinition(column: MetaSchema) {
-  const formatInfo = FIELD_FORMAT_INFO[column.name];
-  if (!column.description && !formatInfo) return null;
+  const fallback = FIELD_FORMAT_INFO[column.name];
+
+  // Prefer API fields; fall back to the local FIELD_FORMAT_INFO constant
+  const type = column.data_type || fallback?.type;
+  const hint = column.hint || fallback?.examples;
+  const units = column.units;
+
+  const hasExtra = type || hint || units;
+  if (!column.description && !hasExtra) return null;
+
+  // Build a compact "Type: string — in Mbps — e.g. ..." line
+  const extraParts: string[] = [];
+  if (type) extraParts.push(type);
+  if (units) extraParts.push(units);
+  if (hint) extraParts.push(hint);
 
   return (
     <div className="flex flex-col gap-1">
       {column.description && <span>{column.description}</span>}
-      {formatInfo && (
+      {extraParts.length > 0 && (
         <span className="text-xs opacity-80">
-          <strong>Type:</strong> {formatInfo.type}
-          {formatInfo.examples && ` — ${formatInfo.examples}`}
+          <strong>Type:</strong> {extraParts.join(" — ")}
         </span>
       )}
     </div>
