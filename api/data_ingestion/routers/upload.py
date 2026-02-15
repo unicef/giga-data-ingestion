@@ -47,6 +47,7 @@ from data_ingestion.schemas.upload import (
     FileUploadRequest,
     UnstructuredFileUploadRequest,
 )
+from data_ingestion.utils.data_quality import get_metadata_path
 
 router = APIRouter(
     prefix="/api/upload",
@@ -335,9 +336,17 @@ async def upload_file(
         column_to_schema_mapping=orjson.loads(form.column_to_schema_mapping),
         column_license=orjson.loads(form.column_license),
     )
+
     db.add(file_upload)
     await db.commit()
+    await db.refresh(file_upload)
 
+    # compute ADLS path before commit
+    metadata_file_path = get_metadata_path(file_upload.upload_path)
+    file_upload.metadata_json_path = metadata_file_path
+
+    db.add(file_upload)
+    await db.commit()
     client = storage_client.get_blob_client(file_upload.upload_path)
 
     try:
@@ -353,9 +362,15 @@ async def upload_file(
         await file.seek(0)
         client.upload_blob(
             await file.read(),
-            metadata=metadata,
+            overwrite=True,
             content_settings=ContentSettings(content_type=file_type),
         )
+        # Upload metadata sidecar JSON
+        metadata_blob_client = storage_client.get_blob_client(
+            file_upload.metadata_json_path
+        )
+        metadata_json_bytes = json.dumps(metadata, indent=2).encode()
+        metadata_blob_client.upload_blob(metadata_json_bytes, overwrite=True)
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
         await db.execute(delete(FileUpload).where(FileUpload.id == file_upload.id))
