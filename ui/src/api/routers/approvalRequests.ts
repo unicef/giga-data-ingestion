@@ -1,5 +1,6 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
+import { mockApprovalRequestsData } from "@/mocks/approvalRequests";
 import { PagedResponse, PaginationRequest } from "@/types/api.ts";
 import {
   ApprovalRequest,
@@ -11,6 +12,35 @@ export default function routes(axi: AxiosInstance) {
     list: (
       paginationRequest?: PaginationRequest,
     ): Promise<AxiosResponse<PagedResponse<ApprovalRequestListing>>> => {
+      // Return mocked data in development/local mode
+      if (!import.meta.env.PROD) {
+        const page = paginationRequest?.page ?? 1;
+        const page_size = paginationRequest?.page_size ?? 10;
+
+        // Apply pagination
+        const startIdx = (page - 1) * page_size;
+        const endIdx = startIdx + page_size;
+        const paginatedData = mockApprovalRequestsData.data.slice(
+          startIdx,
+          endIdx,
+        );
+
+        return Promise.resolve({
+          data: {
+            data: paginatedData,
+            page,
+            page_size,
+            total_count:
+              mockApprovalRequestsData.total_count ??
+              mockApprovalRequestsData.data.length,
+          },
+          status: 200,
+          statusText: "OK",
+          headers: {},
+          config: {},
+        } as AxiosResponse<PagedResponse<ApprovalRequestListing>>);
+      }
+
       return axi.get("/approval-requests", {
         params: paginationRequest,
       });
