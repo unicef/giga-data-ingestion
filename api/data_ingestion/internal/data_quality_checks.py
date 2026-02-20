@@ -24,7 +24,16 @@ def get_data_quality_summary(dq_report_path: str):
         )
 
     blob_data = blob.download_blob().readall()
-    dq_report_summary = blob_data.decode("utf-8")
+    try:
+        dq_report_summary = blob_data.decode("utf-8")
+    except UnicodeDecodeError:
+        logger.error(
+            "DQ report summary is not valid JSON, this is the path: ", dq_report_path
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid JSON",
+        ) from None
     dq_report_summary_dict: dict = json.loads(dq_report_summary)
 
     for group in dq_report_summary_dict.keys():
