@@ -270,6 +270,7 @@ function UploadColumnMapping() {
       string,
       {
         id: string;
+        name: string;
         masterColumn: React.ReactNode;
         detectedColumns: React.ReactNode;
         license: React.ReactNode;
@@ -278,6 +279,7 @@ function UploadColumnMapping() {
 
     const uncategorized: {
       id: string;
+      name: string;
       masterColumn: React.ReactNode;
       detectedColumns: React.ReactNode;
       license: React.ReactNode;
@@ -301,6 +303,7 @@ function UploadColumnMapping() {
 
       const row = {
         id: column.id,
+        name: column.name,
         masterColumn: <MasterColumn column={adjustedColumn} />,
         detectedColumns: (
           <DetectedColumn
@@ -326,6 +329,18 @@ function UploadColumnMapping() {
 
       uncategorized.push(row);
     });
+
+    const pinned = ["school_id_govt", "school_name"];
+    if (categoryRows["School profile"]) {
+      categoryRows["School profile"].sort((a, b) => {
+        const ai = pinned.indexOf(a.name);
+        const bi = pinned.indexOf(b.name);
+        if (ai !== -1 && bi !== -1) return ai - bi;
+        if (ai !== -1) return -1;
+        if (bi !== -1) return 1;
+        return 0;
+      });
+    }
 
     return { categoryRows, uncategorized };
   }, [detectedColumns, isSchoolSchema, schema, selectedColumns]);
