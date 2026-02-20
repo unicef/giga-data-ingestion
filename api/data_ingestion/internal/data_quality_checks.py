@@ -1,5 +1,5 @@
 import json
-from io import StringIO
+from io import BytesIO
 
 import pandas as pd
 from fastapi import (
@@ -67,9 +67,8 @@ def get_first_n_error_rows_for_data_quality_check(
         metadata = dict(props.metadata or {})
 
     blob_data = blob.download_blob().readall()
-    data_str = blob_data.decode("utf-8")
-    data_io = StringIO(data_str)
-    df = pd.read_csv(data_io)
+    data_io = BytesIO(blob_data)
+    df = pd.read_parquet(data_io)
 
     for column in df.columns:
         column_result = process_n_columns(column, df, rows_to_process)
