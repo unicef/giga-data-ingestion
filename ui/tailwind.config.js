@@ -23,6 +23,7 @@ export default {
       },
       fontFamily: {
         sans: ["Open Sans", ...fontFamily.sans],
+        ibmplex: ['"IBM Plex Sans"', "sans-serif"],
       },
       colors: {
         "primary": "#277AFF",
