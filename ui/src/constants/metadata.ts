@@ -3,7 +3,9 @@ import { z } from "zod";
 
 import { MetadataFormMapping } from "@/types/metadata.ts";
 
-const currentYear = new Date().getFullYear();
+const now = new Date();
+const currentYear = now.getFullYear();
+const currentMonth = now.getMonth() + 1; // 1-12
 const futureYearStart = currentYear + 10;
 
 const unicefFoundingYear = 1945;
@@ -140,26 +142,26 @@ export const metadataMapping: Record<string, MetadataFormMapping[]> = {
       name: "next_school_data_collection",
       label: "Date of the next scheduled data collection",
       helperText: "MM / YYYY",
-      type: "month-year",
+      type: "text",
       required: false,
       validator: z
-        .object({
-          month: z.string(),
-          year: z.union([
-            z.string().max(0),
-            z.coerce
-              .number()
-              .min(currentYear, notInRangeErrorMessage)
-              .max(futureYearStart, notInRangeErrorMessage),
-          ]),
-        })
+        .string()
         .optional()
         .refine(
-          data =>
-            [data?.year, data?.month].every(Boolean) ||
-            [data?.year, data?.month].every(el => !el),
-          "Both month and year must be provided",
-        ),
+          val => !val?.trim() || /^(0[1-9]|1[0-2])\/\d{4}$/.test(val.trim()),
+          "Use MM/YYYY format (e.g. 01/2025)",
+        )
+        .refine(val => {
+          if (!val?.trim()) return true;
+          const match = val.trim().match(/^(0[1-9]|1[0-2])\/(\d{4})$/);
+          if (!match) return true; // format already validated above
+          const month = parseInt(match[1], 10);
+          const year = parseInt(match[2], 10);
+          return (
+            year > currentYear ||
+            (year === currentYear && month >= currentMonth)
+          );
+        }, "Date must be in the current month or in the future"),
     },
     {
       name: "emis_system",

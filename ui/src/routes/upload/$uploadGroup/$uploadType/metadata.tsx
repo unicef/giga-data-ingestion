@@ -33,7 +33,6 @@ import {
   CountrySelect,
   FreeTextInput,
   MetadataForm,
-  MonthYearSelect,
   SelectFromArray,
   SelectFromEnum,
 } from "@/components/upload/MetadataInputs.tsx";
@@ -85,9 +84,9 @@ export const Route = createFileRoute(
 function getFormRows(
   groupKey: string,
   formItems: MetadataFormMapping[],
-): MetadataFormMapping[][] {
+): (MetadataFormMapping | null)[][] {
   if (groupKey === "") {
-    return formItems.map(item => [item]);
+    return [[formItems[0], null], [formItems[1]]];
   }
   if (groupKey === "Information about the school dataset") {
     const pairs: MetadataFormMapping[][] = [];
@@ -108,7 +107,7 @@ function getFormRows(
     }
     return pairs;
   }
-  return formItems.map(item => [item]);
+  return formItems.map(item => [item]) as (MetadataFormMapping | null)[][];
 }
 
 const RenderFormItem = ({
@@ -152,15 +151,6 @@ const RenderFormItem = ({
           register={register(formItem.name, {
             required: formItem.required,
           })}
-        />
-      );
-    }
-    case "month-year": {
-      return (
-        <MonthYearSelect
-          formItem={formItem}
-          errors={errors}
-          register={register}
         />
       );
     }
@@ -285,12 +275,6 @@ function Metadata() {
     );
 
     Object.keys(metadata).forEach(key => {
-      if (key === "next_school_data_collection") {
-        metadata[key] = `${metadata[key].month ?? ""} ${
-          metadata[key].year ?? ""
-        }`.trim();
-      }
-
       if (metadata[key] === "") metadata[key] = null;
     });
 
@@ -368,8 +352,10 @@ function Metadata() {
                               gap: "1rem",
                             }}
                           >
-                            {row.map(formItem =>
-                              formItem.name === "country" ? (
+                            {row.map((formItem, cellIndex) =>
+                              formItem === null ? (
+                                <div key={`empty-${rowIndex}-${cellIndex}`} />
+                              ) : formItem.name === "country" ? (
                                 <div key={formItem.name}>
                                   <CountrySelect
                                     countryOptions={countryOptions}
