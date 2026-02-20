@@ -134,6 +134,8 @@ function Index() {
                 marginBottom: "1rem",
               }}
             >
+              {uploadData.mode && <>Upload type: {uploadData.mode}</>}
+              <br />
               Uploaded: {uploadData.uploader_email}
               <br />
               UploadID: {uploadId}

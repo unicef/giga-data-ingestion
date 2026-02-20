@@ -55,6 +55,10 @@ const columns: DataTableHeader[] = [
     header: "Dataset",
   },
   {
+    key: "mode",
+    header: "Type",
+  },
+  {
     key: "country",
     header: "Country",
   },
@@ -124,6 +128,16 @@ function UploadsTable({
               <span className="uppercase"> ({upload.source})</span>
             )}
           </>
+        ),
+        mode: upload.mode ? (
+          <Tag
+            type={upload.mode.toLowerCase() === "create" ? "green" : "blue"}
+            size="sm"
+          >
+            {upload.mode}
+          </Tag>
+        ) : (
+          "—"
         ),
         status: (
           <Tag
