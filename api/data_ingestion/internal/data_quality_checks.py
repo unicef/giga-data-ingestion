@@ -1,5 +1,5 @@
 import json
-from io import BytesIO
+from io import BytesIO, StringIO
 
 import pandas as pd
 from fastapi import (
@@ -59,8 +59,16 @@ def get_first_n_error_rows_for_data_quality_check(
 
     blob_properties = blob.get_blob_properties()
     blob_data = blob.download_blob().readall()
-    data_io = BytesIO(blob_data)
-    df = pd.read_parquet(data_io)
+
+    if dq_full_path.endswith(".csv"):
+        data_str = blob_data.decode("utf-8")
+        data_io = StringIO(data_str)
+        df = pd.read_csv(data_io)
+    elif dq_full_path.endswith(".parquet"):
+        data_io = BytesIO(blob_data)
+        df = pd.read_parquet(data_io)
+    else:
+        raise ValueError("File type not supported")
 
     for column in df.columns:
         column_result = process_n_columns(column, df, rows_to_process)
