@@ -1,4 +1,6 @@
-import { AuthenticatedTemplate, useAccount } from "@azure/msal-react";
+import { PropsWithChildren } from "react";
+
+import { AuthenticatedTemplate } from "@azure/msal-react";
 import { Logout } from "@carbon/icons-react";
 import {
   Header,
@@ -20,10 +22,21 @@ import useRoles from "@/hooks/useRoles.ts";
 import { HeaderName, HeaderNavigation } from "./CarbonOverrides";
 import ProgressBar from "./ProgressBar";
 
+function LocalPassthrough({ children }: PropsWithChildren) {
+  return <>{children}</>;
+}
+
+const NavContent =
+  import.meta.env.VITE_PYTHON_ENV === "local"
+    ? LocalPassthrough
+    : AuthenticatedTemplate;
+
 export default function Navbar() {
   const logout = useLogout();
-  const account = useAccount();
   const { isPrivileged, hasRoles } = useRoles();
+  const {
+    appState: { user },
+  } = useStore();
   const { location } = useRouterState();
   const isFetching = useIsFetching();
 
@@ -45,7 +58,7 @@ export default function Navbar() {
         <span className="font-light">giga</span>
         <b>sync</b>
       </HeaderName>
-      <AuthenticatedTemplate>
+      <NavContent>
         <HeaderNavigation
           aria-label="Main Navigation"
           aria-labelledby="main-nav-label"
@@ -123,14 +136,12 @@ export default function Navbar() {
           )}
         </HeaderNavigation>
         <HeaderGlobalBar className="flex items-center">
-          <div className="text-sm text-giga-dark-gray">
-            {(account?.idTokenClaims?.emails?.[0] as string) ?? ""}
-          </div>
+          <div className="text-sm text-giga-dark-gray">{user.email}</div>
           <HeaderGlobalAction aria-label="Logout" onClick={logout}>
             <Logout />
           </HeaderGlobalAction>
         </HeaderGlobalBar>
-      </AuthenticatedTemplate>
+      </NavContent>
     </Header>
   );
 }

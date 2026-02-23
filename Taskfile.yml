@@ -19,6 +19,12 @@ tasks:
       - docker compose --project-name giga-dataops-platform --file docker-compose-network.yaml up --detach --build --remove-orphans {{.CLI_ARGS}}
       - docker compose --project-name {{.PROJECT_NAME}} up --detach --build --remove-orphans {{.CLI_ARGS}}
 
+  local:
+    desc: Build and start Docker containers using local Azurite/Dagster from giga-dagster
+    cmds:
+      - docker compose --project-name giga-dataops-platform --file docker-compose-network.yaml up --detach --build --remove-orphans {{.CLI_ARGS}}
+      - docker compose --project-name {{.PROJECT_NAME}} -f docker-compose.yml -f docker-compose.local.yaml up --detach --build --remove-orphans {{.CLI_ARGS}}
+
   setup:
     desc: Run first-time setup tasks
     cmds:

@@ -1,0 +1,36 @@
+# Docker Compose override for Local Development
+# Configures all API services to use Azurite (Azure Blob Storage emulator)
+# running in the giga-dagster project on the shared giga-dataops network.
+#
+# Prerequisites:
+#   1. Create the external network:
+#      docker compose -f docker-compose-network.yaml up -d
+#   2. Start giga-dagster local services (provides azurite + dagster):
+#      cd ../giga-dagster && task up
+#
+# Usage:
+#   task local
+
+x-azurite-env: &azurite-env
+  PYTHON_ENV: local
+  # Points at the azurite service running in giga-dagster on the shared network
+  AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:80/devstoreaccount1;"
+  AZURE_STORAGE_ACCOUNT_NAME: devstoreaccount1
+  AZURE_BLOB_CONTAINER_NAME: giga-dataops-dev
+
+services:
+  api:
+    environment:
+      <<: *azurite-env
+
+  celery-worker:
+    environment:
+      <<: *azurite-env
+
+  celery-beat:
+    environment:
+      <<: *azurite-env
+
+  flower:
+    environment:
+      <<: *azurite-env

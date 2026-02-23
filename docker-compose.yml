@@ -100,7 +100,7 @@ services:
     volumes:
       - db-data:/bitnami/postgresql
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "$POSTGRESQL_USERNAME", "-d", "$POSTGRESQL_DATABASE" ]
+      test: [ "CMD", "pg_isready", "-U", "$$POSTGRESQL_USERNAME", "-d", "$$POSTGRESQL_DATABASE" ]
       retries: 3
       timeout: 5s
       start_period: 3s
@@ -114,7 +114,7 @@ services:
     volumes:
       - cache-data:/bitnami/redis/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "--pass", "$REDIS_PASSWORD", "ping" ]
+      test: [ "CMD", "redis-cli", "--pass", "$$REDIS_PASSWORD", "ping" ]
       retries: 3
       timeout: 5s
       start_period: 3s
