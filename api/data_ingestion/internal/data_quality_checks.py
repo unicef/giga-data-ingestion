@@ -1,6 +1,5 @@
 import json
-from io import BytesIO
-from io import StringIO
+from io import BytesIO, StringIO
 
 import pandas as pd
 from azure.core.exceptions import HttpResponseError
