@@ -8,26 +8,9 @@ import country_converter as coco
 import magic
 import orjson
 import pandas as pd
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-    Query,
-    Response,
-    Security,
-    status,
-)
-from fastapi_azure_auth.user import User
-from loguru import logger
-from pydantic import Field
-from sqlalchemy import delete, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import StreamingResponse
-
-from azure.core.exceptions import HttpResponseError
-from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
+from data_ingestion.db.trino import get_db as get_trino_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.data_quality_checks import (
     get_data_quality_summary,
@@ -47,6 +30,26 @@ from data_ingestion.schemas.upload import (
     FileUploadRequest,
     UnstructuredFileUploadRequest,
 )
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    Response,
+    Security,
+    status,
+)
+from fastapi_azure_auth.user import User
+from loguru import logger
+from pydantic import Field
+from sqlalchemy import delete, func, select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
+from starlette.responses import StreamingResponse
+
+from api.data_ingestion.schemas.fuzzy_mismatches import FuzzyCorrectionRequest
+from azure.core.exceptions import HttpResponseError
+from azure.storage.blob import ContentSettings
 
 router = APIRouter(
     prefix="/api/upload",
@@ -810,4 +813,168 @@ async def download_raw_file_direct(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error downloading file: {str(e)}",
+        ) from e
+
+
+@router.get(
+    "/{upload_id}/fuzzy-mismatches",
+    response_model=PagedResponseSchema,
+)
+async def get_fuzzy_mismatches(
+    upload_id: str,
+    page: int = 1,
+    page_size: int = 10,
+    trino: Session = Depends(get_trino_db),
+    user: User = Depends(azure_scheme),
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    """
+    Get fuzzy mismatches for a specific upload from the school_master.fuzzy_mismatches Delta table via Trino.
+    """
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access details for this file.",
+        )
+
+    try:
+        # Count Query
+        count_query = text(
+            "SELECT COUNT(*) FROM school_master.fuzzy_mismatches WHERE file_upload_id = :upload_id"
+        )
+        total_count = trino.execute(count_query, {"upload_id": upload_id}).scalar()
+
+        # Data Query
+        offset = (page - 1) * page_size
+        sql_query = text(
+            """
+                         SELECT file_upload_id,
+                                row_index,
+                                school_id_govt,
+                                column_name,
+                                original_value,
+                                suggested_value,
+                                match_score,
+                                is_accepted,
+                                final_value,
+                                created_at
+                         FROM school_master.fuzzy_mismatches
+                         WHERE file_upload_id = :upload_id
+                         ORDER BY created_at DESC LIMIT :limit
+                         OFFSET :offset
+                         """
+        )
+
+        result = trino.execute(
+            sql_query, {"upload_id": upload_id, "limit": page_size, "offset": offset}
+        )
+        rows = result.fetchall()
+
+        data = []
+        for row in rows:
+            # Map RowProxy/Tuple to dict or model
+            # Assuming row fields match model fields
+            item = {
+                "file_upload_id": row.file_upload_id,
+                "row_index": row.row_index,
+                "school_id_govt": row.school_id_govt,
+                "column_name": row.column_name,
+                "original_value": row.original_value,
+                "suggested_value": row.suggested_value,
+                "match_score": row.match_score,
+                "is_accepted": row.is_accepted,
+                "final_value": row.final_value,
+                "created_at": str(row.created_at) if row.created_at else None,
+            }
+            data.append(item)
+
+        return {
+            "data": data,
+            "page": page,
+            "page_size": page_size,
+            "total_count": total_count,
+        }
+
+    except Exception as e:
+        logger.error(f"Error querying fuzzy mismatches: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving fuzzy mismatches: {str(e)}",
+        ) from e
+
+
+@router.post(
+    "/{upload_id}/fuzzy-corrections",
+    status_code=status.HTTP_201_CREATED,
+)
+async def submit_fuzzy_corrections(
+    upload_id: str,
+    request: FuzzyCorrectionRequest,
+    user: User = Depends(azure_scheme),
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    """
+    Submit corrections for fuzzy mismatches.
+    Uploads corrections as JSON to ADLS, which triggers the Dagster correction job.
+    """
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to modify this file.",
+        )
+
+    try:
+        # Construct path for corrections file
+        # Format: fuzzy-corrections/{upload_id}_{country_code}.json
+        # This format is required for the Dagster sensor to parse country_code.
+        correction_path = f"fuzzy-corrections/{upload_id}_{file_upload.country}.json"
+
+        # Upload JSON to ADLS
+        client = storage_client.get_blob_client(correction_path)
+
+        json_data = orjson.dumps(request.model_dump()).decode("utf-8")
+
+        client.upload_blob(
+            json_data,
+            overwrite=True,
+            content_settings=ContentSettings(content_type="application/json"),
+        )
+
+        file_upload.dq_status = "PENDING_REVIEW"
+        db.add(file_upload)
+        await db.commit()
+
+        return {"status": "success", "message": "Corrections submitted successfully"}
+
+    except Exception as e:
+        logger.error(f"Error submitting fuzzy corrections: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error submitting corrections: {str(e)}",
         ) from e
