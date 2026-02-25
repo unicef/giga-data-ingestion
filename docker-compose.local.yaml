@@ -12,11 +12,10 @@
 #   task local
 
 x-azurite-env: &azurite-env
-  PYTHON_ENV: local
   # Points at the azurite service running in giga-dagster on the shared network
-  AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:80/devstoreaccount1;"
-  AZURE_STORAGE_ACCOUNT_NAME: devstoreaccount1
-  AZURE_BLOB_CONTAINER_NAME: giga-dataops-dev
+  AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING}
+  AZURE_STORAGE_ACCOUNT_NAME: ${AZURE_STORAGE_ACCOUNT_NAME}
+  AZURE_BLOB_CONTAINER_NAME: ${AZURE_BLOB_CONTAINER_NAME}
 
 services:
   api:

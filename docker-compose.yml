@@ -12,7 +12,7 @@ services:
     build: ./api
     image: unicef/giga-data-ingestion/api
     init: true
-    env_file: ./api/.env
+    env_file: .env
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -29,7 +29,7 @@ services:
     build: ./api
     image: unicef/giga-data-ingestion/api
     init: true
-    env_file: ./api/.env
+    env_file: .env
     restart: unless-stopped
     deploy:
       mode: replicated
@@ -49,7 +49,7 @@ services:
     build: ./api
     image: unicef/giga-data-ingestion/api
     init: true
-    env_file: ./api/.env
+    env_file: .env
     restart: unless-stopped
     command: [ "/app/celery-beat-docker-entrypoint.dev.sh" ]
     volumes:
@@ -60,16 +60,16 @@ services:
     build: ./api
     image: unicef/giga-data-ingestion/api
     init: true
-    env_file: ./api/.env
+    env_file: .env
     restart: unless-stopped
     environment:
       FLOWER_UNAUTHENTICATED_API: true
     command:
       - /bin/sh
       - -c
-      - exec poetry run celery -A data_ingestion.celery flower --port=5000
+      - exec poetry run celery -A data_ingestion.celery flower --port=5555
     ports:
-      - "5000:5000"
+      - "5555:5555"
     volumes:
       - ./api:/app
       - ./api/.venv-docker:/app/.venv
@@ -80,7 +80,7 @@ services:
     environment:
       NODE_ENV: development
       VITE_COMMIT_SHA: ${COMMIT_SHA}
-    env_file: ./ui/.env
+    env_file: .env
     working_dir: /app
     ports:
       - "3000:3000"
@@ -94,7 +94,7 @@ services:
   db:
     image: public.ecr.aws/bitnami/postgresql:16.2.0-debian-11-r10
     restart: unless-stopped
-    env_file: ./api/.env
+    env_file: .env
     ports:
       - "5432:5432"
     volumes:
@@ -108,7 +108,7 @@ services:
   redis:
     image: public.ecr.aws/bitnami/redis:7.2.4-debian-12-r10
     restart: unless-stopped
-    env_file: ./api/.env
+    env_file: .env
     ports:
       - "6379:6379"
     volumes:
@@ -123,7 +123,7 @@ services:
     image: node:20-alpine
     restart: unless-stopped
     working_dir: /app
-    env_file: ./email/.env
+    env_file: .env
     entrypoint:
       - /bin/sh
       - -c
@@ -136,7 +136,7 @@ services:
   email-ui:
     image: node:20-alpine
     restart: unless-stopped
-    env_file: ./email/.env
+    env_file: .env
     working_dir: /app
     entrypoint:
       - /bin/sh
