@@ -22,6 +22,7 @@ def send_email_base(
     subject: str,
     html_part: str = None,
     text_part: str = None,
+    attachments: list[dict] = None,
 ):
     if len(recipients) == 0:
         logger.warning("No recipients provided, skipping email send")
@@ -44,8 +45,11 @@ def send_email_base(
     }
 
     formatted_recipients = [{"Email": r} for r in recipients]
-
     message["Recipients"] = formatted_recipients
+
+    # Add attachments if provided
+    if attachments:
+        message["Attachments"] = attachments
 
     client = Client(
         auth=(settings.MAILJET_API_KEY, settings.CLEAN_MAILJET_SECRET),
@@ -132,6 +136,103 @@ def send_dq_report_email(body: EmailRenderRequest[DqReportRenderRequest]):
         recipients=[body.email],
         subject="DQ summary report",
     )
+
+
+def send_dq_report_email_with_pdf(body: EmailRenderRequest[DqReportRenderRequest]):
+    import base64
+
+    json_dump = body.props.model_dump()
+    json_dump["uploadDate"] = json_dump["uploadDate"].isoformat()
+    json_dump["dataQualityCheck"]["summary"]["timestamp"] = json_dump[
+        "dataQualityCheck"
+    ]["summary"]["timestamp"].isoformat()
+
+    # Generate HTML and text content
+    res = requests.post(
+        f"{settings.EMAIL_RENDERER_SERVICE_URL}/email/dq-report",
+        headers={
+            "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
+            "Content-Type": "application/json",
+        },
+        json=json_dump,
+    )
+
+    if not res.ok:
+        try:
+            raise HTTPError(res.json())
+        except JSONDecodeError:
+            raise HTTPError(res.text) from None
+
+    email_data = res.json()
+    html_content = email_data.get("html")
+    text_content = email_data.get("text")
+
+    # Generate PDF
+    pdf_res = requests.post(
+        f"{settings.EMAIL_RENDERER_SERVICE_URL}/email/dq-report-pdf",
+        headers={
+            "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
+            "Content-Type": "application/json",
+        },
+        json=json_dump,
+    )
+
+    if not pdf_res.ok:
+        try:
+            raise HTTPError(pdf_res.json())
+        except JSONDecodeError:
+            raise HTTPError(pdf_res.text) from None
+
+    pdf_data = pdf_res.json()
+    pdf_base64 = pdf_data.get("pdf")
+    pdf_filename = pdf_data.get(
+        "filename", f"data-quality-report-{body.props.country}.pdf"
+    )
+
+    # Decode PDF and create attachment
+    pdf_content = base64.b64decode(pdf_base64)
+
+    attachment = {
+        "Content-type": "application/pdf",
+        "Filename": pdf_filename,
+        "content": pdf_content,
+    }
+
+    # Send email with PDF attachment
+    send_email_base(
+        recipients=[body.email],
+        subject="DQ summary report with PDF attachment",
+        html_part=html_content,
+        text_part=text_content,
+        attachments=[attachment],
+    )
+
+
+async def generate_dq_report_pdf(body: EmailRenderRequest[DqReportRenderRequest]):
+    json_dump = body.props.model_dump()
+    json_dump["uploadDate"] = json_dump["uploadDate"].isoformat()
+    json_dump["dataQualityCheck"]["summary"]["timestamp"] = json_dump[
+        "dataQualityCheck"
+    ]["summary"]["timestamp"].isoformat()
+
+    # Call the email service to generate PDF
+    res = requests.post(
+        f"{settings.EMAIL_RENDERER_SERVICE_URL}/email/dq-report-pdf",
+        headers={
+            "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
+            "Content-Type": "application/json",
+        },
+        json=json_dump,
+    )
+
+    if not res.ok:
+        try:
+            raise HTTPError(res.json())
+        except JSONDecodeError:
+            raise HTTPError(res.text) from None
+
+    logger.info(f"PDF generation response: {res.status_code}")
+    return res.json()
 
 
 def send_master_data_release_notification(
