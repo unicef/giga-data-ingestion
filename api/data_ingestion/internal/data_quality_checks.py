@@ -8,9 +8,9 @@ from fastapi import (
 )
 from loguru import logger
 
-from azure.core.exceptions import HttpResponseError
+from azure.storage.blob import BlobProperties
 from data_ingestion.internal.storage import storage_client
-from data_ingestion.utils.data_quality import get_metadata_path, process_n_columns
+from data_ingestion.utils.data_quality import process_n_columns
 
 
 def get_data_quality_summary(dq_report_path: str):
@@ -46,7 +46,7 @@ def get_data_quality_summary(dq_report_path: str):
 def get_first_n_error_rows_for_data_quality_check(
     dq_full_path: str,
     rows_to_process: int = 5,
-) -> tuple[dict, dict]:
+) -> tuple[BlobProperties, dict]:
     results = {}
 
     blob = storage_client.get_blob_client(dq_full_path)
@@ -57,15 +57,7 @@ def get_first_n_error_rows_for_data_quality_check(
             detail="Not Found",
         )
 
-    # Try reading metadata from metadata file, fallback to blob metadata
-    try:
-        metadata_file_path = get_metadata_path(dq_full_path)
-        metadata_blob_client = storage_client.get_blob_client(metadata_file_path)
-        metadata = json.loads(metadata_blob_client.download_blob().readall())
-    except HttpResponseError:
-        props = blob.get_blob_properties()
-        metadata = dict(props.metadata or {})
-
+    blob_properties = blob.get_blob_properties()
     blob_data = blob.download_blob().readall()
 
     if dq_full_path.endswith(".csv"):
@@ -83,4 +75,4 @@ def get_first_n_error_rows_for_data_quality_check(
         if column_result:
             results.update(column_result)
 
-    return metadata, results
+    return blob_properties, results
