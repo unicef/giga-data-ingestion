@@ -5,6 +5,8 @@ from data_ingestion.constants import constants
 
 from data_ingestion.constants import constants
 
+from data_ingestion.constants import constants
+
 
 def process_n_columns(column_name: str, df: pd.DataFrame, rows: int) -> dict | None:
     """
