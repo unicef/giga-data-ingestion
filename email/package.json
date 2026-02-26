@@ -15,9 +15,10 @@
     "@hono/zod-validator": "^0.2.2",
     "@react-email/components": "^0.0.24",
     "@react-email/render": "^1.0.1",
-    "@sentry/node": "^5.5.0",
+    "@sentry/node": "^7.44.1",
     "@sentry/profiling-node": "^8.37.1",
     "hono": "^4.5.9",
+    "jspdf": "^2.5.1",
     "react-email": "^2.1.6",
     "zod": "^3.23.8"
   },

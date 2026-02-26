@@ -22,6 +22,7 @@ def send_email_base(
     subject: str,
     html_part: str = None,
     text_part: str = None,
+    attachments: list[dict] = None,
 ):
     if len(recipients) == 0:
         logger.warning("No recipients provided, skipping email send")
@@ -44,8 +45,21 @@ def send_email_base(
     }
 
     formatted_recipients = [{"Email": r} for r in recipients]
-
     message["Recipients"] = formatted_recipients
+
+    # Add attachments if provided
+    if attachments:
+        message["Attachments"] = []
+        for attachment in attachments:
+            message["Attachments"].append(
+                {
+                    "Content-type": attachment.get(
+                        "contentType", "application/octet-stream"
+                    ),
+                    "Filename": attachment.get("filename", "attachment"),
+                    "content": attachment.get("content", ""),
+                }
+            )
 
     client = Client(
         auth=(settings.MAILJET_API_KEY, settings.CLEAN_MAILJET_SECRET),
@@ -63,6 +77,7 @@ def send_rendered_email(
     json: dict[str, Any],
     recipients: list[str],
     subject: str,
+    attachments: list[dict] = None,
 ):
     res = requests.post(
         f"{settings.EMAIL_RENDERER_SERVICE_URL}{endpoint}",
@@ -83,8 +98,13 @@ def send_rendered_email(
     data = res.json()
     html = data.get("html")
     text = data.get("text")
+    email_attachments = data.get("attachments", [])
 
-    send_email_base(recipients, subject, html, text)
+    # Merge any additional attachments
+    if attachments:
+        email_attachments.extend(attachments)
+
+    send_email_base(recipients, subject, html, text, email_attachments)
 
 
 def invite_user(body: InviteEmailRenderRequest):

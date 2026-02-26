@@ -17,6 +17,7 @@ class UploadSuccessRenderRequest(BaseModel):
     uploadId: str
     dataset: str
     uploadDate: datetime
+    country: str
 
 
 class DataCheckSuccessRenderRequest(BaseModel):
@@ -24,6 +25,7 @@ class DataCheckSuccessRenderRequest(BaseModel):
     dataset: str
     uploadDate: datetime
     checkDate: datetime
+    country: str
 
 
 class DqReportRenderRequest(BaseModel):
@@ -31,6 +33,7 @@ class DqReportRenderRequest(BaseModel):
     dataQualityCheck: DataQualityCheck
     uploadDate: datetime
     uploadId: str
+    country: str
 
 
 class MasterDataReleaseNotificationRenderRequest(BaseModel):
