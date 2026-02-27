@@ -1,3 +1,22 @@
+# Docker Compose for Local Development
+# Configures all API services to use Azurite (Azure Blob Storage emulator)
+# running in the giga-dagster project on the shared giga-dataops network.
+#
+# Prerequisites:
+#   1. Create the external network:
+#      docker compose -f docker-compose-network.yaml up -d
+#   2. Start giga-dagster local services (provides azurite + dagster):
+#      cd ../giga-dagster && task up
+#
+# Usage:
+#   task up
+
+x-azurite-env: &azurite-env
+  # Points at the azurite service running in giga-dagster on the shared network
+  AZURE_STORAGE_CONNECTION_STRING: ${AZURE_STORAGE_CONNECTION_STRING}
+  AZURE_STORAGE_ACCOUNT_NAME: ${AZURE_STORAGE_ACCOUNT_NAME}
+  AZURE_BLOB_CONTAINER_NAME: ${AZURE_BLOB_CONTAINER_NAME}
+
 networks:
   default:
     name: giga-dataops
@@ -19,6 +38,8 @@ services:
     volumes:
       - ./api:/app
       - ./api/.venv-docker:/app/.venv
+    environment:
+      <<: *azurite-env
     depends_on:
       db:
         condition: service_healthy
@@ -41,6 +62,8 @@ services:
     volumes:
       - ./api:/app
       - ./api/.venv-docker:/app/.venv
+    environment:
+      <<: *azurite-env
     depends_on:
       redis:
         condition: service_healthy
@@ -55,6 +78,8 @@ services:
     volumes:
       - ./api:/app
       - ./api/.venv-docker:/app/.venv
+    environment:
+      <<: *azurite-env
 
   flower:
     build: ./api
@@ -63,6 +88,7 @@ services:
     env_file: .env
     restart: unless-stopped
     environment:
+      <<: *azurite-env
       FLOWER_UNAUTHENTICATED_API: true
     command:
       - /bin/sh
@@ -118,7 +144,7 @@ services:
       retries: 3
       timeout: 5s
       start_period: 3s
-  
+
   email-api:
     image: node:20-alpine
     restart: unless-stopped
