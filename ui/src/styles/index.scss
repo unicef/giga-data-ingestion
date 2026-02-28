@@ -75,6 +75,20 @@ ul {
   margin-left: 0 !important;
 }
 
+.cds--file-browse-btn {
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 78px !important;
+}
+
+.cds--file__selected-file {
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: none !important;
+}
+
 *,
 ::before,
 ::after {
