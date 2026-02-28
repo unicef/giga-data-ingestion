@@ -101,6 +101,14 @@ function ApproveRejectTable() {
   const navigate = useNavigate({ from: Route.fullPath });
 
   const {
+    selectedUploadIds,
+    uploadActions: { clearSelectedUploadIds },
+  } = useStore();
+
+  const uploadIdsArray =
+    selectedUploadIds.length > 0 ? selectedUploadIds : undefined;
+
+  const {
     approveRowActions: {
       setApprovedRows,
       setHeaders,
@@ -119,8 +127,15 @@ function ApproveRejectTable() {
   } = useSuspenseQuery(
     queryOptions({
       queryFn: () =>
-        api.approvalRequests.get(subpath, { page: page, page_size: pageSize }),
-      queryKey: ["approval-requests", subpath, page, pageSize],
+        api.approvalRequests.get(
+          subpath,
+          {
+            page,
+            page_size: pageSize,
+          },
+          uploadIdsArray ? uploadIdsArray : undefined,
+        ),
+      queryKey: ["approval-requests", subpath, page, pageSize, uploadIdsArray],
     }),
   );
 
@@ -278,6 +293,8 @@ function ApproveRejectTable() {
   };
 
   const handleProceedAll = async () => {
+    resetApproveRowState();
+    clearSelectedUploadIds();
     await upload({ approved_rows: approvedRows, subpath });
     await navigate({ to: "/approval-requests" });
   };
