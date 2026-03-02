@@ -189,13 +189,11 @@ def send_dq_report_email_with_pdf(body: EmailRenderRequest[DqReportRenderRequest
         "filename", f"data-quality-report-{body.props.country}.pdf"
     )
 
-    # Decode PDF and create attachment
-    pdf_content = base64.b64decode(pdf_base64)
-
+    # Use base64 string directly as required by Mailjet v3 send API
     attachment = {
         "Content-type": "application/pdf",
         "Filename": pdf_filename,
-        "content": pdf_content,
+        "content": pdf_base64,
     }
 
     # Send email with PDF attachment
