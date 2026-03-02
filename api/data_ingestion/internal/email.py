@@ -139,8 +139,6 @@ def send_dq_report_email(body: EmailRenderRequest[DqReportRenderRequest]):
 
 
 def send_dq_report_email_with_pdf(body: EmailRenderRequest[DqReportRenderRequest]):
-    import base64
-
     json_dump = body.props.model_dump()
     json_dump["uploadDate"] = json_dump["uploadDate"].isoformat()
     json_dump["dataQualityCheck"]["summary"]["timestamp"] = json_dump[
