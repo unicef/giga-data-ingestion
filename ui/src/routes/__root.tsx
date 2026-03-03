@@ -74,7 +74,7 @@ function Base({ children }: PropsWithChildren) {
 
 function Layout() {
   const {
-    appStateActions: { setUser, setNotificiation },
+    appStateActions: { setUser, setNotification },
     appState: { notification },
   } = useStore();
   const { instance } = useMsal();
@@ -111,7 +111,7 @@ function Layout() {
     <Base>
       <ToastNotification
         show={notification}
-        setShow={setNotificiation}
+        setShow={setNotification}
         kind="success"
         caption="Rows to delete successfully uploaded"
         title="Success"
