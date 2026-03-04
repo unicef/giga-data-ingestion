@@ -43,9 +43,10 @@ class Settings(BaseSettings):
     AZURE_CLIENT_SECRET: str
     AZURE_SUSI_AUTH_POLICY_NAME: str
     AZURE_REDIRECT_URI: str
-    AZURE_SAS_TOKEN: str
+    AZURE_SAS_TOKEN: str = ""
     AZURE_BLOB_CONTAINER_NAME: str
     AZURE_STORAGE_ACCOUNT_NAME: str
+    AZURE_STORAGE_CONNECTION_STRING: str = ""
     WEB_APP_REDIRECT_URI: str
     MAILJET_API_KEY: str
     MAILJET_API_URL: str
@@ -54,7 +55,7 @@ class Settings(BaseSettings):
     EMAIL_RENDERER_BEARER_TOKEN: str
     EMAIL_RENDERER_SERVICE_URL: AnyUrl
     TRINO_USERNAME: str
-    TRINO_PASSWORD: str
+    TRINO_PASSWORD: str = ""
     REDIS_PASSWORD: str
 
     # Optional envs
@@ -177,13 +178,15 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def TRINO_CONNECTION_DICT(self) -> dict:
-        return {
+        connection_dict = {
             "username": self.TRINO_USERNAME,
-            "password": self.TRINO_PASSWORD,
             "host": self.TRINO_HOST,
             "port": self.TRINO_PORT,
             "path": self.TRINO_CATALOG,
         }
+        if self.TRINO_PASSWORD:
+            connection_dict["password"] = self.TRINO_PASSWORD
+        return connection_dict
 
     @computed_field
     @property

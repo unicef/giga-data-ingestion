@@ -37,7 +37,7 @@ function Confirmation() {
   const {
     uploadSlice: { detectedColumns: ids },
     uploadSliceActions: { resetUploadSliceState },
-    appStateActions: { setNotificiation },
+    appStateActions: { setNotification },
   } = useStore();
 
   const {
@@ -58,7 +58,7 @@ function Confirmation() {
           setError(err.message);
         },
         onSuccess: () => {
-          setNotificiation(true);
+          setNotification(true);
           void navigate({ to: "../../.." });
         },
       },
