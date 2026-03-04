@@ -54,11 +54,17 @@ def send_email_base(
             content = att.get("Base64Content") or att.get("content")
             if content is None:
                 continue
-            mailjet_attachments.append({
-                "ContentType": att.get("ContentType") or att.get("Content-type") or "application/octet-stream",
-                "Filename": att.get("Filename") or "attachment",
-                "Base64Content": content if isinstance(content, str) else content.decode("ascii"),
-            })
+            mailjet_attachments.append(
+                {
+                    "ContentType": att.get("ContentType")
+                    or att.get("Content-type")
+                    or "application/octet-stream",
+                    "Filename": att.get("Filename") or "attachment",
+                    "Base64Content": content
+                    if isinstance(content, str)
+                    else content.decode("ascii"),
+                }
+            )
         if mailjet_attachments:
             message["Attachments"] = mailjet_attachments
 

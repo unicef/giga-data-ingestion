@@ -4,7 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials
 
 from data_ingestion.internal import email
-from data_ingestion.internal.auth import email_header, azure_scheme
+from data_ingestion.internal.auth import azure_scheme, email_header
 from data_ingestion.internal.email import send_email_base
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.email import (
