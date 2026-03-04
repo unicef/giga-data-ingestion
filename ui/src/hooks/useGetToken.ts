@@ -5,10 +5,17 @@ import { useMsal } from "@azure/msal-react";
 import { axi } from "@/api";
 import { loginRequest } from "@/lib/auth.ts";
 
+const isLocal = import.meta.env.VITE_PYTHON_ENV === "local";
+
 function useGetToken() {
   const { instance } = useMsal();
 
   async function getToken() {
+    if (isLocal) {
+      delete axi.defaults.headers.common["Authorization"];
+      return "";
+    }
+
     try {
       const result = await instance.acquireTokenSilent(loginRequest);
       const bearer = !!result.accessToken ? result.accessToken : result.idToken;

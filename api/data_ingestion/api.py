@@ -8,7 +8,8 @@ from fastapi.responses import FileResponse, ORJSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 
 from data_ingestion.constants import __version__
-from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.db.primary import get_db_context
+from data_ingestion.internal.auth import azure_scheme, local_auth_bypass
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
 from data_ingestion.routers import (
     approval_requests,
@@ -72,8 +73,64 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def load_config():
-    await azure_scheme.openid_config.load_config()
+    if settings.IN_PRODUCTION:
+        await azure_scheme.openid_config.load_config()
+    else:
+        try:
+            await azure_scheme.openid_config.load_config()
+        except Exception as exc:
+            logger.warning(
+                "Azure B2C OIDC config could not be loaded (running locally): %s", exc
+            )
+        await _ensure_local_dev_user()
 
+
+async def _ensure_local_dev_user():
+    """Create the local dev user with Admin role if it doesn't already have it."""
+    from uuid import uuid4
+
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+
+    from data_ingestion.models import Role, User
+
+    local_email = "dev@example.com"
+
+    async with get_db_context() as db:
+        user = await db.scalar(
+            select(User)
+            .where(User.email == local_email)
+            .options(selectinload(User.roles))
+        )
+        admin_role = await db.scalar(select(Role).where(Role.name == "Admin"))
+
+        if admin_role is None:
+            logger.warning(
+                "Admin role not found in DB — run migrations/fixtures first."
+            )
+            return
+
+        if user is None:
+            user = User(
+                id=str(uuid4()),
+                email=local_email,
+                given_name="Local",
+                surname="Dev",
+            )
+            user.roles = {admin_role}
+            db.add(user)
+            await db.commit()
+            logger.info("Local dev user '%s' created with Admin role.", local_email)
+        elif admin_role not in user.roles:
+            user.roles.add(admin_role)
+            await db.commit()
+            logger.info("Local dev user '%s' updated with Admin role.", local_email)
+        else:
+            logger.info("Local dev user '%s' already has Admin role.", local_email)
+
+
+if not settings.IN_PRODUCTION:
+    app.dependency_overrides[azure_scheme] = local_auth_bypass
 
 app.include_router(approval_requests.router)
 app.include_router(core.router)
