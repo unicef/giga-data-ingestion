@@ -11,7 +11,6 @@ engine = create_engine(
     settings.TRINO_URL,
     echo=not settings.IN_PRODUCTION,
     future=True,
-    connect_args={"http_scheme": "https" if settings.IN_PRODUCTION else "http"},
 )
 
 session_maker = sessionmaker(
