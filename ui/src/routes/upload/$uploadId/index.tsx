@@ -118,7 +118,7 @@ function Index() {
     handleDownloadRawFile,
     handleDownloadDqKit,
     handleDownloadMap,
-  } = useDownloadHelpers(uploadData);
+  } = useDownloadHelpers(uploadData, dqResultData);
 
   // Check if DQ Kit is available
   useEffect(() => {
@@ -315,7 +315,7 @@ function Index() {
               renderIcon={Download}
               onClick={handleDownloadDqSummary}
             >
-              Download data quality report
+              Download data quality report (PDF)
             </Button>
             {dqKitAvailable && (
               <Button
