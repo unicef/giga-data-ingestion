@@ -47,9 +47,20 @@ def send_email_base(
     formatted_recipients = [{"Email": r} for r in recipients]
     message["Recipients"] = formatted_recipients
 
-    # Add attachments if provided
+    # Add attachments if provided (normalize to Mailjet v3.1 format: ContentType, Filename, Base64Content)
     if attachments:
-        message["Attachments"] = attachments
+        mailjet_attachments = []
+        for att in attachments:
+            content = att.get("Base64Content") or att.get("content")
+            if content is None:
+                continue
+            mailjet_attachments.append({
+                "ContentType": att.get("ContentType") or att.get("Content-type") or "application/octet-stream",
+                "Filename": att.get("Filename") or "attachment",
+                "Base64Content": content if isinstance(content, str) else content.decode("ascii"),
+            })
+        if mailjet_attachments:
+            message["Attachments"] = mailjet_attachments
 
     client = Client(
         auth=(settings.MAILJET_API_KEY, settings.CLEAN_MAILJET_SECRET),
