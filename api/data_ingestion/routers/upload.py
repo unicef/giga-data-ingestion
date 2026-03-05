@@ -356,6 +356,7 @@ async def upload_file(
             **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
             "country": form.country,
             "uploader_email": email,
+            "dq_mode": form.dq_mode,
         }
 
         if form.source is not None:
@@ -384,8 +385,24 @@ async def upload_file(
         await db.execute(delete(FileUpload).where(FileUpload.id == file_upload.id))
         await db.commit()
         raise err
-
     return file_upload
+
+
+@router.post("/review", response_model=FileUploadSchema)
+async def upload_file_for_review(
+    response: Response,
+    dataset: str,
+    form: FileUploadRequest = Depends(),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    """
+    Acts exactly like /api/upload, but forces dq_mode to 'uploaded'
+    so that background checks do not compare against the master table.
+    """
+    form.dq_mode = "uploaded"
+    return await upload_file(response, dataset, form, db, user, is_privileged)
 
 
 @router.post("/unstructured", status_code=status.HTTP_201_CREATED)
