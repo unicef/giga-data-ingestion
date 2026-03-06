@@ -221,29 +221,67 @@ def send_dq_report_email_with_pdf(body: EmailRenderRequest[DqReportRenderRequest
     )
 
 
-async def generate_dq_report_pdf(body: EmailRenderRequest[DqReportRenderRequest]):
-    json_dump = body.props.model_dump()
-    json_dump["uploadDate"] = json_dump["uploadDate"].isoformat()
-    json_dump["dataQualityCheck"]["summary"]["timestamp"] = json_dump[
-        "dataQualityCheck"
-    ]["summary"]["timestamp"].isoformat()
+def _build_dq_pdf_payload(props: dict) -> dict:
+    """Ensure uploadDate and dataQualityCheck.summary.timestamp are JSON-safe (ISO strings)."""
+    payload = dict(props)
+    upload_date = payload.get("uploadDate")
+    payload["uploadDate"] = (
+        upload_date.isoformat()
+        if hasattr(upload_date, "isoformat")
+        else str(upload_date)
+    )
+    dq = payload.get("dataQualityCheck") or {}
+    summary = dq.get("summary") or {}
+    ts = summary.get("timestamp")
+    if ts is not None and hasattr(ts, "isoformat"):
+        payload.setdefault("dataQualityCheck", {})["summary"] = {
+            **summary,
+            "timestamp": ts.isoformat(),
+        }
+    elif ts is not None:
+        payload.setdefault("dataQualityCheck", {})["summary"] = {
+            **summary,
+            "timestamp": str(ts),
+        }
+    return payload
 
-    # Call the email service to generate PDF
+
+async def generate_dq_report_pdf(body: EmailRenderRequest[DqReportRenderRequest]):
+    json_dump = _build_dq_pdf_payload(body.props.model_dump())
+    base = str(settings.EMAIL_RENDERER_SERVICE_URL).rstrip("/")
     res = requests.post(
-        f"{settings.EMAIL_RENDERER_SERVICE_URL}/email/dq-report-pdf",
+        f"{base}/email/dq-report-pdf",
         headers={
             "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
             "Content-Type": "application/json",
         },
         json=json_dump,
     )
-
     if not res.ok:
         try:
             raise HTTPError(res.json())
         except JSONDecodeError:
             raise HTTPError(res.text) from None
+    logger.info(f"PDF generation response: {res.status_code}")
+    return res.json()
 
+
+async def generate_dq_report_pdf_from_payload(payload: dict) -> dict:
+    """Generate PDF using a pre-built payload (for lenient frontend request)."""
+    base = str(settings.EMAIL_RENDERER_SERVICE_URL).rstrip("/")
+    res = requests.post(
+        f"{base}/email/dq-report-pdf",
+        headers={
+            "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+    )
+    if not res.ok:
+        try:
+            raise HTTPError(res.json())
+        except JSONDecodeError:
+            raise HTTPError(res.text) from None
     logger.info(f"PDF generation response: {res.status_code}")
     return res.json()
 
