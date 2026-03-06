@@ -9,6 +9,7 @@ from data_ingestion.internal.email import send_email_base
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.email import (
     DataCheckSuccessRenderRequest,
+    DqReportPdfRequest,
     DqReportRenderRequest,
     EmailRenderRequest,
     GenericEmailRequest,
@@ -92,18 +93,11 @@ async def send_dq_report_email(
     dependencies=[Security(azure_scheme)],
 )
 async def generate_dq_report_pdf(
-    body: EmailRenderRequest[DqReportRenderRequest],
+    body: EmailRenderRequest[DqReportPdfRequest],
 ):
-    props = DqReportRenderRequest(**body.model_dump()["props"])
-
-    # Generate PDF using the email service
-    pdf_data = await email.generate_dq_report_pdf(
-        EmailRenderRequest[DqReportRenderRequest](
-            email=body.email,
-            props=props,
-        )
-    )
-
+    # Lenient schema accepts same shape as get_data_quality_check (e.g. timestamp as string)
+    payload = body.props.to_renderer_payload()
+    pdf_data = await email.generate_dq_report_pdf_from_payload(payload)
     return pdf_data
 
 
