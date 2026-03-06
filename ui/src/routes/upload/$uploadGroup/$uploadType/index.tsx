@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
+  FileUploaderItem,
   SelectItem,
   SkeletonPlaceholder,
   Stack,
@@ -104,6 +105,8 @@ export default function Index() {
       setDetectedColumns,
       setColumnMapping,
       setUploadDate,
+      setFile,
+      setTimeStamp,
     },
   } = useStore();
 
@@ -216,6 +219,15 @@ export default function Index() {
     (isCoverage && !!source) ||
     (isGeolocation && !!mode);
 
+  function handleRemoveFile() {
+    setFile(null);
+    setTimeStamp(null);
+    setDetectedColumns([]);
+    setColumnMapping({});
+    setParsingError("");
+    setIsParsing(false);
+  }
+
   function handleOnAddFiles(addedFiles: File[]) {
     const file = addedFiles.at(0) ?? null;
     if (!file) return;
@@ -271,7 +283,7 @@ export default function Index() {
           id="source"
           labelText="Source"
           placeholder="Source"
-          className="w-1/4"
+          className="w-1/2"
           {...register("source", { required: true })}
         >
           <SelectItem value="" text="" />
@@ -285,45 +297,61 @@ export default function Index() {
         </Select>
       )}
 
-      {uploadType === "geolocation" && (
-        <Select
-          id="mode"
-          labelText="Are you updating existing schools or uploading data for new schools?"
-          placeholder="Select an option..."
-          className="w-1/4"
-          {...register("mode", { required: true })}
-        >
-          <SelectItem value="" text="" />
-          {UPLOAD_MODE_OPTIONS.map(option => (
-            <SelectItem key={option} text={option} value={option} />
-          ))}
-        </Select>
-      )}
+      <div className="flex w-1/2 flex-col gap-4">
+        {uploadType === "geolocation" && (
+          <Select
+            id="mode"
+            labelText="Are you updating existing schools or uploading data for new schools?"
+            placeholder="Select an option..."
+            className="w-full"
+            {...register("mode", { required: true })}
+          >
+            <SelectItem value="" text="" />
+            {UPLOAD_MODE_OPTIONS.map(option => (
+              <SelectItem key={option} text={option} value={option} />
+            ))}
+          </Select>
+        )}
 
-      {isSchemaLoading ? (
-        shouldShowSkeleton ? (
-          <SkeletonPlaceholder />
-        ) : null
-      ) : (
-        <div className="flex w-1/4 flex-col gap-4">
-          <FileUploaderDropContainer
-            accept={Object.keys(validTypes)}
-            name="file"
-            labelText={
-              hasUploadedFile ? file.name : "Click or drag a file to upload"
-            }
-            onAddFiles={(_, { addedFiles }: { addedFiles: File[] }) =>
-              handleOnAddFiles(addedFiles)
-            }
-          />
-          <p>
-            File formats:{" "}
-            {[...new Set(Object.values(validTypes).flat())].join(", ")} up to
-            10MB
-          </p>
-          {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
-        </div>
-      )}
+        {isSchemaLoading ? (
+          shouldShowSkeleton ? (
+            <SkeletonPlaceholder />
+          ) : null
+        ) : (
+          <div className="flex w-full flex-col gap-4">
+            <h2 className="font-ibmplex text-base font-semibold">
+              Upload file
+            </h2>
+            <p className="-mt-1 font-ibmplex text-sm font-normal text-giga-gray">
+              File formats:{" "}
+              {[...new Set(Object.values(validTypes).flat())].join(", ")} up to
+              10MB
+            </p>
+            <div className="h-[78px] w-full">
+              {hasUploadedFile && file ? (
+                <FileUploaderItem
+                  name={file.name}
+                  status="edit"
+                  onDelete={handleRemoveFile}
+                  iconDescription="Remove file"
+                  aria-label={`Remove ${file.name}`}
+                />
+              ) : (
+                <FileUploaderDropContainer
+                  accept={Object.keys(validTypes)}
+                  name="file"
+                  labelText="Click or drag a file to upload"
+                  onAddFiles={(_, { addedFiles }: { addedFiles: File[] }) =>
+                    handleOnAddFiles(addedFiles)
+                  }
+                />
+              )}
+            </div>
+
+            {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
+          </div>
+        )}
+      </div>
 
       <ButtonSet className="w-full">
         <Button
