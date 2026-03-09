@@ -688,6 +688,8 @@ async def download_failed_rows_direct(
     country_code: str,
     filename: str,
 ):
+    filename = str(Path(filename).with_suffix(".csv"))
+
     path = f"data-quality-results/{dataset}/dq-failed-rows-human-readable/{country_code}/{filename}"
     blob = storage_client.get_blob_client(path)
 
@@ -719,6 +721,8 @@ async def download_passed_rows_direct(
     country_code: str,
     filename: str,
 ):
+    filename = str(Path(filename).with_suffix(".csv"))
+
     path = f"data-quality-results/{dataset}/dq-passed-rows-human-readable/{country_code}/{filename}"
 
     blob = storage_client.get_blob_client(path)
