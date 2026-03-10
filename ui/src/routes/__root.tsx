@@ -26,6 +26,8 @@ import useGetToken from "@/hooks/useGetToken.ts";
 import useLogout from "@/hooks/useLogout.ts";
 import info from "@/info.json";
 
+const isLocal = import.meta.env.VITE_PYTHON_ENV === "local";
+
 interface RouteContext {
   queryClient: QueryClient;
   getState: typeof useStore.getState;
@@ -72,7 +74,7 @@ function Base({ children }: PropsWithChildren) {
 
 function Layout() {
   const {
-    appStateActions: { setUser, setNotificiation },
+    appStateActions: { setUser, setNotification },
     appState: { notification },
   } = useStore();
   const { instance } = useMsal();
@@ -81,6 +83,11 @@ function Layout() {
   const logout = useLogout();
 
   useEffect(() => {
+    if (isLocal) {
+      setUser({ name: "Local Dev", email: "dev@example.com", roles: [] });
+      return;
+    }
+
     (async () => {
       if (account) {
         console.debug(account);
@@ -104,7 +111,7 @@ function Layout() {
     <Base>
       <ToastNotification
         show={notification}
-        setShow={setNotificiation}
+        setShow={setNotification}
         kind="success"
         caption="Rows to delete successfully uploaded"
         title="Success"
