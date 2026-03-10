@@ -10,7 +10,6 @@ import orjson
 import pandas as pd
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
-from data_ingestion.db.trino import get_db as get_trino_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.data_quality_checks import (
     get_data_quality_summary,
@@ -42,12 +41,10 @@ from fastapi import (
 from fastapi_azure_auth.user import User
 from loguru import logger
 from pydantic import Field
-from sqlalchemy import delete, func, select, text
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
-from api.data_ingestion.schemas.fuzzy_mismatches import FuzzyCorrectionRequest
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
 
@@ -280,6 +277,45 @@ async def get_upload(
     return file_upload
 
 
+def _apply_fuzzy_corrections(
+    fuzzy_corrections_json: str, file_extension: str, file_obj, upload_content: bytes
+) -> bytes:
+    import io
+
+    import pandas as pd
+
+    try:
+        corrections_mapping = orjson.loads(fuzzy_corrections_json)
+        # Check if file is a CSV
+        if file_extension.lower() == ".csv":
+            # In a non-async context we'd just use seek(0).
+            # Since file_obj is an UploadFile, we need an await if we abstract it entirely.
+            # But we can just use file_obj.file which is a SpooledTemporaryFile with synchronous ops.
+            file_obj.file.seek(0)
+            df = pd.read_csv(file_obj.file)
+
+            changed = False
+            for correction in corrections_mapping:
+                col = correction.get("column_name")
+                old_val = correction.get("value_found")
+                new_val = correction.get("replace_with")
+
+                if col in df.columns and old_val is not None and new_val is not None:
+                    # Replace occurrences directly
+                    df[col] = df[col].astype(str).replace(str(old_val), str(new_val))
+                    changed = True
+
+            if changed:
+                # Write back to a buffer
+                buffer = io.BytesIO()
+                df.to_csv(buffer, index=False)
+                return buffer.getvalue()
+    except Exception as e:
+        logger.error(f"Failed to apply fuzzy corrections: {e}")
+    # Fallback to the original file content
+    return upload_content
+
+
 @router.post("", response_model=FileUploadSchema)
 async def upload_file(
     response: Response,
@@ -354,8 +390,16 @@ async def upload_file(
             metadata["source"] = form.source
 
         await file.seek(0)
+        upload_content = await file.read()
+
+        # Apply fuzzy corrections if provided
+        if form.fuzzy_corrections:
+            upload_content = _apply_fuzzy_corrections(
+                form.fuzzy_corrections, file_extension, file, upload_content
+            )
+
         client.upload_blob(
-            await file.read(),
+            upload_content,
             metadata=metadata,
             content_settings=ContentSettings(content_type=file_type),
         )
@@ -816,165 +860,76 @@ async def download_raw_file_direct(
         ) from e
 
 
-@router.get(
-    "/{upload_id}/fuzzy-mismatches",
-    response_model=PagedResponseSchema,
-)
-async def get_fuzzy_mismatches(
-    upload_id: str,
-    page: int = 1,
-    page_size: int = 10,
-    trino: Session = Depends(get_trino_db),
-    user: User = Depends(azure_scheme),
+@router.post("/validate-fuzzy", status_code=status.HTTP_200_OK)
+async def validate_fuzzy_matching(
+    dataset: str,
+    form: UnstructuredFileUploadRequest = Depends(),
     db: AsyncSession = Depends(get_db),
+    user: User = Depends(azure_scheme),
     is_privileged: bool = Depends(IsPrivileged.raises(False)),
 ):
     """
-    Get fuzzy mismatches for a specific upload from the school_master.fuzzy_mismatches Delta table via Trino.
+    Synchronously validate an uploaded CSV file for fuzzy matching errors.
+    Returns the errors grouped by column to display in the UI.
     """
-    query = select(FileUpload).where(FileUpload.id == upload_id)
-    file_upload = await db.scalar(query)
+    if not is_privileged:
+        roles = await get_user_roles(user, db)
+        if not roles:  # If user has no roles at all, deny access
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have permissions to upload structured datasets",
+            )
+    email = user.claims.get("email")[0]
+    file = form.file
 
-    if file_upload is None:
+    if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="File Upload ID does not exist",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds 10 MB limit",
         )
 
-    if (
-        not is_privileged
-        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
-    ):
+    file_content = await file.read(8192)
+    file_type = magic.from_buffer(file_content, mime=True)
+    file_extension = os.path.splitext(file.filename)[1]
+
+    if file_extension.lower() == ".csv" and file_type == "text/plain":
+        file_type = "text/csv"
+
+    if file_type not in ["text/csv", "application/csv"]:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to access details for this file.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fuzzy validation currently only supports CSV files.",
         )
 
+    # Re-read the file to parse with pandas
+    await file.seek(0)
     try:
-        # Count Query
-        count_query = text(
-            "SELECT COUNT(*) FROM school_master.fuzzy_mismatches WHERE file_upload_id = :upload_id"
-        )
-        total_count = trino.execute(count_query, {"upload_id": upload_id}).scalar()
-
-        # Data Query
-        offset = (page - 1) * page_size
-        sql_query = text(
-            """
-                         SELECT file_upload_id,
-                                row_index,
-                                school_id_govt,
-                                column_name,
-                                original_value,
-                                suggested_value,
-                                match_score,
-                                is_accepted,
-                                final_value,
-                                created_at
-                         FROM school_master.fuzzy_mismatches
-                         WHERE file_upload_id = :upload_id
-                         ORDER BY created_at DESC LIMIT :limit
-                         OFFSET :offset
-                         """
-        )
-
-        result = trino.execute(
-            sql_query, {"upload_id": upload_id, "limit": page_size, "offset": offset}
-        )
-        rows = result.fetchall()
-
-        data = []
-        for row in rows:
-            # Map RowProxy/Tuple to dict or model
-            # Assuming row fields match model fields
-            item = {
-                "file_upload_id": row.file_upload_id,
-                "row_index": row.row_index,
-                "school_id_govt": row.school_id_govt,
-                "column_name": row.column_name,
-                "original_value": row.original_value,
-                "suggested_value": row.suggested_value,
-                "match_score": row.match_score,
-                "is_accepted": row.is_accepted,
-                "final_value": row.final_value,
-                "created_at": str(row.created_at) if row.created_at else None,
-            }
-            data.append(item)
-
-        return {
-            "data": data,
-            "page": page,
-            "page_size": page_size,
-            "total_count": total_count,
-        }
-
+        df = pd.read_csv(file.file)
     except Exception as e:
-        logger.error(f"Error querying fuzzy mismatches: {str(e)}")
+        logger.error(f"Failed to parse CSV file: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error retrieving fuzzy mismatches: {str(e)}",
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid CSV format."
         ) from e
 
-
-@router.post(
-    "/{upload_id}/fuzzy-corrections",
-    status_code=status.HTTP_201_CREATED,
-)
-async def submit_fuzzy_corrections(
-    upload_id: str,
-    request: FuzzyCorrectionRequest,
-    user: User = Depends(azure_scheme),
-    db: AsyncSession = Depends(get_db),
-    is_privileged: bool = Depends(IsPrivileged.raises(False)),
-):
-    """
-    Submit corrections for fuzzy mismatches.
-    Uploads corrections as JSON to ADLS, which triggers the Dagster correction job.
-    """
-    query = select(FileUpload).where(FileUpload.id == upload_id)
-    file_upload = await db.scalar(query)
-
-    if file_upload is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="File Upload ID does not exist",
-        )
-
-    if (
-        not is_privileged
-        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to modify this file.",
-        )
-
     try:
-        # Construct path for corrections file
-        # Format: fuzzy-corrections/{upload_id}_{country_code}.json
-        # This format is required for the Dagster sensor to parse country_code.
-        correction_path = f"fuzzy-corrections/{upload_id}_{file_upload.country}.json"
+        metadata = {
+            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            "country": form.country,
+            "uploader_email": email,
+            "dataset_type": "structured",
+        }
 
-        # Upload JSON to ADLS
-        client = storage_client.get_blob_client(correction_path)
+        if form.source is not None:
+            metadata["source"] = form.source
 
-        json_data = orjson.dumps(request.model_dump()).decode("utf-8")
+        from data_ingestion.utils.fuzzy_matching import run_fuzzy_matching
 
-        client.upload_blob(
-            json_data,
-            overwrite=True,
-            content_settings=ContentSettings(content_type="application/json"),
-        )
-
-        file_upload.dq_status = "PENDING_REVIEW"
-        db.add(file_upload)
-        await db.commit()
-
-        return {"status": "success", "message": "Corrections submitted successfully"}
+        results = run_fuzzy_matching(df)
+        return results
 
     except Exception as e:
-        logger.error(f"Error submitting fuzzy corrections: {str(e)}")
+        logger.error(f"Error during fuzzy matching validation: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error submitting corrections: {str(e)}",
+            detail=f"Error running fuzzy matching validation: {str(e)}",
         ) from e
