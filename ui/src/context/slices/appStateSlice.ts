@@ -14,7 +14,7 @@ interface AppStateSliceState {
 interface AppStateSliceActions {
   appStateActions: {
     setUser: (user: User) => void;
-    setNotificiation: (bool: boolean) => void;
+    setNotification: (bool: boolean) => void;
   };
 }
 
@@ -45,7 +45,7 @@ export const createAppStateSlice: StateCreator<
       set(state => {
         state.appState.user = user;
       }),
-    setNotificiation: (bool: boolean) =>
+    setNotification: (bool: boolean) =>
       set(state => {
         state.appState.notification = bool;
       }),
