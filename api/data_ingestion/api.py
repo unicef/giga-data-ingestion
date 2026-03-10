@@ -2,11 +2,6 @@ import logging
 import sys
 from datetime import timedelta
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, ORJSONResponse
-from starlette.middleware.sessions import SessionMiddleware
-
 from data_ingestion.constants import __version__
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
@@ -15,6 +10,7 @@ from data_ingestion.routers import (
     core,
     deletion_requests,
     email,
+    error_table,
     groups,
     qos,
     roles,
@@ -24,6 +20,10 @@ from data_ingestion.routers import (
     utils,
 )
 from data_ingestion.settings import DeploymentEnvironment, initialize_sentry, settings
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, ORJSONResponse
+from starlette.middleware.sessions import SessionMiddleware
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -79,6 +79,7 @@ app.include_router(approval_requests.router)
 app.include_router(core.router)
 app.include_router(deletion_requests.router)
 app.include_router(email.router)
+app.include_router(error_table.router)
 app.include_router(groups.router)
 app.include_router(qos.router)
 app.include_router(roles.router)
