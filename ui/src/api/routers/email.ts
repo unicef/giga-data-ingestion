@@ -27,5 +27,16 @@ export default function routes(axi: AxiosInstance) {
     ): Promise<AxiosResponse<DqReportPdfResponse>> => {
       return axi.post("email/dq-report-pdf", body);
     },
+    getDqReportPdfFromAdls: (params: {
+      dataset: string;
+      country: string;
+      uploadId: string;
+    }): Promise<AxiosResponse<Blob>> => {
+      const { dataset, country, uploadId } = params;
+      return axi.get(
+        `email/dq-report-pdf-from-adls/${dataset}/${country}/${uploadId}`,
+        { responseType: "blob" },
+      );
+    },
   };
 }
