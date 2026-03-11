@@ -1,11 +1,13 @@
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
+from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
 
 from data_ingestion.internal import email
 from data_ingestion.internal.auth import azure_scheme, email_header
 from data_ingestion.internal.email import send_email_base
+from data_ingestion.internal.storage import storage_client
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.email import (
     DataCheckSuccessRenderRequest,
@@ -118,6 +120,43 @@ async def send_dq_report_email_with_pdf(
             email=body.email,
             props=props,
         ),
+    )
+
+
+@router.get(
+    "/dq-report-pdf-from-adls/{dataset}/{country_code}/{upload_id}",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(azure_scheme)],
+)
+async def download_dq_report_pdf_from_adls(
+    dataset: str,
+    country_code: str,
+    upload_id: str,
+):
+    """
+    Stream the DQ report PDF stored in ADLS by Dagster.
+    Path mirrors other data-quality-results artefacts:
+    data-quality-results/{dataset}/dq-report/{country_code}/{upload_id}.pdf
+    """
+    filename = f"{upload_id}.pdf"
+    path = f"data-quality-results/{dataset}/dq-report/{country_code}/{filename}"
+
+    blob = storage_client.get_blob_client(path)
+    if not blob.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"DQ report PDF not found at path: {path}",
+        )
+
+    stream = blob.download_blob()
+    headers = {
+        "Content-Disposition": f'attachment; filename="{filename}"',
+        "Content-Type": "application/pdf",
+    }
+    return StreamingResponse(
+        stream.chunks(),
+        media_type="application/pdf",
+        headers=headers,
     )
 
 
