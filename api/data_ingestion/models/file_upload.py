@@ -1,16 +1,20 @@
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+from data_ingestion.constants import constants
 
 # File upload model for data ingestion
 from pydantic import UUID4, EmailStr
 from sqlalchemy import JSON, VARCHAR, DateTime, String, func
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped, mapped_column
-
-from data_ingestion.constants import constants
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import BaseModel
+
+if TYPE_CHECKING:
+    from .approval_requests import ApprovalRequest
 
 
 class DQStatusEnum(Enum):
@@ -47,6 +51,9 @@ class FileUpload(BaseModel):
     )
     column_license: Mapped[dict] = mapped_column(
         JSON, nullable=False, server_default='"{}"'
+    )
+    approval_requests: Mapped[list["ApprovalRequest"]] = relationship(
+        back_populates="file_upload"
     )
 
     @hybrid_property
