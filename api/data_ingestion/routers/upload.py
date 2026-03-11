@@ -28,6 +28,7 @@ from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
     FileUploadRequest,
     UnstructuredFileUploadRequest,
+    ValidateFuzzyRequest,
 )
 from fastapi import (
     APIRouter,
@@ -863,7 +864,7 @@ async def download_raw_file_direct(
 @router.post("/validate-fuzzy", status_code=status.HTTP_200_OK)
 async def validate_fuzzy_matching(
     dataset: str,
-    form: UnstructuredFileUploadRequest = Depends(),
+    form: ValidateFuzzyRequest = Depends(),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(azure_scheme),
     is_privileged: bool = Depends(IsPrivileged.raises(False)),
@@ -879,7 +880,6 @@ async def validate_fuzzy_matching(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User does not have permissions to upload structured datasets",
             )
-    email = user.claims.get("email")[0]
     file = form.file
 
     if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
@@ -912,19 +912,10 @@ async def validate_fuzzy_matching(
         ) from e
 
     try:
-        metadata = {
-            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
-            "country": form.country,
-            "uploader_email": email,
-            "dataset_type": "structured",
-        }
-
-        if form.source is not None:
-            metadata["source"] = form.source
-
         from data_ingestion.utils.fuzzy_matching import run_fuzzy_matching
 
-        results = run_fuzzy_matching(df)
+        column_mapping = orjson.loads(form.column_to_schema_mapping)
+        results = run_fuzzy_matching(df, column_mapping)
         return results
 
     except Exception as e:

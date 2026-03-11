@@ -60,3 +60,9 @@ class UnstructuredFileUploadRequest:
     country: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+
+
+@dataclass
+class ValidateFuzzyRequest:
+    file: UploadFile = Form(...)
+    column_to_schema_mapping: str = Form(...)

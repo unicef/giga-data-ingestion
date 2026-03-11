@@ -124,28 +124,7 @@ def _process_column_fuzzy_matching(
     return errors_in_column, total_unknown
 
 
-def _guess_column_mappings(df: pd.DataFrame) -> dict[str, str]:
-    column_mappings = {}
-    logger.info("No column_mapping provided. Attempting dynamic header mapping.")
-    for col in df.columns:
-        # Check against our expected target fields
-        target_keys = list(NOCODB_FUZZY_TABLES.keys())
-
-        # Use basic RapidFuzz string matching on the column headers
-        result = process.extractOne(
-            col, target_keys, scorer=fuzz.WRatio, processor=utils.default_process
-        )
-        if result:
-            matched_key, score, _ = result
-            # Only map if we are reasonably confident the column means what we think it means
-            if score >= 80.0:
-                column_mappings[col] = matched_key
-    return column_mappings
-
-
-def run_fuzzy_matching(
-    df: pd.DataFrame, column_mappings: dict[str, str] = None
-) -> dict:
+def run_fuzzy_matching(df: pd.DataFrame, column_mappings: dict[str, str]) -> dict:
     """
 
     Returns a dict matching the UI contract:
@@ -166,12 +145,6 @@ def run_fuzzy_matching(
     """
     config = get_fuzzy_match_config_from_nocodb()
     columns_with_errors = []
-
-    if column_mappings is None:
-        column_mappings = {}
-
-    if not column_mappings:
-        column_mappings = _guess_column_mappings(df)
 
     # column_mappings: "Raw_CSV_Col" -> "standard_col"
     # We want to check standardized columns (like "education_level_govt" -> targets "education_level" rules)
