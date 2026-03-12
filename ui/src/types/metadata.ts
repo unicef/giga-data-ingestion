@@ -20,7 +20,7 @@ export type MetadataFormMapping =
       label: string;
       helperText: string;
       required: boolean;
-      type: "text" | "year" | "month-year";
+      type: "text" | "year";
       validator: ZodType;
     }
   | {
