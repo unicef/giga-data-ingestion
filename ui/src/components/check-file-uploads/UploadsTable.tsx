@@ -87,11 +87,6 @@ interface UploadsTableProps {
   dataset?: string | null;
 }
 
-const hasFilter = (
-  s: string | null | undefined,
-  d: string | null | undefined,
-) => (s !== undefined && s !== null) || (d !== undefined && d !== null);
-
 function UploadsTable({
   page,
   pageSize,
@@ -99,16 +94,15 @@ function UploadsTable({
   source,
   dataset,
 }: UploadsTableProps) {
-  // When filtering by source or dataset, fetch a large batch to filter client-side
-  // Otherwise use normal pagination
-  const filterActive = hasFilter(source, dataset);
-  const fetchPageSize = filterActive ? 1000 : pageSize;
-  const fetchPage = filterActive ? 1 : page;
-
   const { data: uploadsQuery, isLoading } = useSuspenseQuery({
     queryFn: () =>
-      api.uploads.list_uploads({ page: fetchPage, page_size: fetchPageSize }),
-    queryKey: ["uploads", fetchPage, fetchPageSize, source, dataset],
+      api.uploads.list_uploads({
+        page,
+        page_size: pageSize,
+        source: source ?? undefined,
+        dataset: dataset ?? undefined,
+      }),
+    queryKey: ["uploads", page, pageSize, source, dataset],
   });
 
   const renderUploads = useMemo<PagedResponse<TableUpload>>(() => {
@@ -119,33 +113,14 @@ function UploadsTable({
       total_count: 0,
     };
 
-    // Filter by source or dataset if provided.
-    // When filtering by source (Geolocation, API, Giga Meter), exclude coverage and
-    // schemaless datasets so they only appear in Coverage and Schemaless tabs.
-    const datasetOnlyTabs = ["coverage", "structured"];
-    let filteredData = uploads.data;
-    if (source !== undefined && source !== null) {
-      filteredData = uploads.data.filter(
-        upload =>
-          upload.source === source && !datasetOnlyTabs.includes(upload.dataset),
-      );
-    } else if (dataset !== undefined && dataset !== null) {
-      filteredData = uploads.data.filter(upload => upload.dataset === dataset);
-    }
-
-    // Recalculate pagination for filtered data
-    const startIdx = (page - 1) * pageSize;
-    const endIdx = startIdx + pageSize;
-    const paginatedData = filteredData.slice(startIdx, endIdx);
-
     const _renderUploads = {
       data: [],
-      page: filterActive ? page : uploads.page,
+      page: uploads.page,
       page_size: pageSize,
-      total_count: filteredData.length,
+      total_count: uploads.total_count,
     } as PagedResponse<TableUpload>;
 
-    _renderUploads.data = paginatedData.map(upload => {
+    _renderUploads.data = uploads.data.map(upload => {
       const isUnstructured = upload.dataset === "unstructured";
       const statusText = upload.dq_status.replace("_", " ").toLowerCase();
 
@@ -184,7 +159,7 @@ function UploadsTable({
     });
 
     return _renderUploads;
-  }, [page, pageSize, uploadsQuery?.data, source, dataset]);
+  }, [page, pageSize, uploadsQuery?.data]);
 
   return isLoading ? (
     <DataTableSkeleton headers={columns} />

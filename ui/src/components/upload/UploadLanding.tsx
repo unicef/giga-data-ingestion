@@ -41,11 +41,14 @@ function UploadLanding(props: UploadLandingProps) {
   const tabFilter = (() => {
     switch (selectedTab) {
       case 0:
-        return { source: "gigasync" as const, dataset: null };
+        return { source: null, dataset: "geolocation" as const };
       case 1:
-        return { source: "api" as const, dataset: null };
+        return { source: "api" as const, dataset: "geolocation" as const };
       case 2:
-        return { source: "gigameter" as const, dataset: null };
+        return {
+          source: "gigameter" as const,
+          dataset: "geolocation" as const,
+        };
       case 3:
         return { source: null, dataset: "coverage" as const };
       case 4:
