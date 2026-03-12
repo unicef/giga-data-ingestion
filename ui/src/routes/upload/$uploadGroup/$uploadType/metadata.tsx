@@ -410,7 +410,7 @@ function Metadata() {
                 className="w-full"
                 isExpressive
               >
-                Continue
+                Submit
               </Button>
             </ButtonSet>
 
