@@ -33,7 +33,6 @@ import {
   CountrySelect,
   FreeTextInput,
   MetadataForm,
-  MonthYearSelect,
   SelectFromArray,
   SelectFromEnum,
 } from "@/components/upload/MetadataInputs.tsx";
@@ -82,6 +81,35 @@ export const Route = createFileRoute(
   },
 });
 
+function getFormRows(
+  groupKey: string,
+  formItems: MetadataFormMapping[],
+): (MetadataFormMapping | null)[][] {
+  if (groupKey === "") {
+    return [[formItems[0], null], [formItems[1]]];
+  }
+  if (groupKey === "Information about the school dataset") {
+    const pairs: MetadataFormMapping[][] = [];
+    for (let i = 0; i < 6 && i < formItems.length; i += 2) {
+      pairs.push(formItems.slice(i, i + 2));
+    }
+    if (formItems.length > 6) {
+      pairs.push(...formItems.slice(6).map(item => [item]));
+    }
+    return pairs;
+  }
+  if (
+    groupKey === "Information about national school data collection practices"
+  ) {
+    const pairs: MetadataFormMapping[][] = [];
+    for (let i = 0; i < formItems.length; i += 2) {
+      pairs.push(formItems.slice(i, i + 2));
+    }
+    return pairs;
+  }
+  return formItems.map(item => [item]) as (MetadataFormMapping | null)[][];
+}
+
 const RenderFormItem = ({
   formItem,
   errors,
@@ -123,15 +151,6 @@ const RenderFormItem = ({
           register={register(formItem.name, {
             required: formItem.required,
           })}
-        />
-      );
-    }
-    case "month-year": {
-      return (
-        <MonthYearSelect
-          formItem={formItem}
-          errors={errors}
-          register={register}
         />
       );
     }
@@ -256,12 +275,6 @@ function Metadata() {
     );
 
     Object.keys(metadata).forEach(key => {
-      if (key === "next_school_data_collection") {
-        metadata[key] = `${metadata[key].month ?? ""} ${
-          metadata[key].year ?? ""
-        }`.trim();
-      }
-
       if (metadata[key] === "") metadata[key] = null;
     });
 
@@ -321,37 +334,56 @@ function Metadata() {
         </div>
         <Form className="" onSubmit={handleSubmit(onSubmit)}>
           <Stack gap={8}>
-            {Object.entries(metadataMapping).map(([group, formItems]) => (
-              <Stack gap={5} key={group}>
-                <Section>
-                  <Heading>{group}</Heading>
-                  <FormGroup legendText="">
-                    <Stack gap={6}>
-                      {formItems.map(formItem =>
-                        formItem.name === "country" ? (
-                          <CountrySelect
-                            key={formItem.name}
-                            countryOptions={countryOptions}
-                            isLoading={isLoading}
-                            errors={errors}
-                            register={register("country", {
-                              required: !isStructured,
-                            })}
-                          />
-                        ) : (
-                          <RenderFormItem
-                            key={formItem.name}
-                            formItem={formItem}
-                            errors={errors}
-                            register={register}
-                          />
-                        ),
-                      )}
-                    </Stack>
-                  </FormGroup>
-                </Section>
-              </Stack>
-            ))}
+            {Object.entries(metadataMapping).map(([group, formItems]) => {
+              const rows = getFormRows(group, formItems);
+              return (
+                <Stack gap={5} key={group || "general"}>
+                  <Section>
+                    {group && <Heading>{group}</Heading>}
+                    <FormGroup legendText="">
+                      <Stack gap={6}>
+                        {rows.map((row, rowIndex) => (
+                          <div
+                            key={rowIndex}
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns:
+                                row.length === 2 ? "1fr 1fr" : "1fr",
+                              gap: "1rem",
+                            }}
+                          >
+                            {row.map((formItem, cellIndex) =>
+                              formItem === null ? (
+                                <div key={`empty-${rowIndex}-${cellIndex}`} />
+                              ) : formItem.name === "country" ? (
+                                <div key={formItem.name}>
+                                  <CountrySelect
+                                    countryOptions={countryOptions}
+                                    isLoading={isLoading}
+                                    errors={errors}
+                                    register={register("country", {
+                                      required: !isStructured,
+                                    })}
+                                  />
+                                </div>
+                              ) : (
+                                <div key={formItem.name}>
+                                  <RenderFormItem
+                                    formItem={formItem}
+                                    errors={errors}
+                                    register={register}
+                                  />
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        ))}
+                      </Stack>
+                    </FormGroup>
+                  </Section>
+                </Stack>
+              );
+            })}
 
             <ButtonSet>
               <Button
