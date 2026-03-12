@@ -219,8 +219,6 @@ async def list_uploads(
     db: AsyncSession = Depends(get_db),
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Field(ge=1, le=50)] = 10,
-    source: str | None = None,
-    dataset: str | None = None,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -234,12 +232,6 @@ async def list_uploads(
 
     if id_search:
         query = query.where(func.starts_with(FileUpload.id, id_search))
-
-    if source is not None:
-        query = query.where(FileUpload.source == source)
-
-    if dataset is not None:
-        query = query.where(FileUpload.dataset == dataset)
 
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query)

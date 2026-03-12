@@ -1,17 +1,7 @@
 import { useState } from "react";
 
 import { Add } from "@carbon/icons-react";
-import {
-  Button,
-  Heading,
-  Section,
-  Stack,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-} from "@carbon/react";
+import { Button, Heading, Section, Stack } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
@@ -33,38 +23,7 @@ interface UploadLandingProps {
 
 function UploadLanding(props: UploadLandingProps) {
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
-  const [selectedTab, setSelectedTab] = useState(0);
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
-
-  // Tab 0 = Geolocation (source gigasync), 1 = API (source api), 2 = Giga Meter (source gigameter),
-  // 3 = Coverage (dataset coverage), 4 = Schemaless (dataset structured)
-  const tabFilter = (() => {
-    switch (selectedTab) {
-      case 0:
-        return { source: null, dataset: "geolocation" as const };
-      case 1:
-        return { source: "api" as const, dataset: "geolocation" as const };
-      case 2:
-        return {
-          source: "gigameter" as const,
-          dataset: "geolocation" as const,
-        };
-      case 3:
-        return { source: null, dataset: "coverage" as const };
-      case 4:
-        return { source: null, dataset: "structured" as const };
-      default:
-        return { source: null, dataset: null };
-    }
-  })();
-
-  const handleTabChange = ({ selectedIndex }: { selectedIndex: number }) => {
-    setSelectedTab(selectedIndex);
-    // Reset to page 1 when switching tabs
-    if (props.page !== 1) {
-      props.handlePaginationChange({ page: 1, pageSize: props.pageSize });
-    }
-  };
 
   return (
     <Section>
@@ -153,57 +112,7 @@ function UploadLanding(props: UploadLandingProps) {
             </div>
           </Stack>
 
-          <Tabs selectedIndex={selectedTab} onChange={handleTabChange}>
-            <TabList
-              aria-label="File Uploads Tabs"
-              fullWidth
-              className="w-full"
-            >
-              <Tab>Geolocation</Tab>
-              <Tab>API</Tab>
-              <Tab>Giga Meter</Tab>
-              <Tab>Coverage</Tab>
-              <Tab>Schemaless</Tab>
-            </TabList>
-
-            <TabPanels>
-              <TabPanel className="p-0">
-                <UploadsTable
-                  {...props}
-                  source={tabFilter.source}
-                  dataset={tabFilter.dataset}
-                />
-              </TabPanel>
-              <TabPanel className="p-0">
-                <UploadsTable
-                  {...props}
-                  source={tabFilter.source}
-                  dataset={tabFilter.dataset}
-                />
-              </TabPanel>
-              <TabPanel className="p-0">
-                <UploadsTable
-                  {...props}
-                  source={tabFilter.source}
-                  dataset={tabFilter.dataset}
-                />
-              </TabPanel>
-              <TabPanel className="p-0">
-                <UploadsTable
-                  {...props}
-                  source={tabFilter.source}
-                  dataset={tabFilter.dataset}
-                />
-              </TabPanel>
-              <TabPanel className="p-0">
-                <UploadsTable
-                  {...props}
-                  source={tabFilter.source}
-                  dataset={tabFilter.dataset}
-                />
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+          <UploadsTable {...props} />
         </Stack>
       </Section>
     </Section>

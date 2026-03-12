@@ -83,26 +83,16 @@ interface UploadsTableProps {
     page: number;
     pageSize: number;
   }) => void;
-  source?: string | null;
-  dataset?: string | null;
 }
 
 function UploadsTable({
   page,
   pageSize,
   handlePaginationChange,
-  source,
-  dataset,
 }: UploadsTableProps) {
   const { data: uploadsQuery, isLoading } = useSuspenseQuery({
-    queryFn: () =>
-      api.uploads.list_uploads({
-        page,
-        page_size: pageSize,
-        source: source ?? undefined,
-        dataset: dataset ?? undefined,
-      }),
-    queryKey: ["uploads", page, pageSize, source, dataset],
+    queryFn: () => api.uploads.list_uploads({ page, page_size: pageSize }),
+    queryKey: ["uploads", page, pageSize],
   });
 
   const renderUploads = useMemo<PagedResponse<TableUpload>>(() => {
@@ -116,7 +106,7 @@ function UploadsTable({
     const _renderUploads = {
       data: [],
       page: uploads.page,
-      page_size: pageSize,
+      page_size: uploads.page_size,
       total_count: uploads.total_count,
     } as PagedResponse<TableUpload>;
 
