@@ -287,13 +287,16 @@ def _apply_fuzzy_corrections(
 
     try:
         corrections_mapping = orjson.loads(fuzzy_corrections_json)
-        # Check if file is a CSV
-        if file_extension.lower() == ".csv":
+        file_ext = file_extension.lower()
+        if file_ext in [".csv", ".xls", ".xlsx"]:
             # In a non-async context we'd just use seek(0).
             # Since file_obj is an UploadFile, we need an await if we abstract it entirely.
             # But we can just use file_obj.file which is a SpooledTemporaryFile with synchronous ops.
             file_obj.file.seek(0)
-            df = pd.read_csv(file_obj.file)
+            if file_ext == ".csv":
+                df = pd.read_csv(file_obj.file)
+            else:
+                df = pd.read_excel(file_obj.file)
 
             changed = False
             for correction in corrections_mapping:
@@ -309,7 +312,10 @@ def _apply_fuzzy_corrections(
             if changed:
                 # Write back to a buffer
                 buffer = io.BytesIO()
-                df.to_csv(buffer, index=False)
+                if file_ext == ".csv":
+                    df.to_csv(buffer, index=False)
+                else:
+                    df.to_excel(buffer, index=False)
                 return buffer.getvalue()
     except Exception as e:
         logger.error(f"Failed to apply fuzzy corrections: {e}")
@@ -888,27 +894,27 @@ async def validate_fuzzy_matching(
             detail="File size exceeds 10 MB limit",
         )
 
-    file_content = await file.read(8192)
-    file_type = magic.from_buffer(file_content, mime=True)
-    file_extension = os.path.splitext(file.filename)[1]
+    await file.read(8192)
+    file_extension = os.path.splitext(file.filename)[1].lower()
 
-    if file_extension.lower() == ".csv" and file_type == "text/plain":
-        file_type = "text/csv"
-
-    if file_type not in ["text/csv", "application/csv"]:
+    if file_extension not in [".csv", ".xls", ".xlsx"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Fuzzy validation currently only supports CSV files.",
+            detail="Fuzzy validation currently only supports CSV, XLS, and XLSX files.",
         )
 
     # Re-read the file to parse with pandas
     await file.seek(0)
     try:
-        df = pd.read_csv(file.file)
+        if file_extension == ".csv":
+            df = pd.read_csv(file.file)
+        else:
+            df = pd.read_excel(file.file)
     except Exception as e:
-        logger.error(f"Failed to parse CSV file: {e}")
+        logger.error(f"Failed to parse file: {e}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid CSV format."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid {file_extension} format.",
         ) from e
 
     try:
