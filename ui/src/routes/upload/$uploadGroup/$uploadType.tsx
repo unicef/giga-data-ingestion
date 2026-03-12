@@ -155,7 +155,6 @@ function Layout() {
         We ask that you take special note of those columns marked as “Mandatory”
         and ensure they all filled in correctly.{" "}
       </p>
-      <p>Accepted file formats include: [.csv, .xlsx, .xls]</p>
     </>
   );
 
@@ -177,10 +176,6 @@ function Layout() {
       <p>
         Please take special note of those columns marked as “Mandatory” and
         ensure they all filled in correctly.
-      </p>
-      <p>
-        Any file uploaded must be no larger than 10MB and be in one of the
-        accepted file formats: [.csv, .xlsx, .xls.]
       </p>
     </>
   );
