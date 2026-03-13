@@ -22,8 +22,19 @@ export default function routes(axi: AxiosInstance) {
       page_size?: number;
       source?: string;
       dataset?: string;
+      is_archived?: boolean;
     }): Promise<AxiosResponse<PagedResponse<UploadResponse>>> => {
       return axi.get("/upload", { params });
+    },
+    archive_upload: (
+      upload_id: string,
+    ): Promise<AxiosResponse<UploadResponse>> => {
+      return axi.patch(`/upload/${upload_id}/archive`);
+    },
+    unarchive_upload: (
+      upload_id: string,
+    ): Promise<AxiosResponse<UploadResponse>> => {
+      return axi.patch(`/upload/${upload_id}/unarchive`);
     },
     get_upload: (upload_id: string): Promise<AxiosResponse<UploadResponse>> => {
       return axi.get(`upload/${upload_id}`);

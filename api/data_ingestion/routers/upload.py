@@ -221,6 +221,7 @@ async def list_uploads(
     page_size: Annotated[int, Field(ge=1, le=50)] = 10,
     source: str | None = None,
     dataset: str | None = None,
+    is_archived: bool = False,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -231,6 +232,8 @@ async def list_uploads(
         query = query.where(
             FileUpload.uploader_email == user.claims.get("emails", ["NONE"])[0]
         )
+
+    query = query.where(FileUpload.is_archived == is_archived)
 
     if id_search:
         query = query.where(func.starts_with(FileUpload.id, id_search))
@@ -282,6 +285,80 @@ async def get_upload(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to access details for this file.",
         )
+
+    return file_upload
+
+
+@router.patch("/{upload_id}/archive", response_model=FileUploadSchema)
+async def archive_upload(
+    upload_id: str,
+    user: User = Depends(azure_scheme),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    email = user.claims.get("emails", ["NONE"])[0]
+    if file_upload.uploader_email != email:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only archive your own uploads.",
+        )
+
+    if file_upload.is_archived:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Upload is already archived.",
+        )
+
+    file_upload.is_archived = True
+    file_upload.archived_at = func.now()
+    db.add(file_upload)
+    await db.commit()
+    await db.refresh(file_upload)
+
+    return file_upload
+
+
+@router.patch("/{upload_id}/unarchive", response_model=FileUploadSchema)
+async def unarchive_upload(
+    upload_id: str,
+    user: User = Depends(azure_scheme),
+    db: AsyncSession = Depends(get_db),
+):
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    email = user.claims.get("emails", ["NONE"])[0]
+    if file_upload.uploader_email != email:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only unarchive your own uploads.",
+        )
+
+    if not file_upload.is_archived:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Upload is not archived.",
+        )
+
+    file_upload.is_archived = False
+    file_upload.archived_at = None
+    db.add(file_upload)
+    await db.commit()
+    await db.refresh(file_upload)
 
     return file_upload
 

@@ -18,6 +18,8 @@ class FileUpload(BaseModel):
     dq_status: DQStatusEnum
     bronze_path: str | None
     is_processed_in_staging: bool
+    is_archived: bool
+    archived_at: datetime | None
     country: constr(min_length=3, max_length=3)
     dataset: str
     source: str | None

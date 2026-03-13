@@ -118,6 +118,8 @@ export interface UploadResponse {
   dq_status: DQStatus;
   bronze_path: string | null;
   is_processed_in_staging: boolean;
+  is_archived: boolean;
+  archived_at: string | null;
   country: string;
   dataset: string;
   source: string | null;
@@ -137,6 +139,8 @@ export const initialUploadResponse: UploadResponse = {
   dq_status: DQStatus.IN_PROGRESS,
   bronze_path: null,
   is_processed_in_staging: false,
+  is_archived: false,
+  archived_at: null,
   country: "",
   dataset: "",
   source: null,

@@ -38,6 +38,10 @@ class FileUpload(BaseModel):
     metadata_json_path: Mapped[str] = mapped_column(nullable=True)
     bronze_path: Mapped[str] = mapped_column(nullable=True, default=None)
     is_processed_in_staging: Mapped[bool] = mapped_column(nullable=False, default=False)
+    is_archived: Mapped[bool] = mapped_column(nullable=False, default=False)
+    archived_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=None
+    )
     country: Mapped[str] = mapped_column(VARCHAR(3), nullable=False)
     dataset: Mapped[str] = mapped_column(nullable=False)
     source: Mapped[str] = mapped_column(nullable=True)

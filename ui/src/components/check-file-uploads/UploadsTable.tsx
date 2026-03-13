@@ -1,11 +1,12 @@
 import { ReactElement, useMemo } from "react";
 
 import {
-  Button,
   DataTable,
   DataTableHeader,
   DataTableSkeleton,
   DefinitionTooltip,
+  OverflowMenu,
+  OverflowMenuItem,
   Pagination,
   Table,
   TableBody,
@@ -16,11 +17,11 @@ import {
   TableRow,
   Tag,
 } from "@carbon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
 
-import { api } from "@/api";
+import { api, queryClient } from "@/api";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { PagedResponse } from "@/types/api.ts";
 import {
@@ -85,6 +86,51 @@ interface UploadsTableProps {
   }) => void;
   source?: string | null;
   dataset?: string | null;
+  isArchived?: boolean;
+}
+
+function RowMenu({
+  upload,
+  isArchived,
+  onArchive,
+  onUnarchive,
+}: {
+  upload: UploadResponse;
+  isArchived: boolean;
+  onArchive: (id: string) => void;
+  onUnarchive: (id: string) => void;
+}) {
+  const navigate = useNavigate();
+  const canView =
+    upload.dataset !== "unstructured" &&
+    upload.dq_status === DQStatus.COMPLETED;
+
+  return (
+    <OverflowMenu aria-label="Row actions" flipped>
+      {canView && (
+        <OverflowMenuItem
+          itemText="View"
+          onClick={() =>
+            void navigate({
+              to: "/upload/$uploadId",
+              params: { uploadId: upload.id },
+            })
+          }
+        />
+      )}
+      {!isArchived ? (
+        <OverflowMenuItem
+          itemText="Archive"
+          onClick={() => onArchive(upload.id)}
+        />
+      ) : (
+        <OverflowMenuItem
+          itemText="Unarchive"
+          onClick={() => onUnarchive(upload.id)}
+        />
+      )}
+    </OverflowMenu>
+  );
 }
 
 function UploadsTable({
@@ -93,6 +139,7 @@ function UploadsTable({
   handlePaginationChange,
   source,
   dataset,
+  isArchived = false,
 }: UploadsTableProps) {
   const { data: uploadsQuery, isLoading } = useSuspenseQuery({
     queryFn: () =>
@@ -101,8 +148,23 @@ function UploadsTable({
         page_size: pageSize,
         source: source ?? undefined,
         dataset: dataset ?? undefined,
+        is_archived: isArchived,
       }),
-    queryKey: ["uploads", page, pageSize, source, dataset],
+    queryKey: ["uploads", page, pageSize, source, dataset, isArchived],
+  });
+
+  const { mutate: archiveUpload } = useMutation({
+    mutationFn: (uploadId: string) => api.uploads.archive_upload(uploadId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["uploads"] });
+    },
+  });
+
+  const { mutate: unarchiveUpload } = useMutation({
+    mutationFn: (uploadId: string) => api.uploads.unarchive_upload(uploadId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["uploads"] });
+    },
   });
 
   const renderUploads = useMemo<PagedResponse<TableUpload>>(() => {
@@ -121,7 +183,6 @@ function UploadsTable({
     } as PagedResponse<TableUpload>;
 
     _renderUploads.data = uploads.data.map(upload => {
-      const isUnstructured = upload.dataset === "unstructured";
       const statusText = upload.dq_status.replace("_", " ").toLowerCase();
 
       return {
@@ -143,23 +204,26 @@ function UploadsTable({
             {statusText}
           </Tag>
         ),
-        actions: !isUnstructured && (
-          <Button
-            as={Link}
-            to="/upload/$uploadId"
-            params={{ uploadId: upload.id }}
-            kind="ghost"
-            size="sm"
-            disabled={upload.dq_status !== DQStatus.COMPLETED}
-          >
-            View
-          </Button>
+        actions: (
+          <RowMenu
+            upload={upload}
+            isArchived={isArchived}
+            onArchive={archiveUpload}
+            onUnarchive={unarchiveUpload}
+          />
         ),
       } as TableUpload;
     });
 
     return _renderUploads;
-  }, [page, pageSize, uploadsQuery?.data]);
+  }, [
+    page,
+    pageSize,
+    uploadsQuery?.data,
+    isArchived,
+    archiveUpload,
+    unarchiveUpload,
+  ]);
 
   return isLoading ? (
     <DataTableSkeleton headers={columns} />

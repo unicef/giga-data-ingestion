@@ -38,18 +38,37 @@ function UploadLanding(props: UploadLandingProps) {
 
   // Tab 0 = Geolocation (source gigasync), 1 = API (source api),
   // 2 = Coverage (dataset coverage), 3 = Schemaless (dataset structured)
+  // 4 = Archived (all datasets, is_archived=true)
   const tabFilter = (() => {
     switch (selectedTab) {
       case 0:
-        return { source: null, dataset: "geolocation" as const };
+        return {
+          source: null,
+          dataset: "geolocation" as const,
+          isArchived: false,
+        };
       case 1:
-        return { source: "api" as const, dataset: "geolocation" as const };
+        return {
+          source: "api" as const,
+          dataset: "geolocation" as const,
+          isArchived: false,
+        };
       case 2:
-        return { source: null, dataset: "coverage" as const };
+        return {
+          source: null,
+          dataset: "coverage" as const,
+          isArchived: false,
+        };
       case 3:
-        return { source: null, dataset: "structured" as const };
+        return {
+          source: null,
+          dataset: "structured" as const,
+          isArchived: false,
+        };
+      case 4:
+        return { source: null, dataset: null, isArchived: true };
       default:
-        return { source: null, dataset: null };
+        return { source: null, dataset: null, isArchived: false };
     }
   })();
 
@@ -158,6 +177,7 @@ function UploadLanding(props: UploadLandingProps) {
               <Tab>API</Tab>
               <Tab>Coverage</Tab>
               <Tab>Schemaless</Tab>
+              <Tab>Archived</Tab>
             </TabList>
 
             <TabPanels>
@@ -166,6 +186,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  isArchived={tabFilter.isArchived}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -173,6 +194,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  isArchived={tabFilter.isArchived}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -180,6 +202,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  isArchived={tabFilter.isArchived}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -187,6 +210,15 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  isArchived={tabFilter.isArchived}
+                />
+              </TabPanel>
+              <TabPanel className="p-0">
+                <UploadsTable
+                  {...props}
+                  source={tabFilter.source}
+                  dataset={tabFilter.dataset}
+                  isArchived={tabFilter.isArchived}
                 />
               </TabPanel>
             </TabPanels>
