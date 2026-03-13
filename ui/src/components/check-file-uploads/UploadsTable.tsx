@@ -116,7 +116,7 @@ function UploadsTable({
     const _renderUploads = {
       data: [],
       page: uploads.page,
-      page_size: pageSize,
+      page_size: uploads.page_size,
       total_count: uploads.total_count,
     } as PagedResponse<TableUpload>;
 
