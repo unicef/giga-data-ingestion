@@ -1,3 +1,4 @@
+import base64
 from typing import Any
 
 import requests
@@ -22,6 +23,7 @@ def send_email_base(
     subject: str,
     html_part: str = None,
     text_part: str = None,
+    attachments: list[dict] = None,
 ):
     if len(recipients) == 0:
         logger.warning("No recipients provided, skipping email send")
@@ -44,8 +46,28 @@ def send_email_base(
     }
 
     formatted_recipients = [{"Email": r} for r in recipients]
-
     message["Recipients"] = formatted_recipients
+
+    # Add attachments if provided (normalize to Mailjet v3.1 format: ContentType, Filename, Base64Content)
+    if attachments:
+        mailjet_attachments = []
+        for att in attachments:
+            content = att.get("Base64Content") or att.get("content")
+            if content is None:
+                continue
+            mailjet_attachments.append(
+                {
+                    "ContentType": att.get("ContentType")
+                    or att.get("Content-type")
+                    or "application/octet-stream",
+                    "Filename": att.get("Filename") or "attachment",
+                    "Base64Content": content
+                    if isinstance(content, str)
+                    else content.decode("ascii"),
+                }
+            )
+        if mailjet_attachments:
+            message["Attachments"] = mailjet_attachments
 
     client = Client(
         auth=(settings.MAILJET_API_KEY, settings.CLEAN_MAILJET_SECRET),
@@ -132,6 +154,156 @@ def send_dq_report_email(body: EmailRenderRequest[DqReportRenderRequest]):
         recipients=[body.email],
         subject="DQ summary report",
     )
+
+
+def send_dq_report_email_with_pdf(body: EmailRenderRequest[DqReportRenderRequest]):
+    json_dump = body.props.model_dump()
+    json_dump["uploadDate"] = json_dump["uploadDate"].isoformat()
+    json_dump["dataQualityCheck"]["summary"]["timestamp"] = json_dump[
+        "dataQualityCheck"
+    ]["summary"]["timestamp"].isoformat()
+
+    # Generate HTML and text content
+    res = requests.post(
+        f"{settings.EMAIL_RENDERER_SERVICE_URL}/email/dq-report",
+        headers={
+            "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
+            "Content-Type": "application/json",
+        },
+        json=json_dump,
+    )
+
+    if not res.ok:
+        try:
+            raise HTTPError(res.json())
+        except JSONDecodeError:
+            raise HTTPError(res.text) from None
+
+    email_data = res.json()
+    html_content = email_data.get("html")
+    text_content = email_data.get("text")
+
+    # Generate PDF (renderer returns binary to avoid large JSON truncation)
+    pdf_res = requests.post(
+        f"{settings.EMAIL_RENDERER_SERVICE_URL}/email/dq-report-pdf",
+        headers={
+            "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
+            "Content-Type": "application/json",
+        },
+        json=json_dump,
+    )
+
+    if not pdf_res.ok:
+        try:
+            raise HTTPError(pdf_res.json())
+        except JSONDecodeError:
+            raise HTTPError(pdf_res.text) from None
+
+    pdf_bytes = pdf_res.content
+    pdf_base64 = base64.b64encode(pdf_bytes).decode("ascii")
+    disp = pdf_res.headers.get("Content-Disposition") or ""
+    pdf_filename = f"data-quality-report-{body.props.country}.pdf"
+    if "filename=" in disp:
+        part = disp.split("filename=", 1)[1].strip().strip('"')
+        if part:
+            pdf_filename = part
+
+    # Use base64 string directly as required by Mailjet v3 send API
+    attachment = {
+        "Content-type": "application/pdf",
+        "Filename": pdf_filename,
+        "content": pdf_base64,
+    }
+
+    # Send email with PDF attachment
+    send_email_base(
+        recipients=[body.email],
+        subject="DQ summary report with PDF attachment",
+        html_part=html_content,
+        text_part=text_content,
+        attachments=[attachment],
+    )
+
+
+def _build_dq_pdf_payload(props: dict) -> dict:
+    """Ensure uploadDate and dataQualityCheck.summary.timestamp are JSON-safe (ISO strings)."""
+    payload = dict(props)
+    upload_date = payload.get("uploadDate")
+    payload["uploadDate"] = (
+        upload_date.isoformat()
+        if hasattr(upload_date, "isoformat")
+        else str(upload_date)
+    )
+    dq = payload.get("dataQualityCheck") or {}
+    summary = dq.get("summary") or {}
+    ts = summary.get("timestamp")
+    if ts is not None and hasattr(ts, "isoformat"):
+        payload.setdefault("dataQualityCheck", {})["summary"] = {
+            **summary,
+            "timestamp": ts.isoformat(),
+        }
+    elif ts is not None:
+        payload.setdefault("dataQualityCheck", {})["summary"] = {
+            **summary,
+            "timestamp": str(ts),
+        }
+    return payload
+
+
+async def generate_dq_report_pdf(body: EmailRenderRequest[DqReportRenderRequest]):
+    json_dump = _build_dq_pdf_payload(body.props.model_dump())
+    base = str(settings.EMAIL_RENDERER_SERVICE_URL).rstrip("/")
+    res = requests.post(
+        f"{base}/email/dq-report-pdf",
+        headers={
+            "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
+            "Content-Type": "application/json",
+        },
+        json=json_dump,
+    )
+    if not res.ok:
+        try:
+            raise HTTPError(res.json())
+        except JSONDecodeError:
+            raise HTTPError(res.text) from None
+    logger.info(f"PDF generation response: {res.status_code}")
+    pdf_bytes = res.content
+    pdf_b64 = base64.b64encode(pdf_bytes).decode("ascii")
+    disp = res.headers.get("Content-Disposition") or ""
+    filename = f"data-quality-report-{body.props.country}-{body.props.uploadId}.pdf"
+    if "filename=" in disp:
+        part = disp.split("filename=", 1)[1].strip().strip('"')
+        if part:
+            filename = part
+    return {"pdf": pdf_b64, "filename": filename}
+
+
+async def generate_dq_report_pdf_from_payload(payload: dict) -> dict:
+    """Generate PDF using a pre-built payload (for lenient frontend request)."""
+    base = str(settings.EMAIL_RENDERER_SERVICE_URL).rstrip("/")
+    res = requests.post(
+        f"{base}/email/dq-report-pdf",
+        headers={
+            "Authorization": f"Bearer {settings.EMAIL_RENDERER_BEARER_TOKEN}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+    )
+    if not res.ok:
+        try:
+            raise HTTPError(res.json())
+        except JSONDecodeError:
+            raise HTTPError(res.text) from None
+    logger.info(f"PDF generation response: {res.status_code}")
+    pdf_bytes = res.content
+    pdf_b64 = base64.b64encode(pdf_bytes).decode("ascii")
+    disp = res.headers.get("Content-Disposition") or ""
+    filename = "data-quality-report.pdf"
+    if "filename=" in disp:
+        part = disp.split("filename=", 1)[1].strip().strip('"')
+        if part:
+            filename = part
+    return {"pdf": pdf_b64, "filename": filename}
 
 
 def send_master_data_release_notification(
