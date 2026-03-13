@@ -251,7 +251,7 @@ const DataQualityReportPDF: React.FC<PDFReportProps> = ({
             <Text style={styles.sectionTitle}>School ID Checks</Text>
             <MetricRow label="Duplicate School IDs" value={duplicateSchoolIds} />
             <MetricRow label="Missing School IDs" value={missingSchoolIds} />
-            <MetricRow label="Missing School Names D" value={missingSchoolNames} />
+            <MetricRow label="Missing School Names" value={missingSchoolNames} />
             <CommentBox>{''}</CommentBox>
           </View>
         </View>

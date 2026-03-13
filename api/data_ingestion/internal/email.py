@@ -1,3 +1,4 @@
+import base64
 from typing import Any
 
 import requests
@@ -182,7 +183,7 @@ def send_dq_report_email_with_pdf(body: EmailRenderRequest[DqReportRenderRequest
     html_content = email_data.get("html")
     text_content = email_data.get("text")
 
-    # Generate PDF
+    # Generate PDF (renderer returns binary to avoid large JSON truncation)
     pdf_res = requests.post(
         f"{settings.EMAIL_RENDERER_SERVICE_URL}/email/dq-report-pdf",
         headers={
@@ -198,11 +199,14 @@ def send_dq_report_email_with_pdf(body: EmailRenderRequest[DqReportRenderRequest
         except JSONDecodeError:
             raise HTTPError(pdf_res.text) from None
 
-    pdf_data = pdf_res.json()
-    pdf_base64 = pdf_data.get("pdf")
-    pdf_filename = pdf_data.get(
-        "filename", f"data-quality-report-{body.props.country}.pdf"
-    )
+    pdf_bytes = pdf_res.content
+    pdf_base64 = base64.b64encode(pdf_bytes).decode("ascii")
+    disp = pdf_res.headers.get("Content-Disposition") or ""
+    pdf_filename = f"data-quality-report-{body.props.country}.pdf"
+    if "filename=" in disp:
+        part = disp.split("filename=", 1)[1].strip().strip('"')
+        if part:
+            pdf_filename = part
 
     # Use base64 string directly as required by Mailjet v3 send API
     attachment = {
@@ -263,7 +267,15 @@ async def generate_dq_report_pdf(body: EmailRenderRequest[DqReportRenderRequest]
         except JSONDecodeError:
             raise HTTPError(res.text) from None
     logger.info(f"PDF generation response: {res.status_code}")
-    return res.json()
+    pdf_bytes = res.content
+    pdf_b64 = base64.b64encode(pdf_bytes).decode("ascii")
+    disp = res.headers.get("Content-Disposition") or ""
+    filename = f"data-quality-report-{body.props.country}-{body.props.uploadId}.pdf"
+    if "filename=" in disp:
+        part = disp.split("filename=", 1)[1].strip().strip('"')
+        if part:
+            filename = part
+    return {"pdf": pdf_b64, "filename": filename}
 
 
 async def generate_dq_report_pdf_from_payload(payload: dict) -> dict:
@@ -283,7 +295,15 @@ async def generate_dq_report_pdf_from_payload(payload: dict) -> dict:
         except JSONDecodeError:
             raise HTTPError(res.text) from None
     logger.info(f"PDF generation response: {res.status_code}")
-    return res.json()
+    pdf_bytes = res.content
+    pdf_b64 = base64.b64encode(pdf_bytes).decode("ascii")
+    disp = res.headers.get("Content-Disposition") or ""
+    filename = "data-quality-report.pdf"
+    if "filename=" in disp:
+        part = disp.split("filename=", 1)[1].strip().strip('"')
+        if part:
+            filename = part
+    return {"pdf": pdf_b64, "filename": filename}
 
 
 def send_master_data_release_notification(
