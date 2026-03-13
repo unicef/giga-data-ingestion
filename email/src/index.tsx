@@ -112,13 +112,15 @@ app.post(
     };
     
     const pdfBuffer = await generateDataQualityReportPDF(pdfData);
-    
-    // Return PDF as base64 for easy attachment
-    const pdfBase64 = pdfBuffer.toString('base64');
-    
-    return ctx.json({ 
-      pdf: pdfBase64,
-      filename: `data-quality-report-${json.country}-${json.uploadId}.pdf`
+    const filename = `data-quality-report-${json.country}-${json.uploadId}.pdf`;
+
+    // Return PDF as binary to avoid huge JSON/base64 response truncation
+    return new Response(pdfBuffer, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+      },
     });
   },
 );

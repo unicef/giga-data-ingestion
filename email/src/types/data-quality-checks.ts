@@ -7,8 +7,8 @@ const Check = z.object({
   count_overall: z.number(),
   count_passed: z.number(),
   description: z.string(),
-  percent_failed: z.number(),
-  percent_passed: z.number(),
+  percent_failed: z.number().nullable(),
+  percent_passed: z.number().nullable(),
   dq_remarks: z.string().optional(),
 });
 
