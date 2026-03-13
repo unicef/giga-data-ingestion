@@ -1,31 +1,12 @@
 import json
 import logging
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 from country_converter import country_converter as coco
-from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
-from fastapi_azure_auth.user import User
-from sqlalchemy import (
-    column,
-    distinct,
-    func,
-    literal,
-    literal_column,
-    select,
-    text,
-    union_all,
-    update,
-)
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
-from sqlalchemy.sql.functions import count
-from sqlalchemy.types import String
-
-from azure.core.exceptions import HttpResponseError
-from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db as get_primary_db
 from data_ingestion.db.trino import get_db, get_db_context
@@ -33,15 +14,40 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
     ApprovalRequest,
+    FileUpload,
     User as DatabaseUser,
 )
 from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
+    ApprovalByUploadResponse,
+    ApprovalFilterByUploadRequest,
     ApprovalRequestListing,
     UploadApprovedRowsRequest,
 )
 from data_ingestion.schemas.core import PagedResponseSchema
+from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
+from fastapi_azure_auth.user import User
+from sqlalchemy import (
+    and_,
+    column,
+    distinct,
+    func,
+    literal,
+    literal_column,
+    or_,
+    select,
+    text,
+    union_all,
+    update,
+)
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.sql.functions import count
+from sqlalchemy.types import String
+
+from azure.core.exceptions import HttpResponseError
+from azure.storage.blob import ContentSettings
 
 router = APIRouter(
     prefix="/api/approval-requests",
@@ -69,7 +75,7 @@ async def list_approval_requests(
     settings = {}
     table_names = []
     for item in items:
-        settings[f"{item.country}-{item.dataset}"] = item.enabled
+        settings[item.upload_id] = item.enabled
         table_names.append(item.country.lower())
 
     data_cte = (
@@ -218,7 +224,17 @@ async def list_approval_requests(
             union_all(*queries).order_by(column("table_name"), column("table_schema"))
         )
         stats = res.mappings().all()
-
+        approvals = await primary_db.scalars(
+            select(ApprovalRequest).options(joinedload(ApprovalRequest.file_upload))
+        )
+        approval_map = {
+            f"{a.country}-{a.dataset}": {
+                "upload_id": a.upload_id,
+                "uploaded_at": a.file_upload.created if a.file_upload else None,
+                "file_name": a.file_upload.file_name if a.file_upload else None,
+            }
+            for a in approvals.all()
+        }
         for stat in stats:
             country = coco.convert(stat["table_name"], to="name_short")
             country_iso3 = coco.convert(stat["table_name"], to="ISO3")
@@ -230,8 +246,9 @@ async def list_approval_requests(
                 .title()
                 .rstrip()
             )
-            enabled = settings.get(f"{country_iso3}-{dataset}", False)
+            approval_info = approval_map.get(f"{country_iso3}-{dataset}", {})
 
+            enabled = settings.get(approval_info.get("upload_id", ""), False)
             body.append(
                 ApprovalRequestListing(
                     id=f'{stat["table_name"].upper()}-{dataset}',
@@ -245,6 +262,9 @@ async def list_approval_requests(
                     rows_updated=stat["rows_updated"],
                     rows_deleted=stat["rows_deleted"],
                     enabled=enabled,
+                    upload_id=approval_info.get("upload_id"),
+                    uploaded_at=approval_info.get("uploaded_at"),
+                    file_name=approval_info.get("file_name"),
                 )
             )
 
@@ -256,10 +276,12 @@ async def list_approval_requests(
     }
 
 
-@router.get("/{subpath}")
+@router.post("/{subpath}")
 async def get_approval_request(
     subpath: str,
+    payload: Optional[ApprovalFilterByUploadRequest] = None,
     db: Session = Depends(get_db),
+    primary_db: AsyncSession = Depends(get_primary_db),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
 ):
@@ -272,7 +294,6 @@ async def get_approval_request(
 
     data_cte = (
         select(
-            # Create an identifier that is unique across versions
             func.concat_ws(
                 "|",
                 column("school_id_giga"),
@@ -309,6 +330,46 @@ async def get_approval_request(
         )
     )
 
+    # Apply upload_ids filter if provided
+    if payload and payload.upload_ids:
+        # Verify upload_ids exist in ApprovalRequest for this dataset
+        approval_requests = await primary_db.execute(
+            select(ApprovalRequest.upload_id, FileUpload.created)
+            .join(FileUpload, FileUpload.id == ApprovalRequest.upload_id)
+            .where(ApprovalRequest.upload_id.in_(payload.upload_ids))
+            .where(ApprovalRequest.country == table_name.split("_")[0].upper())
+            .where(ApprovalRequest.dataset == (dataset.split(" ")[1]).lower())
+        )
+        approval_requests = approval_requests.mappings().all()
+        if not approval_requests:
+            return {
+                "info": {
+                    "country": country,
+                    "dataset": dataset.replace("-", " ").title(),
+                    "version": None,
+                    "timestamp": None,
+                },
+                "total_count": 0,
+                "data": [],
+            }
+
+        # Get timestamp ranges for these uploads
+        upload_times = [req["created"] for req in approval_requests]
+
+        # Filter changes by commit timestamp
+        time_conditions = []
+        for upload_time in upload_times:
+            time_conditions.append(
+                and_(
+                    column("_commit_timestamp") >= upload_time - timedelta(minutes=5),
+                    column("_commit_timestamp") <= upload_time + timedelta(hours=2),
+                )
+            )
+
+        # Apply time filter
+        if time_conditions:
+            cdf_cte = select("*").select_from(cdf_cte).where(or_(*time_conditions))
+
     total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
 
     cdf = (
@@ -326,6 +387,7 @@ async def get_approval_request(
         .mappings()
         .all()
     )
+
     detail = (
         db.execute(
             select("*")
@@ -339,12 +401,13 @@ async def get_approval_request(
 
     df = pd.DataFrame(cdf)
     df = df.drop(columns=["signature"]).fillna("NULL")
+
     return {
         "info": {
             "country": country,
-            "dataset": dataset.title(),
-            "version": detail["version"],
-            "timestamp": detail["timestamp"],
+            "dataset": dataset.replace("-", " ").title(),
+            "version": detail["version"] if detail else None,
+            "timestamp": detail["timestamp"] if detail else None,
         },
         "total_count": total_count,
         "data": df.to_dict(orient="records"),
@@ -489,10 +552,7 @@ async def upload_approved_rows(
 
         obj = await primary_db.execute(
             update(ApprovalRequest)
-            .where(
-                (ApprovalRequest.country == country_iso3)
-                & (ApprovalRequest.dataset == formatted_dataset)
-            )
+            .where(ApprovalRequest.upload_id == body.upload_id)
             .values(
                 {
                     ApprovalRequest.enabled: False,
@@ -514,3 +574,30 @@ async def upload_approved_rows(
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
+
+
+@router.post(
+    "/by-upload",
+    response_model=list[ApprovalByUploadResponse],
+)
+async def get_approvals_by_upload_ids(
+    payload: ApprovalFilterByUploadRequest,
+    primary_db: AsyncSession = Depends(get_primary_db),
+):
+    query = select(ApprovalRequest).where(
+        ApprovalRequest.upload_id.in_(payload.upload_ids)
+    )
+
+    result = await primary_db.scalars(query)
+    rows = result.all()
+
+    return [
+        ApprovalByUploadResponse(
+            id=row.id,
+            country=row.country,
+            dataset=row.dataset,
+            upload_id=row.upload_id,
+            enabled=row.enabled,
+        )
+        for row in rows
+    ]
