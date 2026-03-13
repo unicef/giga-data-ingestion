@@ -17,7 +17,7 @@ from data_ingestion.models import (
     FileUpload,
     User as DatabaseUser,
 )
-from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
+from data_ingestion.models.approval_requests import ApprovalRequestAuditLog, DQModeEnum
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
     ApprovalRequestListing,
@@ -45,8 +45,6 @@ from sqlalchemy.types import String
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
-
-from api.data_ingestion.models.approval_requests import DQModeEnum
 
 router = APIRouter(
     prefix="/api/approval-requests",
