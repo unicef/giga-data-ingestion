@@ -634,9 +634,13 @@ async def get_data_quality_check(
     )
     dq_report_summary_dict = get_data_quality_summary(file_upload.dq_report_path)
 
+    creation_time = blob_properties.get("creation_time")
+    if creation_time is not None and hasattr(creation_time, "isoformat"):
+        creation_time = creation_time.isoformat()
+
     return {
-        "name": blob_properties.name,
-        "creation_time": blob_properties.creation_time.isoformat(),
+        "name": blob_properties.get("name"),
+        "creation_time": creation_time,
         "dq_summary": dq_report_summary_dict,
         "dq_failed_rows_first_five_rows": results,
         "status": file_upload.dq_status,
