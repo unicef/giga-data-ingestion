@@ -221,6 +221,9 @@ async def list_uploads(
     page_size: Annotated[int, Field(ge=1, le=50)] = 10,
     source: str | None = None,
     dataset: str | None = None,
+    uploader_email: str | None = None,
+    country: str | None = None,
+    dq_status: str | None = None,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -240,6 +243,15 @@ async def list_uploads(
 
     if dataset is not None:
         query = query.where(FileUpload.dataset == dataset)
+
+    if uploader_email is not None:
+        query = query.where(FileUpload.uploader_email == uploader_email)
+
+    if country is not None:
+        query = query.where(FileUpload.country == country)
+
+    if dq_status is not None:
+        query = query.where(FileUpload.dq_status == dq_status)
 
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query)

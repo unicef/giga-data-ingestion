@@ -89,6 +89,17 @@ ul {
   min-height: none !important;
 }
 
+.filter-side-panel .cds--modal-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: auto;
+  height: 100%;
+  max-height: 100%;
+  width: 20rem;
+  transform: none;
+}
+
 *,
 ::before,
 ::after {
