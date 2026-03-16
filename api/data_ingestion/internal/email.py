@@ -25,6 +25,10 @@ def send_email_base(
     text_part: str = None,
     attachments: list[dict] = None,
 ):
+    """Match main: mailjet_rest Client + v3 message format. Use v3.1 only when attachments present."""
+    if getattr(settings, "EMAIL_TEST_RECIPIENTS", ""):
+        recipients = [e.strip() for e in settings.EMAIL_TEST_RECIPIENTS.split(",") if e.strip()]
+        logger.info("Using test recipients override: %s", recipients)
     if len(recipients) == 0:
         logger.warning("No recipients provided, skipping email send")
         return
@@ -37,19 +41,19 @@ def send_email_base(
     if settings.DEPLOY_ENV != DeploymentEnvironment.PRD:
         from_name = f"{from_name} {settings.DEPLOY_ENV.name}"
 
-    message = {
-        "FromEmail": settings.SENDER_EMAIL,
-        "FromName": from_name,
-        "Subject": subject,
-        "Html-part": html_part,
-        "Text-part": text_part,
-    }
-
     formatted_recipients = [{"Email": r} for r in recipients]
-    message["Recipients"] = formatted_recipients
 
-    # Add attachments if provided (normalize to Mailjet v3.1 format: ContentType, Filename, Base64Content)
     if attachments:
+        # v3.1 supports Attachments; send via direct POST to match main's credentials/URL
+        base = (settings.MAILJET_API_URL or "https://api.mailjet.com").rstrip("/")
+        url = f"{base}/v3.1/send"
+        msg = {
+            "From": {"Email": settings.SENDER_EMAIL, "Name": from_name},
+            "To": formatted_recipients,
+            "Subject": subject,
+            "HTMLPart": html_part or "",
+            "TextPart": text_part or "",
+        }
         mailjet_attachments = []
         for att in attachments:
             content = att.get("Base64Content") or att.get("content")
@@ -57,18 +61,37 @@ def send_email_base(
                 continue
             mailjet_attachments.append(
                 {
-                    "ContentType": att.get("ContentType")
-                    or att.get("Content-type")
-                    or "application/octet-stream",
+                    "ContentType": att.get("ContentType") or att.get("Content-type") or "application/octet-stream",
                     "Filename": att.get("Filename") or "attachment",
-                    "Base64Content": content
-                    if isinstance(content, str)
-                    else content.decode("ascii"),
+                    "Base64Content": content if isinstance(content, str) else content.decode("ascii"),
                 }
             )
         if mailjet_attachments:
-            message["Attachments"] = mailjet_attachments
-
+            msg["Attachments"] = mailjet_attachments
+        payload = {"Messages": [msg]}
+        result = requests.post(
+            url,
+            auth=(settings.MAILJET_API_KEY, settings.CLEAN_MAILJET_SECRET),
+            headers={"Content-Type": "application/json"},
+            json=payload,
+            timeout=30,
+        )
+        try:
+            logger.info("Mailjet send result: status=%s body=%s", result.status_code, result.json())
+            if result.status_code >= 400:
+                logger.error("Mailjet send failed: status=%s body=%s", result.status_code, result.text)
+        except JSONDecodeError:
+            logger.info("Mailjet send result: status=%s raw=%s", result.status_code, result.text[:500])
+        return
+    # No attachments: same as main – Client + v3 format
+    message = {
+        "FromEmail": settings.SENDER_EMAIL,
+        "FromName": from_name,
+        "Subject": subject,
+        "Html-part": html_part,
+        "Text-part": text_part,
+        "Recipients": formatted_recipients,
+    }
     client = Client(
         auth=(settings.MAILJET_API_KEY, settings.CLEAN_MAILJET_SECRET),
         api_url=settings.MAILJET_API_URL,
