@@ -28,6 +28,11 @@ def _send_mailjet_with_attachments(
 ) -> None:
     """Send via Mailjet v3.1 when attachments are present."""
     base = (settings.MAILJET_API_URL or "https://api.mailjet.com").rstrip("/")
+    # Be tolerant of configs that already include a version suffix (e.g. https://api.mailjet.com/v3)
+    for suffix in ("/v3.1", "/v3.0", "/v3"):
+        if base.endswith(suffix):
+            base = base[: -len(suffix)]
+            break
     url = f"{base}/v3.1/send"
     msg: dict[str, Any] = {
         "From": {"Email": settings.SENDER_EMAIL, "Name": from_name},
