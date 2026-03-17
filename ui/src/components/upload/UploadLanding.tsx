@@ -46,18 +46,8 @@ function UploadLanding(props: UploadLandingProps) {
   ).length;
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
 
-  // Tab 0 = Geolocation (source gigasync), 1 = API (source api),
-  // 2 = Coverage (dataset coverage), 3 = Schemaless (dataset structured)
   const tabFilter = (() => {
     switch (selectedTab) {
-      case 0:
-        return { source: null, dataset: "geolocation" as const };
-      case 1:
-        return { source: "api" as const, dataset: "geolocation" as const };
-      case 2:
-        return { source: null, dataset: "coverage" as const };
-      case 3:
-        return { source: null, dataset: "structured" as const };
       default:
         return { source: null, dataset: null };
     }
@@ -65,10 +55,6 @@ function UploadLanding(props: UploadLandingProps) {
 
   const handleTabChange = ({ selectedIndex }: { selectedIndex: number }) => {
     setSelectedTab(selectedIndex);
-    // Reset to page 1 when switching tabs
-    if (props.page !== 1) {
-      props.handlePaginationChange({ page: 1, pageSize: props.pageSize });
-    }
   };
 
   return (
@@ -92,11 +78,7 @@ function UploadLanding(props: UploadLandingProps) {
                 Please review our{" "}
                 <a
                   onClick={async () => {
-                    // It's ridiculous how there's no native way of disabling
-                    // HTML anchors. We could add the pointer-events-none class
-                    // but that disables the loading cursor animation.
                     if (isPrivacyLoading) return;
-
                     setIsPrivacyLoading(true);
                     await getDataPrivacyDocument();
                     setIsPrivacyLoading(false);
@@ -160,15 +142,8 @@ function UploadLanding(props: UploadLandingProps) {
 
           <Tabs selectedIndex={selectedTab} onChange={handleTabChange}>
             <div className="flex items-center">
-              <TabList
-                aria-label="File Uploads Tabs"
-                fullWidth
-                className="w-full"
-              >
-                <Tab>Geolocation</Tab>
-                <Tab>API</Tab>
-                <Tab>Coverage</Tab>
-                <Tab>Schemaless</Tab>
+              <TabList aria-label="File Uploads Tabs" className="w-full">
+                <Tab>All uploads</Tab>
               </TabList>
               <Button
                 kind="tertiary"
@@ -187,38 +162,8 @@ function UploadLanding(props: UploadLandingProps) {
               <TabPanel className="p-0">
                 <UploadsTable
                   {...props}
-                  source={tabFilter.source}
-                  dataset={activeFilters.dataset || tabFilter.dataset}
-                  uploaderEmail={activeFilters.uploaderEmail}
-                  country={activeFilters.country}
-                  dqStatus={activeFilters.dqStatus}
-                />
-              </TabPanel>
-              <TabPanel className="p-0">
-                <UploadsTable
-                  {...props}
-                  source={tabFilter.source}
-                  dataset={activeFilters.dataset || tabFilter.dataset}
-                  uploaderEmail={activeFilters.uploaderEmail}
-                  country={activeFilters.country}
-                  dqStatus={activeFilters.dqStatus}
-                />
-              </TabPanel>
-              <TabPanel className="p-0">
-                <UploadsTable
-                  {...props}
-                  source={tabFilter.source}
-                  dataset={activeFilters.dataset || tabFilter.dataset}
-                  uploaderEmail={activeFilters.uploaderEmail}
-                  country={activeFilters.country}
-                  dqStatus={activeFilters.dqStatus}
-                />
-              </TabPanel>
-              <TabPanel className="p-0">
-                <UploadsTable
-                  {...props}
-                  source={tabFilter.source}
-                  dataset={activeFilters.dataset || tabFilter.dataset}
+                  source={activeFilters.source || tabFilter.source}
+                  dataset={activeFilters.dataset || undefined}
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}

@@ -21,6 +21,7 @@ export interface UploadFilters {
   dataset: string;
   country: string;
   dqStatus: string;
+  source: string;
 }
 
 interface FilterModalProps {
@@ -35,6 +36,7 @@ const EMPTY_FILTERS: UploadFilters = {
   dataset: "",
   country: "",
   dqStatus: "",
+  source: "",
 };
 
 function FilterModal({
@@ -128,6 +130,18 @@ function FilterModal({
             {countryList.map(c => (
               <SelectItem key={c.ISO3} value={c.ISO3} text={c.name_short} />
             ))}
+          </Select>
+
+          <Select
+            id="filter-source"
+            labelText="Source"
+            value={filters.source}
+            onChange={e => handleChange("source", e.target.value)}
+          >
+            <SelectItem value="" text="Choose an option" />
+            <SelectItem value="fb" text="Facebook" />
+            <SelectItem value="itu" text="ITU" />
+            <SelectItem value="api" text="API" />
           </Select>
 
           <Select
