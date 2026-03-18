@@ -9,4 +9,3 @@ export const FOOTER_LOCKUP_PNG_SRC: { data: Buffer; format: "png" } = {
   data: Buffer.from(FOOTER_LOCKUP_PNG_B64, "base64"),
   format: "png",
 };
-
