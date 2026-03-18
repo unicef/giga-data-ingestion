@@ -1,15 +1,8 @@
 import { ComponentProps, memo, useMemo, useState } from "react";
 
-import {
-  ArrowLeft,
-  ArrowRight,
-  Download,
-  InProgress,
-  Restart,
-} from "@carbon/icons-react";
+import { ArrowRight, Download, InProgress, Restart } from "@carbon/icons-react";
 import {
   Button,
-  ButtonSet,
   Loading,
   Tab,
   TabList,
@@ -211,11 +204,16 @@ function Success() {
     effectiveStatus === DQStatus.SKIPPED ||
     effectiveStatus === DQStatus.TIMEOUT;
 
-  const handleFinalSubmit = () => {
-    navigate({
-      to: effectiveStatus === DQStatus.COMPLETED ? "/upload/$uploadId" : "..",
-      params: { uploadId },
-    });
+  const handleSubmit = () => {
+    if (status === DQStatus.COMPLETED) {
+      navigate({
+        to: "/upload/$uploadId",
+        params: { uploadId },
+      });
+    } else {
+      resetUploadSliceState();
+      navigate({ to: "/upload" });
+    }
   };
 
   const handleReview = async () => {
@@ -486,11 +484,19 @@ function Success() {
               </>
             )}
           </div>
-          {!activeUploadId ? (
-            <p>
-              Click Review to see review output, or click Submit to continue.
-            </p>
-          ) : effectiveStatus === DQStatus.COMPLETED ? (
+          <Button
+            className={cn("w-full", {
+              "bg-green-600 hover:bg-green-800": status === DQStatus.COMPLETED,
+            })}
+            isExpressive
+            onClick={handleSubmit}
+            renderIcon={ArrowRight}
+          >
+            {status === DQStatus.COMPLETED
+              ? "Review Submission"
+              : "Close and run in background"}
+          </Button>
+          {status === DQStatus.COMPLETED ? (
             <SuccessDataQualityChecks
               dqResult={dqResult}
               status={effectiveStatus}
@@ -512,81 +518,6 @@ function Success() {
                 ))}
               </TabPanels>
             </Tabs>
-          )}
-          {!!actionError && (
-            <div className="text-giga-dark-red">{actionError}</div>
-          )}
-
-          {isPreSubmitMode && (
-            <ButtonSet className="w-full">
-              <Button
-                as={Link}
-                isExpressive
-                kind="secondary"
-                renderIcon={ArrowLeft}
-                to="../metadata"
-                disabled={isActionPending}
-              >
-                Back
-              </Button>
-              <Button
-                kind="tertiary"
-                isExpressive
-                renderIcon={ArrowRight}
-                onClick={() => void handleReview()}
-                disabled={isActionPending}
-              >
-                Review
-              </Button>
-              <Button
-                isExpressive
-                renderIcon={ArrowRight}
-                onClick={() => void handleInitialSubmit()}
-                disabled={isActionPending}
-              >
-                Submit
-              </Button>
-            </ButtonSet>
-          )}
-
-          {!isPreSubmitMode && (
-            <ButtonSet className="w-full">
-              {effectiveStatus !== DQStatus.COMPLETED && (
-                <Button
-                  as={Link}
-                  isExpressive
-                  kind="secondary"
-                  renderIcon={ArrowLeft}
-                  to=".."
-                >
-                  Back
-                </Button>
-              )}
-              <Button
-                kind="tertiary"
-                isExpressive
-                renderIcon={ArrowRight}
-                disabled
-              >
-                Review
-              </Button>
-              <Button
-                className={cn({
-                  "bg-green-600 hover:bg-green-800":
-                    effectiveStatus === DQStatus.COMPLETED,
-                  "bg-orange-400 hover:bg-orange-600": isError,
-                })}
-                disabled={effectiveStatus === DQStatus.IN_PROGRESS}
-                isExpressive
-                onClick={handleFinalSubmit}
-                renderIcon={ArrowRight}
-              >
-                {effectiveStatus === DQStatus.IN_PROGRESS ||
-                effectiveStatus === DQStatus.COMPLETED
-                  ? "Submit"
-                  : "Reupload"}
-              </Button>
-            </ButtonSet>
           )}
         </section>
       )}
