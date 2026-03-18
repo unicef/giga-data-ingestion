@@ -1,7 +1,7 @@
 import json
 import logging
 import urllib.parse
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -14,7 +14,6 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
     ApprovalRequest,
-    FileUpload,
     User as DatabaseUser,
 )
 from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
@@ -29,7 +28,6 @@ from data_ingestion.schemas.core import PagedResponseSchema
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi_azure_auth.user import User
 from sqlalchemy import (
-    and_,
     column,
     distinct,
     func,
@@ -227,14 +225,24 @@ async def list_approval_requests(
         approvals = await primary_db.scalars(
             select(ApprovalRequest).options(joinedload(ApprovalRequest.file_upload))
         )
-        approval_map = {
-            f"{a.country}-{a.dataset}": {
-                "upload_id": a.upload_id,
-                "uploaded_at": a.file_upload.created if a.file_upload else None,
-                "file_name": a.file_upload.file_name if a.file_upload else None,
-            }
-            for a in approvals.all()
-        }
+        # Group approvals by country-dataset to handle multiple uploads
+        approval_lists = {}
+        for a in approvals.all():
+            key = f"{a.country}-{a.dataset}"
+            if key not in approval_lists:
+                approval_lists[key] = []
+            approval_lists[key].append(
+                {
+                    "upload_id": a.upload_id,
+                    "uploaded_at": a.file_upload.created if a.file_upload else None,
+                    "file_name": a.file_upload.file_name if a.file_upload else None,
+                    "uploader_email": a.file_upload.uploader_email
+                    if a.file_upload
+                    else None,
+                }
+            )
+
+        # Create one row per upload (not one per country/dataset)
         for stat in stats:
             country = coco.convert(stat["table_name"], to="name_short")
             country_iso3 = coco.convert(stat["table_name"], to="ISO3")
@@ -246,27 +254,52 @@ async def list_approval_requests(
                 .title()
                 .rstrip()
             )
-            approval_info = approval_map.get(f"{country_iso3}-{dataset}", {})
 
-            enabled = settings.get(approval_info.get("upload_id", ""), False)
-            body.append(
-                ApprovalRequestListing(
-                    id=f'{stat["table_name"].upper()}-{dataset}',
-                    country=country,
-                    country_iso3=stat["table_name"].upper(),
-                    dataset=dataset,
-                    subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
-                    last_modified=stat["last_modified"],
-                    rows_count=stat["rows_count"],
-                    rows_added=stat["rows_added"],
-                    rows_updated=stat["rows_updated"],
-                    rows_deleted=stat["rows_deleted"],
-                    enabled=enabled,
-                    upload_id=approval_info.get("upload_id"),
-                    uploaded_at=approval_info.get("uploaded_at"),
-                    file_name=approval_info.get("file_name"),
+            # Get all uploads for this country-dataset
+            uploads = approval_lists.get(f"{country_iso3}-{dataset}", [])
+
+            if not uploads:
+                # No uploads found, create a single row with no upload info
+                body.append(
+                    ApprovalRequestListing(
+                        id=f'{stat["table_name"].upper()}-{dataset}',
+                        country=country,
+                        country_iso3=stat["table_name"].upper(),
+                        dataset=dataset,
+                        subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
+                        last_modified=stat["last_modified"],
+                        rows_count=stat["rows_count"],
+                        rows_added=stat["rows_added"],
+                        rows_updated=stat["rows_updated"],
+                        rows_deleted=stat["rows_deleted"],
+                        enabled=False,
+                        upload_id=None,
+                        uploaded_at=None,
+                        file_name=None,
+                    )
                 )
-            )
+            else:
+                # Create one row per upload
+                for upload_info in uploads:
+                    enabled = settings.get(upload_info.get("upload_id", ""), False)
+                    body.append(
+                        ApprovalRequestListing(
+                            id=f'{stat["table_name"].upper()}-{dataset}-{upload_info["upload_id"]}',
+                            country=country,
+                            country_iso3=stat["table_name"].upper(),
+                            dataset=dataset,
+                            subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
+                            last_modified=stat["last_modified"],
+                            rows_count=stat["rows_count"],
+                            rows_added=stat["rows_added"],
+                            rows_updated=stat["rows_updated"],
+                            rows_deleted=stat["rows_deleted"],
+                            enabled=enabled,
+                            upload_id=upload_info.get("upload_id"),
+                            uploaded_at=upload_info.get("uploaded_at"),
+                            file_name=upload_info.get("file_name"),
+                        )
+                    )
 
     return {
         "data": body,
@@ -334,14 +367,14 @@ async def get_approval_request(
     if payload and payload.upload_ids:
         # Verify upload_ids exist in ApprovalRequest for this dataset
         approval_requests = await primary_db.execute(
-            select(ApprovalRequest.upload_id, FileUpload.created)
-            .join(FileUpload, FileUpload.id == ApprovalRequest.upload_id)
+            select(ApprovalRequest.upload_id)
             .where(ApprovalRequest.upload_id.in_(payload.upload_ids))
             .where(ApprovalRequest.country == table_name.split("_")[0].upper())
             .where(ApprovalRequest.dataset == (dataset.split(" ")[1]).lower())
         )
-        approval_requests = approval_requests.mappings().all()
-        if not approval_requests:
+        valid_upload_ids = [row[0] for row in approval_requests.all()]
+
+        if not valid_upload_ids:
             return {
                 "info": {
                     "country": country,
@@ -353,22 +386,15 @@ async def get_approval_request(
                 "data": [],
             }
 
-        # Get timestamp ranges for these uploads
-        upload_times = [req["created"] for req in approval_requests]
+        # Filter by upload_id column in the staging table
+        # NOTE: This requires the staging table to have an upload_id column
+        # The external data pipeline must include this column when writing to Delta Lake
+        upload_id_conditions = [
+            column("upload_id") == literal(upload_id) for upload_id in valid_upload_ids
+        ]
 
-        # Filter changes by commit timestamp
-        time_conditions = []
-        for upload_time in upload_times:
-            time_conditions.append(
-                and_(
-                    column("_commit_timestamp") >= upload_time - timedelta(minutes=5),
-                    column("_commit_timestamp") <= upload_time + timedelta(hours=2),
-                )
-            )
-
-        # Apply time filter
-        if time_conditions:
-            cdf_cte = select("*").select_from(cdf_cte).where(or_(*time_conditions))
+        if upload_id_conditions:
+            cdf_cte = select("*").select_from(cdf_cte).where(or_(*upload_id_conditions))
 
     total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
 
