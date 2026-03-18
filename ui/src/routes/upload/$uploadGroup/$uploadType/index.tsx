@@ -306,7 +306,7 @@ export default function Index() {
             className="w-full"
             {...register("mode", { required: true })}
           >
-            <SelectItem value="" text="" />
+            <SelectItem value="" text="Select an option..." />
             {UPLOAD_MODE_OPTIONS.map(option => (
               <SelectItem key={option} text={option} value={option} />
             ))}
