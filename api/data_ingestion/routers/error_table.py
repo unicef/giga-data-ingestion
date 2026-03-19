@@ -23,6 +23,31 @@ router = APIRouter(
 UPLOAD_ERRORS_TABLE = "school_master.upload_errors"
 
 
+def _serialize_error_row(row: dict) -> dict:
+    """Serialize a single error row from the upload_errors table."""
+    return {
+        "giga_sync_file_id": row.get("giga_sync_file_id"),
+        "giga_sync_file_name": row.get("giga_sync_file_name"),
+        "dataset_type": row.get("dataset_type"),
+        "country_code": row.get("country_code"),
+        # Mandatory columns (flat, queryable)
+        "school_id_govt": row.get("school_id_govt"),
+        "school_id_giga": row.get("school_id_giga"),
+        "school_name": row.get("school_name"),
+        "latitude": row.get("latitude"),
+        "longitude": row.get("longitude"),
+        "education_level": row.get("education_level"),
+        # Failure reason
+        "failure_reason": row.get("failure_reason"),
+        # JSON fields
+        "additional_data": row.get("additional_data"),
+        "error_details": row.get("error_details"),
+        "created_at": (
+            row["created_at"].isoformat() if row.get("created_at") else None
+        ),
+    }
+
+
 @router.get("")
 def list_upload_errors(
     country_code: str | None = Query(default=None),
@@ -75,21 +100,7 @@ def list_upload_errors(
         .all()
     )
 
-    data = []
-    for row in rows:
-        data.append(
-            {
-                "giga_sync_file_id": row["giga_sync_file_id"],
-                "giga_sync_file_name": row["giga_sync_file_name"],
-                "dataset_type": row["dataset_type"],
-                "country_code": row["country_code"],
-                "row_data": row["row_data"],
-                "error_details": row["error_details"],
-                "created_at": (
-                    row["created_at"].isoformat() if row["created_at"] else None
-                ),
-            }
-        )
+    data = [_serialize_error_row(row) for row in rows]
 
     return {
         "data": data,
@@ -177,7 +188,7 @@ def download_upload_errors(
             detail="No error rows found matching the given filters.",
         )
 
-    df = pd.DataFrame(rows)
+    df = pd.DataFrame([_serialize_error_row(row) for row in rows])
     csv_buffer = io.StringIO()
     df.to_csv(csv_buffer, index=False)
     csv_buffer.seek(0)
