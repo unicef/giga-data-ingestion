@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import {
   FieldError,
   FieldErrors,
@@ -50,12 +51,11 @@ export function CountrySelect({
           Country<sup className="text-giga-red">*</sup>
         </>
       }
-      placeholder="Country"
       invalid={!!errors.country}
       invalidText={errors["country"]?.message as string}
       {...register}
     >
-      <SelectItem value="" text="" />
+      <SelectItem value="" text="Select country" />
       {countryOptions.map(country => (
         <SelectItem key={country} text={country} value={country} />
       ))}
@@ -76,6 +76,28 @@ export function FreeTextInput({
   register,
   loading = false,
 }: BaseInputProps) {
+  const prevValueRef = useRef("");
+  const isDateField = formItem.helperText === "MM / YYYY";
+
+  const enhancedRegister = isDateField
+    ? {
+        ...register,
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+          const val = e.target.value;
+          const prev = prevValueRef.current;
+          if (
+            val.length > prev.length &&
+            val.length === 2 &&
+            /^\d\d$/.test(val)
+          ) {
+            e.target.value = val + "/";
+          }
+          prevValueRef.current = e.target.value;
+          return register.onChange(e);
+        },
+      }
+    : register;
+
   return loading ? (
     <TextInputSkeleton />
   ) : (
@@ -87,18 +109,10 @@ export function FreeTextInput({
           {formItem.required && <sup className="text-giga-red">*</sup>}
         </>
       }
-      helperText={
-        <span className="whitespace-pre-line">{formItem.helperText}</span>
-      }
+      placeholder={formItem.helperText || undefined}
       invalid={formItem.name in errors}
-      invalidText={
-        <span className="whitespace-pre-line">
-          {errors[formItem.name]?.message as string}
-          <br />
-          {formItem.helperText}
-        </span>
-      }
-      {...register}
+      invalidText={errors[formItem.name]?.message as string}
+      {...enhancedRegister}
     />
   );
 }
@@ -112,23 +126,21 @@ export function SelectFromEnum({
   errors,
   register,
 }: SelectFromEnumProps) {
+  const placeholderText = formItem.helperText || "Select an option";
   return (
     <Select
       id={formItem.name}
       labelText={formItem.label}
-      helperText={formItem.helperText}
       invalid={formItem.name in errors}
-      invalidText={
-        <span className="whitespace-pre-line">
-          {errors[formItem.name]?.message as string}
-          <br />
-          {formItem.helperText}
-        </span>
-      }
+      invalidText={errors[formItem.name]?.message as string}
       {...register}
     >
       {formItem.enum.map(el => (
-        <SelectItem key={el} text={el} value={el} />
+        <SelectItem
+          key={el || "placeholder"}
+          text={el === "" ? placeholderText : el}
+          value={el}
+        />
       ))}
     </Select>
   );
@@ -138,6 +150,7 @@ interface SelectFromArrayProps extends BaseInputProps {
   options: string[];
   subpath?: string;
   labelOverride?: string;
+  placeholderOverride?: string;
   hideExtras?: boolean;
 }
 
@@ -145,6 +158,7 @@ export function SelectFromArray({
   formItem,
   subpath,
   labelOverride,
+  placeholderOverride,
   errors,
   register,
   options,
@@ -158,17 +172,24 @@ export function SelectFromArray({
       : errors[formItem.name]?.message
   ) as string;
 
+  const placeholderText =
+    placeholderOverride ??
+    (hideExtras ? undefined : formItem.helperText || "Select an option");
+
   return (
     <Select
       id={subpath ? `${formItem.name}.${subpath}` : formItem.name}
       labelText={labelOverride ?? formItem.label}
-      helperText={hideExtras ? "" : formItem.helperText}
       invalid={formItem.name in errors}
       invalidText={invalidText}
       {...register}
     >
       {options.map(option => (
-        <SelectItem key={option} text={option} value={option} />
+        <SelectItem
+          key={option || "placeholder"}
+          text={option === "" && placeholderText ? placeholderText : option}
+          value={option}
+        />
       ))}
     </Select>
   );
@@ -190,6 +211,7 @@ export function MonthYearSelect({
         formItem={formItem}
         subpath="month"
         labelOverride={`${formItem.label} (Month)`}
+        placeholderOverride="Select month"
         errors={errors}
         register={register(`${formItem.name}.month`, {
           deps: `${formItem.name}.year`,
@@ -203,6 +225,7 @@ export function MonthYearSelect({
         formItem={formItem}
         subpath="year"
         labelOverride="Year"
+        placeholderOverride="Select year"
         hideExtras
         errors={errors}
         register={register(`${formItem.name}.year`, {

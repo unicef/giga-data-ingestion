@@ -1,15 +1,8 @@
 import { ComponentProps, memo, useMemo } from "react";
 
-import {
-  ArrowLeft,
-  ArrowRight,
-  Download,
-  InProgress,
-  Restart,
-} from "@carbon/icons-react";
+import { ArrowRight, Download, InProgress, Restart } from "@carbon/icons-react";
 import {
   Button,
-  ButtonSet,
   Loading,
   Tab,
   TabList,
@@ -193,10 +186,15 @@ function Success() {
   const rowsFailed = summaryStats.rows_failed ?? 0;
 
   const handleSubmit = () => {
-    navigate({
-      to: status === DQStatus.COMPLETED ? "/upload/$uploadId" : "..",
-      params: { uploadId },
-    });
+    if (status === DQStatus.COMPLETED) {
+      navigate({
+        to: "/upload/$uploadId",
+        params: { uploadId },
+      });
+    } else {
+      resetUploadSliceState();
+      navigate({ to: "/upload" });
+    }
   };
 
   const unstructuredMessage =
@@ -317,6 +315,19 @@ function Success() {
             )}
           </div>
 
+          <Button
+            className={cn("w-full", {
+              "bg-green-600 hover:bg-green-800": status === DQStatus.COMPLETED,
+            })}
+            isExpressive
+            onClick={handleSubmit}
+            renderIcon={ArrowRight}
+          >
+            {status === DQStatus.COMPLETED
+              ? "Review Submission"
+              : "Close and run in background"}
+          </Button>
+
           <div>
             <div
               style={{
@@ -430,35 +441,6 @@ function Success() {
               </TabPanels>
             </Tabs>
           )}
-
-          <ButtonSet className="w-full">
-            {status !== DQStatus.COMPLETED && (
-              <Button
-                as={Link}
-                isExpressive
-                kind="secondary"
-                renderIcon={ArrowLeft}
-                to=".."
-              >
-                Back
-              </Button>
-            )}
-            <Button
-              className={cn({
-                "bg-green-600 hover:bg-green-800":
-                  status === DQStatus.COMPLETED,
-                "bg-orange-400 hover:bg-orange-600": isError,
-              })}
-              disabled={status === DQStatus.IN_PROGRESS}
-              isExpressive
-              onClick={handleSubmit}
-              renderIcon={ArrowRight}
-            >
-              {status === DQStatus.IN_PROGRESS || status === DQStatus.COMPLETED
-                ? "Submit"
-                : "Reupload"}
-            </Button>
-          </ButtonSet>
         </section>
       )}
     </>
