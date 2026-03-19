@@ -1,17 +1,7 @@
 import { useState } from "react";
 
 import { Add, Filter } from "@carbon/icons-react";
-import {
-  Button,
-  Heading,
-  Section,
-  Stack,
-  Tab,
-  TabList,
-  TabPanel,
-  TabPanels,
-  Tabs,
-} from "@carbon/react";
+import { Button, Heading, Section, Stack } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
@@ -37,7 +27,6 @@ interface UploadLandingProps {
 
 function UploadLanding(props: UploadLandingProps) {
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
-  const [selectedTab, setSelectedTab] = useState(0);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] =
     useState<UploadFilters>(EMPTY_FILTERS);
@@ -45,17 +34,6 @@ function UploadLanding(props: UploadLandingProps) {
     v => v !== "",
   ).length;
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
-
-  const tabFilter = (() => {
-    switch (selectedTab) {
-      default:
-        return { source: null, dataset: null };
-    }
-  })();
-
-  const handleTabChange = ({ selectedIndex }: { selectedIndex: number }) => {
-    setSelectedTab(selectedIndex);
-  };
 
   return (
     <Section>
@@ -140,11 +118,8 @@ function UploadLanding(props: UploadLandingProps) {
             </div>
           </Stack>
 
-          <Tabs selectedIndex={selectedTab} onChange={handleTabChange}>
-            <div className="flex items-center">
-              <TabList aria-label="File Uploads Tabs" className="w-full">
-                <Tab>All uploads</Tab>
-              </TabList>
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-end">
               <Button
                 kind="tertiary"
                 size="sm"
@@ -157,20 +132,15 @@ function UploadLanding(props: UploadLandingProps) {
                 }`}
               </Button>
             </div>
-
-            <TabPanels>
-              <TabPanel className="p-0">
-                <UploadsTable
-                  {...props}
-                  source={activeFilters.source || tabFilter.source}
-                  dataset={activeFilters.dataset || undefined}
-                  uploaderEmail={activeFilters.uploaderEmail}
-                  country={activeFilters.country}
-                  dqStatus={activeFilters.dqStatus}
-                />
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+            <UploadsTable
+              {...props}
+              source={activeFilters.source || null}
+              dataset={activeFilters.dataset || undefined}
+              uploaderEmail={activeFilters.uploaderEmail}
+              country={activeFilters.country}
+              dqStatus={activeFilters.dqStatus}
+            />
+          </div>
 
           <FilterModal
             open={isFilterOpen}
