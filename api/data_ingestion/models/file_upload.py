@@ -8,9 +8,8 @@ from data_ingestion.constants import constants
 from pydantic import UUID4, EmailStr
 from sqlalchemy import JSON, VARCHAR, DateTime, String, func
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
-from .approval_requests import ApprovalRequest
 from .base import BaseModel
 
 
@@ -48,9 +47,6 @@ class FileUpload(BaseModel):
     )
     column_license: Mapped[dict] = mapped_column(
         JSON, nullable=False, server_default='"{}"'
-    )
-    approval_requests: Mapped[list["ApprovalRequest"]] = relationship(
-        back_populates="file_upload"
     )
 
     @hybrid_property
