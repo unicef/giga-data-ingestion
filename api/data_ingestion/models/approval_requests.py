@@ -56,7 +56,7 @@ async def fetch_approvals_by_upload_ids(
     db: AsyncSession,
     upload_ids: list[str],
 ) -> list[ApprovalRequest]:
-    query = select(ApprovalRequest).where(ApprovalRequest.id.in_(upload_ids))
+    query = select(ApprovalRequest).where(ApprovalRequest.upload_id.in_(upload_ids))
 
     result = await db.scalars(query)
     return result.all()

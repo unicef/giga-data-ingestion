@@ -1,9 +1,12 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Generic, TypeVar
 
 import orjson
 from fastapi import Form, UploadFile
 from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr, field_validator
+
+T = TypeVar("T")
 
 from data_ingestion.models.file_upload import DQStatusEnum
 
@@ -66,6 +69,16 @@ class UploadSummaryResponse(BaseModel):
     upload_id: str
     created: datetime
     file_name: str | None
+    dataset: str | None = None
+    uploader_email: str | None = None
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
 
 
 class UploadDetailsRequest(BaseModel):
