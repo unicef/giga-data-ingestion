@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING
 
 from pydantic import UUID4
 from sqlalchemy import (
@@ -14,9 +13,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import BaseModel
-
-if TYPE_CHECKING:
-    pass
 
 
 class DQModeEnum(str, Enum):
