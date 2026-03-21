@@ -6,6 +6,25 @@ from pathlib import Path
 
 import pandas as pd
 from country_converter import country_converter as coco
+from data_ingestion.constants import constants
+from data_ingestion.db.primary import get_db as get_primary_db
+from data_ingestion.db.trino import get_db, get_db_context
+from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.storage import storage_client
+from data_ingestion.models import (
+    ApprovalRequest,
+    DQRun,
+    FileUpload,
+    User as DatabaseUser,
+)
+from data_ingestion.models.approval_requests import ApprovalRequestAuditLog, DQModeEnum
+from data_ingestion.permissions.permissions import IsPrivileged
+from data_ingestion.schemas.approval_requests import (
+    ApprovalRequestListing,
+    ApproveDatasetRequest,
+    UploadApprovedRowsRequest,
+)
+from data_ingestion.schemas.core import PagedResponseSchema
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi_azure_auth.user import User
 from sqlalchemy import (
@@ -26,22 +45,6 @@ from sqlalchemy.types import String
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
-from data_ingestion.constants import constants
-from data_ingestion.db.primary import get_db as get_primary_db
-from data_ingestion.db.trino import get_db, get_db_context
-from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.internal.storage import storage_client
-from data_ingestion.models import (
-    ApprovalRequest,
-    User as DatabaseUser,
-)
-from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
-from data_ingestion.permissions.permissions import IsPrivileged
-from data_ingestion.schemas.approval_requests import (
-    ApprovalRequestListing,
-    UploadApprovedRowsRequest,
-)
-from data_ingestion.schemas.core import PagedResponseSchema
 
 router = APIRouter(
     prefix="/api/approval-requests",
@@ -364,9 +367,33 @@ async def upload_approved_rows(
     dataset = posix_path.parent.name.replace("_staging", "").replace("_", "-")
     country_iso3 = posix_path.name.split("_")[0].upper()
     timestamp = datetime.now().strftime(constants.FILENAME_TIMESTAMP_FORMAT)
+    approval = await primary_db.scalar(
+        select(ApprovalRequest).where(
+            (ApprovalRequest.country == country_iso3)
+            & (ApprovalRequest.dataset == dataset)
+            & (ApprovalRequest.enabled.is_(True))
+        )
+    )
 
+    if not approval:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Active approval request not found",
+        )
     filename = f"{country_iso3}_{dataset}_{timestamp}.json"
-    approve_location = f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/{dataset}/{country_iso3}/{filename}"
+    dq_run = DQRun(
+        upload_id=approval.upload_id,
+        dq_mode=DQModeEnum.master,
+        status="PENDING",
+    )
+
+    primary_db.add(dq_run)
+    await primary_db.commit()
+    await primary_db.refresh(dq_run)
+    approve_location = (
+        f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/"
+        f"{dq_run.id}/{filename}"
+    )
     email = user.claims.get("emails")[0]
 
     database_user = await primary_db.scalar(
@@ -376,11 +403,14 @@ async def upload_approved_rows(
     approve_client = storage_client.get_blob_client(approve_location)
     try:
         approve_client.upload_blob(
-            json.dumps(
-                body.approved_rows,
-            ),
+            json.dumps(body.approved_rows),
             overwrite=True,
-            metadata={"approver_email": email},
+            metadata={
+                "approver_email": email,
+                "dq_mode": body.dq_mode,
+                "dq_run_id": str(dq_run.id),
+                "upload_id": str(body.upload_id),
+            },
             content_settings=ContentSettings(content_type="application/json"),
         )
 
@@ -497,6 +527,7 @@ async def upload_approved_rows(
                 {
                     ApprovalRequest.enabled: False,
                     ApprovalRequest.is_merge_processing: True,
+                    ApprovalRequest.dq_mode: body.dq_mode,
                 }
             )
             .returning(column("id"))
@@ -506,6 +537,7 @@ async def upload_approved_rows(
                 approval_request_id=obj.first().id,
                 approved_by_id=database_user.id,
                 approved_by_email=database_user.email,
+                dq_mode=DQModeEnum(body.dq_mode),
             )
         )
         await primary_db.commit()
@@ -514,3 +546,125 @@ async def upload_approved_rows(
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
+
+
+@router.post(
+    "/approve",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Security(IsPrivileged())],
+)
+async def approve_dataset_without_merge(
+    payload: ApproveDatasetRequest,
+    user: User = Depends(azure_scheme),
+    primary_db: AsyncSession = Depends(get_primary_db),
+):
+    existing = await primary_db.scalar(
+        select(ApprovalRequest).where(ApprovalRequest.upload_id == payload.upload_id)
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Already approved or in process")
+
+    upload = await primary_db.scalar(
+        select(FileUpload).where(FileUpload.id == payload.upload_id)
+    )
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload ID not found")
+
+    approval = ApprovalRequest(
+        upload_id=payload.upload_id,
+        country=upload.country,
+        dataset=upload.dataset,
+        enabled=True,
+        is_merge_processing=False,
+        approved_by_id=user.claims["oid"],
+        approved_by_email=user.claims["emails"][0],
+        dq_mode=payload.dq_mode,
+    )
+
+    primary_db.add(approval)
+    await primary_db.commit()
+
+    return {"status": "approved", "upload_id": payload.upload_id}
+
+
+@router.post(
+    "/submit",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(IsPrivileged())],
+)
+async def submit_approval_request(
+    upload_id: str,
+    user: User = Depends(azure_scheme),
+    primary_db: AsyncSession = Depends(get_primary_db),
+):
+    approval = await primary_db.scalar(
+        select(ApprovalRequest).where(ApprovalRequest.upload_id == upload_id)
+    )
+    if not approval:
+        raise HTTPException(status_code=404, detail="Approval request not found")
+
+    if approval.is_merge_processing:
+        raise HTTPException(status_code=400, detail="Already submitted for merge")
+
+    # Re-upload approved row IDs with master mode to trigger DQ re-run
+    try:
+        # Find the latest approved row IDs blob for this approval request
+        dataset = approval.dataset.replace(" ", "-").lower()
+        country_iso3 = approval.country
+
+        # List blobs in the approved-row-ids directory for this dataset/country
+        blob_prefix = f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/{dataset}/{country_iso3}/"
+        container_client = storage_client.get_container_client(
+            storage_client.container_name
+        )
+
+        # Get the most recent blob
+        blobs = list(container_client.list_blobs(name_starts_with=blob_prefix))
+        if not blobs:
+            raise HTTPException(
+                status_code=400,
+                detail="No approved rows found. Please approve rows before submitting.",
+            )
+
+        # Sort by last_modified to get the most recent
+        latest_blob = max(blobs, key=lambda b: b.last_modified)
+
+        # Download the existing approved row IDs
+        blob_client = storage_client.get_blob_client(latest_blob.name)
+        approved_rows_json = blob_client.download_blob().readall()
+
+        # Get the approver email from the blob metadata
+        blob_properties = blob_client.get_blob_properties()
+        approver_email = blob_properties.metadata.get(
+            "approver_email", user.claims.get("emails", [""])[0]
+        )
+
+        # Create new blob with master mode
+        timestamp = datetime.now().strftime(constants.FILENAME_TIMESTAMP_FORMAT)
+        filename = f"{country_iso3}_{dataset}_{timestamp}.json"
+        new_approve_location = f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/{dataset}/{country_iso3}/{filename}"
+
+        new_approve_client = storage_client.get_blob_client(new_approve_location)
+        new_approve_client.upload_blob(
+            approved_rows_json,
+            overwrite=True,
+            metadata={"approver_email": approver_email, "dq_mode": "master"},
+            content_settings=ContentSettings(content_type="application/json"),
+        )
+
+        # Update the approval request with master mode
+        approval.dq_mode = DQModeEnum.master
+        approval.is_merge_processing = True
+        await primary_db.commit()
+
+        return {"status": "submitted", "dq_mode": "master"}
+
+    except HttpResponseError as err:
+        raise HTTPException(
+            detail=f"Failed to re-upload approved rows: {err.message}",
+            status_code=err.response.status_code,
+        ) from err
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to process submission: {str(e)}"
+        ) from e
