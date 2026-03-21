@@ -7,6 +7,24 @@ from typing import Optional
 
 import pandas as pd
 from country_converter import country_converter as coco
+from data_ingestion.constants import constants
+from data_ingestion.db.primary import get_db as get_primary_db
+from data_ingestion.db.trino import get_db, get_db_context
+from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.storage import storage_client
+from data_ingestion.models import (
+    ApprovalRequest,
+    User as DatabaseUser,
+)
+from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
+from data_ingestion.permissions.permissions import IsPrivileged
+from data_ingestion.schemas.approval_requests import (
+    ApprovalByUploadResponse,
+    ApprovalFilterByUploadRequest,
+    ApprovalRequestListing,
+    UploadApprovedRowsRequest,
+)
+from data_ingestion.schemas.core import PagedResponseSchema
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi_azure_auth.user import User
 from sqlalchemy import (
@@ -28,24 +46,6 @@ from sqlalchemy.types import String
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
-from data_ingestion.constants import constants
-from data_ingestion.db.primary import get_db as get_primary_db
-from data_ingestion.db.trino import get_db, get_db_context
-from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.internal.storage import storage_client
-from data_ingestion.models import (
-    ApprovalRequest,
-    User as DatabaseUser,
-)
-from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
-from data_ingestion.permissions.permissions import IsPrivileged
-from data_ingestion.schemas.approval_requests import (
-    ApprovalByUploadResponse,
-    ApprovalFilterByUploadRequest,
-    ApprovalRequestListing,
-    UploadApprovedRowsRequest,
-)
-from data_ingestion.schemas.core import PagedResponseSchema
 
 router = APIRouter(
     prefix="/api/approval-requests",
@@ -309,137 +309,6 @@ async def list_approval_requests(
     }
 
 
-@router.post("/{subpath}")
-async def get_approval_request(
-    subpath: str,
-    payload: Optional[ApprovalFilterByUploadRequest] = None,
-    db: Session = Depends(get_db),
-    primary_db: AsyncSession = Depends(get_primary_db),
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=10, ge=1, le=100),
-):
-    if len(splits := urllib.parse.unquote(subpath).split("/")) != 2:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    table_schema, table_name = splits
-    country = coco.convert(table_name, to="name_short")
-    dataset = table_schema.replace("staging", "").replace("_", " ").title()
-
-    data_cte = (
-        select(
-            func.concat_ws(
-                "|",
-                column("school_id_giga"),
-                column("_change_type"),
-                column("_commit_version").cast(String()),
-            ).label("change_id"),
-            "*",
-        )
-        .select_from(
-            func.table(
-                func.delta_lake.system.table_changes(
-                    literal(table_schema), literal(table_name), 0
-                )
-            )
-        )
-        .cte("changes")
-    )
-    max_version_cte = (
-        select(func.max(column("_commit_version")).label("max_version"))
-        .select_from(data_cte)
-        .limit(1)
-    ).cte("max_version")
-
-    cdf_cte = (
-        select("*")
-        .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
-        .where(
-            (literal_column("mv.max_version") == 1)
-            | (literal_column("d._commit_version") == 2)
-            | (
-                (literal_column("d._commit_version") > 2)
-                & (literal_column("d._change_type") != "update_preimage")
-            )
-        )
-    )
-
-    # Apply upload_ids filter if provided
-    if payload and payload.upload_ids:
-        # Verify upload_ids exist in ApprovalRequest for this dataset
-        approval_requests = await primary_db.execute(
-            select(ApprovalRequest.upload_id)
-            .where(ApprovalRequest.upload_id.in_(payload.upload_ids))
-            .where(ApprovalRequest.country == table_name.split("_")[0].upper())
-            .where(ApprovalRequest.dataset == (dataset.split(" ")[1]).lower())
-        )
-        valid_upload_ids = [row[0] for row in approval_requests.all()]
-
-        if not valid_upload_ids:
-            return {
-                "info": {
-                    "country": country,
-                    "dataset": dataset.replace("-", " ").title(),
-                    "version": None,
-                    "timestamp": None,
-                },
-                "total_count": 0,
-                "data": [],
-            }
-
-        # Filter by upload_id column in the staging table
-        # NOTE: This requires the staging table to have an upload_id column
-        # The external data pipeline must include this column when writing to Delta Lake
-        upload_id_conditions = [
-            column("upload_id") == literal(upload_id) for upload_id in valid_upload_ids
-        ]
-
-        if upload_id_conditions:
-            cdf_cte = select("*").select_from(cdf_cte).where(or_(*upload_id_conditions))
-
-    total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
-
-    cdf = (
-        db.execute(
-            select("*")
-            .select_from(cdf_cte)
-            .order_by(
-                column("school_id_giga"),
-                column("_commit_version").desc(),
-                column("_change_type").desc(),
-            )
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        )
-        .mappings()
-        .all()
-    )
-
-    detail = (
-        db.execute(
-            select("*")
-            .select_from(text(f'{table_schema}."{table_name}$history"'))
-            .order_by(column("version").desc())
-            .limit(1)
-        )
-        .mappings()
-        .first()
-    )
-
-    df = pd.DataFrame(cdf)
-    df = df.drop(columns=["signature"]).fillna("NULL")
-
-    return {
-        "info": {
-            "country": country,
-            "dataset": dataset.replace("-", " ").title(),
-            "version": detail["version"] if detail else None,
-            "timestamp": detail["timestamp"] if detail else None,
-        },
-        "total_count": total_count,
-        "data": df.to_dict(orient="records"),
-    }
-
-
 @router.post(
     "/upload",
     status_code=status.HTTP_201_CREATED,
@@ -569,6 +438,8 @@ async def upload_approved_rows(
                             status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"Invalid approval data: {len(missing_rows)} approved row IDs not found in staging change feed. Missing: {list(missing_rows)[:10]}",
                         )
+        except HTTPException:
+            raise
         except Exception as validation_err:
             # Log validation error
             logger.warning(
@@ -627,3 +498,134 @@ async def get_approvals_by_upload_ids(
         )
         for row in rows
     ]
+
+
+@router.post("/{subpath}")
+async def get_approval_request(
+    subpath: str,
+    payload: Optional[ApprovalFilterByUploadRequest] = None,
+    db: Session = Depends(get_db),
+    primary_db: AsyncSession = Depends(get_primary_db),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+):
+    if len(splits := urllib.parse.unquote(subpath).split("/")) != 2:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    table_schema, table_name = splits
+    country = coco.convert(table_name, to="name_short")
+    dataset = table_schema.replace("staging", "").replace("_", " ").title().rstrip()
+
+    data_cte = (
+        select(
+            func.concat_ws(
+                "|",
+                column("school_id_giga"),
+                column("_change_type"),
+                column("_commit_version").cast(String()),
+            ).label("change_id"),
+            "*",
+        )
+        .select_from(
+            func.table(
+                func.delta_lake.system.table_changes(
+                    literal(table_schema), literal(table_name), 0
+                )
+            )
+        )
+        .cte("changes")
+    )
+    max_version_cte = (
+        select(func.max(column("_commit_version")).label("max_version"))
+        .select_from(data_cte)
+        .limit(1)
+    ).cte("max_version")
+
+    cdf_cte = (
+        select("*")
+        .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
+        .where(
+            (literal_column("mv.max_version") == 1)
+            | (literal_column("d._commit_version") == 2)
+            | (
+                (literal_column("d._commit_version") > 2)
+                & (literal_column("d._change_type") != "update_preimage")
+            )
+        )
+    )
+
+    # Apply upload_ids filter if provided
+    if payload and payload.upload_ids:
+        # Verify upload_ids exist in ApprovalRequest for this dataset
+        approval_requests = await primary_db.execute(
+            select(ApprovalRequest.upload_id)
+            .where(ApprovalRequest.upload_id.in_(payload.upload_ids))
+            .where(ApprovalRequest.country == table_name.split("_")[0].upper())
+            .where(ApprovalRequest.dataset == dataset)
+        )
+        valid_upload_ids = [row[0] for row in approval_requests.all()]
+
+        if not valid_upload_ids:
+            return {
+                "info": {
+                    "country": country,
+                    "dataset": dataset.replace("-", " ").title(),
+                    "version": None,
+                    "timestamp": None,
+                },
+                "total_count": 0,
+                "data": [],
+            }
+
+        # Filter by upload_id column in the staging table
+        # NOTE: This requires the staging table to have an upload_id column
+        # The external data pipeline must include this column when writing to Delta Lake
+        upload_id_conditions = [
+            column("upload_id") == literal(upload_id) for upload_id in valid_upload_ids
+        ]
+
+        if upload_id_conditions:
+            cdf_cte = select("*").select_from(cdf_cte).where(or_(*upload_id_conditions))
+
+    total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
+
+    cdf = (
+        db.execute(
+            select("*")
+            .select_from(cdf_cte)
+            .order_by(
+                column("school_id_giga"),
+                column("_commit_version").desc(),
+                column("_change_type").desc(),
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        .mappings()
+        .all()
+    )
+
+    detail = (
+        db.execute(
+            select("*")
+            .select_from(text(f'{table_schema}."{table_name}$history"'))
+            .order_by(column("version").desc())
+            .limit(1)
+        )
+        .mappings()
+        .first()
+    )
+
+    df = pd.DataFrame(cdf)
+    df = df.drop(columns=["signature"]).fillna("NULL")
+
+    return {
+        "info": {
+            "country": country,
+            "dataset": dataset.replace("-", " ").title(),
+            "version": detail["version"] if detail else None,
+            "timestamp": detail["timestamp"] if detail else None,
+        },
+        "total_count": total_count,
+        "data": df.to_dict(orient="records"),
+    }
