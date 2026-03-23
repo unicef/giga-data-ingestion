@@ -227,7 +227,9 @@ function FuzzyValidationModal({
 
               {column.value_mappings.map(valueMapping => {
                 const fieldKey = `${column.file_column}::${valueMapping.value_found}`;
-                const selectedValue = selectedReplacements[fieldKey] ?? "";
+                const selectedValue = valueMapping.is_valid
+                  ? valueMapping.replace_with ?? ""
+                  : selectedReplacements[fieldKey] ?? "";
 
                 return (
                   <div
