@@ -18,7 +18,6 @@ import { DQStatus } from "@/types/upload.ts";
 
 export interface UploadFilters {
   uploaderEmail: string;
-  dataset: string;
   country: string;
   dqStatus: string;
   source: string;
@@ -33,7 +32,6 @@ interface FilterModalProps {
 
 const EMPTY_FILTERS: UploadFilters = {
   uploaderEmail: "",
-  dataset: "",
   country: "",
   dqStatus: "",
   source: "",
@@ -106,19 +104,6 @@ function FilterModal({
               ))}
             </Select>
           )}
-
-          <Select
-            id="filter-dataset"
-            labelText="Dataset"
-            value={filters.dataset}
-            onChange={e => handleChange("dataset", e.target.value)}
-          >
-            <SelectItem value="" text="Choose an option" />
-            <SelectItem value="geolocation" text="Geolocation" />
-            <SelectItem value="coverage" text="Coverage" />
-            <SelectItem value="structured" text="Structured" />
-            <SelectItem value="unstructured" text="Unstructured" />
-          </Select>
 
           <Select
             id="filter-country"
