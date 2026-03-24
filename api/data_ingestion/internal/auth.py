@@ -17,6 +17,7 @@ class LocalAzureUser:
             "emails": ["dev@example.com"],
             "given_name": "Local",
             "family_name": "Dev",
+            "oid": "00000000-0000-0000-0000-000000000001",
         }
     )
     given_name: str = "Local"

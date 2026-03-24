@@ -100,10 +100,8 @@ function CDFDataTable({
                     </div>
                     <p>
                       Select rows to approve or reject below. You may opt to
-                      approve only a subset of the rows. Note that when
-                      approving multiple entries that correspond to the same{" "}
-                      <code>school_id_giga</code>, only the entry with the
-                      latest <code>_commit_version</code> will be kept.
+                      approve only a subset of the rows. Rows not actioned will
+                      remain pending for later review.
                     </p>
                   </>
                 }
@@ -174,9 +172,9 @@ function CDFDataTable({
                       return (
                         <TableRow
                           className={cn({
-                            "bg-green-300": changeType === "insert",
-                            "bg-yellow-200": changeType === "update_postimage",
-                            "bg-red-300": changeType === "delete",
+                            "bg-green-300": changeType === "INSERT",
+                            "bg-yellow-200": changeType === "UPDATE",
+                            "bg-red-300": changeType === "DELETE",
                           })}
                           {...getRowProps({
                             row,
@@ -190,7 +188,8 @@ function CDFDataTable({
                           />
                           {row.cells.map(cell => (
                             <TableCell key={cell.id}>
-                              {typeof cell.value === "object" ? (
+                              {typeof cell.value === "object" &&
+                              cell.value !== null ? (
                                 <>
                                   <s>{cell.value.old ?? "NULL"}</s>
                                   <p>{cell.value.update ?? "NULL"}</p>
