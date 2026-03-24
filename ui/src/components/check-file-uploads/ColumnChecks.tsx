@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 
-import { ChevronDown, ChevronUp } from "@carbon/icons-react";
 import {
+  CheckmarkFilled,
+  ChevronDown,
+  ChevronUp,
+  WarningFilled,
+} from "@carbon/icons-react";
+import {
+  Button,
   DataTable,
   DataTableHeader,
   Search,
@@ -15,8 +21,57 @@ import {
 } from "@carbon/react";
 
 import { cn } from "@/lib/utils.ts";
-import { Check } from "@/types/upload";
+import {
+  Check,
+  DqFailedRowValues,
+  DqFailedRowsFirstFiveRows,
+} from "@/types/upload";
 import { commaNumber } from "@/utils/number.ts";
+
+import ViewDetailsModal from "./ViewDetailsModal";
+
+export const ASSERTION_LABELS: Record<string, string> = {
+  // Null / missing value checks
+  is_null_mandatory: "Required field is empty",
+  is_null_optional: "Field has no value",
+
+  // Create vs. update existence checks
+  is_not_update: "School already exists — could not create a duplicate record",
+  is_not_create: "School not found in system — could not apply the update",
+
+  // Duplicate checks
+  duplicate: "Duplicate value detected",
+  duplicate_all_except_school_code:
+    "Potential duplicate record (all fields match except school ID)",
+  duplicate_set: "Duplicate location (same coordinates as another school)",
+  duplicate_name_level_within_110m_radius:
+    "Same school name and education level within 110m of another school",
+  duplicate_similar_name_same_level_within_110m_radius:
+    "Similar school name and same education level within 110m",
+  duplicate_within_110m_radius:
+    "Another school already exists within a 110m radius",
+  duplicate_50_flag: "Another school exists within 50 meters",
+  duplicate_50_count: "Number of nearby schools within 50 meters",
+  duplicate_50_group_id: "Nearby schools group identifier (50m radius)",
+
+  // Location / geospatial checks
+  is_not_within_country: "Coordinates fall outside the country's boundaries",
+  uninhabited: "School location is in an uninhabited area",
+  is_school_density_greater_than_5:
+    "High school density: 5 or more schools found within ~500m",
+  precision: "Coordinate has fewer than 5 decimal places (low precision)",
+
+  // Domain / categorical checks
+  is_invalid_domain: "Value is not in the list of allowed options",
+
+  // Range / numeric checks
+  is_invalid_range: "Value is outside the expected numeric range",
+  is_not_numeric: "Value must be a number",
+  is_not_alphanumeric: "Value contains invalid characters",
+};
+
+export const formatAssertion = (assertion: string) =>
+  ASSERTION_LABELS[assertion] ?? assertion.replace(/_/g, " ");
 
 interface ExtendedDataTableHeader extends DataTableHeader {
   sortable?: boolean;
@@ -24,14 +79,29 @@ interface ExtendedDataTableHeader extends DataTableHeader {
 
 interface DataQualityChecksProps {
   data: Check[];
+  previewData: DqFailedRowsFirstFiveRows;
 }
 
-const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
+const INVALID_VALUES = [
+  {
+    name: "invalid",
+    errorMessage: "The values of these columns seem to be invalid",
+  },
+];
+
+const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
   }>({ key: "", direction: "ascending" });
+
+  const [selectedAssertion, setSelectedAssertion] = useState<string>("");
+  const [selectedColumn, setSelectedColumn] = useState<string>("");
+  const [selectedPreviewData, setSelectedPreviewData] = useState<
+    DqFailedRowValues[]
+  >([{}]);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const handleUpSort = (key: string) => {
     setSortConfig({ key, direction: "ascending" });
@@ -112,26 +182,28 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
   const rows = filteredAndSortedRows.map(check => {
     const {
       assertion,
-      column = "NO_COLUMN",
+      column = "",
       count_failed,
       count_passed,
       percent_passed,
     } = check;
 
     const columnKey = column === "" ? "NO_COLUMN" : column;
+    const columnDisplay = columnKey === "NO_COLUMN" ? "Entire row" : columnKey;
+    const canViewDetails = count_failed > 0 && columnKey !== "NO_COLUMN";
 
     return {
       id: `${assertion}-${columnKey}`,
-      column: columnKey,
-      assertion,
+      column: columnDisplay,
+      assertion: formatAssertion(assertion),
       result_with_errors: (
         <div className="flex items-center">
           {count_failed > 0 ? (
-            <span className="mr-2 text-red-600">
+            <span className="mr-2 font-medium text-red-600">
               {commaNumber(count_failed)}
             </span>
           ) : (
-            <span className="mr-2 text-green-600">0</span>
+            <span className="mr-2 font-medium text-green-600">0</span>
           )}
         </div>
       ),
@@ -146,30 +218,68 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
           {count_failed > 0 ? `${percent_passed.toFixed(2)}%` : "100%"}
         </div>
       ),
-      actions: null,
+      actions: (
+        <Button
+          className="cursor-pointer"
+          kind="ghost"
+          disabled={!canViewDetails}
+          title={
+            canViewDetails
+              ? "View rows with errors"
+              : count_failed === 0
+              ? "No errors found"
+              : "Row-level check — no column details available"
+          }
+          onClick={() => {
+            const selectedPreviewData =
+              previewData[`${assertion}-${column}`] || INVALID_VALUES;
+
+            setSelectedAssertion(assertion);
+            setSelectedPreviewData(selectedPreviewData);
+            setIsModalOpen(true);
+            setSelectedColumn(column);
+          }}
+        >
+          {count_failed > 0 ? (
+            <WarningFilled
+              className={cn({
+                "text-red-600": canViewDetails,
+                "text-red-300": !canViewDetails,
+              })}
+            />
+          ) : (
+            <CheckmarkFilled className="text-green-600" />
+          )}
+        </Button>
+      ),
     };
   });
 
   const dqResultHeaders: ExtendedDataTableHeader[] = [
     {
       key: "column",
-      header: "Column(s)",
+      header: "Field",
       sortable: false,
     },
     {
       key: "assertion",
-      header: "Validation Rule",
+      header: "Check Description",
       sortable: false,
     },
     {
       key: "passed_without_errors",
-      header: "Passed with success",
+      header: "Passed",
       sortable: true,
     },
     {
       key: "result_with_errors",
-      header: "Rejected",
+      header: "Failed",
       sortable: true,
+    },
+    {
+      key: "actions",
+      header: "View Errors",
+      sortable: false,
     },
   ];
 
@@ -225,6 +335,14 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
           )}
         </DataTable>
       </div>
+
+      <ViewDetailsModal
+        assertion={selectedAssertion}
+        column={selectedColumn}
+        previewData={selectedPreviewData}
+        open={isModalOpen}
+        setOpen={setIsModalOpen}
+      />
     </div>
   );
 };
