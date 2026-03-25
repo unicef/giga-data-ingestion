@@ -146,7 +146,7 @@ function Confirm() {
           </AccordionItem>
         )}
       </Accordion>
-      <Section level={8}>
+      <Section>
         <p className="py-4">
           Approved rows will be scheduled for merging into the school master
           dataset. Rejected rows will be flagged as rejected. Rows left pending
