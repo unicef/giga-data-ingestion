@@ -49,7 +49,7 @@ export const Route = createFileRoute("/approval-requests/$countryCode/")({
 
 type UploadTableRow = Record<
   keyof UploadListing,
-  string | number | ReactElement
+  string | number | boolean | ReactElement
 > & {
   id: string;
   actions: ReactElement;
@@ -70,7 +70,11 @@ function UploadsForCountry() {
     page: number;
     pageSize: number;
   }) {
-    void navigate({ to: "", search: { page, page_size: pageSize } });
+    void navigate({
+      to: "",
+      params: { countryCode },
+      search: { page, page_size: pageSize },
+    });
   }
 
   const { data, isFetching, isRefetching } = useSuspenseQuery(

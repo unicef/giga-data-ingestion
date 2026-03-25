@@ -96,11 +96,15 @@ function Confirm() {
                       {typeof cell.value === "object" && cell.value !== null ? (
                         <>
                           <p className="line-through">
-                            {(cell.value as { old: unknown }).old ?? "NULL"}
+                            {String(
+                              (cell.value as { old: unknown }).old ?? "NULL",
+                            )}
                           </p>
                           <p>
-                            {(cell.value as { update: unknown }).update ??
-                              "NULL"}
+                            {String(
+                              (cell.value as { update: unknown }).update ??
+                                "NULL",
+                            )}
                           </p>
                         </>
                       ) : (
