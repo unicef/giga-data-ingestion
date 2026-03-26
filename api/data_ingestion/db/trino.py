@@ -1,11 +1,10 @@
 from contextlib import AbstractContextManager, contextmanager
 
+from data_ingestion.settings import settings
 from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DatabaseError
 from sqlalchemy.orm import Session, sessionmaker
-
-from data_ingestion.settings import settings
 
 engine = create_engine(
     settings.TRINO_URL,

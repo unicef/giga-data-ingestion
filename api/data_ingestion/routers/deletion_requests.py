@@ -2,13 +2,6 @@ import json
 from datetime import datetime
 
 import country_converter as coco
-from fastapi import APIRouter, Depends, HTTPException, Security
-from fastapi_azure_auth.user import User
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from azure.core.exceptions import HttpResponseError
-from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
@@ -19,6 +12,13 @@ from data_ingestion.models import (
 )
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.deletion_requests import DeleteRowsRequest, DeleteRowsSchema
+from fastapi import APIRouter, Depends, HTTPException, Security
+from fastapi_azure_auth.user import User
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from azure.core.exceptions import HttpResponseError
+from azure.storage.blob import ContentSettings
 
 router = APIRouter(
     prefix="/api/delete",

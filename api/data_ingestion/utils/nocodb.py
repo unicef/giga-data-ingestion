@@ -1,6 +1,5 @@
 import pandas as pd
 import requests
-
 from data_ingestion.settings import settings
 
 

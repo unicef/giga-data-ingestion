@@ -1,11 +1,6 @@
 from typing import Any
 
 import requests
-from fastapi.encoders import jsonable_encoder
-from loguru import logger
-from mailjet_rest import Client
-from requests import HTTPError, JSONDecodeError
-
 from data_ingestion.schemas.email import (
     DataCheckSuccessRenderRequest,
     DqReportRenderRequest,
@@ -15,6 +10,10 @@ from data_ingestion.schemas.email import (
 )
 from data_ingestion.schemas.invitation import InviteEmailRenderRequest
 from data_ingestion.settings import DeploymentEnvironment, settings
+from fastapi.encoders import jsonable_encoder
+from loguru import logger
+from mailjet_rest import Client
+from requests import HTTPError, JSONDecodeError
 
 
 def send_email_base(

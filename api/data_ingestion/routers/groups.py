@@ -1,9 +1,3 @@
-from fastapi import APIRouter, Depends, HTTPException, Security, status
-from pydantic import UUID4
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload, selectinload
-
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
@@ -17,6 +11,11 @@ from data_ingestion.schemas.group import (
     UpdateGroupRequest,
 )
 from data_ingestion.schemas.user import DatabaseRole, GraphUser
+from fastapi import APIRouter, Depends, HTTPException, Security, status
+from pydantic import UUID4
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload, selectinload
 
 router = APIRouter(
     prefix="/api/groups",

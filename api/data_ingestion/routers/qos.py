@@ -3,6 +3,20 @@ from pathlib import Path
 from typing import Annotated
 
 import magic
+from data_ingestion.constants import constants
+from data_ingestion.db.primary import get_db
+from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.storage import storage_client
+from data_ingestion.models import SchoolConnectivity, SchoolList
+from data_ingestion.permissions.permissions import IsPrivileged
+from data_ingestion.schemas.core import PagedResponseSchema
+from data_ingestion.schemas.qos import (
+    CreateApiIngestionRequest,
+    EditApiIngestionRequest,
+    SchoolConnectivitySchema,
+    SchoolListSchema,
+    UpdateSchoolListErrorMessageRequest,
+)
 from fastapi import (
     APIRouter,
     Depends,
@@ -19,20 +33,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from azure.core.exceptions import HttpResponseError
-from data_ingestion.constants import constants
-from data_ingestion.db.primary import get_db
-from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.internal.storage import storage_client
-from data_ingestion.models import SchoolConnectivity, SchoolList
-from data_ingestion.permissions.permissions import IsPrivileged
-from data_ingestion.schemas.core import PagedResponseSchema
-from data_ingestion.schemas.qos import (
-    CreateApiIngestionRequest,
-    EditApiIngestionRequest,
-    SchoolConnectivitySchema,
-    SchoolListSchema,
-    UpdateSchoolListErrorMessageRequest,
-)
 
 router = APIRouter(
     prefix="/api/qos",

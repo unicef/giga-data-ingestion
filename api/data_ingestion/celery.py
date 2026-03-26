@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from celery import Celery
-
 from data_ingestion.settings import settings
 
 celery = Celery(

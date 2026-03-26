@@ -1,8 +1,7 @@
+from data_ingestion.internal.auth import azure_scheme
 from fastapi import Depends, HTTPException, status
 from fastapi_azure_auth.user import User as AzureUser
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from data_ingestion.internal.auth import azure_scheme
 
 from ..db.primary import get_db
 from ..internal.roles import get_user_roles

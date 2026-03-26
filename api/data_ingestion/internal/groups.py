@@ -1,6 +1,15 @@
 import json
 
 import requests
+from data_ingestion.internal.utils import chunks
+from data_ingestion.models.users import Role
+from data_ingestion.schemas.group import (
+    CreateGroupRequest,
+    GraphGroup,
+    ModifyUserAccessRequest,
+    UpdateGroupRequest,
+)
+from data_ingestion.schemas.user import GraphUser
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from msgraph.generated.groups.groups_request_builder import (
@@ -13,16 +22,6 @@ from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from data_ingestion.internal.utils import chunks
-from data_ingestion.models.users import Role
-from data_ingestion.schemas.group import (
-    CreateGroupRequest,
-    GraphGroup,
-    ModifyUserAccessRequest,
-    UpdateGroupRequest,
-)
-from data_ingestion.schemas.user import GraphUser
 
 from .auth import graph_client, graph_credentials
 

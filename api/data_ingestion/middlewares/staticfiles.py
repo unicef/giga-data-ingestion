@@ -1,9 +1,8 @@
+from data_ingestion.settings import settings
 from loguru import logger
 from starlette.responses import FileResponse, Response
 from starlette.staticfiles import StaticFiles
 from starlette.types import Scope
-
-from data_ingestion.settings import settings
 
 
 class StaticFilesMiddleware(StaticFiles):

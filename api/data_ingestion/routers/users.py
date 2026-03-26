@@ -1,11 +1,5 @@
 from uuid import uuid4
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
-from fastapi_azure_auth.user import User as AzureUser
-from sqlalchemy import delete, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal import email
 from data_ingestion.internal.auth import azure_scheme
@@ -27,6 +21,11 @@ from data_ingestion.schemas.user import (
     GraphUserInviteAndAddGroupsRequest,
     GraphUserUpdateRequest,
 )
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
+from fastapi_azure_auth.user import User as AzureUser
+from sqlalchemy import delete, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(
     prefix="/api/users",

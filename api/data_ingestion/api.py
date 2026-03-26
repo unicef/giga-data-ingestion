@@ -2,11 +2,6 @@ import logging
 import sys
 from datetime import timedelta
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, ORJSONResponse
-from starlette.middleware.sessions import SessionMiddleware
-
 from data_ingestion.constants import __version__
 from data_ingestion.db.primary import get_db_context
 from data_ingestion.internal.auth import azure_scheme, local_auth_bypass
@@ -26,6 +21,10 @@ from data_ingestion.routers import (
     utils,
 )
 from data_ingestion.settings import DeploymentEnvironment, initialize_sentry, settings
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, ORJSONResponse
+from starlette.middleware.sessions import SessionMiddleware
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -90,10 +89,9 @@ async def _ensure_local_dev_user():
     """Create the local dev user with Admin role if it doesn't already have it."""
     from uuid import uuid4
 
+    from data_ingestion.models import Role, User
     from sqlalchemy import select
     from sqlalchemy.orm import selectinload
-
-    from data_ingestion.models import Role, User
 
     local_email = "dev@example.com"
 

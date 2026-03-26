@@ -1,5 +1,7 @@
 import io
 
+from data_ingestion.db.trino import get_db
+from data_ingestion.internal.auth import azure_scheme
 from fastapi import (
     APIRouter,
     Depends,
@@ -11,9 +13,6 @@ from fastapi import (
 from sqlalchemy import column, func, literal, select, text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
-
-from data_ingestion.db.trino import get_db
-from data_ingestion.internal.auth import azure_scheme
 
 router = APIRouter(
     prefix="/api/error-table",

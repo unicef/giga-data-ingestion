@@ -1,8 +1,5 @@
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
-from fastapi.security import HTTPAuthorizationCredentials
-
 from data_ingestion.internal import email
 from data_ingestion.internal.auth import email_header
 from data_ingestion.internal.email import send_email_base
@@ -16,6 +13,8 @@ from data_ingestion.schemas.email import (
     UploadSuccessRenderRequest,
 )
 from data_ingestion.settings import settings
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
+from fastapi.security import HTTPAuthorizationCredentials
 
 router = APIRouter(
     prefix="/api/email",

@@ -1,11 +1,11 @@
 from dataclasses import dataclass, field
 
+from data_ingestion.settings import settings
 from fastapi.security import HTTPBearer
 from fastapi_azure_auth import B2CMultiTenantAuthorizationCodeBearer
 from msgraph import GraphServiceClient
 
 from azure.identity import ClientSecretCredential
-from data_ingestion.settings import settings
 
 
 @dataclass

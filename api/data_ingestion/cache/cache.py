@@ -1,9 +1,8 @@
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 
 import redis.asyncio as redis
-from loguru import logger
-
 from data_ingestion.settings import settings
+from loguru import logger
 
 pool = redis.ConnectionPool.from_url(settings.REDIS_CACHE_URL)
 

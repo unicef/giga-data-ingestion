@@ -1,6 +1,5 @@
-from fastapi_azure_auth.user import User
-
 from data_ingestion.internal.users import UsersApi
+from fastapi_azure_auth.user import User
 
 
 async def get_user_email(user: User) -> str:

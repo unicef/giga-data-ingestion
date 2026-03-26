@@ -3,6 +3,15 @@ from typing import Annotated
 
 import orjson
 import pandas as pd
+from data_ingestion.cache.keys import get_schema_key
+from data_ingestion.cache.serde import get_cache_string
+from data_ingestion.db.trino import get_db
+from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.schema import (
+    get_schema as _get_schema,
+    get_schemas,
+)
+from data_ingestion.schemas.schema_column import SchemaColumn as MetaSchema
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -14,16 +23,6 @@ from fastapi import (
     status,
 )
 from sqlalchemy.orm import Session
-
-from data_ingestion.cache.keys import get_schema_key
-from data_ingestion.cache.serde import get_cache_string
-from data_ingestion.db.trino import get_db
-from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.internal.schema import (
-    get_schema as _get_schema,
-    get_schemas,
-)
-from data_ingestion.schemas.schema_column import SchemaColumn as MetaSchema
 
 router = APIRouter(
     prefix="/api/schema",

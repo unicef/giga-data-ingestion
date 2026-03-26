@@ -1,12 +1,11 @@
 from datetime import timedelta
 
-from sqlalchemy import update
-from sqlalchemy.sql.functions import current_timestamp
-
 from data_ingestion.celery import celery
 from data_ingestion.db.primary import sync_get_db_context
 from data_ingestion.models import FileUpload
 from data_ingestion.models.file_upload import DQStatusEnum
+from sqlalchemy import update
+from sqlalchemy.sql.functions import current_timestamp
 
 
 @celery.task(name="data_ingestion.tasks.file_upload_dq_checks_timeout")
