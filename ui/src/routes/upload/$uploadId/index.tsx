@@ -71,7 +71,7 @@ function Index() {
     handleDownloadPassedRows,
     handleDownloadDqSummary,
     handleDownloadRawFile,
-  } = useDownloadHelpers(uploadData);
+  } = useDownloadHelpers(uploadData, dqResultData);
 
   // Extract checks from dqResultData
   const {
@@ -151,7 +151,7 @@ function Index() {
               renderIcon={Download}
               onClick={handleDownloadDqSummary}
             >
-              Download data quality report
+              Download data quality report (PDF)
             </Button>
           </div>
         </div>

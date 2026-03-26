@@ -137,11 +137,6 @@ function Success() {
     () => uploadQuery?.data ?? initialUploadResponse,
     [uploadQuery],
   );
-  const {
-    handleDownloadFailedRows,
-    handleDownloadPassedRows,
-    handleDownloadDqSummary,
-  } = useDownloadHelpers(uploadData);
 
   const {
     data: dqResultQuery,
@@ -158,6 +153,12 @@ function Success() {
     () => dqResultQuery?.data ?? initialDataQualityCheck,
     [dqResultQuery],
   );
+
+  const {
+    handleDownloadFailedRows,
+    handleDownloadPassedRows,
+    handleDownloadDqSummary,
+  } = useDownloadHelpers(uploadData, dqResult);
 
   const status = dqResult?.status;
 
@@ -378,7 +379,7 @@ function Success() {
                         disabled={rows === 0}
                         onClick={handleDownloadDqSummary}
                       >
-                        Download Summary
+                        Download data quality report (PDF)
                       </Button>
                     </div>
                   </div>
