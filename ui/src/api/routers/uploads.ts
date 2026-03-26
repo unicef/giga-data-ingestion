@@ -4,6 +4,8 @@ import { PagedResponse } from "@/types/api.ts";
 import {
   BasicChecks,
   DataQualityCheck,
+  FuzzyValidationParams,
+  FuzzyValidationResponse,
   UploadParams,
   UploadStructuredParams,
   UploadUnstructuredParams,
@@ -49,6 +51,21 @@ export default function routes(axi: AxiosInstance) {
       });
 
       return axi.post("/upload/review", formData, {
+        params: { dataset: params.dataset },
+      });
+    },
+
+    validate_fuzzy: (
+      params: FuzzyValidationParams,
+    ): Promise<AxiosResponse<FuzzyValidationResponse>> => {
+      const formData = new FormData();
+      formData.append("file", params.file);
+      formData.append(
+        "column_to_schema_mapping",
+        params.column_to_schema_mapping,
+      );
+
+      return axi.post("/upload/validate-fuzzy", formData, {
         params: { dataset: params.dataset },
       });
     },
