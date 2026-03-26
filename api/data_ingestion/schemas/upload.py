@@ -3,12 +3,11 @@ from datetime import datetime
 from typing import Generic, TypeVar
 
 import orjson
+from data_ingestion.models.file_upload import DQStatusEnum
 from fastapi import Form, UploadFile
 from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr, field_validator
 
 T = TypeVar("T")
-
-from data_ingestion.models.file_upload import DQStatusEnum
 
 
 class FileUpload(BaseModel):
@@ -55,6 +54,7 @@ class FileUploadRequest:
     dataset: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+    dq_mode: str = Form("master")
 
 
 @dataclass

@@ -1,8 +1,17 @@
 from datetime import datetime
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from pydantic import UUID4
-from sqlalchemy import VARCHAR, DateTime, ForeignKey, UniqueConstraint, func, select
+from sqlalchemy import (
+    VARCHAR,
+    DateTime,
+    Enum as SQLEnum,
+    ForeignKey,
+    UniqueConstraint,
+    func,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -10,6 +19,11 @@ from .base import BaseModel
 
 if TYPE_CHECKING:
     from .file_upload import FileUpload
+
+
+class DQModeEnum(str, Enum):
+    uploaded = "uploaded"
+    master = "master"
 
 
 class ApprovalRequest(BaseModel):
@@ -35,6 +49,12 @@ class ApprovalRequest(BaseModel):
         back_populates="approval_requests",
     )
 
+    dq_mode: Mapped[DQModeEnum] = mapped_column(
+        SQLEnum(DQModeEnum, name="dqmodeenum"),
+        nullable=False,
+        default=DQModeEnum.uploaded,
+    )
+
 
 class ApprovalRequestAuditLog(BaseModel):
     __tablename__ = "approval_request_audit_log"
@@ -49,6 +69,11 @@ class ApprovalRequestAuditLog(BaseModel):
     approved_by_email: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     approved_date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+    dq_mode: Mapped[DQModeEnum] = mapped_column(
+        SQLEnum(DQModeEnum, name="dqmodeenum"),
+        nullable=False,
+        default=DQModeEnum.uploaded,
     )
 
 
