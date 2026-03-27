@@ -25,32 +25,27 @@ def _mock_azure_scheme():
 
 
 def _make_mock_trino(rows=None, mappings=None, scalar_value=0):
-    """Create a mock Trino session whose .execute() returns controlled data.
-
-    Parameters
-    ----------
-    rows : list[dict] | None
-        Rows to return for `.mappings().all()`.
-    mappings : list[dict] | None
-        Alias for *rows* (kept for readability at call sites).
-    scalar_value : int
-        Value to return for `.scalar()`.
-    """
     effective_rows = mappings if mappings is not None else (rows or [])
 
     mock_session = MagicMock()
 
-    # .execute(...).mappings().all() → effective_rows
-    mock_result = MagicMock()
-    mock_result.mappings.return_value.all.return_value = effective_rows
+    def side_effect(query, *args, **kwargs):
+        mock_result = MagicMock()
+        query_str = str(query).lower()
+        if "information_schema" in query_str:
+            mock_result.mappings.return_value.all.return_value = [
+                {"table_name": "upload_errors_bra"},
+                {"table_name": "upload_errors_ken"},
+            ]
+        else:
+            mock_result.mappings.return_value.all.return_value = effective_rows
+            mock_result.scalar.return_value = scalar_value
+            mock_result.first.return_value = (
+                effective_rows[0] if effective_rows else None
+            )
+        return mock_result
 
-    # .execute(...).scalar() → scalar_value
-    mock_result.scalar.return_value = scalar_value
-
-    # .execute(...).first() → first row or None
-    mock_result.first.return_value = effective_rows[0] if effective_rows else None
-
-    mock_session.execute.return_value = mock_result
+    mock_session.execute.side_effect = side_effect
     return mock_session
 
 
