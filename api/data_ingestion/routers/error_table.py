@@ -1,5 +1,7 @@
 import io
 
+from data_ingestion.db.trino import get_db
+from data_ingestion.internal.auth import azure_scheme
 from fastapi import (
     APIRouter,
     Depends,
@@ -12,16 +14,27 @@ from sqlalchemy import column, func, literal, select, text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
-from data_ingestion.db.trino import get_db
-from data_ingestion.internal.auth import azure_scheme
-
 router = APIRouter(
     prefix="/api/error-table",
     tags=["error-table"],
     dependencies=[Security(azure_scheme)],
 )
 
-UPLOAD_ERRORS_TABLE = "school_master.upload_errors"
+
+def get_upload_error_tables(db: Session) -> list[str]:
+    keys = (
+        db.execute(
+            select(column("table_name"))
+            .select_from(text("information_schema.tables"))
+            .where(
+                (column("table_schema") == literal("school_master"))
+                & column("table_name").like("upload_errors_%")
+            )
+        )
+        .mappings()
+        .all()
+    )
+    return [f"school_master.{row['table_name']}" for row in keys]
 
 
 def _serialize_error_row(row: dict) -> dict:
@@ -31,18 +44,16 @@ def _serialize_error_row(row: dict) -> dict:
         "giga_sync_file_name": row.get("giga_sync_file_name"),
         "dataset_type": row.get("dataset_type"),
         "country_code": row.get("country_code"),
-        # Mandatory columns (flat, queryable)
+        # Mandatory columns
         "school_id_govt": row.get("school_id_govt"),
         "school_id_giga": row.get("school_id_giga"),
         "school_name": row.get("school_name"),
         "latitude": row.get("latitude"),
         "longitude": row.get("longitude"),
-        "education_level": row.get("education_level"),
+        "education_level": row.get("education_level")
+        or row.get("education_level_govt"),
         # Failure reason
         "failure_reason": row.get("failure_reason"),
-        # JSON fields
-        "additional_data": row.get("additional_data"),
-        "error_details": row.get("error_details"),
         "created_at": (
             row["created_at"].isoformat() if row.get("created_at") else None
         ),
@@ -59,49 +70,54 @@ def list_upload_errors(
     db: Session = Depends(get_db),
 ):
     """List rows from the unified upload errors table with optional filters."""
-    try:
-        db.execute(
-            select("*")
-            .select_from(text("information_schema.tables"))
-            .where(
-                (column("table_schema") == literal("school_master"))
-                & (column("table_name") == literal("upload_errors"))
-            )
-            .limit(1)
-        ).first()
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Upload errors table does not exist.",
-        ) from e
-
-    base = select("*").select_from(text(UPLOAD_ERRORS_TABLE))
-
-    filters = []
+    tables = get_upload_error_tables(db)
     if country_code:
-        filters.append(column("country_code") == literal(country_code))
-    if dataset_type:
-        filters.append(column("dataset_type") == literal(dataset_type))
-    if file_id:
-        filters.append(column("giga_sync_file_id") == literal(file_id))
+        target_table = f"school_master.upload_errors_{country_code.lower()}"
+        tables = [t for t in tables if t == target_table]
 
-    filtered = base.where(*filters) if filters else base
+    if not tables:
+        return {
+            "data": [],
+            "page": page,
+            "page_size": page_size,
+            "total_count": 0,
+        }
 
-    total_count = db.execute(
-        select(func.count()).select_from(filtered.subquery())
-    ).scalar()
+    # If querying multiple tables without country_code, we must do it safely.
+    # We will query all tables one by one (or using simple UNION ALL if columns were guaranteed).
+    # Since we use SELECT *, Trino UNION ALL fails on differing schemas.
+    # We will iterate in Python, applying filters to each query, to calculate total counts and collect rows.
+    total_count = 0
+    all_rows = []
 
-    rows = (
-        db.execute(
-            filtered.order_by(column("created_at").desc())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        )
-        .mappings()
-        .all()
-    )
+    for table_name in tables:
+        base = select("*").select_from(text(table_name))
+        filters = []
+        if dataset_type:
+            filters.append(column("dataset_type") == literal(dataset_type))
+        if file_id:
+            filters.append(column("giga_sync_file_id") == literal(file_id))
 
-    data = [_serialize_error_row(row) for row in rows]
+        filtered = base.where(*filters) if filters else base
+        try:
+            tbl_count = db.execute(
+                select(func.count()).select_from(filtered.subquery())
+            ).scalar()
+            total_count += tbl_count
+
+            # Note: Pagination across multiple tables dynamically in python is tricky.
+            # We fetch all matching from each table, then sort & slice at the end if no country provided.
+            # If country is provided, it's just 1 table and we can limit dynamically in SQL, but for safety:
+            rows = db.execute(filtered).mappings().all()
+            all_rows.extend(rows)
+        except Exception:
+            # If an error occurs (e.g. table not totally initialized), skip
+            continue
+
+    all_rows.sort(key=lambda r: r.get("created_at") or "", reverse=True)
+    paged_rows = all_rows[(page - 1) * page_size : page * page_size]
+
+    data = [_serialize_error_row(row) for row in paged_rows]
 
     return {
         "data": data,
@@ -116,8 +132,13 @@ def get_upload_errors_summary(
     db: Session = Depends(get_db),
 ):
     """Aggregated error counts grouped by country_code and dataset_type."""
-    try:
-        summary_query = (
+    tables = get_upload_error_tables(db)
+    if not tables:
+        return {"data": []}
+
+    queries = []
+    for table_name in tables:
+        queries.append(
             select(
                 column("country_code"),
                 column("dataset_type"),
@@ -126,29 +147,45 @@ def get_upload_errors_summary(
                     "distinct_files"
                 ),
             )
-            .select_from(text(UPLOAD_ERRORS_TABLE))
+            .select_from(text(table_name))
             .group_by(column("country_code"), column("dataset_type"))
-            .order_by(column("country_code"), column("dataset_type"))
         )
 
+    # We can UNION ALL these safely because we are explicitly selecting 4 standard columns that must exist.
+    from sqlalchemy import union_all
+
+    summary_query = union_all(*queries).order_by(
+        column("country_code"), column("dataset_type")
+    )
+
+    try:
         rows = db.execute(summary_query).mappings().all()
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Upload errors table does not exist.",
+            detail="Failed to retrieve summary from error tables.",
         ) from e
 
-    return {
-        "data": [
-            {
-                "country_code": r["country_code"],
-                "dataset_type": r["dataset_type"],
-                "error_count": r["error_count"],
-                "distinct_files": r["distinct_files"],
-            }
-            for r in rows
-        ],
-    }
+    # since union all across tables might duplicate country_code/dataset_type pairs if somehow mixed, we group in python safely
+    summary_dict = {}
+    for r in rows:
+        key = (r["country_code"], r["dataset_type"])
+        if key not in summary_dict:
+            summary_dict[key] = {"error_count": 0, "distinct_files": 0}
+        summary_dict[key]["error_count"] += r["error_count"]
+        summary_dict[key]["distinct_files"] += r["distinct_files"]
+
+    results = [
+        {
+            "country_code": k[0],
+            "dataset_type": k[1],
+            "error_count": v["error_count"],
+            "distinct_files": v["distinct_files"],
+        }
+        for k, v in summary_dict.items()
+    ]
+
+    return {"data": results}
 
 
 @router.get("/download")
@@ -161,33 +198,41 @@ def download_upload_errors(
     """Download filtered error rows as CSV."""
     import pandas as pd
 
-    base = select("*").select_from(text(UPLOAD_ERRORS_TABLE))
-
-    filters = []
+    tables = get_upload_error_tables(db)
     if country_code:
-        filters.append(column("country_code") == literal(country_code))
-    if dataset_type:
-        filters.append(column("dataset_type") == literal(dataset_type))
-    if file_id:
-        filters.append(column("giga_sync_file_id") == literal(file_id))
+        target_table = f"school_master.upload_errors_{country_code.lower()}"
+        tables = [t for t in tables if t == target_table]
 
-    filtered = base.where(*filters) if filters else base
-
-    try:
-        rows = (
-            db.execute(filtered.order_by(column("created_at").desc())).mappings().all()
-        )
-    except Exception as e:
+    if not tables:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Upload errors table does not exist.",
-        ) from e
+            detail="No error tables found matching the given filters.",
+        )
 
-    if not rows:
+    all_rows = []
+
+    for table_name in tables:
+        base = select("*").select_from(text(table_name))
+        filters = []
+        if dataset_type:
+            filters.append(column("dataset_type") == literal(dataset_type))
+        if file_id:
+            filters.append(column("giga_sync_file_id") == literal(file_id))
+
+        filtered = base.where(*filters) if filters else base
+        try:
+            rows = db.execute(filtered).mappings().all()
+            all_rows.extend(rows)
+        except Exception:
+            continue
+
+    if not all_rows:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No error rows found matching the given filters.",
         )
+
+    all_rows.sort(key=lambda r: r.get("created_at") or "", reverse=True)
 
     df = pd.DataFrame([_serialize_error_row(row) for row in rows])
     csv_buffer = io.StringIO()
