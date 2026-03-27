@@ -142,15 +142,40 @@ function ApproveRejectTable() {
   }, [approvalRequests]);
 
   const formattedRows = useMemo<Record<string, unknown>[]>(() => {
-    return approvalRequests.map(row => ({
-      ...row,
-      id: row.school_id_giga,
-      approval_status: approvedRows.includes(row.school_id_giga)
+    const result: Record<string, unknown>[] = [];
+
+    for (const row of approvalRequests) {
+      const approvalStatus = approvedRows.includes(row.school_id_giga)
         ? "Approved"
         : rejectedRows.includes(row.school_id_giga)
         ? "Rejected"
-        : "",
-    }));
+        : "";
+
+      // For UPDATE rows, prepend a non-selectable "current" row showing the old values
+      if (row._change_type === "UPDATE") {
+        const currentRecord: Record<string, unknown> = {
+          _change_type: "CURRENT",
+          id: `${row.school_id_giga}_current`,
+          approval_status: approvalStatus,
+        };
+        for (const [key, value] of Object.entries(row)) {
+          if (key === "_change_type") continue;
+          currentRecord[key] =
+            value !== null && typeof value === "object" && "old" in value
+              ? (value as { old: unknown }).old
+              : value;
+        }
+        result.push(currentRecord);
+      }
+
+      result.push({
+        ...row,
+        id: row.school_id_giga,
+        approval_status: approvalStatus,
+      });
+    }
+
+    return result;
   }, [approvalRequests, approvedRows, rejectedRows]);
 
   const { mutateAsync: submit, isPending } = useMutation({

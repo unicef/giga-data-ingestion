@@ -1,7 +1,12 @@
 import { ReactElement, useMemo } from "react";
 
-import { CheckmarkFilled } from "@carbon/icons-react";
-import { Button, DataTableHeader, DataTableSkeleton } from "@carbon/react";
+import { ArrowLeft, CheckmarkFilled } from "@carbon/icons-react";
+import {
+  Button,
+  ButtonSet,
+  DataTableHeader,
+  DataTableSkeleton,
+} from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { format } from "date-fns";
@@ -120,16 +125,32 @@ function UploadsForCountry() {
   );
 
   return (
-    <DataTable
-      title={`Pending Uploads — ${countryCode}`}
-      columns={columns}
-      rows={formattedRows}
-      isPaginated
-      count={uploadsData.total_count}
-      handlePaginationChange={handlePaginationChange}
-      page={uploadsData.page}
-      pageSize={uploadsData.page_size}
-      pageSizes={[10]}
-    />
+    <>
+      <DataTable
+        title={`Pending Uploads — ${countryCode}`}
+        columns={columns}
+        rows={formattedRows}
+        isPaginated
+        count={uploadsData.total_count}
+        handlePaginationChange={handlePaginationChange}
+        page={uploadsData.page}
+        pageSize={uploadsData.page_size}
+        pageSizes={[10]}
+      />
+      <div className="container">
+        <ButtonSet className="w-full">
+          <Button
+            as={Link}
+            className="w-full"
+            isExpressive
+            kind="secondary"
+            renderIcon={ArrowLeft}
+            to=".."
+          >
+            Back
+          </Button>
+        </ButtonSet>
+      </div>
+    </>
   );
 }

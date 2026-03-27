@@ -378,6 +378,36 @@ async def get_upload_rows(
     }
 
 
+def _resolve_change_ids(
+    rows_input: list[str],
+    staging: str,
+    upload_id: str,
+    db: Session,
+) -> list[str]:
+    _all = ["__all__"]
+    if rows_input == _all:
+        return _all
+    if not rows_input:
+        return []
+    rows = (
+        db.execute(
+            text(
+                f"SELECT school_id_giga, change_type FROM {staging} "  # nosec B608
+                f"WHERE upload_id = '{upload_id}' "
+                f"AND school_id_giga IN {_in_clause(rows_input)}"
+            )
+        )
+        .mappings()
+        .all()
+    )
+    id_to_change_type = {r["school_id_giga"]: r["change_type"] for r in rows}
+    return [
+        f"{sid}|{upload_id}|{id_to_change_type[sid]}"
+        for sid in rows_input
+        if sid in id_to_change_type
+    ]
+
+
 @router.post("/{country_code}/{upload_id}/submit", status_code=status.HTTP_200_OK)
 async def submit_upload_review(
     country_code: str,
@@ -430,54 +460,28 @@ async def submit_upload_review(
         select(DatabaseUser).where(DatabaseUser.email == email)
     )
 
-    _all = ["__all__"]
-
-    # Build change_ids for approved rows.
+    # Build change_ids for approved and rejected rows.
     # change_id format: school_id_giga|upload_id|change_type (matches Dagster staging step)
-    approved_change_ids: list[str] = []
-    if body.approved_rows == _all:
-        approved_change_ids = _all
-    elif body.approved_rows:
-        rows = (
-            db.execute(
-                text(
-                    f"SELECT school_id_giga, change_type FROM {staging} "  # nosec B608
-                    f"WHERE upload_id = '{upload_id}' "
-                    f"AND school_id_giga IN {_in_clause(body.approved_rows)}"
-                )
-            )
-            .mappings()
-            .all()
-        )
-        id_to_change_type = {r["school_id_giga"]: r["change_type"] for r in rows}
-        approved_change_ids = [
-            f"{sid}|{upload_id}|{id_to_change_type[sid]}"
-            for sid in body.approved_rows
-            if sid in id_to_change_type
-        ]
+    approved_change_ids = _resolve_change_ids(
+        body.approved_rows, staging, upload_id, db
+    )
+    rejected_change_ids = _resolve_change_ids(
+        body.rejected_rows, staging, upload_id, db
+    )
 
-    # Build change_ids for rejected rows.
-    rejected_change_ids: list[str] = []
-    if body.rejected_rows == _all:
-        rejected_change_ids = _all
-    elif body.rejected_rows:
-        rows = (
-            db.execute(
-                text(
-                    f"SELECT school_id_giga, change_type FROM {staging} "  # nosec B608
-                    f"WHERE upload_id = '{upload_id}' "
-                    f"AND school_id_giga IN {_in_clause(body.rejected_rows)}"
-                )
+    # Create the audit log first so its ID can be included in the approval payload.
+    approval_request_log_id = None
+    if approval_request:
+        approval_request.is_merge_processing = True
+        if approved_change_ids and database_user:
+            audit_log = ApprovalRequestAuditLog(
+                approval_request_id=approval_request.id,
+                approved_by_id=database_user.id,
+                approved_by_email=email,
             )
-            .mappings()
-            .all()
-        )
-        id_to_change_type = {r["school_id_giga"]: r["change_type"] for r in rows}
-        rejected_change_ids = [
-            f"{sid}|{upload_id}|{id_to_change_type[sid]}"
-            for sid in body.rejected_rows
-            if sid in id_to_change_type
-        ]
+            primary_db.add(audit_log)
+            await primary_db.flush()
+            approval_request_log_id = audit_log.id
 
     # Write approval JSON to blob storage.
     # Dagster sensor watches this path and triggers the silver merge job.
@@ -495,6 +499,7 @@ async def submit_upload_review(
             "upload_id": upload_id,
             "approved_change_ids": approved_change_ids,
             "rejected_change_ids": rejected_change_ids,
+            "approval_request_log_id": approval_request_log_id,
         },
         indent=2,
     ).encode()
@@ -502,17 +507,7 @@ async def submit_upload_review(
         approval_payload, overwrite=True
     )
 
-    # Set is_merge_processing and record audit log.
     if approval_request:
-        approval_request.is_merge_processing = True
-        if approved_change_ids and database_user:
-            primary_db.add(
-                ApprovalRequestAuditLog(
-                    approval_request_id=approval_request.id,
-                    approved_by_id=database_user.id,
-                    approved_by_email=email,
-                )
-            )
         await primary_db.commit()
 
 
