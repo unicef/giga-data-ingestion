@@ -113,9 +113,9 @@ function Success() {
   const {
     uploadSliceActions: {
       resetUploadSliceState,
-      setUploadId,
-      setUploadDate,
       setPendingSchoolDataPayload,
+      setUploadDate,
+      setUploadId,
     },
     uploadSlice: { uploadId, source, pendingSchoolDataPayload },
   } = useStore();
@@ -131,6 +131,7 @@ function Success() {
   const isPreSubmitMode =
     isSchoolData && !!pendingSchoolDataPayload && uploadId === "";
   const activeUploadId = uploadId || reviewUploadId;
+  const isReviewMode = isPreSubmitMode || (!!reviewUploadId && !uploadId);
 
   const reviewFile = useMutation({
     mutationFn: api.uploads.review,
@@ -265,10 +266,9 @@ function Success() {
   };
 
   const tagProps = effectiveStatus ? statusTagMap[effectiveStatus] : null;
-  const qualityHeader =
-    isPreSubmitMode || (!!reviewUploadId && !uploadId)
-      ? "Data Quality: Review / Submit"
-      : "Data Quality Review";
+  const qualityHeader = isReviewMode
+    ? "Data Quality: Review / Submit"
+    : "Data Quality Review";
   // Common card styles
   const cardStyle = {
     flex: 1,
@@ -392,18 +392,45 @@ function Success() {
             )}
           </div>
 
-          <Button
-            className={cn("w-full", {
-              "bg-green-600 hover:bg-green-800": status === DQStatus.COMPLETED,
-            })}
-            isExpressive
-            onClick={handleSubmit}
-            renderIcon={ArrowRight}
-          >
-            {status === DQStatus.COMPLETED
-              ? "Review Submission"
-              : "Close and run in background"}
-          </Button>
+          {actionError && <p className="text-sm text-red-600">{actionError}</p>}
+
+          {isReviewMode ? (
+            <div className="flex flex-col gap-3 md:flex-row">
+              <Button
+                className="md:flex-1"
+                disabled={!pendingSchoolDataPayload || isActionPending}
+                isExpressive
+                kind="secondary"
+                onClick={handleReview}
+                renderIcon={Restart}
+              >
+                {reviewFile.isPending ? "Reviewing..." : "Review"}
+              </Button>
+              <Button
+                className="md:flex-1"
+                disabled={!pendingSchoolDataPayload || isActionPending}
+                isExpressive
+                onClick={handleInitialSubmit}
+                renderIcon={ArrowRight}
+              >
+                {uploadFile.isPending ? "Submitting..." : "Submit"}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              className={cn("w-full", {
+                "bg-green-600 hover:bg-green-800":
+                  status === DQStatus.COMPLETED,
+              })}
+              isExpressive
+              onClick={handleSubmit}
+              renderIcon={ArrowRight}
+            >
+              {status === DQStatus.COMPLETED
+                ? "Review Submission"
+                : "Close and run in background"}
+            </Button>
+          )}
 
           <div>
             <div className="mb-8 rounded border border-gray-200 bg-white p-6">
