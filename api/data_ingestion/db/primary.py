@@ -5,12 +5,13 @@ from contextlib import (
     contextmanager,
 )
 
-from data_ingestion.settings import settings
 from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.exc import DatabaseError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
+
+from data_ingestion.settings import settings
 
 engine = create_async_engine(
     settings.ASYNC_DATABASE_URL,

@@ -1,8 +1,7 @@
 from functools import lru_cache
 
-from data_ingestion.settings import settings
-
 from azure.storage.blob import BlobServiceClient
+from data_ingestion.settings import settings
 
 
 @lru_cache

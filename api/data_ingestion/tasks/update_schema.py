@@ -1,11 +1,12 @@
 import orjson
 from asgiref.sync import async_to_sync
+from fastapi.encoders import jsonable_encoder
+
 from data_ingestion.cache.keys import SCHEMAS_KEY, get_schema_key
 from data_ingestion.cache.serde import get_cache_list, set_cache_list, set_cache_string
 from data_ingestion.celery import celery
 from data_ingestion.db.trino import get_db_context
 from data_ingestion.internal.schema import get_schema, get_schemas
-from fastapi.encoders import jsonable_encoder
 
 
 def get_schema_list() -> list[str]:

@@ -3,9 +3,10 @@ from datetime import datetime
 from typing import Generic, TypeVar
 
 import orjson
-from data_ingestion.models.file_upload import DQStatusEnum
 from fastapi import Form, UploadFile
 from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr, field_validator
+
+from data_ingestion.models.file_upload import DQStatusEnum
 
 T = TypeVar("T")
 

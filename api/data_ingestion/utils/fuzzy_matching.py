@@ -1,10 +1,11 @@
 import pandas as pd
+from rapidfuzz import fuzz, process, utils
+
 from data_ingestion.settings import logger
 from data_ingestion.utils.nocodb import (
     get_nocodb_table_id_from_name,
     get_nocodb_table_rows,
 )
-from rapidfuzz import fuzz, process, utils
 
 NOCODB_FUZZY_TABLES = {
     "education_level": "EducationLevelMapping",

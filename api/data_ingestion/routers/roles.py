@@ -1,16 +1,17 @@
 from typing import Annotated
 
+from fastapi import APIRouter, Depends, HTTPException, Response, Security, status
+from fastapi_azure_auth.user import User as AzureUser
+from sqlalchemy import delete, exc, insert, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.roles import get_user_roles as _get_user_roles
 from data_ingestion.models import Role, UserRoleAssociation
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.user import DatabaseRole, DatabaseRoleWithMembers
-from fastapi import APIRouter, Depends, HTTPException, Response, Security, status
-from fastapi_azure_auth.user import User as AzureUser
-from sqlalchemy import delete, exc, insert, select
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 router = APIRouter(
     prefix="/api/roles",

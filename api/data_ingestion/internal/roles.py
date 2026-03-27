@@ -1,11 +1,12 @@
 from uuid import uuid4
 
-from data_ingestion.models import Role, User
-from data_ingestion.settings import settings
 from fastapi_azure_auth.user import User as AzureUser
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
+
+from data_ingestion.models import Role, User
+from data_ingestion.settings import settings
 
 
 async def create_user_if_not_exist_and_assign_roles(

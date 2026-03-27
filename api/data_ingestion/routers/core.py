@@ -1,12 +1,13 @@
-from data_ingestion.cache import get_redis_connection
-from data_ingestion.db.primary import get_db as get_db_primary
-from data_ingestion.db.trino import get_db as get_db_trino
 from fastapi import APIRouter, Depends, Response, status
 from loguru import logger
 from redis.asyncio import Redis
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
+
+from data_ingestion.cache import get_redis_connection
+from data_ingestion.db.primary import get_db as get_db_primary
+from data_ingestion.db.trino import get_db as get_db_trino
 
 router = APIRouter(tags=["core"], include_in_schema=False)
 

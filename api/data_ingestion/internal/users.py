@@ -2,17 +2,6 @@ import asyncio
 import json
 from secrets import token_urlsafe
 
-from data_ingestion.schemas.group import GraphGroup
-from data_ingestion.schemas.invitation import (
-    GraphInvitationCreateRequest,
-)
-from data_ingestion.schemas.user import (
-    GraphUser,
-    GraphUserCreateRequest,
-    GraphUserCreateResponse,
-    GraphUserUpdateRequest,
-)
-from data_ingestion.settings import settings
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from kiota_abstractions.headers_collection import HeadersCollection
@@ -25,6 +14,18 @@ from msgraph.generated.models.password_profile import PasswordProfile
 from msgraph.generated.models.user import User
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic import UUID4, ValidationError
+
+from data_ingestion.schemas.group import GraphGroup
+from data_ingestion.schemas.invitation import (
+    GraphInvitationCreateRequest,
+)
+from data_ingestion.schemas.user import (
+    GraphUser,
+    GraphUserCreateRequest,
+    GraphUserCreateResponse,
+    GraphUserUpdateRequest,
+)
+from data_ingestion.settings import settings
 
 from .auth import graph_client
 
