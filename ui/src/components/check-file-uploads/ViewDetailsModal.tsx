@@ -34,7 +34,7 @@ const ViewDetailsModal = ({
 }: ViewDetailsModalProps) => {
   const headers: DataTableHeader[] = [
     { key: "assertion", header: "Check Type" },
-    { key: "column", header: "Field" },
+    { key: "column", header: "Column" },
     { key: "value", header: "Value in your file" },
   ];
 

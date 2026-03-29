@@ -32,8 +32,8 @@ import ViewDetailsModal from "./ViewDetailsModal";
 
 export const ASSERTION_LABELS: Record<string, string> = {
   // Null / missing value checks
-  is_null_mandatory: "Required field is empty",
-  is_null_optional: "Field has no value",
+  is_null_mandatory: "Required column is empty",
+  is_null_optional: "Column has no value",
 
   // Create vs. update existence checks
   is_not_update: "School already exists — could not create a duplicate record",
@@ -42,7 +42,7 @@ export const ASSERTION_LABELS: Record<string, string> = {
   // Duplicate checks
   duplicate: "Duplicate value detected",
   duplicate_all_except_school_code:
-    "Potential duplicate record (all fields match except school ID)",
+    "Potential duplicate record (all columns match except school ID)",
   duplicate_set: "Duplicate location (same coordinates as another school)",
   duplicate_name_level_within_110m_radius:
     "Same school name and education level within 110m of another school",
@@ -258,7 +258,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
   const dqResultHeaders: ExtendedDataTableHeader[] = [
     {
       key: "column",
-      header: "Field",
+      header: "Column",
       sortable: false,
     },
     {
@@ -296,7 +296,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
       <div className="rounded-lg border bg-white shadow-sm">
         <div className="border-b px-4 py-3">
           <h3 className="text-lg font-semibold text-gray-800">
-            Overview of all fields sorted by type
+            Overview of all checks sorted by type
           </h3>
         </div>
 
