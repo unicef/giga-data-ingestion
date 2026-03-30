@@ -50,6 +50,7 @@ from data_ingestion.schemas.upload import (
     UploadDetailsRequest,
     UploadDetailsResponse,
     UploadSummaryResponse,
+    ValidateFuzzyRequest,
 )
 from data_ingestion.utils.data_quality import get_metadata_path
 
@@ -426,6 +427,51 @@ async def get_upload(
     return file_upload
 
 
+def _apply_fuzzy_corrections(
+    fuzzy_corrections_json: str, file_extension: str, file_obj, upload_content: bytes
+) -> bytes:
+    import io
+
+    import pandas as pd
+
+    try:
+        corrections_mapping = orjson.loads(fuzzy_corrections_json)
+        file_ext = file_extension.lower()
+        if file_ext in [".csv", ".xls", ".xlsx"]:
+            # In a non-async context we'd just use seek(0).
+            # Since file_obj is an UploadFile, we need an await if we abstract it entirely.
+            # But we can just use file_obj.file which is a SpooledTemporaryFile with synchronous ops.
+            file_obj.file.seek(0)
+            if file_ext == ".csv":
+                df = pd.read_csv(file_obj.file)
+            else:
+                df = pd.read_excel(file_obj.file)
+
+            changed = False
+            for correction in corrections_mapping:
+                col = correction.get("column_name")
+                old_val = correction.get("value_found")
+                new_val = correction.get("replace_with")
+
+                if col in df.columns and old_val is not None and new_val is not None:
+                    # Replace occurrences directly
+                    df[col] = df[col].astype(str).replace(str(old_val), str(new_val))
+                    changed = True
+
+            if changed:
+                # Write back to a buffer
+                buffer = io.BytesIO()
+                if file_ext == ".csv":
+                    df.to_csv(buffer, index=False)
+                else:
+                    df.to_excel(buffer, index=False)
+                return buffer.getvalue()
+    except Exception as e:
+        logger.error(f"Failed to apply fuzzy corrections: {e}")
+    # Fallback to the original file content
+    return upload_content
+
+
 @router.post("", response_model=FileUploadSchema)
 async def upload_file(
     response: Response,
@@ -508,9 +554,17 @@ async def upload_file(
             metadata["source"] = form.source
 
         await file.seek(0)
+        upload_content = await file.read()
+
+        # Apply fuzzy corrections if provided
+        if form.fuzzy_corrections:
+            upload_content = _apply_fuzzy_corrections(
+                form.fuzzy_corrections, file_extension, file, upload_content
+            )
+
         client.upload_blob(
-            await file.read(),
-            overwrite=True,
+            upload_content,
+            metadata=metadata,
             content_settings=ContentSettings(content_type=file_type),
         )
         # Upload metadata sidecar JSON
@@ -977,4 +1031,69 @@ async def download_raw_file_direct(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error downloading file: {str(e)}",
+        ) from e
+
+
+@router.post("/validate-fuzzy", status_code=status.HTTP_200_OK)
+async def validate_fuzzy_matching(
+    dataset: str,
+    form: ValidateFuzzyRequest = Depends(),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    """
+    Synchronously validate an uploaded CSV file for fuzzy matching errors.
+    Returns the errors grouped by column to display in the UI.
+    """
+    if not is_privileged:
+        roles = await get_user_roles(user, db)
+        if not roles:  # If user has no roles at all, deny access
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have permissions to upload structured datasets",
+            )
+    file = form.file
+
+    if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds 10 MB limit",
+        )
+
+    await file.read(8192)
+    file_extension = os.path.splitext(file.filename)[1].lower()
+
+    if file_extension not in [".csv", ".xls", ".xlsx"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fuzzy validation currently only supports CSV, XLS, and XLSX files.",
+        )
+
+    # Re-read the file to parse with pandas
+    await file.seek(0)
+    try:
+        if file_extension == ".csv":
+            df = pd.read_csv(file.file)
+        else:
+            df = pd.read_excel(file.file)
+    except Exception as e:
+        logger.error(f"Failed to parse file: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid {file_extension} format.",
+        ) from e
+
+    try:
+        from data_ingestion.utils.fuzzy_matching import run_fuzzy_matching
+
+        column_mapping = orjson.loads(form.column_to_schema_mapping)
+        results = run_fuzzy_matching(df, column_mapping)
+        return results
+
+    except Exception as e:
+        logger.error(f"Error during fuzzy matching validation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error running fuzzy matching validation: {str(e)}",
         ) from e
