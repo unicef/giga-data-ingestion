@@ -163,7 +163,12 @@ const RenderFormItem = ({
 function Metadata() {
   const {
     uploadSlice,
-    uploadSliceActions: { setStepIndex, setUploadDate, setUploadId },
+    uploadSliceActions: {
+      setStepIndex,
+      setUploadDate,
+      setUploadId,
+      setPendingSchoolDataPayload,
+    },
   } = useStore();
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType, uploadGroup } = Route.useParams();
@@ -171,6 +176,7 @@ function Metadata() {
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
+  const isSchoolData = uploadGroup === "school-data";
 
   const { countryDatasets, isPrivileged } = useRoles();
 
@@ -288,6 +294,14 @@ function Metadata() {
       source: uploadSlice.source,
     };
 
+    if (isSchoolData) {
+      setPendingSchoolDataPayload(body);
+      setIsUploading(false);
+      setStepIndex(3);
+      void navigate({ to: "../success" });
+      return;
+    }
+
     try {
       if (isUnstructured) {
         await uploadUnstructuredFile.mutateAsync(body);
@@ -303,6 +317,7 @@ function Metadata() {
         setUploadDate(new Date(created));
       }
 
+      setPendingSchoolDataPayload(null);
       setIsUploading(false);
       setStepIndex(3);
       void navigate({ to: "../success" });
