@@ -42,6 +42,18 @@ export default function routes(axi: AxiosInstance) {
         params: { dataset: params.dataset },
       });
     },
+    review: (params: UploadParams): Promise<AxiosResponse<UploadResponse>> => {
+      const formData = new FormData();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value != null) {
+          formData.append(key, value);
+        }
+      });
+
+      return axi.post("/upload/review", formData, {
+        params: { dataset: params.dataset },
+      });
+    },
 
     validate_fuzzy: (
       params: FuzzyValidationParams,

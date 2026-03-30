@@ -56,6 +56,7 @@ class FileUploadRequest:
     metadata: str = Form(...)
     source: str | None = Form(None)
     fuzzy_corrections: str | None = Form(None)
+    dq_mode: str = Form("master")
 
 
 @dataclass
