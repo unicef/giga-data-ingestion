@@ -23,19 +23,34 @@ def upgrade() -> None:
     op.execute("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'dq_mode') THEN CREATE TYPE dq_mode AS ENUM ('uploaded', 'master'); END IF; END $$;")
     op.execute("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'dqmodeenum') THEN CREATE TYPE dqmodeenum AS ENUM ('uploaded', 'master'); END IF; END $$;")
 
-    op.create_table('dq_runs',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('upload_id', sa.String(), nullable=False),
-    sa.Column('dq_mode', postgresql.ENUM('uploaded', 'master', name='dq_mode', create_type=False), nullable=False),
-    sa.Column('status', sa.String(), nullable=False),
-    sa.Column('dagster_run_id', sa.String(), nullable=True),
-    sa.Column('result_path', sa.String(), nullable=True),
-    sa.ForeignKeyConstraint(['upload_id'], ['file_uploads.id'], ondelete='CASCADE'),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_dq_runs_upload_id'), 'dq_runs', ['upload_id'], unique=False)
-    op.add_column('approval_request_audit_log', sa.Column('dq_mode', sa.Enum('uploaded', 'master', name='dqmodeenum', create_type=False), nullable=False))
-    op.add_column('approval_requests', sa.Column('dq_mode', sa.Enum('uploaded', 'master', name='dqmodeenum', create_type=False), nullable=False))
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    tables = inspector.get_table_names()
+    if 'dq_runs' not in tables:
+        op.create_table('dq_runs',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('upload_id', sa.String(), nullable=False),
+            sa.Column('dq_mode', postgresql.ENUM('uploaded', 'master', name='dq_mode', create_type=False), nullable=False),
+            sa.Column('status', sa.String(), nullable=False),
+            sa.Column('dagster_run_id', sa.String(), nullable=True),
+            sa.Column('result_path', sa.String(), nullable=True),
+            sa.ForeignKeyConstraint(['upload_id'], ['file_uploads.id'], ondelete='CASCADE'),
+            sa.PrimaryKeyConstraint('id')
+        )
+        op.create_index(op.f('ix_dq_runs_upload_id'), 'dq_runs', ['upload_id'], unique=False)
+
+    columns_audit = [c['name'] for c in inspector.get_columns('approval_request_audit_log')]
+    if 'dq_mode' not in columns_audit:
+        op.add_column('approval_request_audit_log',
+            sa.Column('dq_mode', postgresql.ENUM('uploaded', 'master', name='dqmodeenum', create_type=False), nullable=False)
+        )
+
+    columns_req = [c['name'] for c in inspector.get_columns('approval_requests')]
+    if 'dq_mode' not in columns_req:
+        op.add_column('approval_requests',
+            sa.Column('dq_mode', postgresql.ENUM('uploaded', 'master', name='dqmodeenum', create_type=False), nullable=False)
+        )
+
     op.drop_constraint(op.f('uq_country_dataset'), 'approval_requests', type_='unique')
     op.create_unique_constraint('uq_country_dataset', 'approval_requests', ['country', 'dataset', 'upload_id'])
     op.alter_column('file_uploads', 'dq_full_path',
