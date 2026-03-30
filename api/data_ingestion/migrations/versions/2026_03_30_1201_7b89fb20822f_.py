@@ -30,7 +30,7 @@ def upgrade() -> None:
         op.create_table('dq_runs',
             sa.Column('id', sa.Integer(), nullable=False),
             sa.Column('upload_id', sa.String(), nullable=False),
-            sa.Column('dq_mode', postgresql.ENUM('uploaded', 'master', name='dq_mode', create_type=False), nullable=False),
+            sa.Column('dq_mode', postgresql.ENUM('uploaded', 'master', name='dq_mode', create_type=False), nullable=False, server_default='uploaded'),
             sa.Column('status', sa.String(), nullable=False),
             sa.Column('dagster_run_id', sa.String(), nullable=True),
             sa.Column('result_path', sa.String(), nullable=True),
@@ -42,13 +42,13 @@ def upgrade() -> None:
     columns_audit = [c['name'] for c in inspector.get_columns('approval_request_audit_log')]
     if 'dq_mode' not in columns_audit:
         op.add_column('approval_request_audit_log',
-            sa.Column('dq_mode', postgresql.ENUM('uploaded', 'master', name='dqmodeenum', create_type=False), nullable=False)
+            sa.Column('dq_mode', postgresql.ENUM('uploaded', 'master', name='dqmodeenum', create_type=False), nullable=False, server_default='uploaded')
         )
 
     columns_req = [c['name'] for c in inspector.get_columns('approval_requests')]
     if 'dq_mode' not in columns_req:
         op.add_column('approval_requests',
-            sa.Column('dq_mode', postgresql.ENUM('uploaded', 'master', name='dqmodeenum', create_type=False), nullable=False)
+            sa.Column('dq_mode', postgresql.ENUM('uploaded', 'master', name='dqmodeenum', create_type=False), nullable=False, server_default='uploaded')
         )
 
     op.drop_constraint(op.f('uq_country_dataset'), 'approval_requests', type_='unique')
