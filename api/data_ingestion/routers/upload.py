@@ -2,7 +2,7 @@ import io
 import json
 import os
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Optional
 
 import country_converter as coco
 import magic
@@ -45,7 +45,11 @@ from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
     FileUploadRequest,
+    PaginatedResponse,
     UnstructuredFileUploadRequest,
+    UploadDetailsRequest,
+    UploadDetailsResponse,
+    UploadSummaryResponse,
 )
 from data_ingestion.utils.data_quality import get_metadata_path
 
@@ -54,6 +58,142 @@ router = APIRouter(
     tags=["upload"],
     dependencies=[Security(azure_scheme)],
 )
+
+
+@router.get("/by-country", response_model=list[UploadSummaryResponse])
+async def list_uploads_by_country(
+    country: str = Query(..., min_length=3, max_length=3),
+    dataset: str = Query(...),
+    upload_id: Optional[str] = Query(None, description="Filter by upload ID"),
+    uploaded_by: Optional[str] = Query(None, description="Filter by uploader email"),
+    sort_by: Optional[str] = Query("uploaded_at", description="Sort by field"),
+    sort_order: Optional[str] = Query(
+        "desc", regex="^(asc|desc)$", description="Sort order"
+    ),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    db: AsyncSession = Depends(get_db),
+):
+    # Convert ISO3 → country short name for role matching
+    country_name = coco.convert(country, to="name_short")
+
+    if not is_privileged:
+        roles = await get_user_roles(user, db)
+
+        expected_prefix = f"{country_name}-School"
+        has_access = any(role.startswith(expected_prefix) for role in roles)
+        if not has_access:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have permissions on this country",
+            )
+
+    # Base query
+    query = (
+        select(FileUpload)
+        .where(FileUpload.country == country)
+        .where(FileUpload.dataset == dataset.lower().split(" ")[1])
+    )
+
+    # Apply filters
+    if upload_id:
+        query = query.where(FileUpload.id == upload_id)
+
+    if uploaded_by:
+        query = query.where(FileUpload.uploader_email.ilike(f"%{uploaded_by}%"))
+    count_query = select(func.count()).select_from(query.subquery())
+    total = await db.scalar(count_query)
+    sort_mapping = {
+        "uploaded_at": FileUpload.created,
+        "uploader_email": FileUpload.uploader_email,
+    }
+    sort_column = sort_mapping.get(sort_by, FileUpload.created)
+
+    if sort_order == "asc":
+        query = query.order_by(sort_column.asc())
+    else:
+        query = query.order_by(sort_column.desc())
+
+    # Apply pagination
+    offset = (page - 1) * page_size
+    query = query.offset(offset).limit(page_size)
+
+    results = await db.scalars(query)
+    items = [
+        UploadSummaryResponse(
+            upload_id=row.id,
+            created=row.created,
+            file_name=row.original_filename,
+            dataset=row.dataset,
+            uploader_email=row.uploader_email,
+        )
+        for row in results.all()
+    ]
+
+    return PaginatedResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=(total + page_size - 1) // page_size,  # Ceiling division
+    )
+
+
+async def fetch_uploads_by_ids(
+    db: AsyncSession,
+    upload_ids: list[str],
+) -> list[FileUpload]:
+    query = (
+        select(FileUpload)
+        .where(FileUpload.id.in_(upload_ids))
+        .order_by(FileUpload.created.desc())
+    )
+
+    result = await db.scalars(query)
+    return result.all()
+
+
+@router.post("/details", response_model=list[UploadDetailsResponse])
+async def get_upload_details(
+    payload: UploadDetailsRequest,
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    db: AsyncSession = Depends(get_db),
+):
+    uploads = await fetch_uploads_by_ids(db, payload.upload_ids)
+
+    if not uploads:
+        return []
+
+    if not is_privileged:
+        roles = await get_user_roles(user, db)
+
+        def has_country_access(iso3: str) -> bool:
+            country_name = coco.convert(iso3, to="name_short")
+            expected_prefix = f"{country_name}-School"
+            return any(role.startswith(expected_prefix) for role in roles)
+
+        unauthorized = [
+            row.id for row in uploads if not has_country_access(row.country)
+        ]
+
+        if unauthorized:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to access one or more requested uploads.",
+            )
+
+    return [
+        UploadDetailsResponse(
+            upload_id=row.id,
+            country=row.country,
+            created=row.created,
+            file_name=row.original_filename,
+        )
+        for row in uploads
+    ]
 
 
 @router.get("/basic_check/{dataset}")
