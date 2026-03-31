@@ -134,6 +134,19 @@ export default function Navbar() {
               User management
             </HeaderMenuItem>
           )}
+          {isPrivileged && (
+            <HeaderMenuItem
+              as={Link}
+              to="/error-table"
+              search={{
+                page: DEFAULT_PAGE_NUMBER,
+                page_size: DEFAULT_PAGE_SIZE,
+              }}
+              isActive={location.pathname.startsWith("/error-table")}
+            >
+              Errors
+            </HeaderMenuItem>
+          )}
         </HeaderNavigation>
         <HeaderGlobalBar className="flex items-center">
           <div className="text-sm text-giga-dark-gray">{user.email}</div>
