@@ -91,7 +91,7 @@ async def list_countries_with_pending_changes(
             result = (
                 db.execute(
                     text(
-                        f"SELECT change_type, COUNT(*) AS cnt, COUNT(DISTINCT upload_id) AS upload_cnt"  # nosec B608
+                        f"SELECT change_type, COUNT(*) AS cnt"  # nosec B608
                         f" FROM {staging}"
                         f" WHERE status = '{_STATUS_PENDING}'"
                         f" AND change_type != '{_CHANGE_UNCHANGED}'"
@@ -106,6 +106,17 @@ async def list_countries_with_pending_changes(
 
         if not result:
             continue
+
+        upload_cnt = (
+            db.execute(
+                text(
+                    f"SELECT COUNT(DISTINCT upload_id) FROM {staging}"  # nosec B608
+                    f" WHERE status = '{_STATUS_PENDING}'"
+                    f" AND change_type != '{_CHANGE_UNCHANGED}'"
+                )
+            ).scalar()
+            or 0
+        )
 
         entry = rows_by_country.setdefault(
             ar.country,
@@ -123,7 +134,7 @@ async def list_countries_with_pending_changes(
                 entry["rows_updated"] += row["cnt"]
             elif row["change_type"] == _CHANGE_DELETE:
                 entry["rows_deleted"] += row["cnt"]
-            entry["pending_uploads"] = max(entry["pending_uploads"], row["upload_cnt"])
+        entry["pending_uploads"] += upload_cnt
 
     total_count = len(rows_by_country)
     sorted_countries = sorted(rows_by_country.keys())
