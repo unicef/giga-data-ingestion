@@ -1,11 +1,12 @@
-import pandas as pd
-from rapidfuzz import fuzz, process, utils
+import re
 
+import pandas as pd
 from data_ingestion.settings import logger
 from data_ingestion.utils.nocodb import (
     get_nocodb_table_id_from_name,
     get_nocodb_table_rows,
 )
+from rapidfuzz import fuzz, process, utils
 
 NOCODB_FUZZY_TABLES = {
     "education_level": "EducationLevelMapping",
@@ -31,10 +32,22 @@ def get_fuzzy_match_config_from_nocodb() -> dict[str, list[str]]:
                     continue
                 target_column = "Giga"
                 rows = get_nocodb_table_rows(table_id, fields=target_column)
-                valid_values = [
+                valid_values_raw = [
                     r.get(target_column) for r in rows if r.get(target_column)
                 ]
-                valid_values = list(set(valid_values))
+                # Split entries that contain multiple values (e.g. "Primary, Secondary and Post-Secondary")
+                valid_values = set()
+                for val in valid_values_raw:
+                    # Split by common delimiters: comma, semicolon, " and ", " & "
+                    parts = re.split(
+                        r",|;| and | & | And | AND ", str(val), flags=re.IGNORECASE
+                    )
+                    for p in parts:
+                        cleaned = p.strip()
+                        if cleaned:
+                            valid_values.add(cleaned)
+
+                valid_values = list(valid_values)
                 if valid_values:
                     config[col_name] = valid_values
                 else:
@@ -92,7 +105,7 @@ def _process_column_fuzzy_matching(
         is_valid_exactly = False
         exact_match_str = None
         for v in valid_values:
-            if str_val.lower() == v.lower():
+            if str_val.lower() == v.strip().lower():
                 is_valid_exactly = True
                 exact_match_str = v
                 break
