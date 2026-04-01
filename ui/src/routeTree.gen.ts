@@ -14,6 +14,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as UserManagementImport } from './routes/user-management'
+import { Route as ErrorTableImport } from './routes/error-table'
 import { Route as IndexImport } from './routes/index'
 import { Route as UserManagementIndexImport } from './routes/user-management/index'
 import { Route as UploadIndexImport } from './routes/upload/index'
@@ -76,6 +77,11 @@ const ApprovalRequestsLazyRoute = ApprovalRequestsLazyImport.update({
 
 const UserManagementRoute = UserManagementImport.update({
   path: '/user-management',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ErrorTableRoute = ErrorTableImport.update({
+  path: '/error-table',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -242,6 +248,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/error-table': {
+      preLoaderRoute: typeof ErrorTableImport
+      parentRoute: typeof rootRoute
+    }
     '/user-management': {
       preLoaderRoute: typeof UserManagementImport
       parentRoute: typeof rootRoute
@@ -377,6 +387,7 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
+  ErrorTableRoute,
   UserManagementRoute.addChildren([
     UserManagementIndexRoute,
     UserManagementUserAddRoute,
