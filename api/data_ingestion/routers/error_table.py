@@ -1,5 +1,7 @@
 import io
 
+from data_ingestion.db.trino import get_db
+from data_ingestion.internal.auth import azure_scheme
 from fastapi import (
     APIRouter,
     Depends,
@@ -11,9 +13,6 @@ from fastapi import (
 from sqlalchemy import column, func, literal, select, text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
-
-from data_ingestion.db.trino import get_db
-from data_ingestion.internal.auth import azure_scheme
 
 router = APIRouter(
     prefix="/api/error-table",
@@ -235,7 +234,8 @@ def download_upload_errors(
 
     all_rows.sort(key=lambda r: r.get("created_at") or "", reverse=True)
 
-    df = pd.DataFrame([_serialize_error_row(row) for row in rows])
+    # Export all columns to match the dq_results schema (not the UI subset)
+    df = pd.DataFrame([dict(row) for row in all_rows])
     csv_buffer = io.StringIO()
     df.to_csv(csv_buffer, index=False)
     csv_buffer.seek(0)
