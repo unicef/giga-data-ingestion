@@ -25,6 +25,16 @@ interface ViewDetailsModalProps {
   setOpen: Dispatch<SetStateAction<boolean>>;
 }
 
+const COLUMN_HEADERS: Record<string, string> = {
+  school_id_govt: "School ID",
+  school_name: "School Name",
+  admin1: "Region",
+  admin2: "District",
+  latitude: "Latitude",
+  longitude: "Longitude",
+  education_level: "Education Level",
+};
+
 const ViewDetailsModal = ({
   assertion,
   column,
@@ -32,14 +42,6 @@ const ViewDetailsModal = ({
   previewData,
   setOpen,
 }: ViewDetailsModalProps) => {
-  const headers: DataTableHeader[] = [
-    { key: "assertion", header: "Check Type" },
-    { key: "column", header: "Column" },
-    { key: "value", header: "Value in your file" },
-  ];
-
-  const columnDisplay = column === "" ? "Entire row" : column;
-
   const formatValue = (value: string | number | null | undefined) => {
     const isEmpty =
       value === null ||
@@ -53,14 +55,22 @@ const ViewDetailsModal = ({
     return value;
   };
 
-  const rows = previewData.map((data, index) => {
-    return {
-      id: `${assertion}-${column}-${index}`,
-      assertion: formatAssertion(assertion),
-      column: columnDisplay,
-      value: formatValue(data[column]),
-    };
-  });
+  const dynamicColumns =
+    previewData.length > 0 ? Object.keys(previewData[0]) : [];
+
+  const headers: DataTableHeader[] = dynamicColumns.map(col => ({
+    key: col,
+    header:
+      COLUMN_HEADERS[col] ??
+      col.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+  }));
+
+  const rows = previewData.map((data, index) => ({
+    id: `${assertion}-${column}-${index}`,
+    ...Object.fromEntries(
+      dynamicColumns.map(col => [col, formatValue(data[col])]),
+    ),
+  }));
 
   const onCancel = () => {
     setOpen(false);
