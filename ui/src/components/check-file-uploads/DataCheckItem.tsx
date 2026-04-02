@@ -2,18 +2,19 @@ import { useState } from "react";
 
 import { Tab, TabList, TabPanel, TabPanels, Tabs } from "@carbon/react";
 
-import { Check } from "@/types/upload";
+import { Check, DqFailedRowsFirstFiveRows } from "@/types/upload";
 
 import DataQualityChecks from "./ColumnChecks";
 
 interface DataCheckItemProps {
   data: Check[];
+  previewData: DqFailedRowsFirstFiveRows;
   title?: string;
   uploadId: string;
   hasDownloadButton?: boolean;
 }
 
-const DataCheckItem = ({ data, title }: DataCheckItemProps) => {
+const DataCheckItem = ({ data, previewData, title }: DataCheckItemProps) => {
   const [selectedTab, setSelectedTab] = useState(0);
   return (
     <Tabs
@@ -28,7 +29,7 @@ const DataCheckItem = ({ data, title }: DataCheckItemProps) => {
 
       <TabPanels>
         <TabPanel>
-          <DataQualityChecks data={data} />
+          <DataQualityChecks data={data} previewData={previewData} />
         </TabPanel>
       </TabPanels>
     </Tabs>
