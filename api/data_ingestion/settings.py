@@ -83,6 +83,10 @@ class Settings(BaseSettings):
     REDIS_CACHE_DEFAULT_TTL_SECONDS: int = int(timedelta(minutes=10).total_seconds())
     ADMIN_EMAIL: str = ""
     LAKEHOUSE_USERNAME: str = ""
+    GIGAMETER_API_BASE_URL: str = ""
+    GIGAMETER_API_TOKEN: str = ""
+    SYSTEM_USER_ID: str = "11223344-5566-4788-9900-aabbccddeeff"
+    SYSTEM_USER_EMAIL: str = "giga_meter@gigasync.org"
 
     @computed_field
     @property
