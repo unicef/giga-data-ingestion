@@ -36,8 +36,17 @@ export interface DataQualityCheckSummary {
   summary: Summary;
 }
 
+export interface DqFailedRowValues {
+  [key: string]: string | number | null;
+}
+
+export interface DqFailedRowsFirstFiveRows {
+  [checkName: string]: DqFailedRowValues[];
+}
+
 export interface DataQualityCheck {
   dq_summary: DataQualityCheckSummary;
+  dq_failed_rows_first_five_rows: DqFailedRowsFirstFiveRows;
   status: DQStatus;
 }
 
@@ -56,6 +65,7 @@ export const initialDataQualityCheck: DataQualityCheck = {
     geospatial_checks: [],
     critical_error_check: [],
   },
+  dq_failed_rows_first_five_rows: {},
   status: DQStatus.IN_PROGRESS,
 };
 
