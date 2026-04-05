@@ -68,7 +68,7 @@ const ViewDetailsModal = ({
 
   return (
     <Modal
-      modalHeading={`Rows failing: ${formatAssertion(assertion)}`}
+      modalHeading={`Rows failing: ${formatAssertion(assertion, column)}`}
       open={open}
       passiveModal
       primaryButtonText="Proceed"

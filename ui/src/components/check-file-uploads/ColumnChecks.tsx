@@ -44,6 +44,9 @@ export const ASSERTION_LABELS: Record<string, string> = {
   duplicate_all_except_school_code:
     "Potential duplicate record (all columns match except school ID)",
   duplicate_set: "Duplicate location (same coordinates as another school)",
+
+  // Cross-column relation checks
+  column_relation_checks: "Cross-column validation failed",
   duplicate_name_level_within_110m_radius:
     "Same school name and education level within 110m of another school",
   duplicate_similar_name_same_level_within_110m_radius:
@@ -70,8 +73,27 @@ export const ASSERTION_LABELS: Record<string, string> = {
   is_not_alphanumeric: "Value contains invalid characters",
 };
 
-export const formatAssertion = (assertion: string) =>
-  ASSERTION_LABELS[assertion] ?? assertion.replace(/_/g, " ");
+// Composite-key labels for duplicate_set checks.
+// These column names (e.g. "location_id") are internal DQ pipeline keys, not
+// columns from the user's file — they cannot be derived dynamically.
+export const ASSERTION_COLUMN_LABELS: Record<string, string> = {
+  "duplicate_set-location_id":
+    "Duplicate location (same coordinates as another school)",
+  "duplicate_set-education_level_location_id":
+    "Duplicate location and education level",
+  "duplicate_set-school_name_education_level_location_id":
+    "Duplicate school name, education level and location",
+  "duplicate_set-school_id_govt_school_name_education_level_location_id":
+    "Near-exact duplicate record (ID, name, education level and location all match)",
+};
+
+export const formatAssertion = (assertion: string, column?: string) => {
+  if (column) {
+    const combined = ASSERTION_COLUMN_LABELS[`${assertion}-${column}`];
+    if (combined) return combined;
+  }
+  return ASSERTION_LABELS[assertion] ?? assertion.replace(/_/g, " ");
+};
 
 interface ExtendedDataTableHeader extends DataTableHeader {
   sortable?: boolean;
@@ -195,7 +217,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
     return {
       id: `${assertion}-${columnKey}`,
       column: columnDisplay,
-      assertion: formatAssertion(assertion),
+      assertion: formatAssertion(assertion, columnKey),
       result_with_errors: (
         <div className="flex items-center">
           {count_failed > 0 ? (
