@@ -13,11 +13,9 @@ import { Tailwind } from "@react-email/tailwind";
 import tailwindConfig from "../styles/tailwind.config";
 import { DataQualityReportEmailProps } from "../types/dq-report";
 import { dqResultSummary } from "../constants/dq-result-summary";
-import CheckWithError from "../components/CheckWithError";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import DqReportHeading from "../components/DqReportHeading";
-import { isSummaryCheck } from "../utils/dq-report";
 
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
@@ -26,6 +24,7 @@ const DataQualityReport = ({
   dataset,
   uploadDate,
   uploadId,
+  country,
 }: DataQualityReportEmailProps) => {
   const hasCriticalError = Boolean(
     dataQualityCheck["critical_error_check"]?.[0]?.percent_failed > 0,
@@ -35,32 +34,11 @@ const DataQualityReport = ({
     ? "Data Check Error: Action Required!"
     : "Data Check Warnings: Action Required!";
 
-  const checks = Object.keys(dataQualityCheck)
-    .filter((key) => {
-      if (key === "summary") return false;
-      if (key === "critical_error_check") return false;
-      return true;
-    })
-    .map((key) => {
-      const check = dataQualityCheck[key];
-      if (isSummaryCheck(check)) {
-        return (
-          <>
-            <Text className="my-1">
-              Checks performed at <strong>{check.timestamp}</strong>
-            </Text>
-            <Text className="my-1">
-              Total rows: <strong>{check.rows}</strong>
-            </Text>
-            <Text className="my-1">
-              Total columns: <strong>{check.columns}</strong>
-            </Text>
-          </>
-        );
-      } else {
-        return <CheckWithError checks={check} title={key} />;
-      }
-    });
+  // Get summary information for the email
+  const summary = dataQualityCheck?.summary;
+  const totalRows = summary?.rows || 0;
+  const totalColumns = summary?.columns || 0;
+  const checkTimestamp = summary?.timestamp;
 
   return (
     <Html>
@@ -94,10 +72,13 @@ const DataQualityReport = ({
                 Dataset: <strong>{dataset}</strong>
               </Text>
               <Text className="my-1">
+                Country: <strong>{country}</strong>
+              </Text>
+              <Text className="my-1">
                 File Uploaded at <strong>{uploadDate}</strong>
               </Text>
 
-              <Section className="text-center my-8 ">
+              <Section className="text-center my-8">
                 <Button
                   className="bg-primary px-6 py-4 text-sm font-semibold text-white no-underline text-center"
                   href={`${baseUrl}/upload/${uploadId}`}
@@ -105,8 +86,6 @@ const DataQualityReport = ({
                   View Complete Report
                 </Button>
               </Section>
-
-              <Section className="py-4">{checks}</Section>
 
               <Footer>
                 <Text className="text-[#666666] text-[12px] leading-[24px]">
@@ -136,6 +115,7 @@ DataQualityReport.PreviewProps = {
     timeZoneName: "short",
   }),
   uploadId: "NjA5NzUy",
+  country: "USA",
 } satisfies DataQualityReportEmailProps;
 
 export default DataQualityReport;
