@@ -52,6 +52,7 @@ class FileUploadRequest:
     dataset: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+    dq_mode: str = Form("master")
 
 
 @dataclass
