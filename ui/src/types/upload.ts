@@ -45,16 +45,12 @@ export interface DqFailedRowsFirstFiveRows {
 }
 
 export interface DataQualityCheck {
-  name: string;
-  creation_time: string;
   dq_summary: DataQualityCheckSummary;
   dq_failed_rows_first_five_rows: DqFailedRowsFirstFiveRows;
   status: DQStatus;
 }
 
 export const initialDataQualityCheck: DataQualityCheck = {
-  name: "",
-  creation_time: new Date().toISOString(),
   dq_summary: {
     summary: {
       rows: 0,
