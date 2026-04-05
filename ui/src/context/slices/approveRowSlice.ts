@@ -110,3 +110,55 @@ export const createApproveRowSlice: StateCreator<
       ),
   },
 });
+
+/* ======================================================
+   UPLOAD SELECTION SLICE
+====================================================== */
+
+export interface UploadsByIdSliceState {
+  selectedUploadIds: string[];
+}
+
+export interface UploadsByIdSliceActions {
+  uploadActions: {
+    setSelectedUploadIds: (ids: string[]) => void;
+    clearSelectedUploadIds: () => void;
+  };
+}
+
+export interface UploadByIdSlice
+  extends UploadsByIdSliceState,
+    UploadsByIdSliceActions {}
+
+const initialUploadState: UploadsByIdSliceState = {
+  selectedUploadIds: [],
+};
+
+export const createUploadByIdSlice: StateCreator<
+  UploadByIdSlice,
+  [["zustand/immer", never], never],
+  [],
+  UploadByIdSlice
+> = set => ({
+  ...initialUploadState,
+
+  uploadActions: {
+    setSelectedUploadIds: ids =>
+      set(
+        state => {
+          state.selectedUploadIds = ids;
+        },
+        false,
+        "uploadByIdSlice/setSelectedUploadIds",
+      ),
+
+    clearSelectedUploadIds: () =>
+      set(
+        state => {
+          state.selectedUploadIds = [];
+        },
+        false,
+        "uploadByIdSlice/clearSelectedUploadIds",
+      ),
+  },
+});

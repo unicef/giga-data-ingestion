@@ -1,11 +1,14 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Generic, TypeVar
 
 import orjson
 from fastapi import Form, UploadFile
 from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr, field_validator
 
 from data_ingestion.models.file_upload import DQStatusEnum
+
+T = TypeVar("T")
 
 
 class FileUpload(BaseModel):
@@ -52,6 +55,8 @@ class FileUploadRequest:
     dataset: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+    dq_mode: str = Form("master")
+    fuzzy_corrections: str | None = Form(None)
 
 
 @dataclass
@@ -60,3 +65,36 @@ class UnstructuredFileUploadRequest:
     country: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+
+
+class UploadSummaryResponse(BaseModel):
+    upload_id: str
+    created: datetime
+    file_name: str | None
+    dataset: str | None = None
+    uploader_email: str | None = None
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class UploadDetailsRequest(BaseModel):
+    upload_ids: list[str]
+
+
+class UploadDetailsResponse(BaseModel):
+    upload_id: str
+    country: str
+    created: datetime
+    file_name: str | None
+
+
+@dataclass
+class ValidateFuzzyRequest:
+    file: UploadFile = Form(...)
+    column_to_schema_mapping: str = Form(...)
