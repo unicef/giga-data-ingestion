@@ -76,17 +76,18 @@ def fuzzy_match_value(val: str, valid_values: list[str], score_cutoff: float = 8
         str(val),
         valid_values,
         scorer=fuzz.WRatio,
-        score_cutoff=score_cutoff,
+        score_cutoff=0,
         processor=utils.default_process,
     )
 
     if result:
         matched_val, score, _ = result
-        # Only consider it changed if case-insensitive string doesn't match exactly.
-        # But we still want to return the strictly cased 'matched_val'.
-        str_val = str(val).strip()
-        was_changed = matched_val.lower() != str_val.lower()
-        return matched_val, was_changed
+        if score >= score_cutoff:
+            str_val = str(val).strip()
+            was_changed = matched_val.lower() != str_val.lower()
+            return matched_val, was_changed
+        elif score < 50.0:
+            return "Unknown", True
 
     return val, False
 
@@ -98,8 +99,23 @@ def _process_column_fuzzy_matching(
     total_unknown = 0
 
     for val, count in value_counts.items():
-        str_val = str(val).strip()
-        if not str_val:
+        is_null_or_nan = pd.isna(val)
+        str_val = str(val).strip() if not is_null_or_nan else ""
+
+        is_unknown_val = is_null_or_nan or str_val.lower() == "unknown" or str_val == ""
+
+        if is_unknown_val:
+            errors_in_column.append(
+                {
+                    "value_found": "null/nan/empty"
+                    if not str_val and is_null_or_nan
+                    else (str_val if str_val else "empty"),
+                    "count": int(count),
+                    "replace_with": "Unknown",
+                    "is_valid": True,  # Disables UI dropdown
+                }
+            )
+            total_unknown += int(count)
             continue
 
         # Check if exactly in valid values (case insensitive comparison)
@@ -180,7 +196,7 @@ def run_fuzzy_matching(df: pd.DataFrame, column_mappings: dict[str, str]) -> dic
             continue
 
         # Get unique values and their counts in the column
-        value_counts = df[raw_col].value_counts(dropna=True)
+        value_counts = df[raw_col].value_counts(dropna=False)
 
         errors_in_column, total_unknown = _process_column_fuzzy_matching(
             value_counts, valid_values
