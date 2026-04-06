@@ -18,6 +18,35 @@ NOCODB_FUZZY_TABLES = {
 }
 
 
+def _extract_valid_values_from_rows(rows: list[dict], target_column: str) -> list[str]:
+    """Helper to split and deduplicate valid values from NocoDB rows."""
+    valid_values_raw = [r.get(target_column) for r in rows if r.get(target_column)]
+
+    valid_values_raw_split = []
+    for val in valid_values_raw:
+        # Split by common delimiters: comma, semicolon, " and ", " & "
+        parts = re.split(r",|;| and | & | And | AND ", str(val), flags=re.IGNORECASE)
+        for p in parts:
+            cleaned = p.strip()
+            if cleaned:
+                valid_values_raw_split.append(cleaned)
+
+    # Deduplicate case-insensitively, keeping the first-seen casing
+    seen_lower = set()
+    valid_values = []
+    for v in valid_values_raw_split:
+        # Clean any non-printable or hidden chars
+        v_clean = "".join(char for char in v if char.isprintable()).strip()
+        if not v_clean:
+            continue
+        key = v_clean.lower()
+        if key not in seen_lower:
+            seen_lower.add(key)
+            valid_values.append(v_clean)
+
+    return valid_values
+
+
 def get_fuzzy_match_config_from_nocodb() -> dict[str, list[str]]:
     """
     Fetches exactly valid values for fuzzy matching from NocoDB.
@@ -33,22 +62,8 @@ def get_fuzzy_match_config_from_nocodb() -> dict[str, list[str]]:
                     continue
                 target_column = "Giga"
                 rows = get_nocodb_table_rows(table_id, fields=target_column)
-                valid_values_raw = [
-                    r.get(target_column) for r in rows if r.get(target_column)
-                ]
-                # Split entries that contain multiple values (e.g. "Primary, Secondary and Post-Secondary")
-                valid_values = set()
-                for val in valid_values_raw:
-                    # Split by common delimiters: comma, semicolon, " and ", " & "
-                    parts = re.split(
-                        r",|;| and | & | And | AND ", str(val), flags=re.IGNORECASE
-                    )
-                    for p in parts:
-                        cleaned = p.strip()
-                        if cleaned:
-                            valid_values.add(cleaned)
+                valid_values = _extract_valid_values_from_rows(rows, target_column)
 
-                valid_values = list(valid_values)
                 if valid_values:
                     config[col_name] = valid_values
                 else:
@@ -92,6 +107,16 @@ def fuzzy_match_value(val: str, valid_values: list[str], score_cutoff: float = 8
     return val, False
 
 
+def _is_null_or_nan(val) -> bool:
+    """Robust check for null/NaN/None across types."""
+    if val is None:
+        return True
+    try:
+        return pd.isna(val)
+    except (TypeError, ValueError):
+        return False
+
+
 def _process_column_fuzzy_matching(
     value_counts: pd.Series, valid_values: list[str]
 ) -> tuple[list[dict], int]:
@@ -99,22 +124,30 @@ def _process_column_fuzzy_matching(
     total_unknown = 0
 
     for val, count in value_counts.items():
-        is_null_or_nan = pd.isna(val)
-        str_val = str(val).strip() if not is_null_or_nan else ""
+        is_null = _is_null_or_nan(val)
+        str_val = str(val).strip() if not is_null else ""
 
-        is_unknown_val = is_null_or_nan or str_val.lower() == "unknown" or str_val == ""
+        # Treat null/NaN/empty/"nan" string/"unknown" as locked Unknown
+        is_unknown_val = (
+            is_null or str_val == "" or str_val.lower() in ("unknown", "nan", "none")
+        )
 
         if is_unknown_val:
+            # Determine display label
+            if is_null or str_val.lower() in ("nan", "none", ""):
+                display_val = "null/nan/empty"
+            else:
+                display_val = str_val
+
             errors_in_column.append(
                 {
-                    "value_found": "null/nan/empty"
-                    if not str_val and is_null_or_nan
-                    else (str_val if str_val else "empty"),
+                    "value_found": display_val,
                     "count": int(count),
                     "replace_with": "Unknown",
                     "is_valid": True,  # Disables UI dropdown
                 }
             )
+            # Count towards total rows in column
             total_unknown += int(count)
             continue
 
@@ -136,6 +169,8 @@ def _process_column_fuzzy_matching(
                     "is_valid": True,
                 }
             )
+            # Count towards total rows in column
+            total_unknown += int(count)
             continue
 
         # It's an unknown value. See if we can suggest a fuzzy replacement.
@@ -206,13 +241,19 @@ def run_fuzzy_matching(df: pd.DataFrame, column_mappings: dict[str, str]) -> dic
             # Sort errors_in_column: Invalid ones first, then valid ones
             errors_in_column.sort(key=lambda x: x["is_valid"])
 
+            # Always include "Unknown" in dropdown options so it's selectable
+            # And deduplicate again to be absolutely sure
+            dropdown_opts = sorted(set(valid_values))
+            if "Unknown" not in dropdown_opts:
+                dropdown_opts.append("Unknown")
+
             columns_with_errors.append(
                 {
                     "schema_column": standard_col,
                     "file_column": raw_col,
                     "header_title": f"{raw_col} ({standard_col})",
                     "unknown_count": total_unknown,
-                    "dropdown_options": sorted(valid_values),
+                    "dropdown_options": dropdown_opts,
                     "value_mappings": errors_in_column,
                 }
             )
