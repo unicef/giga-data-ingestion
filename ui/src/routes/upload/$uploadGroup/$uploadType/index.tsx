@@ -6,6 +6,7 @@ import {
   Button,
   ButtonSet,
   FileUploaderItem,
+  InlineNotification,
   SelectItem,
   SkeletonPlaceholder,
   Stack,
@@ -81,6 +82,7 @@ export default function Index() {
   const isGeolocation = uploadType === "geolocation";
 
   const [isParsing, setIsParsing] = useState(false);
+  const [uploadError, setUploadError] = useState(false);
 
   const [parsingError, setParsingError] = useState("");
   const navigate = useNavigate({ from: Route.fullPath });
@@ -190,7 +192,7 @@ export default function Index() {
         void navigate({ to: "./success" });
       } catch (error) {
         console.error("Upload failed:", error);
-        // Handle error appropriately - don't navigate on error
+        setUploadError(true);
         return;
       }
     } else {
@@ -349,6 +351,14 @@ export default function Index() {
             </div>
 
             {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
+            {uploadError && (
+              <InlineNotification
+                kind="error"
+                title="System error: "
+                subtitle="The upload failed due to a server issue. Your file is not the cause. Please try again or contact support if the problem persists."
+                onCloseButtonClick={() => setUploadError(false)}
+              />
+            )}
           </div>
         )}
       </div>
