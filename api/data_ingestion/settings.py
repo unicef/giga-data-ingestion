@@ -3,11 +3,16 @@ from datetime import timedelta
 from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
+from typing import Any, Literal
 
 import sentry_sdk
 from loguru import logger
-from pydantic import AnyUrl, PostgresDsn, RedisDsn, computed_field
+from pydantic import AliasChoices, AnyUrl, Field, PostgresDsn, RedisDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 
 class Environment(StrEnum):
@@ -68,7 +73,19 @@ class Settings(BaseSettings):
     AZURE_PASSWORD_RESET_AUTH_POLICY_NAME: str = ""
     DB_HOST: str = "db"
     DB_PORT: int = 5432
-    SENTRY_DSN: str = ""
+    SENTRY_DSN: str = Field(
+        default="", validation_alias=AliasChoices("SENTRY_DSN", "SENTRY_DSN_BACKEND")
+    )
+    SENTRY_ENABLE_IN_LOCAL: bool = False
+    SENTRY_SEND_DEFAULT_PII: bool = False
+    SENTRY_TRACES_SAMPLE_RATE: float = 1.0
+    SENTRY_PROFILES_SAMPLE_RATE: float = 0.0
+    SENTRY_MAX_REQUEST_BODY_SIZE: Literal[
+        "never", "small", "medium", "always"
+    ] = "never"
+    SENTRY_INCLUDE_SOURCE_CONTEXT: bool = False
+    SENTRY_INCLUDE_LOCAL_VARIABLES: bool = False
+    SENTRY_DEBUG: bool = False
     COMMIT_SHA: str = ""
     TRINO_HOST: str = "trino"
     TRINO_PORT: int = 8080
@@ -223,14 +240,51 @@ def get_settings():
 settings = get_settings()
 
 
+def _scrub_sentry_event(event: dict[str, Any], _hint: dict[str, Any]) -> dict[str, Any]:
+    """Minimize accidental PII leakage in captured request/user payloads."""
+    request = event.get("request")
+    if isinstance(request, dict):
+        request.pop("cookies", None)
+        request.pop("headers", None)
+        request.pop("data", None)
+        request.pop("query_string", None)
+
+        url = request.get("url")
+        if isinstance(url, str):
+            request["url"] = url.split("?", maxsplit=1)[0]
+
+    user = event.get("user")
+    if isinstance(user, dict):
+        user.pop("email", None)
+        user.pop("ip_address", None)
+        user.pop("username", None)
+
+    return event
+
+
 def initialize_sentry():
-    if settings.IN_PRODUCTION and settings.SENTRY_DSN:
+    sentry_enabled = bool(settings.SENTRY_DSN) and (
+        settings.IN_PRODUCTION or settings.SENTRY_ENABLE_IN_LOCAL
+    )
+    if sentry_enabled:
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
-            sample_rate=1.0,
-            traces_sample_rate=1.0,
+            send_default_pii=settings.SENTRY_SEND_DEFAULT_PII,
+            integrations=[
+                FastApiIntegration(transaction_style="url"),
+                CeleryIntegration(),
+                RedisIntegration(),
+                SqlalchemyIntegration(),
+            ],
+            traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
+            profiles_sample_rate=settings.SENTRY_PROFILES_SAMPLE_RATE,
+            max_request_body_size=settings.SENTRY_MAX_REQUEST_BODY_SIZE,
+            include_source_context=settings.SENTRY_INCLUDE_SOURCE_CONTEXT,
+            include_local_variables=settings.SENTRY_INCLUDE_LOCAL_VARIABLES,
+            debug=settings.SENTRY_DEBUG,
             environment=settings.DEPLOY_ENV,
             release=f"github.com/unicef/giga-data-ingestion:{settings.COMMIT_SHA}",
             server_name=f"ingestion-portal-api-{settings.DEPLOY_ENV.name}@{socket.gethostname()}",
+            before_send=_scrub_sentry_event,
         )
         logger.info("Initialized Sentry.")
