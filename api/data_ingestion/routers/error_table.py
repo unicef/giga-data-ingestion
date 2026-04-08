@@ -22,20 +22,20 @@ router = APIRouter(
 )
 
 
+ERRORS_SCHEMA = "school_geolocation_error_table"
+
+
 def get_upload_error_tables(db: Session) -> list[str]:
     keys = (
         db.execute(
             select(column("table_name"))
             .select_from(text("information_schema.tables"))
-            .where(
-                (column("table_schema") == literal("school_master"))
-                & column("table_name").like("upload_errors_%")
-            )
+            .where(column("table_schema") == literal(ERRORS_SCHEMA))
         )
         .mappings()
         .all()
     )
-    return [f"school_master.{row['table_name']}" for row in keys]
+    return [f"{ERRORS_SCHEMA}.{row['table_name']}" for row in keys]
 
 
 def _serialize_error_row(row: dict) -> dict:
@@ -73,7 +73,7 @@ def list_upload_errors(
     """List rows from the unified upload errors table with optional filters."""
     tables = get_upload_error_tables(db)
     if country_code:
-        target_table = f"school_master.upload_errors_{country_code.lower()}"
+        target_table = f"{ERRORS_SCHEMA}.{country_code.lower()}"
         tables = [t for t in tables if t == target_table]
 
     if not tables:
@@ -201,7 +201,7 @@ def download_upload_errors(
 
     tables = get_upload_error_tables(db)
     if country_code:
-        target_table = f"school_master.upload_errors_{country_code.lower()}"
+        target_table = f"{ERRORS_SCHEMA}.{country_code.lower()}"
         tables = [t for t in tables if t == target_table]
 
     if not tables:
