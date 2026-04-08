@@ -169,8 +169,6 @@ def _process_column_fuzzy_matching(
                     "is_valid": True,
                 }
             )
-            # Count towards total rows in column
-            total_unknown += int(count)
             continue
 
         # It's an unknown value. See if we can suggest a fuzzy replacement.
