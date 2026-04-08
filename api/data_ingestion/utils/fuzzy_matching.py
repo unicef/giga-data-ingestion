@@ -147,8 +147,6 @@ def _process_column_fuzzy_matching(
                     "is_valid": True,  # Disables UI dropdown
                 }
             )
-            # Count towards total rows in column
-            total_unknown += int(count)
             continue
 
         # Check if exactly in valid values (case insensitive comparison)
