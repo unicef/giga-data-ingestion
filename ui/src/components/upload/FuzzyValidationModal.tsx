@@ -209,7 +209,6 @@ function FuzzyValidationModal({
           {columnsWithUnknownValues.map(column => (
             <AccordionItem
               key={column.file_column}
-              open={column.unknown_count > 0}
               title={
                 <div className="flex items-center justify-between gap-4 pr-6">
                   <span className="font-semibold">{column.header_title}</span>
