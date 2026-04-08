@@ -1,4 +1,4 @@
-import { ComponentProps, memo, useMemo } from "react";
+import { ComponentProps, memo, useMemo, useState } from "react";
 
 import { ArrowRight, Download, InProgress, Restart } from "@carbon/icons-react";
 import {
@@ -11,7 +11,7 @@ import {
   Tabs,
   Tag,
 } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Link,
   createFileRoute,
@@ -111,27 +111,47 @@ const SuccessDataQualityChecks = memo(
 function Success() {
   const { uploadGroup, uploadType } = Route.useParams();
   const {
-    uploadSliceActions: { resetUploadSliceState },
-    uploadSlice: { uploadId, source },
+    uploadSliceActions: {
+      resetUploadSliceState,
+      setPendingSchoolDataPayload,
+      setUploadDate,
+      setUploadId,
+    },
+    uploadSlice: { uploadId, source, pendingSchoolDataPayload },
   } = useStore();
 
   const navigate = useNavigate({ from: Route.fullPath });
+  const [reviewUploadId, setReviewUploadId] = useState<string>("");
+  const [actionError, setActionError] = useState<string>("");
 
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
+  const isSchoolData = uploadGroup === "school-data";
+  const isPreSubmitMode =
+    isSchoolData && !!pendingSchoolDataPayload && uploadId === "";
+  const activeUploadId = uploadId || reviewUploadId;
+  const isReviewMode = isPreSubmitMode || (!!reviewUploadId && !uploadId);
+
+  const reviewFile = useMutation({
+    mutationFn: api.uploads.review,
+  });
+  const uploadFile = useMutation({
+    mutationFn: api.uploads.upload,
+  });
+  const isActionPending = reviewFile.isPending || uploadFile.isPending;
 
   const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
     queryFn: () => api.uploads.list_basic_checks(uploadType, source),
     queryKey: ["basic_checks", uploadType, source],
-    enabled: !isStructured, // Don't query for structured datasets
+    enabled: !isStructured && !!activeUploadId,
   });
   const basicCheck = basicCheckQuery?.data ?? [];
 
   const { data: uploadQuery } = useQuery({
-    queryKey: ["upload", uploadId],
-    queryFn: () => api.uploads.get_upload(uploadId),
-    enabled: !isStructured && !!uploadId, // Don't query for structured datasets
+    queryKey: ["upload", activeUploadId],
+    queryFn: () => api.uploads.get_upload(activeUploadId),
+    enabled: !isStructured && !!activeUploadId,
   });
   const uploadData = useMemo<UploadResponse>(
     () => uploadQuery?.data ?? initialUploadResponse,
@@ -148,10 +168,10 @@ function Success() {
     isRefetching: isRefetchingDqResultQuery,
     refetch: refetchDqResultQuery,
   } = useQuery({
-    queryKey: ["dq_check", uploadId],
-    queryFn: () => api.uploads.get_data_quality_check(uploadId),
+    queryKey: ["dq_check", activeUploadId],
+    queryFn: () => api.uploads.get_data_quality_check(activeUploadId),
     refetchInterval: 7000,
-    enabled: !isUnstructured && !isStructured, // Don't query for structured datasets
+    enabled: !isUnstructured && !isStructured && !!activeUploadId,
   });
 
   const dqResult = useMemo<DataQualityCheck>(
@@ -160,11 +180,6 @@ function Success() {
   );
 
   const status = dqResult?.status;
-
-  const isError =
-    status === DQStatus.ERROR ||
-    status === DQStatus.SKIPPED ||
-    status === DQStatus.TIMEOUT;
 
   const basicCheckItems = Object.entries(basicCheck)
     .map(([key, value]) => {
@@ -184,6 +199,11 @@ function Success() {
   const rows = summaryStats.rows ?? 0;
   const rowsPassed = summaryStats.rows_passed ?? 0;
   const rowsFailed = summaryStats.rows_failed ?? 0;
+  const effectiveStatus: DQStatus | null = status ?? null;
+  const isError =
+    effectiveStatus === DQStatus.ERROR ||
+    effectiveStatus === DQStatus.SKIPPED ||
+    effectiveStatus === DQStatus.TIMEOUT;
 
   const handleSubmit = () => {
     if (status === DQStatus.COMPLETED) {
@@ -194,6 +214,38 @@ function Success() {
     } else {
       resetUploadSliceState();
       navigate({ to: "/upload" });
+    }
+  };
+
+  const handleReview = async () => {
+    if (!pendingSchoolDataPayload) return;
+
+    setActionError("");
+    try {
+      const {
+        data: { id },
+      } = await reviewFile.mutateAsync(pendingSchoolDataPayload);
+      setReviewUploadId(id);
+    } catch {
+      setActionError("Review failed. Please try again.");
+    }
+  };
+
+  const handleInitialSubmit = async () => {
+    if (!pendingSchoolDataPayload) return;
+
+    setActionError("");
+    try {
+      const {
+        data: { id, created },
+      } = await uploadFile.mutateAsync(pendingSchoolDataPayload);
+
+      setUploadId(id);
+      setUploadDate(new Date(created));
+      setPendingSchoolDataPayload(null);
+      setReviewUploadId("");
+    } catch {
+      setActionError("Submit failed. Please try again.");
     }
   };
 
@@ -213,7 +265,10 @@ function Success() {
     [DQStatus.TIMEOUT]: { color: "red", text: "Failed" },
   };
 
-  const tagProps = status ? statusTagMap[status] : null;
+  const tagProps = effectiveStatus ? statusTagMap[effectiveStatus] : null;
+  const qualityHeader = isReviewMode
+    ? "Data Quality: Review / Submit"
+    : "Data Quality Review";
   // Common card styles
   const cardStyle = {
     flex: 1,
@@ -242,6 +297,11 @@ function Success() {
     marginTop: "auto",
   };
 
+  const displayUploadId = activeUploadId || "-";
+  const displayFileName =
+    uploadData.original_filename || pendingSchoolDataPayload?.file?.name || "-";
+  const createdDate = uploadData.created ? new Date(uploadData.created) : null;
+
   return (
     <>
       {isUnstructured ? (
@@ -263,11 +323,11 @@ function Success() {
           <div className="flex gap-6">
             <div className="flex border-b-2 border-gray-300">
               <div className="bg-gray-100 py-4 pl-4 pr-28 text-base font-semibold">
-                Data Quality Review
+                {qualityHeader}
               </div>
               <Button
                 className="bg-gray-100"
-                disabled={isRefetchingDqResultQuery}
+                disabled={isRefetchingDqResultQuery || !activeUploadId}
                 renderIcon={Restart}
                 kind="ghost"
                 onClick={async () => await refetchDqResultQuery()}
@@ -280,7 +340,7 @@ function Success() {
                 )}
               </div>
             </div>
-            {status === DQStatus.IN_PROGRESS && (
+            {activeUploadId && effectiveStatus === DQStatus.IN_PROGRESS && (
               <>
                 <div className="flex items-center gap-2 text-xs">
                   <Loading small withOverlay={false} />
@@ -294,70 +354,116 @@ function Success() {
           </div>
 
           <div className="py-6 text-blue-400">
-            {status === DQStatus.IN_PROGRESS && (
+            {isPreSubmitMode && !activeUploadId && (
+              <>
+                You are in the Review / Submit step. Review is optional. Click
+                Review to preview checks, or click Submit to continue.
+              </>
+            )}
+            {!!reviewUploadId &&
+              !uploadId &&
+              effectiveStatus === DQStatus.COMPLETED && (
+                <>
+                  Review completed successfully. Preview checks are visible
+                  below. Click Submit when you are ready.
+                </>
+              )}
+            {!!uploadId && effectiveStatus === DQStatus.IN_PROGRESS && (
               <>
                 Congratulations! Your data file has been uploaded and data
                 quality checks are <b>in progress.</b>
               </>
             )}
-            {status === DQStatus.COMPLETED && (
+            {activeUploadId && effectiveStatus === DQStatus.COMPLETED && (
               <>
-                Congratulations! Your data file has been uploaded and data
-                quality checks are{" "}
+                {uploadId
+                  ? "Congratulations! Your data file has been uploaded and data quality checks are "
+                  : "Review checks are "}
                 <span className="text-green-600">successful.</span>
               </>
             )}
-            {isError && (
+            {activeUploadId && isError && (
               <>
-                Your data file has been uploaded and data quality checks{" "}
+                {uploadId
+                  ? "Your data file has been uploaded and data quality checks "
+                  : "Review checks "}
                 <span className="text-orange-400">have failed.</span>
               </>
             )}
           </div>
 
-          <Button
-            className={cn("w-full", {
-              "bg-green-600 hover:bg-green-800": status === DQStatus.COMPLETED,
-            })}
-            isExpressive
-            onClick={handleSubmit}
-            renderIcon={ArrowRight}
-          >
-            {status === DQStatus.COMPLETED
-              ? "Review Submission"
-              : "Close and run in background"}
-          </Button>
+          {actionError && <p className="text-sm text-red-600">{actionError}</p>}
+
+          {isReviewMode ? (
+            <div className="flex flex-col gap-3 md:flex-row">
+              <Button
+                className="md:flex-1"
+                disabled={!pendingSchoolDataPayload || isActionPending}
+                isExpressive
+                kind="secondary"
+                onClick={handleReview}
+                renderIcon={Restart}
+              >
+                {reviewFile.isPending ? "Reviewing..." : "Review"}
+              </Button>
+              <Button
+                className="md:flex-1"
+                disabled={!pendingSchoolDataPayload || isActionPending}
+                isExpressive
+                onClick={handleInitialSubmit}
+                renderIcon={ArrowRight}
+              >
+                {uploadFile.isPending ? "Submitting..." : "Submit"}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              className={cn("w-full", {
+                "bg-green-600 hover:bg-green-800":
+                  status === DQStatus.COMPLETED,
+              })}
+              isExpressive
+              onClick={handleSubmit}
+              renderIcon={ArrowRight}
+            >
+              {status === DQStatus.COMPLETED
+                ? "Review Submission"
+                : "Close and run in background"}
+            </Button>
+          )}
 
           <div>
-            <div
-              style={{
-                marginBottom: "2rem",
-                background: "#fff",
-                padding: "1.5rem",
-                borderRadius: "4px",
-              }}
-            >
-              <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
-                File: <a className="bx--link">{uploadData.original_filename}</a>
+            <div className="mb-8 rounded border border-gray-200 bg-white p-6">
+              <p className="mb-4 text-base font-semibold">
+                File:{" "}
+                {displayFileName === "-" ? (
+                  <span className="text-gray-500">Not available</span>
+                ) : (
+                  <a className="bx--link">{displayFileName}</a>
+                )}
               </p>
 
-              <p
-                style={{
-                  fontSize: "0.875rem",
-                  color: "#6f6f6f",
-                  marginBottom: "1rem",
-                }}
-              >
-                Uploaded: {uploadData.uploader_email}
-                <br />
-                UploadID: {uploadId}
-                <br />
-                {new Date(uploadData.created).toLocaleTimeString()} GMT
-                <br />
-                {new Date(uploadData.created).toDateString()}
-              </p>
+              <div className="grid gap-2 text-sm text-gray-600 md:grid-cols-2">
+                <p>
+                  Uploaded by: {uploadData.uploader_email || "Not available"}
+                </p>
+                <p>
+                  Upload ID:{" "}
+                  {displayUploadId === "-" ? "Not available" : displayUploadId}
+                </p>
+                <p>
+                  Time:{" "}
+                  {createdDate
+                    ? `${createdDate.toLocaleTimeString()} GMT`
+                    : "Not available"}
+                </p>
+                <p>
+                  Date:{" "}
+                  {createdDate ? createdDate.toDateString() : "Not available"}
+                </p>
+              </div>
             </div>
-            {status === DQStatus.COMPLETED && (
+            {activeUploadId && effectiveStatus === DQStatus.COMPLETED && (
               <>
                 <div
                   style={{
@@ -421,9 +527,9 @@ function Success() {
           {status === DQStatus.COMPLETED ? (
             <SuccessDataQualityChecks
               dqResult={dqResult}
-              status={status}
+              status={effectiveStatus}
               uploadData={uploadData}
-              uploadId={uploadId}
+              uploadId={activeUploadId}
             />
           ) : isBasicCheckFetching ? (
             <p>Loading basic checks...</p>

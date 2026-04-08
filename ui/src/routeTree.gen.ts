@@ -14,6 +14,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as UserManagementImport } from './routes/user-management'
+import { Route as ErrorTableImport } from './routes/error-table'
 import { Route as IndexImport } from './routes/index'
 import { Route as UserManagementIndexImport } from './routes/user-management/index'
 import { Route as UploadIndexImport } from './routes/upload/index'
@@ -25,6 +26,7 @@ import { Route as IngestApiAddImport } from './routes/ingest-api/add'
 import { Route as UploadUploadIdIndexImport } from './routes/upload/$uploadId/index'
 import { Route as IngestApiAddIndexImport } from './routes/ingest-api/add/index'
 import { Route as DeleteCountryIndexImport } from './routes/delete/$country/index'
+import { Route as ApprovalRequestsUploadsIndexImport } from './routes/approval-requests/uploads/index'
 import { Route as ApprovalRequestsSubpathIndexImport } from './routes/approval-requests/$subpath/index'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
@@ -76,6 +78,11 @@ const ApprovalRequestsLazyRoute = ApprovalRequestsLazyImport.update({
 
 const UserManagementRoute = UserManagementImport.update({
   path: '/user-management',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ErrorTableRoute = ErrorTableImport.update({
+  path: '/error-table',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -133,6 +140,12 @@ const DeleteCountryIndexRoute = DeleteCountryIndexImport.update({
   path: '/$country/',
   getParentRoute: () => DeleteLazyRoute,
 } as any)
+
+const ApprovalRequestsUploadsIndexRoute =
+  ApprovalRequestsUploadsIndexImport.update({
+    path: '/uploads/',
+    getParentRoute: () => ApprovalRequestsLazyRoute,
+  } as any)
 
 const ApprovalRequestsSubpathIndexRoute =
   ApprovalRequestsSubpathIndexImport.update({
@@ -242,6 +255,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/error-table': {
+      preLoaderRoute: typeof ErrorTableImport
+      parentRoute: typeof rootRoute
+    }
     '/user-management': {
       preLoaderRoute: typeof UserManagementImport
       parentRoute: typeof rootRoute
@@ -314,6 +331,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApprovalRequestsSubpathIndexImport
       parentRoute: typeof ApprovalRequestsLazyImport
     }
+    '/approval-requests/uploads/': {
+      preLoaderRoute: typeof ApprovalRequestsUploadsIndexImport
+      parentRoute: typeof ApprovalRequestsLazyImport
+    }
     '/delete/$country/': {
       preLoaderRoute: typeof DeleteCountryIndexImport
       parentRoute: typeof DeleteLazyImport
@@ -377,6 +398,7 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
+  ErrorTableRoute,
   UserManagementRoute.addChildren([
     UserManagementIndexRoute,
     UserManagementUserAddRoute,
@@ -388,6 +410,7 @@ export const routeTree = rootRoute.addChildren([
     ApprovalRequestsIndexRoute,
     ApprovalRequestsSubpathConfirmRoute,
     ApprovalRequestsSubpathIndexRoute,
+    ApprovalRequestsUploadsIndexRoute,
   ]),
   DeleteLazyRoute.addChildren([DeleteIndexRoute, DeleteCountryIndexRoute]),
   IngestApiLazyRoute.addChildren([
