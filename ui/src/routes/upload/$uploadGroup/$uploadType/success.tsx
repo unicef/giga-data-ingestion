@@ -96,8 +96,8 @@ const SuccessDataQualityChecks = memo(
             <TabPanel key={key}>
               <DataCheckItem
                 data={checks[key] as Check[]}
-                hasDownloadButton={false}
                 previewData={dqResult.dq_failed_rows_first_five_rows}
+                hasDownloadButton={false}
                 uploadId={uploadId}
               />
             </TabPanel>

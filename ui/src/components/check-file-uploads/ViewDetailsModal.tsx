@@ -15,6 +15,8 @@ import {
 
 import { DqFailedRowValues } from "@/types/upload";
 
+import { formatAssertion } from "./ColumnChecks";
+
 interface ViewDetailsModalProps {
   assertion: string;
   column: string;
@@ -31,17 +33,32 @@ const ViewDetailsModal = ({
   setOpen,
 }: ViewDetailsModalProps) => {
   const headers: DataTableHeader[] = [
-    { key: "assertion", header: "Assertion" },
+    { key: "assertion", header: "Check Type" },
     { key: "column", header: "Column" },
-    { key: "value", header: "Value" },
+    { key: "value", header: "Value in your file" },
   ];
+
+  const columnDisplay = column === "" ? "Entire row" : column;
+
+  const formatValue = (value: string | number | null | undefined) => {
+    const isEmpty =
+      value === null ||
+      value === undefined ||
+      (typeof value === "string" && value.trim().toLowerCase() === "nan") ||
+      (typeof value === "number" && isNaN(value));
+
+    if (isEmpty) {
+      return <span className="italic text-gray-400">(Empty)</span>;
+    }
+    return value;
+  };
 
   const rows = previewData.map((data, index) => {
     return {
       id: `${assertion}-${column}-${index}`,
-      assertion: assertion,
-      column: column,
-      value: data[column] === null ? "null" : data[column],
+      assertion: formatAssertion(assertion),
+      column: columnDisplay,
+      value: formatValue(data[column]),
     };
   });
 
@@ -51,7 +68,7 @@ const ViewDetailsModal = ({
 
   return (
     <Modal
-      modalHeading={assertion}
+      modalHeading={`Rows failing: ${formatAssertion(assertion, column)}`}
       open={open}
       passiveModal
       primaryButtonText="Proceed"
