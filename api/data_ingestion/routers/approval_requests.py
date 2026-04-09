@@ -3,6 +3,7 @@ import logging
 import urllib.parse
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 from country_converter import country_converter as coco
@@ -14,13 +15,14 @@ from sqlalchemy import (
     func,
     literal,
     literal_column,
+    or_,
     select,
     text,
     union_all,
     update,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql.functions import count
 from sqlalchemy.types import String
 
@@ -33,12 +35,17 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
     ApprovalRequest,
+    DQRun,
+    FileUpload,
     User as DatabaseUser,
 )
-from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
+from data_ingestion.models.approval_requests import ApprovalRequestAuditLog, DQModeEnum
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
+    ApprovalByUploadResponse,
+    ApprovalFilterByUploadRequest,
     ApprovalRequestListing,
+    ApproveDatasetRequest,
     UploadApprovedRowsRequest,
 )
 from data_ingestion.schemas.core import PagedResponseSchema
@@ -69,7 +76,7 @@ async def list_approval_requests(
     settings = {}
     table_names = []
     for item in items:
-        settings[f"{item.country}-{item.dataset}"] = item.enabled
+        settings[item.upload_id] = item.enabled
         table_names.append(item.country.lower())
 
     data_cte = (
@@ -218,7 +225,27 @@ async def list_approval_requests(
             union_all(*queries).order_by(column("table_name"), column("table_schema"))
         )
         stats = res.mappings().all()
+        approvals = await primary_db.scalars(
+            select(ApprovalRequest).options(joinedload(ApprovalRequest.file_upload))
+        )
+        # Group approvals by country-dataset to handle multiple uploads
+        approval_lists = {}
+        for a in approvals.all():
+            key = f"{a.country}-{a.dataset}"
+            if key not in approval_lists:
+                approval_lists[key] = []
+            approval_lists[key].append(
+                {
+                    "upload_id": a.upload_id,
+                    "uploaded_at": a.file_upload.created if a.file_upload else None,
+                    "file_name": a.file_upload.file_name if a.file_upload else None,
+                    "uploader_email": a.file_upload.uploader_email
+                    if a.file_upload
+                    else None,
+                }
+            )
 
+        # Create one row per upload (not one per country/dataset)
         for stat in stats:
             country = coco.convert(stat["table_name"], to="name_short")
             country_iso3 = coco.convert(stat["table_name"], to="ISO3")
@@ -230,124 +257,58 @@ async def list_approval_requests(
                 .title()
                 .rstrip()
             )
-            enabled = settings.get(f"{country_iso3}-{dataset}", False)
 
-            body.append(
-                ApprovalRequestListing(
-                    id=f'{stat["table_name"].upper()}-{dataset}',
-                    country=country,
-                    country_iso3=stat["table_name"].upper(),
-                    dataset=dataset,
-                    subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
-                    last_modified=stat["last_modified"],
-                    rows_count=stat["rows_count"],
-                    rows_added=stat["rows_added"],
-                    rows_updated=stat["rows_updated"],
-                    rows_deleted=stat["rows_deleted"],
-                    enabled=enabled,
+            # Get all uploads for this country-dataset
+            uploads = approval_lists.get(f"{country_iso3}-{dataset}", [])
+
+            if not uploads:
+                # No uploads found, create a single row with no upload info
+                body.append(
+                    ApprovalRequestListing(
+                        id=f'{stat["table_name"].upper()}-{dataset}',
+                        country=country,
+                        country_iso3=stat["table_name"].upper(),
+                        dataset=dataset,
+                        subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
+                        last_modified=stat["last_modified"],
+                        rows_count=stat["rows_count"],
+                        rows_added=stat["rows_added"],
+                        rows_updated=stat["rows_updated"],
+                        rows_deleted=stat["rows_deleted"],
+                        enabled=False,
+                        upload_id=None,
+                        uploaded_at=None,
+                        file_name=None,
+                    )
                 )
-            )
+            else:
+                # Create one row per upload
+                for upload_info in uploads:
+                    enabled = settings.get(upload_info.get("upload_id", ""), False)
+                    body.append(
+                        ApprovalRequestListing(
+                            id=f'{stat["table_name"].upper()}-{dataset}-{upload_info["upload_id"]}',
+                            country=country,
+                            country_iso3=stat["table_name"].upper(),
+                            dataset=dataset,
+                            subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
+                            last_modified=stat["last_modified"],
+                            rows_count=stat["rows_count"],
+                            rows_added=stat["rows_added"],
+                            rows_updated=stat["rows_updated"],
+                            rows_deleted=stat["rows_deleted"],
+                            enabled=enabled,
+                            upload_id=upload_info.get("upload_id"),
+                            uploaded_at=upload_info.get("uploaded_at"),
+                            file_name=upload_info.get("file_name"),
+                        )
+                    )
 
     return {
         "data": body,
         "page": page,
         "page_size": page_size,
         "total_count": total_count,
-    }
-
-
-@router.get("/{subpath}")
-async def get_approval_request(
-    subpath: str,
-    db: Session = Depends(get_db),
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=10, ge=1, le=100),
-):
-    if len(splits := urllib.parse.unquote(subpath).split("/")) != 2:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    table_schema, table_name = splits
-    country = coco.convert(table_name, to="name_short")
-    dataset = table_schema.replace("staging", "").replace("_", " ").title()
-
-    data_cte = (
-        select(
-            # Create an identifier that is unique across versions
-            func.concat_ws(
-                "|",
-                column("school_id_giga"),
-                column("_change_type"),
-                column("_commit_version").cast(String()),
-            ).label("change_id"),
-            "*",
-        )
-        .select_from(
-            func.table(
-                func.delta_lake.system.table_changes(
-                    literal(table_schema), literal(table_name), 0
-                )
-            )
-        )
-        .cte("changes")
-    )
-    max_version_cte = (
-        select(func.max(column("_commit_version")).label("max_version"))
-        .select_from(data_cte)
-        .limit(1)
-    ).cte("max_version")
-
-    cdf_cte = (
-        select("*")
-        .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
-        .where(
-            (literal_column("mv.max_version") == 1)
-            | (literal_column("d._commit_version") == 2)
-            | (
-                (literal_column("d._commit_version") > 2)
-                & (literal_column("d._change_type") != "update_preimage")
-            )
-        )
-    )
-
-    total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
-
-    cdf = (
-        db.execute(
-            select("*")
-            .select_from(cdf_cte)
-            .order_by(
-                column("school_id_giga"),
-                column("_commit_version").desc(),
-                column("_change_type").desc(),
-            )
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        )
-        .mappings()
-        .all()
-    )
-    detail = (
-        db.execute(
-            select("*")
-            .select_from(text(f'{table_schema}."{table_name}$history"'))
-            .order_by(column("version").desc())
-            .limit(1)
-        )
-        .mappings()
-        .first()
-    )
-
-    df = pd.DataFrame(cdf)
-    df = df.drop(columns=["signature"]).fillna("NULL")
-    return {
-        "info": {
-            "country": country,
-            "dataset": dataset.title(),
-            "version": detail["version"],
-            "timestamp": detail["timestamp"],
-        },
-        "total_count": total_count,
-        "data": df.to_dict(orient="records"),
     }
 
 
@@ -364,9 +325,33 @@ async def upload_approved_rows(
     dataset = posix_path.parent.name.replace("_staging", "").replace("_", "-")
     country_iso3 = posix_path.name.split("_")[0].upper()
     timestamp = datetime.now().strftime(constants.FILENAME_TIMESTAMP_FORMAT)
+    approval = await primary_db.scalar(
+        select(ApprovalRequest).where(
+            (ApprovalRequest.country == country_iso3)
+            & (ApprovalRequest.dataset == dataset)
+            & (ApprovalRequest.enabled.is_(True))
+        )
+    )
 
+    if not approval:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Active approval request not found",
+        )
     filename = f"{country_iso3}_{dataset}_{timestamp}.json"
-    approve_location = f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/{dataset}/{country_iso3}/{filename}"
+    dq_run = DQRun(
+        upload_id=approval.upload_id,
+        dq_mode=DQModeEnum.master,
+        status="PENDING",
+    )
+
+    primary_db.add(dq_run)
+    await primary_db.commit()
+    await primary_db.refresh(dq_run)
+    approve_location = (
+        f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/"
+        f"{dq_run.id}/{filename}"
+    )
     email = user.claims.get("emails")[0]
 
     database_user = await primary_db.scalar(
@@ -376,11 +361,14 @@ async def upload_approved_rows(
     approve_client = storage_client.get_blob_client(approve_location)
     try:
         approve_client.upload_blob(
-            json.dumps(
-                body.approved_rows,
-            ),
+            json.dumps(body.approved_rows),
             overwrite=True,
-            metadata={"approver_email": email},
+            metadata={
+                "approver_email": email,
+                "dq_mode": body.dq_mode,
+                "dq_run_id": str(dq_run.id),
+                "upload_id": str(body.upload_id),
+            },
             content_settings=ContentSettings(content_type="application/json"),
         )
 
@@ -480,6 +468,8 @@ async def upload_approved_rows(
                             status_code=status.HTTP_400_BAD_REQUEST,
                             detail=f"Invalid approval data: {len(missing_rows)} approved row IDs not found in staging change feed. Missing: {list(missing_rows)[:10]}",
                         )
+        except HTTPException:
+            raise
         except Exception as validation_err:
             # Log validation error
             logger.warning(
@@ -489,14 +479,12 @@ async def upload_approved_rows(
 
         obj = await primary_db.execute(
             update(ApprovalRequest)
-            .where(
-                (ApprovalRequest.country == country_iso3)
-                & (ApprovalRequest.dataset == formatted_dataset)
-            )
+            .where(ApprovalRequest.upload_id == body.upload_id)
             .values(
                 {
                     ApprovalRequest.enabled: False,
                     ApprovalRequest.is_merge_processing: True,
+                    ApprovalRequest.dq_mode: body.dq_mode,
                 }
             )
             .returning(column("id"))
@@ -506,6 +494,7 @@ async def upload_approved_rows(
                 approval_request_id=obj.first().id,
                 approved_by_id=database_user.id,
                 approved_by_email=database_user.email,
+                dq_mode=DQModeEnum(body.dq_mode),
             )
         )
         await primary_db.commit()
@@ -514,3 +503,283 @@ async def upload_approved_rows(
         raise HTTPException(
             detail=err.message, status_code=err.response.status_code
         ) from err
+
+
+@router.post(
+    "/by-upload",
+    response_model=list[ApprovalByUploadResponse],
+)
+async def get_approvals_by_upload_ids(
+    payload: ApprovalFilterByUploadRequest,
+    primary_db: AsyncSession = Depends(get_primary_db),
+):
+    query = select(ApprovalRequest).where(
+        ApprovalRequest.upload_id.in_(payload.upload_ids)
+    )
+
+    result = await primary_db.scalars(query)
+    rows = result.all()
+
+    return [
+        ApprovalByUploadResponse(
+            id=row.id,
+            country=row.country,
+            dataset=row.dataset,
+            upload_id=row.upload_id,
+            enabled=row.enabled,
+        )
+        for row in rows
+    ]
+
+
+@router.post("/{subpath}")
+async def get_approval_request(
+    subpath: str,
+    payload: Optional[ApprovalFilterByUploadRequest] = None,
+    db: Session = Depends(get_db),
+    primary_db: AsyncSession = Depends(get_primary_db),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
+):
+    if len(splits := urllib.parse.unquote(subpath).split("/")) != 2:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    table_schema, table_name = splits
+    country = coco.convert(table_name, to="name_short")
+    dataset = table_schema.replace("staging", "").replace("_", " ").title().rstrip()
+
+    data_cte = (
+        select(
+            func.concat_ws(
+                "|",
+                column("school_id_giga"),
+                column("_change_type"),
+                column("_commit_version").cast(String()),
+            ).label("change_id"),
+            "*",
+        )
+        .select_from(
+            func.table(
+                func.delta_lake.system.table_changes(
+                    literal(table_schema), literal(table_name), 0
+                )
+            )
+        )
+        .cte("changes")
+    )
+    max_version_cte = (
+        select(func.max(column("_commit_version")).label("max_version"))
+        .select_from(data_cte)
+        .limit(1)
+    ).cte("max_version")
+
+    cdf_cte = (
+        select("*")
+        .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
+        .where(
+            (literal_column("mv.max_version") == 1)
+            | (literal_column("d._commit_version") == 2)
+            | (
+                (literal_column("d._commit_version") > 2)
+                & (literal_column("d._change_type") != "update_preimage")
+            )
+        )
+    )
+
+    # Apply upload_ids filter if provided
+    if payload and payload.upload_ids:
+        # Verify upload_ids exist in ApprovalRequest for this dataset
+        approval_requests = await primary_db.execute(
+            select(ApprovalRequest.upload_id)
+            .where(ApprovalRequest.upload_id.in_(payload.upload_ids))
+            .where(ApprovalRequest.country == table_name.split("_")[0].upper())
+            .where(ApprovalRequest.dataset == dataset)
+        )
+        valid_upload_ids = [row[0] for row in approval_requests.all()]
+
+        if not valid_upload_ids:
+            return {
+                "info": {
+                    "country": country,
+                    "dataset": dataset.replace("-", " ").title(),
+                    "version": None,
+                    "timestamp": None,
+                },
+                "total_count": 0,
+                "data": [],
+            }
+
+        # Filter by upload_id column in the staging table
+        # NOTE: This requires the staging table to have an upload_id column
+        # The external data pipeline must include this column when writing to Delta Lake
+        upload_id_conditions = [
+            column("upload_id") == literal(upload_id) for upload_id in valid_upload_ids
+        ]
+
+        if upload_id_conditions:
+            cdf_cte = select("*").select_from(cdf_cte).where(or_(*upload_id_conditions))
+
+    total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
+
+    cdf = (
+        db.execute(
+            select("*")
+            .select_from(cdf_cte)
+            .order_by(
+                column("school_id_giga"),
+                column("_commit_version").desc(),
+                column("_change_type").desc(),
+            )
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        .mappings()
+        .all()
+    )
+
+    detail = (
+        db.execute(
+            select("*")
+            .select_from(text(f'{table_schema}."{table_name}$history"'))
+            .order_by(column("version").desc())
+            .limit(1)
+        )
+        .mappings()
+        .first()
+    )
+
+    df = pd.DataFrame(cdf)
+    df = df.drop(columns=["signature"]).fillna("NULL")
+
+    return {
+        "info": {
+            "country": country,
+            "dataset": dataset.replace("-", " ").title(),
+            "version": detail["version"] if detail else None,
+            "timestamp": detail["timestamp"] if detail else None,
+        },
+        "total_count": total_count,
+        "data": df.to_dict(orient="records"),
+    }
+
+
+@router.post(
+    "/approve",
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Security(IsPrivileged())],
+)
+async def approve_dataset_without_merge(
+    payload: ApproveDatasetRequest,
+    user: User = Depends(azure_scheme),
+    primary_db: AsyncSession = Depends(get_primary_db),
+):
+    existing = await primary_db.scalar(
+        select(ApprovalRequest).where(ApprovalRequest.upload_id == payload.upload_id)
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Already approved or in process")
+
+    upload = await primary_db.scalar(
+        select(FileUpload).where(FileUpload.id == payload.upload_id)
+    )
+    if not upload:
+        raise HTTPException(status_code=404, detail="Upload ID not found")
+
+    approval = ApprovalRequest(
+        upload_id=payload.upload_id,
+        country=upload.country,
+        dataset=upload.dataset,
+        enabled=True,
+        is_merge_processing=False,
+        approved_by_id=user.claims["oid"],
+        approved_by_email=user.claims["emails"][0],
+        dq_mode=payload.dq_mode,
+    )
+
+    primary_db.add(approval)
+    await primary_db.commit()
+
+    return {"status": "approved", "upload_id": payload.upload_id}
+
+
+@router.post(
+    "/submit",
+    status_code=status.HTTP_200_OK,
+    dependencies=[Security(IsPrivileged())],
+)
+async def submit_approval_request(
+    upload_id: str,
+    user: User = Depends(azure_scheme),
+    primary_db: AsyncSession = Depends(get_primary_db),
+):
+    approval = await primary_db.scalar(
+        select(ApprovalRequest).where(ApprovalRequest.upload_id == upload_id)
+    )
+    if not approval:
+        raise HTTPException(status_code=404, detail="Approval request not found")
+
+    if approval.is_merge_processing:
+        raise HTTPException(status_code=400, detail="Already submitted for merge")
+
+    # Re-upload approved row IDs with master mode to trigger DQ re-run
+    try:
+        # Find the latest approved row IDs blob for this approval request
+        dataset = approval.dataset.replace(" ", "-").lower()
+        country_iso3 = approval.country
+
+        # List blobs in the approved-row-ids directory for this dataset/country
+        blob_prefix = f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/{dataset}/{country_iso3}/"
+        container_client = storage_client.get_container_client(
+            storage_client.container_name
+        )
+
+        # Get the most recent blob
+        blobs = list(container_client.list_blobs(name_starts_with=blob_prefix))
+        if not blobs:
+            raise HTTPException(
+                status_code=400,
+                detail="No approved rows found. Please approve rows before submitting.",
+            )
+
+        # Sort by last_modified to get the most recent
+        latest_blob = max(blobs, key=lambda b: b.last_modified)
+
+        # Download the existing approved row IDs
+        blob_client = storage_client.get_blob_client(latest_blob.name)
+        approved_rows_json = blob_client.download_blob().readall()
+
+        # Get the approver email from the blob metadata
+        blob_properties = blob_client.get_blob_properties()
+        approver_email = blob_properties.metadata.get(
+            "approver_email", user.claims.get("emails", [""])[0]
+        )
+
+        # Create new blob with master mode
+        timestamp = datetime.now().strftime(constants.FILENAME_TIMESTAMP_FORMAT)
+        filename = f"{country_iso3}_{dataset}_{timestamp}.json"
+        new_approve_location = f"{constants.APPROVAL_REQUESTS_RESULT_UPLOAD_PATH}/approved-row-ids/{dataset}/{country_iso3}/{filename}"
+
+        new_approve_client = storage_client.get_blob_client(new_approve_location)
+        new_approve_client.upload_blob(
+            approved_rows_json,
+            overwrite=True,
+            metadata={"approver_email": approver_email, "dq_mode": "master"},
+            content_settings=ContentSettings(content_type="application/json"),
+        )
+
+        # Update the approval request with master mode
+        approval.dq_mode = DQModeEnum.master
+        approval.is_merge_processing = True
+        await primary_db.commit()
+
+        return {"status": "submitted", "dq_mode": "master"}
+
+    except HttpResponseError as err:
+        raise HTTPException(
+            detail=f"Failed to re-upload approved rows: {err.message}",
+            status_code=err.response.status_code,
+        ) from err
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to process submission: {str(e)}"
+        ) from e
