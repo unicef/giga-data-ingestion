@@ -29,10 +29,7 @@ from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.internal.data_quality_checks import (
-    get_data_quality_summary,
-    get_first_n_error_rows_for_data_quality_check,
-)
+from data_ingestion.internal.data_quality_checks import get_data_quality_summary
 from data_ingestion.internal.roles import get_user_roles
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
@@ -622,25 +619,11 @@ async def get_data_quality_check(
         )
 
     if file_upload.dq_status != DQStatusEnum.COMPLETED:
-        return {
-            "name": None,
-            "creation_time": None,
-            "dq_summary": None,
-            "dq_failed_rows_first_five_rows": None,
-            "status": file_upload.dq_status,
-        }
-    blob_properties, results = get_first_n_error_rows_for_data_quality_check(
-        file_upload.dq_full_path
-    )
+        return {"dq_summary": None, "status": file_upload.dq_status}
+
     dq_report_summary_dict = get_data_quality_summary(file_upload.dq_report_path)
 
-    return {
-        "name": blob_properties.name,
-        "creation_time": blob_properties.creation_time.isoformat(),
-        "dq_summary": dq_report_summary_dict,
-        "dq_failed_rows_first_five_rows": results,
-        "status": file_upload.dq_status,
-    }
+    return {"dq_summary": dq_report_summary_dict, "status": file_upload.dq_status}
 
 
 @router.get(
