@@ -21,6 +21,7 @@ import { Select } from "@/components/forms/Select.tsx";
 import {
   AcceptedFileTypes,
   AcceptedUnstructuredFileTypes,
+  MAX_UPLOAD_FILE_SIZE_MB,
   UPLOAD_MODE_OPTIONS,
 } from "@/constants/upload.ts";
 import { useStore } from "@/context/store";
@@ -237,9 +238,10 @@ export default function Index() {
 
     if (isStructured) {
       // For structured datasets, just validate file size and set the file
-      if (file.size > 10 * 1024 * 1024) {
-        // 10MB limit
-        setParsingError("File size exceeds 10 MB limit");
+      if (file.size > MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024) {
+        setParsingError(
+          `File size exceeds ${MAX_UPLOAD_FILE_SIZE_MB} MB limit`,
+        );
         setIsParsing(false);
         return;
       }
@@ -325,7 +327,7 @@ export default function Index() {
             <p className="-mt-1 font-ibmplex text-sm font-normal text-giga-gray">
               File formats:{" "}
               {[...new Set(Object.values(validTypes).flat())].join(", ")} up to
-              10MB
+              {MAX_UPLOAD_FILE_SIZE_MB}MB
             </p>
             <div className="h-[78px] w-full">
               {hasUploadedFile && file ? (

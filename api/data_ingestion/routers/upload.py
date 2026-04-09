@@ -309,7 +309,7 @@ async def upload_file(
     if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File size exceeds 10 MB limit",
+            detail=f"File size exceeds {constants.UPLOAD_FILE_SIZE_LIMIT_MB} MB limit",
         )
 
     file_content = await file.read(4096)
@@ -415,7 +415,7 @@ async def upload_unstructured(  # noqa: C901
     if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File size exceeds 10 MB limit",
+            detail=f"File size exceeds {constants.UPLOAD_FILE_SIZE_LIMIT_MB} MB limit",
         )
 
     file_content = await file.read(
@@ -513,7 +513,7 @@ async def upload_structured(  # noqa: C901
     if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File size exceeds 10 MB limit",
+            detail=f"File size exceeds {constants.UPLOAD_FILE_SIZE_LIMIT_MB} MB limit",
         )
 
     file_content = await file.read(
