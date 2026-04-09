@@ -78,6 +78,7 @@ class Settings(BaseSettings):
     REDIS_CACHE_DEFAULT_TTL_SECONDS: int = int(timedelta(minutes=10).total_seconds())
     ADMIN_EMAIL: str = ""
     LAKEHOUSE_USERNAME: str = ""
+    EMAIL_TEST_RECIPIENTS: str = ""  # If set, all emails go here (comma-separated)
 
     @computed_field
     @property
