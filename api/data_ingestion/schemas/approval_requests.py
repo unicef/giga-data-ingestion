@@ -15,7 +15,7 @@ class ApprovalRequestListing(BaseModel):
     rows_updated: int
     rows_deleted: int
     enabled: bool
-    upload_id: str
+    upload_id: str | None
     uploaded_at: datetime | None
     file_name: str | None
 
