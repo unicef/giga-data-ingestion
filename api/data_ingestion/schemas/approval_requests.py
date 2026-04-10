@@ -15,11 +15,16 @@ class ApprovalRequestListing(BaseModel):
     rows_updated: int
     rows_deleted: int
     enabled: bool
+    upload_id: str | None
+    uploaded_at: datetime | None
+    file_name: str | None
 
 
 class UploadApprovedRowsRequest(BaseModel):
     approved_rows: list[str]
     subpath: str
+    upload_id: str
+    dq_mode: str = "uploaded"
 
 
 class ApprovalRequestAuditLogSchema(BaseModel):
@@ -27,6 +32,7 @@ class ApprovalRequestAuditLogSchema(BaseModel):
     approved_by_id: UUID4
     approved_by_email: str
     approved_date: datetime
+    dq_mode: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -39,3 +45,20 @@ class ApprovalRequestSchema(BaseModel):
     audit_logs: list[ApprovalRequestAuditLogSchema] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ApprovalFilterByUploadRequest(BaseModel):
+    upload_ids: list[str]
+
+
+class ApprovalByUploadResponse(BaseModel):
+    id: str
+    country: str
+    dataset: str
+    upload_id: str
+    enabled: bool
+
+
+class ApproveDatasetRequest(BaseModel):
+    upload_id: str
+    dq_mode: str

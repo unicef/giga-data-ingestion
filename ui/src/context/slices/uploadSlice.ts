@@ -1,17 +1,41 @@
 import { StateCreator } from "zustand";
 
+import { UploadParams } from "@/types/upload";
+
 export interface UploadSliceState {
   uploadSlice: {
     columnMapping: Record<string, string>;
     columnLicense: Record<string, string>;
     detectedColumns: string[];
     file: File | null;
+    fuzzyCorrections: {
+      column_name: string;
+      value_found: string;
+      replace_with: string | null;
+    }[];
+    fuzzyValidationRequestKey: string | null;
+    fuzzyValidationResult: {
+      columns: {
+        schema_column: string;
+        file_column: string;
+        header_title: string;
+        unknown_count: number;
+        dropdown_options: string[];
+        value_mappings: {
+          value_found: string;
+          count: number;
+          replace_with: string | null;
+          is_valid: boolean;
+        }[];
+      }[];
+    } | null;
     timeStamp: Date | null;
     uploadDate: Date | null;
     uploadId: string;
     stepIndex: number;
     source: string | null;
     mode: "Create" | "Update" | "";
+    pendingSchoolDataPayload: UploadParams | null;
   };
 }
 
@@ -32,6 +56,15 @@ export interface UploadSliceActions {
       value: UploadSliceState["uploadSlice"]["detectedColumns"],
     ) => void;
     setFile: (value: UploadSliceState["uploadSlice"]["file"]) => void;
+    setFuzzyCorrections: (
+      value: UploadSliceState["uploadSlice"]["fuzzyCorrections"],
+    ) => void;
+    setFuzzyValidationRequestKey: (
+      value: UploadSliceState["uploadSlice"]["fuzzyValidationRequestKey"],
+    ) => void;
+    setFuzzyValidationResult: (
+      value: UploadSliceState["uploadSlice"]["fuzzyValidationResult"],
+    ) => void;
     setTimeStamp: (value: UploadSliceState["uploadSlice"]["timeStamp"]) => void;
     setUploadDate: (
       value: UploadSliceState["uploadSlice"]["uploadDate"],
@@ -39,6 +72,9 @@ export interface UploadSliceActions {
     setUploadId: (value: UploadSliceState["uploadSlice"]["uploadId"]) => void;
     setSource: (value: UploadSliceState["uploadSlice"]["source"]) => void;
     setMode: (value: UploadSliceState["uploadSlice"]["mode"]) => void;
+    setPendingSchoolDataPayload: (
+      value: UploadSliceState["uploadSlice"]["pendingSchoolDataPayload"],
+    ) => void;
   };
 }
 
@@ -50,12 +86,16 @@ export const initialUploadSliceState: UploadSliceState = {
     columnLicense: {},
     detectedColumns: [],
     file: null,
+    fuzzyCorrections: [],
+    fuzzyValidationRequestKey: null,
+    fuzzyValidationResult: null,
     stepIndex: 0,
     timeStamp: null,
     uploadDate: null,
     uploadId: "",
     source: null,
     mode: "",
+    pendingSchoolDataPayload: null,
   },
 };
 
@@ -95,6 +135,18 @@ export const createUploadSlice: StateCreator<
       set(state => {
         state.uploadSlice.detectedColumns = detectedColumns;
       }),
+    setFuzzyCorrections: fuzzyCorrections =>
+      set(state => {
+        state.uploadSlice.fuzzyCorrections = fuzzyCorrections;
+      }),
+    setFuzzyValidationRequestKey: fuzzyValidationRequestKey =>
+      set(state => {
+        state.uploadSlice.fuzzyValidationRequestKey = fuzzyValidationRequestKey;
+      }),
+    setFuzzyValidationResult: fuzzyValidationResult =>
+      set(state => {
+        state.uploadSlice.fuzzyValidationResult = fuzzyValidationResult;
+      }),
     setUploadId: uploadId =>
       set(state => {
         state.uploadSlice.uploadId = uploadId;
@@ -122,6 +174,10 @@ export const createUploadSlice: StateCreator<
     setMode: mode =>
       set(state => {
         state.uploadSlice.mode = mode;
+      }),
+    setPendingSchoolDataPayload: pendingSchoolDataPayload =>
+      set(state => {
+        state.uploadSlice.pendingSchoolDataPayload = pendingSchoolDataPayload;
       }),
     resetUploadSliceState: () =>
       set(state => {

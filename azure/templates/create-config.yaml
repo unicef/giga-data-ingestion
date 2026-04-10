@@ -83,8 +83,13 @@ jobs:
                     TRINO_USERNAME: "$(trinoUsername)"
                     TRINO_PASSWORD: ""
                     TRINO_HOST: "trino.ictd-ooi-trino-$(deployEnv).svc.cluster.local"
+                    NOCODB_BASE_URL: "$(nocodbBaseUrl)"
+                    NOCODB_TOKEN: "$(nocodbToken)"
+                    NOCODB_NAME_MAPPINGS_TABLE_ID: "$(nocodbNameMappingsTableID)"
                     REDIS_PASSWORD: "$(redisPassword)"
                     ADMIN_EMAIL: '$(adminEmail)'
+                    GIGAMETER_API_BASE_URL: "$(gigameterApiBaseUrl)"
+                    GIGAMETER_API_TOKEN: "$(gigameterApiToken)"
 
 
             - task: Kubernetes@1
@@ -127,5 +132,10 @@ jobs:
                     TRINO_USERNAME: "$(trinoUsername)"
                     TRINO_PASSWORD: ""
                     TRINO_HOST: "trino.ictd-ooi-trino-$(deployEnv).svc.cluster.local"
+                    NOCODB_BASE_URL: "$(nocodbBaseUrl)"
+                    NOCODB_TOKEN: "$(nocodbToken)"
+                    NOCODB_NAME_MAPPINGS_TABLE_ID: "$(nocodbNameMappingsTableID)"
                     REDIS_PASSWORD: "$(redisPassword)"
                     ADMIN_EMAIL: '$(adminEmail)'
+                    GIGAMETER_API_BASE_URL: "$(gigameterApiBaseUrl)"
+                    GIGAMETER_API_TOKEN: "$(gigameterApiToken)"

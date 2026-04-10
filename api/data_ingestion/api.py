@@ -16,10 +16,12 @@ from data_ingestion.routers import (
     core,
     deletion_requests,
     email,
+    error_table,
     groups,
     qos,
     roles,
     schema,
+    school_registration,
     upload,
     users,
     utils,
@@ -136,10 +138,12 @@ app.include_router(approval_requests.router)
 app.include_router(core.router)
 app.include_router(deletion_requests.router)
 app.include_router(email.router)
+app.include_router(error_table.router)
 app.include_router(groups.router)
 app.include_router(qos.router)
 app.include_router(roles.router)
 app.include_router(schema.router)
+app.include_router(school_registration.router)
 app.include_router(upload.router)
 app.include_router(users.router)
 app.include_router(utils.router)
