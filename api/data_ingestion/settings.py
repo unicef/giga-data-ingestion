@@ -64,9 +64,9 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: str
 
     # NocoDB envs for Fuzzy Matching Mappings
-    NOCODB_BASE_URL: str
-    NOCODB_TOKEN: str
-    NOCODB_NAME_MAPPINGS_TABLE_ID: str
+    NOCODB_BASE_URL: str = ""
+    NOCODB_TOKEN: str = ""
+    NOCODB_NAME_MAPPINGS_TABLE_ID: str = ""
 
     # Optional envs
     PYTHON_ENV: Environment = Environment.PRODUCTION
