@@ -1,7 +1,5 @@
 import io
 
-from data_ingestion.db.trino import get_db
-from data_ingestion.internal.auth import azure_scheme
 from fastapi import (
     APIRouter,
     Depends,
@@ -14,6 +12,9 @@ from sqlalchemy import column, func, literal, select, text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
+from data_ingestion.db.trino import get_db
+from data_ingestion.internal.auth import azure_scheme
+
 router = APIRouter(
     prefix="/api/error-table",
     tags=["error-table"],
@@ -21,20 +22,20 @@ router = APIRouter(
 )
 
 
+ERRORS_SCHEMA = "school_geolocation_error_table"
+
+
 def get_upload_error_tables(db: Session) -> list[str]:
     keys = (
         db.execute(
             select(column("table_name"))
             .select_from(text("information_schema.tables"))
-            .where(
-                (column("table_schema") == literal("school_master"))
-                & column("table_name").like("upload_errors_%")
-            )
+            .where(column("table_schema") == literal(ERRORS_SCHEMA))
         )
         .mappings()
         .all()
     )
-    return [f"school_master.{row['table_name']}" for row in keys]
+    return [f"{ERRORS_SCHEMA}.{row['table_name']}" for row in keys]
 
 
 def _serialize_error_row(row: dict) -> dict:
@@ -72,7 +73,7 @@ def list_upload_errors(
     """List rows from the unified upload errors table with optional filters."""
     tables = get_upload_error_tables(db)
     if country_code:
-        target_table = f"school_master.upload_errors_{country_code.lower()}"
+        target_table = f"{ERRORS_SCHEMA}.{country_code.lower()}"
         tables = [t for t in tables if t == target_table]
 
     if not tables:
@@ -83,15 +84,29 @@ def list_upload_errors(
             "total_count": 0,
         }
 
-    # If querying multiple tables without country_code, we must do it safely.
-    # We will query all tables one by one (or using simple UNION ALL if columns were guaranteed).
-    # Since we use SELECT *, Trino UNION ALL fails on differing schemas.
-    # We will iterate in Python, applying filters to each query, to calculate total counts and collect rows.
+    # We explicitly select only the required columns to prevent Trino's python driver from failing
+    # to parse complex types (e.g., MAP types like dq_results).
+    selected_cols = [
+        "giga_sync_file_id",
+        "giga_sync_file_name",
+        "dataset_type",
+        "country_code",
+        "school_id_govt",
+        "school_id_giga",
+        "school_name",
+        "latitude",
+        "longitude",
+        "education_level",
+        "education_level_govt",
+        "failure_reason",
+        "created_at",
+    ]
+
     total_count = 0
     all_rows = []
 
     for table_name in tables:
-        base = select("*").select_from(text(table_name))
+        base = select(*[column(c) for c in selected_cols]).select_from(text(table_name))
         filters = []
         if dataset_type:
             filters.append(column("dataset_type") == literal(dataset_type))
@@ -100,18 +115,20 @@ def list_upload_errors(
 
         filtered = base.where(*filters) if filters else base
         try:
-            tbl_count = db.execute(
-                select(func.count()).select_from(filtered.subquery())
-            ).scalar()
+            # Avoid anonymous subqueries which can fail in SQLAlchemy 2.0 with Trino
+            count_query = select(func.count()).select_from(text(table_name))
+            if filters:
+                count_query = count_query.where(*filters)
+
+            tbl_count = db.execute(count_query).scalar()
             total_count += tbl_count
 
             # Note: Pagination across multiple tables dynamically in python is tricky.
-            # We fetch all matching from each table, then sort & slice at the end if no country provided.
-            # If country is provided, it's just 1 table and we can limit dynamically in SQL, but for safety:
             rows = db.execute(filtered).mappings().all()
             all_rows.extend(rows)
-        except Exception:
-            # If an error occurs (e.g. table not totally initialized), skip
+        except Exception as e:
+            # If an error occurs (e.g. table not totally initialized or explicit columns missing), skip
+            print(f"Error querying table {table_name}: {e}")
             continue
 
     all_rows.sort(key=lambda r: r.get("created_at") or "", reverse=True)
@@ -200,7 +217,7 @@ def download_upload_errors(
 
     tables = get_upload_error_tables(db)
     if country_code:
-        target_table = f"school_master.upload_errors_{country_code.lower()}"
+        target_table = f"{ERRORS_SCHEMA}.{country_code.lower()}"
         tables = [t for t in tables if t == target_table]
 
     if not tables:
@@ -209,10 +226,26 @@ def download_upload_errors(
             detail="No error tables found matching the given filters.",
         )
 
+    selected_cols = [
+        "giga_sync_file_id",
+        "giga_sync_file_name",
+        "dataset_type",
+        "country_code",
+        "school_id_govt",
+        "school_id_giga",
+        "school_name",
+        "latitude",
+        "longitude",
+        "education_level",
+        "education_level_govt",
+        "failure_reason",
+        "created_at",
+    ]
+
     all_rows = []
 
     for table_name in tables:
-        base = select("*").select_from(text(table_name))
+        base = select(*[column(c) for c in selected_cols]).select_from(text(table_name))
         filters = []
         if dataset_type:
             filters.append(column("dataset_type") == literal(dataset_type))
@@ -223,7 +256,8 @@ def download_upload_errors(
         try:
             rows = db.execute(filtered).mappings().all()
             all_rows.extend(rows)
-        except Exception:
+        except Exception as e:
+            print(f"Error querying table {table_name}: {e}")
             continue
 
     if not all_rows:
