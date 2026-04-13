@@ -30,7 +30,7 @@ def upgrade() -> None:
         ALTER TABLE qos_school_list
         ALTER COLUMN country DROP DEFAULT;
 
-        COMMIT; 
+        COMMIT;
         """)
     )
 
@@ -40,6 +40,6 @@ def downgrade() -> None:
     conn.execute(
         sa.text("""
         ALTER TABLE qos_school_list
-        DROP COLUMN country; 
+        DROP COLUMN country;
         """)
     )

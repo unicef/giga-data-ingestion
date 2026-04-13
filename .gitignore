@@ -5,3 +5,8 @@ secrets.yaml
 
 node_modules/
 .venv/
+ui/mocks
+api/scripts 
+CLAUDE.md
+.claude/
+AGENTS.md

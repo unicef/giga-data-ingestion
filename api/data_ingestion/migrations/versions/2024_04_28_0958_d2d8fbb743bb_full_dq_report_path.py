@@ -24,10 +24,10 @@ def upgrade() -> None:
     conn.execute(
         sa.text("""
         BEGIN;
-        
+
         ALTER TABLE file_uploads
         ADD COLUMN dq_full_path TEXT DEFAULT NULL;
-        
+
         UPDATE file_uploads
         SET dq_full_path = REPLACE(dq_report_path, '/dq-summary/', '/dq-overall/');
 
