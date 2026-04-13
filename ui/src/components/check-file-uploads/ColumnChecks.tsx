@@ -1,8 +1,7 @@
 import { useMemo, useState } from "react";
 
-import { ChevronDown, ChevronUp, Warning } from "@carbon/icons-react";
+import { ChevronDown, ChevronUp } from "@carbon/icons-react";
 import {
-  Button,
   DataTable,
   DataTableHeader,
   Search,
@@ -16,14 +15,8 @@ import {
 } from "@carbon/react";
 
 import { cn } from "@/lib/utils.ts";
-import {
-  Check,
-  DqFailedRowValues,
-  DqFailedRowsFirstFiveRows,
-} from "@/types/upload";
+import { Check } from "@/types/upload";
 import { commaNumber } from "@/utils/number.ts";
-
-import ViewDetailsModal from "./ViewDetailsModal";
 
 interface ExtendedDataTableHeader extends DataTableHeader {
   sortable?: boolean;
@@ -31,29 +24,14 @@ interface ExtendedDataTableHeader extends DataTableHeader {
 
 interface DataQualityChecksProps {
   data: Check[];
-  previewData: DqFailedRowsFirstFiveRows;
 }
 
-const INVALID_VALUES = [
-  {
-    name: "invalid",
-    errorMessage: "The values of these columns seem to be invalid",
-  },
-];
-
-const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
+const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
   }>({ key: "", direction: "ascending" });
-
-  const [selectedAssertion, setSelectedAssertion] = useState<string>("");
-  const [selectedColumn, setSelectedColumn] = useState<string>("");
-  const [selectedPreviewData, setSelectedPreviewData] = useState<
-    DqFailedRowValues[]
-  >([{}]);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
   const handleUpSort = (key: string) => {
     setSortConfig({ key, direction: "ascending" });
@@ -168,24 +146,7 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
           {count_failed > 0 ? `${percent_passed.toFixed(2)}%` : "100%"}
         </div>
       ),
-      actions: (
-        <Button
-          className="cursor-pointer"
-          kind="ghost"
-          disabled={columnKey === "NO_COLUMN" || percent_passed === 100}
-          onClick={() => {
-            const selectedPreviewData =
-              previewData[`${assertion}-${column}`] || INVALID_VALUES;
-
-            setSelectedAssertion(assertion);
-            setSelectedPreviewData(selectedPreviewData);
-            setIsModalOpen(true);
-            setSelectedColumn(column);
-          }}
-        >
-          <Warning className="text-red-600" />
-        </Button>
-      ),
+      actions: null,
     };
   });
 
@@ -209,11 +170,6 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
       key: "result_with_errors",
       header: "Rejected",
       sortable: true,
-    },
-    {
-      key: "actions",
-      header: "Actions",
-      sortable: false,
     },
   ];
 
@@ -269,14 +225,6 @@ const DataQualityChecks = ({ data, previewData }: DataQualityChecksProps) => {
           )}
         </DataTable>
       </div>
-
-      <ViewDetailsModal
-        assertion={selectedAssertion}
-        column={selectedColumn}
-        previewData={selectedPreviewData}
-        open={isModalOpen}
-        setOpen={setIsModalOpen}
-      />
     </div>
   );
 };
