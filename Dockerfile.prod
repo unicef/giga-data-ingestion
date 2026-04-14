@@ -35,7 +35,7 @@ RUN apk add --no-cache libmagic
 
 FROM base AS deps
 
-ARG POETRY_VERSION=1.6.1
+ARG POETRY_VERSION=2.3.2
 
 WORKDIR /tmp
 
