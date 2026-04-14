@@ -62,7 +62,7 @@ export default function UploadBreadcrumbs() {
             params: { uploadGroup, uploadType },
           },
           {
-            label: "Success",
+            label: "Submit",
             path: `/upload/$uploadGroup/$uploadType/success`,
             params: { uploadGroup, uploadType },
           },

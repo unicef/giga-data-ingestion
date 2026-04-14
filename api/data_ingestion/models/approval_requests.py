@@ -55,6 +55,12 @@ class ApprovalRequest(BaseModel):
         default=DQModeEnum.uploaded,
     )
 
+    dq_mode: Mapped[DQModeEnum] = mapped_column(
+        SQLEnum(DQModeEnum, name="dqmodeenum"),
+        nullable=False,
+        default=DQModeEnum.uploaded,
+    )
+
 
 class ApprovalRequestAuditLog(BaseModel):
     __tablename__ = "approval_request_audit_log"

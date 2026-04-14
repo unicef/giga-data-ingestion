@@ -914,6 +914,7 @@ async def download_data_quality_check(
             media_type="text/csv",
             headers=headers,
         )
+
     stream = blob.download_blob()
     headers = {"Content-Disposition": f"attachment; filename={upload_filename}"}
 
