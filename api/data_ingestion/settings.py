@@ -85,6 +85,7 @@ class Settings(BaseSettings):
     ] = "never"
     SENTRY_INCLUDE_SOURCE_CONTEXT: bool = False
     SENTRY_INCLUDE_LOCAL_VARIABLES: bool = False
+    SENTRY_TUNNEL_HOST: str = ""
     SENTRY_DEBUG: bool = False
     COMMIT_SHA: str = ""
     TRINO_HOST: str = "trino"
