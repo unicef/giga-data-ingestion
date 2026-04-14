@@ -452,10 +452,7 @@ function Success() {
               </div>
               <div className="flex flex-col space-y-0.5 text-xs font-normal text-gray-400">
                 <div className="m-0 p-0 leading-tight">
-                  Uploaded:{" "}
-                  {uploadData.uploader_email ||
-                    pendingSchoolDataPayload?.uploader_email ||
-                    "Not available"}
+                  Uploaded: {uploadData.uploader_email || "Not available"}
                 </div>
                 <div className="m-0 p-0 leading-tight">
                   UploadID:{" "}
