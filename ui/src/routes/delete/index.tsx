@@ -151,7 +151,7 @@ function Index() {
             }
           />
           <p className="cds--label-description">
-            File formats: {Object.values(validTypes).join(", ")} up to 10MB
+            File formats: {Object.values(validTypes).join(", ")} up to 100MB
           </p>
           {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
         </div>
