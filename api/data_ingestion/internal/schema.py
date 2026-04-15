@@ -115,19 +115,23 @@ def _inject_missing_core_fields(name: str, schema: list[SchemaColumn]):
     ]
     for name_f, dtype, nullable, important, pk, desc in core_fields:
         if name_f not in existing_names:
-            schema.append(
-                SchemaColumn(
-                    id=str(uuid.uuid4()),
-                    name=name_f,
-                    data_type=dtype,
-                    is_nullable=nullable,
-                    is_important=important,
-                    is_system_generated=False,
-                    primary_key=pk,
-                    description=desc,
-                    license="ODBL",
-                )
-            )
+            col_data = {
+                "id": str(uuid.uuid4()),
+                "name": name_f,
+                "data_type": dtype,
+                "is_nullable": nullable,
+                "is_important": important,
+                "is_system_generated": False,
+                "primary_key": pk,
+                "description": desc,
+                "license": "ODBL",
+            }
+            try:
+                schema.append(SchemaColumn(**col_data))
+            except (ValueError, Exception) as e:
+                logger.error(f"Failed to instantiate SchemaColumn for {name_f}: {e}")
+                logger.error(f"Input data: {col_data}")
+                raise e
 
 
 def get_schema(
