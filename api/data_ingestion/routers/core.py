@@ -68,11 +68,18 @@ async def sentry_tunnel(request: Request):
         envelope_header = json.loads(body.split(b"\n", 1)[0])
         dsn = envelope_header.get("dsn", "")
         parsed = urlparse(dsn)
+        logger.debug(
+            f"Sentry tunnel: dsn={dsn!r}, hostname={parsed.hostname!r}, expected={settings.SENTRY_TUNNEL_HOST!r}"
+        )
         if parsed.hostname != settings.SENTRY_TUNNEL_HOST:
+            logger.warning(
+                f"Sentry tunnel blocked: hostname {parsed.hostname!r} != {settings.SENTRY_TUNNEL_HOST!r}"
+            )
             return Response(status_code=status.HTTP_400_BAD_REQUEST)
         project_id = parsed.path.strip("/")
         url = f"{parsed.scheme}://{parsed.hostname}/api/{project_id}/envelope/"
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Sentry tunnel parse error: {e!r}, body_start={body[:200]!r}")
         return Response(status_code=status.HTTP_400_BAD_REQUEST)
 
     async with httpx.AsyncClient() as client:
