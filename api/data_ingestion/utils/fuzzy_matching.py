@@ -18,40 +18,61 @@ NOCODB_FUZZY_TABLES = {
 }
 
 
-def _extract_valid_values_from_rows(rows: list[dict], target_column: str) -> list[str]:
-    """Helper to split and deduplicate valid values from NocoDB rows."""
-    valid_values_raw = [r.get(target_column) for r in rows if r.get(target_column)]
+def _extract_valid_values_from_rows(
+    rows: list[dict], target_column: str, alias_column: str = "Govt"
+) -> tuple[list[str], dict[str, str]]:
+    """
+    Helper to extract valid values.
+    Returns (standardized_list, matching_map).
+    matching_map: lower_case_alias/target -> StandardizedValue
+    """
+    standardized_list = []
+    matching_map = {}
 
-    valid_values_raw_split = []
-    for val in valid_values_raw:
-        # Split by common delimiters: comma, semicolon, " and ", " & "
-        parts = re.split(r",|;| and | & | And | AND ", str(val), flags=re.IGNORECASE)
-        for p in parts:
-            cleaned = p.strip()
-            if cleaned:
-                valid_values_raw_split.append(cleaned)
-
-    # Deduplicate case-insensitively, keeping the first-seen casing
-    seen_lower = set()
-    valid_values = []
-    for v in valid_values_raw_split:
-        # Clean any non-printable or hidden chars
-        v_clean = "".join(char for char in v if char.isprintable()).strip()
-        if not v_clean:
+    for r in rows:
+        giga_val = r.get(target_column)
+        if not giga_val:
             continue
-        key = v_clean.lower()
-        if key not in seen_lower:
-            seen_lower.add(key)
-            valid_values.append(v_clean)
 
-    return valid_values
+        giga_val_str = str(giga_val).strip()
+        original_compound = giga_val_str
+
+        matching_map[original_compound.lower()] = original_compound
+        if original_compound.lower() not in [s.lower() for s in standardized_list]:
+            standardized_list.append(original_compound)
+
+        parts = re.split(
+            r",|;| and | & | And | AND ", original_compound, flags=re.IGNORECASE
+        )
+        for p in parts:
+            p_clean = p.strip()
+            if p_clean:
+                matching_map[p_clean.lower()] = p_clean
+                if p_clean.lower() not in [s.lower() for s in standardized_list]:
+                    standardized_list.append(p_clean)
+
+        govt_val = r.get(alias_column)
+        if govt_val:
+            govt_val_str = str(govt_val).strip()
+            matching_map[govt_val_str.lower()] = original_compound
+
+    seen = set()
+    final_std = []
+    for s in standardized_list:
+        if s.lower() not in seen:
+            seen.add(s.lower())
+            final_std.append(s)
+
+    final_std.sort()
+
+    return final_std, matching_map
 
 
-def get_fuzzy_match_config_from_nocodb() -> dict[str, list[str]]:
+def get_fuzzy_match_config_from_nocodb() -> dict[str, dict]:
     """
     Fetches exactly valid values for fuzzy matching from NocoDB.
     Returns a dictionary where keys are column names (e.g. 'education_level')
-    and values are lists of valid strings.
+    and values are dicts containing 'dropdown_options' and 'matching_map'.
     """
     config = {}
     try:
@@ -61,11 +82,19 @@ def get_fuzzy_match_config_from_nocodb() -> dict[str, list[str]]:
                 if not table_id:
                     continue
                 target_column = "Giga"
-                rows = get_nocodb_table_rows(table_id, fields=target_column)
-                valid_values = _extract_valid_values_from_rows(rows, target_column)
+                alias_column = "Govt"
+                rows = get_nocodb_table_rows(
+                    table_id, fields=[target_column, alias_column]
+                )
+                dropdown_options, matching_map = _extract_valid_values_from_rows(
+                    rows, target_column, alias_column
+                )
 
-                if valid_values:
-                    config[col_name] = valid_values
+                if dropdown_options:
+                    config[col_name] = {
+                        "dropdown_options": dropdown_options,
+                        "matching_map": matching_map,
+                    }
                 else:
                     logger.warning(
                         f"No valid values found in NocoDB table {table_name} for {col_name}"
@@ -80,28 +109,52 @@ def get_fuzzy_match_config_from_nocodb() -> dict[str, list[str]]:
     return config
 
 
-def fuzzy_match_value(val: str, valid_values: list[str], score_cutoff: float = 85.0):
+def fuzzy_match_value(
+    val: str, matching_map: dict[str, str], score_cutoff: float = 80.0
+):
     """
     Returns (suggested_value, was_changed)
     """
     if not val or not isinstance(val, str):
         return val, False
 
+    str_val = val.strip()
+    match_targets = list(matching_map.keys())
+
+    # Sort targets by length to prioritize specific matches
+    match_targets.sort(key=lambda x: (len(x), x))
+
     result = process.extractOne(
-        str(val),
-        valid_values,
-        scorer=fuzz.WRatio,
+        str_val,
+        match_targets,
+        scorer=fuzz.QRatio,
         score_cutoff=0,
         processor=utils.default_process,
     )
 
     if result:
-        matched_val, score, _ = result
+        matched_target, score, _ = result
+        suggested_val = matching_map[matched_target]
+
         if score >= score_cutoff:
-            str_val = str(val).strip()
-            was_changed = matched_val.lower() != str_val.lower()
-            return matched_val, was_changed
-        elif score < 50.0:
+            was_changed = suggested_val.lower() != str_val.lower()
+            return suggested_val, was_changed
+
+        # secondary check with WRatio for very high confidence aliases/typos
+        wr_result = process.extractOne(
+            str_val,
+            match_targets,
+            scorer=fuzz.WRatio,
+            score_cutoff=0,
+            processor=utils.default_process,
+        )
+        if wr_result:
+            wr_target, wr_score, _ = wr_result
+            if wr_score >= 95.0:
+                suggested_val = matching_map[wr_target]
+                return suggested_val, suggested_val.lower() != str_val.lower()
+
+        if score < 50.0:
             return "Unknown", True
 
     return val, False
@@ -118,7 +171,7 @@ def _is_null_or_nan(val) -> bool:
 
 
 def _process_column_fuzzy_matching(
-    value_counts: pd.Series, valid_values: list[str]
+    value_counts: pd.Series, valid_values: list[str], matching_map: dict[str, str]
 ) -> tuple[list[dict], int]:
     errors_in_column = []
     total_unknown = 0
@@ -170,7 +223,7 @@ def _process_column_fuzzy_matching(
             continue
 
         # It's an unknown value. See if we can suggest a fuzzy replacement.
-        suggested_val, was_changed = fuzzy_match_value(str_val, valid_values)
+        suggested_val, was_changed = fuzzy_match_value(str_val, matching_map)
 
         # Whether we found a suggestion or not, it counts as an "error/unknown"
         errors_in_column.append(
@@ -222,7 +275,8 @@ def run_fuzzy_matching(df: pd.DataFrame, column_mappings: dict[str, str]) -> dic
         if not fuzzy_target:
             continue
 
-        valid_values = config[fuzzy_target]
+        dropdown_opts = config[fuzzy_target]["dropdown_options"]
+        matching_map = config[fuzzy_target]["matching_map"]
         if raw_col not in df.columns:
             continue
 
@@ -230,7 +284,7 @@ def run_fuzzy_matching(df: pd.DataFrame, column_mappings: dict[str, str]) -> dic
         value_counts = df[raw_col].value_counts(dropna=False)
 
         errors_in_column, total_unknown = _process_column_fuzzy_matching(
-            value_counts, valid_values
+            value_counts, dropdown_opts, matching_map
         )
 
         if errors_in_column:
@@ -238,10 +292,9 @@ def run_fuzzy_matching(df: pd.DataFrame, column_mappings: dict[str, str]) -> dic
             errors_in_column.sort(key=lambda x: x["is_valid"])
 
             # Always include "Unknown" in dropdown options so it's selectable
-            # And deduplicate again to be absolutely sure
-            dropdown_opts = sorted(set(valid_values))
-            if "Unknown" not in dropdown_opts:
-                dropdown_opts.append("Unknown")
+            final_dropdown = sorted(set(dropdown_opts))
+            if "Unknown" not in final_dropdown:
+                final_dropdown.append("Unknown")
 
             columns_with_errors.append(
                 {
@@ -249,7 +302,7 @@ def run_fuzzy_matching(df: pd.DataFrame, column_mappings: dict[str, str]) -> dic
                     "file_column": raw_col,
                     "header_title": f"{raw_col} ({standard_col})",
                     "unknown_count": total_unknown,
-                    "dropdown_options": dropdown_opts,
+                    "dropdown_options": final_dropdown,
                     "value_mappings": errors_in_column,
                 }
             )
