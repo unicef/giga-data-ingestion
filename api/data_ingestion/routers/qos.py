@@ -176,7 +176,7 @@ async def create_api_ingestion(
         if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="File size exceeds 10 MB limit",
+                detail=f"File size exceeds {constants.UPLOAD_FILE_SIZE_LIMIT_MB} MB limit",
             )
 
         valid_types = {"text/csv": [".csv"], "application/csv": [".csv"]}

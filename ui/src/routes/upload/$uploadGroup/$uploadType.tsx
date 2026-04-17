@@ -64,7 +64,7 @@ const UNSTRUCTURED_DESCRIPTION = (
       information and boundaries which represent the landscape of countries.
     </p>
     <p>
-      Any file uploaded must be no larger than 10MB and be in one of the
+      Any file uploaded must be no larger than 100MB and be in one of the
       accepted file formats: [bmp, .gif, .jpeg, .jpg, .png, .tif, .tiff, .csv,
       .xlsx, .xls, .pdf, .doc, .docx]
     </p>
@@ -79,7 +79,7 @@ const STRUCTURED_DESCRIPTION = (
     </p>
     <p>
       Only CSV files are accepted for structured datasets. Files must be no
-      larger than 10MB.
+      larger than 100MB.
     </p>
   </>
 );

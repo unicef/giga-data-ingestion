@@ -27,40 +27,26 @@ import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
 const skeletonHeaders: DataTableHeader[] = [
-  {
-    key: "approval_status",
-    header: "approval_status",
-  },
-  {
-    key: "school_id_giga",
-    header: "school_id_giga",
-  },
-  {
-    key: "_change_type",
-    header: "_change_type",
-  },
-  {
-    key: "_commit_timestamp",
-    header: "_commit_timestamp",
-  },
-  {
-    key: "_commit_version",
-    header: "_commit_version",
-  },
+  { key: "school_id_giga", header: "school_id_giga" },
+  { key: "_change_type", header: "_change_type" },
 ];
 
-export const Route = createFileRoute("/approval-requests/$subpath/")({
+export const Route = createFileRoute(
+  "/approval-requests/$countryCode/$uploadId/",
+)({
   component: ApproveRejectTable,
   validateSearch: validateSearchParams,
-  loader: ({ params: { subpath }, context: { queryClient } }) => {
-    return queryClient.ensureQueryData(
+  loader: ({ params: { countryCode, uploadId }, context: { queryClient } }) =>
+    queryClient.ensureQueryData(
       queryOptions({
         queryFn: () =>
-          api.approvalRequests.get(subpath, { page: 1, page_size: 10 }),
-        queryKey: ["approval-requests", subpath, 1, 10],
+          api.approvalRequests.get(countryCode, uploadId, {
+            page: 1,
+            page_size: 10,
+          }),
+        queryKey: ["approval-requests", countryCode, uploadId, 1, 10],
       }),
-    );
-  },
+    ),
   pendingComponent: () => (
     <Section className="container py-6">
       <DataTableSkeleton headers={skeletonHeaders} />
@@ -76,10 +62,12 @@ export const Route = createFileRoute("/approval-requests/$subpath/")({
       handleApproveAll={() => {}}
       handleRejectAll={() => {}}
       info={{
-        dataset: "",
-        timestamp: "",
-        version: 0,
         country: "",
+        country_iso3: "",
+        dataset: "",
+        upload_id: "",
+        uploaded_at: "",
+        uploader_email: "",
       }}
       page={DEFAULT_PAGE_NUMBER}
       pageSize={DEFAULT_PAGE_SIZE}
@@ -89,7 +77,7 @@ export const Route = createFileRoute("/approval-requests/$subpath/")({
 });
 
 function ApproveRejectTable() {
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isApproveAllModalOpen, setIsApproveAllModalOpen] = useState(false);
   const [isRejectAllModalOpen, setIsRejectAllModalOpen] = useState(false);
 
@@ -97,16 +85,8 @@ function ApproveRejectTable() {
     page = DEFAULT_PAGE_NUMBER,
     page_size: pageSize = DEFAULT_PAGE_SIZE,
   } = Route.useSearch();
-  const { subpath } = Route.useParams();
+  const { countryCode, uploadId } = Route.useParams();
   const navigate = useNavigate({ from: Route.fullPath });
-
-  const {
-    selectedUploadIds,
-    uploadActions: { clearSelectedUploadIds },
-  } = useStore();
-
-  const uploadIdsArray =
-    selectedUploadIds.length > 0 ? selectedUploadIds : undefined;
 
   const {
     approveRowActions: {
@@ -127,15 +107,11 @@ function ApproveRejectTable() {
   } = useSuspenseQuery(
     queryOptions({
       queryFn: () =>
-        api.approvalRequests.get(
-          subpath,
-          {
-            page,
-            page_size: pageSize,
-          },
-          uploadIdsArray ? uploadIdsArray : undefined,
-        ),
-      queryKey: ["approval-requests", subpath, page, pageSize, uploadIdsArray],
+        api.approvalRequests.get(countryCode, uploadId, {
+          page,
+          page_size: pageSize,
+        }),
+      queryKey: ["approval-requests", countryCode, uploadId, page, pageSize],
     }),
   );
 
@@ -148,98 +124,90 @@ function ApproveRejectTable() {
   } = approvalRequestsQuery?.data ?? SENTINEL_APPROVAL_REQUEST;
 
   const headers = useMemo<DataTableHeader[]>(() => {
-    let keys = Object.keys(approvalRequests[0] ?? { _change_type: "insert" });
-    const schoolIdGigaIndex = keys.findIndex(key => key === "school_id_giga");
-    if (schoolIdGigaIndex > -1) {
-      keys = [
-        "school_id_giga",
-        ...keys.slice(0, schoolIdGigaIndex),
-        ...keys.slice(schoolIdGigaIndex + 1),
-      ];
-    }
+    const first = approvalRequests[0] ?? {
+      school_id_giga: "",
+      _change_type: "INSERT",
+    };
+    let keys = Object.keys(first);
 
-    const changeIdIndex = keys.findIndex(key => key === "change_id");
-    if (changeIdIndex > -1) {
-      keys = [
-        "approval_status",
-        "change_id",
-        ...keys.slice(0, changeIdIndex),
-        ...keys.slice(changeIdIndex + 1),
-      ];
+    // Put school_id_giga first
+    const gigaIdx = keys.findIndex(k => k === "school_id_giga");
+    if (gigaIdx > -1) {
+      keys = ["school_id_giga", ...keys.filter(k => k !== "school_id_giga")];
     }
+    // Put approval_status second
+    keys = ["approval_status", ...keys.filter(k => k !== "approval_status")];
 
-    return keys.map(key => ({
-      key,
-      header: key,
-    }));
+    return keys.map(key => ({ key, header: key }));
   }, [approvalRequests]);
 
-  const formattedRows = useMemo<Record<string, string | null>[]>(() => {
-    return approvalRequests.map(row => {
-      const formattedRow: Record<string, string | null> = {
+  const formattedRows = useMemo<Record<string, unknown>[]>(() => {
+    const result: Record<string, unknown>[] = [];
+
+    for (const row of approvalRequests) {
+      const approvalStatus = approvedRows.includes(row.school_id_giga)
+        ? "Approved"
+        : rejectedRows.includes(row.school_id_giga)
+        ? "Rejected"
+        : "";
+
+      // For UPDATE rows, prepend a non-selectable "current" row showing the old values
+      if (row._change_type === "UPDATE") {
+        const currentRecord: Record<string, unknown> = {
+          _change_type: "CURRENT",
+          id: `${row.school_id_giga}_current`,
+          approval_status: approvalStatus,
+        };
+        for (const [key, value] of Object.entries(row)) {
+          if (key === "_change_type") continue;
+          currentRecord[key] =
+            value !== null && typeof value === "object" && "old" in value
+              ? (value as { old: unknown }).old
+              : value;
+        }
+        result.push(currentRecord);
+      }
+
+      result.push({
         ...row,
-        id: row.change_id,
-        approval_status: approvedRows.includes(row.change_id!)
-          ? "Approved"
-          : rejectedRows.includes(row.change_id!)
-          ? "Rejected"
-          : "",
-      };
-      return formattedRow;
-    });
+        id: row.school_id_giga,
+        approval_status: approvalStatus,
+      });
+    }
+
+    return result;
   }, [approvalRequests, approvedRows, rejectedRows]);
 
-  const { mutateAsync: upload, isPending } = useMutation({
-    mutationKey: ["approval-request-upload", subpath],
-    mutationFn: api.approvalRequests.upload_approved_rows,
+  const { mutateAsync: submit, isPending } = useMutation({
+    mutationKey: ["approval-request-submit", countryCode, uploadId],
+    mutationFn: api.approvalRequests.submit,
   });
 
-  const handleApproveRows = (rows: Record<string, string | null>[]) => {
-    const newApprovedRows = new Set(approvedRows);
-    newApprovedRows.delete("__all__");
+  const handleApproveRows = (rows: Record<string, unknown>[]) => {
+    const newApproved = new Set(approvedRows.filter(r => r !== "__all__"));
+    const newRejected = new Set(rejectedRows.filter(r => r !== "__all__"));
 
     for (const row of rows) {
-      newApprovedRows.add(row.change_id!);
+      const id = row.school_id_giga as string;
+      newApproved.add(id);
+      newRejected.delete(id);
     }
-    setApprovedRows([...newApprovedRows]);
-
-    const ids = rows.map(row => row.change_id ?? "").filter(Boolean);
-
-    // Remove ids from rejected rows
-    const newRejectedRows = new Set(rejectedRows);
-    newRejectedRows.delete("__all__");
-
-    for (const id of ids) {
-      if (newApprovedRows.has(id)) {
-        newRejectedRows.delete(id);
-      }
-    }
-    setRejectedRows([...newRejectedRows]);
-
+    setApprovedRows([...newApproved]);
+    setRejectedRows([...newRejected]);
     setHeaders(headers);
   };
 
-  const handleRejectRows = (rows: Record<string, string | null>[]) => {
-    const newRejectedRows = new Set(rejectedRows);
-    newRejectedRows.delete("__all__");
+  const handleRejectRows = (rows: Record<string, unknown>[]) => {
+    const newRejected = new Set(rejectedRows.filter(r => r !== "__all__"));
+    const newApproved = new Set(approvedRows.filter(r => r !== "__all__"));
 
     for (const row of rows) {
-      newRejectedRows.add(row.change_id!);
+      const id = row.school_id_giga as string;
+      newRejected.add(id);
+      newApproved.delete(id);
     }
-    setRejectedRows([...newRejectedRows]);
-
-    const ids = rows.map(row => row.change_id ?? "").filter(Boolean);
-    // Remove ids from approved rows
-    const newApprovedRows = new Set(approvedRows);
-    newApprovedRows.delete("__all__");
-
-    for (const id of ids) {
-      if (newRejectedRows.has(id)) {
-        newApprovedRows.delete(id);
-      }
-    }
-    setApprovedRows([...newApprovedRows]);
-
+    setRejectedRows([...newRejected]);
+    setApprovedRows([...newApproved]);
     setHeaders(headers);
   };
 
@@ -266,16 +234,13 @@ function ApproveRejectTable() {
   }) => {
     void navigate({
       to: "",
-      params: { subpath },
-      search: {
-        page,
-        page_size: pageSize,
-      },
+      params: { countryCode, uploadId },
+      search: { page, page_size: pageSize },
     });
   };
 
   const handleSubmit = () => {
-    if (Object.keys(approvedRows).length < total_count) {
+    if (approvedRows.length + rejectedRows.length < total_count) {
       setIsConfirmModalOpen(true);
     } else {
       void handleProceed();
@@ -283,20 +248,25 @@ function ApproveRejectTable() {
   };
 
   const handleProceed = async () => {
-    setRows(formattedRows);
+    setRows(formattedRows as never);
     setTotalCount(total_count);
-
     await navigate({
-      to: "/approval-requests/$subpath/confirm",
-      params: { subpath },
+      to: "/approval-requests/$countryCode/$uploadId/confirm",
+      params: { countryCode, uploadId },
     });
   };
 
   const handleProceedAll = async () => {
-    resetApproveRowState();
-    clearSelectedUploadIds();
-    await upload({ approved_rows: approvedRows, subpath });
-    await navigate({ to: "/approval-requests" });
+    await submit({
+      countryCode,
+      uploadId,
+      approved_rows: approvedRows,
+      rejected_rows: rejectedRows,
+    });
+    await navigate({
+      to: "/approval-requests/$countryCode",
+      params: { countryCode },
+    });
   };
 
   return (
@@ -334,7 +304,10 @@ function ApproveRejectTable() {
             renderIcon={ArrowRight}
             type="submit"
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={
+              isLoading ||
+              (approvedRows.length === 0 && rejectedRows.length === 0)
+            }
           >
             Proceed
           </Button>
@@ -349,46 +322,41 @@ function ApproveRejectTable() {
         onRequestClose={() => setIsConfirmModalOpen(false)}
         onRequestSubmit={handleProceed}
       >
-        You have {total_count - approvedRows.length} unapproved rows. These rows
-        will be automatically rejected. Proceed?
+        You have {total_count - approvedRows.length - rejectedRows.length} rows
+        not yet actioned. These will remain pending for later review. Proceed?
       </Modal>
 
       <Modal
-        modalHeading="Confirm Approve All"
+        modalHeading="Approve All Rows"
         open={isApproveAllModalOpen}
-        primaryButtonText="Proceed"
+        primaryButtonText="Approve All"
         secondaryButtonText="Cancel"
         primaryButtonDisabled={isPending}
         loadingStatus={isPending ? "active" : "inactive"}
         onRequestClose={() => {
           setIsApproveAllModalOpen(false);
           setApprovedRows([]);
-          setRejectedRows([]);
         }}
         onRequestSubmit={handleProceedAll}
       >
-        You are approving all {total_count} rows, which will be merged shortly
-        into the school master dataset for {info.country}. Note that rows
-        corresponding to the same <code>school_id_giga</code> will automatically
-        be deduplicated based on the latest <code>_commit_version</code>.
-        Proceed?
+        All {total_count} rows will be approved and scheduled for merge into the
+        school master dataset for {info.country}. Proceed?
       </Modal>
 
       <Modal
-        modalHeading="Confirm Reject All"
+        modalHeading="Reject All Rows"
         open={isRejectAllModalOpen}
-        primaryButtonText="Proceed"
+        primaryButtonText="Reject All"
         secondaryButtonText="Cancel"
         primaryButtonDisabled={isPending}
         loadingStatus={isPending ? "active" : "inactive"}
         onRequestClose={() => {
           setIsRejectAllModalOpen(false);
-          setApprovedRows([]);
           setRejectedRows([]);
         }}
         onRequestSubmit={handleProceedAll}
       >
-        You are rejecting all {total_count} rows. Proceed?
+        All {total_count} rows will be rejected. Proceed?
       </Modal>
     </>
   );

@@ -36,25 +36,12 @@ export interface DataQualityCheckSummary {
   summary: Summary;
 }
 
-export interface DqFailedRowValues {
-  [key: string]: string | number | null;
-}
-
-export interface DqFailedRowsFirstFiveRows {
-  [checkName: string]: DqFailedRowValues[];
-}
-
 export interface DataQualityCheck {
-  name: string;
-  creation_time: string;
   dq_summary: DataQualityCheckSummary;
-  dq_failed_rows_first_five_rows: DqFailedRowsFirstFiveRows;
   status: DQStatus;
 }
 
 export const initialDataQualityCheck: DataQualityCheck = {
-  name: "",
-  creation_time: new Date().toISOString(),
   dq_summary: {
     summary: {
       rows: 0,
@@ -69,7 +56,6 @@ export const initialDataQualityCheck: DataQualityCheck = {
     geospatial_checks: [],
     critical_error_check: [],
   },
-  dq_failed_rows_first_five_rows: {},
   status: DQStatus.IN_PROGRESS,
 };
 

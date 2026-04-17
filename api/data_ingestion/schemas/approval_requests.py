@@ -3,28 +3,39 @@ from datetime import datetime
 from pydantic import UUID4, AwareDatetime, BaseModel, ConfigDict, Field, constr
 
 
-class ApprovalRequestListing(BaseModel):
-    id: str
+class CountryPendingListing(BaseModel):
     country: str
     country_iso3: constr(min_length=3, max_length=3)
-    dataset: str
-    subpath: str
-    last_modified: AwareDatetime
-    rows_count: int
+    pending_uploads: int
     rows_added: int
     rows_updated: int
     rows_deleted: int
-    enabled: bool
-    upload_id: str | None
-    uploaded_at: datetime | None
-    file_name: str | None
 
 
-class UploadApprovedRowsRequest(BaseModel):
-    approved_rows: list[str]
-    subpath: str
+class UploadListing(BaseModel):
     upload_id: str
-    dq_mode: str = "uploaded"
+    dataset: str
+    uploaded_at: AwareDatetime
+    uploader_email: str
+    rows_added: int
+    rows_updated: int
+    rows_deleted: int
+    rows_unchanged: int
+    is_merge_processing: bool = False
+
+
+class ApprovalRequestInfo(BaseModel):
+    country: str
+    country_iso3: str
+    dataset: str
+    upload_id: str
+    uploaded_at: AwareDatetime
+    uploader_email: str
+
+
+class SubmitApprovalRequest(BaseModel):
+    approved_rows: list[str]
+    rejected_rows: list[str]
 
 
 class ApprovalRequestAuditLogSchema(BaseModel):
@@ -32,7 +43,6 @@ class ApprovalRequestAuditLogSchema(BaseModel):
     approved_by_id: UUID4
     approved_by_email: str
     approved_date: datetime
-    dq_mode: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -45,20 +55,3 @@ class ApprovalRequestSchema(BaseModel):
     audit_logs: list[ApprovalRequestAuditLogSchema] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class ApprovalFilterByUploadRequest(BaseModel):
-    upload_ids: list[str]
-
-
-class ApprovalByUploadResponse(BaseModel):
-    id: str
-    country: str
-    dataset: str
-    upload_id: str
-    enabled: bool
-
-
-class ApproveDatasetRequest(BaseModel):
-    upload_id: str
-    dq_mode: str

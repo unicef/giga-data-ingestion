@@ -1,75 +1,46 @@
 import { ReactElement, useMemo } from "react";
 
-import { CheckmarkFilled } from "@carbon/icons-react";
-import {
-  Button,
-  DataTableHeader,
-  DataTableSkeleton,
-  Loading,
-} from "@carbon/react";
+import { Button, DataTableHeader, DataTableSkeleton } from "@carbon/react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { format } from "date-fns";
 
 import { api } from "@/api";
-import { listApprovalRequestQueryOptions } from "@/api/queryOptions";
 import DataTable from "@/components/common/DataTable.tsx";
-import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { useStore } from "@/context/store";
 import { SENTINEL_PAGED_RESPONSE } from "@/types/api.ts";
-import { ApprovalRequestListing } from "@/types/approvalRequests";
+import { CountryPendingListing } from "@/types/approvalRequests";
 import { commaNumber } from "@/utils/number.ts";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
 const columns: DataTableHeader[] = [
-  {
-    key: "country",
-    header: "Country",
-  },
-  {
-    key: "dataset",
-    header: "Dataset",
-  },
-  {
-    key: "last_modified",
-    header: "Last Modified",
-  },
-  {
-    key: "rows_count",
-    header: "Row Count",
-  },
-  {
-    key: "rows_added",
-    header: "Rows Added",
-  },
-  {
-    key: "rows_updated",
-    header: "Rows Updated",
-  },
-  {
-    key: "rows_deleted",
-    header: "Rows Deleted",
-  },
-  {
-    key: "actions",
-    header: "",
-  },
+  { key: "country", header: "Country" },
+  { key: "pending_uploads", header: "Pending Uploads" },
+  { key: "rows_added", header: "Rows to Add" },
+  { key: "rows_updated", header: "Rows to Update" },
+  { key: "rows_deleted", header: "Rows to Delete" },
+  { key: "actions", header: "" },
 ];
 
 export const Route = createFileRoute("/approval-requests/")({
   component: ApprovalRequests,
   validateSearch: validateSearchParams,
   loader: ({ context: { queryClient } }) =>
-    queryClient.ensureQueryData(listApprovalRequestQueryOptions),
+    queryClient.ensureQueryData(
+      queryOptions({
+        queryKey: ["approval-requests", 1, 10],
+        queryFn: () =>
+          api.approvalRequests.listCountries({ page: 1, page_size: 10 }),
+      }),
+    ),
   pendingComponent: () => <DataTableSkeleton headers={columns} />,
   errorComponent: () => (
     <DataTable title="Approval Requests" columns={columns} rows={[]} />
   ),
 });
 
-type ApprovalRequestTableRow = Record<
-  keyof ApprovalRequestListing,
-  string | number | null | boolean | ReactElement
+type CountryTableRow = Record<
+  keyof CountryPendingListing,
+  string | number | ReactElement
 > & { id: string; actions: ReactElement };
 
 function ApprovalRequests() {
@@ -86,31 +57,25 @@ function ApprovalRequests() {
     page: number;
     pageSize: number;
   }) {
-    void navigate({
-      to: "",
-      search: {
-        page,
-        page_size: pageSize,
-      },
-    });
+    void navigate({ to: "", search: { page, page_size: pageSize } });
   }
 
   const { data, isFetching, isRefetching } = useSuspenseQuery(
     queryOptions({
       queryKey: ["approval-requests", page, page_size],
-      queryFn: () => api.approvalRequests.list({ page, page_size }),
+      queryFn: () => api.approvalRequests.listCountries({ page, page_size }),
     }),
   );
 
   const isLoading = isFetching || isRefetching;
-
   const approvalRequests = data.data ?? SENTINEL_PAGED_RESPONSE;
 
-  const formattedApprovalRequests = useMemo<ApprovalRequestTableRow[]>(
+  const formattedRows = useMemo<CountryTableRow[]>(
     () =>
       approvalRequests.data.map(request => ({
         ...request,
-        rows_count: commaNumber(request.rows_count),
+        id: request.country_iso3,
+        pending_uploads: commaNumber(request.pending_uploads),
         rows_added: commaNumber(request.rows_added),
         rows_updated: commaNumber(request.rows_updated),
         rows_deleted: commaNumber(request.rows_deleted),
@@ -139,29 +104,16 @@ function ApprovalRequests() {
         dataset: request.dataset,
         actions: (
           <Button
-            disabled={isLoading || !request.enabled}
+            disabled={isLoading}
             kind="tertiary"
             size="sm"
             as={Link}
-            to="./$subpath"
-            renderIcon={
-              isLoading
-                ? props => (
-                    <Loading small={true} withOverlay={false} {...props} />
-                  )
-                : CheckmarkFilled
-            }
-            params={{
-              subpath: encodeURIComponent(request.subpath),
-            }}
+            to="./$countryCode"
+            params={{ countryCode: request.country_iso3 }}
             onClick={() => resetApproveRowState()}
           >
-            Approve Rows
+            View Uploads
           </Button>
-        ),
-        last_modified: format(
-          new Date(request.last_modified),
-          DEFAULT_DATETIME_FORMAT,
         ),
       })),
     [approvalRequests.data, isLoading, resetApproveRowState],
@@ -171,7 +123,7 @@ function ApprovalRequests() {
     <DataTable
       title="Approval Requests"
       columns={columns}
-      rows={formattedApprovalRequests}
+      rows={formattedRows}
       isPaginated
       count={approvalRequests.total_count}
       handlePaginationChange={handlePaginationChange}
