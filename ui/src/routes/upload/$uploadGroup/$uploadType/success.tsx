@@ -1,4 +1,4 @@
-import { ComponentProps, memo, useMemo, useState } from "react";
+import { ComponentProps, memo, useEffect, useMemo, useState } from "react";
 
 import {
   ArrowLeft,
@@ -31,6 +31,7 @@ import BasicDataQualityCheck from "@/components/check-file-uploads/BasicDataQual
 import DataCheckItem from "@/components/check-file-uploads/DataCheckItem";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
 import { useStore } from "@/context/store";
+import { cn } from "@/lib/utils";
 import {
   Check,
   DQStatus,
@@ -198,6 +199,15 @@ function Success() {
   );
 
   const status = dqResult?.status;
+
+  useEffect(() => {
+    if (!isReviewMode && status === DQStatus.COMPLETED) {
+      navigate({
+        to: "/upload/$uploadId",
+        params: { uploadId },
+      });
+    }
+  }, [status]);
 
   const basicCheckItems = Object.entries(basicCheck)
     .map(([key, value]) => {
@@ -437,6 +447,22 @@ function Success() {
                   {actionError}
                 </p>
               )}
+
+              {!isReviewMode && (
+                <Button
+                  className={cn("w-full", {
+                    "bg-green-600 hover:bg-green-800":
+                      status === DQStatus.COMPLETED,
+                  })}
+                  isExpressive
+                  onClick={handleSubmit}
+                  renderIcon={ArrowRight}
+                >
+                  {status === DQStatus.COMPLETED
+                    ? "Review Submission"
+                    : "Close and run in background"}
+                </Button>
+              )}
             </div>
 
             <div className="pl-4 text-sm">
@@ -452,10 +478,7 @@ function Success() {
               </div>
               <div className="flex flex-col space-y-0.5 text-xs font-normal text-gray-400">
                 <div className="m-0 p-0 leading-tight">
-                  Uploaded:{" "}
-                  {uploadData.uploader_email ||
-                    pendingSchoolDataPayload?.uploader_email ||
-                    "Not available"}
+                  Uploaded: {uploadData.uploader_email || "Not available"}
                 </div>
                 <div className="m-0 p-0 leading-tight">
                   UploadID:{" "}
