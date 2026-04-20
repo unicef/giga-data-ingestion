@@ -12,6 +12,29 @@ class CountryPendingListing(BaseModel):
     rows_deleted: int
 
 
+class UploadApprovedRowsRequest(BaseModel):
+    approved_rows: list[str]
+    subpath: str
+    upload_id: str
+
+
+class ApprovalRequestListing(BaseModel):
+    id: str
+    country: str
+    country_iso3: constr(min_length=3, max_length=3)
+    dataset: str
+    subpath: str
+    last_modified: AwareDatetime
+    rows_count: int
+    rows_added: int
+    rows_updated: int
+    rows_deleted: int
+    enabled: bool
+    upload_id: str | None
+    uploaded_at: datetime | None
+    file_name: str | None
+
+
 class UploadListing(BaseModel):
     upload_id: str
     dataset: str
@@ -22,6 +45,11 @@ class UploadListing(BaseModel):
     rows_deleted: int
     rows_unchanged: int
     is_merge_processing: bool = False
+
+    enabled: bool
+    upload_id: str | None
+    uploaded_at: datetime | None
+    file_name: str | None
 
 
 class ApprovalRequestInfo(BaseModel):
@@ -36,6 +64,7 @@ class ApprovalRequestInfo(BaseModel):
 class SubmitApprovalRequest(BaseModel):
     approved_rows: list[str]
     subpath: str
+    upload_id: str
     dq_mode: str = "uploaded"
     rejected_rows: list[str]
 
@@ -58,6 +87,18 @@ class ApprovalRequestSchema(BaseModel):
     audit_logs: list[ApprovalRequestAuditLogSchema] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ApprovalFilterByUploadRequest(BaseModel):
+    upload_ids: list[str]
+
+
+class ApprovalByUploadResponse(BaseModel):
+    id: str
+    country: str
+    dataset: str
+    upload_id: str
+    enabled: bool
 
 
 class ApproveDatasetRequest(BaseModel):

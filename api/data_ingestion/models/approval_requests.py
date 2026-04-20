@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from pydantic import UUID4
 from sqlalchemy import (
@@ -9,10 +10,15 @@ from sqlalchemy import (
     ForeignKey,
     UniqueConstraint,
     func,
+    select,
 )
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import BaseModel
+
+if TYPE_CHECKING:
+    from .file_upload import FileUpload
 
 
 class DQModeEnum(str, Enum):
@@ -23,7 +29,12 @@ class DQModeEnum(str, Enum):
 class ApprovalRequest(BaseModel):
     __tablename__ = "approval_requests"
     __table_args__ = (
-        UniqueConstraint("country", "dataset", name="uq_country_dataset"),
+        UniqueConstraint("country", "dataset", "upload_id", name="uq_country_dataset"),
+    )
+    upload_id: Mapped[str] = mapped_column(
+        ForeignKey("file_uploads.id"),
+        nullable=True,
+        index=True,
     )
     country: Mapped[str] = mapped_column(VARCHAR(3), nullable=False)
     dataset: Mapped[str] = mapped_column(nullable=False)
@@ -31,6 +42,11 @@ class ApprovalRequest(BaseModel):
     is_merge_processing: Mapped[bool] = mapped_column(default=False)
     audit_logs: Mapped[list["ApprovalRequestAuditLog"]] = relationship(
         back_populates="approval_request"
+    )
+    file_upload: Mapped["FileUpload | None"] = relationship(
+        "FileUpload",
+        foreign_keys=[upload_id],
+        back_populates="approval_requests",
     )
 
     dq_mode: Mapped[DQModeEnum] = mapped_column(
@@ -59,3 +75,13 @@ class ApprovalRequestAuditLog(BaseModel):
         nullable=False,
         default=DQModeEnum.uploaded,
     )
+
+
+async def fetch_approvals_by_upload_ids(
+    db: AsyncSession,
+    upload_ids: list[str],
+) -> list[ApprovalRequest]:
+    query = select(ApprovalRequest).where(ApprovalRequest.upload_id.in_(upload_ids))
+
+    result = await db.scalars(query)
+    return result.all()

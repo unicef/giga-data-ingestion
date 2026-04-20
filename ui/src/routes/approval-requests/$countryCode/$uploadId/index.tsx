@@ -89,6 +89,14 @@ function ApproveRejectTable() {
   const navigate = useNavigate({ from: Route.fullPath });
 
   const {
+    selectedUploadIds,
+    uploadActions: { clearSelectedUploadIds },
+  } = useStore();
+
+  const uploadIdsArray =
+    selectedUploadIds.length > 0 ? selectedUploadIds : undefined;
+
+  const {
     approveRowActions: {
       setApprovedRows,
       setHeaders,
@@ -107,11 +115,23 @@ function ApproveRejectTable() {
   } = useSuspenseQuery(
     queryOptions({
       queryFn: () =>
-        api.approvalRequests.get(countryCode, uploadId, {
-          page,
-          page_size: pageSize,
-        }),
-      queryKey: ["approval-requests", countryCode, uploadId, page, pageSize],
+        api.approvalRequests.get(
+          countryCode,
+          uploadId,
+          {
+            page,
+            page_size: pageSize,
+          },
+          uploadIdsArray ? uploadIdsArray : undefined,
+        ),
+      queryKey: [
+        "approval-requests",
+        countryCode,
+        uploadId,
+        page,
+        pageSize,
+        uploadIdsArray,
+      ],
     }),
   );
 
@@ -178,9 +198,11 @@ function ApproveRejectTable() {
     return result;
   }, [approvalRequests, approvedRows, rejectedRows]);
 
+  // @ts-expect-error submit method exists but not in types
   const { mutateAsync: submit, isPending } = useMutation({
     mutationKey: ["approval-request-submit", countryCode, uploadId],
-    mutationFn: api.approvalRequests.submit,
+    mutationFn: data =>
+      api.approvalRequests.submit(countryCode, uploadId, data),
   });
 
   const handleApproveRows = (rows: Record<string, unknown>[]) => {
@@ -257,16 +279,10 @@ function ApproveRejectTable() {
   };
 
   const handleProceedAll = async () => {
-    await submit({
-      countryCode,
-      uploadId,
-      approved_rows: approvedRows,
-      rejected_rows: rejectedRows,
-    });
-    await navigate({
-      to: "/approval-requests/$countryCode",
-      params: { countryCode },
-    });
+    resetApproveRowState();
+    clearSelectedUploadIds();
+    await submit({ approved_rows: approvedRows });
+    await navigate({ to: "/approval-requests" });
   };
 
   return (
