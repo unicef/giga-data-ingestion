@@ -52,6 +52,7 @@ class FileUploadRequest:
     dataset: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+    fuzzy_corrections: str | None = Form(None)
     dq_mode: str = Form("master")
 
 
@@ -61,3 +62,9 @@ class UnstructuredFileUploadRequest:
     country: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+
+
+@dataclass
+class ValidateFuzzyRequest:
+    file: UploadFile = Form(...)
+    column_to_schema_mapping: str = Form(...)
