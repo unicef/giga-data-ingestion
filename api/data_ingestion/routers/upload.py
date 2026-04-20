@@ -34,9 +34,7 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.data_quality_checks import (
     _read_spark_parquet_directory,
     get_data_quality_summary,
-    get_first_n_error_rows_for_data_quality_check,
 )
-from data_ingestion.internal.data_quality_checks import get_data_quality_summary
 from data_ingestion.internal.roles import get_user_roles
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
