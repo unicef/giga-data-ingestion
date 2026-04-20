@@ -3,35 +3,52 @@ import { AxiosInstance, AxiosResponse } from "axios";
 import { PagedResponse, PaginationRequest } from "@/types/api.ts";
 import {
   ApprovalRequest,
-  ApprovalRequestListing,
+  CountryPendingListing,
+  UploadListing,
 } from "@/types/approvalRequests";
 
 export default function routes(axi: AxiosInstance) {
   return {
-    list: (
+    listCountries: (
       paginationRequest?: PaginationRequest,
-    ): Promise<AxiosResponse<PagedResponse<ApprovalRequestListing>>> => {
-      return axi.get("/approval-requests", {
+    ): Promise<AxiosResponse<PagedResponse<CountryPendingListing>>> => {
+      return axi.get("/approval-requests", { params: paginationRequest });
+    },
+
+    listUploads: (
+      countryCode: string,
+      paginationRequest?: PaginationRequest,
+    ): Promise<AxiosResponse<PagedResponse<UploadListing>>> => {
+      return axi.get(`/approval-requests/${countryCode}`, {
         params: paginationRequest,
       });
     },
+
     get: (
-      subpath: string,
+      countryCode: string,
+      uploadId: string,
       paginationRequest?: PaginationRequest,
     ): Promise<AxiosResponse<ApprovalRequest>> => {
-      const encodedSubpath = encodeURIComponent(subpath);
-      return axi.get(`/approval-requests/${encodedSubpath}`, {
+      return axi.get(`/approval-requests/${countryCode}/${uploadId}`, {
         params: paginationRequest,
       });
     },
-    upload_approved_rows: ({
+
+    submit: ({
+      countryCode,
+      uploadId,
       approved_rows,
-      subpath,
+      rejected_rows,
     }: {
+      countryCode: string;
+      uploadId: string;
       approved_rows: string[];
-      subpath: string;
+      rejected_rows: string[];
     }): Promise<AxiosResponse<void>> => {
-      return axi.post(`approval-requests/upload`, { approved_rows, subpath });
+      return axi.post(`/approval-requests/${countryCode}/${uploadId}/submit`, {
+        approved_rows,
+        rejected_rows,
+      });
     },
   };
 }

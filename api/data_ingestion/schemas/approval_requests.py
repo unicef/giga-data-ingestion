@@ -3,24 +3,41 @@ from datetime import datetime
 from pydantic import UUID4, AwareDatetime, BaseModel, ConfigDict, Field, constr
 
 
-class ApprovalRequestListing(BaseModel):
-    id: str
+class CountryPendingListing(BaseModel):
     country: str
     country_iso3: constr(min_length=3, max_length=3)
-    dataset: str
-    subpath: str
-    last_modified: AwareDatetime
-    rows_count: int
+    pending_uploads: int
     rows_added: int
     rows_updated: int
     rows_deleted: int
-    enabled: bool
 
 
-class UploadApprovedRowsRequest(BaseModel):
+class UploadListing(BaseModel):
+    upload_id: str
+    dataset: str
+    uploaded_at: AwareDatetime
+    uploader_email: str
+    rows_added: int
+    rows_updated: int
+    rows_deleted: int
+    rows_unchanged: int
+    is_merge_processing: bool = False
+
+
+class ApprovalRequestInfo(BaseModel):
+    country: str
+    country_iso3: str
+    dataset: str
+    upload_id: str
+    uploaded_at: AwareDatetime
+    uploader_email: str
+
+
+class SubmitApprovalRequest(BaseModel):
     approved_rows: list[str]
     subpath: str
     dq_mode: str = "uploaded"
+    rejected_rows: list[str]
 
 
 class ApprovalRequestAuditLogSchema(BaseModel):

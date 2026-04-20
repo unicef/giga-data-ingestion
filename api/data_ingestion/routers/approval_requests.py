@@ -1,34 +1,16 @@
 import json
-import logging
-import urllib.parse
-from datetime import datetime
-from pathlib import Path
+from datetime import UTC, datetime
 
+import country_converter as coco
 import pandas as pd
-from country_converter import country_converter as coco
 from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
 from fastapi_azure_auth.user import User
-from sqlalchemy import (
-    column,
-    distinct,
-    func,
-    literal,
-    literal_column,
-    select,
-    text,
-    union_all,
-    update,
-)
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.functions import count
-from sqlalchemy.types import String
 
-from azure.core.exceptions import HttpResponseError
-from azure.storage.blob import ContentSettings
-from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db as get_primary_db
-from data_ingestion.db.trino import get_db, get_db_context
+from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
@@ -43,6 +25,14 @@ from data_ingestion.schemas.approval_requests import (
     ApprovalRequestListing,
     ApproveDatasetRequest,
     UploadApprovedRowsRequest,
+from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
+from data_ingestion.models.file_upload import FileUpload
+from data_ingestion.permissions.permissions import IsPrivileged
+from data_ingestion.schemas.approval_requests import (
+    ApprovalRequestInfo,
+    CountryPendingListing,
+    SubmitApprovalRequest,
+    UploadListing,
 )
 from data_ingestion.schemas.core import PagedResponseSchema
 
@@ -52,204 +42,126 @@ router = APIRouter(
     dependencies=[Security(IsPrivileged())],
 )
 
+_CHANGE_INSERT = "INSERT"
+_CHANGE_UPDATE = "UPDATE"
+_CHANGE_DELETE = "DELETE"
+_CHANGE_UNCHANGED = "UNCHANGED"
+_STATUS_PENDING = "PENDING"
+_STATUS_APPROVED = "APPROVED"
+_STATUS_REJECTED = "REJECTED"
 
-@router.get(
-    "",
-    response_model=PagedResponseSchema[ApprovalRequestListing],
-)
-async def list_approval_requests(
+
+def _staging_table(dataset: str, country_code: str) -> str:
+    """Fully-qualified Trino staging (pending_changes) table name."""
+    schema = dataset.lower().replace("school ", "")
+    return f"delta_lake.school_{schema}_staging.{country_code.lower()}"
+
+
+def _silver_table(dataset: str, country_code: str) -> str:
+    """Fully-qualified Trino silver table name."""
+    schema = dataset.lower().replace("school ", "")
+    return f"delta_lake.school_{schema}_silver.{country_code.lower()}"
+
+
+def _in_clause(ids: list[str]) -> str:
+    """Build a safe SQL IN clause string from a list of string IDs."""
+    escaped = ", ".join(f"'{i.replace(chr(39), '')}'" for i in ids)
+    return f"({escaped})"
+
+
+@router.get("", response_model=PagedResponseSchema[CountryPendingListing])
+async def list_countries_with_pending_changes(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=50),
-    db: Session = Depends(get_db),
     primary_db: AsyncSession = Depends(get_primary_db),
+    db: Session = Depends(get_db),
 ):
-    base_query = (
-        select(ApprovalRequest)
-        .where(ApprovalRequest.enabled)
-        .order_by(ApprovalRequest.country, ApprovalRequest.dataset)
-    )
-    items = await primary_db.scalars(base_query)
-    settings = {}
-    table_names = []
-    for item in items:
-        settings[f"{item.country}-{item.dataset}"] = item.enabled
-        table_names.append(item.country.lower())
-
-    data_cte = (
-        select(
-            "*",
-            func.concat_WS(".", column("table_schema"), column("table_name")).label(
-                "full_name"
-            ),
+    """
+    List countries that have uploads with PENDING rows in their staging tables.
+    Returns one entry per country with aggregate change counts.
+    """
+    enabled_requests = (
+        await primary_db.scalars(
+            select(ApprovalRequest)
+            .where(ApprovalRequest.enabled)
+            .order_by(ApprovalRequest.country)
         )
-        .select_from(text("information_schema.tables"))
-        .where(
-            (column("table_schema").like(literal("school%staging")))
-            & (column("table_name").in_(table_names))
-        )
-        .cte("tables")
-    )
+    ).all()
 
-    res = db.execute(
-        select(
-            "*",
-            select(count(distinct(column("full_name"))))
-            .select_from(data_cte)
-            .label("total_count"),
-        )
-        .select_from(data_cte)
-        .order_by(column("table_name"), column("table_schema"))
-        .offset((page - 1) * page_size)
-        .limit(page_size)
-    )
+    if not enabled_requests:
+        return {"data": [], "page": page, "page_size": page_size, "total_count": 0}
 
-    staging_tables = res.mappings().all()
+    # Aggregate pending change counts per country across all datasets
+    rows_by_country: dict[str, dict] = {}
+    for ar in enabled_requests:
+        staging = _staging_table(ar.dataset, ar.country)
+        try:
+            result = (
+                db.execute(
+                    text(
+                        f"SELECT change_type, COUNT(*) AS cnt"  # nosec B608
+                        f" FROM {staging}"
+                        f" WHERE status = '{_STATUS_PENDING}'"
+                        f" AND change_type != '{_CHANGE_UNCHANGED}'"
+                        " GROUP BY change_type"
+                    )
+                )
+                .mappings()
+                .all()
+            )
+        except Exception:
+            continue
 
-    if len(staging_tables) == 0:
-        total_count = 0
-    else:
-        total_count = staging_tables[0]["total_count"]
+        if not result:
+            continue
 
-    body: list[ApprovalRequestListing] = []
-    queries = []
-    for table in staging_tables:
-        min_version = db.execute(
-            select(func.min(column("version"))).select_from(
+        upload_cnt = (
+            db.execute(
                 text(
-                    f'''delta_lake.{table['table_schema']}."{table['table_name']}$history"'''
+                    f"SELECT COUNT(DISTINCT upload_id) FROM {staging}"  # nosec B608
+                    f" WHERE status = '{_STATUS_PENDING}'"
+                    f" AND change_type != '{_CHANGE_UNCHANGED}'"
                 )
-            )
-        ).scalar()
-
-        change_types_cte = (
-            select(
-                column("school_id_giga"),
-                column("_change_type"),
-                column("_commit_version"),
-            ).select_from(
-                func.table(
-                    func.delta_lake.system.table_changes(
-                        literal(table["table_schema"]),
-                        literal(table["table_name"]),
-                        literal(min_version),
-                    )
-                )
-            )
-        ).cte(f"change_types_{table['table_schema']}_{table['table_name']}")
-        timestamp_cte = (
-            select(column("timestamp"))
-            .select_from(
-                text(
-                    f'''delta_lake.{table['table_schema']}."{table['table_name']}$history"'''
-                )
-            )
-            .order_by(column("timestamp").desc())
-            .limit(1)
-        ).cte(f"timestamp_{table['table_schema']}_{table['table_name']}")
-        max_version_cte = (
-            select(func.max(column("_commit_version")).label("max_version"))
-            .select_from(change_types_cte)
-            .limit(1)
-        ).cte(f"max_version_{table['table_schema']}_{table['table_name']}")
-        query = select(
-            literal(table["table_schema"]).label("table_schema"),
-            literal(table["table_name"]).label("table_name"),
-            (
-                select(count(column("school_id_giga").distinct())).select_from(
-                    change_types_cte
-                )
-            ).label("rows_count"),
-            (
-                select(count())
-                .select_from(
-                    change_types_cte.alias(
-                        f"ct_{table['table_schema']}_{table['table_name']}"
-                    ),
-                    max_version_cte.alias(
-                        f"mv_{table['table_schema']}_{table['table_name']}"
-                    ),
-                )
-                .where(
-                    (
-                        (
-                            literal_column(
-                                f"ct_{table['table_schema']}_{table['table_name']}._change_type"
-                            )
-                            == literal("insert")
-                        )
-                        & (
-                            literal_column(
-                                f"ct_{table['table_schema']}_{table['table_name']}._commit_version"
-                            )
-                            > 1
-                        )
-                    )
-                    | (
-                        (
-                            literal_column(
-                                f"ct_{table['table_schema']}_{table['table_name']}._change_type"
-                            )
-                            == literal("insert")
-                        )
-                        & (
-                            literal_column(
-                                f"mv_{table['table_schema']}_{table['table_name']}.max_version"
-                            )
-                            == 1
-                        )
-                    )
-                )
-            ).label("rows_added"),
-            (
-                select(count())
-                .select_from(change_types_cte)
-                .where(column("_change_type") == literal("update_postimage"))
-            ).label("rows_updated"),
-            (
-                select(count())
-                .select_from(change_types_cte)
-                .where(column("_change_type") == literal("delete"))
-            ).label("rows_deleted"),
-            (select(column("timestamp")).select_from(timestamp_cte)).label(
-                "last_modified"
-            ),
+            ).scalar()
+            or 0
         )
-        queries.append(query)
 
-    if len(queries) > 0:
-        res = db.execute(
-            union_all(*queries).order_by(column("table_name"), column("table_schema"))
+        entry = rows_by_country.setdefault(
+            ar.country,
+            {
+                "rows_added": 0,
+                "rows_updated": 0,
+                "rows_deleted": 0,
+                "pending_uploads": 0,
+            },
         )
-        stats = res.mappings().all()
+        for row in result:
+            if row["change_type"] == _CHANGE_INSERT:
+                entry["rows_added"] += row["cnt"]
+            elif row["change_type"] == _CHANGE_UPDATE:
+                entry["rows_updated"] += row["cnt"]
+            elif row["change_type"] == _CHANGE_DELETE:
+                entry["rows_deleted"] += row["cnt"]
+        entry["pending_uploads"] += upload_cnt
 
-        for stat in stats:
-            country = coco.convert(stat["table_name"], to="name_short")
-            country_iso3 = coco.convert(stat["table_name"], to="ISO3")
+    total_count = len(rows_by_country)
+    sorted_countries = sorted(rows_by_country.keys())
+    page_countries = sorted_countries[(page - 1) * page_size : page * page_size]
 
-            dataset = (
-                stat["table_schema"]
-                .replace("staging", "")
-                .replace("_", " ")
-                .title()
-                .rstrip()
+    body = []
+    for iso3 in page_countries:
+        entry = rows_by_country[iso3]
+        country_name = coco.convert(iso3, to="name_short")
+        body.append(
+            CountryPendingListing(
+                country=country_name if country_name != "not found" else iso3,
+                country_iso3=iso3,
+                pending_uploads=entry["pending_uploads"],
+                rows_added=entry["rows_added"],
+                rows_updated=entry["rows_updated"],
+                rows_deleted=entry["rows_deleted"],
             )
-            enabled = settings.get(f"{country_iso3}-{dataset}", False)
-
-            body.append(
-                ApprovalRequestListing(
-                    id=f'{stat["table_name"].upper()}-{dataset}',
-                    country=country,
-                    country_iso3=stat["table_name"].upper(),
-                    dataset=dataset,
-                    subpath=f'{stat["table_schema"]}/{stat["table_name"]}',
-                    last_modified=stat["last_modified"],
-                    rows_count=stat["rows_count"],
-                    rows_added=stat["rows_added"],
-                    rows_updated=stat["rows_updated"],
-                    rows_deleted=stat["rows_deleted"],
-                    enabled=enabled,
-                )
-            )
+        )
 
     return {
         "data": body,
@@ -259,109 +171,270 @@ async def list_approval_requests(
     }
 
 
-@router.get("/{subpath}")
-async def get_approval_request(
-    subpath: str,
+@router.get("/{country_code}", response_model=PagedResponseSchema[UploadListing])
+async def list_uploads_for_country(
+    country_code: str,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=50),
+    primary_db: AsyncSession = Depends(get_primary_db),
     db: Session = Depends(get_db),
+):
+    """
+    List all pending uploads for a given country across all enabled datasets.
+    Each entry represents one upload_id.
+    """
+    enabled_requests = (
+        await primary_db.scalars(
+            select(ApprovalRequest).where(
+                ApprovalRequest.enabled
+                & (ApprovalRequest.country == country_code.upper())
+            )
+        )
+    ).all()
+
+    if not enabled_requests:
+        return {"data": [], "page": page, "page_size": page_size, "total_count": 0}
+
+    # Collect per-upload-id change counts across all datasets
+    pending_uploads: dict[str, dict] = {}
+    for ar in enabled_requests:
+        staging = _staging_table(ar.dataset, country_code)
+        try:
+            rows = (
+                db.execute(
+                    text(
+                        f"SELECT upload_id, change_type, COUNT(*) AS cnt"  # nosec B608
+                        f" FROM {staging}"
+                        f" WHERE status = '{_STATUS_PENDING}'"
+                        " GROUP BY upload_id, change_type"
+                    )
+                )
+                .mappings()
+                .all()
+            )
+        except Exception:
+            continue
+
+        for row in rows:
+            uid = row["upload_id"]
+            entry = pending_uploads.setdefault(
+                uid,
+                {
+                    "dataset": ar.dataset,
+                    "is_merge_processing": ar.is_merge_processing,
+                    "rows_added": 0,
+                    "rows_updated": 0,
+                    "rows_deleted": 0,
+                    "rows_unchanged": 0,
+                },
+            )
+            ct = row["change_type"]
+            if ct == _CHANGE_INSERT:
+                entry["rows_added"] += row["cnt"]
+            elif ct == _CHANGE_UPDATE:
+                entry["rows_updated"] += row["cnt"]
+            elif ct == _CHANGE_DELETE:
+                entry["rows_deleted"] += row["cnt"]
+            elif ct == _CHANGE_UNCHANGED:
+                entry["rows_unchanged"] += row["cnt"]
+
+    total_count = len(pending_uploads)
+
+    # Fetch FileUpload metadata for sorting and display
+    upload_ids = list(pending_uploads.keys())
+    file_uploads = (
+        await primary_db.scalars(
+            select(FileUpload).where(FileUpload.id.in_(upload_ids))
+        )
+    ).all()
+    file_upload_map = {fu.id: fu for fu in file_uploads}
+
+    sorted_ids = sorted(
+        upload_ids,
+        key=lambda uid: file_upload_map[uid].created
+        if uid in file_upload_map
+        else datetime.min.replace(tzinfo=UTC),
+        reverse=True,
+    )
+    page_ids = sorted_ids[(page - 1) * page_size : page * page_size]
+
+    body = []
+    for uid in page_ids:
+        entry = pending_uploads[uid]
+        fu = file_upload_map.get(uid)
+        body.append(
+            UploadListing(
+                upload_id=uid,
+                dataset=entry["dataset"],
+                uploaded_at=fu.created if fu else datetime.now(UTC),
+                uploader_email=fu.uploader_email if fu else "",
+                rows_added=entry["rows_added"],
+                rows_updated=entry["rows_updated"],
+                rows_deleted=entry["rows_deleted"],
+                rows_unchanged=entry["rows_unchanged"],
+                is_merge_processing=entry["is_merge_processing"],
+            )
+        )
+
+    return {
+        "data": body,
+        "page": page,
+        "page_size": page_size,
+        "total_count": total_count,
+    }
+
+
+@router.get("/{country_code}/{upload_id}")
+async def get_upload_rows(
+    country_code: str,
+    upload_id: str,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=10, ge=1, le=100),
+    primary_db: AsyncSession = Depends(get_primary_db),
+    db: Session = Depends(get_db),
 ):
-    if len(splits := urllib.parse.unquote(subpath).split("/")) != 2:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    """
+    Paginated rows for a specific upload ready for review.
 
-    table_schema, table_name = splits
-    country = coco.convert(table_name, to="name_short")
-    dataset = table_schema.replace("staging", "").replace("_", " ").title()
-
-    data_cte = (
-        select(
-            # Create an identifier that is unique across versions
-            func.concat_ws(
-                "|",
-                column("school_id_giga"),
-                column("_change_type"),
-                column("_commit_version").cast(String()),
-            ).label("change_id"),
-            "*",
-        )
-        .select_from(
-            func.table(
-                func.delta_lake.system.table_changes(
-                    literal(table_schema), literal(table_name), 0
-                )
-            )
-        )
-        .cte("changes")
+    - INSERT / DELETE rows: returned as plain column → value records.
+    - UPDATE rows: changed cells returned as { "old": <silver_value>, "update": <pending_value> };
+      unchanged cells returned as plain values.
+    """
+    file_upload = await primary_db.scalar(
+        select(FileUpload).where(FileUpload.id == upload_id)
     )
-    max_version_cte = (
-        select(func.max(column("_commit_version")).label("max_version"))
-        .select_from(data_cte)
-        .limit(1)
-    ).cte("max_version")
-
-    cdf_cte = (
-        select("*")
-        .select_from(data_cte.alias("d"), max_version_cte.alias("mv"))
-        .where(
-            (literal_column("mv.max_version") == 1)
-            | (literal_column("d._commit_version") == 2)
-            | (
-                (literal_column("d._commit_version") > 2)
-                & (literal_column("d._change_type") != "update_preimage")
-            )
+    if not file_upload:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Upload not found"
         )
-    )
 
-    total_count = db.execute(select(count()).select_from(cdf_cte)).scalar()
+    staging = _staging_table(file_upload.dataset, country_code)
+    silver = _silver_table(file_upload.dataset, country_code)
 
-    cdf = (
+    total_count = db.execute(
+        text(
+            f"SELECT COUNT(*) FROM {staging}"  # nosec B608
+            f" WHERE upload_id = '{upload_id}'"
+            f" AND status = '{_STATUS_PENDING}'"
+            f" AND change_type != '{_CHANGE_UNCHANGED}'"
+        )
+    ).scalar()
+
+    pending_rows = (
         db.execute(
-            select("*")
-            .select_from(cdf_cte)
-            .order_by(
-                column("school_id_giga"),
-                column("_commit_version").desc(),
-                column("_change_type").desc(),
+            text(
+                f"SELECT * FROM {staging}"  # nosec B608
+                f" WHERE upload_id = '{upload_id}'"
+                f" AND status = '{_STATUS_PENDING}'"
+                f" AND change_type != '{_CHANGE_UNCHANGED}'"
+                " ORDER BY change_type, school_id_giga"
+                f" OFFSET {(page - 1) * page_size} ROWS FETCH NEXT {page_size} ROWS ONLY"
             )
-            .offset((page - 1) * page_size)
-            .limit(page_size)
         )
         .mappings()
         .all()
     )
-    detail = (
-        db.execute(
-            select("*")
-            .select_from(text(f'{table_schema}."{table_name}$history"'))
-            .order_by(column("version").desc())
-            .limit(1)
-        )
-        .mappings()
-        .first()
+
+    if not pending_rows:
+        return {
+            "info": _build_info(file_upload, country_code),
+            "total_count": 0,
+            "data": [],
+        }
+
+    pending_df = pd.DataFrame(pending_rows)
+    drop_cols = {"upload_id", "uploaded_columns", "status", "signature"}
+    pending_df = pending_df.drop(
+        columns=[c for c in drop_cols if c in pending_df.columns]
     )
 
-    df = pd.DataFrame(cdf)
-    df = df.drop(columns=["signature"]).fillna("NULL")
+    # Fetch silver rows for any UPDATE records to get before-state
+    update_ids = pending_df.loc[
+        pending_df["change_type"] == _CHANGE_UPDATE, "school_id_giga"
+    ].tolist()
+
+    silver_lookup: dict[str, dict] = {}
+    if update_ids:
+        try:
+            silver_rows = (
+                db.execute(
+                    text(
+                        f"SELECT * FROM {silver} WHERE school_id_giga IN {_in_clause(update_ids)}"  # nosec B608
+                    )
+                )
+                .mappings()
+                .all()
+            )
+            silver_lookup = {r["school_id_giga"]: dict(r) for r in silver_rows}
+        except Exception:
+            pass
+
+    schema_cols = [c for c in pending_df.columns if c != "change_type"]
+    records = []
+    for _, row in pending_df.iterrows():
+        change_type = row["change_type"]
+        record: dict = {"_change_type": change_type}
+
+        if change_type == _CHANGE_UPDATE:
+            silver_row = silver_lookup.get(row["school_id_giga"], {})
+            for col in schema_cols:
+                new_val = row[col]
+                old_val = silver_row.get(col)
+                if old_val is not None and str(old_val) != str(new_val):
+                    record[col] = {"old": old_val, "update": new_val}
+                else:
+                    record[col] = new_val
+        else:
+            for col in schema_cols:
+                record[col] = row[col]
+
+        records.append(record)
+
     return {
-        "info": {
-            "country": country,
-            "dataset": dataset.title(),
-            "version": detail["version"],
-            "timestamp": detail["timestamp"],
-        },
+        "info": _build_info(file_upload, country_code),
         "total_count": total_count,
-        "data": df.to_dict(orient="records"),
+        "data": records,
     }
 
 
-@router.post(
-    "/upload",
-    status_code=status.HTTP_201_CREATED,
-)
-async def upload_approved_rows(
-    body: UploadApprovedRowsRequest,
+def _resolve_change_ids(
+    rows_input: list[str],
+    staging: str,
+    upload_id: str,
+    db: Session,
+) -> list[str]:
+    _all = ["__all__"]
+    if rows_input == _all:
+        return _all
+    if not rows_input:
+        return []
+    rows = (
+        db.execute(
+            text(
+                f"SELECT school_id_giga, change_type FROM {staging} "  # nosec B608
+                f"WHERE upload_id = '{upload_id}' "
+                f"AND school_id_giga IN {_in_clause(rows_input)}"
+            )
+        )
+        .mappings()
+        .all()
+    )
+    id_to_change_type = {r["school_id_giga"]: r["change_type"] for r in rows}
+    return [
+        f"{sid}|{upload_id}|{id_to_change_type[sid]}"
+        for sid in rows_input
+        if sid in id_to_change_type
+    ]
+
+
+@router.post("/{country_code}/{upload_id}/submit", status_code=status.HTTP_200_OK)
+async def submit_upload_review(
+    country_code: str,
+    upload_id: str,
+    body: SubmitApprovalRequest,
     user: User = Depends(azure_scheme),
     primary_db: AsyncSession = Depends(get_primary_db),
+    db: Session = Depends(get_db),
 ):
     posix_path = Path(urllib.parse.unquote(body.subpath))
     dataset = posix_path.parent.name.replace("_staging", "").replace("_", "-")
@@ -395,9 +468,17 @@ async def upload_approved_rows(
         f"{dq_run.id}/{filename}"
     )
     email = user.claims.get("emails")[0]
+    """
+    Mark individual rows within an upload as APPROVED or REJECTED.
 
-    database_user = await primary_db.scalar(
-        select(DatabaseUser).where(DatabaseUser.email == email)
+    Writes an approval JSON file to blob storage so the Dagster sensor can pick it up.
+    The file contains change_ids (school_id_giga|upload_id|change_type) for approved
+    and rejected rows. Dagster then merges approved rows into the silver table via Spark.
+
+    Special value '__all__' in a list applies that decision to all PENDING rows.
+    """
+    file_upload = await primary_db.scalar(
+        select(FileUpload).where(FileUpload.id == upload_id)
     )
 
     approve_client = storage_client.get_blob_client(approve_location)
@@ -412,110 +493,45 @@ async def upload_approved_rows(
                 "upload_id": str(body.upload_id),
             },
             content_settings=ContentSettings(content_type="application/json"),
+    if not file_upload:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Upload not found"
         )
 
-        formatted_dataset = dataset.replace("-", " ").title()
+    formatted_dataset = f"School {file_upload.dataset.capitalize()}"
+    approval_request = await primary_db.scalar(
+        select(ApprovalRequest).where(
+            (ApprovalRequest.country == country_code.upper())
+            & (ApprovalRequest.dataset == formatted_dataset)
+        )
+    )
+    if approval_request and approval_request.is_merge_processing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A merge is already in progress for this dataset. Please wait for it to complete.",
+        )
 
-        # Setup logger for this function
-        logger = logging.getLogger(__name__)
+    staging = _staging_table(file_upload.dataset, country_code)
 
-        # State check: Validate approved rows exist in Trino change feed BEFORE committing
-        table_schema = posix_path.parent.name
-        table_name = posix_path.name
-        try:
-            with get_db_context() as trino_db:
-                # Build change_id column similar to get_approval_request
-                change_id_expr = func.concat_ws(
-                    "|",
-                    column("school_id_giga"),
-                    column("_change_type"),
-                    column("_commit_version").cast(String()),
-                )
+    email = (user.claims.get("emails") or [None])[0]
+    oid = user.claims.get("oid")
+    if not email or not oid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing user claims"
+        )
 
-                # Query change feed for approved rows
-                approved_rows_set = set(body.approved_rows)
-                if len(approved_rows_set) == 0:
-                    # If no rows approved, skip validation
-                    pass
-                elif len(approved_rows_set) == 1 and "__all__" in approved_rows_set:
-                    # If all approved, verify staging table has changes
-                    cdf_query = select(count()).select_from(
-                        func.table(
-                            func.delta_lake.system.table_changes(
-                                literal(table_schema),
-                                literal(table_name),
-                                0,
-                            )
-                        )
-                    )
-                    change_count = trino_db.execute(cdf_query).scalar()
-                    if change_count == 0:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="No changes found in staging table. Cannot approve empty dataset.",
-                        )
-                else:
-                    # Verify specific approved rows exist in change feed
-                    cdf_cte = (
-                        select(
-                            change_id_expr.label("change_id"),
-                        )
-                        .select_from(
-                            func.table(
-                                func.delta_lake.system.table_changes(
-                                    literal(table_schema),
-                                    literal(table_name),
-                                    0,
-                                )
-                            )
-                        )
-                        .cte("changes")
-                    )
+    database_user = await primary_db.scalar(
+        select(DatabaseUser).where(DatabaseUser.email == email)
+    )
 
-                    max_version_cte = (
-                        select(func.max(column("_commit_version")).label("max_version"))
-                        .select_from(cdf_cte)
-                        .limit(1)
-                        .cte("max_version")
-                    )
-
-                    # Filter to latest version changes (similar to get_approval_request logic)
-                    cdf_filtered = (
-                        select(column("change_id"))
-                        .select_from(cdf_cte.alias("d"), max_version_cte.alias("mv"))
-                        .where(
-                            # Include version 1 changes when max_version is 1 (single commit scenario)
-                            (literal_column("mv.max_version") == 1)
-                            # Always include version 2 changes
-                            | (literal_column("d._commit_version") == 2)
-                            # Include version >2 changes that are not update_preimage
-                            | (
-                                (literal_column("d._commit_version") > 2)
-                                & (
-                                    literal_column("d._change_type")
-                                    != "update_preimage"
-                                )
-                            )
-                        )
-                    )
-
-                    available_change_ids = {
-                        row[0] for row in trino_db.execute(cdf_filtered).fetchall()
-                    }
-
-                    # Check if all approved rows exist
-                    missing_rows = approved_rows_set - available_change_ids
-                    if missing_rows:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Invalid approval data: {len(missing_rows)} approved row IDs not found in staging change feed. Missing: {list(missing_rows)[:10]}",
-                        )
-        except Exception as validation_err:
-            # Log validation error
-            logger.warning(
-                f"Failed to validate approved rows for {country_iso3} - {formatted_dataset}: {validation_err}"
-            )
-            # Continue anyway - validation is best-effort
+    # Build change_ids for approved and rejected rows.
+    # change_id format: school_id_giga|upload_id|change_type (matches Dagster staging step)
+    approved_change_ids = _resolve_change_ids(
+        body.approved_rows, staging, upload_id, db
+    )
+    rejected_change_ids = _resolve_change_ids(
+        body.rejected_rows, staging, upload_id, db
+    )
 
         obj = await primary_db.execute(
             update(ApprovalRequest)
@@ -538,8 +554,45 @@ async def upload_approved_rows(
                 approved_by_id=database_user.id,
                 approved_by_email=database_user.email,
                 dq_mode=DQModeEnum(body.dq_mode),
+    # Create the audit log first so its ID can be included in the approval payload.
+    approval_request_log_id = None
+    if approval_request:
+        approval_request.is_merge_processing = True
+        if approved_change_ids and database_user:
+            audit_log = ApprovalRequestAuditLog(
+                approval_request_id=approval_request.id,
+                approved_by_id=database_user.id,
+                approved_by_email=email,
             )
-        )
+            primary_db.add(audit_log)
+            await primary_db.flush()
+            approval_request_log_id = audit_log.id
+
+    # Write approval JSON to blob storage.
+    # Dagster sensor watches this path and triggers the silver merge job.
+    # Filename must follow the format expected by deconstruct_school_master_filename_components:
+    # {COUNTRY_CODE}_{domain}-{dataset_type}_{timestamp}.json  (3 underscore-separated parts)
+    dataset_name = file_upload.dataset.lower()
+    timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
+    approval_filename = f"{country_code.upper()}_school-{dataset_name}_{timestamp}.json"
+    approval_path = (
+        f"staging/approved-row-ids/school-{dataset_name}"
+        f"/{country_code.upper()}/{approval_filename}"
+    )
+    approval_payload = json.dumps(
+        {
+            "upload_id": upload_id,
+            "approved_change_ids": approved_change_ids,
+            "rejected_change_ids": rejected_change_ids,
+            "approval_request_log_id": approval_request_log_id,
+        },
+        indent=2,
+    ).encode()
+    storage_client.get_blob_client(approval_path).upload_blob(
+        approval_payload, overwrite=True
+    )
+
+    if approval_request:
         await primary_db.commit()
 
     except HttpResponseError as err:
@@ -668,3 +721,13 @@ async def submit_approval_request(
         raise HTTPException(
             status_code=500, detail=f"Failed to process submission: {str(e)}"
         ) from e
+
+def _build_info(file_upload: FileUpload, country_code: str) -> ApprovalRequestInfo:
+    return ApprovalRequestInfo(
+        country=coco.convert(country_code.upper(), to="name_short"),
+        country_iso3=country_code.upper(),
+        dataset=file_upload.dataset,
+        upload_id=file_upload.id,
+        uploaded_at=file_upload.created,
+        uploader_email=file_upload.uploader_email,
+    )

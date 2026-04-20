@@ -25,14 +25,14 @@ import { Route as IngestApiAddImport } from './routes/ingest-api/add'
 import { Route as UploadUploadIdIndexImport } from './routes/upload/$uploadId/index'
 import { Route as IngestApiAddIndexImport } from './routes/ingest-api/add/index'
 import { Route as DeleteCountryIndexImport } from './routes/delete/$country/index'
-import { Route as ApprovalRequestsSubpathIndexImport } from './routes/approval-requests/$subpath/index'
+import { Route as ApprovalRequestsCountryCodeIndexImport } from './routes/approval-requests/$countryCode/index'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
 import { Route as IngestApiAddSchoolConnectivityImport } from './routes/ingest-api/add/school-connectivity'
 import { Route as IngestApiAddColumnMappingImport } from './routes/ingest-api/add/column-mapping'
-import { Route as ApprovalRequestsSubpathConfirmImport } from './routes/approval-requests/$subpath/confirm'
 import { Route as UploadUploadGroupUploadTypeIndexImport } from './routes/upload/$uploadGroup/$uploadType/index'
 import { Route as IngestApiEditIngestionIdIndexImport } from './routes/ingest-api/edit/$ingestionId/index'
+import { Route as ApprovalRequestsCountryCodeUploadIdIndexImport } from './routes/approval-requests/$countryCode/$uploadId/index'
 import { Route as UserManagementUserRevokeUserIdImport } from './routes/user-management/user/revoke.$userId'
 import { Route as UserManagementUserEnableUserIdImport } from './routes/user-management/user/enable.$userId'
 import { Route as UserManagementUserEditUserIdImport } from './routes/user-management/user/edit.$userId'
@@ -42,6 +42,7 @@ import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upl
 import { Route as UploadUploadGroupUploadTypeColumnMappingImport } from './routes/upload/$uploadGroup/$uploadType/column-mapping'
 import { Route as IngestApiEditIngestionIdSchoolConnectivityImport } from './routes/ingest-api/edit/$ingestionId/school-connectivity'
 import { Route as IngestApiEditIngestionIdColumnMappingImport } from './routes/ingest-api/edit/$ingestionId/column-mapping'
+import { Route as ApprovalRequestsCountryCodeUploadIdConfirmImport } from './routes/approval-requests/$countryCode/$uploadId/confirm'
 
 // Create Virtual Routes
 
@@ -134,9 +135,9 @@ const DeleteCountryIndexRoute = DeleteCountryIndexImport.update({
   getParentRoute: () => DeleteLazyRoute,
 } as any)
 
-const ApprovalRequestsSubpathIndexRoute =
-  ApprovalRequestsSubpathIndexImport.update({
-    path: '/$subpath/',
+const ApprovalRequestsCountryCodeIndexRoute =
+  ApprovalRequestsCountryCodeIndexImport.update({
+    path: '/$countryCode/',
     getParentRoute: () => ApprovalRequestsLazyRoute,
   } as any)
 
@@ -162,12 +163,6 @@ const IngestApiAddColumnMappingRoute = IngestApiAddColumnMappingImport.update({
   getParentRoute: () => IngestApiAddRoute,
 } as any)
 
-const ApprovalRequestsSubpathConfirmRoute =
-  ApprovalRequestsSubpathConfirmImport.update({
-    path: '/$subpath/confirm',
-    getParentRoute: () => ApprovalRequestsLazyRoute,
-  } as any)
-
 const UploadUploadGroupUploadTypeIndexRoute =
   UploadUploadGroupUploadTypeIndexImport.update({
     path: '/',
@@ -178,6 +173,12 @@ const IngestApiEditIngestionIdIndexRoute =
   IngestApiEditIngestionIdIndexImport.update({
     path: '/$ingestionId/',
     getParentRoute: () => IngestApiEditRoute,
+  } as any)
+
+const ApprovalRequestsCountryCodeUploadIdIndexRoute =
+  ApprovalRequestsCountryCodeUploadIdIndexImport.update({
+    path: '/$countryCode/$uploadId/',
+    getParentRoute: () => ApprovalRequestsLazyRoute,
   } as any)
 
 const UserManagementUserRevokeUserIdRoute =
@@ -232,6 +233,12 @@ const IngestApiEditIngestionIdColumnMappingRoute =
   IngestApiEditIngestionIdColumnMappingImport.update({
     path: '/$ingestionId/column-mapping',
     getParentRoute: () => IngestApiEditRoute,
+  } as any)
+
+const ApprovalRequestsCountryCodeUploadIdConfirmRoute =
+  ApprovalRequestsCountryCodeUploadIdConfirmImport.update({
+    path: '/$countryCode/$uploadId/confirm',
+    getParentRoute: () => ApprovalRequestsLazyRoute,
   } as any)
 
 // Populate the FileRoutesByPath interface
@@ -290,10 +297,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserManagementIndexImport
       parentRoute: typeof UserManagementImport
     }
-    '/approval-requests/$subpath/confirm': {
-      preLoaderRoute: typeof ApprovalRequestsSubpathConfirmImport
-      parentRoute: typeof ApprovalRequestsLazyImport
-    }
     '/ingest-api/add/column-mapping': {
       preLoaderRoute: typeof IngestApiAddColumnMappingImport
       parentRoute: typeof IngestApiAddImport
@@ -310,8 +313,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserManagementUserAddImport
       parentRoute: typeof UserManagementImport
     }
-    '/approval-requests/$subpath/': {
-      preLoaderRoute: typeof ApprovalRequestsSubpathIndexImport
+    '/approval-requests/$countryCode/': {
+      preLoaderRoute: typeof ApprovalRequestsCountryCodeIndexImport
       parentRoute: typeof ApprovalRequestsLazyImport
     }
     '/delete/$country/': {
@@ -325,6 +328,10 @@ declare module '@tanstack/react-router' {
     '/upload/$uploadId/': {
       preLoaderRoute: typeof UploadUploadIdIndexImport
       parentRoute: typeof UploadLazyImport
+    }
+    '/approval-requests/$countryCode/$uploadId/confirm': {
+      preLoaderRoute: typeof ApprovalRequestsCountryCodeUploadIdConfirmImport
+      parentRoute: typeof ApprovalRequestsLazyImport
     }
     '/ingest-api/edit/$ingestionId/column-mapping': {
       preLoaderRoute: typeof IngestApiEditIngestionIdColumnMappingImport
@@ -362,6 +369,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserManagementUserRevokeUserIdImport
       parentRoute: typeof UserManagementImport
     }
+    '/approval-requests/$countryCode/$uploadId/': {
+      preLoaderRoute: typeof ApprovalRequestsCountryCodeUploadIdIndexImport
+      parentRoute: typeof ApprovalRequestsLazyImport
+    }
     '/ingest-api/edit/$ingestionId/': {
       preLoaderRoute: typeof IngestApiEditIngestionIdIndexImport
       parentRoute: typeof IngestApiEditImport
@@ -386,8 +397,9 @@ export const routeTree = rootRoute.addChildren([
   ]),
   ApprovalRequestsLazyRoute.addChildren([
     ApprovalRequestsIndexRoute,
-    ApprovalRequestsSubpathConfirmRoute,
-    ApprovalRequestsSubpathIndexRoute,
+    ApprovalRequestsCountryCodeIndexRoute,
+    ApprovalRequestsCountryCodeUploadIdConfirmRoute,
+    ApprovalRequestsCountryCodeUploadIdIndexRoute,
   ]),
   DeleteLazyRoute.addChildren([DeleteIndexRoute, DeleteCountryIndexRoute]),
   IngestApiLazyRoute.addChildren([
