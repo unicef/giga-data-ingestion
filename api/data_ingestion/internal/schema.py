@@ -126,6 +126,9 @@ def _inject_missing_core_fields(name: str, schema: list[SchemaColumn]):
                     primary_key=pk,
                     description=desc,
                     license="ODBL",
+                    partition_order=None,
+                    units=None,
+                    hint=None,
                 )
             )
 
