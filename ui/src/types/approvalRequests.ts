@@ -5,6 +5,8 @@ export interface CountryPendingListing {
   rows_added: number;
   rows_updated: number;
   rows_deleted: number;
+  enabled?: boolean;
+  dataset?: string;
 }
 
 export interface UploadListing {

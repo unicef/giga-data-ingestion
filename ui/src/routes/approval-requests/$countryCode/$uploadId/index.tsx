@@ -198,11 +198,12 @@ function ApproveRejectTable() {
     return result;
   }, [approvalRequests, approvedRows, rejectedRows]);
 
-  // @ts-expect-error submit method exists but not in types
   const { mutateAsync: submit, isPending } = useMutation({
     mutationKey: ["approval-request-submit", countryCode, uploadId],
-    mutationFn: data =>
-      api.approvalRequests.submit(countryCode, uploadId, data),
+    mutationFn: (data: {
+      approved_rows?: string[];
+      rejected_rows?: string[];
+    }) => api.approvalRequests.submit({ countryCode, uploadId, ...data }),
   });
 
   const handleApproveRows = (rows: Record<string, unknown>[]) => {

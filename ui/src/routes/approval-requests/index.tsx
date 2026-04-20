@@ -38,9 +38,11 @@ export const Route = createFileRoute("/approval-requests/")({
   ),
 });
 
-type CountryTableRow = Record<
-  keyof CountryPendingListing,
-  string | number | ReactElement
+type CountryTableRow = Partial<
+  Record<
+    keyof CountryPendingListing,
+    string | number | boolean | undefined | ReactElement
+  >
 > & { id: string; actions: ReactElement };
 
 function ApprovalRequests() {

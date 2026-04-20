@@ -32,10 +32,8 @@ export default function routes(axi: AxiosInstance) {
       paginationRequest?: PaginationRequest,
       uploadIdsArray?: string[],
     ): Promise<AxiosResponse<ApprovalRequest>> => {
-      const encodedSubpath = encodeURIComponent(subpath);
-
       return axi.post(
-        `/approval-requests/${encodedSubpath}`,
+        `/approval-requests/${countryCode}/${uploadId}`,
         uploadIdsArray ? { upload_ids: uploadIdsArray } : undefined,
         {
           params: paginationRequest,
@@ -43,14 +41,16 @@ export default function routes(axi: AxiosInstance) {
       );
     },
 
-    upload_approved_rows: ({
-      approved_rows,
-      rejected_rows,
+    submit: ({
+      countryCode,
+      uploadId,
+      approved_rows = [],
+      rejected_rows = [],
     }: {
       countryCode: string;
       uploadId: string;
-      approved_rows: string[];
-      rejected_rows: string[];
+      approved_rows?: string[];
+      rejected_rows?: string[];
     }): Promise<AxiosResponse<void>> => {
       return axi.post(`/approval-requests/${countryCode}/${uploadId}/submit`, {
         approved_rows,

@@ -81,11 +81,6 @@ function UploadSelectionPage() {
     sort_order: sort_order ?? "desc",
   });
 
-  const subPath = useMemo(() => {
-    const ds = dataset!.toLowerCase().replace(/\s+/g, "_");
-    return encodeURIComponent(`${ds}/${country}`);
-  }, [dataset, country]);
-
   /* ---------------- Data Fetch ---------------- */
 
   const { data } = useSuspenseQuery(
@@ -338,8 +333,11 @@ function UploadSelectionPage() {
         onRequestClose={() => setIsConfirmModalOpen(false)}
         onRequestSubmit={() => {
           navigate({
-            to: "/approval-requests/$subpath",
-            params: { subpath: subPath },
+            to: "/approval-requests/$countryCode/$uploadId",
+            params: {
+              countryCode: country!,
+              uploadId: rows[0]?.upload_id ?? "",
+            },
           });
           setIsConfirmModalOpen(false);
         }}
