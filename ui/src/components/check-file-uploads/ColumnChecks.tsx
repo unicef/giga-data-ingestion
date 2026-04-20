@@ -146,6 +146,7 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
           {count_failed > 0 ? `${percent_passed.toFixed(2)}%` : "100%"}
         </div>
       ),
+      actions: null,
     };
   });
 

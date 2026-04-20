@@ -18,20 +18,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 
 import { AxiosProvider, queryClient } from "@/api";
 import App from "@/app.tsx";
+import "@/instrument.ts";
 import { msalInstance } from "@/lib/auth.ts";
 import "@/styles/index.scss";
-
-if (import.meta.env.VITE_SENTRY_DSN && import.meta.env.PROD) {
-  Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN,
-    sampleRate: 1.0,
-    tracesSampleRate: 1.0,
-    environment: import.meta.env.VITE_DEPLOY_ENV,
-    release: `github.com/unicef/giga-data-ingestion:${
-      import.meta.env.VITE_COMMIT_SHA
-    }`,
-  });
-}
 
 msalInstance
   .initialize()
@@ -54,7 +43,9 @@ msalInstance
           <AxiosProvider>
             <QueryClientProvider client={queryClient}>
               <HelmetProvider>
-                <App />
+                <Sentry.ErrorBoundary fallback={<p>Something went wrong</p>}>
+                  <App />
+                </Sentry.ErrorBoundary>
               </HelmetProvider>
             </QueryClientProvider>
           </AxiosProvider>
