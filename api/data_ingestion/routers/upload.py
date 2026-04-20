@@ -32,7 +32,6 @@ from data_ingestion.db.primary import get_db
 from data_ingestion.db.trino import get_db as get_trino_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.data_quality_checks import (
-    _read_spark_parquet_directory,
     get_data_quality_summary,
 )
 from data_ingestion.internal.roles import get_user_roles
@@ -738,27 +737,6 @@ async def download_data_quality_check(
     if not blob.exists():
         download_path_original_dq = f"data-quality-results/{dataset}/dq-overall/{country_code}/{upload_filename}"
         blob = storage_client.get_blob_client(download_path_original_dq)
-
-    # Check if the blob is a Spark-written parquet directory (0-byte marker).
-    # If so, read the part-files and stream as CSV.
-    blob_props = blob.get_blob_properties()
-    if blob_props.size == 0 and upload_filename.endswith(".parquet"):
-        df = _read_spark_parquet_directory(blob.blob_name)
-        if df.empty:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="DQ results file is empty.",
-            )
-        csv_filename = Path(upload_filename).with_suffix(".csv").name
-        csv_buffer = io.StringIO()
-        df.to_csv(csv_buffer, index=False)
-        csv_buffer.seek(0)
-        headers = {"Content-Disposition": f"attachment; filename={csv_filename}"}
-        return StreamingResponse(
-            csv_buffer,
-            media_type="text/csv",
-            headers=headers,
-        )
 
     stream = blob.download_blob()
     headers = {"Content-Disposition": f"attachment; filename={upload_filename}"}
