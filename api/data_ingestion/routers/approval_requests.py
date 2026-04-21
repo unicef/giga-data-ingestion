@@ -468,7 +468,8 @@ def _persist_approval_to_storage(
     """Write approval JSON to blob storage for Dagster consumption."""
     timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     approval_filename = f"{country_code.upper()}_school-{dataset_name}_{timestamp}.json"
-    approval_path = f"staging/approved-row-ids/{dq_run_id}/{approval_filename}"
+    dataset_folder = f"school-{dataset_name}"
+    approval_path = f"staging/approved-row-ids/{dataset_folder}/{approval_filename}"
 
     payload = json.dumps(
         {
@@ -842,21 +843,30 @@ async def submit_approval_request(
 
     # Re-upload the approved row IDs with master mode
     try:
-        # We need to find the blob. The path was staging/approved-row-ids/{dq_run.id}/{filename}
-        # Since we don't have the filename stored in DQRun yet, we'll list blobs in the directory
+        dataset_folder = f"school-{dataset_name}"
         container_client = storage_client.get_container_client(
             storage_client.container_name
         )
-        blob_prefix = f"staging/approved-row-ids/{latest_dq_run.id}/"
-        blobs = list(container_client.list_blobs(name_starts_with=blob_prefix))
+        blob_prefix = f"staging/approved-row-ids/{dataset_folder}/"
+        blobs_list = list(container_client.list_blobs(name_starts_with=blob_prefix))
 
-        if not blobs:
+        # Find the specific blob for the latest dq run by checking metadata
+        assessment_blob_name = None
+        for blob_props in blobs_list:
+            # We need to fetch metadata for each blob to find the one with matching dq_run_id
+            b_client = container_client.get_blob_client(blob_props.name)
+            props = b_client.get_blob_properties()
+            if props.metadata.get("dq_run_id") == str(latest_dq_run.id):
+                assessment_blob_name = blob_props.name
+                break
+
+        if not assessment_blob_name:
             raise HTTPException(
-                status_code=404, detail="Assessment data not found in storage"
+                status_code=404,
+                detail="Assessment data for the latest DQ run not found",
             )
 
-        latest_blob = max(blobs, key=lambda b: b.last_modified)
-        blob_client = storage_client.get_blob_client(latest_blob.name)
+        blob_client = storage_client.get_blob_client(assessment_blob_name)
         approved_rows_json = blob_client.download_blob().readall()
 
         # Create a new DQRun for the master submission
@@ -870,7 +880,7 @@ async def submit_approval_request(
 
         timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
         new_filename = f"{country_iso3}_school-{dataset_name}_{timestamp}.json"
-        new_path = f"staging/approved-row-ids/{new_dq_run.id}/{new_filename}"
+        new_path = f"staging/approved-row-ids/{dataset_folder}/{new_filename}"
 
         email = (user.claims.get("emails") or [None])[0]
 
