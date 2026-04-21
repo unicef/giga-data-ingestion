@@ -39,18 +39,6 @@ class SubmitApprovalRequest(BaseModel):
     rejected_rows: list[str]
 
 
-class ApprovalFilterByUploadRequest(BaseModel):
-    upload_ids: list[str]
-
-
-class ApprovalByUploadResponse(BaseModel):
-    id: str
-    country: str
-    dataset: str
-    upload_id: str
-    enabled: bool
-
-
 class ApprovalRequestAuditLogSchema(BaseModel):
     approval_request_id: str
     approved_by_id: UUID4
@@ -69,8 +57,3 @@ class ApprovalRequestSchema(BaseModel):
     audit_logs: list[ApprovalRequestAuditLogSchema] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class ApproveDatasetRequest(BaseModel):
-    upload_id: str
-    dq_mode: str
