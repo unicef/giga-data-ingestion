@@ -35,9 +35,20 @@ class ApprovalRequestInfo(BaseModel):
 
 class SubmitApprovalRequest(BaseModel):
     approved_rows: list[str]
-    subpath: str
     dq_mode: str = "uploaded"
     rejected_rows: list[str]
+
+
+class ApprovalFilterByUploadRequest(BaseModel):
+    upload_ids: list[str]
+
+
+class ApprovalByUploadResponse(BaseModel):
+    id: str
+    country: str
+    dataset: str
+    upload_id: str
+    enabled: bool
 
 
 class ApprovalRequestAuditLogSchema(BaseModel):
