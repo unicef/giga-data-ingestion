@@ -15,10 +15,9 @@ from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
     ApprovalRequest,
-    DQRun,
     User as DatabaseUser,
 )
-from data_ingestion.models.approval_requests import ApprovalRequestAuditLog, DQModeEnum
+from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
 from data_ingestion.models.file_upload import FileUpload
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
@@ -480,25 +479,15 @@ async def submit_upload_review(
     rejected_change_ids = _resolve_change_ids(
         body.rejected_rows, staging, upload_id, db
     )
-    # Create DQRun record to track this assessment/submission
-    dq_run = DQRun(
-        upload_id=file_upload.id,
-        dq_mode=DQModeEnum(body.dq_mode),
-        status="PENDING",
-    )
-    primary_db.add(dq_run)
-    await primary_db.flush()
     # Create the audit log first so its ID can be included in the approval payload.
     approval_request_log_id = None
     if approval_request:
         approval_request.is_merge_processing = True
-        approval_request.dq_mode = DQModeEnum(body.dq_mode)
         if approved_change_ids and database_user:
             audit_log = ApprovalRequestAuditLog(
                 approval_request_id=approval_request.id,
                 approved_by_id=database_user.id,
                 approved_by_email=email,
-                dq_mode=DQModeEnum(body.dq_mode),
             )
             primary_db.add(audit_log)
             await primary_db.flush()

@@ -1,11 +1,9 @@
 from datetime import datetime
-from enum import Enum
 
 from pydantic import UUID4
 from sqlalchemy import (
     VARCHAR,
     DateTime,
-    Enum as SQLEnum,
     ForeignKey,
     UniqueConstraint,
     func,
@@ -13,11 +11,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import BaseModel
-
-
-class DQModeEnum(str, Enum):
-    uploaded = "uploaded"
-    master = "master"
 
 
 class ApprovalRequest(BaseModel):
@@ -31,12 +24,6 @@ class ApprovalRequest(BaseModel):
     is_merge_processing: Mapped[bool] = mapped_column(default=False)
     audit_logs: Mapped[list["ApprovalRequestAuditLog"]] = relationship(
         back_populates="approval_request"
-    )
-
-    dq_mode: Mapped[DQModeEnum] = mapped_column(
-        SQLEnum(DQModeEnum, name="dqmodeenum"),
-        nullable=False,
-        default=DQModeEnum.uploaded,
     )
 
 
@@ -53,9 +40,4 @@ class ApprovalRequestAuditLog(BaseModel):
     approved_by_email: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     approved_date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
-    )
-    dq_mode: Mapped[DQModeEnum] = mapped_column(
-        SQLEnum(DQModeEnum, name="dqmodeenum"),
-        nullable=False,
-        default=DQModeEnum.uploaded,
     )

@@ -35,7 +35,6 @@ class ApprovalRequestInfo(BaseModel):
 
 class SubmitApprovalRequest(BaseModel):
     approved_rows: list[str]
-    dq_mode: str = "uploaded"
     rejected_rows: list[str]
 
 
@@ -44,7 +43,6 @@ class ApprovalRequestAuditLogSchema(BaseModel):
     approved_by_id: UUID4
     approved_by_email: str
     approved_date: datetime
-    dq_mode: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

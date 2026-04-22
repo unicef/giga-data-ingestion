@@ -1,9 +1,15 @@
+from enum import Enum
+
 from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import ENUM as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
-from .approval_requests import DQModeEnum
 from .base import BaseModel
+
+
+class DQModeEnum(str, Enum):
+    uploaded = "uploaded"
+    master = "master"
 
 
 class DQRun(BaseModel):
