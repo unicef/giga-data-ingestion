@@ -644,7 +644,7 @@ async def trigger_dq_run(
     dq_run = DQRun(
         upload_id=file_upload.id,
         dq_mode=dq_mode,
-        status="PENDING",
+        status="IN_PROGRESS",
     )
     db.add(dq_run)
 
