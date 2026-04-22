@@ -450,12 +450,12 @@ async def trigger_dq_run(
     dq_run = DQRun(
         upload_id=file_upload.id,
         dq_mode=dq_mode,
-        status="PENDING",
+        status="IN_PROGRESS",
     )
     db.add(dq_run)
 
     # Update blob metadata to trigger sensor
-    # We update the 'dq_mode' in the metadata sidecar JSON
+    # We update the 'dq_mode' in the metadata JSON
     try:
         blob_client = storage_client.get_blob_client(file_upload.metadata_json_path)
         if blob_client.exists():
@@ -469,13 +469,16 @@ async def trigger_dq_run(
             )
 
             # Reset DQ status in DB to indicate it's re-processing
-            file_upload.dq_status = DQStatusEnum.PENDING
+            file_upload.dq_status = DQStatusEnum.IN_PROGRESS
             await db.commit()
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Metadata file not found in storage",
             )
+    except HTTPException:
+        await db.rollback()
+        raise
     except Exception as e:
         logger.error(f"Failed to trigger DQ run: {str(e)}")
         await db.rollback()
