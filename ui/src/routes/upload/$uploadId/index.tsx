@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import { Download } from "@carbon/icons-react";
 import { Button, Tab, TabList, TabPanel, TabPanels, Tabs } from "@carbon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { api } from "@/api";
@@ -10,13 +10,13 @@ import DataQualityChecks from "@/components/check-file-uploads/ColumnChecks";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { PendingComponent } from "@/components/common/PendingComponent";
-import { Check } from "@/types/upload";
 import {
   DataQualityCheck,
   UploadResponse,
   initialDataQualityCheck,
   initialUploadResponse,
 } from "@/types/upload";
+import { Check } from "@/types/upload";
 import { commaNumber } from "@/utils/number";
 
 export const Route = createFileRoute("/upload/$uploadId/")({
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/upload/$uploadId/")({
 function Index() {
   const { uploadId } = Route.useParams();
 
-  const { data: dqResultQuery } = useSuspenseQuery({
+  const { data: dqResultQuery, refetch: refetchDQ } = useSuspenseQuery({
     queryKey: ["dq_check", uploadId],
     queryFn: () => api.uploads.get_data_quality_check(uploadId),
   });
@@ -58,6 +58,27 @@ function Index() {
     () => uploadQuery?.data ?? initialUploadResponse,
     [uploadQuery],
   );
+
+  const { mutateAsync: runDQ, isPending: isDQRunning } = useMutation({
+    mutationFn: ({
+      uploadId: id,
+      mode,
+    }: {
+      uploadId: string;
+      mode: "uploaded" | "master";
+    }) => api.uploads.dq_run(id, mode),
+    onSuccess: () => {
+      void refetchDQ();
+    },
+  });
+
+  const handleRunDQ = async (mode: "uploaded" | "master") => {
+    try {
+      await runDQ({ uploadId, mode });
+    } catch (e) {
+      console.error("Failed to run DQ", e);
+    }
+  };
 
   const summaryStats = dqResultData.dq_summary.summary || {};
   const {
@@ -211,6 +232,43 @@ function Index() {
               </Button>
             </div>
           </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "1rem",
+            marginBottom: "2rem",
+            background: "#fff",
+            padding: "1.5rem",
+            borderRadius: "4px",
+            alignItems: "center",
+          }}
+        >
+          <p style={{ fontWeight: 600, marginRight: "1rem" }}>
+            Run Data Quality Assessment:
+          </p>
+          <Button
+            kind="tertiary"
+            size="md"
+            onClick={() => handleRunDQ("uploaded")}
+            disabled={isDQRunning}
+          >
+            Run on Uploaded File Only
+          </Button>
+          <Button
+            kind="tertiary"
+            size="md"
+            onClick={() => handleRunDQ("master")}
+            disabled={isDQRunning}
+          >
+            Run with Master Comparison
+          </Button>
+          {isDQRunning && (
+            <p style={{ marginLeft: "1rem", color: "#0062ff" }}>
+              Triggering DQ run...
+            </p>
+          )}
         </div>
       </div>
       <div

@@ -1,6 +1,7 @@
 import io
 import json
 import os
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Literal, Optional
 
@@ -37,9 +38,11 @@ from data_ingestion.internal.data_quality_checks import (
 from data_ingestion.internal.roles import get_user_roles
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
+    DQRun,
     FileUpload,
     User as DatabaseUser,
 )
+from data_ingestion.models.dq_run import DQModeEnum
 from data_ingestion.models.file_upload import DQStatusEnum
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
@@ -254,7 +257,7 @@ async def list_basic_checks(
         logger.error("DQ report summary still does not exist")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Not Found",
+            detail=f"Data Quality report not found in storage at path: {path}",
         )
 
     blob_data = blob.download_blob().readall()
@@ -604,6 +607,78 @@ async def upload_file_for_review(
     """
     form.dq_mode = "uploaded"
     return await upload_file(response, dataset, form, db, user, is_privileged)
+
+
+@router.post("/{upload_id}/dq-run", status_code=status.HTTP_201_CREATED)
+async def trigger_dq_run(
+    upload_id: str,
+    dq_mode: DQModeEnum,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    """
+    Trigger a manual Data Quality assessment (Step 4).
+    Updates the blob metadata to signal the Dagster sensor to re-run checks
+    with the specified mode (uploaded vs master).
+    """
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to trigger DQ for this file.",
+        )
+
+    # Create DQRun record
+    dq_run = DQRun(
+        upload_id=file_upload.id,
+        dq_mode=dq_mode,
+        status="PENDING",
+    )
+    db.add(dq_run)
+
+    # Update blob metadata to trigger sensor
+    # We update the 'dq_mode' in the metadata sidecar JSON
+    try:
+        blob_client = storage_client.get_blob_client(file_upload.metadata_json_path)
+        if blob_client.exists():
+            metadata_json = json.loads(blob_client.download_blob().readall())
+            metadata_json["dq_mode"] = dq_mode.value
+            # We also add a timestamp to force the sensor to see it as a "new" event if it watches for changes
+            metadata_json["dq_triggered_at"] = datetime.now(UTC).isoformat()
+
+            blob_client.upload_blob(
+                json.dumps(metadata_json, indent=2).encode(), overwrite=True
+            )
+
+            # Reset DQ status in DB to indicate it's re-processing
+            file_upload.dq_status = DQStatusEnum.PENDING
+            await db.commit()
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Metadata file not found in storage",
+            )
+    except Exception as e:
+        logger.error(f"Failed to trigger DQ run: {str(e)}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to trigger DQ run: {str(e)}",
+        ) from e
+
+    return {"message": "DQ run triggered successfully", "dq_run_id": dq_run.id}
 
 
 @router.post("/unstructured", status_code=status.HTTP_201_CREATED)

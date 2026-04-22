@@ -179,5 +179,13 @@ export default function routes(axi: AxiosInstance) {
         params: { source: source },
       });
     },
+    dq_run: (
+      upload_id: string,
+      dq_mode: "uploaded" | "master",
+    ): Promise<AxiosResponse<{ message: string; dq_run_id: number }>> => {
+      return axi.post(`/upload/${upload_id}/dq-run`, null, {
+        params: { dq_mode },
+      });
+    },
   };
 }

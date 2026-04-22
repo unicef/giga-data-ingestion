@@ -35,20 +35,7 @@ class ApprovalRequestInfo(BaseModel):
 
 class SubmitApprovalRequest(BaseModel):
     approved_rows: list[str]
-    dq_mode: str = "uploaded"
     rejected_rows: list[str]
-
-
-class ApprovalFilterByUploadRequest(BaseModel):
-    upload_ids: list[str]
-
-
-class ApprovalByUploadResponse(BaseModel):
-    id: str
-    country: str
-    dataset: str
-    upload_id: str
-    enabled: bool
 
 
 class ApprovalRequestAuditLogSchema(BaseModel):
@@ -56,7 +43,6 @@ class ApprovalRequestAuditLogSchema(BaseModel):
     approved_by_id: UUID4
     approved_by_email: str
     approved_date: datetime
-    dq_mode: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -69,8 +55,3 @@ class ApprovalRequestSchema(BaseModel):
     audit_logs: list[ApprovalRequestAuditLogSchema] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class ApproveDatasetRequest(BaseModel):
-    upload_id: str
-    dq_mode: str
