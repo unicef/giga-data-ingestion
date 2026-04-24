@@ -28,4 +28,6 @@ variables:
   nocodbBaseUrl: $(NOCODB_BASE_URL)
   nocodbToken: $(NOCODB_TOKEN)
   nocodbNameMappingsTableID : $(NOCODB_NAME_MAPPINGS_TABLE_ID)
+  gigameterApiBaseUrl: $(GIGAMETER_API_BASE_URL)
+  gigameterApiToken: $(GIGAMETER_API_TOKEN)
   system.debug: true
