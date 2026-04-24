@@ -1,7 +1,13 @@
 from datetime import datetime
 
 from pydantic import UUID4
-from sqlalchemy import VARCHAR, DateTime, ForeignKey, UniqueConstraint, func
+from sqlalchemy import (
+    VARCHAR,
+    DateTime,
+    ForeignKey,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import BaseModel

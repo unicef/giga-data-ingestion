@@ -1,8 +1,9 @@
 import io
 import json
 import os
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal, Optional
 
 import country_converter as coco
 import magic
@@ -20,22 +21,28 @@ from fastapi import (
 from fastapi_azure_auth.user import User
 from loguru import logger
 from pydantic import Field
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
 from azure.core.exceptions import HttpResponseError
 from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
+from data_ingestion.db.trino import get_db as get_trino_db
 from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.internal.data_quality_checks import get_data_quality_summary
+from data_ingestion.internal.data_quality_checks import (
+    get_data_quality_summary,
+)
 from data_ingestion.internal.roles import get_user_roles
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
+    DQRun,
     FileUpload,
     User as DatabaseUser,
 )
+from data_ingestion.models.dq_run import DQModeEnum
 from data_ingestion.models.file_upload import DQStatusEnum
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
@@ -109,7 +116,7 @@ async def list_basic_checks(
         logger.error("DQ report summary still does not exist")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Not Found",
+            detail=f"Data Quality report not found in storage at path: {path}",
         )
 
     blob_data = blob.download_blob().readall()
@@ -359,6 +366,7 @@ async def upload_file(
             **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
             "country": form.country,
             "uploader_email": email,
+            "dq_mode": form.dq_mode,
         }
 
         if form.source is not None:
@@ -387,8 +395,101 @@ async def upload_file(
         await db.execute(delete(FileUpload).where(FileUpload.id == file_upload.id))
         await db.commit()
         raise err
-
     return file_upload
+
+
+@router.post("/review", response_model=FileUploadSchema)
+async def upload_file_for_review(
+    response: Response,
+    dataset: str,
+    dq_mode: DQModeEnum = DQModeEnum.uploaded,
+    form: FileUploadRequest = Depends(),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    """
+    Acts exactly like /api/upload, but accepts a dq_mode parameter
+    to control whether checks compare against uploaded file only or master table.
+    Default is 'uploaded' for review mode.
+    """
+    form.dq_mode = dq_mode.value
+    return await upload_file(response, dataset, form, db, user, is_privileged)
+
+
+@router.post("/{upload_id}/dq-run", status_code=status.HTTP_201_CREATED)
+async def trigger_dq_run(
+    upload_id: str,
+    dq_mode: DQModeEnum,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    """
+    Trigger a manual Data Quality assessment (Step 4).
+    Updates the blob metadata to signal the Dagster sensor to re-run checks
+    with the specified mode (uploaded vs master).
+    """
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to trigger DQ for this file.",
+        )
+
+    # Create DQRun record
+    dq_run = DQRun(
+        upload_id=file_upload.id,
+        dq_mode=dq_mode,
+        status="IN_PROGRESS",
+    )
+    db.add(dq_run)
+
+    # Update blob metadata to trigger sensor
+    # We update the 'dq_mode' in the metadata JSON
+    try:
+        blob_client = storage_client.get_blob_client(file_upload.metadata_json_path)
+        if blob_client.exists():
+            metadata_json = json.loads(blob_client.download_blob().readall())
+            metadata_json["dq_mode"] = dq_mode.value
+            # We also add a timestamp to force the sensor to see it as a "new" event if it watches for changes
+            metadata_json["dq_triggered_at"] = datetime.now(UTC).isoformat()
+
+            blob_client.upload_blob(
+                json.dumps(metadata_json, indent=2).encode(), overwrite=True
+            )
+
+            # Reset DQ status in DB to indicate it's re-processing
+            file_upload.dq_status = DQStatusEnum.IN_PROGRESS
+            await db.commit()
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Metadata file not found in storage",
+            )
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as e:
+        logger.error(f"Failed to trigger DQ run: {str(e)}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to trigger DQ run: {str(e)}",
+        ) from e
+
+    return {"message": "DQ run triggered successfully", "dq_run_id": dq_run.id}
 
 
 @router.post("/unstructured", status_code=status.HTTP_201_CREATED)
@@ -820,4 +921,319 @@ async def download_raw_file_direct(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error downloading file: {str(e)}",
+        ) from e
+
+
+VALID_SORT_COLUMNS = {
+    "giga_sync_file_id",
+    "giga_sync_file_name",
+    "dataset_type",
+    "country_code",
+    "created_at",
+    "max(created_at)",
+}
+
+VALID_SORT_ORDERS = {"ASC", "DESC"}
+
+
+@router.get("/rejected_rows", response_model=PagedResponseSchema)
+async def list_rejected_uploads(
+    page: int = 1,
+    page_size: int = 10,
+    sort_by: Literal[
+        "filename", "upload_id", "dataset", "country", "created_at"
+    ] = "created_at",
+    sort_order: Literal["asc", "desc"] = "desc",
+    search: Optional[str] = None,
+    country_code: Optional[str] = None,
+    dataset_type: Optional[str] = None,
+    trino: Session = Depends(get_trino_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(True)),
+):
+    """
+    List all uploads that have rejected rows in the aggregated error table.
+    Supports pagination, sorting, and filtering.
+    Restricted to privileged users.
+    """
+    try:
+        sort_map = {
+            "filename": "giga_sync_file_name",
+            "upload_id": "giga_sync_file_id",
+            "dataset": "dataset_type",
+            "country": "country_code",
+            "created_at": "max(created_at)",
+        }
+
+        sort_col = sort_map.get(sort_by, "max(created_at)")
+
+        if sort_col not in VALID_SORT_COLUMNS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid sort column: {sort_by}",
+            )
+
+        if sort_order.upper() not in VALID_SORT_ORDERS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid sort order. Must be asc or desc",
+            )
+
+        conditions = []
+        params = {"limit": page_size, "offset": (page - 1) * page_size}
+
+        if search:
+            conditions.append(
+                "(giga_sync_file_name LIKE :search OR giga_sync_file_id LIKE :search)"
+            )
+            params["search"] = f"%{search}%"
+
+        if country_code:
+            conditions.append("country_code = :country_code")
+            params["country_code"] = country_code
+
+        if dataset_type:
+            conditions.append("dataset_type = :dataset_type")
+            params["dataset_type"] = dataset_type
+
+        where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
+
+        # nosec B608: where_clause is built from parameterized conditions, sort_col is validated
+        count_query = f"""
+            SELECT COUNT(DISTINCT giga_sync_file_id)
+            FROM school_master.upload_errors
+            {where_clause}
+        """  # nosec B608
+        total_count = trino.execute(text(count_query), params).scalar()
+
+        # We need to group by to get distinct uploads, but we also want sorting.
+        # If sorting by metadata that is constant per file_id (filename, country, dataset), distinct is fine.
+        # If sorting by created_at, we need aggregation.
+        # The safest "List Uploads" query from an error table is grouping by file_id.
+
+        # nosec B608: where_clause uses parameterized queries, sort_col and sort_order are validated
+        sql_query = f"""
+            SELECT
+                giga_sync_file_id,
+                max(giga_sync_file_name) as giga_sync_file_name,
+                max(dataset_type) as dataset_type,
+                max(country_code) as country_code,
+                max(created_at) as created_at
+            FROM school_master.upload_errors
+            {where_clause}
+            GROUP BY giga_sync_file_id
+            ORDER BY {sort_col} {sort_order.upper()}
+            LIMIT :limit OFFSET :offset
+        """  # nosec B608
+
+        result = trino.execute(text(sql_query), params)
+        rows = result.fetchall()
+
+        items = [
+            {
+                "upload_id": row.giga_sync_file_id,
+                "filename": row.giga_sync_file_name,
+                "dataset": row.dataset_type,
+                "country": row.country_code,
+                "created_at": str(row.created_at),
+            }
+            for row in rows
+        ]
+
+        return {
+            "data": items,
+            "page": page,
+            "page_size": page_size,
+            "total_count": total_count,
+        }
+
+    except Exception as e:
+        logger.error(f"Error listing rejected uploads: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error listing rejected uploads: {str(e)}",
+        ) from e
+
+
+@router.get("/errors", response_model=PagedResponseSchema)
+async def query_errors(
+    page: int = 1,
+    page_size: int = 10,
+    sort_by: Literal["created_at", "filename", "upload_id"] = "created_at",
+    sort_order: Literal["asc", "desc"] = "desc",
+    country_code: Optional[str] = None,
+    dataset_type: Optional[str] = None,
+    upload_id: Optional[str] = None,
+    trino: Session = Depends(get_trino_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(True)),
+):
+    """
+    Query errors from the aggregated error table with filters.
+    Returns a paginated list of error records with parsed details.
+    Restricted to privileged users.
+    """
+    try:
+        # Sort mapping
+        sort_map = {
+            "filename": "giga_sync_file_name",
+            "upload_id": "giga_sync_file_id",
+            "created_at": "created_at",
+        }
+        sort_col = sort_map.get(sort_by, "created_at")
+
+        if sort_col not in VALID_SORT_COLUMNS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid sort column: {sort_by}",
+            )
+
+        if sort_order.upper() not in VALID_SORT_ORDERS:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid sort order. Must be asc or desc",
+            )
+
+        conditions = []
+        params = {"limit": page_size, "offset": (page - 1) * page_size}
+
+        if country_code:
+            conditions.append("country_code = :country_code")
+            params["country_code"] = country_code
+
+        if dataset_type:
+            conditions.append("dataset_type = :dataset_type")
+            params["dataset_type"] = dataset_type
+
+        if upload_id:
+            conditions.append("giga_sync_file_id = :upload_id")
+            params["upload_id"] = upload_id
+
+        where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
+
+        # nosec B608: where_clause is built from parameterized conditions
+        count_query = f"""
+            SELECT COUNT(*)
+            FROM school_master.upload_errors
+            {where_clause}
+        """  # nosec B608
+        total_count = trino.execute(text(count_query), params).scalar()
+
+        # nosec B608: where_clause uses parameterized queries, sort_col and sort_order are validated
+        sql_query = f"""
+            SELECT giga_sync_file_id, giga_sync_file_name, dataset_type, country_code, row_data, error_details, created_at
+            FROM school_master.upload_errors
+            {where_clause}
+            ORDER BY {sort_col} {sort_order.upper()}
+            LIMIT :limit OFFSET :offset
+        """  # nosec B608
+
+        result = trino.execute(text(sql_query), params)
+        rows = result.fetchall()
+
+        output = []
+        for row in rows:
+            record = {
+                "upload_id": row.giga_sync_file_id,
+                "filename": row.giga_sync_file_name,
+                "dataset": row.dataset_type,
+                "country": row.country_code,
+                "created_at": str(row.created_at),
+                "row_data": json.loads(row.row_data) if row.row_data else {},
+                "error_details": json.loads(row.error_details)
+                if row.error_details
+                else {},
+            }
+            output.append(record)
+
+        return {
+            "data": output,
+            "page": page,
+            "page_size": page_size,
+            "total_count": total_count,
+        }
+
+    except Exception as e:
+        logger.error(f"Error querying errors: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error querying errors: {str(e)}",
+        ) from e
+
+
+@router.get("/{upload_id}/rejected_rows/download")
+async def download_rejected_rows(
+    upload_id: str,
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    db: AsyncSession = Depends(get_db),
+    trino: Session = Depends(get_trino_db),
+):
+    """
+    Download rejected rows for a specific upload from the aggregated error table.
+    Queries the school_master.upload_errors Delta table via Trino.
+    Parses/Flattens the JSON columns (row_data, error_details) into a CSV.
+    """
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access details for this file.",
+        )
+
+    try:
+        req_query = text(
+            "SELECT row_data, error_details FROM school_master.upload_errors WHERE giga_sync_file_id = :upload_id"
+        )
+        result = trino.execute(req_query, {"upload_id": upload_id})
+        rows = result.fetchall()
+
+        parsed_rows = []
+        for row in rows:
+            row_dict = {}
+            if row.row_data:
+                try:
+                    row_dict.update(json.loads(row.row_data))
+                except json.JSONDecodeError:
+                    row_dict["row_data_raw"] = row.row_data
+
+            if row.error_details:
+                try:
+                    row_dict.update(json.loads(row.error_details))
+                except json.JSONDecodeError:
+                    row_dict["error_details_raw"] = row.error_details
+
+            parsed_rows.append(row_dict)
+
+        if not parsed_rows:
+            df = pd.DataFrame()
+        else:
+            df = pd.DataFrame(parsed_rows)
+
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+
+        filename = f"rejected_rows_{upload_id}.csv"
+
+        return StreamingResponse(
+            output,
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+
+    except Exception as e:
+        logger.error(f"Error querying rejected rows from Trino: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving rejected rows: {str(e)}",
         ) from e
