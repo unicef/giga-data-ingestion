@@ -25,4 +25,7 @@ variables:
   redisPassword: $(REDIS_PASSWORD)
   ingressHost: $(INGRESS_HOST)
   datahubIngressHost: $(DATAHUB_INGRESS_HOST)
+  nocodbBaseUrl: $(NOCODB_BASE_URL)
+  nocodbToken: $(NOCODB_TOKEN)
+  nocodbNameMappingsTableID : $(NOCODB_NAME_MAPPINGS_TABLE_ID)
   system.debug: true
