@@ -16,9 +16,11 @@ NOCODB_FUZZY_TABLES = {
     "electricity_type": "ElectricityTypeMapping",
     "learning_platform_type": "LearningPlatformTypeMapping",
 }
+UNKNOWN_VALUES = ("unknown", "nan", "none")
+NULL_VAL_DISPLAY = ("nan", "none", "")
 
 
-def _extract_valid_values_from_rows(
+def extract_valid_values_from_rows(
     rows: list[dict], target_column: str, alias_column: str = "Govt"
 ) -> tuple[list[str], dict[str, str]]:
     """
@@ -86,7 +88,7 @@ def get_fuzzy_match_config_from_nocodb() -> dict[str, dict]:
                 rows = get_nocodb_table_rows(
                     table_id, fields=[target_column, alias_column]
                 )
-                dropdown_options, matching_map = _extract_valid_values_from_rows(
+                dropdown_options, matching_map = extract_valid_values_from_rows(
                     rows, target_column, alias_column
                 )
 
@@ -110,57 +112,79 @@ def get_fuzzy_match_config_from_nocodb() -> dict[str, dict]:
 
 
 def fuzzy_match_value(
-    val: str, matching_map: dict[str, str], score_cutoff: float = 80.0
+    val: str, matching_map: dict[str, str], score_cutoff: float = 60.0
 ):
     """
     Returns (suggested_value, was_changed)
+    Improved logic using token_sort_ratio and token_set_ratio to avoid shorter-string bias.
     """
     if not val or not isinstance(val, str):
         return val, False
 
     str_val = val.strip()
+
+    # Pre-check: If 'unknown' is in the input string, automatically suggest 'Unknown'
+    if "unknown" in str_val.lower():
+        return "Unknown", True
+
     match_targets = list(matching_map.keys())
 
-    # Sort targets by length to prioritize specific matches
-    match_targets.sort(key=lambda x: (len(x), x))
+    # We don't necessarily need to sort by length if we use a better scorer,
+    # but keeping it doesn't hurt as a tie-breaker.
+    match_targets.sort(key=len, reverse=True)
 
-    result = process.extractOne(
+    # Pass 1: Use token_sort_ratio for overall string similarity
+    results_sort = process.extract(
         str_val,
         match_targets,
-        scorer=fuzz.QRatio,
-        score_cutoff=0,
+        scorer=fuzz.token_sort_ratio,
         processor=utils.default_process,
+        limit=5,
     )
 
-    if result:
-        matched_target, score, _ = result
-        suggested_val = matching_map[matched_target]
+    # Pass 2: Use token_set_ratio to find cases where tokens perfectly overlap
+    results_set = process.extract(
+        str_val,
+        match_targets,
+        scorer=fuzz.token_set_ratio,
+        processor=utils.default_process,
+        limit=5,
+    )
 
-        if score >= score_cutoff:
-            was_changed = suggested_val.lower() != str_val.lower()
-            return suggested_val, was_changed
+    if not results_sort:
+        return val, False
 
-        # secondary check with WRatio for very high confidence aliases/typos
-        wr_result = process.extractOne(
-            str_val,
-            match_targets,
-            scorer=fuzz.WRatio,
-            score_cutoff=0,
-            processor=utils.default_process,
-        )
-        if wr_result:
-            wr_target, wr_score, _ = wr_result
-            if wr_score >= 95.0:
-                suggested_val = matching_map[wr_target]
-                return suggested_val, suggested_val.lower() != str_val.lower()
+    best_sort_target, best_sort_score, _ = results_sort[0]
+    best_set_target, best_set_score, _ = results_set[0]
 
-        if score < 50.0:
+    # Decision logic:
+    # 1. If we have a very high token_sort_ratio (> 80), it's likely a match or a typo.
+    if best_sort_score >= 80:
+        matched_target = best_sort_target
+        score = best_sort_score
+    # 2. If token_set_ratio is perfect (100) and sort_ratio is decent (> 60),
+    # it's likely a compound match or a specific subset.
+    elif best_set_score == 100 and best_sort_score >= 60:
+        matched_target = best_set_target
+        score = best_set_score
+    # 3. Fallback to the best sort match if it's above a safe threshold
+    elif best_sort_score >= score_cutoff:
+        matched_target = best_sort_target
+        score = best_sort_score
+    else:
+        # If the best match is very weak, don't suggest it unless it's at least better than 50
+        if best_sort_score < 50:
             return "Unknown", True
+        return val, False
 
-    return val, False
+    suggested_val = matching_map[matched_target]
+    was_changed = suggested_val.lower() != str_val.lower()
+
+    logger.info(f"Fuzzy Match: '{str_val}' -> '{matched_target}' ({score:.2f}%)")
+    return suggested_val, was_changed
 
 
-def _is_null_or_nan(val) -> bool:
+def is_null_or_nan(val) -> bool:
     """Robust check for null/NaN/None across types."""
     if val is None:
         return True
@@ -170,24 +194,22 @@ def _is_null_or_nan(val) -> bool:
         return False
 
 
-def _process_column_fuzzy_matching(
+def process_column_fuzzy_matching(
     value_counts: pd.Series, valid_values: list[str], matching_map: dict[str, str]
 ) -> tuple[list[dict], int]:
     errors_in_column = []
     total_unknown = 0
 
     for val, count in value_counts.items():
-        is_null = _is_null_or_nan(val)
+        is_null = is_null_or_nan(val)
         str_val = str(val).strip() if not is_null else ""
 
         # Treat null/NaN/empty/"nan" string/"unknown" as locked Unknown
-        is_unknown_val = (
-            is_null or str_val == "" or str_val.lower() in ("unknown", "nan", "none")
-        )
+        is_unknown_val = is_null or str_val == "" or str_val.lower() in UNKNOWN_VALUES
 
         if is_unknown_val:
             # Determine display label
-            if is_null or str_val.lower() in ("nan", "none", ""):
+            if is_null or str_val.lower() in NULL_VAL_DISPLAY:
                 display_val = "null/nan/empty"
             else:
                 display_val = str_val
@@ -283,7 +305,7 @@ def run_fuzzy_matching(df: pd.DataFrame, column_mappings: dict[str, str]) -> dic
         # Get unique values and their counts in the column
         value_counts = df[raw_col].value_counts(dropna=False)
 
-        errors_in_column, total_unknown = _process_column_fuzzy_matching(
+        errors_in_column, total_unknown = process_column_fuzzy_matching(
             value_counts, dropdown_opts, matching_map
         )
 
