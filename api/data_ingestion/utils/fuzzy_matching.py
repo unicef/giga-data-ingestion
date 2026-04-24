@@ -126,8 +126,6 @@ def fuzzy_match_value(
 
     match_targets = list(matching_map.keys())
 
-    match_targets.sort(key=len, reverse=True)
-
     # Pass 1: Use token_sort_ratio for overall string similarity
     results_sort = process.extract(
         str_val,
@@ -145,9 +143,6 @@ def fuzzy_match_value(
         processor=utils.default_process,
         limit=5,
     )
-
-    if not results_sort:
-        return val, False
 
     best_sort_target, best_sort_score, _ = results_sort[0]
     best_set_target, best_set_score, _ = results_set[0]
