@@ -40,7 +40,10 @@ export default function routes(axi: AxiosInstance) {
         params: { dataset: params.dataset },
       });
     },
-    review: (params: UploadParams): Promise<AxiosResponse<UploadResponse>> => {
+    review: (
+      params: UploadParams,
+      dq_mode: "uploaded" | "master" = "uploaded",
+    ): Promise<AxiosResponse<UploadResponse>> => {
       const formData = new FormData();
       Object.entries(params).forEach(([key, value]) => {
         if (value != null) {
@@ -49,7 +52,7 @@ export default function routes(axi: AxiosInstance) {
       });
 
       return axi.post("/upload/review", formData, {
-        params: { dataset: params.dataset },
+        params: { dataset: params.dataset, dq_mode },
       });
     },
 

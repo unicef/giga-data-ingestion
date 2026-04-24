@@ -402,16 +402,18 @@ async def upload_file(
 async def upload_file_for_review(
     response: Response,
     dataset: str,
+    dq_mode: DQModeEnum = DQModeEnum.uploaded,
     form: FileUploadRequest = Depends(),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(azure_scheme),
     is_privileged: bool = Depends(IsPrivileged.raises(False)),
 ):
     """
-    Acts exactly like /api/upload, but forces dq_mode to 'uploaded'
-    so that background checks do not compare against the master table.
+    Acts exactly like /api/upload, but accepts a dq_mode parameter
+    to control whether checks compare against uploaded file only or master table.
+    Default is 'uploaded' for review mode.
     """
-    form.dq_mode = "uploaded"
+    form.dq_mode = dq_mode.value
     return await upload_file(response, dataset, form, db, user, is_privileged)
 
 

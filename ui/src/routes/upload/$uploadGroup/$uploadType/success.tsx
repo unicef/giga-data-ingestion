@@ -36,6 +36,7 @@ import {
   Check,
   DQStatus,
   DataQualityCheck,
+  UploadParams,
   UploadResponse,
   initialDataQualityCheck,
   initialUploadResponse,
@@ -134,6 +135,7 @@ function Success() {
   const navigate = useNavigate({ from: Route.fullPath });
   const [reviewUploadId, setReviewUploadId] = useState<string>("");
   const [actionError, setActionError] = useState<string>("");
+  const [showModeSelection, setShowModeSelection] = useState<boolean>(false);
 
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
@@ -145,7 +147,13 @@ function Success() {
   const isReviewMode = isPreSubmitMode || (!!reviewUploadId && !uploadId);
 
   const reviewFile = useMutation({
-    mutationFn: api.uploads.review,
+    mutationFn: ({
+      params,
+      dq_mode,
+    }: {
+      params: UploadParams;
+      dq_mode: "uploaded" | "master";
+    }) => api.uploads.review(params, dq_mode),
   });
   const uploadFile = useMutation({
     mutationFn: api.uploads.upload,
@@ -244,18 +252,26 @@ function Success() {
     }
   };
 
-  const handleReview = async () => {
+  const handleReview = async (dq_mode: "uploaded" | "master") => {
     if (!pendingSchoolDataPayload) return;
 
     setActionError("");
     try {
       const {
         data: { id },
-      } = await reviewFile.mutateAsync(pendingSchoolDataPayload);
+      } = await reviewFile.mutateAsync({
+        params: pendingSchoolDataPayload,
+        dq_mode,
+      });
       setReviewUploadId(id);
+      setShowModeSelection(false);
     } catch {
       setActionError("Review failed. Please try again.");
     }
+  };
+
+  const handleReviewClick = () => {
+    setShowModeSelection(true);
   };
 
   const handleInitialSubmit = async () => {
@@ -399,8 +415,43 @@ function Success() {
             </div>
 
             <div className="mb-12 pl-4 text-[1.35rem] font-normal leading-snug text-gray-800">
-              {isPreSubmitMode && !activeUploadId && !isActionPending && (
-                <p>We are currently waiting for your review or submission...</p>
+              {isPreSubmitMode &&
+                !activeUploadId &&
+                !isActionPending &&
+                !showModeSelection && (
+                  <p>
+                    We are currently waiting for your review or submission...
+                  </p>
+                )}
+              {isPreSubmitMode && showModeSelection && !isActionPending && (
+                <div className="flex flex-col gap-4">
+                  <p>
+                    Please select how you want to run the Data Quality
+                    assessment:
+                  </p>
+                  <div className="mt-2 flex gap-4">
+                    <Button
+                      kind="tertiary"
+                      onClick={() => handleReview("uploaded")}
+                      disabled={reviewFile.isPending}
+                    >
+                      Run on Uploaded File Only
+                    </Button>
+                    <Button
+                      kind="tertiary"
+                      onClick={() => handleReview("master")}
+                      disabled={reviewFile.isPending}
+                    >
+                      Run with Master Comparison
+                    </Button>
+                  </div>
+                  {reviewFile.isPending && (
+                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
+                      <Loading small withOverlay={false} className="h-4 w-4" />
+                      Uploading file for review...
+                    </div>
+                  )}
+                </div>
               )}
               {((isActionPending && reviewFile.isPending) ||
                 (!!reviewUploadId &&
@@ -606,7 +657,7 @@ function Success() {
               kind="tertiary"
               className="w-40"
               disabled={(inProgress && !!activeUploadId) || isActionPending}
-              onClick={isReviewMode ? handleReview : undefined}
+              onClick={isReviewMode ? handleReviewClick : undefined}
             >
               Review
             </Button>
