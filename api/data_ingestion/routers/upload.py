@@ -57,6 +57,7 @@ from data_ingestion.schemas.upload import (
     ValidateFuzzyRequest,
 )
 from data_ingestion.utils.data_quality import get_metadata_path
+from data_ingestion.utils.fuzzy_matching import run_fuzzy_matching
 
 router = APIRouter(
     prefix="/api/upload",
@@ -431,17 +432,13 @@ async def get_upload(
     return file_upload
 
 
-def _apply_fuzzy_corrections(
+def apply_fuzzy_corrections(
     fuzzy_corrections_json: str, file_extension: str, file_obj, upload_content: bytes
 ) -> bytes:
-    import io
-
-    import pandas as pd
-
     try:
         corrections_mapping = orjson.loads(fuzzy_corrections_json)
         file_ext = file_extension.lower()
-        if file_ext in [".csv", ".xls", ".xlsx"]:
+        if file_ext in constants.SUPPORTED_SPREADSHEET_EXTENSIONS:
             # In a non-async context we'd just use seek(0).
             # Since file_obj is an UploadFile, we need an await if we abstract it entirely.
             # But we can just use file_obj.file which is a SpooledTemporaryFile with synchronous ops.
@@ -503,6 +500,7 @@ async def upload_file(
         )
 
     file_content = await file.read(4096)
+    await file.seek(0)
     file_type = magic.from_buffer(file_content, mime=True)
     file_extension = os.path.splitext(file.filename)[1]
 
@@ -563,7 +561,7 @@ async def upload_file(
 
         # Apply fuzzy corrections if provided
         if form.fuzzy_corrections:
-            upload_content = _apply_fuzzy_corrections(
+            upload_content = apply_fuzzy_corrections(
                 form.fuzzy_corrections, file_extension, file, upload_content
             )
 
@@ -711,6 +709,7 @@ async def upload_unstructured(  # noqa: C901
     file_content = await file.read(
         8192
     )  # Increased from 2048 to handle large cell values like POLYGON data
+    await file.seek(0)
     file_type = magic.from_buffer(file_content, mime=True)
     file_extension = os.path.splitext(file.filename)[1]
 
@@ -809,6 +808,7 @@ async def upload_structured(  # noqa: C901
     file_content = await file.read(
         8192
     )  # Increased from 2048 to handle large cell values like POLYGON data
+    await file.seek(0)
     file_type = magic.from_buffer(file_content, mime=True)
     file_extension = os.path.splitext(file.filename)[1]
 
@@ -1459,12 +1459,13 @@ async def validate_fuzzy_matching(
         )
 
     await file.read(8192)
+    await file.seek(0)
     file_extension = os.path.splitext(file.filename)[1].lower()
 
-    if file_extension not in [".csv", ".xls", ".xlsx"]:
+    if file_extension not in constants.SUPPORTED_SPREADSHEET_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Fuzzy validation currently only supports CSV, XLS, and XLSX files.",
+            detail=f"Fuzzy validation currently only supports {', '.join(constants.SUPPORTED_SPREADSHEET_EXTENSIONS)} files.",
         )
 
     # Re-read the file to parse with pandas
@@ -1482,8 +1483,6 @@ async def validate_fuzzy_matching(
         ) from e
 
     try:
-        from data_ingestion.utils.fuzzy_matching import run_fuzzy_matching
-
         column_mapping = orjson.loads(form.column_to_schema_mapping)
         results = run_fuzzy_matching(df, column_mapping)
         return results
