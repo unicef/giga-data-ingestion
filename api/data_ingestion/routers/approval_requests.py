@@ -479,7 +479,6 @@ async def submit_upload_review(
     rejected_change_ids = _resolve_change_ids(
         body.rejected_rows, staging, upload_id, db
     )
-
     # Create the audit log first so its ID can be included in the approval payload.
     approval_request_log_id = None
     if approval_request:

@@ -249,6 +249,9 @@ export default function Index() {
       setUploadSliceState({
         uploadSlice: {
           ...uploadSlice,
+          fuzzyCorrections: [],
+          fuzzyValidationRequestKey: null,
+          fuzzyValidationResult: null,
           file: file,
           timeStamp: new Date(),
         },
@@ -271,6 +274,9 @@ export default function Index() {
       setUploadSliceState({
         uploadSlice: {
           ...uploadSlice,
+          fuzzyCorrections: [],
+          fuzzyValidationRequestKey: null,
+          fuzzyValidationResult: null,
           file: file,
           timeStamp: new Date(),
         },

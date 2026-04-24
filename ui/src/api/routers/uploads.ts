@@ -4,6 +4,8 @@ import { PagedResponse } from "@/types/api.ts";
 import {
   BasicChecks,
   DataQualityCheck,
+  FuzzyValidationParams,
+  FuzzyValidationResponse,
   UploadParams,
   UploadStructuredParams,
   UploadUnstructuredParams,
@@ -37,6 +39,33 @@ export default function routes(axi: AxiosInstance) {
       });
 
       return axi.post("/upload", formData, {
+        params: { dataset: params.dataset },
+      });
+    },
+    review: (params: UploadParams): Promise<AxiosResponse<UploadResponse>> => {
+      const formData = new FormData();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value != null) {
+          formData.append(key, value);
+        }
+      });
+
+      return axi.post("/upload/review", formData, {
+        params: { dataset: params.dataset },
+      });
+    },
+
+    validate_fuzzy: (
+      params: FuzzyValidationParams,
+    ): Promise<AxiosResponse<FuzzyValidationResponse>> => {
+      const formData = new FormData();
+      formData.append("file", params.file);
+      formData.append(
+        "column_to_schema_mapping",
+        params.column_to_schema_mapping,
+      );
+
+      return axi.post("/upload/validate-fuzzy", formData, {
         params: { dataset: params.dataset },
       });
     },
@@ -148,6 +177,14 @@ export default function routes(axi: AxiosInstance) {
     ): Promise<AxiosResponse<BasicChecks>> => {
       return axi.get(`/upload/basic_check/${dataset}`, {
         params: { source: source },
+      });
+    },
+    dq_run: (
+      upload_id: string,
+      dq_mode: "uploaded" | "master",
+    ): Promise<AxiosResponse<{ message: string; dq_run_id: number }>> => {
+      return axi.post(`/upload/${upload_id}/dq-run`, null, {
+        params: { dq_mode },
       });
     },
   };

@@ -1,6 +1,12 @@
-import { ComponentProps, memo, useMemo } from "react";
+import { ComponentProps, memo, useEffect, useMemo, useState } from "react";
 
-import { ArrowRight, Download, InProgress, Restart } from "@carbon/icons-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Download,
+  InProgress,
+  Restart,
+} from "@carbon/icons-react";
 import {
   Button,
   Loading,
@@ -11,7 +17,7 @@ import {
   Tabs,
   Tag,
 } from "@carbon/react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Link,
   createFileRoute,
@@ -87,13 +93,18 @@ const SuccessDataQualityChecks = memo(
     return (
       <Tabs>
         <TabList aria-label="Data Quality Tabs">
-          {Object.keys(checks).map(key => (
-            <Tab key={key}>{key.replace(/_/g, " ")}</Tab>
-          ))}
+          {Object.keys(checks).map(key => {
+            const formattedKey = key
+              .replace(/_/g, " ")
+              .replace("Crictical", "Critical");
+            const capitalizedKey =
+              formattedKey.charAt(0).toUpperCase() + formattedKey.slice(1);
+            return <Tab key={key}>{capitalizedKey}</Tab>;
+          })}
         </TabList>
         <TabPanels>
           {Object.keys(checks).map(key => (
-            <TabPanel key={key}>
+            <TabPanel key={key} className="pt-4">
               <DataCheckItem
                 data={checks[key] as Check[]}
                 hasDownloadButton={false}
@@ -110,27 +121,48 @@ const SuccessDataQualityChecks = memo(
 function Success() {
   const { uploadGroup, uploadType } = Route.useParams();
   const {
-    uploadSliceActions: { resetUploadSliceState },
-    uploadSlice: { uploadId, source },
+    uploadSliceActions: {
+      resetUploadSliceState,
+      setPendingSchoolDataPayload,
+      setUploadDate,
+      setUploadId,
+      decrementStepIndex,
+    },
+    uploadSlice: { uploadId, source, pendingSchoolDataPayload },
   } = useStore();
 
   const navigate = useNavigate({ from: Route.fullPath });
+  const [reviewUploadId, setReviewUploadId] = useState<string>("");
+  const [actionError, setActionError] = useState<string>("");
 
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
+  const isSchoolData = uploadGroup === "school-data";
+  const isPreSubmitMode =
+    isSchoolData && !!pendingSchoolDataPayload && uploadId === "";
+  const activeUploadId = uploadId || reviewUploadId;
+  const isReviewMode = isPreSubmitMode || (!!reviewUploadId && !uploadId);
+
+  const reviewFile = useMutation({
+    mutationFn: api.uploads.review,
+  });
+  const uploadFile = useMutation({
+    mutationFn: api.uploads.upload,
+  });
+  const isActionPending = reviewFile.isPending || uploadFile.isPending;
 
   const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
     queryFn: () => api.uploads.list_basic_checks(uploadType, source),
     queryKey: ["basic_checks", uploadType, source],
-    enabled: !isStructured, // Don't query for structured datasets
+    enabled: !isStructured && !!activeUploadId,
   });
   const basicCheck = basicCheckQuery?.data ?? [];
 
   const { data: uploadQuery } = useQuery({
-    queryKey: ["upload", uploadId],
-    queryFn: () => api.uploads.get_upload(uploadId),
-    enabled: !isStructured && !!uploadId, // Don't query for structured datasets
+    queryKey: ["upload", activeUploadId],
+    queryFn: () => api.uploads.get_upload(activeUploadId),
+    enabled: !isStructured && !!activeUploadId,
   });
   const uploadData = useMemo<UploadResponse>(
     () => uploadQuery?.data ?? initialUploadResponse,
@@ -147,10 +179,17 @@ function Success() {
     isRefetching: isRefetchingDqResultQuery,
     refetch: refetchDqResultQuery,
   } = useQuery({
-    queryKey: ["dq_check", uploadId],
-    queryFn: () => api.uploads.get_data_quality_check(uploadId),
-    refetchInterval: 7000,
-    enabled: !isUnstructured && !isStructured, // Don't query for structured datasets
+    queryKey: ["dq_check", activeUploadId],
+    queryFn: () => api.uploads.get_data_quality_check(activeUploadId),
+    refetchInterval: query => {
+      const current_status =
+        query.state.data?.data?.status ?? query.state.data?.status;
+      if (current_status && current_status !== DQStatus.IN_PROGRESS) {
+        return false;
+      }
+      return 7000;
+    },
+    enabled: !isUnstructured && !isStructured && !!activeUploadId,
   });
 
   const dqResult = useMemo<DataQualityCheck>(
@@ -160,10 +199,14 @@ function Success() {
 
   const status = dqResult?.status;
 
-  const isError =
-    status === DQStatus.ERROR ||
-    status === DQStatus.SKIPPED ||
-    status === DQStatus.TIMEOUT;
+  useEffect(() => {
+    if (!isReviewMode && status === DQStatus.COMPLETED) {
+      navigate({
+        to: "/upload/$uploadId",
+        params: { uploadId },
+      });
+    }
+  }, [status]);
 
   const basicCheckItems = Object.entries(basicCheck)
     .map(([key, value]) => {
@@ -183,6 +226,11 @@ function Success() {
   const rows = summaryStats.rows ?? 0;
   const rowsPassed = summaryStats.rows_passed ?? 0;
   const rowsFailed = summaryStats.rows_failed ?? 0;
+  const effectiveStatus: DQStatus | null = status ?? null;
+  const isError =
+    effectiveStatus === DQStatus.ERROR ||
+    effectiveStatus === DQStatus.SKIPPED ||
+    effectiveStatus === DQStatus.TIMEOUT;
 
   const handleSubmit = () => {
     if (status === DQStatus.COMPLETED) {
@@ -193,6 +241,38 @@ function Success() {
     } else {
       resetUploadSliceState();
       navigate({ to: "/upload" });
+    }
+  };
+
+  const handleReview = async () => {
+    if (!pendingSchoolDataPayload) return;
+
+    setActionError("");
+    try {
+      const {
+        data: { id },
+      } = await reviewFile.mutateAsync(pendingSchoolDataPayload);
+      setReviewUploadId(id);
+    } catch {
+      setActionError("Review failed. Please try again.");
+    }
+  };
+
+  const handleInitialSubmit = async () => {
+    if (!pendingSchoolDataPayload) return;
+
+    setActionError("");
+    try {
+      const {
+        data: { id, created },
+      } = await uploadFile.mutateAsync(pendingSchoolDataPayload);
+
+      setUploadId(id);
+      setUploadDate(new Date(created));
+      setPendingSchoolDataPayload(null);
+      setReviewUploadId("");
+    } catch {
+      setActionError("Submit failed. Please try again.");
     }
   };
 
@@ -212,7 +292,8 @@ function Success() {
     [DQStatus.TIMEOUT]: { color: "red", text: "Failed" },
   };
 
-  const tagProps = status ? statusTagMap[status] : null;
+  const tagProps = effectiveStatus ? statusTagMap[effectiveStatus] : null;
+  const qualityHeader = "Data Review & Submit";
   // Common card styles
   const cardStyle = {
     flex: 1,
@@ -241,6 +322,12 @@ function Success() {
     marginTop: "auto",
   };
 
+  const displayUploadId = activeUploadId || "-";
+  const displayFileName =
+    uploadData.original_filename || pendingSchoolDataPayload?.file?.name || "-";
+  const createdDate = uploadData.created ? new Date(uploadData.created) : null;
+  const inProgress = effectiveStatus === DQStatus.IN_PROGRESS;
+
   return (
     <>
       {isUnstructured ? (
@@ -258,188 +345,281 @@ function Success() {
           </Button>
         </>
       ) : (
-        <section className="flex flex-col gap-4">
-          <div className="flex gap-6">
-            <div className="flex border-b-2 border-gray-300">
-              <div className="bg-gray-100 py-4 pl-4 pr-28 text-base font-semibold">
-                Data Quality Review
+        <section className="flex flex-col gap-6 pb-20">
+          <div>
+            <div className="mb-10 flex items-center gap-6">
+              <div className="flex items-stretch border-b border-gray-300">
+                <div className="flex items-center bg-gray-100 py-3 pl-4 pr-16 text-sm font-medium text-gray-800">
+                  {qualityHeader}
+                </div>
+                <div className="flex items-center bg-gray-100 pr-2">
+                  <Button
+                    className="min-h-0 min-w-0 p-2"
+                    disabled={isRefetchingDqResultQuery || !activeUploadId}
+                    renderIcon={Restart}
+                    kind="ghost"
+                    hasIconOnly
+                    iconDescription="Refresh"
+                    size="sm"
+                    onClick={async () => await refetchDqResultQuery()}
+                  />
+                </div>
               </div>
-              <Button
-                className="bg-gray-100"
-                disabled={isRefetchingDqResultQuery}
-                renderIcon={Restart}
-                kind="ghost"
-                onClick={async () => await refetchDqResultQuery()}
-              />
-              <div className="flex items-center">
-                {tagProps && (
-                  <Tag renderIcon={InProgress} type={tagProps.color}>
-                    {tagProps.text}
-                  </Tag>
+
+              <div className="flex flex-1 items-center justify-between">
+                <div className="flex items-center gap-6">
+                  {(activeUploadId || isActionPending) && tagProps && (
+                    <Tag
+                      renderIcon={InProgress}
+                      type={tagProps.color}
+                      className="m-0 rounded-full px-3 py-1"
+                    >
+                      {tagProps.text}
+                    </Tag>
+                  )}
+                  {(activeUploadId || isActionPending) &&
+                    effectiveStatus === DQStatus.IN_PROGRESS && (
+                      <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-gray-800">
+                        <Loading
+                          small
+                          withOverlay={false}
+                          className="h-4 w-4"
+                        />
+                        Refreshing Automatically
+                      </div>
+                    )}
+                  {(activeUploadId || isActionPending) &&
+                    effectiveStatus === DQStatus.IN_PROGRESS && (
+                      <div className="text-xs font-medium text-gray-500">
+                        Estimated running time: 10–15 mins
+                      </div>
+                    )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-12 pl-4 text-[1.35rem] font-normal leading-snug text-gray-800">
+              {isPreSubmitMode && !activeUploadId && !isActionPending && (
+                <p>We are currently waiting for your review or submission...</p>
+              )}
+              {((isActionPending && reviewFile.isPending) ||
+                (!!reviewUploadId &&
+                  !uploadId &&
+                  (effectiveStatus === DQStatus.IN_PROGRESS ||
+                    isRefetchingDqResultQuery))) && (
+                <p>We are currently reviewing your uploaded file...</p>
+              )}
+              {((isActionPending && uploadFile.isPending) ||
+                (!!uploadId &&
+                  (effectiveStatus === DQStatus.IN_PROGRESS ||
+                    isRefetchingDqResultQuery))) && (
+                <p>We are currently submitting your uploaded file...</p>
+              )}
+              {!!reviewUploadId &&
+                !uploadId &&
+                effectiveStatus === DQStatus.COMPLETED &&
+                !isRefetchingDqResultQuery && (
+                  <p>
+                    Review completed successfully. Preview checks are visible
+                    below. Click Submit when you are ready.
+                  </p>
+                )}
+              {activeUploadId &&
+                effectiveStatus === DQStatus.COMPLETED &&
+                !isActionPending &&
+                !isRefetchingDqResultQuery && (
+                  <p>
+                    {uploadId
+                      ? "We have successfully submitted your uploaded file."
+                      : "We have successfully reviewed your uploaded file."}
+                  </p>
+                )}
+              {activeUploadId && isError && !isRefetchingDqResultQuery && (
+                <p className="text-orange-600">
+                  {uploadId
+                    ? "Submission checks have failed."
+                    : "Review checks have failed."}
+                </p>
+              )}
+              {actionError && (
+                <p className="mt-2 text-sm font-normal text-red-600">
+                  {actionError}
+                </p>
+              )}
+
+              {!isReviewMode && (
+                <Button
+                  className={cn("w-full", {
+                    "bg-green-600 hover:bg-green-800":
+                      status === DQStatus.COMPLETED,
+                  })}
+                  isExpressive
+                  onClick={handleSubmit}
+                  renderIcon={ArrowRight}
+                >
+                  {status === DQStatus.COMPLETED
+                    ? "Review Submission"
+                    : "Close and run in background"}
+                </Button>
+              )}
+            </div>
+
+            <div className="pl-4 text-sm">
+              <div className="mb-2">
+                <span className="font-semibold text-gray-900">File: </span>
+                {displayFileName === "-" ? (
+                  <span className="text-gray-500">Not available</span>
+                ) : (
+                  <a className="cursor-pointer text-blue-500 hover:text-blue-700 hover:underline">
+                    {displayFileName}
+                  </a>
                 )}
               </div>
+              <div className="flex flex-col space-y-0.5 text-xs font-normal text-gray-400">
+                <div className="m-0 p-0 leading-tight">
+                  Uploaded: {uploadData.uploader_email || "Not available"}
+                </div>
+                <div className="m-0 p-0 leading-tight">
+                  UploadID:{" "}
+                  {displayUploadId === "-" ? "Not available" : displayUploadId}
+                </div>
+                <div className="m-0 p-0 leading-tight">
+                  {createdDate
+                    ? `${createdDate.toLocaleTimeString()} GMT`
+                    : "Not available"}
+                </div>
+                <div className="m-0 p-0 leading-tight">
+                  {createdDate ? createdDate.toDateString() : "Not available"}
+                </div>
+              </div>
             </div>
-            {status === DQStatus.IN_PROGRESS && (
-              <>
-                <div className="flex items-center gap-2 text-xs">
-                  <Loading small withOverlay={false} />
-                  Refreshing Automatically
-                </div>
-                <div className="flex items-center text-xs text-slate-600">
-                  Estimated running time: 10–15 mins
-                </div>
-              </>
-            )}
           </div>
 
-          <div className="py-6 text-blue-400">
-            {status === DQStatus.IN_PROGRESS && (
-              <>
-                Congratulations! Your data file has been uploaded and data
-                quality checks are <b>in progress.</b>
-              </>
-            )}
-            {status === DQStatus.COMPLETED && (
-              <>
-                Congratulations! Your data file has been uploaded and data
-                quality checks are{" "}
-                <span className="text-green-600">successful.</span>
-              </>
-            )}
-            {isError && (
-              <>
-                Your data file has been uploaded and data quality checks{" "}
-                <span className="text-orange-400">have failed.</span>
-              </>
-            )}
-          </div>
-
-          <Button
-            className={cn("w-full", {
-              "bg-green-600 hover:bg-green-800": status === DQStatus.COMPLETED,
-            })}
-            isExpressive
-            onClick={handleSubmit}
-            renderIcon={ArrowRight}
-          >
-            {status === DQStatus.COMPLETED
-              ? "Review Submission"
-              : "Close and run in background"}
-          </Button>
-
-          <div>
-            <div
-              style={{
-                marginBottom: "2rem",
-                background: "#fff",
-                padding: "1.5rem",
-                borderRadius: "4px",
-              }}
-            >
-              <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
-                File: <a className="bx--link">{uploadData.original_filename}</a>
-              </p>
-
-              <p
+          {activeUploadId && effectiveStatus === DQStatus.COMPLETED && (
+            <>
+              <div
                 style={{
-                  fontSize: "0.875rem",
-                  color: "#6f6f6f",
-                  marginBottom: "1rem",
+                  display: "flex",
+                  gap: "1rem",
+                  marginBottom: "2rem",
+                  alignItems: "stretch",
                 }}
               >
-                Uploaded: {uploadData.uploader_email}
-                <br />
-                UploadID: {uploadId}
-                <br />
-                {new Date(uploadData.created).toLocaleTimeString()} GMT
-                <br />
-                {new Date(uploadData.created).toDateString()}
-              </p>
-            </div>
-            {status === DQStatus.COMPLETED && (
-              <>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "1rem",
-                    marginBottom: "2rem",
-                    alignItems: "stretch",
-                  }}
-                >
-                  <div style={cardStyle}>
-                    <h5 style={cardHeaderStyle}>Total Schools Uploaded</h5>
-                    <p style={cardValueStyle}>{commaNumber(rows)}</p>
-                    <div style={cardButtonContainerStyle}>
-                      <Button
-                        kind="primary"
-                        size="sm"
-                        renderIcon={Download}
-                        disabled={rows === 0}
-                        onClick={handleDownloadDqSummary}
-                      >
-                        Download Summary
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div style={cardStyle}>
-                    <h5 style={cardHeaderStyle}>Total Schools Passed</h5>
-                    <p style={cardValueStyle}>{commaNumber(rowsPassed)}</p>
-                    <div style={cardButtonContainerStyle}>
-                      <Button
-                        kind="primary"
-                        size="sm"
-                        renderIcon={Download}
-                        disabled={rowsPassed == 0}
-                        onClick={handleDownloadPassedRows}
-                      >
-                        Download Passed Schools
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div style={cardStyle}>
-                    <h5 style={cardHeaderStyle}>Total Schools Rejected</h5>
-                    <p style={cardValueStyle}>{commaNumber(rowsFailed)}</p>
-                    <div style={cardButtonContainerStyle}>
-                      <Button
-                        kind="primary"
-                        size="sm"
-                        renderIcon={Download}
-                        disabled={rowsFailed == 0}
-                        onClick={handleDownloadFailedRows}
-                      >
-                        Download Rejected Schools
-                      </Button>
-                    </div>
+                <div style={cardStyle}>
+                  <h5 style={cardHeaderStyle}>Total Schools Uploaded</h5>
+                  <p style={cardValueStyle}>{commaNumber(rows)}</p>
+                  <div style={cardButtonContainerStyle}>
+                    <Button
+                      kind="primary"
+                      size="sm"
+                      renderIcon={Download}
+                      disabled={rows === 0}
+                      onClick={handleDownloadDqSummary}
+                    >
+                      Download Summary
+                    </Button>
                   </div>
                 </div>
-              </>
-            )}
-          </div>
+
+                <div style={cardStyle}>
+                  <h5 style={cardHeaderStyle}>Total Schools Passed</h5>
+                  <p style={cardValueStyle}>{commaNumber(rowsPassed)}</p>
+                  <div style={cardButtonContainerStyle}>
+                    <Button
+                      kind="primary"
+                      size="sm"
+                      renderIcon={Download}
+                      disabled={rowsPassed == 0}
+                      onClick={handleDownloadPassedRows}
+                    >
+                      Download Passed Schools
+                    </Button>
+                  </div>
+                </div>
+
+                <div style={cardStyle}>
+                  <h5 style={cardHeaderStyle}>Total Schools Rejected</h5>
+                  <p style={cardValueStyle}>{commaNumber(rowsFailed)}</p>
+                  <div style={cardButtonContainerStyle}>
+                    <Button
+                      kind="primary"
+                      size="sm"
+                      renderIcon={Download}
+                      disabled={rowsFailed == 0}
+                      onClick={handleDownloadFailedRows}
+                    >
+                      Download Rejected Schools
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
           {status === DQStatus.COMPLETED ? (
             <SuccessDataQualityChecks
               dqResult={dqResult}
-              status={status}
+              status={effectiveStatus}
               uploadData={uploadData}
-              uploadId={uploadId}
+              uploadId={activeUploadId}
             />
           ) : isBasicCheckFetching ? (
             <p>Loading basic checks...</p>
           ) : (
-            <Tabs>
-              <TabList aria-label="Basic Checks">
-                {basicCheckItems.map(({ key }) => (
-                  <Tab key={key}>{key.replace(/_/g, " ")}</Tab>
-                ))}
-              </TabList>
-              <TabPanels>
-                {basicCheckItems.map(({ key, content }) => (
-                  <TabPanel key={key}>{content}</TabPanel>
-                ))}
-              </TabPanels>
-            </Tabs>
+            <div className="mt-4">
+              <Tabs>
+                <TabList aria-label="Basic Checks">
+                  {basicCheckItems.map(({ key }) => {
+                    const formattedKey = key
+                      .replace(/_/g, " ")
+                      .replace("Crictical", "Critical");
+                    const capitalizedKey =
+                      formattedKey.charAt(0).toUpperCase() +
+                      formattedKey.slice(1);
+                    return <Tab key={key}>{capitalizedKey}</Tab>;
+                  })}
+                </TabList>
+                <TabPanels>
+                  {basicCheckItems.map(({ key, content }) => (
+                    <TabPanel key={key} className="pt-4">
+                      {content}
+                    </TabPanel>
+                  ))}
+                </TabPanels>
+              </Tabs>
+            </div>
           )}
+
+          {/* Action buttons matching screenshot */}
+          <div className="mt-8 flex justify-end gap-[2px]">
+            <Button
+              kind="secondary"
+              className="w-40"
+              as={Link}
+              to={isUnstructured || isStructured ? ".." : "../metadata"}
+              renderIcon={ArrowLeft}
+              disabled={(inProgress && !!activeUploadId) || isActionPending}
+              onClick={() => decrementStepIndex()}
+            >
+              Back
+            </Button>
+            <Button
+              kind="tertiary"
+              className="w-40"
+              disabled={(inProgress && !!activeUploadId) || isActionPending}
+              onClick={isReviewMode ? handleReview : undefined}
+            >
+              Review
+            </Button>
+            <Button
+              kind="primary"
+              className="w-40"
+              renderIcon={ArrowRight}
+              disabled={(inProgress && !!activeUploadId) || isActionPending}
+              onClick={isReviewMode ? handleInitialSubmit : handleSubmit}
+            >
+              Submit
+            </Button>
+          </div>
         </section>
       )}
     </>
