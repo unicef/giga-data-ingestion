@@ -118,9 +118,6 @@ def fuzzy_match_value(
     Returns (suggested_value, was_changed)
     Improved logic using token_sort_ratio and token_set_ratio to avoid shorter-string bias.
     """
-    if not val or not isinstance(val, str):
-        return val, False
-
     str_val = val.strip()
 
     # Pre-check: If 'unknown' is in the input string, automatically suggest 'Unknown'
@@ -128,10 +125,6 @@ def fuzzy_match_value(
         return "Unknown", True
 
     match_targets = list(matching_map.keys())
-
-    # We don't necessarily need to sort by length if we use a better scorer,
-    # but keeping it doesn't hurt as a tie-breaker.
-    match_targets.sort(key=len, reverse=True)
 
     # Pass 1: Use token_sort_ratio for overall string similarity
     results_sort = process.extract(
@@ -150,9 +143,6 @@ def fuzzy_match_value(
         processor=utils.default_process,
         limit=5,
     )
-
-    if not results_sort:
-        return val, False
 
     best_sort_target, best_sort_score, _ = results_sort[0]
     best_set_target, best_set_score, _ = results_set[0]
