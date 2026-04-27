@@ -41,6 +41,19 @@ const UNSTRUCTURED_DESCRIPTION = (
   </>
 );
 
+const HEALTH_MASTER_DESCRIPTION = (
+  <>
+    <p>
+      Health Master datasets are specialized production datasets used for
+      health-related master records and reference data management.
+    </p>
+    <p>
+      Once uploaded, these datasets are available for downstream ingestion,
+      validation, and reporting workflows.
+    </p>
+  </>
+);
+
 function Options() {
   const { uploadGroup: _uploadGroup, uploadType: _uploadType } =
     Route.useParams();
@@ -90,6 +103,26 @@ function Options() {
                 renderIcon={Add}
               >
                 Upload Unstructured Dataset
+              </Button>
+            </Stack>
+          </div>
+
+          <div className="rounded-lg border border-gray-200 p-6">
+            <Stack gap={4}>
+              <h2 className="text-xl font-semibold">Health Master Dataset</h2>
+              {HEALTH_MASTER_DESCRIPTION}
+              <Button
+                as={Link}
+                to="/upload/$uploadGroup/$uploadType"
+                params={{
+                  uploadGroup: "other",
+                  uploadType: "health-master",
+                }}
+                className="w-full"
+                size="xl"
+                renderIcon={Add}
+              >
+                Upload Health Master Dataset
               </Button>
             </Stack>
           </div>

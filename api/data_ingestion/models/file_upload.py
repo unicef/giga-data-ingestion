@@ -59,6 +59,9 @@ class FileUpload(BaseModel):
         else:
             country = self.country
 
+        if self.dataset == "health-master":
+            # Preserve original filename for health master destination paths.
+            return self.original_filename
         if self.dataset == "structured":
             # For structured datasets, use original filename with upload ID
             original_name = Path(self.original_filename).stem
@@ -75,6 +78,14 @@ class FileUpload(BaseModel):
 
     @hybrid_property
     def upload_path(self) -> str:
+        if self.dataset == "health-master":
+            country_path = self.country
+            if self.country == "N/A":
+                country_path = "N-A"
+            return (
+                f"updated_master_schema/health-master/"
+                f"{country_path}/{self.filename}"
+            )
         if self.dataset == "structured":
             from data_ingestion.settings import settings
 
