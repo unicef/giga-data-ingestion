@@ -129,14 +129,14 @@ function Success() {
   const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
     queryFn: () => api.uploads.list_basic_checks(uploadType, source),
     queryKey: ["basic_checks", uploadType, source],
-    enabled: !isStructuredLike, // Don't query for structured-like datasets
+    enabled: !isStructuredLike,
   });
   const basicCheck = basicCheckQuery?.data ?? [];
 
   const { data: uploadQuery } = useQuery({
     queryKey: ["upload", uploadId],
     queryFn: () => api.uploads.get_upload(uploadId),
-    enabled: !isStructuredLike && !!uploadId, // Don't query for structured-like datasets
+    enabled: !isStructuredLike && !!uploadId,
   });
   const uploadData = useMemo<UploadResponse>(
     () => uploadQuery?.data ?? initialUploadResponse,
@@ -156,7 +156,7 @@ function Success() {
     queryKey: ["dq_check", uploadId],
     queryFn: () => api.uploads.get_data_quality_check(uploadId),
     refetchInterval: 7000,
-    enabled: !isUnstructured && !isStructuredLike, // Don't query for structured-like datasets
+    enabled: !isUnstructured && !isStructuredLike,
   });
 
   const dqResult = useMemo<DataQualityCheck>(

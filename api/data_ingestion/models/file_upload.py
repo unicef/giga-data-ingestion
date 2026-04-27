@@ -60,8 +60,8 @@ class FileUpload(BaseModel):
             country = self.country
 
         if self.dataset == "health-master":
-            # Preserve original filename for health master destination paths.
-            return self.original_filename
+            original_name = Path(self.original_filename).stem
+            return f"{original_name}_{timestamp}{ext}"
         if self.dataset == "structured":
             # For structured datasets, use original filename with upload ID
             original_name = Path(self.original_filename).stem

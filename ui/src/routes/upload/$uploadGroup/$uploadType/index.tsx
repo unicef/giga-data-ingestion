@@ -209,7 +209,6 @@ export default function Index() {
 
   const handleProceedToNextStep = async () => {
     if (isStructuredLike) {
-      // For structured-like datasets, upload directly without metadata
       if (file) {
         setSource(source ?? null);
         setMode(mode);
@@ -228,7 +227,7 @@ export default function Index() {
 
         await uploadStructuredFile.mutateAsync(body);
         setUploadDate(uploadSlice.timeStamp);
-        setStepIndex(1); // Step 2 for structured-like datasets (zero-based index)
+        setStepIndex(1);
         void navigate({ to: "./success" });
       } catch (error) {
         console.error("Upload failed:", error);
