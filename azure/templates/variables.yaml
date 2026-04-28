@@ -27,4 +27,7 @@ variables:
   datahubIngressHost: $(DATAHUB_INGRESS_HOST)
   gigameterApiBaseUrl: $(GIGAMETER_API_BASE_URL)
   gigameterApiToken: $(GIGAMETER_API_TOKEN)
+  nocodbBaseUrl: $(NOCODB_BASE_URL)
+  nocodbToken: $(NOCODB_TOKEN)
+  nocodbNameMappingsTableID : $(NOCODB_NAME_MAPPINGS_TABLE_ID)
   system.debug: true
