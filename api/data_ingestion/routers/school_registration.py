@@ -62,18 +62,19 @@ def verify_nocodb_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-def build_column_mapping() -> dict:
+def build_column_mapping(payload: SchoolRegistrationTriggerRequest) -> dict:
     """
-    Build identity column mapping for school registration CSV.
-    Since the CSV already has correct schema column names, we map each column to itself.
+    Build identity column mapping for FileUpload
     """
     return {
-        "school_id_giga": "school_id_giga",
-        "school_id_govt": "school_id_govt",
-        "school_name": "school_name",
-        "latitude": "latitude",
-        "longitude": "longitude",
-        "education_level": "education_level",
+        "school_id_giga": payload.get("giga_id_school", ""),
+        "school_id_govt": payload.get("school_id", ""),
+        "school_name": payload.get("school_name", ""),
+        "latitude": payload.get("latitude", ""),
+        "longitude": payload.get("longitude", ""),
+        "education_level": payload.get("education_level", ""),
+        "contact_name": payload.get("contact_name", ""),
+        "contact_email": payload.get("contact_email", ""),
     }
 
 
@@ -137,7 +138,7 @@ async def trigger_registration_pipeline(
         dataset="geolocation",
         source="gigameter",
         original_filename=f"{payload.giga_id_school}.csv",
-        column_to_schema_mapping=build_column_mapping(),
+        column_to_schema_mapping=build_column_mapping(payload.model_dump()),
         column_license={},
     )
 
