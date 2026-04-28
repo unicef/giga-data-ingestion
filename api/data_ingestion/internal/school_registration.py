@@ -94,7 +94,7 @@ def call_meter_soft_delete(school_id_giga: str, rejection_reason: str = None) ->
     }
 
     response = requests.put(url, headers=headers, json=payload, timeout=10)
-    response.raise_for_status()
     logger.info(
         "GigaMeter soft-delete successful for school_id_giga=%s", school_id_giga
     )
+    return response.json()

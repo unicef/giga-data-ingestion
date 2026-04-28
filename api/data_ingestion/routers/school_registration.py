@@ -46,7 +46,7 @@ class SchoolRegistrationTriggerResponse(BaseModel):
     created: datetime
 
 
-def _verify_meter_token(
+def verify_meter_token(
     credentials: HTTPAuthorizationCredentials,
 ) -> None:
     """Validate the bearer token from GigaMeter against the configured secret."""
@@ -54,7 +54,7 @@ def _verify_meter_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-def _verify_nocodb_token(
+def verify_nocodb_token(
     credentials: HTTPAuthorizationCredentials,
 ) -> None:
     """Validate the bearer token from NocoDB against the configured secret."""
@@ -62,7 +62,7 @@ def _verify_nocodb_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-def _build_column_mapping() -> dict:
+def build_column_mapping() -> dict:
     """
     Build identity column mapping for school registration CSV.
     Since the CSV already has correct schema column names, we map each column to itself.
@@ -77,7 +77,7 @@ def _build_column_mapping() -> dict:
     }
 
 
-def _build_registration_metadata(
+def build_registration_metadata(
     payload: SchoolRegistrationTriggerRequest,
 ) -> dict:
     """Build registration-specific metadata (not for column mapping)."""
@@ -104,7 +104,7 @@ async def trigger_registration_pipeline(
     Called by GigaMeter to initiate the DQ pipeline for a new school registration.
     Creates a FileUpload record and writes a single-row CSV to ADLS.
     """
-    _verify_meter_token(credentials)
+    verify_meter_token(credentials)
 
     country_code = coco.convert(payload.country_iso3_code, to="ISO3")
     if country_code == "not found":
@@ -137,7 +137,7 @@ async def trigger_registration_pipeline(
         dataset="geolocation",
         source="gigameter",
         original_filename=f"{payload.giga_id_school}.csv",
-        column_to_schema_mapping=_build_column_mapping(),
+        column_to_schema_mapping=build_column_mapping(),
         column_license={},
     )
 
@@ -151,7 +151,7 @@ async def trigger_registration_pipeline(
     await db.refresh(file_upload)
 
     try:
-        registration_metadata = _build_registration_metadata(payload)
+        registration_metadata = build_registration_metadata(payload)
         write_registration_csv_to_adls(
             payload.model_dump(), file_upload, registration_metadata
         )
@@ -190,7 +190,7 @@ async def retrigger_registration_pipeline(
     Called when a government verifier updates school data or Status from unvarified to varfied or declined.
     Creates a new FileUpload record so the Dagster sensor detects the re-trigger.
     """
-    _verify_nocodb_token(credentials)
+    verify_nocodb_token(credentials)
 
     existing = await db.scalar(
         select(FileUpload)
@@ -216,7 +216,7 @@ async def retrigger_registration_pipeline(
         dataset="geolocation",
         source="nocodb",
         original_filename=f"{payload.giga_id_school}.csv",
-        column_to_schema_mapping=_build_column_mapping(),
+        column_to_schema_mapping=build_column_mapping(),
         column_license={},
     )
 
@@ -230,7 +230,7 @@ async def retrigger_registration_pipeline(
     await db.refresh(new_file_upload)
 
     try:
-        registration_metadata = _build_registration_metadata(payload)
+        registration_metadata = build_registration_metadata(payload)
         write_registration_csv_to_adls(
             payload.model_dump(), new_file_upload, registration_metadata
         )
