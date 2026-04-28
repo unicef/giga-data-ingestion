@@ -141,6 +141,12 @@ function Index() {
               {new Date(uploadData.created).toLocaleTimeString()} GMT
               <br />
               {new Date(uploadData.created).toDateString()}
+              {uploadData.mode && (
+                <>
+                  <br />
+                  Type: {uploadData.mode}
+                </>
+              )}
             </p>
           </div>
 

@@ -331,12 +331,15 @@ async def upload_file(
         select(DatabaseUser).where(DatabaseUser.email == email)
     )
 
+    upload_metadata = orjson.loads(form.metadata)
+
     file_upload = FileUpload(
         uploader_id=database_user.id,
         uploader_email=database_user.email,
         country=country_code,
         dataset=dataset,
         source=form.source,
+        mode=upload_metadata.get("mode") or None,
         original_filename=file.filename,
         column_to_schema_mapping=orjson.loads(form.column_to_schema_mapping),
         column_license=orjson.loads(form.column_license),
@@ -356,7 +359,7 @@ async def upload_file(
 
     try:
         metadata = {
-            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            **{str(k): str(v) for k, v in upload_metadata.items()},
             "country": form.country,
             "uploader_email": email,
         }
@@ -447,11 +450,13 @@ async def upload_unstructured(  # noqa: C901
         select(DatabaseUser).where(DatabaseUser.email == email)
     )
 
+    upload_metadata = orjson.loads(form.metadata)
     file_upload = FileUpload(
         uploader_id=database_user.id,
         uploader_email=database_user.email,
         country=country_code,
         dataset="unstructured",
+        mode=upload_metadata.get("mode") or None,
         original_filename=file.filename,
         column_to_schema_mapping={},
         column_license={},
@@ -464,7 +469,7 @@ async def upload_unstructured(  # noqa: C901
 
     try:
         metadata = {
-            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            **{str(k): str(v) for k, v in upload_metadata.items()},
             "country": form.country,
             "uploader_email": email,
         }
@@ -550,11 +555,13 @@ async def upload_structured(  # noqa: C901
         select(DatabaseUser).where(DatabaseUser.email == email)
     )
 
+    upload_metadata = orjson.loads(form.metadata)
     file_upload = FileUpload(
         uploader_id=database_user.id,
         uploader_email=database_user.email,
         country=country_code,
         dataset="structured",
+        mode=upload_metadata.get("mode") or None,
         original_filename=file.filename,
         column_to_schema_mapping={},
         column_license={},
@@ -567,7 +574,7 @@ async def upload_structured(  # noqa: C901
 
     try:
         metadata = {
-            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            **{str(k): str(v) for k, v in upload_metadata.items()},
             "country": form.country,
             "uploader_email": email,
             "dataset_type": "structured",

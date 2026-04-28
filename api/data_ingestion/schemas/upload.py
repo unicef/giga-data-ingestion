@@ -21,6 +21,7 @@ class FileUpload(BaseModel):
     country: constr(min_length=3, max_length=3)
     dataset: str
     source: str | None
+    mode: str | None
     original_filename: str
     column_to_schema_mapping: dict[str, str]
     column_license: dict[str, str]
