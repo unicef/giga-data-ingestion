@@ -70,8 +70,8 @@ def build_column_mapping(payload: SchoolRegistrationTriggerRequest) -> dict:
         "school_id_giga": payload.get("giga_id_school", ""),
         "school_id_govt": payload.get("school_id", ""),
         "school_name": payload.get("school_name", ""),
-        "latitude": payload.get("latitude", ""),
-        "longitude": payload.get("longitude", ""),
+        "latitude": str(payload.get("latitude", "")),
+        "longitude": str(payload.get("longitude", "")),
         "education_level": payload.get("education_level", ""),
         "contact_name": payload.get("contact_name", ""),
         "contact_email": payload.get("contact_email", ""),
@@ -217,7 +217,7 @@ async def retrigger_registration_pipeline(
         dataset="geolocation",
         source="nocodb",
         original_filename=f"{payload.giga_id_school}.csv",
-        column_to_schema_mapping=build_column_mapping(),
+        column_to_schema_mapping=build_column_mapping(payload.model_dump()),
         column_license={},
     )
 

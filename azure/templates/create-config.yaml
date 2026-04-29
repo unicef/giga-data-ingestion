@@ -90,8 +90,8 @@ jobs:
                     ADMIN_EMAIL: '$(adminEmail)'
                     GIGAMETER_API_BASE_URL: "$(gigameterApiBaseUrl)"
                     GIGAMETER_API_TOKEN: "$(gigameterApiToken)"
-                    SYSTEM_USER_ID: '$(systemUserId)'
-                    SYSTEM_USER_EMAIL: '$(systemUserEmail)'
+                    SYSTEM_USER_ID: "$(systemUserId)"
+                    SYSTEM_USER_EMAIL: "$(systemUserEmail)"
 
 
             - task: Kubernetes@1
@@ -141,5 +141,5 @@ jobs:
                     ADMIN_EMAIL: '$(adminEmail)'
                     GIGAMETER_API_BASE_URL: "$(gigameterApiBaseUrl)"
                     GIGAMETER_API_TOKEN: "$(gigameterApiToken)"
-                    SYSTEM_USER_ID: '$(systemUserId)'
-                    SYSTEM_USER_EMAIL: '$(systemUserEmail)'
+                    SYSTEM_USER_ID: "$(systemUserId)"
+                    SYSTEM_USER_EMAIL: "$(systemUserEmail)"
