@@ -59,6 +59,22 @@ const columns: DataTableHeader[] = [
     header: "Country",
   },
   {
+    key: "rows",
+    header: "Tot. entries",
+  },
+  {
+    key: "rows_passed",
+    header: "Passed",
+  },
+  {
+    key: "rows_failed",
+    header: "Rejected",
+  },
+  {
+    key: "data_owner",
+    header: "Data owner",
+  },
+  {
     key: "status",
     header: "DQ check status",
   },
@@ -135,6 +151,10 @@ function UploadsTable({
             )}
           </>
         ),
+        rows: upload.rows?.toLocaleString() ?? "—",
+        rows_passed: upload.rows_passed?.toLocaleString() ?? "—",
+        rows_failed: upload.rows_failed?.toLocaleString() ?? "—",
+        data_owner: upload.data_owner ?? "—",
         status: (
           <Tag
             type={DQStatusTagMapping[upload.dq_status]}
