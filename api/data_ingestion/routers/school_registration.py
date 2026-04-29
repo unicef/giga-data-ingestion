@@ -62,19 +62,19 @@ def verify_nocodb_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-def build_column_mapping(payload: SchoolRegistrationTriggerRequest) -> dict:
+def build_column_mapping(payload: SchoolRegistrationTriggerRequest | dict) -> dict:
     """
     Build identity column mapping for FileUpload
     """
     return {
-        "school_id_giga": payload.get("giga_id_school", ""),
-        "school_id_govt": payload.get("school_id", ""),
-        "school_name": payload.get("school_name", ""),
-        "latitude": str(payload.get("latitude", "")),
-        "longitude": str(payload.get("longitude", "")),
-        "education_level": payload.get("education_level", ""),
-        "contact_name": payload.get("contact_name", ""),
-        "contact_email": payload.get("contact_email", ""),
+        "school_id_giga": "school_id_giga",
+        "school_id_govt": "school_id_govt",
+        "school_name": "school_name",
+        "latitude": "latitude",
+        "longitude": "longitude",
+        "education_level": "education_level",
+        "contact_name": "contact_name",
+        "contact_email": "contact_email",
     }
 
 
@@ -86,6 +86,10 @@ def build_registration_metadata(
         "giga_id_school": payload.giga_id_school,
         "school_id": payload.school_id,
         "registration_id": getattr(payload, "registration_id", payload.giga_id_school),
+        "school_name": payload.school_name,
+        "latitude": str(payload.latitude) if payload.latitude else "",
+        "longitude": str(payload.longitude) if payload.longitude else "",
+        "education_level": payload.education_level or "",
         "contact_name": payload.contact_name or "",
         "contact_email": str(payload.contact_email) if payload.contact_email else "",
     }
