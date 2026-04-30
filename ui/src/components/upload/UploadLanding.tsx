@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Add } from "@carbon/icons-react";
+import { Add, Column } from "@carbon/icons-react";
 import {
   Button,
   Heading,
@@ -14,6 +14,10 @@ import {
 } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
+import ColumnSelectorModal, {
+  loadVisibleColumns,
+  saveVisibleColumns,
+} from "@/components/check-file-uploads/ColumnSelectorModal";
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
 import useRoles from "@/hooks/useRoles";
 import { cn } from "@/lib/utils.ts";
@@ -34,7 +38,15 @@ interface UploadLandingProps {
 function UploadLanding(props: UploadLandingProps) {
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] =
+    useState<Set<string>>(loadVisibleColumns);
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
+
+  function handleColumnSave(cols: Set<string>) {
+    saveVisibleColumns(cols);
+    setVisibleColumns(cols);
+  }
 
   // Tab 0 = Geolocation (source gigasync), 1 = API (source api),
   // 2 = Coverage (dataset coverage), 3 = Schemaless (dataset structured)
@@ -148,17 +160,36 @@ function UploadLanding(props: UploadLandingProps) {
             </div>
           </Stack>
 
+          <ColumnSelectorModal
+            open={modalOpen}
+            onClose={() => setModalOpen(false)}
+            visibleColumns={visibleColumns}
+            onSave={handleColumnSave}
+          />
+
           <Tabs selectedIndex={selectedTab} onChange={handleTabChange}>
-            <TabList
-              aria-label="File Uploads Tabs"
-              fullWidth
-              className="w-full"
-            >
-              <Tab>Geolocation</Tab>
-              <Tab>API</Tab>
-              <Tab>Coverage</Tab>
-              <Tab>Schemaless</Tab>
-            </TabList>
+            <div className="relative">
+              <TabList
+                aria-label="File Uploads Tabs"
+                fullWidth
+                className="w-full"
+              >
+                <Tab>Geolocation</Tab>
+                <Tab>API</Tab>
+                <Tab>Coverage</Tab>
+                <Tab>Schemaless</Tab>
+              </TabList>
+              <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                <Button
+                  kind="ghost"
+                  size="sm"
+                  iconDescription="Select columns"
+                  renderIcon={Column}
+                  hasIconOnly
+                  onClick={() => setModalOpen(true)}
+                />
+              </div>
+            </div>
 
             <TabPanels>
               <TabPanel className="p-0">
@@ -166,6 +197,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -173,6 +205,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -180,6 +213,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -187,6 +221,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                 />
               </TabPanel>
             </TabPanels>

@@ -29,7 +29,9 @@ import {
   UploadResponse,
 } from "@/types/upload.ts";
 
-const columns: DataTableHeader[] = [
+import { ALL_COLUMN_CONFIGS } from "./ColumnSelectorModal";
+
+const ALL_COLUMNS: DataTableHeader[] = [
   {
     key: "id",
     header: "Upload ID",
@@ -101,6 +103,7 @@ interface UploadsTableProps {
   }) => void;
   source?: string | null;
   dataset?: string | null;
+  visibleColumns: Set<string>;
 }
 
 function UploadsTable({
@@ -109,6 +112,7 @@ function UploadsTable({
   handlePaginationChange,
   source,
   dataset,
+  visibleColumns,
 }: UploadsTableProps) {
   const { data: uploadsQuery, isLoading } = useSuspenseQuery({
     queryFn: () =>
@@ -120,6 +124,16 @@ function UploadsTable({
       }),
     queryKey: ["uploads", page, pageSize, source, dataset],
   });
+
+  const activeColumns = useMemo(() => {
+    const selectableKeys = new Set(ALL_COLUMN_CONFIGS.map(c => c.key));
+    return ALL_COLUMNS.filter(
+      col =>
+        col.key === "actions" ||
+        !selectableKeys.has(col.key) ||
+        visibleColumns.has(col.key),
+    );
+  }, [visibleColumns]);
 
   const renderUploads = useMemo<PagedResponse<TableUpload>>(() => {
     const uploads = uploadsQuery?.data ?? {
@@ -182,9 +196,9 @@ function UploadsTable({
   }, [page, pageSize, uploadsQuery?.data]);
 
   return isLoading ? (
-    <DataTableSkeleton headers={columns} />
+    <DataTableSkeleton headers={activeColumns} />
   ) : (
-    <DataTable headers={columns} rows={renderUploads.data}>
+    <DataTable headers={activeColumns} rows={renderUploads.data}>
       {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
         <TableContainer>
           <Table {...getTableProps()}>
