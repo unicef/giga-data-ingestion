@@ -19,6 +19,8 @@ GEOLOCATION_CSV_COLUMNS = [
     "latitude",
     "longitude",
     "education_level",
+    "contact_name",
+    "contact_email",
 ]
 
 
@@ -35,6 +37,8 @@ def write_registration_csv_to_adls(
         "latitude": payload.get("latitude", ""),
         "longitude": payload.get("longitude", ""),
         "education_level": payload.get("education_level", ""),
+        "contact_name": payload.get("contact_name", ""),
+        "contact_email": payload.get("contact_email", ""),
     }
 
     output = io.StringIO()
