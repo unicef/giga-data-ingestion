@@ -87,6 +87,7 @@ class Settings(BaseSettings):
     GIGAMETER_API_TOKEN: str = ""
     SYSTEM_USER_ID: str = "11223344-5566-4788-9900-aabbccddeeff"
     SYSTEM_USER_EMAIL: str = "giga_meter@gigasync.org"
+    NOCODB_INBOUND_API_TOKEN: str = ""
 
     @computed_field
     @property
