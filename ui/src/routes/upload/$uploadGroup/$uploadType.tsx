@@ -41,7 +41,9 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
 
     if (
       uploadGroup === "other" &&
-      !["unstructured", "structured", "schemaless"].includes(uploadType)
+      !["unstructured", "structured", "schemaless", "health"].includes(
+        uploadType,
+      )
     ) {
       throw doRedirect;
     }
@@ -89,6 +91,8 @@ function Layout() {
 
   const isCoverage = uploadType === "coverage";
   const isGeolocation = uploadType === "geolocation";
+  const isHealth =
+    uploadGroup === "other" && uploadType === "health";
 
   const title = uploadType.replace(/-/g, " ");
   const isUnstructured =
@@ -109,7 +113,7 @@ function Layout() {
     (isCoverage && hasCoverage) ||
     (isGeolocation && hasGeolocation) ||
     isAdmin ||
-    ((isSchemaless || isSchemalessOptions) && hasAccess);
+    ((isSchemaless || isSchemalessOptions || isHealth) && hasAccess);
 
   useEffect(() => {
     return resetUploadSliceState;
@@ -158,6 +162,21 @@ function Layout() {
     </>
   );
 
+  const HEALTH_DESCRIPTION = (
+    <>
+      <p>
+        Upload a health dataset CSV (up to the file size limit shown on the next
+        step). You will add health metadata—including who uploaded the file, the
+        period the data refers to, and a dataset description—before submitting.
+      </p>
+      <p>
+        Files land in the health raw zone in Azure Data Lake; downstream Dagster
+        processing is configured separately from school geolocation and coverage
+        pipelines.
+      </p>
+    </>
+  );
+
   const COVERAGE_DESCRIPTION = (
     <>
       <p>
@@ -186,9 +205,13 @@ function Layout() {
         <UploadBreadcrumbs />
         <Stack gap={10}>
           <Stack gap={1}>
-            <h2 className="text-[23px] capitalize">{title}</h2>
+            <h2 className="text-[23px] capitalize">
+              {isHealth ? "Health dataset" : title}
+            </h2>
             <div>
-              {title === "geolocation"
+              {isHealth
+                ? HEALTH_DESCRIPTION
+                : title === "geolocation"
                 ? GEOLOCATION_DESCRIPTION
                 : title === "coverage"
                 ? COVERAGE_DESCRIPTION
@@ -198,7 +221,25 @@ function Layout() {
             </div>
           </Stack>
 
-          {isUnstructured ? (
+          {isHealth ? (
+            <ProgressIndicator currentIndex={stepIndex} spaceEqually>
+              <ProgressStep
+                label="1"
+                description="Upload"
+                secondaryLabel="Upload"
+              />
+              <ProgressStep
+                label="2"
+                description="Add metadata"
+                secondaryLabel="Add metadata"
+              />
+              <ProgressStep
+                label="3"
+                description="Submit"
+                secondaryLabel="Submit"
+              />
+            </ProgressIndicator>
+          ) : isUnstructured ? (
             <ProgressIndicator currentIndex={stepIndex} spaceEqually>
               <ProgressStep
                 label="1"

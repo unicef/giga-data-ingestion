@@ -36,7 +36,12 @@ import {
   SelectFromArray,
   SelectFromEnum,
 } from "@/components/upload/MetadataInputs.tsx";
-import { metadataMapping, yearList } from "@/constants/metadata";
+import {
+  metadataMapping,
+  schoolMetadataDatasetSection,
+  schoolMetadataNationalSection,
+  yearList,
+} from "@/constants/metadata";
 import { useStore } from "@/context/store";
 import useRoles from "@/hooks/useRoles.ts";
 import { MetadataFormMapping } from "@/types/metadata.ts";
@@ -88,7 +93,7 @@ function getFormRows(
   if (groupKey === "") {
     return [[formItems[0], null], [formItems[1]]];
   }
-  if (groupKey === "Information about the school dataset") {
+  if (groupKey === schoolMetadataDatasetSection) {
     const pairs: MetadataFormMapping[][] = [];
     for (let i = 0; i < 6 && i < formItems.length; i += 2) {
       pairs.push(formItems.slice(i, i + 2));
@@ -98,9 +103,7 @@ function getFormRows(
     }
     return pairs;
   }
-  if (
-    groupKey === "Information about national school data collection practices"
-  ) {
+  if (groupKey === schoolMetadataNationalSection) {
     const pairs: MetadataFormMapping[][] = [];
     for (let i = 0; i < formItems.length; i += 2) {
       pairs.push(formItems.slice(i, i + 2));
@@ -116,7 +119,7 @@ const RenderFormItem = ({
   register,
 }: {
   formItem: MetadataFormMapping;
-  errors: FieldErrors;
+  errors: FieldErrors<MetadataForm>;
   register: UseFormRegister<MetadataForm>;
 }) => {
   switch (formItem.type) {
@@ -257,7 +260,6 @@ function Metadata() {
     }
 
     if (Object.keys(errors).length > 0) {
-      // form has errors, don't submit
       return;
     }
 
@@ -430,10 +432,6 @@ function Metadata() {
             )}
           </Stack>
         </Form>
-
-        {/* <Suspense>
-          <ReactHookFormDevTools control={control} />
-        </Suspense> */}
       </Section>
     </Section>
   );

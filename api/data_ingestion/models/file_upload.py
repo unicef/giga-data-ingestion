@@ -60,9 +60,13 @@ class FileUpload(BaseModel):
             country = self.country
 
         if self.dataset == "structured":
-            # For structured datasets, use original filename with upload ID
             original_name = Path(self.original_filename).stem
             filename = f"{original_name}_{self.id}"
+            return f"{filename}{ext}"
+        if self.dataset == "health":
+            # Timestamp (UTC from `created`) for history tracking alongside upload id
+            original_name = Path(self.original_filename).stem
+            filename = f"{original_name}_{self.id}_{timestamp}"
             return f"{filename}{ext}"
         else:
             filename_elements = [self.id, country, self.dataset]
@@ -79,6 +83,15 @@ class FileUpload(BaseModel):
             from data_ingestion.settings import settings
 
             return f"{settings.LAKEHOUSE_PATH}/raw/custom-dataset/{self.filename}"
+
+        if self.dataset == "health":
+            # Blob path within AZURE_BLOB_CONTAINER_NAME (no leading slash):
+            # updated_master_schema/health-master/<ISO3 or $NA>/<filename>.csv
+            country_segment = "$NA" if self.country == "N/A" else self.country
+            return (
+                f"updated_master_schema/health-master/"
+                f"{country_segment}/{self.filename}"
+            )
 
         # For other datasets, use the uploads path
         if self.dataset == "unstructured":

@@ -37,7 +37,8 @@ function UploadLanding(props: UploadLandingProps) {
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
 
   // Tab 0 = Geolocation (source gigasync), 1 = API (source api),
-  // 2 = Coverage (dataset coverage), 3 = Schemaless (dataset structured)
+  // 2 = Coverage (dataset coverage), 3 = Schemaless (dataset structured),
+  // 4 = Health (dataset health)
   const tabFilter = (() => {
     switch (selectedTab) {
       case 0:
@@ -48,6 +49,8 @@ function UploadLanding(props: UploadLandingProps) {
         return { source: null, dataset: "coverage" as const };
       case 3:
         return { source: null, dataset: "structured" as const };
+      case 4:
+        return { source: null, dataset: "health" as const };
       default:
         return { source: null, dataset: null };
     }
@@ -101,7 +104,7 @@ function UploadLanding(props: UploadLandingProps) {
                 shared and in which context.
               </p>
             </div>
-            <div className="grid grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {(hasGeolocation || isAdmin) && (
                 <Button
                   as={Link}
@@ -145,6 +148,19 @@ function UploadLanding(props: UploadLandingProps) {
               >
                 Schemaless dataset
               </Button>
+              <Button
+                as={Link}
+                to="/upload/$uploadGroup/$uploadType"
+                params={{
+                  uploadGroup: "other",
+                  uploadType: "health",
+                }}
+                className="w-full"
+                size="xl"
+                renderIcon={Add}
+              >
+                Health dataset
+              </Button>
             </div>
           </Stack>
 
@@ -158,9 +174,17 @@ function UploadLanding(props: UploadLandingProps) {
               <Tab>API</Tab>
               <Tab>Coverage</Tab>
               <Tab>Schemaless</Tab>
+              <Tab>Health</Tab>
             </TabList>
 
             <TabPanels>
+              <TabPanel className="p-0">
+                <UploadsTable
+                  {...props}
+                  source={tabFilter.source}
+                  dataset={tabFilter.dataset}
+                />
+              </TabPanel>
               <TabPanel className="p-0">
                 <UploadsTable
                   {...props}
