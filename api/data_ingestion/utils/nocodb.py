@@ -183,6 +183,8 @@ def update_nocodb_record_by_field(
         if not record_id:
             raise ValueError(f"Could not find ID field in NocoDB record: {record}")
 
+        update_data["Id"] = record_id
+
         # Update the record
         table_url = f"{settings.NOCODB_BASE_URL}/api/v2/tables/{table_id}/records"
         headers = {
