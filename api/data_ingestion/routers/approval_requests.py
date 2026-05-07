@@ -493,7 +493,8 @@ async def submit_upload_review(
                 field_name="giga_id_school",
                 field_value=school_id_giga,
                 update_data={
-                    "status": "rejected",
+                    "verification_status": "rejected",
+                    "rejected_on": datetime.now(UTC),
                     "rejection_reason": "Rejected by admin during manual review",
                 },
             )
