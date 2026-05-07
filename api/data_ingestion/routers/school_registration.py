@@ -37,6 +37,9 @@ class SchoolRegistrationTriggerRequest(BaseModel):
     education_level: str | None = None
     contact_name: str | None = None
     contact_email: EmailStr | None = None
+    verification_status: str | None = (
+        None  # Status from NocoDB: "verified", "rejected", "unverified"
+    )
 
 
 class SchoolRegistrationTriggerResponse(BaseModel):
@@ -75,6 +78,7 @@ def build_column_mapping(payload: SchoolRegistrationTriggerRequest | dict) -> di
         "education_level": "education_level",
         "contact_name": "contact_name",
         "contact_email": "contact_email",
+        "verification_status": "verification_status",
     }
 
 
@@ -82,6 +86,9 @@ def build_registration_metadata(
     payload: SchoolRegistrationTriggerRequest,
 ) -> dict:
     """Build registration-specific metadata (not for column mapping)."""
+
+    verification_status = payload.status if payload.status else "unverified"
+
     return {
         "giga_id_school": payload.giga_id_school,
         "school_id": payload.school_id,
@@ -92,6 +99,7 @@ def build_registration_metadata(
         "education_level": payload.education_level or "",
         "contact_name": payload.contact_name or "",
         "contact_email": str(payload.contact_email) if payload.contact_email else "",
+        "verification_status": verification_status,
     }
 
 
@@ -158,7 +166,10 @@ async def trigger_registration_pipeline(
     try:
         registration_metadata = build_registration_metadata(payload)
         write_registration_csv_to_adls(
-            payload.model_dump(), file_upload, registration_metadata
+            payload.model_dump(),
+            file_upload,
+            registration_metadata,
+            mode="create",
         )
     except HttpResponseError as err:
         await db.execute(delete(FileUpload).where(FileUpload.id == file_upload.id))
@@ -192,7 +203,7 @@ async def retrigger_registration_pipeline(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Called when a government verifier updates school data or Status from unvarified to varfied or declined.
+    Called when a government verifier updates school data or Status from unvarified to varfied or reject.
     Creates a new FileUpload record so the Dagster sensor detects the re-trigger.
     """
     verify_nocodb_token(credentials)
@@ -237,7 +248,10 @@ async def retrigger_registration_pipeline(
     try:
         registration_metadata = build_registration_metadata(payload)
         write_registration_csv_to_adls(
-            payload.model_dump(), new_file_upload, registration_metadata
+            payload.model_dump(),
+            new_file_upload,
+            registration_metadata,
+            mode="update",
         )
     except Exception as err:
         await db.execute(delete(FileUpload).where(FileUpload.id == new_file_upload.id))
