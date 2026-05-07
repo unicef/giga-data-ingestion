@@ -87,7 +87,9 @@ def build_registration_metadata(
 ) -> dict:
     """Build registration-specific metadata (not for column mapping)."""
 
-    verification_status = payload.status if payload.status else "unverified"
+    verification_status = (
+        payload.verification_status if payload.verification_status else "unverified"
+    )
 
     return {
         "giga_id_school": payload.giga_id_school,
