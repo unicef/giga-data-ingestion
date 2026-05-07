@@ -90,6 +90,7 @@ jobs:
                     ADMIN_EMAIL: '$(adminEmail)'
                     GIGAMETER_API_BASE_URL: "$(gigameterApiBaseUrl)"
                     GIGAMETER_API_TOKEN: "$(gigameterApiToken)"
+                    NOCODB_INBOUND_API_TOKEN: "$(nocodbInboundApiToken)"
 
 
             - task: Kubernetes@1
@@ -139,3 +140,4 @@ jobs:
                     ADMIN_EMAIL: '$(adminEmail)'
                     GIGAMETER_API_BASE_URL: "$(gigameterApiBaseUrl)"
                     GIGAMETER_API_TOKEN: "$(gigameterApiToken)"
+                    NOCODB_INBOUND_API_TOKEN: "$(nocodbInboundApiToken)"

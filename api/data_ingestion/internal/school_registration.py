@@ -21,11 +21,15 @@ GEOLOCATION_CSV_COLUMNS = [
     "education_level",
     "contact_name",
     "contact_email",
+    "verification_status",
 ]
 
 
 def write_registration_csv_to_adls(
-    payload: dict, file_upload, registration_metadata: dict
+    payload: dict,
+    file_upload,
+    registration_metadata: dict,
+    mode: str = "create",
 ) -> None:
     """
     Formats the school registration payload as a single-row CSV and uploads it to ADLS.
@@ -39,6 +43,9 @@ def write_registration_csv_to_adls(
         "education_level": payload.get("education_level", ""),
         "contact_name": payload.get("contact_name", ""),
         "contact_email": payload.get("contact_email", ""),
+        "verification_status": registration_metadata.get(
+            "verification_status", "unverified"
+        ),
     }
 
     output = io.StringIO()
@@ -55,7 +62,7 @@ def write_registration_csv_to_adls(
             "country": file_upload.country,
             "uploader_email": file_upload.uploader_email,
             "school_id_giga": payload.get("giga_id_school", ""),
-            "mode": "create",
+            "mode": mode,
         },
     )
 
@@ -63,7 +70,7 @@ def write_registration_csv_to_adls(
         "country": file_upload.country,
         "uploader_email": file_upload.uploader_email,
         "dataset": "geolocation",
-        "mode": "create",
+        "mode": mode,
         **registration_metadata,
     }
     metadata_path = get_metadata_path(file_upload.upload_path)
