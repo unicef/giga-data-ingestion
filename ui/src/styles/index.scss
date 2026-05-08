@@ -100,6 +100,27 @@ ul {
   transform: none;
 }
 
+.fuzzy-validation-modal {
+  .cds--modal-content {
+    padding-bottom: 1rem;
+  }
+
+  .cds--modal-content--regular-content {
+    padding-top: 1rem;
+    padding-bottom: 0;
+  }
+
+  .cds--modal-footer {
+    margin-top: 0;
+  }
+}
+
+.fuzzy-validation-modal--loading {
+  .cds--modal-content {
+    padding-bottom: 1rem;
+  }
+}
+
 *,
 ::before,
 ::after {

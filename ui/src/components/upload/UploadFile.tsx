@@ -8,7 +8,7 @@ import { useStore } from "@/context/store.ts";
 import { cn, convertMegabytesToBytes } from "@/lib/utils.ts";
 import { MetaSchema } from "@/types/schema.ts";
 
-const FILE_UPLOAD_SIZE_LIMIT_MB = 10;
+const FILE_UPLOAD_SIZE_LIMIT_MB = 100;
 const FILE_UPLOAD_SIZE_LIMIT = convertMegabytesToBytes(
   FILE_UPLOAD_SIZE_LIMIT_MB,
 );
@@ -35,7 +35,8 @@ const DEFAULT_ACCEPT_TYPE = {
   "text/csv": [".csv"],
 };
 
-const DEFAULT_MESSAGE = "(.xlsx, .xls, .csv, .json, .parquet only, up to 10MB)";
+const DEFAULT_MESSAGE =
+  "(.xlsx, .xls, .csv, .json, .parquet only, up to 100MB)";
 
 const UploadFile = ({
   file,

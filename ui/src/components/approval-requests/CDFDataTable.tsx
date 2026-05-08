@@ -82,7 +82,10 @@ function CDFDataTable({
               ...getBatchActionProps({
                 onSelectAll: () => {
                   rows.map(row => {
-                    if (!row.isSelected) {
+                    if (
+                      !row.isSelected &&
+                      getValueByHeader(row.cells, "_change_type") !== "CURRENT"
+                    ) {
                       selectRow(row.id);
                     }
                   });
@@ -100,10 +103,8 @@ function CDFDataTable({
                     </div>
                     <p>
                       Select rows to approve or reject below. You may opt to
-                      approve only a subset of the rows. Note that when
-                      approving multiple entries that correspond to the same{" "}
-                      <code>school_id_giga</code>, only the entry with the
-                      latest <code>_commit_version</code> will be kept.
+                      approve only a subset of the rows. Rows not actioned will
+                      remain pending for later review.
                     </p>
                   </>
                 }
@@ -170,27 +171,35 @@ function CDFDataTable({
                         row.cells,
                         "_change_type",
                       );
+                      const isCurrentRow = changeType === "CURRENT";
 
                       return (
                         <TableRow
                           className={cn({
-                            "bg-green-300": changeType === "insert",
-                            "bg-yellow-200": changeType === "update_postimage",
-                            "bg-red-300": changeType === "delete",
+                            "bg-green-300": changeType === "INSERT",
+                            "bg-yellow-200":
+                              changeType === "UPDATE" || isCurrentRow,
+                            "bg-red-300": changeType === "DELETE",
                           })}
                           {...getRowProps({
                             row,
                           })}
                         >
-                          {/* @ts-expect-error radio buttons bad type  https://github.com/carbon-design-system/carbon/issues/14831 */}
-                          <TableSelectRow
-                            {...getSelectionProps({
-                              row,
-                            })}
-                          />
+                          {isCurrentRow ? (
+                            <TableCell />
+                          ) : (
+                            // @ts-expect-error radio buttons bad type  https://github.com/carbon-design-system/carbon/issues/14831
+                            <TableSelectRow
+                              {...getSelectionProps({
+                                row,
+                              })}
+                            />
+                          )}
                           {row.cells.map(cell => (
                             <TableCell key={cell.id}>
-                              {typeof cell.value === "object" ? (
+                              {!isCurrentRow &&
+                              typeof cell.value === "object" &&
+                              cell.value !== null ? (
                                 <>
                                   <s>{cell.value.old ?? "NULL"}</s>
                                   <p>{cell.value.update ?? "NULL"}</p>

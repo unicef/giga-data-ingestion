@@ -6,12 +6,13 @@ import {
   Button,
   ButtonSet,
   DataTableHeader,
+  InlineNotification,
   Loading,
   Stack,
   Tag,
 } from "@carbon/react";
 import * as Sentry from "@sentry/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
   createFileRoute,
@@ -29,9 +30,18 @@ import {
   DetectedColumn,
   MasterColumn,
 } from "@/components/upload/ColumnMapping.tsx";
+import FuzzyValidationModal from "@/components/upload/FuzzyValidationModal.tsx";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
+import { FuzzyCorrection, FuzzyValidationResponse } from "@/types/upload.ts";
 import { getDataPrivacyDocument } from "@/utils/download.ts";
+
+const hasUnknownFuzzyValues = (result: FuzzyValidationResponse) =>
+  result.columns.some(
+    column =>
+      column.unknown_count > 0 &&
+      column.value_mappings.some(valueMapping => !valueMapping.is_valid),
+  );
 
 export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/column-mapping",
@@ -158,13 +168,25 @@ function UploadColumnMapping() {
       columnMapping,
       source,
       columnLicense,
+      fuzzyValidationRequestKey,
+      fuzzyValidationResult,
       mode,
     },
-    uploadSliceActions: { setStepIndex, setColumnMapping, setColumnLicense },
+    uploadSliceActions: {
+      setStepIndex,
+      setColumnMapping,
+      setColumnLicense,
+      setFuzzyCorrections,
+      setFuzzyValidationRequestKey,
+      setFuzzyValidationResult,
+    },
   } = useStore();
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isValidationLoading, setIsValidationLoading] = useState(false);
   const [isNullFile, setIsNullFile] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [isValidationModalOpen, setIsValidationModalOpen] = useState(false);
   const [selectedColumns, setSelectedColumns] =
     useState<Record<string, string>>(columnMapping);
 
@@ -180,6 +202,9 @@ function UploadColumnMapping() {
   });
 
   const navigate = useNavigate({ from: Route.fullPath });
+  const validateFuzzy = useMutation({
+    mutationFn: api.uploads.validate_fuzzy,
+  });
 
   // Initialize license values for mandatory columns to ODBL (except school_id_govt)
   const defaultLicenseValues = useMemo(() => {
@@ -206,7 +231,7 @@ function UploadColumnMapping() {
     shouldFocusError: true,
   });
   const { handleSubmit } = hookForm;
-  const onSubmit: SubmitHandler<ConfigureColumnsForm> = data => {
+  const onSubmit: SubmitHandler<ConfigureColumnsForm> = async data => {
     // Ensure mandatory columns are set to ODBL (except school_id_govt)
     const enforcedLicense = { ...data.license };
     schema.forEach(column => {
@@ -229,8 +254,7 @@ function UploadColumnMapping() {
     };
     setColumnMapping(dataWithNullsReplaced.mapping);
     setColumnLicense(dataWithNullsReplaced.license);
-    setStepIndex(2);
-    setIsNavigating(true);
+    setValidationError(null);
 
     if (file == null) {
       // Log to Sentry with context
@@ -258,8 +282,81 @@ function UploadColumnMapping() {
       );
 
       setIsNullFile(true);
+      return;
     }
 
+    const correctedColumnMapping = Object.fromEntries(
+      Object.entries(dataWithNullsReplaced.mapping)
+        .map(([key, value]) => [value, key])
+        .filter(([fileColumn, schemaColumn]) => !!fileColumn && !!schemaColumn),
+    );
+    const nextValidationRequestKey = JSON.stringify({
+      dataset: uploadType,
+      fileLastModified: file.lastModified,
+      fileName: file.name,
+      fileSize: file.size,
+      mapping: correctedColumnMapping,
+      mode,
+    });
+
+    if (fuzzyValidationRequestKey !== nextValidationRequestKey) {
+      setFuzzyValidationRequestKey(null);
+      setFuzzyValidationResult(null);
+      setFuzzyCorrections([]);
+    }
+
+    if (
+      fuzzyValidationResult &&
+      fuzzyValidationRequestKey === nextValidationRequestKey &&
+      hasUnknownFuzzyValues(fuzzyValidationResult)
+    ) {
+      setValidationError(null);
+      setIsValidationModalOpen(true);
+      return;
+    }
+
+    setIsNavigating(true);
+    setIsValidationLoading(true);
+    setIsValidationModalOpen(true);
+
+    try {
+      const { data: validationData } = await validateFuzzy.mutateAsync({
+        column_to_schema_mapping: JSON.stringify(correctedColumnMapping),
+        dataset: uploadType,
+        file,
+      });
+
+      setFuzzyValidationRequestKey(nextValidationRequestKey);
+      setFuzzyValidationResult(validationData);
+      setFuzzyCorrections([]);
+
+      if (!hasUnknownFuzzyValues(validationData)) {
+        setIsValidationModalOpen(false);
+        setStepIndex(2);
+        void navigate({ to: "../metadata" });
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to validate file values. Please try again.";
+
+      setValidationError(message);
+      setIsValidationModalOpen(false);
+    } finally {
+      setIsValidationLoading(false);
+      setIsNavigating(false);
+    }
+  };
+
+  const handleCloseValidationModal = () => {
+    setIsValidationModalOpen(false);
+  };
+
+  const handleConfirmApplyCorrections = (corrections: FuzzyCorrection[]) => {
+    setFuzzyCorrections(corrections);
+    setIsValidationModalOpen(false);
+    setStepIndex(2);
     void navigate({ to: "../metadata" });
   };
 
@@ -460,20 +557,28 @@ function UploadColumnMapping() {
             </Button>
             <Button
               className="w-full"
-              disabled={isNavigating}
+              disabled={isNavigating || isValidationLoading}
               isExpressive
               renderIcon={
-                isNavigating
-                  ? (props: React.ComponentProps<typeof Loading>) => (
+                isNavigating || isValidationLoading
+                  ? props => (
                       <Loading small={true} withOverlay={false} {...props} />
                     )
                   : ArrowRight
               }
               type="submit"
             >
-              Proceed
+              Continue
             </Button>
           </ButtonSet>
+          {validationError && (
+            <InlineNotification
+              aria-label="fuzzy validation error"
+              kind="error"
+              title=""
+              subtitle={validationError}
+            />
+          )}
           {isNullFile && (
             <div className="text-giga-red">
               File is missing at this step, please upload the file again
@@ -481,6 +586,16 @@ function UploadColumnMapping() {
           )}
         </Stack>
       </form>
+      <FuzzyValidationModal
+        errorMessage={validationError}
+        isLoading={isValidationLoading}
+        onClose={handleCloseValidationModal}
+        onConfirmApply={handleConfirmApplyCorrections}
+        open={isValidationModalOpen}
+        validationResult={
+          fuzzyValidationResult as FuzzyValidationResponse | null
+        }
+      />
     </FormProvider>
   );
 }
