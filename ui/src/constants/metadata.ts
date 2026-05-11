@@ -36,6 +36,15 @@ const schoolIdTypeOptions = [
   "Unknown",
 ] as const;
 
+const healthIdTypeOptions = [
+  "",
+  "dhis2_id",
+  "hims_id",
+  "hfml_id",
+  "Other",
+  "Unknown",
+] as const;
+
 const yesNoUnknownOptions = ["", "Yes", "No", "Unknown"] as const;
 
 const requiredFieldErrorMessage = "This field is required";
@@ -271,9 +280,9 @@ export const health: Record<string, MetadataFormMapping[]> = {
       label: "Primary record / facility ID type",
       helperText: "How records are keyed in this file (if applicable)",
       type: "enum",
-      enum: schoolIdTypeOptions,
+      enum: healthIdTypeOptions,
       required: false,
-      validator: z.enum(schoolIdTypeOptions).optional(),
+      validator: z.enum(healthIdTypeOptions).optional(),
     },
     {
       name: "data_quality_issues",

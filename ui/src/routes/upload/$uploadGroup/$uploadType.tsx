@@ -166,13 +166,12 @@ function Layout() {
     <>
       <p>
         Upload a health dataset CSV (up to the file size limit shown on the next
-        step). You will add health metadata—including who uploaded the file, the
+        step). Please add health metadata—including who uploaded the file, the
         period the data refers to, and a dataset description—before submitting.
       </p>
       <p>
-        Files land in the health raw zone in Azure Data Lake; downstream Dagster
-        processing is configured separately from school geolocation and coverage
-        pipelines.
+        Health facility data following the health schema, once uploaded, will be
+        available for querying in Superset and Health Master.
       </p>
     </>
   );

@@ -64,10 +64,9 @@ class FileUpload(BaseModel):
             filename = f"{original_name}_{self.id}"
             return f"{filename}{ext}"
         if self.dataset == "health":
-            # Timestamp (UTC from `created`) for history tracking alongside upload id
-            original_name = Path(self.original_filename).stem
-            filename = f"{original_name}_{self.id}_{timestamp}"
-            return f"{filename}{ext}"
+            # {ISO3}_{original_stem}_{timestamp}.csv under health-master/<ISO3>/
+            stem = Path(self.original_filename).stem or "health_upload"
+            return f"{country}_{stem}_{timestamp}{ext}"
         else:
             filename_elements = [self.id, country, self.dataset]
             if self.source is not None and self.dataset != "geolocation":
@@ -86,7 +85,7 @@ class FileUpload(BaseModel):
 
         if self.dataset == "health":
             # Blob path within AZURE_BLOB_CONTAINER_NAME (no leading slash):
-            # updated_master_schema/health-master/<ISO3 or $NA>/<filename>.csv
+            # updated_master_schema/health-master/<ISO3 or $NA>/<ISO3>_<stem>_<timestamp>.csv
             country_segment = "$NA" if self.country == "N/A" else self.country
             return (
                 f"updated_master_schema/health-master/"
