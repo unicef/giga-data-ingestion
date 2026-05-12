@@ -14,16 +14,16 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
-import {
-  DEFAULT_PAGE_NUMBER,
-  DEFAULT_PAGE_SIZE,
-} from "@/constants/pagination.ts";
 import { FileUploaderDropContainer } from "@/components/common/CarbonOverrides.tsx";
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Select } from "@/components/forms/Select.tsx";
-import type { MetadataForm } from "@/components/upload/MetadataInputs.tsx";
 import { Health } from "@/components/upload/Health.tsx";
+import type { MetadataForm } from "@/components/upload/MetadataInputs.tsx";
+import {
+  DEFAULT_PAGE_NUMBER,
+  DEFAULT_PAGE_SIZE,
+} from "@/constants/pagination.ts";
 import {
   AcceptedFileTypes,
   AcceptedUnstructuredFileTypes,
@@ -104,8 +104,7 @@ export default function Index() {
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
-  const isHealth =
-    uploadGroup === "other" && uploadType === "health";
+  const isHealth = uploadGroup === "other" && uploadType === "health";
 
   const validTypes = isUnstructured
     ? validUnstructuredTypes
@@ -200,8 +199,8 @@ export default function Index() {
       (isCoverage
         ? !!source
         : isGeolocation
-          ? !!mode
-          : !isUnstructured && !isStructured),
+        ? !!mode
+        : !isUnstructured && !isStructured),
   });
 
   const schema = schemaQuery?.data ?? [];

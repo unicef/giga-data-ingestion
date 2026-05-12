@@ -91,8 +91,7 @@ function Layout() {
 
   const isCoverage = uploadType === "coverage";
   const isGeolocation = uploadType === "geolocation";
-  const isHealth =
-    uploadGroup === "other" && uploadType === "health";
+  const isHealth = uploadGroup === "other" && uploadType === "health";
 
   const title = uploadType.replace(/-/g, " ");
   const isUnstructured =

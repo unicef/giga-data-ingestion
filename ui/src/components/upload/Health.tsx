@@ -1,13 +1,12 @@
 import {
+  BaseUploadMetadataForm,
+  UploadMetadataFormProps,
+} from "@/components/upload/uploadMetadataFormBase.tsx";
+import {
   health,
   healthMetadataDatasetSection,
   healthMetadataNationalSection,
 } from "@/constants/metadata";
-
-import {
-  BaseUploadMetadataForm,
-  UploadMetadataFormProps,
-} from "@/components/upload/uploadMetadataFormBase.tsx";
 
 const HEALTH_INTRO = {
   title: "Add health metadata",

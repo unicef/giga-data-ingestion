@@ -247,7 +247,8 @@ export const health: Record<string, MetadataFormMapping[]> = {
     {
       name: "data_owner",
       label: "Health data owner/s",
-      helperText: "e.g. Ministry of Health, national statistics office, implementing partner",
+      helperText:
+        "e.g. Ministry of Health, national statistics office, implementing partner",
       type: "text",
       required: true,
       validator: z.string().min(1, { message: requiredFieldErrorMessage }),
