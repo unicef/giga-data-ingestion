@@ -1,11 +1,16 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Generic, TypeVar
+from uuid import UUID
 
 import orjson
 from fastapi import Form, UploadFile
 from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr, field_validator
 
+T = TypeVar("T")
+
 from data_ingestion.models.file_upload import DQStatusEnum
+from data_ingestion.settings import settings
 
 
 class FileUpload(BaseModel):
@@ -28,11 +33,32 @@ class FileUpload(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    @field_validator("uploader_id", mode="before")
+    @classmethod
+    def sanitize_uploader_id(cls, v):
+        """sanitize_uploader_id"""
+        v_str = str(v)
+        if v_str.startswith("$("):
+            return UUID(settings.SYSTEM_USER_ID)
+        return v
+
+    @field_validator("uploader_email", mode="before")
+    @classmethod
+    def sanitize_uploader_email(cls, v):
+        """sanitize_uploader_email"""
+        v_str = str(v)
+        if v_str.startswith("$("):
+            return settings.SYSTEM_USER_EMAIL
+        return v
+
     @field_validator("column_to_schema_mapping", mode="before")
     @classmethod
-    def validate_column_to_schema_mapping(cls, v: str | dict[str, str]):
+    def validate_column_to_schema_mapping(cls, v: str | dict):
+        """validate_column_to_schema_mapping"""
         if isinstance(v, str):
-            return orjson.loads(v)
+            v = orjson.loads(v)
+        if isinstance(v, dict):
+            return {k: str(val) if val is not None else "" for k, val in v.items()}
         return v
 
     @field_validator("column_license", mode="before")
@@ -53,6 +79,7 @@ class FileUploadRequest:
     metadata: str = Form(...)
     source: str | None = Form(None)
     fuzzy_corrections: str | None = Form(None)
+    dq_mode: str = Form("master")
 
 
 @dataclass
@@ -61,6 +88,33 @@ class UnstructuredFileUploadRequest:
     country: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+
+
+class UploadSummaryResponse(BaseModel):
+    upload_id: str
+    created: datetime
+    file_name: str | None
+    dataset: str | None = None
+    uploader_email: str | None = None
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class UploadDetailsRequest(BaseModel):
+    upload_ids: list[str]
+
+
+class UploadDetailsResponse(BaseModel):
+    upload_id: str
+    country: str
+    created: datetime
+    file_name: str | None
 
 
 @dataclass

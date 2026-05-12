@@ -13,6 +13,7 @@ import useGetToken from "@/hooks/useGetToken.ts";
 
 import approvalRequestsRouter from "./routers/approvalRequests.ts";
 import deleteRouter from "./routers/delete.ts";
+import errorTableRouter from "./routers/errorTable.ts";
 import externalRequestsRouter from "./routers/externalRequests.ts";
 import groupsRouter from "./routers/groups.ts";
 import qosRouter from "./routers/qos.ts";
@@ -40,6 +41,7 @@ export const api = {
   uploads: uploadsRouter(axi),
   users: usersRouter(axi),
   utils: utilsRouter(axi),
+  errorTable: errorTableRouter(axi),
 };
 
 export function AxiosProvider({ children }: PropsWithChildren) {

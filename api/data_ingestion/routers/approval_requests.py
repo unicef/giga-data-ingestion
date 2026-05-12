@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from data_ingestion.db.primary import get_db as get_primary_db
 from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.school_registration import call_meter_soft_delete
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
     ApprovalRequest,
@@ -27,6 +28,7 @@ from data_ingestion.schemas.approval_requests import (
     UploadListing,
 )
 from data_ingestion.schemas.core import PagedResponseSchema
+from data_ingestion.utils.nocodb import update_nocodb_record_by_field
 
 router = APIRouter(
     prefix="/api/approval-requests",
@@ -479,6 +481,28 @@ async def submit_upload_review(
     rejected_change_ids = _resolve_change_ids(
         body.rejected_rows, staging, upload_id, db
     )
+
+    # Call GigaMeter soft-delete and update NocoDB for rejected GigaMeter registrations
+    if rejected_change_ids and file_upload.source == "gigameter":
+        # Extract school_id_giga from rejected change_ids
+        for change_id in rejected_change_ids:
+            school_id_giga = change_id.split("|")[0]
+            # Update NocoDB status to rejected
+            update_nocodb_record_by_field(
+                table_name="SchoolRegistrations",
+                field_name="giga_id_school",
+                field_value=school_id_giga,
+                update_data={
+                    "verification_status": "rejected",
+                    "rejected_on": str(datetime.now(UTC)),
+                    "rejection_reason": "Rejected by admin during manual review",
+                },
+            )
+            # Call GigaMeter soft-delete
+            call_meter_soft_delete(
+                school_id_giga=school_id_giga,
+                rejection_reason="Rejected by admin during manual review",
+            )
 
     # Create the audit log first so its ID can be included in the approval payload.
     approval_request_log_id = None

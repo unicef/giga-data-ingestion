@@ -112,7 +112,7 @@ def get_fuzzy_match_config_from_nocodb() -> dict[str, dict]:
 
 
 def fuzzy_match_value(
-    val: str, matching_map: dict[str, str], score_cutoff: float = 60.0
+    val: str, matching_map: dict[str, str], score_cutoff: float = 50.0
 ):
     """
     Returns (suggested_value, was_changed)

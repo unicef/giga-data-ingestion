@@ -52,3 +52,20 @@ export const listRolesQueryOptions = queryOptions({
   queryKey: ["roles"],
   queryFn: api.roles.list,
 });
+
+export const errorTableSummaryQueryOptions = queryOptions({
+  queryKey: ["error-table-summary"],
+  queryFn: api.errorTable.get_upload_errors_summary,
+});
+
+export const errorTableQueryOptions = (params?: {
+  country_code?: string;
+  dataset_type?: string;
+  file_id?: string;
+  page: number;
+  page_size: number;
+}) =>
+  queryOptions({
+    queryKey: ["error-table", params],
+    queryFn: () => api.errorTable.list_upload_errors(params),
+  });
