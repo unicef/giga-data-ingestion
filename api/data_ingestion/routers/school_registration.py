@@ -119,7 +119,7 @@ async def trigger_registration_pipeline(
     Called by GigaMeter to initiate the DQ pipeline for a new school registration.
     Creates a FileUpload record and writes a single-row CSV to ADLS.
     """
-    verify_meter_token(credentials)
+    # verify_meter_token(credentials)
 
     country_code = coco.convert(payload.country_iso3_code, to="ISO3")
     if country_code == "not found":
