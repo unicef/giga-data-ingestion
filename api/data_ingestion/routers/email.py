@@ -39,6 +39,7 @@ def _entity_for_dataset(dataset: str) -> dict[str, str]:
         "lowerSingular": "school",
     }
 
+
 router = APIRouter(
     prefix="/api/email",
     tags=["email"],
