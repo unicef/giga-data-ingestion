@@ -146,7 +146,9 @@ services:
       start_period: 3s
 
   email-api:
-    image: node:20-alpine
+    build:
+      context: ./email
+      dockerfile: Dockerfile.dev
     restart: unless-stopped
     working_dir: /app
     env_file: .env
