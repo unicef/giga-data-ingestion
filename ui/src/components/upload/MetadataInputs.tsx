@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import {
   FieldError,
   FieldErrors,
@@ -75,6 +76,28 @@ export function FreeTextInput({
   register,
   loading = false,
 }: BaseInputProps) {
+  const prevValueRef = useRef("");
+  const isDateField = formItem.helperText === "MM / YYYY";
+
+  const enhancedRegister = isDateField
+    ? {
+        ...register,
+        onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+          const val = e.target.value;
+          const prev = prevValueRef.current;
+          if (
+            val.length > prev.length &&
+            val.length === 2 &&
+            /^\d\d$/.test(val)
+          ) {
+            e.target.value = val + "/";
+          }
+          prevValueRef.current = e.target.value;
+          return register.onChange(e);
+        },
+      }
+    : register;
+
   return loading ? (
     <TextInputSkeleton />
   ) : (
@@ -89,7 +112,7 @@ export function FreeTextInput({
       placeholder={formItem.helperText || undefined}
       invalid={formItem.name in errors}
       invalidText={errors[formItem.name]?.message as string}
-      {...register}
+      {...enhancedRegister}
     />
   );
 }

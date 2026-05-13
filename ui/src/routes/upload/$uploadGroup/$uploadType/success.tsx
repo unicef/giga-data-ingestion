@@ -97,7 +97,6 @@ const SuccessDataQualityChecks = memo(
               <DataCheckItem
                 data={checks[key] as Check[]}
                 hasDownloadButton={false}
-                previewData={dqResult.dq_failed_rows_first_five_rows}
                 uploadId={uploadId}
               />
             </TabPanel>
@@ -316,6 +315,19 @@ function Success() {
             )}
           </div>
 
+          <Button
+            className={cn("w-full", {
+              "bg-green-600 hover:bg-green-800": status === DQStatus.COMPLETED,
+            })}
+            isExpressive
+            onClick={handleSubmit}
+            renderIcon={ArrowRight}
+          >
+            {status === DQStatus.COMPLETED
+              ? "Review Submission"
+              : "Close and run in background"}
+          </Button>
+
           <div>
             <div
               style={{
@@ -406,18 +418,6 @@ function Success() {
               </>
             )}
           </div>
-          <Button
-            className={cn("w-full", {
-              "bg-green-600 hover:bg-green-800": status === DQStatus.COMPLETED,
-            })}
-            isExpressive
-            onClick={handleSubmit}
-            renderIcon={ArrowRight}
-          >
-            {status === DQStatus.COMPLETED
-              ? "Review Submission"
-              : "Close and run in background"}
-          </Button>
           {status === DQStatus.COMPLETED ? (
             <SuccessDataQualityChecks
               dqResult={dqResult}

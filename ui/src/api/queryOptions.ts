@@ -32,7 +32,7 @@ export const listApiIngestionsQueryOptions = queryOptions({
 export const listApprovalRequestQueryOptions = queryOptions({
   queryKey: ["approval-requests", DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE],
   queryFn: () =>
-    api.approvalRequests.list({
+    api.approvalRequests.listCountries({
       page: DEFAULT_PAGE_NUMBER,
       page_size: DEFAULT_PAGE_SIZE,
     }),

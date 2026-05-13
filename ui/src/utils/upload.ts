@@ -8,6 +8,7 @@ import {
   AcceptedUnstructuredFileTypes,
   AcceptedUnstructuredMimeTypes,
   MAX_UPLOAD_FILE_SIZE_BYTES,
+  MAX_UPLOAD_FILE_SIZE_MB,
 } from "@/constants/upload.ts";
 import { convertBytesToMegabytes } from "@/lib/utils.ts";
 import { MetaSchema } from "@/types/schema.ts";
@@ -94,7 +95,7 @@ export class HeaderDetector {
           this.options.file.size,
         ).toFixed(
           2,
-        )} MB) exceeds the limit of 10 MB, please try a smaller file.`,
+        )} MB) exceeds the limit of ${MAX_UPLOAD_FILE_SIZE_MB} MB, please try a smaller file.`,
       );
       this.options.setIsParsing(false);
     }
