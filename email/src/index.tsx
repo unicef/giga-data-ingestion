@@ -103,14 +103,14 @@ app.post(
   zValidator("json", DataQualityReportEmailProps),
   async (ctx) => {
     const json = ctx.req.valid("json") as DataQualityReportEmailProps;
-    
-    // Generate PDF with additional data
+
     const pdfData = {
       ...json,
       generatedDate: formatDateForPDF(new Date()),
-      uploadedFileName: `upload_${json.uploadId}_${json.country}.csv`, // You might want to pass this from the API
+      uploadedFileName:
+        json.uploadedFileName ?? `upload_${json.uploadId}_${json.country}.csv`,
     };
-    
+
     const pdfBuffer = await generateDataQualityReportPDF(pdfData);
     const filename = `data-quality-report-${json.country}-${json.uploadId}.pdf`;
 

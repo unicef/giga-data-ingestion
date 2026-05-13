@@ -34,6 +34,19 @@ class DqReportRenderRequest(BaseModel):
     country: str
 
 
+class EntityLabel(BaseModel):
+    plural: str
+    lowerPlural: str
+    lowerSingular: str
+
+
+class FieldMappingEntry(BaseModel):
+    from_: str = Field(alias="from")
+    to: str
+
+    model_config = {"populate_by_name": True}
+
+
 class DqReportPdfRequest(BaseModel):
     """Lenient schema for PDF download: accepts the same shape as get_data_quality_check returns."""
 
@@ -42,6 +55,12 @@ class DqReportPdfRequest(BaseModel):
     uploadDate: str | datetime
     uploadId: str
     country: str
+    # Optional enrichment fields used by the Puppeteer PDF template. If the
+    # caller omits them, the route handler fills them in from the
+    # file_uploads row before forwarding to the email renderer.
+    uploadedFileName: str | None = None
+    entity: EntityLabel | None = None
+    fieldMapping: list[FieldMappingEntry] | None = None
 
     @field_validator("uploadDate", mode="before")
     @classmethod
@@ -52,7 +71,7 @@ class DqReportPdfRequest(BaseModel):
 
     def to_renderer_payload(self) -> dict[str, Any]:
         """Build JSON payload for the email renderer (ISO strings for dates)."""
-        payload = self.model_dump()
+        payload = self.model_dump(by_alias=True, exclude_none=True)
         payload["uploadDate"] = (
             self.uploadDate.isoformat()
             if hasattr(self.uploadDate, "isoformat")

@@ -1,24 +1,35 @@
 import { z } from "zod";
 
-const Check = z.object({
-  assertion: z.string(),
-  column: z.string(),
-  count_failed: z.number(),
-  count_overall: z.number(),
-  count_passed: z.number(),
-  description: z.string(),
-  percent_failed: z.number().nullable(),
-  percent_passed: z.number().nullable(),
-  dq_remarks: z.string().optional(),
-});
+// Lenient schemas: the on-disk Dagster DQ JSON has section names with spaces
+// (e.g. "duplicate checks") and many shape variants between Python pipelines.
+// We only validate the bare minimum the PDF generator depends on and pass
+// extra fields through.
+
+const Check = z
+  .object({
+    assertion: z.string().optional(),
+    column: z.string().optional(),
+    count_failed: z.number().optional(),
+    count_overall: z.number().optional(),
+    count_passed: z.number().optional(),
+    description: z.string().optional(),
+    percent_failed: z.number().nullable().optional(),
+    percent_passed: z.number().nullable().optional(),
+    dq_remarks: z.string().optional(),
+  })
+  .passthrough();
 
 export type Check = z.infer<typeof Check>;
 
-const SummaryCheck = z.object({
-  columns: z.number(),
-  rows: z.number(),
-  timestamp: z.string(),
-});
+const SummaryCheck = z
+  .object({
+    columns: z.number().optional(),
+    rows: z.number().optional(),
+    rows_passed: z.number().optional(),
+    rows_failed: z.number().optional(),
+    timestamp: z.union([z.string(), z.number()]).optional(),
+  })
+  .passthrough();
 
 export type SummaryCheck = z.infer<typeof SummaryCheck>;
 
@@ -31,7 +42,7 @@ export const DataQualityCheck = z
   );
 
 export interface DataQualityCheck {
-  [key: string]: Check[] | SummaryCheck;
+  [key: string]: Check[] | SummaryCheck | undefined;
   critical_error_check?: Check[];
   summary?: SummaryCheck;
 }

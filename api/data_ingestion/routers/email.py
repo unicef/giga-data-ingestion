@@ -3,11 +3,15 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from data_ingestion.db.primary import get_db
 from data_ingestion.internal import email
 from data_ingestion.internal.auth import azure_scheme, email_header
 from data_ingestion.internal.email import send_email_base
 from data_ingestion.internal.storage import storage_client
+from data_ingestion.models import FileUpload
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.email import (
     DataCheckSuccessRenderRequest,
@@ -19,6 +23,21 @@ from data_ingestion.schemas.email import (
     UploadSuccessRenderRequest,
 )
 from data_ingestion.settings import settings
+
+
+def _entity_for_dataset(dataset: str) -> dict[str, str]:
+    """Map dataset name to entity labels used in the PDF template."""
+    if dataset in {"health", "health-master"}:
+        return {
+            "plural": "Health Centers",
+            "lowerPlural": "health centers",
+            "lowerSingular": "health center",
+        }
+    return {
+        "plural": "Schools",
+        "lowerPlural": "schools",
+        "lowerSingular": "school",
+    }
 
 router = APIRouter(
     prefix="/api/email",
@@ -96,9 +115,33 @@ async def send_dq_report_email(
 )
 async def generate_dq_report_pdf(
     body: EmailRenderRequest[DqReportPdfRequest],
+    db: AsyncSession = Depends(get_db),
 ):
     # Lenient schema accepts same shape as get_data_quality_check (e.g. timestamp as string)
     payload = body.props.to_renderer_payload()
+
+    # Enrich payload with fields the UI doesn't have to supply: real upload
+    # filename and the user's column-to-schema mapping, both straight off
+    # the file_uploads row. Entity is inferred from dataset when missing.
+    needs_filename = not payload.get("uploadedFileName")
+    needs_mapping = "fieldMapping" not in payload
+    if needs_filename or needs_mapping:
+        file_upload = await db.scalar(
+            select(FileUpload).where(FileUpload.id == body.props.uploadId)
+        )
+        if file_upload is not None:
+            if needs_filename and file_upload.original_filename:
+                payload["uploadedFileName"] = file_upload.original_filename
+            if needs_mapping and file_upload.column_to_schema_mapping:
+                payload["fieldMapping"] = [
+                    {"from": k, "to": v}
+                    for k, v in file_upload.column_to_schema_mapping.items()
+                    if v
+                ]
+
+    if not payload.get("entity"):
+        payload["entity"] = _entity_for_dataset(body.props.dataset)
+
     pdf_data = await email.generate_dq_report_pdf_from_payload(payload)
     return pdf_data
 
