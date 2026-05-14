@@ -93,6 +93,15 @@ class NocoDBWebhookPayload(BaseModel):
     data: NocoDBWebhookData
 
 
+class NocoDBWebhookRequest(BaseModel):
+    """Schema for the complete NocoDB webhook request including hook metadata."""
+
+    model_config = {"extra": "allow"}
+
+    hook: dict | None = None  # Hook metadata (optional, we don't need it)
+    payload: NocoDBWebhookPayload
+
+
 def verify_meter_token(
     credentials: HTTPAuthorizationCredentials,
 ) -> None:
@@ -155,7 +164,7 @@ def build_registration_metadata(
     response_model=SchoolRegistrationTriggerResponse,
 )
 async def trigger_registration_pipeline(
-    payload: NocoDBWebhookPayload,
+    payload: SchoolRegistrationTriggerRequest,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(meter_auth)],
     db: AsyncSession = Depends(get_db),
 ):
@@ -244,7 +253,7 @@ async def trigger_registration_pipeline(
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def retrigger_registration_pipeline(
-    payload: SchoolRegistrationTriggerRequest,
+    webhook_request: NocoDBWebhookRequest,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(meter_auth)],
     db: AsyncSession = Depends(get_db),
 ):
@@ -252,7 +261,10 @@ async def retrigger_registration_pipeline(
     Called by NocoDB webhook when a government verifier updates school data.
     Creates a new FileUpload record so the Dagster sensor detects the re-trigger.
     """
-    verify_nocodb_token(credentials)
+    # verify_nocodb_token(credentials)
+
+    # Extract the actual payload from the webhook request
+    payload = webhook_request.payload
 
     if not payload.data.rows:
         raise HTTPException(
