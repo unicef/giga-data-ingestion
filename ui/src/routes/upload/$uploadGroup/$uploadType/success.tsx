@@ -50,10 +50,13 @@ export const Route = createFileRoute(
     const isUnstructured =
       uploadGroup === "other" && uploadType === "unstructured";
     const isStructured = uploadGroup === "other" && uploadType === "structured";
+    const isHealthMaster =
+      uploadGroup === "other" && uploadType === "health-master";
+    const isStructuredLike = isStructured || isHealthMaster;
 
     if (isUnstructured) {
       return;
-    } else if (isStructured) {
+    } else if (isStructuredLike) {
       // For structured datasets, allow access even without file since upload is already complete
       return;
     } else if (
@@ -119,18 +122,21 @@ function Success() {
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
+  const isHealthMaster =
+    uploadGroup === "other" && uploadType === "health-master";
+  const isStructuredLike = isStructured || isHealthMaster;
 
   const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
     queryFn: () => api.uploads.list_basic_checks(uploadType, source),
     queryKey: ["basic_checks", uploadType, source],
-    enabled: !isStructured, // Don't query for structured datasets
+    enabled: !isStructuredLike,
   });
   const basicCheck = basicCheckQuery?.data ?? [];
 
   const { data: uploadQuery } = useQuery({
     queryKey: ["upload", uploadId],
     queryFn: () => api.uploads.get_upload(uploadId),
-    enabled: !isStructured && !!uploadId, // Don't query for structured datasets
+    enabled: !isStructuredLike && !!uploadId,
   });
   const uploadData = useMemo<UploadResponse>(
     () => uploadQuery?.data ?? initialUploadResponse,
@@ -150,7 +156,7 @@ function Success() {
     queryKey: ["dq_check", uploadId],
     queryFn: () => api.uploads.get_data_quality_check(uploadId),
     refetchInterval: 7000,
-    enabled: !isUnstructured && !isStructured, // Don't query for structured datasets
+    enabled: !isUnstructured && !isStructuredLike,
   });
 
   const dqResult = useMemo<DataQualityCheck>(
@@ -250,7 +256,7 @@ function Success() {
             Back to Home
           </Button>
         </>
-      ) : isStructured ? (
+      ) : isStructuredLike ? (
         <>
           {structuredMessage}
           <Button as={Link} to="/" onClick={resetUploadSliceState} isExpressive>

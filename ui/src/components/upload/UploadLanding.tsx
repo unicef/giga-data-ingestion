@@ -37,7 +37,7 @@ function UploadLanding(props: UploadLandingProps) {
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
 
   // Tab 0 = Geolocation (source gigasync), 1 = API (source api),
-  // 2 = Coverage (dataset coverage), 3 = Schemaless (dataset structured)
+  // 2 = Coverage (dataset coverage), 3 = Schemaless (grouped dataset filter)
   const tabFilter = (() => {
     switch (selectedTab) {
       case 0:
@@ -47,7 +47,7 @@ function UploadLanding(props: UploadLandingProps) {
       case 2:
         return { source: null, dataset: "coverage" as const };
       case 3:
-        return { source: null, dataset: "structured" as const };
+        return { source: null, dataset: "schemaless" as const };
       default:
         return { source: null, dataset: null };
     }

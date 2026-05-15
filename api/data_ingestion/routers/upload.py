@@ -20,7 +20,7 @@ from fastapi import (
 from fastapi_azure_auth.user import User
 from loguru import logger
 from pydantic import Field
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import StreamingResponse
 
@@ -238,7 +238,15 @@ async def list_uploads(
         query = query.where(FileUpload.source == source)
 
     if dataset is not None:
-        query = query.where(FileUpload.dataset == dataset)
+        if dataset == "schemaless":
+            query = query.where(
+                or_(
+                    FileUpload.dataset == "structured",
+                    FileUpload.dataset == "health-master",
+                )
+            )
+        else:
+            query = query.where(FileUpload.dataset == dataset)
 
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query)
@@ -549,12 +557,19 @@ async def upload_structured(  # noqa: C901
     is_privileged: bool = Depends(IsPrivileged.raises(False)),
 ):
     file = form.file
+    parsed_metadata = orjson.loads(form.metadata)
+    dataset_type = parsed_metadata.get("dataset_type", "structured")
+    is_health_master = dataset_type == "health-master"
 
-    # For structured datasets, we don't validate country permissions since they're global
-    # Only check if user is privileged or has any upload permissions
     if not is_privileged:
         roles = await get_user_roles(user, db)
-        if not roles:  # If user has no roles at all, deny access
+        if is_health_master:
+            if not any(role.rsplit("-")[0] == form.country for role in roles):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="User does not have permissions on this dataset",
+                )
+        elif not roles:  # If user has no roles at all, deny access
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User does not have permissions to upload structured datasets",
@@ -591,13 +606,26 @@ async def upload_structured(  # noqa: C901
             detail="File extension must be .csv for structured datasets.",
         )
 
-    # For structured datasets, always use "N/A" as country
-    if form.country == "Global Dataset":
-        country_code = "N/A"
-    else:
+    if is_health_master:
+        if not form.country:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Country is required for health master datasets.",
+            )
         country_code = coco.convert(form.country, to="ISO3")
         if country_code == "not found":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid country selected for health master dataset.",
+            )
+    else:
+        # For structured datasets, always use "N/A" as country
+        if form.country == "Global Dataset":
             country_code = "N/A"
+        else:
+            country_code = coco.convert(form.country, to="ISO3")
+            if country_code == "not found":
+                country_code = "N/A"
 
     email = user.claims.get("emails")[0]
     database_user = await db.scalar(
@@ -608,7 +636,7 @@ async def upload_structured(  # noqa: C901
         uploader_id=database_user.id,
         uploader_email=database_user.email,
         country=country_code,
-        dataset="structured",
+        dataset="health-master" if is_health_master else "structured",
         original_filename=file.filename,
         column_to_schema_mapping={},
         column_license={},
@@ -621,10 +649,10 @@ async def upload_structured(  # noqa: C901
 
     try:
         metadata = {
-            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            **{str(k): str(v) for k, v in parsed_metadata.items()},
             "country": form.country,
             "uploader_email": email,
-            "dataset_type": "structured",
+            "dataset_type": dataset_type,
         }
 
         if form.source is not None:

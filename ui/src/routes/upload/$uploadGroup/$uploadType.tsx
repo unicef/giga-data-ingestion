@@ -41,7 +41,9 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
 
     if (
       uploadGroup === "other" &&
-      !["unstructured", "structured", "schemaless"].includes(uploadType)
+      !["unstructured", "structured", "health-master", "schemaless"].includes(
+        uploadType,
+      )
     ) {
       throw doRedirect;
     }
@@ -83,6 +85,18 @@ const STRUCTURED_DESCRIPTION = (
     </p>
   </>
 );
+const HEALTH_MASTER_DESCRIPTION = (
+  <>
+    <p>
+      Health Master datasets are uploaded as CSV files and require a selected
+      country for routing.
+    </p>
+    <p>
+      Uploaded files are stored using the country code in the destination path
+      for downstream processing.
+    </p>
+  </>
+);
 function Layout() {
   const { uploadType, uploadGroup } = Route.useParams();
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
@@ -94,7 +108,9 @@ function Layout() {
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
-  const isSchemaless = isUnstructured || isStructured;
+  const isHealthMaster =
+    uploadGroup === "other" && uploadType === "health-master";
+  const isSchemaless = isUnstructured || isStructured || isHealthMaster;
   const isSchemalessOptions =
     uploadGroup === "other" && uploadType === "schemaless";
   const {
@@ -194,6 +210,8 @@ function Layout() {
                 ? COVERAGE_DESCRIPTION
                 : title === "structured"
                 ? STRUCTURED_DESCRIPTION
+                : title === "health master"
+                ? HEALTH_MASTER_DESCRIPTION
                 : UNSTRUCTURED_DESCRIPTION}
             </div>
           </Stack>
@@ -216,7 +234,7 @@ function Layout() {
                 secondaryLabel="Submit"
               />
             </ProgressIndicator>
-          ) : isStructured ? (
+          ) : isStructured || isHealthMaster ? (
             <ProgressIndicator currentIndex={stepIndex} spaceEqually>
               <ProgressStep
                 label="1"

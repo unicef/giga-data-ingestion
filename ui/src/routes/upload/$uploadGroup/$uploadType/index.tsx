@@ -8,6 +8,7 @@ import {
   FileUploaderItem,
   SelectItem,
   SkeletonPlaceholder,
+  SkeletonText,
   Stack,
 } from "@carbon/react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -25,7 +26,9 @@ import {
   UPLOAD_MODE_OPTIONS,
 } from "@/constants/upload.ts";
 import { useStore } from "@/context/store";
+import useRoles from "@/hooks/useRoles.ts";
 import { sourceOptions } from "@/mocks/metadataFormValues.tsx";
+import { capitalizeFirstLetter } from "@/utils/string.ts";
 import { HeaderDetector } from "@/utils/upload.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
@@ -80,6 +83,8 @@ export default function Index() {
   const { uploadType, uploadGroup } = Route.useParams();
   const isCoverage = uploadType === "coverage";
   const isGeolocation = uploadType === "geolocation";
+  const isHealthMaster =
+    uploadGroup === "other" && uploadType === "health-master";
 
   const [isParsing, setIsParsing] = useState(false);
 
@@ -89,12 +94,14 @@ export default function Index() {
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
+  const isStructuredLike = isStructured || isHealthMaster;
 
   const validTypes = isUnstructured
     ? validUnstructuredTypes
-    : isStructured
+    : isStructuredLike
     ? validCustomStructuredTypes
     : validStructuredTypes;
+  const { countryDatasets, isPrivileged, roles } = useRoles();
   const {
     uploadSlice,
     uploadSliceActions: {
@@ -121,17 +128,20 @@ export default function Index() {
   const { register, watch } = useForm<{
     source: string | null;
     mode: typeof storeMode;
+    country: string | null;
   }>({
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
       source: storeSource,
       mode: storeMode,
+      country: null,
     },
   });
 
   const source = watch("source");
   const mode = watch("mode");
+  const country = watch("country");
 
   const metaschemaName = isCoverage
     ? `coverage_${source}`
@@ -144,8 +154,39 @@ export default function Index() {
       ? !!source
       : isGeolocation
       ? !!mode
-      : !isUnstructured && !isStructured,
+      : !isUnstructured && !isStructuredLike,
   });
+  const { data: allGroupsQuery, isFetching: isGroupsFetching } = useQuery({
+    queryKey: ["groups"],
+    queryFn: api.groups.list,
+    enabled: isHealthMaster && isPrivileged,
+  });
+  const allCountryNames = (allGroupsQuery?.data ?? []).reduce<string[]>(
+    (acc, group) => {
+      const [country, dataset] = group.name.split("-");
+      if (dataset?.startsWith("School") && country && !acc.includes(country)) {
+        acc.push(country);
+      }
+      return acc;
+    },
+    [],
+  );
+  const roleCountryNames = [
+    ...new Set(
+      roles
+        .map(role => role.split("-"))
+        .filter(parts => parts.length > 1)
+        .map(parts => parts[0].trim())
+        .filter(Boolean),
+    ),
+  ];
+  const fallbackCountryNames =
+    countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [];
+  const healthMasterCountryOptions = isPrivileged
+    ? allCountryNames
+    : roleCountryNames.length > 0
+    ? roleCountryNames
+    : fallbackCountryNames;
 
   const schema = schemaQuery?.data ?? [];
 
@@ -167,8 +208,7 @@ export default function Index() {
   }, [schema]);
 
   const handleProceedToNextStep = async () => {
-    if (isStructured) {
-      // For structured datasets, upload directly without metadata
+    if (isStructuredLike) {
       if (file) {
         setSource(source ?? null);
         setMode(mode);
@@ -176,18 +216,18 @@ export default function Index() {
 
       try {
         const body = {
-          country: "Global Dataset",
+          country: isHealthMaster ? country ?? "" : "Global Dataset",
           file: file!,
           source: source ?? null,
           metadata: JSON.stringify({
-            dataset_type: "structured",
+            dataset_type: isHealthMaster ? "health-master" : "structured",
             upload_timestamp: new Date().toISOString(),
           }),
         };
 
         await uploadStructuredFile.mutateAsync(body);
         setUploadDate(uploadSlice.timeStamp);
-        setStepIndex(2); // Step 2 for structured datasets (Submit step)
+        setStepIndex(1);
         void navigate({ to: "./success" });
       } catch (error) {
         console.error("Upload failed:", error);
@@ -208,7 +248,8 @@ export default function Index() {
     !hasUploadedFile ||
     (isCoverage && !source) ||
     (isGeolocation && !mode) ||
-    (!isStructured && (isSchemaFetching || isParsing || hasParsingError));
+    (isHealthMaster && !country) ||
+    (!isStructuredLike && (isSchemaFetching || isParsing || hasParsingError));
   const isSchemaLoading = !(
     (!isCoverage && !isSchemaFetching) ||
     (!isGeolocation && !isSchemaFetching) ||
@@ -236,8 +277,9 @@ export default function Index() {
     setParsingError("");
     setIsParsing(true);
 
-    if (isStructured) {
-      // For structured datasets, just validate file size and set the file
+    if (isStructuredLike) {
+      // For structured-like datasets (structured + health master), just
+      // validate file size and set the file.
       if (file.size > MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024) {
         setParsingError(
           `File size exceeds ${MAX_UPLOAD_FILE_SIZE_MB} MB limit`,
@@ -306,6 +348,24 @@ export default function Index() {
       )}
 
       <div className="flex w-1/2 flex-col gap-4">
+        {isHealthMaster &&
+          (isGroupsFetching ? (
+            <SkeletonText />
+          ) : (
+            <Select
+              id="country"
+              labelText="Country"
+              placeholder="Select a country"
+              className="w-full"
+              {...register("country", { required: true })}
+            >
+              <SelectItem value="" text="" />
+              {healthMasterCountryOptions.map(option => (
+                <SelectItem key={option} text={option} value={option} />
+              ))}
+            </Select>
+          ))}
+
         {uploadType === "geolocation" && (
           <Select
             id="mode"
