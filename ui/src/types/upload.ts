@@ -82,6 +82,8 @@ export interface UploadStructuredParams {
   file: File;
   source?: string | null;
   metadata: string;
+  /** Routes CSV to dataset `health` in blob storage when set to `"health"`. */
+  portal_dataset?: string;
 }
 
 export interface FuzzyValueMapping {

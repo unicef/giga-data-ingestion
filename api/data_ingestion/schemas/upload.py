@@ -61,6 +61,8 @@ class UnstructuredFileUploadRequest:
     country: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+    # When "health", stores dataset=health and uses the health raw path (see upload_structured).
+    portal_dataset: str | None = Form(None)
 
 
 @dataclass
