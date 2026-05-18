@@ -144,6 +144,10 @@ export interface UploadResponse {
   upload_path: string;
   column_to_schema_mapping: string;
   column_license: string;
+  data_owner: string | null;
+  rows: number | null;
+  rows_passed: number | null;
+  rows_failed: number | null;
 }
 
 export const initialUploadResponse: UploadResponse = {
@@ -163,6 +167,10 @@ export const initialUploadResponse: UploadResponse = {
   upload_path: "",
   column_to_schema_mapping: "",
   column_license: "",
+  data_owner: null,
+  rows: null,
+  rows_passed: null,
+  rows_failed: null,
 };
 
 export const basicCheckSchema = z.object({

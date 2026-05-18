@@ -29,7 +29,9 @@ import {
   UploadResponse,
 } from "@/types/upload.ts";
 
-const columns: DataTableHeader[] = [
+import { ALL_COLUMN_CONFIGS } from "./ColumnSelectorModal";
+
+const ALL_COLUMNS: DataTableHeader[] = [
   {
     key: "id",
     header: "Upload ID",
@@ -59,6 +61,22 @@ const columns: DataTableHeader[] = [
     header: "Country",
   },
   {
+    key: "rows",
+    header: "Tot. entries",
+  },
+  {
+    key: "rows_passed",
+    header: "Passed",
+  },
+  {
+    key: "rows_failed",
+    header: "Rejected",
+  },
+  {
+    key: "data_owner",
+    header: "Data owner",
+  },
+  {
     key: "status",
     header: "DQ check status",
   },
@@ -85,6 +103,7 @@ interface UploadsTableProps {
   }) => void;
   source?: string | null;
   dataset?: string | null;
+  visibleColumns: Set<string>;
 }
 
 function UploadsTable({
@@ -93,6 +112,7 @@ function UploadsTable({
   handlePaginationChange,
   source,
   dataset,
+  visibleColumns,
 }: UploadsTableProps) {
   const { data: uploadsQuery, isLoading } = useSuspenseQuery({
     queryFn: () =>
@@ -104,6 +124,16 @@ function UploadsTable({
       }),
     queryKey: ["uploads", page, pageSize, source, dataset],
   });
+
+  const activeColumns = useMemo(() => {
+    const selectableKeys = new Set(ALL_COLUMN_CONFIGS.map(c => c.key));
+    return ALL_COLUMNS.filter(
+      col =>
+        col.key === "actions" ||
+        !selectableKeys.has(col.key) ||
+        visibleColumns.has(col.key),
+    );
+  }, [visibleColumns]);
 
   const renderUploads = useMemo<PagedResponse<TableUpload>>(() => {
     const uploads = uploadsQuery?.data ?? {
@@ -135,6 +165,10 @@ function UploadsTable({
             )}
           </>
         ),
+        rows: upload.rows?.toLocaleString() ?? "—",
+        rows_passed: upload.rows_passed?.toLocaleString() ?? "—",
+        rows_failed: upload.rows_failed?.toLocaleString() ?? "—",
+        data_owner: upload.data_owner ?? "—",
         status: (
           <Tag
             type={DQStatusTagMapping[upload.dq_status]}
@@ -162,9 +196,9 @@ function UploadsTable({
   }, [page, pageSize, uploadsQuery?.data]);
 
   return isLoading ? (
-    <DataTableSkeleton headers={columns} />
+    <DataTableSkeleton headers={activeColumns} />
   ) : (
-    <DataTable headers={columns} rows={renderUploads.data}>
+    <DataTable headers={activeColumns} rows={renderUploads.data}>
       {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
         <TableContainer>
           <Table {...getTableProps()}>
