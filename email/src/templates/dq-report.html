@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Giga Sync | Data Quality Report | {{country}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Manrope:wght@400;500;600&family=Open+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 0;
+    margin: 0;
+    font-family: 'Open Sans', sans-serif;
+  }
+
+  #wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .page {
+    width: 595px;
+    min-height: 842px;
+    height: 842px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow: hidden;
+    page-break-after: always;
+    break-after: page;
+    flex-shrink: 0;
+  }
+  .page:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .logo {
+    height: 42px;
+    width: auto;
+    max-width: min(100%, 260px);
+    display: block;
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+
+  .footer {
+    margin-top: auto;
+    width: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .footer-legend {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .footer-legend-item {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: -0.1px;
+    color: #000;
+    white-space: nowrap;
+  }
+  .footer-right {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: -0.1px;
+    white-space: nowrap;
+  }
+  .footer-label { color: #989898; }
+  .footer-page  { color: #000; }
+
+  .icon-critical, .icon-warning {
+    display: inline-flex;
+    width: 12px; height: 12px;
+    align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .basic-checks .card,
+  .duplicates .card,
+  #page2 .card {
+    border: 1px solid #e9e9e9;
+    border-radius: 2px;
+  }
+  .card-header {
+    background: #f5f5f5;
+    padding: 4px 8px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 16px;
+    color: #000;
+  }
+  .basic-checks .card > .card-header:first-child,
+  #page2 .card > .card-header:first-child {
+    border-radius: 2px 2px 0 0;
+  }
+  .card-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-top: 0.5px solid #e9e9e9;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: -0.1px;
+    color: #000;
+  }
+  .card-row .label { flex: 1; min-width: 0; }
+  .card-row .val   { text-align: right; white-space: nowrap; flex-shrink: 0; }
+  .card-row .val-bold { font-weight: 700; }
+  .card-row .cell  { flex: 1; text-align: right; white-space: nowrap; display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+
+  .comment-wrap {
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+  }
+  .comment-box {
+    background: #eaf2ff;
+    border-radius: 1px;
+    padding: 8px;
+    width: 100%;
+    min-height: 32px;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    font-style: italic;
+    font-weight: 400;
+    line-height: 16px;
+    color: #000;
+  }
+  .comment-box.plain { font-style: normal; }
+  /* Editable boxes have the "Recommended action:" prompt rendered as a small
+     label above the box so a PDF AcroForm field can overlay the box itself
+     with no visible label collision. The HTML rectangle is rendered with a
+     subtle border but a transparent fill; the post-processing step then
+     drops a real text-field widget on top whose appearance stream fills it
+     with the same light-blue tint we used to bake into the static HTML. */
+  .comment-label {
+    font-size: 8px;
+    color: #555;
+    line-height: 1.1;
+    padding: 0 2px 2px 2px;
+    font-family: 'Open Sans', sans-serif;
+  }
+  .comment-box.editable {
+    background: transparent;
+    border: 0.5px solid #d8e3f5;
+  }
+
+  /* The last card on each page grows so it fills the empty space above the
+     footer (matches the mockup's intent). Inside the grow card, the rows
+     region is the only thing that flex-grows — and it CLIPS overflow so a
+     long mapping list never pushes the Recommended-action box (or the page
+     footer) off the page. The comment-wrap below the rows therefore stays
+     visible at its natural height and matches the rect we feed to pdf-lib. */
+  .grow-card { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+  .grow-card .card { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+  .grow-card .card > .card-rows {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .grow-card .card > .comment-wrap { flex: 0 0 auto; }
+
+  .report-page-top {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .report-entity-badge {
+    flex-shrink: 0;
+    align-self: flex-start;
+    padding: 3px 10px;
+    border: 1px solid #e9e9e9;
+    border-radius: 2px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 16px;
+    letter-spacing: -0.1px;
+    color: #000;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+
+  .p1-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .p1-summary {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 24px;
+    width: 100%;
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+  .p1-title {
+    font-family: 'Manrope', sans-serif;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 32px;
+    color: #005bed;
+  }
+  .p1-subtitle {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    line-height: 16px;
+    color: #000;
+  }
+  .p1-subtitle .bold { font-weight: 600; }
+
+  .p1-donut-area {
+    width: 172px;
+    height: 172px;
+    flex-shrink: 0;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .donut-svg { transform: rotate(-90deg); }
+
+  .p1-kpi-grid {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    align-content: start;
+    border: 1px solid #f4f4f4;
+  }
+  .kpi-card {
+    border: none;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+  .p1-kpi-grid .kpi-card:nth-child(1),
+  .p1-kpi-grid .kpi-card:nth-child(3) {
+    border-right: 1px solid #f4f4f4;
+  }
+  .p1-kpi-grid .kpi-card:nth-child(1),
+  .p1-kpi-grid .kpi-card:nth-child(2) {
+    border-bottom: 1px solid #f4f4f4;
+  }
+  .kpi-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    line-height: normal;
+    color: #000;
+  }
+  .kpi-num.green  { color: #74c48e; }
+  .kpi-num.red    { color: #ff0000; }
+  .kpi-num.orange { color: #f9a825; }
+  .kpi-denom {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(0,0,0,0.5);
+  }
+  .kpi-label {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: -0.1px;
+    color: #000;
+    margin-top: 2px;
+  }
+  .kpi-excel-tab {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 14px;
+    color: #666;
+    white-space: nowrap;
+  }
+  .kpi-excel-chip {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    line-height: 14px;
+    color: #1d66e5;
+  }
+
+  .p1-inline-note {
+    width: 100%;
+    flex-shrink: 0;
+  }
+  .p1-inline-note .comment-wrap { padding: 0; }
+  .p1-inline-note .comment-box {
+    min-height: 34px;
+    padding: 6px 8px;
+    font-style: normal;
+  }
+
+  .basic-checks {
+    width: 100%;
+    flex-shrink: 0;
+  }
+  .basic-checks .card-header {
+    display: flex; gap: 10px;
+  }
+  .basic-checks .card-header span { flex: 1; }
+  .basic-checks .card-header span:not(:first-child) { text-align: right; }
+  .basic-checks .card .comment-wrap { min-height: 44px; }
+
+  .duplicates {
+    width: 100%;
+    flex-shrink: 0;
+  }
+  .dup-kpi {
+    padding: 12px 12px;
+    border-radius: 2px 2px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .dup-kpi-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    color: #ff0000;
+    font-weight: 400;
+    line-height: 1;
+  }
+  .dup-kpi-sub {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: -0.1px;
+    line-height: 16px;
+    color: #000;
+  }
+  .duplicates .card {
+    display: flex;
+    flex-direction: column;
+  }
+  .duplicates .card .comment-wrap { min-height: 44px; }
+
+  .p2-top-row {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    width: 100%;
+    align-items: stretch;
+    flex-shrink: 0;
+  }
+  .p2-top-left, .p2-top-right { flex: 1; min-width: 0; }
+  .p2-top-left .card, .p2-top-right .card {
+    min-height: 116px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .arrow-right-icon {
+    width: 12px; height: 12px;
+    flex-shrink: 0;
+    opacity: 0.3;
+  }
+
+  @page { size: A4 portrait; margin: 0; }
+</style>
+</head>
+<body>
+<div id="wrapper">
+
+  <!-- ───────────────────────── PAGE 1 ───────────────────────── -->
+  <div class="page" id="page1">
+
+    <div class="report-page-top">
+      <img class="logo" src="{{logoDataUri}}" alt="Giga, UNICEF, ITU" />
+      <span class="report-entity-badge">{{entity.plural}}</span>
+    </div>
+
+    <div class="p1-header">
+      <div class="p1-title">Data Quality Report - {{country}}</div>
+      <div class="p1-subtitle">
+        <span class="bold">{{uploadedFileName}} </span>uploaded on
+        <span class="bold">{{uploadDate}}</span> | Ingestion ID:
+        <span class="bold">{{uploadId}}</span>
+      </div>
+    </div>
+
+    <div class="p1-summary">
+      <!-- Donut: red (rejected) + orange (warnings) + green (passed) -->
+      <div class="p1-donut-area">
+        <svg class="donut-svg" width="172" height="172" viewBox="0 0 172 172">
+          <circle cx="86" cy="86" r="64" fill="none" stroke="#e8ecf4" stroke-width="18" pathLength="100"/>
+          <circle cx="86" cy="86" r="64" fill="none" stroke="#74c48e" stroke-width="18" pathLength="100"
+            stroke-dasharray="0 {{donut.rejectedPct}} {{donut.passedPct}} 0"/>
+          <circle cx="86" cy="86" r="64" fill="none" stroke="#ff0000" stroke-width="18" pathLength="100"
+            stroke-dasharray="{{donut.rejectedPct}} {{donut.rejectedComplementPct}}" stroke-dashoffset="0"/>
+          <circle cx="86" cy="86" r="64" fill="none" stroke="#f9a825" stroke-width="18" pathLength="100"
+            stroke-dasharray="{{donut.warningsPct}} {{donut.warningsComplementPct}}" stroke-dashoffset="-{{donut.rejectedPct}}"/>
+          <circle cx="86" cy="86" r="38" fill="white"/>
+        </svg>
+      </div>
+
+      <div class="p1-kpi-grid">
+        <div class="kpi-card">
+          <div>
+            <div style="display:flex;align-items:center;gap:2px;"><span class="kpi-num">{{totals.uploaded}}</span></div>
+            <div class="kpi-label">{{entity.plural}} uploaded</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div>
+            <div style="display:flex;align-items:center;gap:2px;">
+              <span class="kpi-num green">{{totals.passed}}</span>
+              <span class="kpi-denom">/{{totals.uploaded}}</span>
+            </div>
+            <div class="kpi-label">{{entity.plural}} passed</div>
+            <div class="kpi-excel-tab"><span>Excel tab:</span><span class="kpi-excel-chip">Passed</span></div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div>
+            <div style="display:flex;align-items:center;gap:2px;">
+              <span class="kpi-num red">{{totals.rejected}}</span>
+              <span class="kpi-denom">/{{totals.uploaded}}</span>
+            </div>
+            <div class="kpi-label">{{entity.plural}} rejected</div>
+            <div class="kpi-excel-tab"><span>Excel tab:</span><span class="kpi-excel-chip">Rejected</span></div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div>
+            <div style="display:flex;align-items:center;gap:2px;">
+              <span class="kpi-num orange">{{totals.warnings}}</span>
+              <span class="kpi-denom">/{{totals.uploaded}}</span>
+            </div>
+            <div class="kpi-label">{{entity.plural}} with warnings</div>
+            <div class="kpi-excel-tab"><span>Excel tab:</span><span class="kpi-excel-chip">Warnings</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p1-inline-note">
+      <div class="comment-wrap">
+        <div class="comment-box plain">Next step: inspect the companion Excel file. Open the Excel file delivered with this report. Review Critical and Warning tabs to validate flagged {{entity.lowerPlural}}.</div>
+      </div>
+    </div>
+
+    <div class="basic-checks">
+      <div class="card">
+        <div class="card-header" style="display:flex;gap:10px;height:24px;align-items:center;">
+          <span style="flex:1;">Basic Checks</span>
+          <span style="flex:1;text-align:right;">Number of {{entity.plural}}</span>
+        </div>
+        {{#each basicChecks}}
+        <div class="card-row">
+          <span class="label">{{{label}}}</span>
+          <span class="cell">
+            <span class="val-bold">{{value}}</span>
+            {{{tone toneName}}}
+          </span>
+        </div>
+        {{/each}}
+        <div class="comment-wrap">
+          <div class="comment-label">Recommended action:</div>
+          <div class="comment-box plain editable" data-action-field="rec_basic_checks"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="duplicates grow-card">
+      <div class="card">
+        <div class="dup-kpi">
+          <div class="dup-kpi-num">{{duplicates.totalLabel}}</div>
+          <div class="dup-kpi-sub">Possible Duplicates</div>
+        </div>
+        <div style="padding:0;">
+          <div class="card-header" style="display:flex;gap:10px;">
+            <span style="flex:1;">Duplicate Groups</span>
+            <span style="flex:1;text-align:right;">Number of {{entity.plural}}</span>
+          </div>
+          {{#each duplicates.page1Rows}}
+          <div class="card-row">
+            <span class="label">{{{label}}}</span>
+            <span class="val" style="display:inline-flex;align-items:center;gap:4px;">
+              <span class="val-bold">{{value}}</span>
+              {{{tone toneName}}}
+            </span>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-legend">
+        <div class="footer-legend-item">{{{tone "critical"}}} Critical error</div>
+        <div class="footer-legend-item">{{{tone "warning"}}} Warning</div>
+      </div>
+      <div class="footer-right">
+        <span class="footer-label">Giga Sync | Data Quality Report | {{country}}</span>
+        <span class="footer-page">01</span>
+      </div>
+    </div>
+
+  </div><!-- /page1 -->
+
+
+  <!-- ───────────────────────── PAGE 2 ───────────────────────── -->
+  <div class="page" id="page2">
+
+    <div class="report-page-top">
+      <img class="logo" src="{{logoDataUri}}" alt="Giga, UNICEF, ITU" />
+      <span class="report-entity-badge">{{entity.plural}}</span>
+    </div>
+
+    <div class="duplicates">
+      <div class="card">
+        <div style="padding:0;">
+          <div class="card-header" style="display:flex;gap:10px;">
+            <span style="flex:1;">Duplicate Groups</span>
+            <span style="flex:1;text-align:right;">Number of {{entity.plural}}</span>
+          </div>
+          {{#each duplicates.page2Rows}}
+          <div class="card-row" style="border-top:0.5px solid #e9e9e9;">
+            <span class="label">{{{label}}}</span>
+            <span class="val" style="display:inline-flex;align-items:center;gap:4px;">
+              <span class="val-bold">{{value}}</span>
+              {{{tone toneName}}}
+            </span>
+          </div>
+          {{/each}}
+        </div>
+        <div class="comment-wrap">
+          <div class="comment-label">Recommended action:</div>
+          <div class="comment-box plain editable" data-action-field="rec_duplicates"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p2-top-row">
+      <div class="p2-top-left">
+        <div class="card">
+          <div class="card-header" style="display:flex;gap:10px;">
+            <span style="flex:1;">Connectivity data</span>
+            <span style="flex:1;text-align:right;">Number of {{entity.plural}}</span>
+          </div>
+          {{#each connectivity}}
+          <div class="card-row" style="border-top:0.5px solid #e9e9e9;">
+            <span class="label">{{label}}</span>
+            <span class="val">{{value}}</span>
+          </div>
+          {{/each}}
+          <div class="comment-wrap">
+            <div class="comment-label">Recommended action:</div>
+            <div class="comment-box plain editable" data-action-field="rec_connectivity"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="p2-top-right">
+        <div class="card">
+          <div class="card-header" style="display:flex;gap:10px;">
+            <span style="flex:1;">Electricity availability</span>
+            <span style="flex:1;text-align:right;">Number of {{entity.plural}}</span>
+          </div>
+          {{#each electricity}}
+          <div class="card-row" style="border-top:0.5px solid #e9e9e9;">
+            <span class="label">{{label}}</span>
+            <span class="val">{{value}}</span>
+          </div>
+          {{/each}}
+          <div class="comment-wrap">
+            <div class="comment-label">Recommended action:</div>
+            <div class="comment-box plain editable" data-action-field="rec_electricity"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p2-edu{{#unless fieldMapping.length}} grow-card{{/unless}}">
+      <div class="card">
+        <div class="card-header" style="display:flex;gap:10px;">
+          <span style="flex:1;">Education level</span>
+          <span style="flex:1;text-align:right;">Number of {{entity.plural}}</span>
+        </div>
+        {{#each educationLevels}}
+        <div class="card-row" style="padding:4px 8px;">
+          <span class="label">{{label}}</span>
+          <span class="val">{{value}}</span>
+        </div>
+        {{/each}}
+        <div class="comment-wrap">
+          <div class="comment-label">Recommended action:</div>
+          <div class="comment-box plain editable" data-action-field="rec_education_level"></div>
+        </div>
+      </div>
+    </div>
+
+    {{#if fieldMapping.length}}
+    <div class="p2-mapping grow-card">
+      <div class="card">
+        <div class="card-header" style="display:flex;gap:4px;">
+          <span style="flex:1;">Original field</span>
+          <span style="flex:1;">Will be mapped to</span>
+        </div>
+        <div class="card-rows">
+          {{#each fieldMapping}}
+          <div class="card-row" style="gap:8px;padding:4px 8px;">
+            <span class="label">{{from}}</span>
+            <svg class="arrow-right-icon" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="label">{{to}}</span>
+          </div>
+          {{/each}}
+        </div>
+        <div class="comment-wrap">
+          <div class="comment-label">Recommended action:</div>
+          <div class="comment-box plain editable" data-action-field="rec_field_mapping"></div>
+        </div>
+      </div>
+    </div>
+    {{/if}}
+
+    <div class="footer">
+      <div class="footer-legend">
+        <div class="footer-legend-item">{{{tone "critical"}}} Critical checks</div>
+        <div class="footer-legend-item">{{{tone "warning"}}} Warnings</div>
+      </div>
+      <div class="footer-right">
+        <span class="footer-label">Giga Sync | Data Quality Report | {{country}}</span>
+        <span class="footer-page">02</span>
+      </div>
+    </div>
+
+  </div><!-- /page2 -->
+
+</div><!-- /wrapper -->
+</body>
+</html>

@@ -1,0 +1,24 @@
+FROM node:20-alpine
+
+# Chromium for puppeteer-core (system install instead of bundled download
+# because the bundled Chromium is glibc-only and Alpine is musl).
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    font-noto \
+    libc6-compat
+
+ENV PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    NODE_OPTIONS=--max-old-space-size=512
+
+WORKDIR /app
+
+# The dev docker-compose bind-mounts ./email onto /app and uses an entrypoint
+# that runs `npm install` and then `tsx watch`, so no COPY is needed here.
+
+CMD ["npx", "tsx", "watch", "src/index.tsx"]

@@ -14,9 +14,24 @@ RUN npm ci && \
 
 FROM base AS prod
 
+# Chromium for puppeteer-core (system install; bundled Chromium is glibc-only).
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont \
+    font-noto
+
+ENV PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 WORKDIR /app
 
 COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/src/templates /app/src/templates
+COPY --from=builder /app/src/assets /app/src/assets
 
 CMD [ "node", "/app/dist/index.js" ]
