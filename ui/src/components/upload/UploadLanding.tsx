@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Add } from "@carbon/icons-react";
+import { Add, Filter } from "@carbon/icons-react";
 import {
   Button,
   Heading,
@@ -15,6 +15,10 @@ import {
 import { Link } from "@tanstack/react-router";
 
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
+import FilterModal, {
+  EMPTY_FILTERS,
+  UploadFilters,
+} from "@/components/upload/FilterModal.tsx";
 import useRoles from "@/hooks/useRoles";
 import { cn } from "@/lib/utils.ts";
 import { getDataPrivacyDocument } from "@/utils/download.ts";
@@ -34,6 +38,12 @@ interface UploadLandingProps {
 function UploadLanding(props: UploadLandingProps) {
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeFilters, setActiveFilters] =
+    useState<UploadFilters>(EMPTY_FILTERS);
+  const activeFilterCount = Object.values(activeFilters).filter(
+    v => v !== "",
+  ).length;
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
 
   // Tab 0 = Geolocation (source gigasync), 1 = API (source api),
@@ -82,11 +92,7 @@ function UploadLanding(props: UploadLandingProps) {
                 Please review our{" "}
                 <a
                   onClick={async () => {
-                    // It's ridiculous how there's no native way of disabling
-                    // HTML anchors. We could add the pointer-events-none class
-                    // but that disables the loading cursor animation.
                     if (isPrivacyLoading) return;
-
                     setIsPrivacyLoading(true);
                     await getDataPrivacyDocument();
                     setIsPrivacyLoading(false);
@@ -149,16 +155,29 @@ function UploadLanding(props: UploadLandingProps) {
           </Stack>
 
           <Tabs selectedIndex={selectedTab} onChange={handleTabChange}>
-            <TabList
-              aria-label="File Uploads Tabs"
-              fullWidth
-              className="w-full"
-            >
-              <Tab>Geolocation</Tab>
-              <Tab>API</Tab>
-              <Tab>Coverage</Tab>
-              <Tab>Schemaless</Tab>
-            </TabList>
+            <div className="flex items-center">
+              <TabList
+                aria-label="File Uploads Tabs"
+                fullWidth
+                className="w-full"
+              >
+                <Tab>Geolocation</Tab>
+                <Tab>API</Tab>
+                <Tab>Coverage</Tab>
+                <Tab>Schemaless</Tab>
+              </TabList>
+              <Button
+                kind="tertiary"
+                size="sm"
+                renderIcon={Filter}
+                onClick={() => setIsFilterOpen(true)}
+                className="shrink-0"
+              >
+                {`Filters${
+                  activeFilterCount > 0 ? ` (${activeFilterCount})` : ""
+                }`}
+              </Button>
+            </div>
 
             <TabPanels>
               <TabPanel className="p-0">
@@ -166,6 +185,9 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -173,6 +195,9 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -180,6 +205,9 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -187,10 +215,20 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
                 />
               </TabPanel>
             </TabPanels>
           </Tabs>
+
+          <FilterModal
+            open={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            onApply={setActiveFilters}
+            initialFilters={activeFilters}
+          />
         </Stack>
       </Section>
     </Section>
