@@ -302,49 +302,51 @@ function Success() {
       ) : (
         <section className="flex flex-col gap-6 pb-20">
           <div>
-            <h2 className="text-xl ml-4 font-semibold leading-tight text-gray-900">
+            <h2 className="ml-4 text-xl font-semibold leading-tight text-gray-900">
               {qualityHeader}
             </h2>
             <div className="flex items-center">
               <div className="flex flex-1 items-center justify-between">
-                {(!!activeUploadId || !!isActionPending) && <div className="flex items-center gap-6 mt-6">
-                <Button
-                    className="min-h-0 min-w-0 ml-4 mr-[-1rem]"
-                    disabled={isRefetchingDqResultQuery || !activeUploadId}
-                    renderIcon={Restart}
-                    kind="ghost"
-                    hasIconOnly
-                    iconDescription="Refresh"
-                    size="sm"
-                    onClick={async () => await refetchDqResultQuery()}
-                  />
-                  {(activeUploadId || isActionPending) && tagProps && (
-                    <Tag
-                      renderIcon={InProgress}
-                      type={tagProps.color}
-                      className="m-0 rounded-full px-3 py-1"
-                    >
-                      {tagProps.text}
-                    </Tag>
-                  )}
-                  {(activeUploadId || isActionPending) &&
-                    effectiveStatus === DQStatus.IN_PROGRESS && (
-                      <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-gray-800">
-                        <Loading
-                          small
-                          withOverlay={false}
-                          className="h-4 w-4"
-                        />
-                        Refreshing Automatically
-                      </div>
+                {(!!activeUploadId || !!isActionPending) && (
+                  <div className="mt-6 flex items-center gap-6">
+                    <Button
+                      className="ml-4 mr-[-1rem] min-h-0 min-w-0"
+                      disabled={isRefetchingDqResultQuery || !activeUploadId}
+                      renderIcon={Restart}
+                      kind="ghost"
+                      hasIconOnly
+                      iconDescription="Refresh"
+                      size="sm"
+                      onClick={async () => await refetchDqResultQuery()}
+                    />
+                    {(activeUploadId || isActionPending) && tagProps && (
+                      <Tag
+                        renderIcon={InProgress}
+                        type={tagProps.color}
+                        className="m-0 rounded-full px-3 py-1"
+                      >
+                        {tagProps.text}
+                      </Tag>
                     )}
-                  {(activeUploadId || isActionPending) &&
-                    effectiveStatus === DQStatus.IN_PROGRESS && (
-                      <div className="text-xs font-medium text-gray-500">
-                        Estimated running time: 10–15 mins
-                      </div>
-                    )}
-                </div>}
+                    {(activeUploadId || isActionPending) &&
+                      effectiveStatus === DQStatus.IN_PROGRESS && (
+                        <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-gray-800">
+                          <Loading
+                            small
+                            withOverlay={false}
+                            className="h-4 w-4"
+                          />
+                          Refreshing Automatically
+                        </div>
+                      )}
+                    {(activeUploadId || isActionPending) &&
+                      effectiveStatus === DQStatus.IN_PROGRESS && (
+                        <div className="text-xs font-medium text-gray-500">
+                          Estimated running time: 10–15 mins
+                        </div>
+                      )}
+                  </div>
+                )}
               </div>
             </div>
 
