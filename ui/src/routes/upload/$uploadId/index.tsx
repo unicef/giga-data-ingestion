@@ -230,9 +230,7 @@ function Index() {
           <TabPanels>
             {Object.keys(checks).map(key => (
               <TabPanel key={key}>
-                <DataQualityChecks
-                  data={checks[key] as Check[]}
-                />
+                <DataQualityChecks data={checks[key] as Check[]} />
               </TabPanel>
             ))}
           </TabPanels>
