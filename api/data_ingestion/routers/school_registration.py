@@ -5,7 +5,7 @@ from typing import Annotated
 import country_converter as coco
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -253,7 +253,7 @@ async def trigger_registration_pipeline(
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def retrigger_registration_pipeline(
-    webhook_request: NocoDBWebhookRequest,
+    webhook_data: dict,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(meter_auth)],
     db: AsyncSession = Depends(get_db),
 ):
@@ -263,22 +263,50 @@ async def retrigger_registration_pipeline(
     """
     # verify_nocodb_token(credentials)
 
+    logger.info(f"Received re-trigger webhook request: {webhook_data}")
+
+    # Try to parse the raw webhook data into the expected schema
+    try:
+        webhook_request = NocoDBWebhookRequest(**webhook_data)
+    except ValidationError as ve:
+        logger.error(f"Webhook validation error: {ve}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "Invalid webhook payload format",
+                "validation_errors": ve.errors(),
+                "received_payload": webhook_data,
+            },
+        ) from ve
+
     # Extract the actual payload from the webhook request
     payload = webhook_request.payload
+    logger.info(f"Extracted payload: {payload.model_dump_json()}")
 
     if not payload.data.rows:
+        logger.warning("No rows found in webhook payload")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No rows found in webhook payload",
+            detail={
+                "error": "No rows found in webhook payload",
+                "received_payload": payload.model_dump(),
+            },
         )
 
     updated_record = payload.data.rows[0]
+    logger.info(f"Updated record from webhook: {updated_record.model_dump_json()}")
 
     giga_id = getattr(updated_record, "giga_id_school", None)
     if not giga_id:
+        logger.warning(
+            f"Missing required field: giga_id_school. Record: {updated_record}"
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing required field: giga_id_school",
+            detail={
+                "error": "Missing required field: giga_id_school",
+                "received_record": updated_record.model_dump(),
+            },
         )
     try:
         # Parse latitude and longitude as floats, handling both string and numeric types
@@ -288,10 +316,16 @@ async def retrigger_registration_pipeline(
         lat_value = getattr(updated_record, "latitude", None)
         lon_value = getattr(updated_record, "longitude", None)
 
+        logger.debug(
+            f"Parsing coordinates: lat_value={lat_value}, lon_value={lon_value}"
+        )
+
         if lat_value:
             latitude = float(lat_value)
         if lon_value:
             longitude = float(lon_value)
+
+        logger.debug(f"Parsed coordinates: latitude={latitude}, longitude={longitude}")
 
     except (ValueError, TypeError) as e:
         logger.error(
@@ -315,6 +349,7 @@ async def retrigger_registration_pipeline(
         verification_status=getattr(updated_record, "verification_status", None)
         or "unverified",
     )
+    logger.info(f"Built school registration data: {school_data.model_dump_json()}")
 
     existing = await db.scalar(
         select(FileUpload)
@@ -324,14 +359,24 @@ async def retrigger_registration_pipeline(
         .order_by(FileUpload.created.desc())
     )
     if existing is None:
+        logger.warning(
+            f"No registration found for giga_id_school={school_data.giga_id_school}"
+        )
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"No registration found for giga_id_school={school_data.giga_id_school}",
         )
 
+    logger.info(f"Found existing registration: {existing.id}")
+
     country_code = coco.convert(school_data.country_iso3_code, to="ISO3")
     if country_code == "not found":
+        logger.warning(
+            f"Invalid country code: {school_data.country_iso3_code}, using existing: {existing.country}"
+        )
         country_code = existing.country
+
+    logger.debug(f"Using country code: {country_code}")
 
     new_file_upload = FileUpload(
         uploader_id=existing.uploader_id,
@@ -347,23 +392,32 @@ async def retrigger_registration_pipeline(
     db.add(new_file_upload)
     await db.commit()
     await db.refresh(new_file_upload)
+    logger.info(f"Created new FileUpload record: {new_file_upload.id}")
 
     new_file_upload.metadata_json_path = get_metadata_path(new_file_upload.upload_path)
     db.add(new_file_upload)
     await db.commit()
     await db.refresh(new_file_upload)
+    logger.debug(f"Set metadata path: {new_file_upload.metadata_json_path}")
 
     try:
         registration_metadata = build_registration_metadata(school_data)
+        logger.info(
+            f"Writing registration CSV to ADLS for {school_data.giga_id_school}"
+        )
         write_registration_csv_to_adls(
             school_data.model_dump(),
             new_file_upload,
             registration_metadata,
             mode="update",
         )
+        logger.info(
+            f"Successfully wrote registration CSV for {school_data.giga_id_school}"
+        )
     except Exception as err:
         logger.error(
-            f"Failed to write registration file for {school_data.giga_id_school}: {err}"
+            f"Failed to write registration file for {school_data.giga_id_school}: {err}",
+            exc_info=True,
         )
         await db.execute(delete(FileUpload).where(FileUpload.id == new_file_upload.id))
         await db.commit()
@@ -372,9 +426,14 @@ async def retrigger_registration_pipeline(
             detail=f"Failed to write registration file to storage: {str(err)}",
         ) from err
 
-    return {
+    response_data = {
         "message": "Re-trigger initiated successfully.",
         "file_upload_id": new_file_upload.id,
         "giga_id_school": school_data.giga_id_school,
         "verification_status": school_data.verification_status,
     }
+    logger.info(
+        f"Re-trigger completed successfully for {school_data.giga_id_school}: {response_data}"
+    )
+
+    return response_data
