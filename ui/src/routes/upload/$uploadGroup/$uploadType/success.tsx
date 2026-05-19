@@ -31,12 +31,10 @@ import BasicDataQualityCheck from "@/components/check-file-uploads/BasicDataQual
 import DataCheckItem from "@/components/check-file-uploads/DataCheckItem";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
 import { useStore } from "@/context/store";
-import { cn } from "@/lib/utils";
 import {
   Check,
   DQStatus,
   DataQualityCheck,
-  UploadParams,
   UploadResponse,
   initialDataQualityCheck,
   initialUploadResponse,
@@ -50,7 +48,7 @@ export const Route = createFileRoute(
   component: Success,
   loader: ({ context: { getState }, params: { uploadGroup, uploadType } }) => {
     const {
-      uploadSlice: { file, columnMapping },
+      uploadSlice: { file, columnMapping, pendingSchoolDataPayload },
       uploadSliceActions: { setStepIndex },
     } = getState();
 
@@ -62,6 +60,9 @@ export const Route = createFileRoute(
       return;
     } else if (isStructured) {
       // For structured datasets, allow access even without file since upload is already complete
+      return;
+    } else if (pendingSchoolDataPayload) {
+      // For school-data coming from assessment with pending payload, allow access
       return;
     } else if (
       !file ||
@@ -81,7 +82,6 @@ const SuccessDataQualityChecks = memo(
   }: {
     dqResult: DataQualityCheck;
     status: DQStatus;
-    uploadData: UploadResponse;
     uploadId: string;
   }) => {
     if (status !== DQStatus.COMPLETED) return null;
@@ -124,41 +124,30 @@ function Success() {
   const {
     uploadSliceActions: {
       resetUploadSliceState,
-      setPendingSchoolDataPayload,
       setUploadDate,
       setUploadId,
+      setPendingSchoolDataPayload,
       decrementStepIndex,
     },
     uploadSlice: { uploadId, source, pendingSchoolDataPayload },
   } = useStore();
 
   const navigate = useNavigate({ from: Route.fullPath });
-  const [reviewUploadId, setReviewUploadId] = useState<string>("");
   const [actionError, setActionError] = useState<string>("");
-  const [showModeSelection, setShowModeSelection] = useState<boolean>(false);
 
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
   const isSchoolData = uploadGroup === "school-data";
-  const isPreSubmitMode =
-    isSchoolData && !!pendingSchoolDataPayload && uploadId === "";
-  const activeUploadId = uploadId || reviewUploadId;
-  const isReviewMode = isPreSubmitMode || (!!reviewUploadId && !uploadId);
+  const hasPendingPayload =
+    isSchoolData && !!pendingSchoolDataPayload && !uploadId;
+  const activeUploadId = uploadId;
+  const isSubmitMode = hasPendingPayload;
 
-  const reviewFile = useMutation({
-    mutationFn: ({
-      params,
-      dq_mode,
-    }: {
-      params: UploadParams;
-      dq_mode: "uploaded" | "master";
-    }) => api.uploads.review(params, dq_mode),
-  });
   const uploadFile = useMutation({
     mutationFn: api.uploads.upload,
   });
-  const isActionPending = reviewFile.isPending || uploadFile.isPending;
+  const isActionPending = uploadFile.isPending;
 
   const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
     queryFn: () => api.uploads.list_basic_checks(uploadType, source),
@@ -208,7 +197,7 @@ function Success() {
   const status = dqResult?.status;
 
   useEffect(() => {
-    if (!isReviewMode && status === DQStatus.COMPLETED) {
+    if (status === DQStatus.COMPLETED) {
       navigate({
         to: "/upload/$uploadId",
         params: { uploadId },
@@ -252,28 +241,6 @@ function Success() {
     }
   };
 
-  const handleReview = async (dq_mode: "uploaded" | "master") => {
-    if (!pendingSchoolDataPayload) return;
-
-    setActionError("");
-    try {
-      const {
-        data: { id },
-      } = await reviewFile.mutateAsync({
-        params: pendingSchoolDataPayload,
-        dq_mode,
-      });
-      setReviewUploadId(id);
-      setShowModeSelection(false);
-    } catch {
-      setActionError("Review failed. Please try again.");
-    }
-  };
-
-  const handleReviewClick = () => {
-    setShowModeSelection(true);
-  };
-
   const handleInitialSubmit = async () => {
     if (!pendingSchoolDataPayload) return;
 
@@ -286,7 +253,6 @@ function Success() {
       setUploadId(id);
       setUploadDate(new Date(created));
       setPendingSchoolDataPayload(null);
-      setReviewUploadId("");
     } catch {
       setActionError("Submit failed. Please try again.");
     }
@@ -309,34 +275,7 @@ function Success() {
   };
 
   const tagProps = effectiveStatus ? statusTagMap[effectiveStatus] : null;
-  const qualityHeader = "Data Review & Submit";
-  // Common card styles
-  const cardStyle = {
-    flex: 1,
-    border: "1px solid #e0e0e0",
-    borderRadius: "4px",
-    padding: "1.5rem",
-    background: "#fff",
-    display: "flex",
-    flexDirection: "column" as const,
-    height: "100%",
-  };
-
-  const cardHeaderStyle = {
-    fontSize: "0.875rem",
-    fontWeight: 600,
-    marginBottom: "1rem",
-  };
-
-  const cardValueStyle = {
-    fontSize: "1.5rem",
-    fontWeight: 600,
-    marginBottom: "1rem",
-  };
-
-  const cardButtonContainerStyle = {
-    marginTop: "auto",
-  };
+  const qualityHeader = "Submission of the entire dataset";
 
   const displayUploadId = activeUploadId || "-";
   const displayFileName =
@@ -363,155 +302,73 @@ function Success() {
       ) : (
         <section className="flex flex-col gap-6 pb-20">
           <div>
-            <div className="mb-10 flex items-center gap-6">
-              <div className="flex items-stretch border-b border-gray-300">
-                <div className="flex items-center bg-gray-100 py-3 pl-4 pr-16 text-sm font-medium text-gray-800">
-                  {qualityHeader}
-                </div>
-                <div className="flex items-center bg-gray-100 pr-2">
-                  <Button
-                    className="min-h-0 min-w-0 p-2"
-                    disabled={isRefetchingDqResultQuery || !activeUploadId}
-                    renderIcon={Restart}
-                    kind="ghost"
-                    hasIconOnly
-                    iconDescription="Refresh"
-                    size="sm"
-                    onClick={async () => await refetchDqResultQuery()}
-                  />
-                </div>
-              </div>
-
+            <h2 className="ml-4 text-xl font-semibold leading-tight text-gray-900">
+              {qualityHeader}
+            </h2>
+            <div className="flex items-center">
               <div className="flex flex-1 items-center justify-between">
-                <div className="flex items-center gap-6">
-                  {(activeUploadId || isActionPending) && tagProps && (
-                    <Tag
-                      renderIcon={InProgress}
-                      type={tagProps.color}
-                      className="m-0 rounded-full px-3 py-1"
-                    >
-                      {tagProps.text}
-                    </Tag>
-                  )}
-                  {(activeUploadId || isActionPending) &&
-                    effectiveStatus === DQStatus.IN_PROGRESS && (
-                      <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-gray-800">
-                        <Loading
-                          small
-                          withOverlay={false}
-                          className="h-4 w-4"
-                        />
-                        Refreshing Automatically
-                      </div>
+                {(!!activeUploadId || !!isActionPending) && (
+                  <div className="mt-6 flex items-center gap-6">
+                    <Button
+                      className="ml-4 mr-[-1rem] min-h-0 min-w-0"
+                      disabled={isRefetchingDqResultQuery || !activeUploadId}
+                      renderIcon={Restart}
+                      kind="ghost"
+                      hasIconOnly
+                      iconDescription="Refresh"
+                      size="sm"
+                      onClick={async () => await refetchDqResultQuery()}
+                    />
+                    {(activeUploadId || isActionPending) && tagProps && (
+                      <Tag
+                        renderIcon={InProgress}
+                        type={tagProps.color}
+                        className="m-0 rounded-full px-3 py-1"
+                      >
+                        {tagProps.text}
+                      </Tag>
                     )}
-                  {(activeUploadId || isActionPending) &&
-                    effectiveStatus === DQStatus.IN_PROGRESS && (
-                      <div className="text-xs font-medium text-gray-500">
-                        Estimated running time: 10–15 mins
-                      </div>
-                    )}
-                </div>
+                    {(activeUploadId || isActionPending) &&
+                      effectiveStatus === DQStatus.IN_PROGRESS && (
+                        <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-gray-800">
+                          <Loading
+                            small
+                            withOverlay={false}
+                            className="h-4 w-4"
+                          />
+                          Refreshing Automatically
+                        </div>
+                      )}
+                    {(activeUploadId || isActionPending) &&
+                      effectiveStatus === DQStatus.IN_PROGRESS && (
+                        <div className="text-xs font-medium text-gray-500">
+                          Estimated running time: 10–15 mins
+                        </div>
+                      )}
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="mb-12 pl-4 text-[1.35rem] font-normal leading-snug text-gray-800">
-              {isPreSubmitMode &&
-                !activeUploadId &&
-                !isActionPending &&
-                !showModeSelection && (
-                  <p>
-                    We are currently waiting for your review or submission...
-                  </p>
-                )}
-              {isPreSubmitMode && showModeSelection && !isActionPending && (
-                <div className="flex flex-col gap-4">
-                  <p>
-                    Please select how you want to run the Data Quality
-                    assessment:
-                  </p>
-                  <div className="mt-2 flex gap-4">
-                    <Button
-                      kind="tertiary"
-                      onClick={() => handleReview("uploaded")}
-                      disabled={reviewFile.isPending}
-                    >
-                      Run on Uploaded File Only
-                    </Button>
-                    <Button
-                      kind="tertiary"
-                      onClick={() => handleReview("master")}
-                      disabled={reviewFile.isPending}
-                    >
-                      Run with Master Comparison
-                    </Button>
-                  </div>
-                  {reviewFile.isPending && (
-                    <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-                      <Loading small withOverlay={false} className="h-4 w-4" />
-                      Uploading file for review...
-                    </div>
-                  )}
-                </div>
+              {isSubmitMode && !isActionPending && (
+                <p>We are currently waiting for your submission...</p>
               )}
-              {((isActionPending && reviewFile.isPending) ||
-                (!!reviewUploadId &&
-                  !uploadId &&
-                  (effectiveStatus === DQStatus.IN_PROGRESS ||
-                    isRefetchingDqResultQuery))) && (
-                <p>We are currently reviewing your uploaded file...</p>
-              )}
-              {((isActionPending && uploadFile.isPending) ||
-                (!!uploadId &&
-                  (effectiveStatus === DQStatus.IN_PROGRESS ||
-                    isRefetchingDqResultQuery))) && (
-                <p>We are currently submitting your uploaded file...</p>
-              )}
-              {!!reviewUploadId &&
-                !uploadId &&
-                effectiveStatus === DQStatus.COMPLETED &&
-                !isRefetchingDqResultQuery && (
-                  <p>
-                    Review completed successfully. Preview checks are visible
-                    below. Click Submit when you are ready.
-                  </p>
-                )}
               {activeUploadId &&
                 effectiveStatus === DQStatus.COMPLETED &&
                 !isActionPending &&
                 !isRefetchingDqResultQuery && (
-                  <p>
-                    {uploadId
-                      ? "We have successfully submitted your uploaded file."
-                      : "We have successfully reviewed your uploaded file."}
-                  </p>
+                  <p>We have successfully submitted your uploaded file.</p>
                 )}
               {activeUploadId && isError && !isRefetchingDqResultQuery && (
                 <p className="text-orange-600">
-                  {uploadId
-                    ? "Submission checks have failed."
-                    : "Review checks have failed."}
+                  Submission checks have failed.
                 </p>
               )}
               {actionError && (
                 <p className="mt-2 text-sm font-normal text-red-600">
                   {actionError}
                 </p>
-              )}
-
-              {!isReviewMode && (
-                <Button
-                  className={cn("w-full", {
-                    "bg-green-600 hover:bg-green-800":
-                      status === DQStatus.COMPLETED,
-                  })}
-                  isExpressive
-                  onClick={handleSubmit}
-                  renderIcon={ArrowRight}
-                >
-                  {status === DQStatus.COMPLETED
-                    ? "Review Submission"
-                    : "Close and run in background"}
-                </Button>
               )}
             </div>
 
@@ -548,18 +405,15 @@ function Success() {
 
           {activeUploadId && effectiveStatus === DQStatus.COMPLETED && (
             <>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "1rem",
-                  marginBottom: "2rem",
-                  alignItems: "stretch",
-                }}
-              >
-                <div style={cardStyle}>
-                  <h5 style={cardHeaderStyle}>Total Schools Uploaded</h5>
-                  <p style={cardValueStyle}>{commaNumber(rows)}</p>
-                  <div style={cardButtonContainerStyle}>
+              <div className="mb-8 flex items-stretch gap-4">
+                <div className="flex h-full flex-1 flex-col rounded border border-[#e0e0e0] bg-white p-6">
+                  <h5 className="mb-4 text-sm font-semibold">
+                    Total Schools Uploaded
+                  </h5>
+                  <p className="mb-4 text-2xl font-semibold">
+                    {commaNumber(rows)}
+                  </p>
+                  <div className="mt-auto">
                     <Button
                       kind="primary"
                       size="sm"
@@ -572,10 +426,14 @@ function Success() {
                   </div>
                 </div>
 
-                <div style={cardStyle}>
-                  <h5 style={cardHeaderStyle}>Total Schools Passed</h5>
-                  <p style={cardValueStyle}>{commaNumber(rowsPassed)}</p>
-                  <div style={cardButtonContainerStyle}>
+                <div className="flex h-full flex-1 flex-col rounded border border-[#e0e0e0] bg-white p-6">
+                  <h5 className="mb-4 text-sm font-semibold">
+                    Total Schools Passed
+                  </h5>
+                  <p className="mb-4 text-2xl font-semibold">
+                    {commaNumber(rowsPassed)}
+                  </p>
+                  <div className="mt-auto">
                     <Button
                       kind="primary"
                       size="sm"
@@ -588,10 +446,14 @@ function Success() {
                   </div>
                 </div>
 
-                <div style={cardStyle}>
-                  <h5 style={cardHeaderStyle}>Total Schools Rejected</h5>
-                  <p style={cardValueStyle}>{commaNumber(rowsFailed)}</p>
-                  <div style={cardButtonContainerStyle}>
+                <div className="flex h-full flex-1 flex-col rounded border border-[#e0e0e0] bg-white p-6">
+                  <h5 className="mb-4 text-sm font-semibold">
+                    Total Schools Rejected
+                  </h5>
+                  <p className="mb-4 text-2xl font-semibold">
+                    {commaNumber(rowsFailed)}
+                  </p>
+                  <div className="mt-auto">
                     <Button
                       kind="primary"
                       size="sm"
@@ -610,7 +472,6 @@ function Success() {
             <SuccessDataQualityChecks
               dqResult={dqResult}
               status={effectiveStatus}
-              uploadData={uploadData}
               uploadId={activeUploadId}
             />
           ) : isBasicCheckFetching ? (
@@ -640,36 +501,41 @@ function Success() {
             </div>
           )}
 
-          {/* Action buttons matching screenshot */}
-          <div className="mt-8 flex justify-end gap-[2px]">
-            <Button
-              kind="secondary"
-              className="w-40"
-              as={Link}
-              to={isUnstructured || isStructured ? ".." : "../metadata"}
-              renderIcon={ArrowLeft}
-              disabled={(inProgress && !!activeUploadId) || isActionPending}
-              onClick={() => decrementStepIndex()}
-            >
-              Back
-            </Button>
-            <Button
-              kind="tertiary"
-              className="w-40"
-              disabled={(inProgress && !!activeUploadId) || isActionPending}
-              onClick={isReviewMode ? handleReviewClick : undefined}
-            >
-              Review
-            </Button>
-            <Button
-              kind="primary"
-              className="w-40"
-              renderIcon={ArrowRight}
-              disabled={(inProgress && !!activeUploadId) || isActionPending}
-              onClick={isReviewMode ? handleInitialSubmit : handleSubmit}
-            >
-              Submit
-            </Button>
+          {/* Action buttons */}
+          <div className="mt-8 flex items-center justify-between gap-6">
+            <div className="flex items-center gap-[2px]">
+              <Button
+                kind="secondary"
+                className="w-40"
+                as={Link}
+                to={isUnstructured || isStructured ? ".." : "../assessment"}
+                renderIcon={ArrowLeft}
+                disabled={(inProgress && !!activeUploadId) || isActionPending}
+                onClick={() => decrementStepIndex()}
+              >
+                Back
+              </Button>
+              <Button
+                kind="primary"
+                className="w-40"
+                renderIcon={ArrowRight}
+                disabled={(inProgress && !!activeUploadId) || isActionPending}
+                onClick={isSubmitMode ? handleInitialSubmit : handleSubmit}
+              >
+                Submit
+              </Button>
+            </div>
+
+            {!isSubmitMode && inProgress && (
+              <Button
+                kind="primary"
+                className="w-72"
+                renderIcon={ArrowRight}
+                onClick={handleSubmit}
+              >
+                Close and run in background
+              </Button>
+            )}
           </div>
         </section>
       )}

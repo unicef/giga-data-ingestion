@@ -302,7 +302,7 @@ function Metadata() {
       setPendingSchoolDataPayload(body);
       setIsUploading(false);
       setStepIndex(3);
-      void navigate({ to: "../success" });
+      void navigate({ to: "../assessment" });
       return;
     }
 
@@ -323,7 +323,7 @@ function Metadata() {
 
       setPendingSchoolDataPayload(null);
       setIsUploading(false);
-      setStepIndex(3);
+      setStepIndex(4);
       void navigate({ to: "../success" });
     } catch {
       console.error(
