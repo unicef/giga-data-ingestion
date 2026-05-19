@@ -41,6 +41,7 @@ import { Route as UploadUploadGroupOptionsUploadTypeImport } from './routes/uplo
 import { Route as UploadUploadGroupUploadTypeSuccessImport } from './routes/upload/$uploadGroup/$uploadType/success'
 import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upload/$uploadGroup/$uploadType/metadata'
 import { Route as UploadUploadGroupUploadTypeColumnMappingImport } from './routes/upload/$uploadGroup/$uploadType/column-mapping'
+import { Route as UploadUploadGroupUploadTypeAssessmentImport } from './routes/upload/$uploadGroup/$uploadType/assessment'
 import { Route as IngestApiEditIngestionIdSchoolConnectivityImport } from './routes/ingest-api/edit/$ingestionId/school-connectivity'
 import { Route as IngestApiEditIngestionIdColumnMappingImport } from './routes/ingest-api/edit/$ingestionId/column-mapping'
 import { Route as ApprovalRequestsCountryCodeUploadIdConfirmImport } from './routes/approval-requests/$countryCode/$uploadId/confirm'
@@ -229,6 +230,12 @@ const UploadUploadGroupUploadTypeColumnMappingRoute =
     getParentRoute: () => UploadUploadGroupUploadTypeRoute,
   } as any)
 
+const UploadUploadGroupUploadTypeAssessmentRoute =
+  UploadUploadGroupUploadTypeAssessmentImport.update({
+    path: '/assessment',
+    getParentRoute: () => UploadUploadGroupUploadTypeRoute,
+  } as any)
+
 const IngestApiEditIngestionIdSchoolConnectivityRoute =
   IngestApiEditIngestionIdSchoolConnectivityImport.update({
     path: '/$ingestionId/school-connectivity',
@@ -351,6 +358,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiEditIngestionIdSchoolConnectivityImport
       parentRoute: typeof IngestApiEditImport
     }
+    '/upload/$uploadGroup/$uploadType/assessment': {
+      preLoaderRoute: typeof UploadUploadGroupUploadTypeAssessmentImport
+      parentRoute: typeof UploadUploadGroupUploadTypeImport
+    }
     '/upload/$uploadGroup/$uploadType/column-mapping': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeColumnMappingImport
       parentRoute: typeof UploadUploadGroupUploadTypeImport
@@ -429,6 +440,7 @@ export const routeTree = rootRoute.addChildren([
   UploadLazyRoute.addChildren([
     UploadIndexRoute,
     UploadUploadGroupUploadTypeRoute.addChildren([
+      UploadUploadGroupUploadTypeAssessmentRoute,
       UploadUploadGroupUploadTypeColumnMappingRoute,
       UploadUploadGroupUploadTypeMetadataRoute,
       UploadUploadGroupUploadTypeSuccessRoute,
