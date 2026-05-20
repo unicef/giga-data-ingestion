@@ -291,6 +291,10 @@ function Metadata() {
       column_license: JSON.stringify(uploadSlice.columnLicense),
       dataset: uploadType,
       file: uploadSlice.file!,
+      fuzzy_corrections:
+        uploadSlice.fuzzyCorrections.length > 0
+          ? JSON.stringify(uploadSlice.fuzzyCorrections)
+          : undefined,
       source: uploadSlice.source,
     };
 

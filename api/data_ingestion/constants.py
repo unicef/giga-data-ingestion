@@ -25,6 +25,7 @@ class Constants(BaseSettings):
         "text/csv": [".csv"],
         "application/csv": [".csv"],
     }
+    SUPPORTED_SPREADSHEET_EXTENSIONS: list[str] = [".csv", ".xls", ".xlsx"]
     VALID_UNSTRUCTURED_UPLOAD_TYPES: dict[str, list[str]] = {
         "image/jpeg": [".jpeg", ".jpg"],
         "image/png": [".png"],

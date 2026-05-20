@@ -123,4 +123,3 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
----

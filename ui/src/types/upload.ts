@@ -65,6 +65,7 @@ export interface UploadParams {
   country: string;
   dataset: string;
   file: File;
+  fuzzy_corrections?: string;
   source?: string | null;
   metadata: string;
 }
@@ -81,6 +82,38 @@ export interface UploadStructuredParams {
   file: File;
   source?: string | null;
   metadata: string;
+}
+
+export interface FuzzyValueMapping {
+  value_found: string;
+  count: number;
+  replace_with: string | null;
+  is_valid: boolean;
+}
+
+export interface FuzzyValidationColumn {
+  schema_column: string;
+  file_column: string;
+  header_title: string;
+  unknown_count: number;
+  dropdown_options: string[];
+  value_mappings: FuzzyValueMapping[];
+}
+
+export interface FuzzyValidationResponse {
+  columns: FuzzyValidationColumn[];
+}
+
+export interface FuzzyValidationParams {
+  column_to_schema_mapping: string;
+  dataset: string;
+  file: File;
+}
+
+export interface FuzzyCorrection {
+  column_name: string;
+  value_found: string;
+  replace_with: string | null;
 }
 
 export const DQStatusTagMapping: Record<
