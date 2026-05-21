@@ -5,7 +5,7 @@ from typing import Annotated
 import country_converter as coco
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -89,17 +89,9 @@ class NocoDBWebhookPayload(BaseModel):
 
     type: str
     id: str
+    base_id: str
     version: str
     data: NocoDBWebhookData
-
-
-class NocoDBWebhookRequest(BaseModel):
-    """Schema for the complete NocoDB webhook request including hook metadata."""
-
-    model_config = {"extra": "allow"}
-
-    hook: dict | None = None  # Hook metadata (optional, we don't need it)
-    payload: NocoDBWebhookPayload
 
 
 def verify_meter_token(
@@ -253,7 +245,7 @@ async def trigger_registration_pipeline(
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def retrigger_registration_pipeline(
-    webhook_data: dict,
+    payload: NocoDBWebhookPayload,
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(meter_auth)],
     db: AsyncSession = Depends(get_db),
 ):
@@ -263,24 +255,7 @@ async def retrigger_registration_pipeline(
     """
     # verify_nocodb_token(credentials)
 
-    logger.info(f"Received re-trigger webhook request: {webhook_data}")
-
-    # Try to parse the raw webhook data into the expected schema
-    try:
-        webhook_request = NocoDBWebhookRequest(**webhook_data)
-    except ValidationError as ve:
-        logger.error(f"Webhook validation error: {ve}")
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                "error": "Invalid webhook payload format",
-                "validation_errors": ve.errors(),
-                "received_payload": webhook_data,
-            },
-        ) from ve
-
-    # Extract the actual payload from the webhook request
-    payload = webhook_request.payload
+    logger.info(f"Received re-trigger webhook request: {payload.model_dump()}")
     logger.info(f"Extracted payload: {payload.model_dump_json()}")
 
     if not payload.data.rows:
