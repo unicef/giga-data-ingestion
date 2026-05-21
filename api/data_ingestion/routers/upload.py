@@ -301,16 +301,17 @@ def apply_fuzzy_corrections(
             else:
                 df = pd.read_excel(file_obj.file)
 
-            changed = False
+            column_replacements: dict[str, dict] = {}
             for correction in corrections_mapping:
                 col = correction.get("column_name")
                 old_val = correction.get("value_found")
                 new_val = correction.get("replace_with")
-
                 if col in df.columns and old_val is not None and new_val is not None:
-                    # Replace occurrences directly
-                    df[col] = df[col].astype(str).replace(str(old_val), str(new_val))
-                    changed = True
+                    column_replacements.setdefault(col, {})[old_val] = new_val
+
+            changed = bool(column_replacements)
+            for col, replacements in column_replacements.items():
+                df[col] = df[col].replace(replacements)
 
             if changed:
                 # Write back to a buffer
