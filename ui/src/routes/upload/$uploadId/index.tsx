@@ -1,8 +1,13 @@
 import { useMemo } from "react";
+import { toast } from "react-hot-toast";
 
-import { Download } from "@carbon/icons-react";
+import { Download, Play } from "@carbon/icons-react";
 import { Button, Tab, TabList, TabPanel, TabPanels, Tabs } from "@carbon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { api } from "@/api";
@@ -10,7 +15,7 @@ import DataQualityChecks from "@/components/check-file-uploads/ColumnChecks";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { PendingComponent } from "@/components/common/PendingComponent";
-import { Check } from "@/types/upload";
+import { Check, DQStatus } from "@/types/upload";
 import {
   DataQualityCheck,
   UploadResponse,
@@ -38,6 +43,7 @@ export const Route = createFileRoute("/upload/$uploadId/")({
 
 function Index() {
   const { uploadId } = Route.useParams();
+  const queryClient = useQueryClient();
 
   const { data: dqResultQuery } = useSuspenseQuery({
     queryKey: ["dq_check", uploadId],
@@ -72,6 +78,24 @@ function Index() {
     handleDownloadDqSummary,
     handleDownloadRawFile,
   } = useDownloadHelpers(uploadData);
+
+  // Mutation for running master data check
+  const runMasterCheckMutation = useMutation({
+    mutationFn: () => api.uploads.run_master_check(uploadId),
+    onSuccess: () => {
+      toast.success("Master data check triggered successfully!");
+      // Refetch the upload data to update the status
+      queryClient.invalidateQueries({ queryKey: ["upload", uploadId] });
+      queryClient.invalidateQueries({ queryKey: ["dq_check", uploadId] });
+    },
+    onError: (error: Error & { response?: { data?: { detail?: string } } }) => {
+      toast.error(
+        `Failed to trigger master data check: ${
+          error.response?.data?.detail || error.message
+        }`,
+      );
+    },
+  });
 
   // Extract checks from dqResultData
   const {
@@ -144,7 +168,20 @@ function Index() {
             </p>
           </div>
 
-          <div>
+          <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+            {uploadData.dq_status === DQStatus.FILE_CHECKED && (
+              <Button
+                kind="secondary"
+                size="md"
+                renderIcon={Play}
+                onClick={() => runMasterCheckMutation.mutate()}
+                disabled={runMasterCheckMutation.isPending}
+              >
+                {runMasterCheckMutation.isPending
+                  ? "Starting..."
+                  : "Run Master Data Check"}
+              </Button>
+            )}
             <Button
               kind="primary"
               size="md"

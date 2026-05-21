@@ -80,6 +80,7 @@ class FileUploadRequest:
     source: str | None = Form(None)
     fuzzy_corrections: str | None = Form(None)
     dq_mode: str = Form("master")
+    fuzzy_corrections: str | None = Form(None)
 
 
 @dataclass
