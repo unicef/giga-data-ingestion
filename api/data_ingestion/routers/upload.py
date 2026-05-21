@@ -74,7 +74,11 @@ async def list_basic_checks(
         select(FileUpload)
         .where(FileUpload.is_processed_in_staging == True)  # noqa: E712
         .where(FileUpload.dataset == dataset)
-        .where(FileUpload.dq_status == DQStatusEnum.COMPLETED)
+        .where(
+            FileUpload.dq_status.in_(
+                [DQStatusEnum.COMPLETED, DQStatusEnum.FILE_CHECKED]
+            )
+        )
         .where(FileUpload.dq_report_path != None)  # noqa: E711
         .where(FileUpload.dq_full_path != None)  # noqa: E711
         .order_by(FileUpload.created.desc())
@@ -140,7 +144,11 @@ async def download_basic_check(
         select(FileUpload)
         .where(FileUpload.is_processed_in_staging == True)  # noqa: E712
         .where(FileUpload.dataset == dataset)
-        .where(FileUpload.dq_status == DQStatusEnum.COMPLETED)
+        .where(
+            FileUpload.dq_status.in_(
+                [DQStatusEnum.COMPLETED, DQStatusEnum.FILE_CHECKED]
+            )
+        )
         .where(FileUpload.dq_report_path != None)  # noqa: E711
         .where(FileUpload.dq_full_path != None)  # noqa: E711
         .order_by(FileUpload.created.desc())
@@ -544,6 +552,121 @@ async def trigger_dq_run(
     return {"message": "DQ run triggered successfully", "dq_run_id": dq_run.id}
 
 
+@router.post("/{upload_id}/dq-complete", status_code=status.HTTP_200_OK)
+async def complete_dq_run(
+    upload_id: str,
+    dq_mode: DQModeEnum,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Webhook endpoint for Dagster pipeline to update DQ status based on dq_mode.
+    - If dq_mode is 'uploaded', set status to FILE_CHECKED
+    - If dq_mode is 'master', set status to COMPLETED
+    """
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    # Update status based on dq_mode
+    if dq_mode == DQModeEnum.uploaded:
+        file_upload.dq_status = DQStatusEnum.FILE_CHECKED
+    elif dq_mode == DQModeEnum.master:
+        file_upload.dq_status = DQStatusEnum.COMPLETED
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown dq_mode: {dq_mode}",
+        )
+
+    await db.commit()
+    return {"message": f"DQ status updated to {file_upload.dq_status.value}"}
+
+
+@router.post("/{upload_id}/run-master-check", status_code=status.HTTP_201_CREATED)
+async def run_master_data_check(
+    upload_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    """
+    Run master data check for a file that is in FILE_CHECKED status.
+    This allows users to complete the submission by running the check against master data.
+    """
+    query = select(FileUpload).where(FileUpload.id == upload_id)
+    file_upload = await db.scalar(query)
+
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to trigger DQ for this file.",
+        )
+
+    if file_upload.dq_status != DQStatusEnum.FILE_CHECKED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Master data check can only be run on files with FILE_CHECKED status.",
+        )
+
+    # Create DQRun record for master mode
+    dq_run = DQRun(
+        upload_id=file_upload.id,
+        dq_mode=DQModeEnum.master,
+        status="IN_PROGRESS",
+    )
+    db.add(dq_run)
+
+    # Update blob metadata to trigger sensor
+    try:
+        blob_client = storage_client.get_blob_client(file_upload.metadata_json_path)
+        if blob_client.exists():
+            metadata_json = json.loads(blob_client.download_blob().readall())
+            metadata_json["dq_mode"] = DQModeEnum.master.value
+            metadata_json["dq_triggered_at"] = datetime.now(UTC).isoformat()
+
+            blob_client.upload_blob(
+                json.dumps(metadata_json, indent=2).encode(), overwrite=True
+            )
+
+            # Reset DQ status to indicate it's re-processing
+            file_upload.dq_status = DQStatusEnum.IN_PROGRESS
+            await db.commit()
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Metadata file not found in storage",
+            )
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as e:
+        logger.error(f"Failed to trigger master data check: {str(e)}")
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to trigger master data check: {str(e)}",
+        ) from e
+
+    return {
+        "message": "Master data check triggered successfully",
+        "dq_run_id": dq_run.id,
+    }
+
+
 @router.post("/unstructured", status_code=status.HTTP_201_CREATED)
 async def upload_unstructured(  # noqa: C901
     response: Response,
@@ -773,7 +896,10 @@ async def get_data_quality_check(
             detail="You do not have permission to access details for this file.",
         )
 
-    if file_upload.dq_status != DQStatusEnum.COMPLETED:
+    if file_upload.dq_status not in [DQStatusEnum.COMPLETED, DQStatusEnum.FILE_CHECKED]:
+        return {"dq_summary": None, "status": file_upload.dq_status}
+
+    if not file_upload.dq_report_path:
         return {"dq_summary": None, "status": file_upload.dq_status}
 
     dq_report_summary_dict = get_data_quality_summary(file_upload.dq_report_path)
@@ -1290,6 +1416,9 @@ async def download_rejected_rows(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error retrieving rejected rows: {str(e)}",
+        ) from e
+
+
 @router.post("/validate-fuzzy", status_code=status.HTTP_200_OK)
 async def validate_fuzzy_matching(
     dataset: str,

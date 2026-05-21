@@ -9,6 +9,7 @@ export enum DQStatus {
   ERROR = "ERROR",
   TIMEOUT = "TIMEOUT",
   SKIPPED = "SKIPPED",
+  FILE_CHECKED = "FILE_CHECKED",
 }
 export interface Check {
   assertion: string;
@@ -125,6 +126,7 @@ export const DQStatusTagMapping: Record<
   [DQStatus.ERROR]: "red",
   [DQStatus.TIMEOUT]: "red",
   [DQStatus.SKIPPED]: "gray",
+  [DQStatus.FILE_CHECKED]: "teal",
 };
 
 export interface UploadResponse {
