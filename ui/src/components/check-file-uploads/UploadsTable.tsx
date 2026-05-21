@@ -150,7 +150,10 @@ function UploadsTable({
             params={{ uploadId: upload.id }}
             kind="ghost"
             size="sm"
-            disabled={upload.dq_status !== DQStatus.COMPLETED}
+            disabled={
+              upload.dq_status !== DQStatus.COMPLETED &&
+              upload.dq_status !== DQStatus.FILE_CHECKED
+            }
           >
             View
           </Button>

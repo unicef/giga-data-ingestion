@@ -773,7 +773,7 @@ async def get_data_quality_check(
             detail="You do not have permission to access details for this file.",
         )
 
-    if file_upload.dq_status != DQStatusEnum.COMPLETED:
+    if file_upload.dq_status not in [DQStatusEnum.FILE_CHECKED, DQStatusEnum.COMPLETED]:
         return {"dq_summary": None, "status": file_upload.dq_status}
 
     dq_report_summary_dict = get_data_quality_summary(file_upload.dq_report_path)
@@ -1290,6 +1290,9 @@ async def download_rejected_rows(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error retrieving rejected rows: {str(e)}",
+        ) from e
+
+
 @router.post("/validate-fuzzy", status_code=status.HTTP_200_OK)
 async def validate_fuzzy_matching(
     dataset: str,
