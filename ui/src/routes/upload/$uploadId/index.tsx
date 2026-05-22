@@ -11,7 +11,11 @@ import {
   Tabs,
   Tag,
 } from "@carbon/react";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 
 import { api } from "@/api";
@@ -50,6 +54,7 @@ export const Route = createFileRoute("/upload/$uploadId/")({
 function Index() {
   const { uploadId } = Route.useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data: dqResultQuery } = useSuspenseQuery({
     queryKey: ["dq_check", uploadId],
@@ -94,6 +99,8 @@ function Index() {
   const runMasterCheckMutation = useMutation({
     mutationFn: () => api.uploads.dq_run(uploadId, "master"),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["upload", uploadId] });
+      queryClient.invalidateQueries({ queryKey: ["dq_check", uploadId] });
       router.invalidate();
     },
   });
@@ -102,7 +109,7 @@ function Index() {
     runMasterCheckMutation.mutate();
   };
 
-  const summaryStats = dqResultData.dq_summary.summary || {};
+  const summaryStats = dqResultData.dq_summary?.summary || {};
   const {
     rows = 0,
     rows_passed: rowsPassed = 0,
@@ -121,7 +128,7 @@ function Index() {
     summary: _summaryStats,
     critical_error_check: _critical_error_check = [],
     ...checks
-  } = dqResultData.dq_summary;
+  } = dqResultData.dq_summary || {};
 
   // Common card styles
   const cardStyle = {
