@@ -19,7 +19,6 @@ class DQStatusEnum(Enum):
     ERROR = "ERROR"
     TIMEOUT = "TIMEOUT"
     SKIPPED = "SKIPPED"
-    FILE_CHECKED = "FILE_CHECKED"
 
 
 class FileUpload(BaseModel):

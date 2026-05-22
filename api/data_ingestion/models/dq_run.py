@@ -17,7 +17,7 @@ class DQRun(BaseModel):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    upload_id: Mapped[int] = mapped_column(
+    upload_id: Mapped[str] = mapped_column(
         ForeignKey("file_uploads.id", ondelete="CASCADE"),
         index=True,
         nullable=False,

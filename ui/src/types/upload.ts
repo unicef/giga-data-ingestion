@@ -9,7 +9,6 @@ export enum DQStatus {
   ERROR = "ERROR",
   TIMEOUT = "TIMEOUT",
   SKIPPED = "SKIPPED",
-  FILE_CHECKED = "FILE_CHECKED",
 }
 export interface Check {
   assertion: string;
@@ -126,7 +125,6 @@ export const DQStatusTagMapping: Record<
   [DQStatus.ERROR]: "red",
   [DQStatus.TIMEOUT]: "red",
   [DQStatus.SKIPPED]: "gray",
-  [DQStatus.FILE_CHECKED]: "teal",
 };
 
 export interface UploadResponse {
@@ -146,6 +144,7 @@ export interface UploadResponse {
   upload_path: string;
   column_to_schema_mapping: string;
   column_license: string;
+  dq_mode?: "uploaded" | "master" | null;
 }
 
 export const initialUploadResponse: UploadResponse = {
@@ -165,6 +164,7 @@ export const initialUploadResponse: UploadResponse = {
   upload_path: "",
   column_to_schema_mapping: "",
   column_license: "",
+  dq_mode: null,
 };
 
 export const basicCheckSchema = z.object({

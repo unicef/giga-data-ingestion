@@ -71,14 +71,10 @@ function Index() {
   );
 
   const dqStatus = uploadData.dq_status;
-  const isFileChecked = dqStatus === DQStatus.FILE_CHECKED;
   const isCompleted = dqStatus === DQStatus.COMPLETED;
 
-  const checkTypeLabel = isCompleted
-    ? "MASTER"
-    : isFileChecked
-    ? "UPLOADED_FILE_CHECK"
-    : dqStatus;
+  const checkTypeLabel =
+    uploadData.dq_mode === "uploaded" ? "FILE_CHECKED" : "MASTER";
 
   const runMasterCheckMutation = useMutation({
     mutationFn: () => api.uploads.dq_run(uploadId, "master"),
@@ -204,7 +200,7 @@ function Index() {
               Download data quality report
             </Button>
 
-            {isFileChecked && (
+            {uploadData.dq_mode === "uploaded" && isCompleted && (
               <Button
                 kind="primary"
                 size="md"

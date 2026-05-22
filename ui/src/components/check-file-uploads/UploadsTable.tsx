@@ -122,7 +122,13 @@ function UploadsTable({
 
     _renderUploads.data = uploads.data.map(upload => {
       const isUnstructured = upload.dataset === "unstructured";
-      const statusText = upload.dq_status.replace("_", " ").toLowerCase();
+      let statusText = upload.dq_status.replace("_", " ").toLowerCase();
+      if (upload.dq_status === DQStatus.COMPLETED) {
+        statusText =
+          upload.dq_mode === "uploaded"
+            ? "file check completed"
+            : "master check completed";
+      }
 
       return {
         ...upload,
@@ -150,10 +156,7 @@ function UploadsTable({
             params={{ uploadId: upload.id }}
             kind="ghost"
             size="sm"
-            disabled={
-              upload.dq_status !== DQStatus.COMPLETED &&
-              upload.dq_status !== DQStatus.FILE_CHECKED
-            }
+            disabled={upload.dq_status !== DQStatus.COMPLETED}
           >
             View
           </Button>
