@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { Download, Send } from "@carbon/icons-react";
 import {
   Button,
+  Loading,
   Tab,
   TabList,
   TabPanel,
@@ -53,6 +54,13 @@ function Index() {
   const { data: dqResultQuery } = useSuspenseQuery({
     queryKey: ["dq_check", uploadId],
     queryFn: () => api.uploads.get_data_quality_check(uploadId),
+    refetchInterval: query => {
+      const current_status = query.state.data?.data?.status;
+      if (current_status && current_status !== DQStatus.IN_PROGRESS) {
+        return false;
+      }
+      return 5000;
+    },
   });
 
   const dqResultData = useMemo<DataQualityCheck>(
@@ -63,6 +71,13 @@ function Index() {
   const { data: uploadQuery } = useSuspenseQuery({
     queryKey: ["upload", uploadId],
     queryFn: () => api.uploads.get_upload(uploadId),
+    refetchInterval: query => {
+      const current_status = query.state.data?.data?.dq_status;
+      if (current_status && current_status !== DQStatus.IN_PROGRESS) {
+        return false;
+      }
+      return 5000;
+    },
   });
 
   const uploadData = useMemo<UploadResponse>(
@@ -180,6 +195,24 @@ function Index() {
               <Tag type={DQStatusTagMapping[dqStatus]} size="md">
                 {checkTypeLabel}
               </Tag>
+              {dqStatus === DQStatus.IN_PROGRESS && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                    fontSize: "0.875rem",
+                    color: "#393939",
+                  }}
+                >
+                  <Loading
+                    small
+                    withOverlay={false}
+                    style={{ width: "1rem", height: "1rem" }}
+                  />
+                  <span>Checking... Refreshing automatically</span>
+                </div>
+              )}
             </div>
           </div>
 

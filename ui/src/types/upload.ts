@@ -68,6 +68,7 @@ export interface UploadParams {
   fuzzy_corrections?: string;
   source?: string | null;
   metadata: string;
+  dq_mode?: "uploaded" | "master";
 }
 
 export interface UploadUnstructuredParams {
