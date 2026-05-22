@@ -1,3 +1,4 @@
+import asyncio
 import io
 import json
 import os
@@ -286,7 +287,7 @@ async def get_upload(
 
 
 def apply_fuzzy_corrections(
-    fuzzy_corrections_json: str, file_extension: str, file_obj, upload_content: bytes
+    fuzzy_corrections_json: str, file_extension: str, upload_content: bytes
 ) -> bytes:
     try:
         corrections_mapping = orjson.loads(fuzzy_corrections_json)
@@ -300,20 +301,20 @@ def apply_fuzzy_corrections(
                 if col is not None and old_val is not None and new_val is not None:
                     column_replacements.setdefault(col, {})[str(old_val)] = str(new_val)
 
-            file_obj.file.seek(0)
             dtype_overrides = {col: str for col in column_replacements}
+            file_buffer = io.BytesIO(upload_content)
             if file_ext == ".csv":
-                df = pd.read_csv(file_obj.file, dtype=dtype_overrides)
+                df = pd.read_csv(file_buffer, dtype=dtype_overrides)
             else:
-                df = pd.read_excel(file_obj.file, dtype=dtype_overrides)
+                df = pd.read_excel(file_buffer, dtype=dtype_overrides)
 
-            changed = bool(column_replacements)
+            changed = False
             for col, replacements in column_replacements.items():
                 if col in df.columns:
                     df[col] = df[col].replace(replacements)
+                    changed = True
 
             if changed:
-                # Write back to a buffer
                 buffer = io.BytesIO()
                 if file_ext == ".csv":
                     df.to_csv(buffer, index=False)
@@ -322,7 +323,6 @@ def apply_fuzzy_corrections(
                 return buffer.getvalue()
     except Exception as e:
         logger.error(f"Failed to apply fuzzy corrections: {e}")
-    # Fallback to the original file content
     return upload_content
 
 
@@ -413,8 +413,13 @@ async def upload_file(
 
         # Apply fuzzy corrections if provided
         if form.fuzzy_corrections:
-            upload_content = apply_fuzzy_corrections(
-                form.fuzzy_corrections, file_extension, file, upload_content
+            loop = asyncio.get_running_loop()
+            upload_content = await loop.run_in_executor(
+                None,
+                apply_fuzzy_corrections,
+                form.fuzzy_corrections,
+                file_extension,
+                upload_content,
             )
 
         client.upload_blob(
