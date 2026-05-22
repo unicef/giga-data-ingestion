@@ -109,9 +109,15 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
   const filteredAndSortedRows = useMemo(() => {
     const result = data.filter(check => {
       const searchString = searchTerm.toLowerCase();
+      const columnKey = check.column === "" ? "NO_COLUMN" : check.column;
+      const columnDisplay =
+        columnKey === "NO_COLUMN" ? "Entire row" : columnKey;
+      const assertionLabel = formatAssertion(check.assertion, columnKey);
       return (
         check.column.toLowerCase().includes(searchString) ||
-        check.assertion.toLowerCase().includes(searchString)
+        check.assertion.toLowerCase().includes(searchString) ||
+        columnDisplay.toLowerCase().includes(searchString) ||
+        assertionLabel.toLowerCase().includes(searchString)
       );
     });
 
