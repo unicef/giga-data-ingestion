@@ -292,26 +292,25 @@ def apply_fuzzy_corrections(
         corrections_mapping = orjson.loads(fuzzy_corrections_json)
         file_ext = file_extension.lower()
         if file_ext in constants.SUPPORTED_SPREADSHEET_EXTENSIONS:
-            # In a non-async context we'd just use seek(0).
-            # Since file_obj is an UploadFile, we need an await if we abstract it entirely.
-            # But we can just use file_obj.file which is a SpooledTemporaryFile with synchronous ops.
-            file_obj.file.seek(0)
-            if file_ext == ".csv":
-                df = pd.read_csv(file_obj.file)
-            else:
-                df = pd.read_excel(file_obj.file)
-
             column_replacements: dict[str, dict] = {}
             for correction in corrections_mapping:
                 col = correction.get("column_name")
                 old_val = correction.get("value_found")
                 new_val = correction.get("replace_with")
-                if col in df.columns and old_val is not None and new_val is not None:
-                    column_replacements.setdefault(col, {})[old_val] = new_val
+                if col is not None and old_val is not None and new_val is not None:
+                    column_replacements.setdefault(col, {})[str(old_val)] = str(new_val)
+
+            file_obj.file.seek(0)
+            dtype_overrides = {col: str for col in column_replacements}
+            if file_ext == ".csv":
+                df = pd.read_csv(file_obj.file, dtype=dtype_overrides)
+            else:
+                df = pd.read_excel(file_obj.file, dtype=dtype_overrides)
 
             changed = bool(column_replacements)
             for col, replacements in column_replacements.items():
-                df[col] = df[col].replace(replacements)
+                if col in df.columns:
+                    df[col] = df[col].replace(replacements)
 
             if changed:
                 # Write back to a buffer
