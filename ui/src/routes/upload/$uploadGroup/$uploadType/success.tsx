@@ -272,7 +272,6 @@ function Success() {
     [DQStatus.ERROR]: { color: "red", text: "Failed" },
     [DQStatus.SKIPPED]: { color: "red", text: "Failed" },
     [DQStatus.TIMEOUT]: { color: "red", text: "Failed" },
-    [DQStatus.FILE_CHECKED]: { color: "teal", text: "File Checked" },
   };
 
   const tagProps = effectiveStatus ? statusTagMap[effectiveStatus] : null;

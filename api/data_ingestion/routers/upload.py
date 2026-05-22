@@ -395,9 +395,24 @@ async def list_uploads(
         .limit(page_size)
         .offset((page - 1) * page_size)
     )
+    items_list = list(items)
+
+    if items_list:
+        upload_ids = [item.id for item in items_list]
+        dq_runs_query = select(DQRun).where(DQRun.upload_id.in_(upload_ids))
+        dq_runs = await db.scalars(dq_runs_query)
+        latest_dq_mode_map = {}
+        for run in dq_runs:
+            existing_run = latest_dq_mode_map.get(run.upload_id)
+            if not existing_run or run.id > existing_run.id:
+                latest_dq_mode_map[run.upload_id] = run
+
+        for item in items_list:
+            run = latest_dq_mode_map.get(item.id)
+            item.dq_mode = run.dq_mode.value if run else "master"
 
     return {
-        "data": items,
+        "data": items_list,
         "page": page,
         "page_size": page_size,
         "total_count": total,
@@ -428,6 +443,17 @@ async def get_upload(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to access details for this file.",
         )
+
+    dq_mode = "master"
+    if file_upload.metadata_json_path:
+        try:
+            blob_client = storage_client.get_blob_client(file_upload.metadata_json_path)
+            if blob_client.exists():
+                metadata_json = json.loads(blob_client.download_blob().readall())
+                dq_mode = metadata_json.get("dq_mode", "master")
+        except Exception as e:
+            logger.error(f"Failed to fetch dq_mode from metadata: {e}")
+    file_upload.dq_mode = dq_mode
 
     return file_upload
 
@@ -542,6 +568,15 @@ async def upload_file(
     file_upload.metadata_json_path = metadata_file_path
 
     db.add(file_upload)
+    await db.commit()
+
+    # Create initial DQRun record
+    dq_run = DQRun(
+        upload_id=file_upload.id,
+        dq_mode=form.dq_mode,
+        status="IN_PROGRESS",
+    )
+    db.add(dq_run)
     await db.commit()
     client = storage_client.get_blob_client(file_upload.upload_path)
 
@@ -913,7 +948,7 @@ async def get_data_quality_check(
             detail="You do not have permission to access details for this file.",
         )
 
-    if file_upload.dq_status not in [DQStatusEnum.FILE_CHECKED, DQStatusEnum.COMPLETED]:
+    if file_upload.dq_status != DQStatusEnum.COMPLETED:
         return {"dq_summary": None, "status": file_upload.dq_status}
 
     dq_report_summary_dict = get_data_quality_summary(file_upload.dq_report_path)

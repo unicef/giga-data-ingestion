@@ -30,6 +30,7 @@ class FileUpload(BaseModel):
     column_to_schema_mapping: dict[str, str]
     column_license: dict[str, str]
     upload_path: str
+    dq_mode: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
