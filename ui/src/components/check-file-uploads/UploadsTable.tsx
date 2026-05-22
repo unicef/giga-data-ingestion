@@ -14,6 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Tag,
 } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
@@ -22,7 +23,11 @@ import { format } from "date-fns";
 import { api } from "@/api";
 import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime.ts";
 import { PagedResponse } from "@/types/api.ts";
-import { DQStatus, UploadResponse } from "@/types/upload.ts";
+import {
+  DQStatus,
+  DQStatusTagMapping,
+  UploadResponse,
+} from "@/types/upload.ts";
 
 const columns: DataTableHeader[] = [
   {
@@ -119,13 +124,6 @@ function UploadsTable({
       const isUnstructured = upload.dataset === "unstructured";
       const statusText = upload.dq_status.replace("_", " ").toLowerCase();
 
-      let statusDisplay = statusText;
-      if (upload.dq_status === DQStatus.COMPLETED) {
-        statusDisplay = "Master data check completed";
-      } else if (upload.dq_status === DQStatus.FILE_CHECKED) {
-        statusDisplay = "File-only check completed";
-      }
-
       return {
         ...upload,
         created: format(new Date(upload.created), DEFAULT_DATETIME_FORMAT),
@@ -137,7 +135,14 @@ function UploadsTable({
             )}
           </>
         ),
-        status: <span className="font-medium capitalize">{statusDisplay}</span>,
+        status: (
+          <Tag
+            type={DQStatusTagMapping[upload.dq_status]}
+            className="capitalize"
+          >
+            {statusText}
+          </Tag>
+        ),
         actions: !isUnstructured && (
           <Button
             as={Link}
@@ -146,9 +151,8 @@ function UploadsTable({
             kind="ghost"
             size="sm"
             disabled={
-              ![DQStatus.COMPLETED, DQStatus.FILE_CHECKED].includes(
-                upload.dq_status,
-              )
+              upload.dq_status !== DQStatus.COMPLETED &&
+              upload.dq_status !== DQStatus.FILE_CHECKED
             }
           >
             View

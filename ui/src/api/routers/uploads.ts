@@ -198,10 +198,5 @@ export default function routes(axi: AxiosInstance) {
         params: { dq_mode },
       });
     },
-    run_master_check: (
-      upload_id: string,
-    ): Promise<AxiosResponse<{ message: string; dq_run_id: number }>> => {
-      return axi.post(`/upload/${upload_id}/run-master-check`);
-    },
   };
 }
