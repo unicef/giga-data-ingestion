@@ -39,7 +39,10 @@ export default function routes(axi: AxiosInstance) {
       });
 
       return axi.post("/upload", formData, {
-        params: { dataset: params.dataset },
+        params: {
+          dataset: params.dataset,
+          ...(params.dq_mode ? { dq_mode: params.dq_mode } : {}),
+        },
       });
     },
     review: (

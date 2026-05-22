@@ -363,11 +363,14 @@ def apply_fuzzy_corrections(
 async def upload_file(
     response: Response,
     dataset: str,
+    dq_mode: Optional[DQModeEnum] = Query(None),
     form: FileUploadRequest = Depends(),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(azure_scheme),
     is_privileged: bool = Depends(IsPrivileged.raises(False)),
 ):
+    form.dq_mode = getattr(dq_mode, "value", None) or form.dq_mode or "master"
+
     file = form.file
 
     if not is_privileged:
@@ -489,7 +492,7 @@ async def upload_file(
 async def upload_file_for_review(
     response: Response,
     dataset: str,
-    dq_mode: DQModeEnum = DQModeEnum.uploaded,
+    dq_mode: Optional[DQModeEnum] = Query(None),
     form: FileUploadRequest = Depends(),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(azure_scheme),
@@ -500,8 +503,22 @@ async def upload_file_for_review(
     to control whether checks compare against uploaded file only or master table.
     Default is 'uploaded' for review mode.
     """
-    form.dq_mode = dq_mode.value
-    return await upload_file(response, dataset, form, db, user, is_privileged)
+    resolved_dq_mode = "uploaded"
+    if dq_mode is not None:
+        resolved_dq_mode = dq_mode.value
+    elif form.dq_mode:
+        resolved_dq_mode = form.dq_mode
+
+    form.dq_mode = resolved_dq_mode
+    return await upload_file(
+        response=response,
+        dataset=dataset,
+        dq_mode=None,
+        form=form,
+        db=db,
+        user=user,
+        is_privileged=is_privileged,
+    )
 
 
 @router.post("/{upload_id}/dq-run", status_code=status.HTTP_201_CREATED)
@@ -556,6 +573,12 @@ async def trigger_dq_run(
             blob_client.upload_blob(
                 json.dumps(metadata_json, indent=2).encode(), overwrite=True
             )
+
+            # Also update the metadata on the raw upload file itself
+            raw_blob_client = storage_client.get_blob_client(file_upload.upload_path)
+            if raw_blob_client.exists():
+                string_metadata = {str(k): str(v) for k, v in metadata_json.items()}
+                raw_blob_client.set_blob_metadata(metadata=string_metadata)
 
             # Reset DQ status in DB to indicate it's re-processing
             file_upload.dq_status = DQStatusEnum.IN_PROGRESS
