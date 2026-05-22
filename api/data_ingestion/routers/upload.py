@@ -424,7 +424,7 @@ async def upload_file(
 
         client.upload_blob(
             upload_content,
-            metadata=metadata,
+            overwrite=True,
             content_settings=ContentSettings(content_type=file_type),
         )
         # Upload metadata sidecar JSON
