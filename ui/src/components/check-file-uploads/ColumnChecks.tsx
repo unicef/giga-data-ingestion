@@ -155,7 +155,7 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
     const isActive = sortConfig.key === key;
 
     return (
-      <div className="absolute right-1 top-1/2 flex -translate-y-1/2 flex-col">
+      <div className="ml-2 flex shrink-0 flex-col">
         <ChevronUp
           className={cn(
             "cursor-pointer transition-colors duration-150",
@@ -271,9 +271,9 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
                       <TableHeader
                         key={header.key}
                         isSortable={false}
-                        className={cn("relative bg-blue-50 text-gray-700")}
+                        className={cn("bg-blue-50 text-gray-700")}
                       >
-                        <div className="flex w-full items-center justify-between">
+                        <div className="flex w-full items-center justify-between gap-2">
                           <span>{header.header}</span>
                           {(header as ExtendedDataTableHeader).sortable &&
                             renderSortControls(header.key)}
