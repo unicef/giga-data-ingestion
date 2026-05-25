@@ -88,6 +88,8 @@ interface UploadsTableProps {
   uploaderEmail?: string;
   country?: string;
   dqStatus?: string;
+  createdFrom?: string;
+  createdTo?: string;
 }
 
 function UploadsTable({
@@ -99,6 +101,8 @@ function UploadsTable({
   uploaderEmail,
   country,
   dqStatus,
+  createdFrom,
+  createdTo,
 }: UploadsTableProps) {
   const { data: uploadsQuery, isLoading } = useSuspenseQuery({
     queryFn: () =>
@@ -110,6 +114,8 @@ function UploadsTable({
         uploader_email: uploaderEmail || undefined,
         country: country || undefined,
         dq_status: dqStatus || undefined,
+        created_from: createdFrom || undefined,
+        created_to: createdTo || undefined,
       }),
     queryKey: [
       "uploads",
@@ -120,6 +126,8 @@ function UploadsTable({
       uploaderEmail,
       country,
       dqStatus,
+      createdFrom,
+      createdTo,
     ],
   });
 

@@ -16,12 +16,19 @@ import { Link } from "@tanstack/react-router";
 
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
 import FilterModal, {
-  EMPTY_FILTERS,
   UploadFilters,
 } from "@/components/upload/FilterModal.tsx";
 import useRoles from "@/hooks/useRoles";
 import { cn } from "@/lib/utils.ts";
 import { getDataPrivacyDocument } from "@/utils/download.ts";
+
+const EMPTY_FILTERS: UploadFilters = {
+  uploaderEmail: "",
+  country: "",
+  dqStatus: "",
+  createdFrom: "",
+  createdTo: "",
+};
 
 interface UploadLandingProps {
   page: number;
@@ -188,6 +195,8 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -198,6 +207,8 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -208,6 +219,8 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -218,6 +231,8 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
                 />
               </TabPanel>
             </TabPanels>

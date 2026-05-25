@@ -27,6 +27,8 @@ export default function routes(axi: AxiosInstance) {
       uploader_email?: string;
       country?: string;
       dq_status?: string;
+      created_from?: string;
+      created_to?: string;
     }): Promise<AxiosResponse<PagedResponse<UploadResponse>>> => {
       return axi.get("/upload", { params });
     },

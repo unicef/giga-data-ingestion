@@ -1,6 +1,7 @@
 import io
 import json
 import os
+from datetime import date, datetime, time
 from pathlib import Path
 from typing import Annotated
 
@@ -223,6 +224,8 @@ async def list_uploads(
     uploader_email: str | None = None,
     country: str | None = None,
     dq_status: str | None = None,
+    created_from: date | None = None,
+    created_to: date | None = None,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -251,6 +254,16 @@ async def list_uploads(
 
     if dq_status is not None:
         query = query.where(FileUpload.dq_status == dq_status)
+
+    if created_from is not None:
+        query = query.where(
+            FileUpload.created >= datetime.combine(created_from, time.min)
+        )
+
+    if created_to is not None:
+        query = query.where(
+            FileUpload.created <= datetime.combine(created_to, time.max)
+        )
 
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query)

@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 import {
   Button,
   ComposedModal,
+  DatePicker,
+  DatePickerInput,
   ModalBody,
   ModalFooter,
   ModalHeader,
@@ -10,9 +12,11 @@ import {
   SelectItem,
 } from "@carbon/react";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 
 import { api } from "@/api";
 import { listCountriesQueryOptions } from "@/api/queryOptions.ts";
+import { DEFAULT_DATE_FORMAT } from "@/constants/datetime.ts";
 import useRoles from "@/hooks/useRoles.ts";
 import { DQStatus } from "@/types/upload.ts";
 
@@ -20,7 +24,8 @@ export interface UploadFilters {
   uploaderEmail: string;
   country: string;
   dqStatus: string;
-  source: string;
+  createdFrom: string;
+  createdTo: string;
 }
 
 interface FilterModalProps {
@@ -34,7 +39,8 @@ const EMPTY_FILTERS: UploadFilters = {
   uploaderEmail: "",
   country: "",
   dqStatus: "",
-  source: "",
+  createdFrom: "",
+  createdTo: "",
 };
 
 function FilterModal({
@@ -48,6 +54,7 @@ function FilterModal({
 
   useEffect(() => {
     if (open) setFilters(initialFilters);
+    if (!open) closeDatePickers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -66,20 +73,52 @@ function FilterModal({
     setFilters(prev => ({ ...prev, [field]: value }));
   }
 
+  function handleDateChange(field: keyof UploadFilters, selectedDates: Date[]) {
+    handleChange(
+      field,
+      selectedDates[0] ? format(selectedDates[0], DEFAULT_DATE_FORMAT) : "",
+    );
+  }
+
+  function handleDateInputChange(
+    field: keyof UploadFilters,
+    event: ChangeEvent<HTMLInputElement>,
+  ) {
+    if (!event.target.value) handleChange(field, "");
+  }
+
+  function closeDatePickers() {
+    ["filter-created-from", "filter-created-to"].forEach(id => {
+      const input = document.getElementById(id) as
+        | (HTMLInputElement & { _flatpickr?: { close: () => void } })
+        | null;
+      input?._flatpickr?.close();
+    });
+  }
+
+  function handleClose() {
+    closeDatePickers();
+    onClose();
+  }
+
   function handleApply() {
     onApply(filters);
-    onClose();
+    handleClose();
   }
 
   function handleClear() {
     const cleared = { ...EMPTY_FILTERS };
     setFilters(cleared);
     onApply(cleared);
-    onClose();
+    handleClose();
   }
 
   return (
-    <ComposedModal open={open} onClose={onClose} className="filter-side-panel">
+    <ComposedModal
+      open={open}
+      onClose={handleClose}
+      className="filter-side-panel"
+    >
       <ModalHeader title="Filters" />
       <ModalBody hasForm>
         <div className="flex flex-col gap-4">
@@ -117,17 +156,37 @@ function FilterModal({
             ))}
           </Select>
 
-          <Select
-            id="filter-source"
-            labelText="Source"
-            value={filters.source}
-            onChange={e => handleChange("source", e.target.value)}
+          <DatePicker
+            datePickerType="single"
+            dateFormat="Y-m-d"
+            value={filters.createdFrom}
+            onChange={selectedDates =>
+              handleDateChange("createdFrom", selectedDates)
+            }
           >
-            <SelectItem value="" text="Choose an option" />
-            <SelectItem value="fb" text="Facebook" />
-            <SelectItem value="itu" text="ITU" />
-            <SelectItem value="api" text="API" />
-          </Select>
+            <DatePickerInput
+              id="filter-created-from"
+              labelText="Uploaded from"
+              placeholder="yyyy-mm-dd"
+              onChange={event => handleDateInputChange("createdFrom", event)}
+            />
+          </DatePicker>
+
+          <DatePicker
+            datePickerType="single"
+            dateFormat="Y-m-d"
+            value={filters.createdTo}
+            onChange={selectedDates =>
+              handleDateChange("createdTo", selectedDates)
+            }
+          >
+            <DatePickerInput
+              id="filter-created-to"
+              labelText="Uploaded to"
+              placeholder="yyyy-mm-dd"
+              onChange={event => handleDateInputChange("createdTo", event)}
+            />
+          </DatePicker>
 
           <Select
             id="filter-dq-status"
@@ -158,5 +217,4 @@ function FilterModal({
   );
 }
 
-export { EMPTY_FILTERS };
 export default FilterModal;
