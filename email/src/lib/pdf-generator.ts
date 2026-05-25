@@ -252,6 +252,8 @@ function buildContext(data: PDFReportData) {
   const passPct = (passed / safeDenom) * 100;
   const warnPct = (warnings / safeDenom) * 100;
 
+  const pctParen = (n: number) => `(${n.toFixed(1)}%)`;
+
   // ── Connectivity / Electricity / Education / Mapping ─────────────────
   const missConnectivity = failedCount(findCheck(missChecks, "is_null_optional", "connectivity_govt"));
   const missConnectivityType = failedCount(findCheck(missChecks, "is_null_optional", "connectivity_type"));
@@ -297,6 +299,9 @@ function buildContext(data: PDFReportData) {
       passed: fmt(passed),
       rejected: fmt(rejected),
       warnings: fmt(warnings),
+      passedPctParen: pctParen(passPct),
+      rejectedPctParen: pctParen(rejPct),
+      warningsPctParen: pctParen(warnPct),
     },
     donut: {
       rejectedPct: rejPct.toFixed(4),
@@ -304,6 +309,7 @@ function buildContext(data: PDFReportData) {
       warningsPct: warnPct.toFixed(4),
       rejectedComplementPct: (100 - rejPct).toFixed(4),
       warningsComplementPct: (100 - warnPct).toFixed(4),
+      centerPct: passPct.toFixed(1),
     },
     basicChecks,
     duplicates: {

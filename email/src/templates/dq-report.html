@@ -49,9 +49,9 @@
   }
 
   .logo {
-    height: 42px;
+    height: 30px;
     width: auto;
-    max-width: min(100%, 260px);
+    max-width: min(100%, 200px);
     display: block;
     flex-shrink: 0;
     align-self: flex-start;
@@ -259,8 +259,35 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
   }
   .donut-svg { transform: rotate(-90deg); }
+  .donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    text-align: center;
+  }
+  .donut-center-pct {
+    font-family: 'Inter', sans-serif;
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 1;
+    color: #74c48e;
+  }
+  .donut-center-label {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 14px;
+    letter-spacing: -0.1px;
+    color: #000;
+    margin-top: 2px;
+  }
 
   .p1-kpi-grid {
     flex: 1;
@@ -443,6 +470,10 @@
             stroke-dasharray="{{donut.warningsPct}} {{donut.warningsComplementPct}}" stroke-dashoffset="-{{donut.rejectedPct}}"/>
           <circle cx="86" cy="86" r="38" fill="white"/>
         </svg>
+        <div class="donut-center">
+          <div class="donut-center-pct">{{donut.centerPct}}%</div>
+          <div class="donut-center-label">passed</div>
+        </div>
       </div>
 
       <div class="p1-kpi-grid">
@@ -456,7 +487,7 @@
           <div>
             <div style="display:flex;align-items:center;gap:2px;">
               <span class="kpi-num green">{{totals.passed}}</span>
-              <span class="kpi-denom">/{{totals.uploaded}}</span>
+              <span class="kpi-denom">{{totals.passedPctParen}}</span>
             </div>
             <div class="kpi-label">{{entity.plural}} passed</div>
             <div class="kpi-excel-tab"><span>Excel tab:</span><span class="kpi-excel-chip">Passed</span></div>
@@ -466,7 +497,7 @@
           <div>
             <div style="display:flex;align-items:center;gap:2px;">
               <span class="kpi-num red">{{totals.rejected}}</span>
-              <span class="kpi-denom">/{{totals.uploaded}}</span>
+              <span class="kpi-denom">{{totals.rejectedPctParen}}</span>
             </div>
             <div class="kpi-label">{{entity.plural}} rejected</div>
             <div class="kpi-excel-tab"><span>Excel tab:</span><span class="kpi-excel-chip">Rejected</span></div>
@@ -476,7 +507,7 @@
           <div>
             <div style="display:flex;align-items:center;gap:2px;">
               <span class="kpi-num orange">{{totals.warnings}}</span>
-              <span class="kpi-denom">/{{totals.uploaded}}</span>
+              <span class="kpi-denom">{{totals.warningsPctParen}}</span>
             </div>
             <div class="kpi-label">{{entity.plural}} with warnings</div>
             <div class="kpi-excel-tab"><span>Excel tab:</span><span class="kpi-excel-chip">Warnings</span></div>
@@ -538,13 +569,13 @@
     </div>
 
     <div class="footer">
+      <div class="footer-right">
+        <span class="footer-page">01</span>
+        <span class="footer-label">Giga Sync | Data Quality Report | {{country}}</span>
+      </div>
       <div class="footer-legend">
         <div class="footer-legend-item">{{{tone "critical"}}} Critical error</div>
         <div class="footer-legend-item">{{{tone "warning"}}} Warning</div>
-      </div>
-      <div class="footer-right">
-        <span class="footer-label">Giga Sync | Data Quality Report | {{country}}</span>
-        <span class="footer-page">01</span>
       </div>
     </div>
 
@@ -667,13 +698,13 @@
     {{/if}}
 
     <div class="footer">
-      <div class="footer-legend">
-        <div class="footer-legend-item">{{{tone "critical"}}} Critical checks</div>
-        <div class="footer-legend-item">{{{tone "warning"}}} Warnings</div>
-      </div>
       <div class="footer-right">
-        <span class="footer-label">Giga Sync | Data Quality Report | {{country}}</span>
         <span class="footer-page">02</span>
+        <span class="footer-label">Giga Sync | Data Quality Report | {{country}}</span>
+      </div>
+      <div class="footer-legend">
+        <div class="footer-legend-item">{{{tone "critical"}}} Critical error</div>
+        <div class="footer-legend-item">{{{tone "warning"}}} Warning</div>
       </div>
     </div>
 
