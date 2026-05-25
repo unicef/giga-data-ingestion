@@ -31,8 +31,8 @@ jobs:
                   --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
 
             - task: HelmDeploy@0
-              displayName: Helm deploy PostgreSQL stg/prd
-              condition: or(eq(variables.environment, 'stg'), eq(variables.environment, 'prd'))
+              displayName: Helm deploy PostgreSQL stg
+              condition: eq(variables.environment, 'stg')
               inputs:
                 command: upgrade
                 chartType: Name
@@ -41,7 +41,24 @@ jobs:
                 releaseName: postgres
                 namespace: $(kubernetesNamespace)
                 valueFile: infra/helm/pg-values.yaml
-                arguments: --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
+                arguments: >
+                  --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
+                  --set readReplicas.replicaCount=1
+
+            - task: HelmDeploy@0
+              displayName: Helm deploy PostgreSQL prd
+              condition: eq(variables.environment, 'prd')
+              inputs:
+                command: upgrade
+                chartType: Name
+                chartName: bitnami/postgresql
+                chartVersion: 14.0.5
+                releaseName: postgres
+                namespace: $(kubernetesNamespace)
+                valueFile: infra/helm/pg-values.yaml
+                arguments: >
+                  --set auth.existingSecret="giga-ingestion-portal-secrets-$(deployEnv)"
+                  --set readReplicas.replicaCount=2
 
             - task: HelmDeploy@0
               displayName: Helm deploy Redis dev
