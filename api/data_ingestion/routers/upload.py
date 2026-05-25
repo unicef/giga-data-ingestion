@@ -639,6 +639,12 @@ async def upload_structured(  # noqa: C901
     )
     db.add(file_upload)
     await db.commit()
+    await db.refresh(file_upload)
+
+    metadata_file_path = get_metadata_path(file_upload.upload_path)
+    file_upload.metadata_json_path = metadata_file_path
+    db.add(file_upload)
+    await db.commit()
 
     client = storage_client.get_blob_client(file_upload.upload_path)
 
@@ -659,6 +665,11 @@ async def upload_structured(  # noqa: C901
             metadata=metadata,
             content_settings=ContentSettings(content_type=file_type),
         )
+        metadata_blob_client = storage_client.get_blob_client(
+            file_upload.metadata_json_path
+        )
+        metadata_json_bytes = json.dumps(metadata, indent=2).encode()
+        metadata_blob_client.upload_blob(metadata_json_bytes, overwrite=True)
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
         raise HTTPException(

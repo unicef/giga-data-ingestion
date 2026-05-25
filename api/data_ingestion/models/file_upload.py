@@ -84,8 +84,8 @@ class FileUpload(BaseModel):
             return f"{settings.LAKEHOUSE_PATH}/raw/custom-dataset/{self.filename}"
 
         if self.dataset == "health":
-            # Blob path within AZURE_BLOB_CONTAINER_NAME (no leading slash):
-            # updated_master_schema/health-master/<ISO3 or $NA>/<ISO3>_<stem>_<timestamp>.csv
+            # CSV: updated_master_schema/health-master/<ISO3 or $NA>/<ISO3>_<stem>_<timestamp>.csv
+            # Metadata sidecar: raw/upload_metadata/health-master/<ISO3 or $NA>/... (see get_metadata_path)
             country_segment = "$NA" if self.country == "N/A" else self.country
             return (
                 f"updated_master_schema/health-master/"
