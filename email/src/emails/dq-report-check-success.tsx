@@ -15,7 +15,6 @@ import tailwindConfig from "../styles/tailwind.config";
 import { DataQualityCheckSuccessProps } from "../types/dq-report";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { blobAssetUrls } from "../constants/blob-assets";
 
 const baseUrl = process.env.WEB_APP_REDIRECT_URI;
 
@@ -52,7 +51,7 @@ export const DataQualityReportCheckSuccess = ({
               <Heading className="flex align-middle p-0 text-2xl font-normal text-giga-green">
                 <Img
                   className="w-10 h-10 mr-2 -mt-1"
-                  src={blobAssetUrls.checkmarkGreen()}
+                  src="https://saunigigashare.blob.core.windows.net/assets/CheckmarkOutlineGreen.png"
                 />
                 <strong>Data check successful</strong>
               </Heading>
