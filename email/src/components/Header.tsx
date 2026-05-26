@@ -1,5 +1,7 @@
 import { Column, Img, Row, Text } from "@react-email/components";
 
+import { blobAssetUrls } from "../constants/blob-assets";
+
 function Header() {
   return (
     <Row className="bg-primary">
@@ -8,7 +10,7 @@ function Header() {
           className="p-4"
           width={40}
           height={40}
-          src="https://saunigigashare.blob.core.windows.net/assets/GIGA_logo.png"
+          src={blobAssetUrls.gigaLogo()}
         />
       </Column>
       <Column>

@@ -12,7 +12,7 @@ export function blobAssetUrl(filename: string): string {
   return `${getAssetsBlobBaseUrl()}/${filename}`;
 }
 
-/** Filenames under the `assets` blob prefix (must exist in the storage account). */
+/** Filenames under the `assets` blob prefix (all must exist in the storage account). */
 export const BLOB_ASSET_FILES = {
   gigaLogo: "GIGA_logo.png",
   pdfHorizontalLogo: "giga_horizontal_unicef-itu_bicolor.svg",
