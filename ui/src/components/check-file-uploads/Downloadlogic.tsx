@@ -21,6 +21,14 @@ export function useDownloadHelpers(uploadData: UploadResponse) {
     mutationFn: api.uploads.download_raw_file,
   });
 
+  const { mutateAsync: downloadDqKit } = useMutation({
+    mutationFn: api.uploads.download_dq_kit,
+  });
+
+  const { mutateAsync: downloadMap } = useMutation({
+    mutationFn: api.uploads.download_map,
+  });
+
   function getFilenameFromFullPath(): string {
     const pathParts = uploadData.dq_full_path?.split("/") || [];
     return pathParts[pathParts.length - 1];
@@ -69,10 +77,22 @@ export function useDownloadHelpers(uploadData: UploadResponse) {
     if (blob) saveFile(blob);
   }
 
+  async function handleDownloadDqKit() {
+    const blob = await downloadDqKit({ upload_id: uploadData.id });
+    if (blob) saveFile(blob);
+  }
+
+  async function handleDownloadMap() {
+    const blob = await downloadMap({ upload_id: uploadData.id });
+    if (blob) saveFile(blob);
+  }
+
   return {
     handleDownloadFailedRows,
     handleDownloadPassedRows,
     handleDownloadDqSummary,
     handleDownloadRawFile,
+    handleDownloadDqKit,
+    handleDownloadMap,
   };
 }

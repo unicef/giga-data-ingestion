@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Download, Send } from "@carbon/icons-react";
 import {
   Button,
+  InlineLoading,
   Loading,
   Tab,
   TabList,
@@ -55,6 +56,9 @@ function Index() {
   const { uploadId } = Route.useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const [mapUrl, setMapUrl] = useState<string>("");
+  const [mapLoading, setMapLoading] = useState<boolean>(true);
+  const [mapError, setMapError] = useState<string>("");
 
   const { data: dqResultQuery } = useSuspenseQuery({
     queryKey: ["dq_check", uploadId],
@@ -121,7 +125,39 @@ function Index() {
     handleDownloadPassedRows,
     handleDownloadDqSummary,
     handleDownloadRawFile,
+    handleDownloadDqKit,
+    handleDownloadMap,
   } = useDownloadHelpers(uploadData);
+
+  // Fetch map HTML and create a blob URL for iframe preview
+  useEffect(() => {
+    if (uploadData.dq_status !== "COMPLETED") {
+      return;
+    }
+
+    let createdUrl: string | null = null;
+    setMapLoading(true);
+    setMapError("");
+
+    api.uploads
+      .download_map({ upload_id: uploadId })
+      .then(response => {
+        createdUrl = window.URL.createObjectURL(response.data);
+        setMapUrl(createdUrl);
+        setMapLoading(false);
+      })
+      .catch(error => {
+        console.error("Error loading map:", error);
+        setMapError("Map not available or not yet generated");
+        setMapLoading(false);
+      });
+
+    return () => {
+      if (createdUrl) {
+        window.URL.revokeObjectURL(createdUrl);
+      }
+    };
+  }, [uploadId, uploadData.dq_status]);
 
   // Extract checks from dqResultData
   const {
@@ -231,28 +267,38 @@ function Index() {
               alignItems: "flex-end",
             }}
           >
-            <Button
-              kind="primary"
-              size="md"
-              renderIcon={Download}
-              onClick={handleDownloadDqSummary}
-            >
-              Download data quality report
-            </Button>
-
-            {uploadData.dq_mode === "uploaded" && isCompleted && (
+            <div style={{ display: "flex", gap: "0.5rem" }}>
               <Button
                 kind="primary"
                 size="md"
-                renderIcon={Send}
-                onClick={handleSubmitMasterCheck}
-                disabled={runMasterCheckMutation.isPending}
+                renderIcon={Download}
+                onClick={handleDownloadDqSummary}
               >
-                {runMasterCheckMutation.isPending
-                  ? "Submitting..."
-                  : "Submit for master check"}
+                Download data quality report
               </Button>
-            )}
+
+              {uploadData.dq_mode === "uploaded" && isCompleted && (
+                <Button
+                  kind="primary"
+                  size="md"
+                  renderIcon={Send}
+                  onClick={handleSubmitMasterCheck}
+                  disabled={runMasterCheckMutation.isPending}
+                >
+                  {runMasterCheckMutation.isPending
+                    ? "Submitting..."
+                    : "Submit for master check"}
+                </Button>
+              )}
+              <Button
+                kind="secondary"
+                size="md"
+                renderIcon={Download}
+                onClick={handleDownloadDqKit}
+              >
+                Download DQ Kit
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -336,6 +382,93 @@ function Index() {
           </TabPanels>
         </Tabs>
       </div>
+
+      {uploadData.dq_status === "COMPLETED" && (
+        <div
+          style={{
+            background: "#fff",
+            padding: "1.5rem",
+            borderRadius: "4px",
+            marginTop: "2rem",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "1rem",
+            }}
+          >
+            <h3 style={{ margin: 0 }}>School Location Map</h3>
+            <Button
+              kind="primary"
+              size="sm"
+              renderIcon={Download}
+              onClick={handleDownloadMap}
+              disabled={mapLoading || !!mapError}
+            >
+              Download map
+            </Button>
+          </div>
+
+          <div
+            style={{
+              position: "relative",
+              border: "1px solid #e0e0e0",
+              borderRadius: "4px",
+              overflow: "hidden",
+              minHeight: "600px",
+            }}
+          >
+            {mapLoading && (
+              <div
+                style={{
+                  height: "600px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#525252",
+                }}
+              >
+                <InlineLoading description="Loading map..." />
+              </div>
+            )}
+
+            {mapError && !mapLoading && (
+              <div
+                style={{
+                  height: "600px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "0.5rem",
+                  color: "#da1e28",
+                }}
+              >
+                <p>{mapError}</p>
+                <p style={{ fontSize: "0.875rem", color: "#525252" }}>
+                  The map may not have been generated yet.
+                </p>
+              </div>
+            )}
+
+            {mapUrl && !mapLoading && !mapError && (
+              <iframe
+                src={mapUrl}
+                style={{
+                  width: "100%",
+                  height: "600px",
+                  border: "none",
+                  display: "block",
+                }}
+                title="School Data Quality Map"
+              />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

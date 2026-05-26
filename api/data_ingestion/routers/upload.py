@@ -1,3 +1,4 @@
+import asyncio
 import io
 import json
 import os
@@ -459,34 +460,34 @@ async def get_upload(
 
 
 def apply_fuzzy_corrections(
-    fuzzy_corrections_json: str, file_extension: str, file_obj, upload_content: bytes
+    fuzzy_corrections_json: str, file_extension: str, upload_content: bytes
 ) -> bytes:
     try:
         corrections_mapping = orjson.loads(fuzzy_corrections_json)
         file_ext = file_extension.lower()
         if file_ext in constants.SUPPORTED_SPREADSHEET_EXTENSIONS:
-            # In a non-async context we'd just use seek(0).
-            # Since file_obj is an UploadFile, we need an await if we abstract it entirely.
-            # But we can just use file_obj.file which is a SpooledTemporaryFile with synchronous ops.
-            file_obj.file.seek(0)
-            if file_ext == ".csv":
-                df = pd.read_csv(file_obj.file)
-            else:
-                df = pd.read_excel(file_obj.file)
-
-            changed = False
+            column_replacements: dict[str, dict] = {}
             for correction in corrections_mapping:
                 col = correction.get("column_name")
                 old_val = correction.get("value_found")
                 new_val = correction.get("replace_with")
+                if col is not None and old_val is not None and new_val is not None:
+                    column_replacements.setdefault(col, {})[str(old_val)] = str(new_val)
 
-                if col in df.columns and old_val is not None and new_val is not None:
-                    # Replace occurrences directly
-                    df[col] = df[col].astype(str).replace(str(old_val), str(new_val))
+            dtype_overrides = {col: str for col in column_replacements}
+            file_buffer = io.BytesIO(upload_content)
+            if file_ext == ".csv":
+                df = pd.read_csv(file_buffer, dtype=dtype_overrides)
+            else:
+                df = pd.read_excel(file_buffer, dtype=dtype_overrides)
+
+            changed = False
+            for col, replacements in column_replacements.items():
+                if col in df.columns:
+                    df[col] = df[col].replace(replacements)
                     changed = True
 
             if changed:
-                # Write back to a buffer
                 buffer = io.BytesIO()
                 if file_ext == ".csv":
                     df.to_csv(buffer, index=False)
@@ -495,7 +496,6 @@ def apply_fuzzy_corrections(
                 return buffer.getvalue()
     except Exception as e:
         logger.error(f"Failed to apply fuzzy corrections: {e}")
-    # Fallback to the original file content
     return upload_content
 
 
@@ -599,13 +599,18 @@ async def upload_file(
 
         # Apply fuzzy corrections if provided
         if form.fuzzy_corrections:
-            upload_content = apply_fuzzy_corrections(
-                form.fuzzy_corrections, file_extension, file, upload_content
+            loop = asyncio.get_running_loop()
+            upload_content = await loop.run_in_executor(
+                None,
+                apply_fuzzy_corrections,
+                form.fuzzy_corrections,
+                file_extension,
+                upload_content,
             )
 
         client.upload_blob(
             upload_content,
-            metadata=metadata,
+            overwrite=True,
             content_settings=ContentSettings(content_type=file_type),
         )
         # Upload metadata sidecar JSON
@@ -1552,4 +1557,108 @@ async def validate_fuzzy_matching(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error running fuzzy matching validation: {str(e)}",
+        ) from e
+
+
+@router.get("/dq_kit/{upload_id}/download")
+async def download_dq_kit(
+    upload_id: str,
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    user: User = Depends(azure_scheme),
+):
+    """Download a complete DQ Kit ZIP for a given upload."""
+    from data_ingestion.utils.dq_kit_generator import generate_dq_kit_zip
+
+    file_upload = await db.scalar(select(FileUpload).where(FileUpload.id == upload_id))
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this file.",
+        )
+
+    if file_upload.dq_status != DQStatusEnum.COMPLETED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"DQ Kit is not available. DQ Status: {file_upload.dq_status.value}",
+        )
+
+    try:
+        logger.info(f"Generating DQ Kit for upload_id: {upload_id}")
+        zip_buffer, filename = generate_dq_kit_zip(file_upload)
+
+        return StreamingResponse(
+            io.BytesIO(zip_buffer.read()),
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    except Exception as e:
+        logger.error(f"Error generating DQ Kit: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating DQ Kit: {str(e)}",
+        ) from e
+
+
+@router.get("/map/{upload_id}")
+async def get_school_map(
+    upload_id: str,
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    user: User = Depends(azure_scheme),
+):
+    """Serve the interactive school-location HTML map for a given upload."""
+    from data_ingestion.utils.dq_kit_generator import get_map_blob_path
+
+    file_upload = await db.scalar(select(FileUpload).where(FileUpload.id == upload_id))
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this file.",
+        )
+
+    map_path = get_map_blob_path(file_upload)
+    map_filename = Path(map_path).name
+    logger.info(f"Attempting to serve map from: {map_path}")
+
+    blob = storage_client.get_blob_client(map_path)
+    if not blob.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Map not found. It may not have been generated yet.",
+        )
+
+    try:
+        stream = blob.download_blob()
+        return StreamingResponse(
+            stream.chunks(),
+            media_type="text/html",
+            headers={
+                "Content-Disposition": f"inline; filename={map_filename}",
+                "X-Frame-Options": "SAMEORIGIN",
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error serving map: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error loading map: {str(e)}",
         ) from e
