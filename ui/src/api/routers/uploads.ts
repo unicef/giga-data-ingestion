@@ -159,6 +159,24 @@ export default function routes(axi: AxiosInstance) {
       });
     },
 
+    download_dq_kit: (params: {
+      upload_id: string;
+    }): Promise<AxiosResponse<Blob>> => {
+      const { upload_id } = params;
+      return axi.get(`upload/dq_kit/${upload_id}/download`, {
+        responseType: "blob",
+      });
+    },
+
+    download_map: (params: {
+      upload_id: string;
+    }): Promise<AxiosResponse<Blob>> => {
+      const { upload_id } = params;
+      return axi.get(`upload/map/${upload_id}`, {
+        responseType: "blob",
+      });
+    },
+
     list_basic_checks: (
       dataset: string,
       source: string | null,

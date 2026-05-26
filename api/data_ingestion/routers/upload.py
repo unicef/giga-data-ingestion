@@ -944,3 +944,107 @@ async def validate_fuzzy_matching(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error running fuzzy matching validation: {str(e)}",
         ) from e
+
+
+@router.get("/dq_kit/{upload_id}/download")
+async def download_dq_kit(
+    upload_id: str,
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    user: User = Depends(azure_scheme),
+):
+    """Download a complete DQ Kit ZIP for a given upload."""
+    from data_ingestion.utils.dq_kit_generator import generate_dq_kit_zip
+
+    file_upload = await db.scalar(select(FileUpload).where(FileUpload.id == upload_id))
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this file.",
+        )
+
+    if file_upload.dq_status != DQStatusEnum.COMPLETED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"DQ Kit is not available. DQ Status: {file_upload.dq_status.value}",
+        )
+
+    try:
+        logger.info(f"Generating DQ Kit for upload_id: {upload_id}")
+        zip_buffer, filename = generate_dq_kit_zip(file_upload)
+
+        return StreamingResponse(
+            io.BytesIO(zip_buffer.read()),
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    except Exception as e:
+        logger.error(f"Error generating DQ Kit: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error generating DQ Kit: {str(e)}",
+        ) from e
+
+
+@router.get("/map/{upload_id}")
+async def get_school_map(
+    upload_id: str,
+    db: AsyncSession = Depends(get_db),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+    user: User = Depends(azure_scheme),
+):
+    """Serve the interactive school-location HTML map for a given upload."""
+    from data_ingestion.utils.dq_kit_generator import get_map_blob_path
+
+    file_upload = await db.scalar(select(FileUpload).where(FileUpload.id == upload_id))
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if (
+        not is_privileged
+        and file_upload.uploader_email != user.claims.get("emails", ["NONE"])[0]
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to access this file.",
+        )
+
+    map_path = get_map_blob_path(file_upload)
+    map_filename = Path(map_path).name
+    logger.info(f"Attempting to serve map from: {map_path}")
+
+    blob = storage_client.get_blob_client(map_path)
+    if not blob.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Map not found. It may not have been generated yet.",
+        )
+
+    try:
+        stream = blob.download_blob()
+        return StreamingResponse(
+            stream.chunks(),
+            media_type="text/html",
+            headers={
+                "Content-Disposition": f"inline; filename={map_filename}",
+                "X-Frame-Options": "SAMEORIGIN",
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error serving map: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error loading map: {str(e)}",
+        ) from e
