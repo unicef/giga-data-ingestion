@@ -321,6 +321,7 @@ function buildContext(data: PDFReportData) {
     electricity,
     educationLevels,
     fieldMapping,
+    fieldMappingCompact: fieldMapping.length > 8,
   };
 }
 
