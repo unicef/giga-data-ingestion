@@ -13,6 +13,7 @@ import {
 } from "pdf-lib";
 import puppeteer, { type Browser } from "puppeteer-core";
 
+import { loadPdfLogoDataUri } from "./blob-assets";
 import type { DataQualityReportEmailProps } from "../types/dq-report";
 
 export interface PDFReportData extends DataQualityReportEmailProps {
@@ -43,28 +44,16 @@ Handlebars.registerHelper("tone", function (this: unknown, tone: unknown) {
   return new Handlebars.SafeString("");
 });
 
-// Resolve paths relative to this source file so both tsx (dev) and the
-// compiled dist build see assets next to /src/templates and /src/assets.
+// Resolve template path relative to this file (tsx dev and compiled dist).
 const HERE = path.dirname(
   typeof __filename !== "undefined"
     ? __filename
     : fileURLToPath(import.meta.url)
 );
 const TEMPLATE_PATH = path.resolve(HERE, "..", "templates", "dq-report.html");
-// True-vector lockup of the Giga + UNICEF + ITU horizontal mark, using the
-// Giga blue (#277AFF) and near-black (#222) fills baked into the file. No
-// patterns, no embedded raster — Chrome renders it crisply at any size and
-// it stays legible on the PDF's white pages.
-const LOGO_PATH = path.resolve(
-  HERE,
-  "..",
-  "assets",
-  "giga_horizontal_unicef-itu_bicolor.svg"
-);
 
 let cachedTemplate: HandlebarsTemplateDelegate | null = null;
 let cachedTemplateMtimeMs = 0;
-let cachedLogoDataUri: string | null = null;
 let cachedBrowser: Browser | null = null;
 
 function loadTemplate(): HandlebarsTemplateDelegate {
@@ -75,21 +64,6 @@ function loadTemplate(): HandlebarsTemplateDelegate {
     cachedTemplateMtimeMs = stat.mtimeMs;
   }
   return cachedTemplate;
-}
-
-function loadLogoDataUri(): string {
-  if (cachedLogoDataUri === null) {
-    const buf = fs.readFileSync(LOGO_PATH);
-    const ext = path.extname(LOGO_PATH).toLowerCase();
-    const mime =
-      ext === ".svg"
-        ? "image/svg+xml"
-        : ext === ".png"
-          ? "image/png"
-          : "application/octet-stream";
-    cachedLogoDataUri = `data:${mime};base64,${buf.toString("base64")}`;
-  }
-  return cachedLogoDataUri;
 }
 
 async function getBrowser(): Promise<Browser> {
@@ -169,7 +143,7 @@ function toneFor(value: number, tone: Tone): Tone {
 
 // ── Main payload assembly ────────────────────────────────────────────────
 
-function buildContext(data: PDFReportData) {
+async function buildContext(data: PDFReportData) {
   const dq = (data.dataQualityCheck ?? {}) as Record<string, unknown>;
   const summary =
     (dq["summary"] as { rows?: number; rows_passed?: number; rows_failed?: number } | undefined) ?? {};
@@ -293,7 +267,7 @@ function buildContext(data: PDFReportData) {
     uploadDate: data.uploadDate,
     uploadId: data.uploadId,
     entity,
-    logoDataUri: loadLogoDataUri(),
+    logoDataUri: await loadPdfLogoDataUri(),
     totals: {
       uploaded: fmt(uploaded),
       passed: fmt(passed),
@@ -325,9 +299,9 @@ function buildContext(data: PDFReportData) {
   };
 }
 
-export function renderHtml(data: PDFReportData): string {
+export async function renderHtml(data: PDFReportData): Promise<string> {
   const template = loadTemplate();
-  return template(buildContext(data));
+  return template(await buildContext(data));
 }
 
 // Layout-pixel height of one ".page" wrapper inside the rendered HTML; used
@@ -477,7 +451,7 @@ async function overlayFormFields(
 export async function generateDataQualityReportPDF(
   data: PDFReportData
 ): Promise<Buffer> {
-  const html = renderHtml(data);
+  const html = await renderHtml(data);
 
   const browser = await getBrowser();
   const page = await browser.newPage();

@@ -1,7 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
 import {
   BLOB_ASSET_FILES,
   blobAssetUrls,
@@ -9,21 +5,8 @@ import {
 
 const dataUriCache = new Map<string, string>();
 
-const HERE = path.dirname(
-  typeof __filename !== "undefined"
-    ? __filename
-    : fileURLToPath(import.meta.url)
-);
-
-const LOCAL_PDF_LOGO_PATH = path.resolve(
-  HERE,
-  "..",
-  "assets",
-  BLOB_ASSET_FILES.pdfHorizontalLogo
-);
-
 function mimeFromFilename(filename: string): string {
-  const ext = path.extname(filename).toLowerCase();
+  const ext = filename.slice(filename.lastIndexOf(".")).toLowerCase();
   if (ext === ".svg") return "image/svg+xml";
   if (ext === ".png") return "image/png";
   if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
@@ -59,24 +42,11 @@ export async function fetchBlobAssetAsDataUri(url: string): Promise<string> {
 
 let cachedPdfLogoDataUri: string | null = null;
 
-/** PDF footer lockup: fetch from blob, inline as data URI for reliable Puppeteer render. */
+/** PDF footer lockup: fetch from blob and inline as data URI for Puppeteer. */
 export async function loadPdfLogoDataUri(): Promise<string> {
   if (cachedPdfLogoDataUri !== null) return cachedPdfLogoDataUri;
-
-  const url = blobAssetUrls.pdfHorizontalLogo();
-  try {
-    cachedPdfLogoDataUri = await fetchBlobAssetAsDataUri(url);
-    return cachedPdfLogoDataUri;
-  } catch (err) {
-    // Local dev fallback when the SVG is not yet in blob (prod must have it uploaded).
-    if (fs.existsSync(LOCAL_PDF_LOGO_PATH)) {
-      const buf = fs.readFileSync(LOCAL_PDF_LOGO_PATH);
-      cachedPdfLogoDataUri = bufferToDataUri(
-        buf,
-        mimeFromFilename(LOCAL_PDF_LOGO_PATH)
-      );
-      return cachedPdfLogoDataUri;
-    }
-    throw err;
-  }
+  cachedPdfLogoDataUri = await fetchBlobAssetAsDataUri(
+    blobAssetUrls.pdfHorizontalLogo()
+  );
+  return cachedPdfLogoDataUri;
 }
