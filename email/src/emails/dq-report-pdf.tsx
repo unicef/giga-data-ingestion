@@ -1,8 +1,10 @@
 import React from "react";
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
-import { blobAssetUrls } from "../constants/blob-assets";
 import { DataQualityReportEmailProps } from "../types/dq-report";
+
+const GIGA_LOGO_URL =
+  "https://saunigigashare.blob.core.windows.net/assets/GIGA_logo.png";
 
 const BORDER_BLUE = "#93C5FD";
 const TITLE_BLUE = "#2563EB";
@@ -391,7 +393,7 @@ const DataQualityReportPDF: React.FC<PDFReportProps> = ({
             <View style={styles.footerLogoChip}>
               <Image
                 style={styles.footerLockupImage}
-                src={blobAssetUrls.gigaLogo()}
+                src={GIGA_LOGO_URL}
               />
             </View>
           </View>
@@ -482,7 +484,7 @@ const DataQualityReportPDF: React.FC<PDFReportProps> = ({
             <View style={styles.footerLogoChip}>
               <Image
                 style={styles.footerLockupImage}
-                src={blobAssetUrls.gigaLogo()}
+                src={GIGA_LOGO_URL}
               />
             </View>
           </View>
