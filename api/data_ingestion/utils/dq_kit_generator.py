@@ -60,7 +60,7 @@ class DQKitManager:
 
         # Pre-built ZIP path (from Dagster `geolocation_dq_kit_zip` asset)
         prebuilt_zip = (
-            f"{dq_root}/{country}/dq-kit/" f"DQ_Kit_{country}_{self.dataset}_{stem}.zip"
+            f"{dq_root}/dq-kit/{country}/DQ_Kit_{country}_{self.dataset}_{stem}.zip"
         )
 
         return {
@@ -71,7 +71,7 @@ class DQKitManager:
             "passed_rows": f"{dq_root}/dq-passed-rows-human-readable/{country}/{stem}.csv",
             "failed_rows": f"{dq_root}/dq-failed-rows-human-readable/{country}/{stem}.csv",
             "dq_full_report": self.file_upload.dq_full_path,
-            "map_html": f"{dq_root}/{country}/dq-map/school_map_{country}_{stem}.html",
+            "map_html": f"{dq_root}/dq-map/{country}/school_map_{country}_{stem}.html",
         }
 
     def map_blob_path(self) -> str:
