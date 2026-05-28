@@ -1,6 +1,8 @@
+import asyncio
 import io
 import json
 import os
+from datetime import date, datetime, time
 from pathlib import Path
 from typing import Annotated
 
@@ -302,6 +304,11 @@ async def list_uploads(
     page_size: Annotated[int, Field(ge=1, le=50)] = 10,
     source: str | None = None,
     dataset: str | None = None,
+    uploader_email: str | None = None,
+    country: str | None = None,
+    dq_status: str | None = None,
+    created_from: date | None = None,
+    created_to: date | None = None,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -321,6 +328,25 @@ async def list_uploads(
 
     if dataset is not None:
         query = query.where(FileUpload.dataset == dataset)
+
+    if uploader_email is not None:
+        query = query.where(FileUpload.uploader_email == uploader_email)
+
+    if country is not None:
+        query = query.where(FileUpload.country == country)
+
+    if dq_status is not None:
+        query = query.where(FileUpload.dq_status == dq_status)
+
+    if created_from is not None:
+        query = query.where(
+            FileUpload.created >= datetime.combine(created_from, time.min)
+        )
+
+    if created_to is not None:
+        query = query.where(
+            FileUpload.created <= datetime.combine(created_to, time.max)
+        )
 
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query)
@@ -368,34 +394,34 @@ async def get_upload(
 
 
 def apply_fuzzy_corrections(
-    fuzzy_corrections_json: str, file_extension: str, file_obj, upload_content: bytes
+    fuzzy_corrections_json: str, file_extension: str, upload_content: bytes
 ) -> bytes:
     try:
         corrections_mapping = orjson.loads(fuzzy_corrections_json)
         file_ext = file_extension.lower()
         if file_ext in constants.SUPPORTED_SPREADSHEET_EXTENSIONS:
-            # In a non-async context we'd just use seek(0).
-            # Since file_obj is an UploadFile, we need an await if we abstract it entirely.
-            # But we can just use file_obj.file which is a SpooledTemporaryFile with synchronous ops.
-            file_obj.file.seek(0)
-            if file_ext == ".csv":
-                df = pd.read_csv(file_obj.file)
-            else:
-                df = pd.read_excel(file_obj.file)
-
-            changed = False
+            column_replacements: dict[str, dict] = {}
             for correction in corrections_mapping:
                 col = correction.get("column_name")
                 old_val = correction.get("value_found")
                 new_val = correction.get("replace_with")
+                if col is not None and old_val is not None and new_val is not None:
+                    column_replacements.setdefault(col, {})[str(old_val)] = str(new_val)
 
-                if col in df.columns and old_val is not None and new_val is not None:
-                    # Replace occurrences directly
-                    df[col] = df[col].astype(str).replace(str(old_val), str(new_val))
+            dtype_overrides = {col: str for col in column_replacements}
+            file_buffer = io.BytesIO(upload_content)
+            if file_ext == ".csv":
+                df = pd.read_csv(file_buffer, dtype=dtype_overrides)
+            else:
+                df = pd.read_excel(file_buffer, dtype=dtype_overrides)
+
+            changed = False
+            for col, replacements in column_replacements.items():
+                if col in df.columns:
+                    df[col] = df[col].replace(replacements)
                     changed = True
 
             if changed:
-                # Write back to a buffer
                 buffer = io.BytesIO()
                 if file_ext == ".csv":
                     df.to_csv(buffer, index=False)
@@ -404,7 +430,6 @@ def apply_fuzzy_corrections(
                 return buffer.getvalue()
     except Exception as e:
         logger.error(f"Failed to apply fuzzy corrections: {e}")
-    # Fallback to the original file content
     return upload_content
 
 
@@ -495,13 +520,18 @@ async def upload_file(
 
         # Apply fuzzy corrections if provided
         if form.fuzzy_corrections:
-            upload_content = apply_fuzzy_corrections(
-                form.fuzzy_corrections, file_extension, file, upload_content
+            loop = asyncio.get_running_loop()
+            upload_content = await loop.run_in_executor(
+                None,
+                apply_fuzzy_corrections,
+                form.fuzzy_corrections,
+                file_extension,
+                upload_content,
             )
 
         client.upload_blob(
             upload_content,
-            metadata=metadata,
+            overwrite=True,
             content_settings=ContentSettings(content_type=file_type),
         )
         # Upload metadata sidecar JSON
