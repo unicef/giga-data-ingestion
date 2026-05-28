@@ -317,35 +317,54 @@ def apply_fuzzy_corrections(
     try:
         corrections_mapping = orjson.loads(fuzzy_corrections_json)
         file_ext = file_extension.lower()
-        if file_ext in constants.SUPPORTED_SPREADSHEET_EXTENSIONS:
-            column_replacements: dict[str, dict] = {}
-            for correction in corrections_mapping:
-                col = correction.get("column_name")
-                old_val = correction.get("value_found")
-                new_val = correction.get("replace_with")
-                if col is not None and old_val is not None and new_val is not None:
-                    column_replacements.setdefault(col, {})[str(old_val)] = str(new_val)
+        if file_ext not in constants.SUPPORTED_SPREADSHEET_EXTENSIONS:
+            return upload_content
 
-            dtype_overrides = {col: str for col in column_replacements}
-            file_buffer = io.BytesIO(upload_content)
-            if file_ext == ".csv":
-                df = pd.read_csv(file_buffer, dtype=dtype_overrides)
-            else:
-                df = pd.read_excel(file_buffer, dtype=dtype_overrides)
+        column_replacements: dict[str, dict] = {}
+        for correction in corrections_mapping:
+            col = correction.get("column_name")
+            old_val = correction.get("value_found")
+            new_val = correction.get("replace_with")
+            if col is not None and old_val is not None and new_val is not None:
+                column_replacements.setdefault(col, {})[str(old_val)] = str(new_val)
 
-            changed = False
-            for col, replacements in column_replacements.items():
-                if col in df.columns:
-                    df[col] = df[col].replace(replacements)
-                    changed = True
+        # Skip parsing the file entirely if there is nothing to replace
+        if not column_replacements:
+            return upload_content
 
-            if changed:
-                buffer = io.BytesIO()
-                if file_ext == ".csv":
-                    df.to_csv(buffer, index=False)
-                else:
-                    df.to_excel(buffer, index=False)
-                return buffer.getvalue()
+        dtype_overrides = {col: str for col in column_replacements}
+        file_buffer = io.BytesIO(upload_content)
+        if file_ext == ".csv":
+            df = pd.read_csv(file_buffer, dtype=dtype_overrides)
+        else:
+            df = pd.read_excel(file_buffer, dtype=dtype_overrides)
+        # Free the BytesIO copy now that pandas has parsed it; the DataFrame
+        # and upload_content are the only representations we need going forward
+        del file_buffer
+
+        changed = False
+        for col, replacements in column_replacements.items():
+            if col in df.columns:
+                df[col] = df[col].replace(replacements)
+                changed = True
+
+        if not changed:
+            # Free the DataFrame before returning; no output to produce
+            del df
+            return upload_content
+
+        buffer = io.BytesIO()
+        if file_ext == ".csv":
+            df.to_csv(buffer, index=False)
+        else:
+            df.to_excel(buffer, index=False)
+        # Free the DataFrame before extracting bytes so both are not live at once
+        del df
+
+        result = buffer.getvalue()
+        # Close releases the internal buffer now that we hold the result bytes
+        buffer.close()
+        return result
     except Exception as e:
         logger.error(f"Failed to apply fuzzy corrections: {e}")
     return upload_content
