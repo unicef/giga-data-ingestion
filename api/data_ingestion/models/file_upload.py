@@ -42,6 +42,7 @@ class FileUpload(BaseModel):
     dataset: Mapped[str] = mapped_column(nullable=False)
     source: Mapped[str] = mapped_column(nullable=True)
     mode: Mapped[str] = mapped_column(nullable=True, default=None)
+    approval_status: Mapped[str] = mapped_column(nullable=True, default=None)
     original_filename: Mapped[str] = mapped_column(nullable=False)
     column_to_schema_mapping: Mapped[dict] = mapped_column(
         JSON, nullable=False, server_default='"{}"'

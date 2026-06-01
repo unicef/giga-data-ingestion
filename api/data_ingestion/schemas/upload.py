@@ -22,6 +22,7 @@ class FileUpload(BaseModel):
     dataset: str
     source: str | None
     mode: str | None
+    approval_status: str | None
     original_filename: str
     column_to_schema_mapping: dict[str, str]
     column_license: dict[str, str]

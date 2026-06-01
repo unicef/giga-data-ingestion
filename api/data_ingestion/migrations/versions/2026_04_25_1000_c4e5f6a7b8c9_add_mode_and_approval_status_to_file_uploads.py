@@ -1,4 +1,4 @@
-"""add mode to file_uploads
+"""add mode and approval_status to file_uploads
 
 Revision ID: c4e5f6a7b8c9
 Revises: a3c6ab14b3f8
@@ -19,7 +19,11 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.add_column("file_uploads", sa.Column("mode", sa.String(), nullable=True))
+    op.add_column(
+        "file_uploads", sa.Column("approval_status", sa.String(), nullable=True)
+    )
 
 
 def downgrade() -> None:
+    op.drop_column("file_uploads", "approval_status")
     op.drop_column("file_uploads", "mode")
