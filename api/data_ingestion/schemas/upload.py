@@ -67,3 +67,19 @@ class UnstructuredFileUploadRequest:
 class ValidateFuzzyRequest:
     file: UploadFile = Form(...)
     column_to_schema_mapping: str = Form(...)
+
+
+@dataclass
+class UploadImpactPreviewRequest:
+    file: UploadFile = Form(...)
+    column_to_schema_mapping: str = Form(...)
+    country: str = Form(...)
+
+
+class UploadImpactPreviewResponse(BaseModel):
+    new_schools: int
+    schools_to_update: int
+    rows_with_school_id: int
+    missing_school_id_rows: int
+    unique_school_ids: int
+    duplicate_school_id_rows: int
