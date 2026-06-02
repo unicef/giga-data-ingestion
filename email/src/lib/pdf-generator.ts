@@ -44,13 +44,12 @@ Handlebars.registerHelper("tone", function (this: unknown, tone: unknown) {
   return new Handlebars.SafeString("");
 });
 
-// Resolve template path relative to this file (tsx dev and compiled dist).
-const HERE = path.dirname(
-  typeof __filename !== "undefined"
-    ? __filename
-    : fileURLToPath(import.meta.url)
-);
-const TEMPLATE_PATH = path.resolve(HERE, "..", "templates", "dq-report.html");
+// Dev: src/lib/.. → src/templates. Prod bundle: dist/index.mjs → dist/templates.
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const TEMPLATE_PATH = [
+  path.resolve(HERE, "templates", "dq-report.html"),
+  path.resolve(HERE, "..", "templates", "dq-report.html"),
+].find((p) => fs.existsSync(p))!;
 
 let cachedTemplate: HandlebarsTemplateDelegate | null = null;
 let cachedTemplateMtimeMs = 0;
