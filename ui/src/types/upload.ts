@@ -110,6 +110,18 @@ export interface FuzzyValidationParams {
   file: File;
 }
 
+export interface UploadImpactPreviewParams {
+  column_to_schema_mapping: string;
+  country: string;
+  dataset: string;
+  file: File;
+}
+
+export interface UploadImpactPreviewResponse {
+  new_schools: number;
+  schools_to_update: number;
+}
+
 export interface FuzzyCorrection {
   column_name: string;
   value_found: string;

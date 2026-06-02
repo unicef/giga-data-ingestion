@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
@@ -22,10 +22,11 @@ import {
   AcceptedFileTypes,
   AcceptedUnstructuredFileTypes,
   MAX_UPLOAD_FILE_SIZE_MB,
-  UPLOAD_MODE_OPTIONS,
 } from "@/constants/upload.ts";
 import { useStore } from "@/context/store";
+import useRoles from "@/hooks/useRoles.ts";
 import { sourceOptions } from "@/mocks/metadataFormValues.tsx";
+import { capitalizeFirstLetter } from "@/utils/string.ts";
 import { HeaderDetector } from "@/utils/upload.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
@@ -89,6 +90,7 @@ export default function Index() {
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
+  const shouldSelectCountry = !isUnstructured && !isStructured;
 
   const validTypes = isUnstructured
     ? validUnstructuredTypes
@@ -101,8 +103,8 @@ export default function Index() {
       setStepIndex,
       resetUploadSliceState,
       setUploadSliceState,
+      setCountry,
       setSource,
-      setMode,
       setDetectedColumns,
       setColumnMapping,
       setUploadDate,
@@ -111,46 +113,72 @@ export default function Index() {
     },
   } = useStore();
 
-  const { file, source: storeSource, mode: storeMode } = uploadSlice;
+  const { country: storeCountry, file, source: storeSource } = uploadSlice;
   const hasUploadedFile = file != null;
+  const { countryDatasets, isPrivileged } = useRoles();
 
   const uploadStructuredFile = useMutation({
     mutationFn: api.uploads.upload_structured,
   });
 
   const { register, watch } = useForm<{
+    country: string;
     source: string | null;
-    mode: typeof storeMode;
   }>({
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
+      country: storeCountry,
       source: storeSource,
-      mode: storeMode,
     },
   });
 
+  const country = watch("country");
   const source = watch("source");
-  const mode = watch("mode");
+
+  const { data: allGroupsQuery } = useQuery({
+    queryKey: ["groups"],
+    queryFn: api.groups.list,
+    enabled: shouldSelectCountry && isPrivileged,
+  });
+
+  const userCountryNames = useMemo(
+    () => countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [],
+    [countryDatasets, uploadType],
+  );
+
+  const allCountryNames = useMemo(() => {
+    const allGroups = allGroupsQuery?.data ?? [];
+    const allGroupNames = allGroups.map(group => group.name);
+    return [
+      ...new Set(
+        allGroupNames
+          .map(name => name.split("-School"))
+          .filter(split => split.length > 1)
+          .map(split => split[0]),
+      ),
+    ];
+  }, [allGroupsQuery?.data]);
+
+  const countryOptions = isPrivileged ? allCountryNames : userCountryNames;
 
   const metaschemaName = isCoverage
     ? `coverage_${source}`
     : `school_${uploadType}`;
 
   const { data: schemaQuery, isFetching: isSchemaFetching } = useQuery({
-    queryFn: () => api.schema.get(metaschemaName, mode === "Update"),
-    queryKey: ["schema", metaschemaName, mode, false],
+    queryFn: () => api.schema.get(metaschemaName),
+    queryKey: ["schema", metaschemaName, false],
     enabled: isCoverage
       ? !!source
       : isGeolocation
-      ? !!mode
+      ? true
       : !isUnstructured && !isStructured,
   });
 
-  const schema = schemaQuery?.data ?? [];
+  const schema = useMemo(() => schemaQuery?.data ?? [], [schemaQuery?.data]);
 
   useEffect(() => {
-    const { file } = uploadSlice;
     if (schema.length && file) {
       const detector = new HeaderDetector({
         file,
@@ -164,14 +192,13 @@ export default function Index() {
       detector.validateFileSize();
       detector.detect();
     }
-  }, [schema]);
+  }, [schema, file, setColumnMapping, setDetectedColumns, validTypes]);
 
   const handleProceedToNextStep = async () => {
     if (isStructured) {
       // For structured datasets, upload directly without metadata
       if (file) {
         setSource(source ?? null);
-        setMode(mode);
       }
 
       try {
@@ -196,8 +223,10 @@ export default function Index() {
       }
     } else {
       if (file) {
+        if (shouldSelectCountry) {
+          setCountry(country);
+        }
         setSource(source ?? null);
-        setMode(mode);
         setStepIndex(1);
       }
       void navigate({ to: isUnstructured ? "./metadata" : "./column-mapping" });
@@ -206,19 +235,19 @@ export default function Index() {
 
   const isProceedDisabled =
     !hasUploadedFile ||
+    (shouldSelectCountry && !country) ||
     (isCoverage && !source) ||
-    (isGeolocation && !mode) ||
     (!isStructured && (isSchemaFetching || isParsing || hasParsingError));
   const isSchemaLoading = !(
     (!isCoverage && !isSchemaFetching) ||
     (!isGeolocation && !isSchemaFetching) ||
     (isCoverage && !!source && !isSchemaFetching) ||
-    (isGeolocation && !!mode && !isSchemaFetching)
+    (isGeolocation && !isSchemaFetching)
   );
   const shouldShowSkeleton =
     (!isCoverage && isSchemaLoading) ||
     (isCoverage && !!source) ||
-    (isGeolocation && !!mode);
+    isGeolocation;
 
   function handleRemoveFile() {
     setFile(null);
@@ -286,6 +315,21 @@ export default function Index() {
 
   return (
     <Stack gap={10}>
+      {shouldSelectCountry && (
+        <Select
+          id="country"
+          labelText="Country"
+          placeholder="Country"
+          className="w-1/2"
+          {...register("country", { required: true })}
+        >
+          <SelectItem value="" text="Select country" />
+          {countryOptions.map(option => (
+            <SelectItem key={option} text={option} value={option} />
+          ))}
+        </Select>
+      )}
+
       {isCoverage && (
         <Select
           id="source"
@@ -306,21 +350,6 @@ export default function Index() {
       )}
 
       <div className="flex w-1/2 flex-col gap-4">
-        {uploadType === "geolocation" && (
-          <Select
-            id="mode"
-            labelText="Are you updating existing schools or uploading data for new schools?"
-            placeholder="Select an option..."
-            className="w-full"
-            {...register("mode", { required: true })}
-          >
-            <SelectItem value="" text="Select an option..." />
-            {UPLOAD_MODE_OPTIONS.map(option => (
-              <SelectItem key={option} text={option} value={option} />
-            ))}
-          </Select>
-        )}
-
         {isSchemaLoading ? (
           shouldShowSkeleton ? (
             <SkeletonPlaceholder />

@@ -4,6 +4,7 @@ export interface UploadSliceState {
   uploadSlice: {
     columnMapping: Record<string, string>;
     columnLicense: Record<string, string>;
+    country: string;
     detectedColumns: string[];
     file: File | null;
     fuzzyCorrections: {
@@ -32,7 +33,6 @@ export interface UploadSliceState {
     uploadId: string;
     stepIndex: number;
     source: string | null;
-    mode: "Create" | "Update" | "";
   };
 }
 
@@ -49,6 +49,7 @@ export interface UploadSliceActions {
     setColumnLicense: (
       value: UploadSliceState["uploadSlice"]["columnLicense"],
     ) => void;
+    setCountry: (value: UploadSliceState["uploadSlice"]["country"]) => void;
     setDetectedColumns: (
       value: UploadSliceState["uploadSlice"]["detectedColumns"],
     ) => void;
@@ -68,7 +69,6 @@ export interface UploadSliceActions {
     ) => void;
     setUploadId: (value: UploadSliceState["uploadSlice"]["uploadId"]) => void;
     setSource: (value: UploadSliceState["uploadSlice"]["source"]) => void;
-    setMode: (value: UploadSliceState["uploadSlice"]["mode"]) => void;
   };
 }
 
@@ -78,6 +78,7 @@ export const initialUploadSliceState: UploadSliceState = {
   uploadSlice: {
     columnMapping: {},
     columnLicense: {},
+    country: "",
     detectedColumns: [],
     file: null,
     fuzzyCorrections: [],
@@ -88,7 +89,6 @@ export const initialUploadSliceState: UploadSliceState = {
     uploadDate: null,
     uploadId: "",
     source: null,
-    mode: "",
   },
 };
 
@@ -160,13 +160,13 @@ export const createUploadSlice: StateCreator<
       set(state => {
         state.uploadSlice.columnLicense = columnLicense;
       }),
+    setCountry: country =>
+      set(state => {
+        state.uploadSlice.country = country;
+      }),
     setSource: source =>
       set(state => {
         state.uploadSlice.source = source;
-      }),
-    setMode: mode =>
-      set(state => {
-        state.uploadSlice.mode = mode;
       }),
     resetUploadSliceState: () =>
       set(state => {

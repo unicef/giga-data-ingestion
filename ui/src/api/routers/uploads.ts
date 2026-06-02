@@ -6,6 +6,8 @@ import {
   DataQualityCheck,
   FuzzyValidationParams,
   FuzzyValidationResponse,
+  UploadImpactPreviewParams,
+  UploadImpactPreviewResponse,
   UploadParams,
   UploadStructuredParams,
   UploadUnstructuredParams,
@@ -59,6 +61,22 @@ export default function routes(axi: AxiosInstance) {
       );
 
       return axi.post("/upload/validate-fuzzy", formData, {
+        params: { dataset: params.dataset },
+      });
+    },
+
+    get_impact_preview: (
+      params: UploadImpactPreviewParams,
+    ): Promise<AxiosResponse<UploadImpactPreviewResponse>> => {
+      const formData = new FormData();
+      formData.append("file", params.file);
+      formData.append("country", params.country);
+      formData.append(
+        "column_to_schema_mapping",
+        params.column_to_schema_mapping,
+      );
+
+      return axi.post("/upload/impact-preview", formData, {
         params: { dataset: params.dataset },
       });
     },
