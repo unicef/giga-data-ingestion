@@ -354,6 +354,8 @@ function UploadColumnMapping() {
       });
 
       setImpactPreview({
+        duplicateSchoolIdRows: preview.duplicate_school_id_rows,
+        missingSchoolIdRows: preview.missing_school_id_rows,
         newSchools: preview.new_schools,
         schoolsToUpdate: preview.schools_to_update,
       });
@@ -447,6 +449,8 @@ function UploadColumnMapping() {
       });
 
       setImpactPreview({
+        duplicateSchoolIdRows: preview.duplicate_school_id_rows,
+        missingSchoolIdRows: preview.missing_school_id_rows,
         newSchools: preview.new_schools,
         schoolsToUpdate: preview.schools_to_update,
       });

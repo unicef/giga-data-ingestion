@@ -1,4 +1,4 @@
-import { AddAlt, Renew } from "@carbon/icons-react";
+import { AddAlt, Renew, RowDelete, WarningAlt } from "@carbon/icons-react";
 import {
   Button,
   InlineLoading,
@@ -13,6 +13,8 @@ import { commaNumber } from "@/utils/number";
 import FuzzyValidationModal from "./FuzzyValidationModal";
 
 export interface UploadImpactPreview {
+  duplicateSchoolIdRows: number;
+  missingSchoolIdRows: number;
   newSchools: number;
   schoolsToUpdate: number;
 }
@@ -30,6 +32,24 @@ interface UploadReviewModalProps {
   onStartImport: () => void;
   open: boolean;
   step: "impact" | "fuzzy";
+}
+
+interface ImpactPreviewRowProps {
+  icon: React.ElementType;
+  label: string;
+  value: number;
+}
+
+function ImpactPreviewRow({ icon: Icon, label, value }: ImpactPreviewRowProps) {
+  return (
+    <div className="flex items-center justify-between bg-gray-100 px-6 py-5">
+      <div className="flex items-center gap-5">
+        <Icon size={20} />
+        <span>{label}</span>
+      </div>
+      <span className="font-semibold">{commaNumber(value)}</span>
+    </div>
+  );
 }
 
 function UploadReviewModal({
@@ -105,24 +125,30 @@ function UploadReviewModal({
 
         {impactPreview && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between bg-gray-100 px-6 py-5">
-              <div className="flex items-center gap-5">
-                <AddAlt size={20} />
-                <span>New schools</span>
-              </div>
-              <span className="font-semibold">
-                {commaNumber(impactPreview.newSchools)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between bg-gray-100 px-6 py-5">
-              <div className="flex items-center gap-5">
-                <Renew size={20} />
-                <span>Schools to be updated</span>
-              </div>
-              <span className="font-semibold">
-                {commaNumber(impactPreview.schoolsToUpdate)}
-              </span>
-            </div>
+            <ImpactPreviewRow
+              icon={AddAlt}
+              label="New schools"
+              value={impactPreview.newSchools}
+            />
+            <ImpactPreviewRow
+              icon={Renew}
+              label="Schools to be updated"
+              value={impactPreview.schoolsToUpdate}
+            />
+            {impactPreview.missingSchoolIdRows > 0 && (
+              <ImpactPreviewRow
+                icon={WarningAlt}
+                label="Rows missing school ID"
+                value={impactPreview.missingSchoolIdRows}
+              />
+            )}
+            {impactPreview.duplicateSchoolIdRows > 0 && (
+              <ImpactPreviewRow
+                icon={RowDelete}
+                label="Duplicate school ID rows"
+                value={impactPreview.duplicateSchoolIdRows}
+              />
+            )}
           </div>
         )}
       </Stack>
