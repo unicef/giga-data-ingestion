@@ -109,6 +109,7 @@ export default function Index() {
       setColumnMapping,
       setUploadDate,
       setFile,
+      setMode,
       setTimeStamp,
     },
   } = useStore();
@@ -254,6 +255,7 @@ export default function Index() {
     setTimeStamp(null);
     setDetectedColumns([]);
     setColumnMapping({});
+    setMode(null);
     setParsingError("");
     setIsParsing(false);
   }
@@ -282,6 +284,7 @@ export default function Index() {
           fuzzyValidationRequestKey: null,
           fuzzyValidationResult: null,
           file: file,
+          mode: null,
           timeStamp: new Date(),
         },
       });
@@ -307,6 +310,7 @@ export default function Index() {
           fuzzyValidationRequestKey: null,
           fuzzyValidationResult: null,
           file: file,
+          mode: null,
           timeStamp: new Date(),
         },
       });

@@ -1,5 +1,7 @@
 import { StateCreator } from "zustand";
 
+export type UploadMode = "Create" | "Update" | "Mixed";
+
 export interface UploadSliceState {
   uploadSlice: {
     columnMapping: Record<string, string>;
@@ -31,6 +33,7 @@ export interface UploadSliceState {
     timeStamp: Date | null;
     uploadDate: Date | null;
     uploadId: string;
+    mode: UploadMode | null;
     stepIndex: number;
     source: string | null;
   };
@@ -54,6 +57,7 @@ export interface UploadSliceActions {
       value: UploadSliceState["uploadSlice"]["detectedColumns"],
     ) => void;
     setFile: (value: UploadSliceState["uploadSlice"]["file"]) => void;
+    setMode: (value: UploadSliceState["uploadSlice"]["mode"]) => void;
     setFuzzyCorrections: (
       value: UploadSliceState["uploadSlice"]["fuzzyCorrections"],
     ) => void;
@@ -88,6 +92,7 @@ export const initialUploadSliceState: UploadSliceState = {
     timeStamp: null,
     uploadDate: null,
     uploadId: "",
+    mode: null,
     source: null,
   },
 };
@@ -123,6 +128,10 @@ export const createUploadSlice: StateCreator<
     setFile: file =>
       set(state => {
         state.uploadSlice.file = file;
+      }),
+    setMode: mode =>
+      set(state => {
+        state.uploadSlice.mode = mode;
       }),
     setDetectedColumns: detectedColumns =>
       set(state => {

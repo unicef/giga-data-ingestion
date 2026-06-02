@@ -228,6 +228,11 @@ function Metadata() {
   let countryOptions = isPrivileged ? allCountryNames : userCountryNames;
   if (isUnstructured || isStructured) {
     countryOptions = ["N/A", ...countryOptions];
+  } else if (
+    uploadSlice.country &&
+    !countryOptions.includes(uploadSlice.country)
+  ) {
+    countryOptions = [uploadSlice.country, ...countryOptions];
   }
 
   const onSubmit: SubmitHandler<MetadataForm> = async data => {
@@ -285,7 +290,10 @@ function Metadata() {
     });
 
     const body: UploadParams = {
-      metadata: JSON.stringify({ ...metadata, mode: "Merge" }),
+      metadata: JSON.stringify({
+        ...metadata,
+        mode: uploadSlice.mode ?? "Mixed",
+      }),
       country,
       column_to_schema_mapping: JSON.stringify(correctedColumnMapping),
       column_license: JSON.stringify(uploadSlice.columnLicense),
@@ -365,11 +373,11 @@ function Metadata() {
                             {row.map((formItem, cellIndex) =>
                               formItem === null ? (
                                 <div key={`empty-${rowIndex}-${cellIndex}`} />
-                              ) : formItem.name === "country" &&
-                                (isUnstructured || isStructured) ? (
+                              ) : formItem.name === "country" ? (
                                 <div key={formItem.name}>
                                   <CountrySelect
                                     countryOptions={countryOptions}
+                                    disabled={!isUnstructured && !isStructured}
                                     isLoading={isLoading}
                                     errors={errors}
                                     register={register("country", {
@@ -377,7 +385,7 @@ function Metadata() {
                                     })}
                                   />
                                 </div>
-                              ) : formItem.name === "country" ? null : (
+                              ) : (
                                 <div key={formItem.name}>
                                   <RenderFormItem
                                     formItem={formItem}

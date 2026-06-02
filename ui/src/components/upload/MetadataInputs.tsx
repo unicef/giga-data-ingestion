@@ -30,6 +30,7 @@ export type MetadataForm = z.infer<typeof MetadataForm>;
 
 interface CountrySelectProps {
   countryOptions: string[];
+  disabled?: boolean;
   isLoading: boolean;
   register: UseFormRegisterReturn;
   errors: FieldErrors<MetadataForm>;
@@ -37,6 +38,7 @@ interface CountrySelectProps {
 
 export function CountrySelect({
   countryOptions,
+  disabled = false,
   isLoading,
   register,
   errors,
@@ -53,6 +55,7 @@ export function CountrySelect({
       }
       invalid={!!errors.country}
       invalidText={errors["country"]?.message as string}
+      disabled={disabled}
       {...register}
     >
       <SelectItem value="" text="Select country" />

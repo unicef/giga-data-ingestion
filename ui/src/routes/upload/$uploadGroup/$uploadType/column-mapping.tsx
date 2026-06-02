@@ -174,6 +174,7 @@ function UploadColumnMapping() {
       setStepIndex,
       setColumnMapping,
       setColumnLicense,
+      setMode,
       setFuzzyCorrections,
       setFuzzyValidationRequestKey,
       setFuzzyValidationResult,
@@ -215,6 +216,12 @@ function UploadColumnMapping() {
   const getImpactPreview = useMutation({
     mutationFn: api.uploads.get_impact_preview,
   });
+
+  const getUploadMode = (newSchools: number, schoolsToUpdate: number) => {
+    if (newSchools > 0 && schoolsToUpdate > 0) return "Mixed";
+    if (schoolsToUpdate > 0) return "Update";
+    return "Create";
+  };
 
   // Initialize license values for mandatory columns to ODBL (except school_id_govt)
   const defaultLicenseValues = useMemo(() => {
@@ -333,6 +340,7 @@ function UploadColumnMapping() {
     setReviewStep("impact");
     setImpactPreview(null);
     setImpactError(null);
+    setMode(null);
     setIsReviewModalOpen(true);
     setIsNavigating(true);
     setIsImpactLoading(true);
@@ -349,6 +357,7 @@ function UploadColumnMapping() {
         newSchools: preview.new_schools,
         schoolsToUpdate: preview.schools_to_update,
       });
+      setMode(getUploadMode(preview.new_schools, preview.schools_to_update));
     } catch (error) {
       const message =
         error instanceof Error
@@ -441,6 +450,7 @@ function UploadColumnMapping() {
         newSchools: preview.new_schools,
         schoolsToUpdate: preview.schools_to_update,
       });
+      setMode(getUploadMode(preview.new_schools, preview.schools_to_update));
     } catch (error) {
       const message =
         error instanceof Error
