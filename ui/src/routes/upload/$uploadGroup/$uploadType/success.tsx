@@ -50,11 +50,12 @@ export const Route = createFileRoute(
     const isUnstructured =
       uploadGroup === "other" && uploadType === "unstructured";
     const isStructured = uploadGroup === "other" && uploadType === "structured";
+    const isHealth = uploadGroup === "other" && uploadType === "health";
 
     if (isUnstructured) {
       return;
-    } else if (isStructured) {
-      // For structured datasets, allow access even without file since upload is already complete
+    } else if (isStructured || isHealth) {
+      // Structured / health CSV: upload already finished before this screen
       return;
     } else if (
       !file ||
@@ -119,18 +120,19 @@ function Success() {
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
+  const isHealth = uploadGroup === "other" && uploadType === "health";
 
   const { data: basicCheckQuery, isFetching: isBasicCheckFetching } = useQuery({
     queryFn: () => api.uploads.list_basic_checks(uploadType, source),
     queryKey: ["basic_checks", uploadType, source],
-    enabled: !isStructured, // Don't query for structured datasets
+    enabled: !isStructured && !isHealth,
   });
   const basicCheck = basicCheckQuery?.data ?? [];
 
   const { data: uploadQuery } = useQuery({
     queryKey: ["upload", uploadId],
     queryFn: () => api.uploads.get_upload(uploadId),
-    enabled: !isStructured && !!uploadId, // Don't query for structured datasets
+    enabled: !isStructured && !isHealth && !!uploadId,
   });
   const uploadData = useMemo<UploadResponse>(
     () => uploadQuery?.data ?? initialUploadResponse,
@@ -145,7 +147,7 @@ function Success() {
     queryKey: ["dq_check", uploadId],
     queryFn: () => api.uploads.get_data_quality_check(uploadId),
     refetchInterval: 7000,
-    enabled: !isUnstructured && !isStructured, // Don't query for structured datasets
+    enabled: !isUnstructured && !isStructured && !isHealth,
   });
 
   const dqResult = useMemo<DataQualityCheck>(
@@ -203,6 +205,9 @@ function Success() {
   const structuredMessage =
     "Your file has been uploaded and will be made available for query on Superset within 5 minutes.";
 
+  const healthMessage =
+    "Your health dataset file and metadata have been uploaded. Downstream staging in Azure Data Lake and Dagster will pick this up in a later step.";
+
   type TagColors = ComponentProps<typeof Tag>["type"];
 
   const statusTagMap: Record<DQStatus, { color: TagColors; text: string }> = {
@@ -254,6 +259,13 @@ function Success() {
       ) : isStructured ? (
         <>
           {structuredMessage}
+          <Button as={Link} to="/" onClick={resetUploadSliceState} isExpressive>
+            Back to Home
+          </Button>
+        </>
+      ) : isHealth ? (
+        <>
+          {healthMessage}
           <Button as={Link} to="/" onClick={resetUploadSliceState} isExpressive>
             Back to Home
           </Button>

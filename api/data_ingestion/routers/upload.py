@@ -564,6 +564,13 @@ async def upload_unstructured(  # noqa: C901
     )
     db.add(file_upload)
     await db.commit()
+    await db.refresh(file_upload)
+
+    # Keep parity with school uploads: persist a sidecar JSON metadata path.
+    metadata_file_path = get_metadata_path(file_upload.upload_path)
+    file_upload.metadata_json_path = metadata_file_path
+    db.add(file_upload)
+    await db.commit()
 
     client = storage_client.get_blob_client(file_upload.upload_path)
 
@@ -583,6 +590,11 @@ async def upload_unstructured(  # noqa: C901
             metadata=metadata,
             content_settings=ContentSettings(content_type=file_type),
         )
+        metadata_blob_client = storage_client.get_blob_client(
+            file_upload.metadata_json_path
+        )
+        metadata_json_bytes = json.dumps(metadata, indent=2).encode()
+        metadata_blob_client.upload_blob(metadata_json_bytes, overwrite=True)
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
         raise HTTPException(
@@ -643,6 +655,17 @@ async def upload_structured(  # noqa: C901
             detail="File extension must be .csv for structured datasets.",
         )
 
+    portal_ds = (form.portal_dataset or "").strip().lower()
+    if portal_ds == "health":
+        dataset_label = "health"
+    elif portal_ds == "":
+        dataset_label = "structured"
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid portal_dataset value.",
+        )
+
     # For structured datasets, always use "N/A" as country
     if form.country == "Global Dataset":
         country_code = "N/A"
@@ -660,12 +683,18 @@ async def upload_structured(  # noqa: C901
         uploader_id=database_user.id,
         uploader_email=database_user.email,
         country=country_code,
-        dataset="structured",
+        dataset=dataset_label,
         original_filename=file.filename,
         column_to_schema_mapping={},
         column_license={},
         dq_status=DQStatusEnum.SKIPPED,
     )
+    db.add(file_upload)
+    await db.commit()
+    await db.refresh(file_upload)
+
+    metadata_file_path = get_metadata_path(file_upload.upload_path)
+    file_upload.metadata_json_path = metadata_file_path
     db.add(file_upload)
     await db.commit()
 
@@ -676,7 +705,7 @@ async def upload_structured(  # noqa: C901
             **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
             "country": form.country,
             "uploader_email": email,
-            "dataset_type": "structured",
+            "dataset_type": dataset_label,
         }
 
         if form.source is not None:
@@ -688,6 +717,11 @@ async def upload_structured(  # noqa: C901
             metadata=metadata,
             content_settings=ContentSettings(content_type=file_type),
         )
+        metadata_blob_client = storage_client.get_blob_client(
+            file_upload.metadata_json_path
+        )
+        metadata_json_bytes = json.dumps(metadata, indent=2).encode()
+        metadata_blob_client.upload_blob(metadata_json_bytes, overwrite=True)
         response.status_code = status.HTTP_201_CREATED
     except HttpResponseError as err:
         raise HTTPException(
