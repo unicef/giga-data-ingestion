@@ -676,7 +676,7 @@
       </div>
     </div>
 
-    <div class="p2-edu grow-card">
+    <div class="p2-edu{{#unless fieldMapping.length}} grow-card{{/unless}}">
       <div class="card">
         <div class="card-header" style="display:flex;gap:10px;">
           <span style="flex:1;">Education level</span>
@@ -696,6 +696,7 @@
     </div>
 
     {{#if fieldMapping.length}}
+    {{#unless fieldMappingOnPage3}}
     <div class="p2-mapping{{#if fieldMappingCompact}} p2-mapping-compact{{/if}}">
       <div class="card">
         <div class="card-header" style="display:flex;gap:4px;">
@@ -717,6 +718,7 @@
         </div>
       </div>
     </div>
+    {{/unless}}
     {{/if}}
 
     <div class="footer">
@@ -731,6 +733,51 @@
     </div>
 
   </div><!-- /page2 -->
+
+  {{#if fieldMappingOnPage3}}
+  <!-- ───────────────────────── PAGE 3 (field mapping) ───────────────────────── -->
+  <div class="page" id="page3">
+
+    <div class="report-page-top">
+      <img class="logo" src="{{logoDataUri}}" alt="Giga, UNICEF, ITU" />
+      <span class="report-entity-badge">{{entity.plural}}</span>
+    </div>
+
+    <div class="p2-mapping{{#if fieldMappingCompact}} p2-mapping-compact{{/if}}">
+      <div class="card">
+        <div class="card-header" style="display:flex;gap:4px;">
+          <span style="flex:1;">Original field</span>
+          <span style="flex:1;">Will be mapped to</span>
+        </div>
+        <div class="card-rows">
+          {{#each fieldMapping}}
+          <div class="card-row" style="gap:8px;padding:4px 8px;">
+            <span class="label">{{from}}</span>
+            <svg class="arrow-right-icon" viewBox="0 0 12 12" fill="none"><path d="M2 6h8M7 3l3 3-3 3" stroke="#000" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="label">{{to}}</span>
+          </div>
+          {{/each}}
+        </div>
+        <div class="comment-wrap">
+          <div class="comment-label">Recommended action:</div>
+          <div class="comment-box plain editable" data-action-field="rec_field_mapping"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-right">
+        <span class="footer-page">03</span>
+        <span class="footer-label">Giga Sync | Data Quality Report | {{country}}</span>
+      </div>
+      <div class="footer-legend">
+        <div class="footer-legend-item">{{{tone "critical"}}} Critical error</div>
+        <div class="footer-legend-item">{{{tone "warning"}}} Warning</div>
+      </div>
+    </div>
+
+  </div><!-- /page3 -->
+  {{/if}}
 
 </div><!-- /wrapper -->
 </body>
