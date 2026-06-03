@@ -16,7 +16,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: "{{ include "data-ingestion.fullname" . }}-init-wait-db"
-          image: public.ecr.aws/bitnami/postgresql:16.2.0-debian-11-r10
+          image: uniappsoigiga.azurecr.io/bitnami/postgresql:16.2.0-debian-11-r10
           command:
             - /bin/sh
             - -c
@@ -107,7 +107,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: "{{ include "data-ingestion.fullname" . }}-init-wait-redis"
-          image: public.ecr.aws/bitnami/redis:7.2.4-debian-12-r10
+          image: uniappsoigiga.azurecr.io/bitnami/redis:7.2.4-debian-12-r16
           command:
             - /bin/sh
             - -c

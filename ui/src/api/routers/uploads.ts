@@ -24,6 +24,11 @@ export default function routes(axi: AxiosInstance) {
       page_size?: number;
       source?: string;
       dataset?: string;
+      uploader_email?: string;
+      country?: string;
+      dq_status?: string;
+      created_from?: string;
+      created_to?: string;
     }): Promise<AxiosResponse<PagedResponse<UploadResponse>>> => {
       return axi.get("/upload", { params });
     },
