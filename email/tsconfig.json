@@ -5,7 +5,7 @@
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
     "target": "ESNext",
-    "outDir": "./dist",
+    "noEmit": true,
     "esModuleInterop": true
   },
   "exclude": ["node_modules"]
