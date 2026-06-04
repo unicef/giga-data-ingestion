@@ -88,7 +88,10 @@ function Index() {
 
   // Fetch map HTML and create a blob URL for iframe preview
   useEffect(() => {
-    if (uploadData.dq_status !== "COMPLETED") {
+    if (
+      uploadData.dq_status !== "COMPLETED" ||
+      uploadData.dataset !== "geolocation"
+    ) {
       return;
     }
 
@@ -114,7 +117,7 @@ function Index() {
         window.URL.revokeObjectURL(createdUrl);
       }
     };
-  }, [uploadId, uploadData.dq_status]);
+  }, [uploadId, uploadData.dq_status, uploadData.dataset]);
 
   // Extract checks from dqResultData
   const {
@@ -288,92 +291,94 @@ function Index() {
         </Tabs>
       </div>
 
-      {uploadData.dq_status === "COMPLETED" && (
-        <div
-          style={{
-            background: "#fff",
-            padding: "1.5rem",
-            borderRadius: "4px",
-            marginTop: "2rem",
-          }}
-        >
+      {uploadData.dq_status === "COMPLETED" &&
+        uploadData.dataset === "geolocation" && (
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "1rem",
-            }}
-          >
-            <h3 style={{ margin: 0 }}>School Location Map</h3>
-            <Button
-              kind="primary"
-              size="sm"
-              renderIcon={Download}
-              onClick={handleDownloadMap}
-              disabled={mapLoading || !!mapError}
-            >
-              Download map
-            </Button>
-          </div>
-
-          <div
-            style={{
-              position: "relative",
-              border: "1px solid #e0e0e0",
+              background: "#fff",
+              padding: "1.5rem",
               borderRadius: "4px",
-              overflow: "hidden",
-              minHeight: "600px",
+              marginTop: "2rem",
             }}
           >
-            {mapLoading && (
-              <div
-                style={{
-                  height: "600px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#525252",
-                }}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1rem",
+              }}
+            >
+              <h3 style={{ margin: 0 }}>School Location Map</h3>
+              <Button
+                kind="primary"
+                size="sm"
+                renderIcon={Download}
+                onClick={handleDownloadMap}
+                disabled={mapLoading || !!mapError}
               >
-                <InlineLoading description="Loading map..." />
-              </div>
-            )}
+                Download map
+              </Button>
+            </div>
 
-            {mapError && !mapLoading && (
-              <div
-                style={{
-                  height: "600px",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem",
-                  color: "#da1e28",
-                }}
-              >
-                <p>{mapError}</p>
-                <p style={{ fontSize: "0.875rem", color: "#525252" }}>
-                  The map may not have been generated yet.
-                </p>
-              </div>
-            )}
+            <div
+              style={{
+                position: "relative",
+                border: "1px solid #e0e0e0",
+                borderRadius: "4px",
+                overflow: "hidden",
+                minHeight: "600px",
+              }}
+            >
+              {mapLoading && (
+                <div
+                  style={{
+                    height: "600px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#525252",
+                  }}
+                >
+                  <InlineLoading description="Loading map..." />
+                </div>
+              )}
 
-            {mapUrl && !mapLoading && !mapError && (
-              <iframe
-                src={mapUrl}
-                style={{
-                  width: "100%",
-                  height: "600px",
-                  border: "none",
-                  display: "block",
-                }}
-                title="School Data Quality Map"
-              />
-            )}
+              {mapError && !mapLoading && (
+                <div
+                  style={{
+                    height: "600px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "0.5rem",
+                    color: "#da1e28",
+                  }}
+                >
+                  <p>{mapError}</p>
+                  <p style={{ fontSize: "0.875rem", color: "#525252" }}>
+                    The map may not have been generated yet.
+                  </p>
+                </div>
+              )}
+
+              {mapUrl && !mapLoading && !mapError && (
+                <iframe
+                  src={mapUrl}
+                  sandbox="allow-scripts"
+                  style={{
+                    width: "100%",
+                    height: "600px",
+                    border: "none",
+                    display: "block",
+                  }}
+                  title="School Data Quality Map"
+                />
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
   );
 }
