@@ -294,7 +294,9 @@ async function buildContext(data: PDFReportData) {
     electricity,
     educationLevels,
     fieldMapping,
-    fieldMappingCompact: fieldMapping.length > 8,
+    // Keep mapping on page 2 when it fits; move whole card (+ comment) to page 3 when long.
+    fieldMappingOnPage3: fieldMapping.length > 4,
+    fieldMappingCompact: fieldMapping.length > 6,
   };
 }
 
