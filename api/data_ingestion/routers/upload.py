@@ -42,6 +42,7 @@ from data_ingestion.models.file_upload import DQStatusEnum
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.upload import (
+    DataQualityCheckLabel,
     FileUpload as FileUploadSchema,
     FileUploadRequest,
     UnstructuredFileUploadRequest,
@@ -49,12 +50,93 @@ from data_ingestion.schemas.upload import (
 )
 from data_ingestion.utils.data_quality import get_metadata_path
 from data_ingestion.utils.fuzzy_matching import run_fuzzy_matching
+from data_ingestion.utils.nocodb import (
+    get_nocodb_table_id_from_name,
+    get_nocodb_table_rows,
+)
+
+DQ_CHECK_LABELS_TABLE_NAME = "SchoolGeolocationMasterDQChecksTest"
 
 router = APIRouter(
     prefix="/api/upload",
     tags=["upload"],
     dependencies=[Security(azure_scheme)],
 )
+
+
+def _parse_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return True
+    return str(value).strip().lower() in {"true", "1", "yes", "y"}
+
+
+def _parse_sort_order(value) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _parse_dq_table_column_name(value: str) -> tuple[str, str]:
+    key = value.removeprefix("dq_")
+    assertion, _, column_key = key.partition("-")
+    return assertion, column_key
+
+
+def _normalize_dq_check_label(row: dict) -> DataQualityCheckLabel | None:
+    dq_table_column_name = row.get("DQ Table Column Name") or ""
+    parsed_assertion, parsed_column_key = _parse_dq_table_column_name(
+        dq_table_column_name
+    )
+    assertion = row.get("Assertion") or parsed_assertion
+
+    if not assertion:
+        return None
+
+    active = _parse_bool(row.get("Active"))
+    if not active:
+        return None
+
+    ui_error_description = (
+        row.get("UI Error Description")
+        or row.get("Human Readable Name")
+        or assertion.replace("_", " ")
+    )
+
+    return DataQualityCheckLabel(
+        assertion=assertion,
+        column_key=row.get("Column Key") or parsed_column_key,
+        ui_error_description=ui_error_description,
+        dq_table_column_name=dq_table_column_name or None,
+        dq_check_category=row.get("DQ Check Category"),
+        column_checked=row.get("Column Checked"),
+        human_readable_name=row.get("Human Readable Name"),
+        active=active,
+        sort_order=_parse_sort_order(row.get("Sort Order")),
+    )
+
+
+@router.get("/data_quality_check_labels", response_model=list[DataQualityCheckLabel])
+async def list_data_quality_check_labels():
+    table_id = get_nocodb_table_id_from_name(DQ_CHECK_LABELS_TABLE_NAME)
+    rows = get_nocodb_table_rows(table_id)
+    labels = [
+        label for row in rows if (label := _normalize_dq_check_label(row)) is not None
+    ]
+
+    return sorted(
+        labels,
+        key=lambda label: (
+            label.sort_order is None,
+            label.sort_order or 0,
+            label.assertion,
+            label.column_key,
+        ),
+    )
 
 
 @router.get("/basic_check/{dataset}")
