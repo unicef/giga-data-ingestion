@@ -44,6 +44,8 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
 const validStructuredTypes = {
   "text/csv": AcceptedFileTypes.CSV,
   "application/csv": AcceptedFileTypes.CSV,
+  "application/vnd.ms-excel": AcceptedFileTypes.EXCEL_LEGACY,
+  "application/x-ole-storage": AcceptedFileTypes.EXCEL_LEGACY,
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
     AcceptedFileTypes.EXCEL,
 };
