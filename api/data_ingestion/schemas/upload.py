@@ -71,3 +71,15 @@ class UnstructuredFileUploadRequest:
 class ValidateFuzzyRequest:
     file: UploadFile = Form(...)
     column_to_schema_mapping: str = Form(...)
+
+
+class DataQualityCheckLabel(BaseModel):
+    assertion: str
+    column_key: str = ""
+    ui_error_description: str
+    dq_table_column_name: str | None = None
+    dq_check_category: str | None = None
+    column_checked: str | None = None
+    human_readable_name: str | None = None
+    active: bool = True
+    sort_order: int | None = None

@@ -104,6 +104,11 @@ interface UploadsTableProps {
   source?: string | null;
   dataset?: string | null;
   visibleColumns: Set<string>;
+  uploaderEmail?: string;
+  country?: string;
+  dqStatus?: string;
+  createdFrom?: string;
+  createdTo?: string;
 }
 
 function UploadsTable({
@@ -113,6 +118,11 @@ function UploadsTable({
   source,
   dataset,
   visibleColumns,
+  uploaderEmail,
+  country,
+  dqStatus,
+  createdFrom,
+  createdTo,
 }: UploadsTableProps) {
   const { data: uploadsQuery, isLoading } = useSuspenseQuery({
     queryFn: () =>
@@ -121,8 +131,24 @@ function UploadsTable({
         page_size: pageSize,
         source: source ?? undefined,
         dataset: dataset ?? undefined,
+        uploader_email: uploaderEmail || undefined,
+        country: country || undefined,
+        dq_status: dqStatus || undefined,
+        created_from: createdFrom || undefined,
+        created_to: createdTo || undefined,
       }),
-    queryKey: ["uploads", page, pageSize, source, dataset],
+    queryKey: [
+      "uploads",
+      page,
+      pageSize,
+      source,
+      dataset,
+      uploaderEmail,
+      country,
+      dqStatus,
+      createdFrom,
+      createdTo,
+    ],
   });
 
   const activeColumns = useMemo(() => {

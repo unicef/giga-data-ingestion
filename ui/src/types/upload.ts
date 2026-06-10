@@ -22,6 +22,18 @@ export interface Check {
   dq_remarks: string;
 }
 
+export interface DataQualityCheckLabel {
+  assertion: string;
+  column_key: string;
+  ui_error_description: string;
+  dq_table_column_name: string | null;
+  dq_check_category: string | null;
+  column_checked: string | null;
+  human_readable_name: string | null;
+  active: boolean;
+  sort_order: number | null;
+}
+
 export interface Summary {
   rows: number;
   columns: number;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Add, Column } from "@carbon/icons-react";
+import { Add, Column, Filter } from "@carbon/icons-react";
 import {
   Button,
   Heading,
@@ -19,9 +19,20 @@ import ColumnSelectorModal, {
   saveVisibleColumns,
 } from "@/components/check-file-uploads/ColumnSelectorModal";
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
+import FilterModal, {
+  UploadFilters,
+} from "@/components/upload/FilterModal.tsx";
 import useRoles from "@/hooks/useRoles";
 import { cn } from "@/lib/utils.ts";
 import { getDataPrivacyDocument } from "@/utils/download.ts";
+
+const EMPTY_FILTERS: UploadFilters = {
+  uploaderEmail: "",
+  country: "",
+  dqStatus: "",
+  createdFrom: "",
+  createdTo: "",
+};
 
 interface UploadLandingProps {
   page: number;
@@ -41,6 +52,12 @@ function UploadLanding(props: UploadLandingProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] =
     useState<Set<string>>(loadVisibleColumns);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeFilters, setActiveFilters] =
+    useState<UploadFilters>(EMPTY_FILTERS);
+  const activeFilterCount = Object.values(activeFilters).filter(
+    v => v !== "",
+  ).length;
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
 
   function handleColumnSave(cols: Set<string>) {
@@ -94,11 +111,7 @@ function UploadLanding(props: UploadLandingProps) {
                 Please review our{" "}
                 <a
                   onClick={async () => {
-                    // It's ridiculous how there's no native way of disabling
-                    // HTML anchors. We could add the pointer-events-none class
-                    // but that disables the loading cursor animation.
                     if (isPrivacyLoading) return;
-
                     setIsPrivacyLoading(true);
                     await getDataPrivacyDocument();
                     setIsPrivacyLoading(false);
@@ -168,7 +181,7 @@ function UploadLanding(props: UploadLandingProps) {
           />
 
           <Tabs selectedIndex={selectedTab} onChange={handleTabChange}>
-            <div className="relative">
+            <div className="flex items-center">
               <TabList
                 aria-label="File Uploads Tabs"
                 fullWidth
@@ -179,16 +192,26 @@ function UploadLanding(props: UploadLandingProps) {
                 <Tab>Coverage</Tab>
                 <Tab>Schemaless</Tab>
               </TabList>
-              <div className="absolute right-0 top-1/2 -translate-y-1/2">
-                <Button
-                  kind="ghost"
-                  size="sm"
-                  iconDescription="Select columns"
-                  renderIcon={Column}
-                  hasIconOnly
-                  onClick={() => setModalOpen(true)}
-                />
-              </div>
+              <Button
+                kind="tertiary"
+                size="sm"
+                renderIcon={Filter}
+                onClick={() => setIsFilterOpen(true)}
+                className="shrink-0"
+              >
+                {`Filters${
+                  activeFilterCount > 0 ? ` (${activeFilterCount})` : ""
+                }`}
+              </Button>
+              <Button
+                kind="tertiary"
+                size="sm"
+                renderIcon={Column}
+                onClick={() => setModalOpen(true)}
+                className="ml-2 shrink-0"
+              >
+                Columns
+              </Button>
             </div>
 
             <TabPanels>
@@ -198,6 +221,11 @@ function UploadLanding(props: UploadLandingProps) {
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
                   visibleColumns={visibleColumns}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -206,6 +234,11 @@ function UploadLanding(props: UploadLandingProps) {
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
                   visibleColumns={visibleColumns}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -214,6 +247,11 @@ function UploadLanding(props: UploadLandingProps) {
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
                   visibleColumns={visibleColumns}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
                 />
               </TabPanel>
               <TabPanel className="p-0">
@@ -222,10 +260,22 @@ function UploadLanding(props: UploadLandingProps) {
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
                   visibleColumns={visibleColumns}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
                 />
               </TabPanel>
             </TabPanels>
           </Tabs>
+
+          <FilterModal
+            open={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            onApply={setActiveFilters}
+            initialFilters={activeFilters}
+          />
         </Stack>
       </Section>
     </Section>
