@@ -1,6 +1,8 @@
+import asyncio
 import io
 import json
 import os
+from datetime import date, datetime, time
 from pathlib import Path
 from typing import Annotated
 
@@ -40,17 +42,101 @@ from data_ingestion.models.file_upload import DQStatusEnum
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.core import PagedResponseSchema
 from data_ingestion.schemas.upload import (
+    DataQualityCheckLabel,
     FileUpload as FileUploadSchema,
     FileUploadRequest,
     UnstructuredFileUploadRequest,
+    ValidateFuzzyRequest,
 )
 from data_ingestion.utils.data_quality import get_metadata_path
+from data_ingestion.utils.fuzzy_matching import run_fuzzy_matching
+from data_ingestion.utils.nocodb import (
+    get_nocodb_table_id_from_name,
+    get_nocodb_table_rows,
+)
+
+DQ_CHECK_LABELS_TABLE_NAME = "SchoolGeolocationMasterDQChecksTest"
 
 router = APIRouter(
     prefix="/api/upload",
     tags=["upload"],
     dependencies=[Security(azure_scheme)],
 )
+
+
+def _parse_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return True
+    return str(value).strip().lower() in {"true", "1", "yes", "y"}
+
+
+def _parse_sort_order(value) -> int | None:
+    if value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _parse_dq_table_column_name(value: str) -> tuple[str, str]:
+    key = value.removeprefix("dq_")
+    assertion, _, column_key = key.partition("-")
+    return assertion, column_key
+
+
+def _normalize_dq_check_label(row: dict) -> DataQualityCheckLabel | None:
+    dq_table_column_name = row.get("DQ Table Column Name") or ""
+    parsed_assertion, parsed_column_key = _parse_dq_table_column_name(
+        dq_table_column_name
+    )
+    assertion = row.get("Assertion") or parsed_assertion
+
+    if not assertion:
+        return None
+
+    active = _parse_bool(row.get("Active"))
+    if not active:
+        return None
+
+    ui_error_description = (
+        row.get("UI Error Description")
+        or row.get("Human Readable Name")
+        or assertion.replace("_", " ")
+    )
+
+    return DataQualityCheckLabel(
+        assertion=assertion,
+        column_key=row.get("Column Key") or parsed_column_key,
+        ui_error_description=ui_error_description,
+        dq_table_column_name=dq_table_column_name or None,
+        dq_check_category=row.get("DQ Check Category"),
+        column_checked=row.get("Column Checked"),
+        human_readable_name=row.get("Human Readable Name"),
+        active=active,
+        sort_order=_parse_sort_order(row.get("Sort Order")),
+    )
+
+
+@router.get("/data_quality_check_labels", response_model=list[DataQualityCheckLabel])
+async def list_data_quality_check_labels():
+    table_id = get_nocodb_table_id_from_name(DQ_CHECK_LABELS_TABLE_NAME)
+    rows = get_nocodb_table_rows(table_id)
+    labels = [
+        label for row in rows if (label := _normalize_dq_check_label(row)) is not None
+    ]
+
+    return sorted(
+        labels,
+        key=lambda label: (
+            label.sort_order is None,
+            label.sort_order or 0,
+            label.assertion,
+            label.column_key,
+        ),
+    )
 
 
 @router.get("/basic_check/{dataset}")
@@ -218,6 +304,11 @@ async def list_uploads(
     page_size: Annotated[int, Field(ge=1, le=50)] = 10,
     source: str | None = None,
     dataset: str | None = None,
+    uploader_email: str | None = None,
+    country: str | None = None,
+    dq_status: str | None = None,
+    created_from: date | None = None,
+    created_to: date | None = None,
     id_search: Annotated[
         str,
         Query(min_length=1, max_length=24, pattern=r"^\w+$"),
@@ -237,6 +328,25 @@ async def list_uploads(
 
     if dataset is not None:
         query = query.where(FileUpload.dataset == dataset)
+
+    if uploader_email is not None:
+        query = query.where(FileUpload.uploader_email == uploader_email)
+
+    if country is not None:
+        query = query.where(FileUpload.country == country)
+
+    if dq_status is not None:
+        query = query.where(FileUpload.dq_status == dq_status)
+
+    if created_from is not None:
+        query = query.where(
+            FileUpload.created >= datetime.combine(created_from, time.min)
+        )
+
+    if created_to is not None:
+        query = query.where(
+            FileUpload.created <= datetime.combine(created_to, time.max)
+        )
 
     count_query = select(func.count()).select_from(query.subquery())
     total = await db.scalar(count_query)
@@ -283,6 +393,68 @@ async def get_upload(
     return file_upload
 
 
+def _parse_spreadsheet(
+    content: bytes, file_ext: str, dtype_overrides: dict
+) -> pd.DataFrame:
+    buf = io.BytesIO(content)
+    if file_ext == ".csv":
+        return pd.read_csv(buf, dtype=dtype_overrides)
+    if file_ext == ".xlsx":
+        return pd.read_excel(buf, dtype=dtype_overrides, engine="openpyxl")
+    return pd.read_excel(buf, dtype=dtype_overrides, engine="xlrd")
+
+
+def _serialize_spreadsheet(df: pd.DataFrame, file_ext: str) -> bytes:
+    buf = io.BytesIO()
+    if file_ext == ".csv":
+        df.to_csv(buf, index=False)
+    else:
+        df.to_excel(buf, index=False)
+    result = buf.getvalue()
+    buf.close()
+    return result
+
+
+def _build_column_replacements(corrections_mapping: list) -> dict[str, dict]:
+    column_replacements: dict[str, dict] = {}
+    for correction in corrections_mapping:
+        col = correction.get("column_name")
+        old_val = correction.get("value_found")
+        new_val = correction.get("replace_with")
+        if col is not None and old_val is not None and new_val is not None:
+            column_replacements.setdefault(col, {})[str(old_val)] = str(new_val)
+    return column_replacements
+
+
+def apply_fuzzy_corrections(
+    fuzzy_corrections_json: str, file_extension: str, upload_content: bytes
+) -> bytes:
+    try:
+        corrections_mapping = orjson.loads(fuzzy_corrections_json)
+        file_ext = file_extension.lower()
+        if file_ext not in constants.SUPPORTED_SPREADSHEET_EXTENSIONS:
+            return upload_content
+
+        column_replacements = _build_column_replacements(corrections_mapping)
+        if not column_replacements:
+            return upload_content
+
+        dtype_overrides = {col: str for col in column_replacements}
+        df = _parse_spreadsheet(upload_content, file_ext, dtype_overrides)
+
+        if not any(col in df.columns for col in column_replacements):
+            return upload_content
+
+        for col, replacements in column_replacements.items():
+            if col in df.columns:
+                df[col] = df[col].replace(replacements)
+
+        return _serialize_spreadsheet(df, file_ext)
+    except Exception as e:
+        logger.error(f"Failed to apply fuzzy corrections: {e}")
+    return upload_content
+
+
 @router.post("", response_model=FileUploadSchema)
 async def upload_file(
     response: Response,
@@ -310,6 +482,7 @@ async def upload_file(
         )
 
     file_content = await file.read(4096)
+    await file.seek(0)
     file_type = magic.from_buffer(file_content, mime=True)
     file_extension = os.path.splitext(file.filename)[1]
 
@@ -368,8 +541,21 @@ async def upload_file(
             metadata["source"] = form.source
 
         await file.seek(0)
+        upload_content = await file.read()
+
+        # Apply fuzzy corrections if provided
+        if form.fuzzy_corrections:
+            loop = asyncio.get_running_loop()
+            upload_content = await loop.run_in_executor(
+                None,
+                apply_fuzzy_corrections,
+                form.fuzzy_corrections,
+                file_extension,
+                upload_content,
+            )
+
         client.upload_blob(
-            await file.read(),
+            upload_content,
             overwrite=True,
             content_settings=ContentSettings(content_type=file_type),
         )
@@ -421,6 +607,7 @@ async def upload_unstructured(  # noqa: C901
     file_content = await file.read(
         8192
     )  # Increased from 2048 to handle large cell values like POLYGON data
+    await file.seek(0)
     file_type = magic.from_buffer(file_content, mime=True)
     file_extension = os.path.splitext(file.filename)[1]
 
@@ -521,6 +708,7 @@ async def upload_structured(  # noqa: C901
     file_content = await file.read(
         8192
     )  # Increased from 2048 to handle large cell values like POLYGON data
+    await file.seek(0)
     file_type = magic.from_buffer(file_content, mime=True)
     file_extension = os.path.splitext(file.filename)[1]
 
@@ -827,4 +1015,70 @@ async def download_raw_file_direct(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error downloading file: {str(e)}",
+        ) from e
+
+
+@router.post("/validate-fuzzy", status_code=status.HTTP_200_OK)
+async def validate_fuzzy_matching(
+    dataset: str,
+    form: ValidateFuzzyRequest = Depends(),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    """
+    Synchronously validate an uploaded CSV file for fuzzy matching errors.
+    Returns the errors grouped by column to display in the UI.
+    """
+    if not is_privileged:
+        roles = await get_user_roles(user, db)
+        if not roles:  # If user has no roles at all, deny access
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have permissions to upload structured datasets",
+            )
+    file = form.file
+
+    if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File size exceeds 10 MB limit",
+        )
+
+    await file.read(8192)
+    await file.seek(0)
+    file_extension = os.path.splitext(file.filename)[1].lower()
+
+    if file_extension not in constants.SUPPORTED_SPREADSHEET_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Fuzzy validation currently only supports {', '.join(constants.SUPPORTED_SPREADSHEET_EXTENSIONS)} files.",
+        )
+
+    # Re-read the file to parse with pandas
+    await file.seek(0)
+    try:
+        if file_extension == ".csv":
+            df = pd.read_csv(file.file)
+        elif file_extension == ".xlsx":
+            df = pd.read_excel(file.file, engine="openpyxl")
+        else:
+            df = pd.read_excel(file.file, engine="xlrd")
+    except Exception as e:
+        logger.error(f"Failed to parse file: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid {file_extension} format.",
+        ) from e
+
+    try:
+        column_mapping = orjson.loads(form.column_to_schema_mapping)
+        results = run_fuzzy_matching(df, column_mapping)
+        return results
+
+    except Exception as e:
+        logger.error(f"Error during fuzzy matching validation: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error running fuzzy matching validation: {str(e)}",
         ) from e

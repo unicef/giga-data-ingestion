@@ -4,6 +4,9 @@ import { PagedResponse } from "@/types/api.ts";
 import {
   BasicChecks,
   DataQualityCheck,
+  DataQualityCheckLabel,
+  FuzzyValidationParams,
+  FuzzyValidationResponse,
   UploadParams,
   UploadStructuredParams,
   UploadUnstructuredParams,
@@ -17,11 +20,21 @@ export default function routes(axi: AxiosInstance) {
     ): Promise<AxiosResponse<DataQualityCheck>> => {
       return axi.get(`upload/data_quality_check/${upload_id}`);
     },
+    list_data_quality_check_labels: (): Promise<
+      AxiosResponse<DataQualityCheckLabel[]>
+    > => {
+      return axi.get("upload/data_quality_check_labels");
+    },
     list_uploads: (params?: {
       page?: number;
       page_size?: number;
       source?: string;
       dataset?: string;
+      uploader_email?: string;
+      country?: string;
+      dq_status?: string;
+      created_from?: string;
+      created_to?: string;
     }): Promise<AxiosResponse<PagedResponse<UploadResponse>>> => {
       return axi.get("/upload", { params });
     },
@@ -37,6 +50,21 @@ export default function routes(axi: AxiosInstance) {
       });
 
       return axi.post("/upload", formData, {
+        params: { dataset: params.dataset },
+      });
+    },
+
+    validate_fuzzy: (
+      params: FuzzyValidationParams,
+    ): Promise<AxiosResponse<FuzzyValidationResponse>> => {
+      const formData = new FormData();
+      formData.append("file", params.file);
+      formData.append(
+        "column_to_schema_mapping",
+        params.column_to_schema_mapping,
+      );
+
+      return axi.post("/upload/validate-fuzzy", formData, {
         params: { dataset: params.dataset },
       });
     },
