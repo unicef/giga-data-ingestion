@@ -12,6 +12,7 @@ import {
 } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import axios from "axios";
 
 import { api } from "@/api";
 import DataQualityChecks from "@/components/check-file-uploads/ColumnChecks";
@@ -49,6 +50,7 @@ function Index() {
   const [mapUrl, setMapUrl] = useState<string>("");
   const [mapLoading, setMapLoading] = useState<boolean>(true);
   const [mapError, setMapError] = useState<string>("");
+  const [dqKitAvailable, setDqKitAvailable] = useState<boolean>(true);
 
   const { data: dqResultQuery } = useSuspenseQuery({
     queryKey: ["dq_check", uploadId],
@@ -85,6 +87,18 @@ function Index() {
     handleDownloadDqKit,
     handleDownloadMap,
   } = useDownloadHelpers(uploadData);
+
+  // Check if DQ Kit is available
+  useEffect(() => {
+    if (uploadData.dq_status !== "COMPLETED") {
+      return;
+    }
+
+    axios
+      .head(`upload/dq_kit/${uploadData.id}/download`)
+      .then(() => setDqKitAvailable(true))
+      .catch(() => setDqKitAvailable(false));
+  }, [uploadData.id, uploadData.dq_status]);
 
   // Fetch map HTML and create a blob URL for iframe preview
   useEffect(() => {
@@ -199,14 +213,16 @@ function Index() {
             >
               Download data quality report
             </Button>
-            <Button
-              kind="secondary"
-              size="md"
-              renderIcon={Download}
-              onClick={handleDownloadDqKit}
-            >
-              Download DQ Kit
-            </Button>
+            {dqKitAvailable && (
+              <Button
+                kind="secondary"
+                size="md"
+                renderIcon={Download}
+                onClick={handleDownloadDqKit}
+              >
+                Download DQ Kit
+              </Button>
+            )}
           </div>
         </div>
 
@@ -292,7 +308,8 @@ function Index() {
       </div>
 
       {uploadData.dq_status === "COMPLETED" &&
-        uploadData.dataset === "geolocation" && (
+        uploadData.dataset === "geolocation" &&
+        (mapUrl || mapLoading) && (
           <div
             style={{
               background: "#fff",
