@@ -59,8 +59,8 @@ function FilterModal({
   }, [open]);
 
   const { data: usersData } = useQuery({
-    queryKey: ["users"],
-    queryFn: api.users.list,
+    queryKey: ["uploaders"],
+    queryFn: api.users.listUploaders,
     enabled: isPrivileged,
   });
 

@@ -11,6 +11,9 @@ export default function routes(axi: AxiosInstance) {
     list: (): Promise<AxiosResponse<DatabaseUserWithRoles[]>> => {
       return axi.get("/users");
     },
+    listUploaders: (): Promise<AxiosResponse<DatabaseUser[]>> => {
+      return axi.get("/users/uploaders");
+    },
     get: (id: string): Promise<AxiosResponse<DatabaseUserWithRoles>> => {
       return axi.get(`/users/${id}`);
     },
