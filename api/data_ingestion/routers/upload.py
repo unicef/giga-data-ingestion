@@ -1560,6 +1560,7 @@ async def validate_fuzzy_matching(
         ) from e
 
 
+@router.head("/dq_kit/{upload_id}/download")
 @router.get("/dq_kit/{upload_id}/download")
 async def download_dq_kit(
     upload_id: str,
