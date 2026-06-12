@@ -10,7 +10,6 @@ from pydantic import (
     EmailStr,
     constr,
     field_validator,
-    model_validator,
 )
 
 from data_ingestion.models.file_upload import DQStatusEnum
@@ -55,18 +54,6 @@ class FileUpload(BaseModel):
         if isinstance(v, str):
             return orjson.loads(v)
         return v
-
-    @model_validator(mode="after")
-    def derive_pending_approval_status(self):
-        # PENDING is never persisted: an upload is pending review once Dagster
-        # has staged it (DQ passed) and no reviewer decision has been recorded.
-        if (
-            self.approval_status is None
-            and self.dq_status == DQStatusEnum.COMPLETED
-            and self.is_processed_in_staging
-        ):
-            self.approval_status = "PENDING"
-        return self
 
 
 @dataclass
