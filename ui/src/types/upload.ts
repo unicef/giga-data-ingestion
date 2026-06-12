@@ -152,7 +152,7 @@ export interface UploadResponse {
   country: string;
   dataset: string;
   source: string | null;
-  mode: "Create" | "Update" | null;
+  mode: "Create" | "Update" | "Mixed" | null;
   approval_status: "PENDING" | "APPROVED" | "REJECTED" | null;
   original_filename: string;
   upload_path: string;

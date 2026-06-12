@@ -37,7 +37,7 @@ export const AcceptedUnstructuredMimeTypes = [
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
 
-export const UPLOAD_MODE_OPTIONS = ["Create", "Update"] as const;
+export const UPLOAD_MODE_OPTIONS = ["Create", "Update", "Mixed"] as const;
 export type UploadModeOptions = typeof UPLOAD_MODE_OPTIONS[number];
 
 export const MAX_UPLOAD_FILE_SIZE_MB = 100;
