@@ -152,6 +152,8 @@ export interface UploadResponse {
   country: string;
   dataset: string;
   source: string | null;
+  mode: "Create" | "Update" | "Mixed" | null;
+  approval_status: "PENDING" | "APPROVED" | "REJECTED" | null;
   original_filename: string;
   upload_path: string;
   column_to_schema_mapping: string;
@@ -171,6 +173,8 @@ export const initialUploadResponse: UploadResponse = {
   country: "",
   dataset: "",
   source: null,
+  mode: null,
+  approval_status: null,
   original_filename: "",
   upload_path: "",
   column_to_schema_mapping: "",
