@@ -1,7 +1,7 @@
 """add upload row stats and data owner
 
 Revision ID: b1c2d3e4f5a6
-Revises: a3c6ab14b3f8
+Revises: c4e5f6a7b8c9
 Create Date: 2026-04-28 12:00:00.000000
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "b1c2d3e4f5a6"
-down_revision: str | None = "a3c6ab14b3f8"
+down_revision: str | None = "c4e5f6a7b8c9"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

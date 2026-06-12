@@ -81,7 +81,6 @@ export default function ColumnSelectorModal({
   }
 
   function handleSave() {
-    saveVisibleColumns(draft);
     onSave(draft);
     onClose();
   }
