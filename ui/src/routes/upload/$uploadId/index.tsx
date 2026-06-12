@@ -147,6 +147,12 @@ function Index() {
                   Type: {uploadData.mode}
                 </>
               )}
+              {uploadData.approval_status && (
+                <>
+                  <br />
+                  Approval status: {uploadData.approval_status}
+                </>
+              )}
             </p>
           </div>
 
