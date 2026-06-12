@@ -19,6 +19,7 @@ export const ALL_COLUMN_CONFIGS: ColumnConfig[] = [
   { key: "rows_passed", label: "Records Passed" },
   { key: "rows_failed", label: "Records Rejected" },
   { key: "data_owner", label: "Data Owner" },
+  { key: "approval_status", label: "Approval status" },
   { key: "status", label: "DQ status" },
 ];
 

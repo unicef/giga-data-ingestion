@@ -1,4 +1,4 @@
-import { ReactElement, useMemo } from "react";
+import { ComponentProps, ReactElement, useMemo } from "react";
 
 import {
   Button,
@@ -77,6 +77,10 @@ const ALL_COLUMNS: DataTableHeader[] = [
     header: "Data owner",
   },
   {
+    key: "approval_status",
+    header: "Approval status",
+  },
+  {
     key: "status",
     header: "DQ check status",
   },
@@ -85,6 +89,15 @@ const ALL_COLUMNS: DataTableHeader[] = [
     header: "",
   },
 ];
+
+const ApprovalStatusTagMapping: Record<
+  NonNullable<UploadResponse["approval_status"]>,
+  ComponentProps<typeof Tag>["type"]
+> = {
+  PENDING: "gray",
+  APPROVED: "green",
+  REJECTED: "red",
+};
 
 type TableUpload = Record<
   keyof UploadResponse,
@@ -202,6 +215,16 @@ function UploadsTable({
           >
             {statusText}
           </Tag>
+        ),
+        approval_status: upload.approval_status ? (
+          <Tag
+            type={ApprovalStatusTagMapping[upload.approval_status]}
+            className="capitalize"
+          >
+            {upload.approval_status.toLowerCase()}
+          </Tag>
+        ) : (
+          "—"
         ),
         actions: !isUnstructured && (
           <Button
