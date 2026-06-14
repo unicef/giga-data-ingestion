@@ -4,6 +4,7 @@ import { PagedResponse } from "@/types/api.ts";
 import {
   BasicChecks,
   DataQualityCheck,
+  DataQualityCheckLabel,
   FuzzyValidationParams,
   FuzzyValidationResponse,
   UploadParams,
@@ -19,11 +20,21 @@ export default function routes(axi: AxiosInstance) {
     ): Promise<AxiosResponse<DataQualityCheck>> => {
       return axi.get(`upload/data_quality_check/${upload_id}`);
     },
+    list_data_quality_check_labels: (): Promise<
+      AxiosResponse<DataQualityCheckLabel[]>
+    > => {
+      return axi.get("upload/data_quality_check_labels");
+    },
     list_uploads: (params?: {
       page?: number;
       page_size?: number;
       source?: string;
       dataset?: string;
+      uploader_email?: string;
+      country?: string;
+      dq_status?: string;
+      created_from?: string;
+      created_to?: string;
     }): Promise<AxiosResponse<PagedResponse<UploadResponse>>> => {
       return axi.get("/upload", { params });
     },

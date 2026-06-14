@@ -1,19 +1,9 @@
 import pandas as pd
 from rapidfuzz import fuzz, process, utils
 
-from data_ingestion.settings import logger
-from data_ingestion.utils.nocodb import (
-    get_nocodb_table_id_from_name,
-    get_nocodb_table_rows,
-)
+from data_ingestion.settings import logger, settings
+from data_ingestion.utils.nocodb import get_nocodb_table_rows
 
-NOCODB_FUZZY_TABLES = {
-    "education_level": "EducationLevelMapping",
-    "connectivity_type": "ConnectivityTypeMapping",
-    "school_area_type": "SchoolAreaTypeMapping",
-    "electricity_type": "ElectricityTypeMapping",
-    "learning_platform_type": "LearningPlatformTypeMapping",
-}
 UNKNOWN_VALUES = ("unknown", "nan", "none")
 NULL_VAL_DISPLAY = ("nan", "none", "")
 
@@ -55,21 +45,28 @@ def extract_valid_values_from_rows(
 
 def get_fuzzy_match_config_from_nocodb() -> dict[str, dict]:
     """
-    Fetches exactly valid values for fuzzy matching from NocoDB.
-    Returns a dictionary where keys are column names (e.g. 'education_level')
+    Fetches valid values for fuzzy matching from NocoDB.
+    Returns a dictionary where keys are column names (e.g. 'electricity_type_govt')
     and values are dicts containing 'dropdown_options' and 'matching_map'.
     """
     config = {}
     try:
-        for col_name, table_name in NOCODB_FUZZY_TABLES.items():
+        rows = get_nocodb_table_rows(
+            settings.NOCODB_NAME_MAPPINGS_TABLE_ID,
+            where="(column_name,notblank)",
+            fields="column_name,table_id",
+        )
+        for row in rows:
+            col_name = row.get("column_name", "")
+            table_id = row.get("table_id", "")
+
+            if not (col_name and table_id):
+                continue
+
             try:
-                table_id = get_nocodb_table_id_from_name(table_name)
-                if not table_id:
-                    continue
-                target_column = "Govt"
-                rows = get_nocodb_table_rows(table_id, fields=[target_column])
+                table_rows = get_nocodb_table_rows(table_id, fields="Govt")
                 dropdown_options, matching_map = extract_valid_values_from_rows(
-                    rows, target_column
+                    table_rows, "Govt"
                 )
 
                 if dropdown_options:
@@ -79,11 +76,11 @@ def get_fuzzy_match_config_from_nocodb() -> dict[str, dict]:
                     }
                 else:
                     logger.warning(
-                        f"No valid values found in NocoDB table {table_name} for {col_name}"
+                        f"No valid values found in NocoDB table {table_id} for {col_name}"
                     )
             except Exception as e:
                 logger.warning(
-                    f"Failed to fetch fuzzy match config for {col_name} from {table_name}: {e}"
+                    f"Failed to fetch fuzzy match config for {col_name}: {e}"
                 )
     except Exception as e:
         logger.error(f"Error connecting to NocoDB for fuzzy match config: {e}")
@@ -258,17 +255,11 @@ def run_fuzzy_matching(df: pd.DataFrame, column_mappings: dict[str, str]) -> dic
 
     for raw_col, standard_col in column_mappings.items():
         # Check if the standard config maps to a known fuzzy target, e.g. "education_level_govt" -> "education_level"
-        fuzzy_target = None
-        if standard_col in config:
-            fuzzy_target = standard_col
-        elif standard_col.replace("_govt", "") in config:
-            fuzzy_target = standard_col.replace("_govt", "")
-
-        if not fuzzy_target:
+        if standard_col not in config:
             continue
 
-        dropdown_opts = config[fuzzy_target]["dropdown_options"]
-        matching_map = config[fuzzy_target]["matching_map"]
+        dropdown_opts = config[standard_col]["dropdown_options"]
+        matching_map = config[standard_col]["matching_map"]
         if raw_col not in df.columns:
             continue
 

@@ -503,6 +503,11 @@ async def submit_upload_review(
                 school_id_giga=school_id_giga,
                 rejection_reason="Rejected by admin during manual review",
             )
+    # Set approval_status on the upload based on the decision.
+    if approved_change_ids:
+        file_upload.approval_status = _STATUS_APPROVED
+    elif rejected_change_ids:
+        file_upload.approval_status = _STATUS_REJECTED
 
     # Create the audit log first so its ID can be included in the approval payload.
     approval_request_log_id = None
@@ -542,8 +547,7 @@ async def submit_upload_review(
         approval_payload, overwrite=True
     )
 
-    if approval_request:
-        await primary_db.commit()
+    await primary_db.commit()
 
 
 def _build_info(file_upload: FileUpload, country_code: str) -> ApprovalRequestInfo:
