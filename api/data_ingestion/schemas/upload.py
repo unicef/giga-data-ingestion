@@ -3,7 +3,15 @@ from datetime import datetime
 
 import orjson
 from fastapi import Form, UploadFile
-from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr, field_validator
+from pydantic import (
+    UUID4,
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    constr,
+    field_validator,
+    model_validator,
+)
 
 from data_ingestion.models.file_upload import DQStatusEnum
 
@@ -21,10 +29,16 @@ class FileUpload(BaseModel):
     country: constr(min_length=3, max_length=3)
     dataset: str
     source: str | None
+    mode: str | None
+    approval_status: str | None
     original_filename: str
     column_to_schema_mapping: dict[str, str]
     column_license: dict[str, str]
     upload_path: str
+    data_owner: str | None
+    rows: int | None
+    rows_passed: int | None
+    rows_failed: int | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -41,6 +55,18 @@ class FileUpload(BaseModel):
         if isinstance(v, str):
             return orjson.loads(v)
         return v
+
+    @model_validator(mode="after")
+    def derive_pending_approval_status(self):
+        # PENDING is never persisted: an upload is pending review once Dagster
+        # has staged it (DQ passed) and no reviewer decision has been recorded.
+        if (
+            self.approval_status is None
+            and self.dq_status == DQStatusEnum.COMPLETED
+            and self.is_processed_in_staging
+        ):
+            self.approval_status = "PENDING"
+        return self
 
 
 @dataclass
@@ -67,3 +93,15 @@ class UnstructuredFileUploadRequest:
 class ValidateFuzzyRequest:
     file: UploadFile = Form(...)
     column_to_schema_mapping: str = Form(...)
+
+
+class DataQualityCheckLabel(BaseModel):
+    assertion: str
+    column_key: str = ""
+    ui_error_description: str
+    dq_table_column_name: str | None = None
+    dq_check_category: str | None = None
+    column_checked: str | None = None
+    human_readable_name: str | None = None
+    active: bool = True
+    sort_order: int | None = None

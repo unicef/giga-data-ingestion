@@ -11,7 +11,7 @@ from data_ingestion.internal import email
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.groups import GroupsApi
 from data_ingestion.internal.users import UsersApi
-from data_ingestion.models import Role, User
+from data_ingestion.models import FileUpload, Role, User
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.group import ModifyUserAccessRequest
 from data_ingestion.schemas.invitation import (
@@ -45,6 +45,20 @@ async def list_users(db: AsyncSession = Depends(get_db)):
         select(User)
         .order_by(User.given_name, User.surname, User.email)
         .options(selectinload(User.roles))
+    )
+
+
+@router.get(
+    "/uploaders",
+    response_model=list[DatabaseUser],
+    dependencies=[Security(IsPrivileged())],
+)
+async def list_uploaders(db: AsyncSession = Depends(get_db)):
+    return await db.scalars(
+        select(User)
+        .join(FileUpload, FileUpload.uploader_id == User.id)
+        .distinct()
+        .order_by(User.given_name, User.surname, User.email)
     )
 
 

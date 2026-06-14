@@ -201,6 +201,18 @@ function Index() {
               {new Date(uploadData.created).toLocaleTimeString()} GMT
               <br />
               {new Date(uploadData.created).toDateString()}
+              {uploadData.mode && (
+                <>
+                  <br />
+                  Type: {uploadData.mode}
+                </>
+              )}
+              {uploadData.approval_status && (
+                <>
+                  <br />
+                  Approval status: {uploadData.approval_status}
+                </>
+              )}
             </p>
           </div>
 
