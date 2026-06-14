@@ -281,6 +281,7 @@ function UploadLanding(props: UploadLandingProps) {
                 <UploadsTable
                   {...props}
                   source={tabFilter.source}
+                  visibleColumns={visibleColumns}
                   dataset={tabFilter.dataset}
                 />
               </TabPanel>
@@ -288,6 +289,7 @@ function UploadLanding(props: UploadLandingProps) {
                 <UploadsTable
                   {...props}
                   source={tabFilter.source}
+                  visibleColumns={visibleColumns}
                   dataset={tabFilter.dataset}
                 />
               </TabPanel>
