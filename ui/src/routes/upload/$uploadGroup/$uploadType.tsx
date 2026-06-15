@@ -287,6 +287,11 @@ function Layout() {
               />
               <ProgressStep
                 label="4"
+                description="Quality Assessment"
+                secondaryLabel="Quality Assessment"
+              />
+              <ProgressStep
+                label="5"
                 description="Submit"
                 secondaryLabel="Submit"
               />

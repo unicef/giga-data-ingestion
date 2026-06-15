@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Add, Filter } from "@carbon/icons-react";
+import { Add, Column, Filter } from "@carbon/icons-react";
 import {
   Button,
   Heading,
@@ -14,6 +14,10 @@ import {
 } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
+import ColumnSelectorModal, {
+  loadVisibleColumns,
+  saveVisibleColumns,
+} from "@/components/check-file-uploads/ColumnSelectorModal";
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
 import FilterModal, {
   UploadFilters,
@@ -45,6 +49,9 @@ interface UploadLandingProps {
 function UploadLanding(props: UploadLandingProps) {
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] =
+    useState<Set<string>>(loadVisibleColumns);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] =
     useState<UploadFilters>(EMPTY_FILTERS);
@@ -52,6 +59,11 @@ function UploadLanding(props: UploadLandingProps) {
     v => v !== "",
   ).length;
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
+
+  function handleColumnSave(cols: Set<string>) {
+    saveVisibleColumns(cols);
+    setVisibleColumns(cols);
+  }
 
   // Tab 0 = Geolocation (source gigasync), 1 = API (source api),
   // 2 = Coverage (dataset coverage), 3 = Schemaless (dataset structured),
@@ -177,6 +189,13 @@ function UploadLanding(props: UploadLandingProps) {
             </div>
           </Stack>
 
+          <ColumnSelectorModal
+            open={modalOpen}
+            onClose={() => setModalOpen(false)}
+            visibleColumns={visibleColumns}
+            onSave={handleColumnSave}
+          />
+
           <Tabs selectedIndex={selectedTab} onChange={handleTabChange}>
             <div className="flex items-center">
               <TabList
@@ -201,6 +220,15 @@ function UploadLanding(props: UploadLandingProps) {
                   activeFilterCount > 0 ? ` (${activeFilterCount})` : ""
                 }`}
               </Button>
+              <Button
+                kind="tertiary"
+                size="sm"
+                renderIcon={Column}
+                onClick={() => setModalOpen(true)}
+                className="ml-2 shrink-0"
+              >
+                Columns
+              </Button>
             </div>
 
             <TabPanels>
@@ -209,6 +237,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
@@ -221,6 +250,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
@@ -233,6 +263,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
@@ -245,6 +276,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}

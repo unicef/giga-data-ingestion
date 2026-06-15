@@ -27,6 +27,7 @@ import {
 import {
   AcceptedFileTypes,
   AcceptedUnstructuredFileTypes,
+  MAX_UPLOAD_FILE_SIZE_BYTES,
   MAX_UPLOAD_FILE_SIZE_MB,
   UPLOAD_MODE_OPTIONS,
 } from "@/constants/upload.ts";
@@ -49,7 +50,9 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
 
 const validStructuredTypes = {
   "text/csv": AcceptedFileTypes.CSV,
+  "application/csv": AcceptedFileTypes.CSV,
   "application/vnd.ms-excel": AcceptedFileTypes.EXCEL_LEGACY,
+  "application/x-ole-storage": AcceptedFileTypes.EXCEL_LEGACY,
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
     AcceptedFileTypes.EXCEL,
 };
@@ -88,6 +91,44 @@ const validUnstructuredTypes = {
     AcceptedUnstructuredFileTypes.DOCX,
 };
 
+type ValidFileTypes = Record<string, string | string[]>;
+
+function getFileExtension(file: File) {
+  const extensionIndex = file.name.lastIndexOf(".");
+  return extensionIndex === -1
+    ? ""
+    : file.name.slice(extensionIndex).toLowerCase();
+}
+
+function getAllowedExtensions(validTypes: ValidFileTypes) {
+  return [...new Set(Object.values(validTypes).flat())];
+}
+
+function getAcceptedFileType(file: File, validTypes: ValidFileTypes) {
+  const fileExtension = getFileExtension(file);
+
+  return getAllowedExtensions(validTypes).find(
+    extension => extension.toLowerCase() === fileExtension,
+  );
+}
+
+function getFileValidationError(file: File, validTypes: ValidFileTypes) {
+  const allowedExtensions = getAllowedExtensions(validTypes);
+  const fileExtension = getFileExtension(file);
+
+  if (!allowedExtensions.includes(fileExtension)) {
+    return `Unsupported file type. Please upload ${allowedExtensions.join(
+      " or ",
+    )} files only.`;
+  }
+
+  if (file.size > MAX_UPLOAD_FILE_SIZE_BYTES) {
+    return `File size exceeds ${MAX_UPLOAD_FILE_SIZE_MB} MB limit`;
+  }
+
+  return "";
+}
+
 export default function Index() {
   const { uploadType, uploadGroup } = Route.useParams();
   const isCoverage = uploadType === "coverage";
@@ -106,11 +147,15 @@ export default function Index() {
   const isStructured = uploadGroup === "other" && uploadType === "structured";
   const isHealth = uploadGroup === "other" && uploadType === "health";
 
-  const validTypes = isUnstructured
-    ? validUnstructuredTypes
-    : isStructured
-    ? validCustomStructuredTypes
-    : validStructuredTypes;
+  const validTypes = useMemo(
+    () =>
+      isUnstructured
+        ? validUnstructuredTypes
+        : isStructured
+        ? validCustomStructuredTypes
+        : validStructuredTypes,
+    [isStructured, isUnstructured],
+  );
   const {
     uploadSlice,
     uploadSliceActions: {
@@ -203,7 +248,8 @@ export default function Index() {
         : !isUnstructured && !isStructured),
   });
 
-  const schema = schemaQuery?.data ?? [];
+  const schemaData = schemaQuery?.data;
+  const schema = useMemo(() => schemaData ?? [], [schemaData]);
 
   useEffect(() => {
     if (!isHealth) return;
@@ -213,6 +259,18 @@ export default function Index() {
   useEffect(() => {
     const { file } = uploadSlice;
     if (schema.length && file) {
+      const validationError = getFileValidationError(file, validTypes);
+      if (validationError) {
+        setFile(null);
+        setTimeStamp(null);
+        setDetectedColumns([]);
+        setColumnMapping({});
+        setParsingError(validationError);
+        setIsParsing(false);
+        return;
+      }
+
+      const acceptedFileType = getAcceptedFileType(file, validTypes);
       const detector = new HeaderDetector({
         file,
         schema,
@@ -220,12 +278,20 @@ export default function Index() {
         setError: setParsingError,
         setColumnMapping,
         setDetectedColumns,
-        type: validTypes[file.type as keyof typeof validTypes],
+        type: acceptedFileType as AcceptedFileTypes,
       });
-      detector.validateFileSize();
+      if (!detector.validateFileSize()) return;
       detector.detect();
     }
-  }, [schema]);
+  }, [
+    file,
+    schema,
+    setColumnMapping,
+    setDetectedColumns,
+    setFile,
+    setTimeStamp,
+    validTypes,
+  ]);
 
   const handleProceedToNextStep = async () => {
     if (isStructured) {
@@ -297,52 +363,32 @@ export default function Index() {
     setParsingError("");
     setIsParsing(true);
 
-    if (isStructured) {
-      // For structured datasets, just validate file size and set the file
-      if (file.size > MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024) {
-        setParsingError(
-          `File size exceeds ${MAX_UPLOAD_FILE_SIZE_MB} MB limit`,
-        );
-        setIsParsing(false);
-        return;
-      }
-
-      setUploadSliceState({
-        uploadSlice: {
-          ...uploadSlice,
-          fuzzyCorrections: [],
-          fuzzyValidationRequestKey: null,
-          fuzzyValidationResult: null,
-          file: file,
-          timeStamp: new Date(),
-        },
-      });
+    const validationError = getFileValidationError(file, validTypes);
+    if (validationError) {
+      setFile(null);
+      setTimeStamp(null);
+      setDetectedColumns([]);
+      setColumnMapping({});
+      setParsingError(validationError);
       setIsParsing(false);
-    } else {
-      // For other datasets, use HeaderDetector
-      const detector = new HeaderDetector({
-        file,
-        schema,
-        setIsParsing: setIsParsing,
-        setError: setParsingError,
-        setColumnMapping,
-        setDetectedColumns,
-        type: validTypes[file.type as keyof typeof validTypes],
-      });
-      detector.validateFileSize();
-      detector.detect();
-
-      setUploadSliceState({
-        uploadSlice: {
-          ...uploadSlice,
-          fuzzyCorrections: [],
-          fuzzyValidationRequestKey: null,
-          fuzzyValidationResult: null,
-          file: file,
-          timeStamp: new Date(),
-        },
-      });
+      return;
     }
+
+    setUploadSliceState({
+      uploadSlice: {
+        ...uploadSlice,
+        fuzzyCorrections: [],
+        fuzzyValidationRequestKey: null,
+        fuzzyValidationResult: null,
+        file: file,
+        timeStamp: new Date(),
+      },
+    });
+
+    if (isStructured || isUnstructured) {
+      setIsParsing(false);
+    }
+    // For school/coverage/geolocation: useEffect detects when schema is ready
   }
 
   function handleHealthAddFiles(addedFiles: File[]) {
@@ -598,7 +644,7 @@ export default function Index() {
                 />
               ) : (
                 <FileUploaderDropContainer
-                  accept={Object.keys(validTypes)}
+                  accept={getAllowedExtensions(validTypes)}
                   name="file"
                   labelText="Click or drag a file to upload"
                   onAddFiles={(_, { addedFiles }: { addedFiles: File[] }) =>

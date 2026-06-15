@@ -1,9 +1,18 @@
 import { useMemo } from "react";
 
-import { Download } from "@carbon/icons-react";
-import { Button, Tab, TabList, TabPanel, TabPanels, Tabs } from "@carbon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Download, Send } from "@carbon/icons-react";
+import {
+  Button,
+  Loading,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  Tag,
+} from "@carbon/react";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import DataQualityChecks from "@/components/check-file-uploads/ColumnChecks";
@@ -12,6 +21,8 @@ import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { PendingComponent } from "@/components/common/PendingComponent";
 import { Check } from "@/types/upload";
 import {
+  DQStatus,
+  DQStatusTagMapping,
   DataQualityCheck,
   UploadResponse,
   initialDataQualityCheck,
@@ -38,10 +49,18 @@ export const Route = createFileRoute("/upload/$uploadId/")({
 
 function Index() {
   const { uploadId } = Route.useParams();
+  const router = useRouter();
 
   const { data: dqResultQuery } = useSuspenseQuery({
     queryKey: ["dq_check", uploadId],
     queryFn: () => api.uploads.get_data_quality_check(uploadId),
+    refetchInterval: query => {
+      const current_status = query.state.data?.data?.status;
+      if (current_status && current_status !== DQStatus.IN_PROGRESS) {
+        return false;
+      }
+      return 5000;
+    },
   });
 
   const dqResultData = useMemo<DataQualityCheck>(
@@ -52,12 +71,36 @@ function Index() {
   const { data: uploadQuery } = useSuspenseQuery({
     queryKey: ["upload", uploadId],
     queryFn: () => api.uploads.get_upload(uploadId),
+    refetchInterval: query => {
+      const current_status = query.state.data?.data?.dq_status;
+      if (current_status && current_status !== DQStatus.IN_PROGRESS) {
+        return false;
+      }
+      return 5000;
+    },
   });
 
   const uploadData = useMemo<UploadResponse>(
     () => uploadQuery?.data ?? initialUploadResponse,
     [uploadQuery],
   );
+
+  const dqStatus = uploadData.dq_status;
+  const isCompleted = dqStatus === DQStatus.COMPLETED;
+
+  const checkTypeLabel =
+    uploadData.dq_mode === "uploaded" ? "FILE_CHECKED" : "MASTER";
+
+  const runMasterCheckMutation = useMutation({
+    mutationFn: () => api.uploads.dq_run(uploadId, "master"),
+    onSuccess: () => {
+      router.invalidate();
+    },
+  });
+
+  const handleSubmitMasterCheck = () => {
+    runMasterCheckMutation.mutate();
+  };
 
   const summaryStats = dqResultData.dq_summary.summary || {};
   const {
@@ -141,10 +184,58 @@ function Index() {
               {new Date(uploadData.created).toLocaleTimeString()} GMT
               <br />
               {new Date(uploadData.created).toDateString()}
+              {uploadData.mode && (
+                <>
+                  <br />
+                  Type: {uploadData.mode}
+                </>
+              )}
+              {uploadData.approval_status && (
+                <>
+                  <br />
+                  Approval status: {uploadData.approval_status}
+                </>
+              )}
             </p>
+
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+            >
+              <span style={{ fontSize: "0.875rem", color: "#6f6f6f" }}>
+                Check type:
+              </span>
+              <Tag type={DQStatusTagMapping[dqStatus]} size="md">
+                {checkTypeLabel}
+              </Tag>
+              {dqStatus === DQStatus.IN_PROGRESS && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                    fontSize: "0.875rem",
+                    color: "#393939",
+                  }}
+                >
+                  <Loading
+                    small
+                    withOverlay={false}
+                    style={{ width: "1rem", height: "1rem" }}
+                  />
+                  <span>Checking... Refreshing automatically</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.75rem",
+              alignItems: "flex-end",
+            }}
+          >
             <Button
               kind="primary"
               size="md"
@@ -153,6 +244,20 @@ function Index() {
             >
               Download data quality report
             </Button>
+
+            {uploadData.dq_mode === "uploaded" && isCompleted && (
+              <Button
+                kind="primary"
+                size="md"
+                renderIcon={Send}
+                onClick={handleSubmitMasterCheck}
+                disabled={runMasterCheckMutation.isPending}
+              >
+                {runMasterCheckMutation.isPending
+                  ? "Submitting..."
+                  : "Submit for master check"}
+              </Button>
+            )}
           </div>
         </div>
 
