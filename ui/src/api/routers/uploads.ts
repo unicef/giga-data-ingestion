@@ -50,7 +50,25 @@ export default function routes(axi: AxiosInstance) {
       });
 
       return axi.post("/upload", formData, {
-        params: { dataset: params.dataset },
+        params: {
+          dataset: params.dataset,
+          ...(params.dq_mode ? { dq_mode: params.dq_mode } : {}),
+        },
+      });
+    },
+    review: (
+      params: UploadParams,
+      dq_mode: "uploaded" | "master" = "uploaded",
+    ): Promise<AxiosResponse<UploadResponse>> => {
+      const formData = new FormData();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value != null) {
+          formData.append(key, value);
+        }
+      });
+
+      return axi.post("/upload/review", formData, {
+        params: { dataset: params.dataset, dq_mode },
       });
     },
 
@@ -194,6 +212,22 @@ export default function routes(axi: AxiosInstance) {
     ): Promise<AxiosResponse<BasicChecks>> => {
       return axi.get(`/upload/basic_check/${dataset}`, {
         params: { source: source },
+      });
+    },
+    dq_run: (
+      upload_id: string,
+      dq_mode: "uploaded" | "master",
+    ): Promise<AxiosResponse<{ message: string; dq_run_id: number }>> => {
+      return axi.post(`/upload/${upload_id}/dq-run`, null, {
+        params: { dq_mode },
+      });
+    },
+    complete_dq_run: (
+      upload_id: string,
+      dq_mode: "uploaded" | "master",
+    ): Promise<AxiosResponse<{ message: string }>> => {
+      return axi.post(`/upload/${upload_id}/dq-complete`, null, {
+        params: { dq_mode },
       });
     },
   };
