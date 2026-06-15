@@ -2,7 +2,7 @@ import asyncio
 import io
 import json
 import os
-from datetime import date, datetime, time, UTC
+from datetime import UTC, date, datetime, time
 from pathlib import Path
 from typing import Annotated, Literal, Optional
 
@@ -302,7 +302,7 @@ async def download_basic_check(
 
 
 @router.get("", response_model=PagedResponseSchema[FileUploadSchema])
-async def list_uploads(
+async def list_uploads(  # noqa: C901
     user: User = Depends(azure_scheme),
     is_privileged: bool = Depends(IsPrivileged.raises(False)),
     db: AsyncSession = Depends(get_db),
@@ -539,15 +539,19 @@ async def upload_file(
         select(DatabaseUser).where(DatabaseUser.email == email)
     )
 
+    upload_metadata = orjson.loads(form.metadata)
+
     file_upload = FileUpload(
         uploader_id=database_user.id,
         uploader_email=database_user.email,
         country=country_code,
         dataset=dataset,
         source=form.source,
+        mode=upload_metadata.get("mode") or None,
         original_filename=file.filename,
         column_to_schema_mapping=orjson.loads(form.column_to_schema_mapping),
         column_license=orjson.loads(form.column_license),
+        data_owner=upload_metadata.get("data_owner"),
     )
 
     db.add(file_upload)
@@ -573,7 +577,7 @@ async def upload_file(
 
     try:
         metadata = {
-            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            **{str(k): str(v) for k, v in upload_metadata.items()},
             "country": form.country,
             "uploader_email": email,
             "dq_mode": form.dq_mode,
@@ -792,15 +796,18 @@ async def upload_unstructured(  # noqa: C901
         select(DatabaseUser).where(DatabaseUser.email == email)
     )
 
+    upload_metadata = orjson.loads(form.metadata)
     file_upload = FileUpload(
         uploader_id=database_user.id,
         uploader_email=database_user.email,
         country=country_code,
         dataset="unstructured",
+        mode=upload_metadata.get("mode") or None,
         original_filename=file.filename,
         column_to_schema_mapping={},
         column_license={},
         dq_status=DQStatusEnum.SKIPPED,
+        data_owner=upload_metadata.get("data_owner"),
     )
     db.add(file_upload)
     await db.commit()
@@ -809,7 +816,7 @@ async def upload_unstructured(  # noqa: C901
 
     try:
         metadata = {
-            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            **{str(k): str(v) for k, v in upload_metadata.items()},
             "country": form.country,
             "uploader_email": email,
         }
@@ -896,15 +903,18 @@ async def upload_structured(  # noqa: C901
         select(DatabaseUser).where(DatabaseUser.email == email)
     )
 
+    upload_metadata = orjson.loads(form.metadata)
     file_upload = FileUpload(
         uploader_id=database_user.id,
         uploader_email=database_user.email,
         country=country_code,
         dataset="structured",
+        mode=upload_metadata.get("mode") or None,
         original_filename=file.filename,
         column_to_schema_mapping={},
         column_license={},
         dq_status=DQStatusEnum.SKIPPED,
+        data_owner=upload_metadata.get("data_owner"),
     )
     db.add(file_upload)
     await db.commit()
@@ -913,7 +923,7 @@ async def upload_structured(  # noqa: C901
 
     try:
         metadata = {
-            **{str(k): str(v) for k, v in orjson.loads(form.metadata).items()},
+            **{str(k): str(v) for k, v in upload_metadata.items()},
             "country": form.country,
             "uploader_email": email,
             "dataset_type": "structured",

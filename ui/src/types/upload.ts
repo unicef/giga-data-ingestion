@@ -153,11 +153,17 @@ export interface UploadResponse {
   country: string;
   dataset: string;
   source: string | null;
+  mode: "Create" | "Update" | "Mixed" | null;
+  approval_status: "PENDING" | "APPROVED" | "REJECTED" | null;
   original_filename: string;
   upload_path: string;
   column_to_schema_mapping: string;
   column_license: string;
   dq_mode?: "uploaded" | "master" | null;
+  data_owner: string | null;
+  rows: number | null;
+  rows_passed: number | null;
+  rows_failed: number | null;
 }
 
 export const initialUploadResponse: UploadResponse = {
@@ -173,11 +179,17 @@ export const initialUploadResponse: UploadResponse = {
   country: "",
   dataset: "",
   source: null,
+  mode: null,
+  approval_status: null,
   original_filename: "",
   upload_path: "",
   column_to_schema_mapping: "",
   column_license: "",
   dq_mode: null,
+  data_owner: null,
+  rows: null,
+  rows_passed: null,
+  rows_failed: null,
 };
 
 export const basicCheckSchema = z.object({

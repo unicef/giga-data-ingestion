@@ -34,7 +34,7 @@ export interface UploadSliceState {
     uploadId: string;
     stepIndex: number;
     source: string | null;
-    mode: "Create" | "Update" | "";
+    mode: "Create" | "Update" | "Mixed" | "";
     pendingSchoolDataPayload: UploadParams | null;
   };
 }
