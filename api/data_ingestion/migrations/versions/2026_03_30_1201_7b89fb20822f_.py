@@ -1,6 +1,6 @@
 """
 Revision ID: 7b89fb20822f
-Revises: 49a684bb43f3
+Revises: b1c2d3e4f5a6
 Create Date: 2026-03-30 12:01:25.183717
 """
 from collections.abc import Sequence
@@ -10,8 +10,8 @@ from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'a3c6ab14b3f8'
-down_revision: str | None = '49a684bb43f3'
+revision: str = '7b89fb20822f'
+down_revision: str | None = 'b1c2d3e4f5a6'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
