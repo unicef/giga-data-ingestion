@@ -35,6 +35,7 @@ class FileUpload(BaseModel):
     column_to_schema_mapping: dict[str, str]
     column_license: dict[str, str]
     upload_path: str
+    dq_mode: str | None = None
     data_owner: str | None
     rows: int | None
     rows_passed: int | None
@@ -78,6 +79,7 @@ class FileUploadRequest:
     dataset: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+    dq_mode: str = Form("master")
     fuzzy_corrections: str | None = Form(None)
 
 

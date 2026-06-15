@@ -80,6 +80,7 @@ export interface UploadParams {
   fuzzy_corrections?: string;
   source?: string | null;
   metadata: string;
+  dq_mode?: "uploaded" | "master";
 }
 
 export interface UploadUnstructuredParams {
@@ -158,6 +159,7 @@ export interface UploadResponse {
   upload_path: string;
   column_to_schema_mapping: string;
   column_license: string;
+  dq_mode?: "uploaded" | "master" | null;
   data_owner: string | null;
   rows: number | null;
   rows_passed: number | null;
@@ -183,6 +185,7 @@ export const initialUploadResponse: UploadResponse = {
   upload_path: "",
   column_to_schema_mapping: "",
   column_license: "",
+  dq_mode: null,
   data_owner: null,
   rows: null,
   rows_passed: null,
