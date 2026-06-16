@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Download, Send } from "@carbon/icons-react";
 import {
   Button,
-  InlineLoading,
   Loading,
   Tab,
   TabList,
@@ -14,9 +13,8 @@ import {
 } from "@carbon/react";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import axios from "axios";
 
-import { api } from "@/api";
+import { api, axi } from "@/api";
 import DataQualityChecks from "@/components/check-file-uploads/ColumnChecks";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
@@ -52,9 +50,7 @@ export const Route = createFileRoute("/upload/$uploadId/")({
 function Index() {
   const { uploadId } = Route.useParams();
   const [mapUrl, setMapUrl] = useState<string>("");
-  const [mapLoading, setMapLoading] = useState<boolean>(true);
-  const [mapError, setMapError] = useState<string>("");
-  const [dqKitAvailable, setDqKitAvailable] = useState<boolean>(true);
+  const [dqKitAvailable, setDqKitAvailable] = useState<boolean>(false);
   const router = useRouter();
 
   const { data: dqResultQuery } = useSuspenseQuery({
@@ -126,14 +122,31 @@ function Index() {
 
   // Check if DQ Kit is available
   useEffect(() => {
+    let isCurrent = true;
+    setDqKitAvailable(false);
+
     if (uploadData.dq_status !== "COMPLETED") {
-      return;
+      return () => {
+        isCurrent = false;
+      };
     }
 
-    axios
+    axi
       .head(`upload/dq_kit/${uploadData.id}/download`)
-      .then(() => setDqKitAvailable(true))
-      .catch(() => setDqKitAvailable(false));
+      .then(() => {
+        if (isCurrent) {
+          setDqKitAvailable(true);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setDqKitAvailable(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
   }, [uploadData.id, uploadData.dq_status]);
 
   // Fetch map HTML and create a blob URL for iframe preview
@@ -142,27 +155,32 @@ function Index() {
       uploadData.dq_status !== "COMPLETED" ||
       uploadData.dataset !== "geolocation"
     ) {
+      setMapUrl("");
       return;
     }
 
+    let isCurrent = true;
     let createdUrl: string | null = null;
-    setMapLoading(true);
-    setMapError("");
+    setMapUrl("");
 
     api.uploads
       .download_map({ upload_id: uploadId })
       .then(response => {
+        if (!isCurrent) {
+          return;
+        }
         createdUrl = window.URL.createObjectURL(response.data);
         setMapUrl(createdUrl);
-        setMapLoading(false);
       })
       .catch(error => {
+        if (!isCurrent) {
+          return;
+        }
         console.error("Error loading map:", error);
-        setMapError("Map not available or not yet generated");
-        setMapLoading(false);
       });
 
     return () => {
+      isCurrent = false;
       if (createdUrl) {
         window.URL.revokeObjectURL(createdUrl);
       }
@@ -284,9 +302,10 @@ function Index() {
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
+              flexWrap: "wrap",
               gap: "0.75rem",
-              alignItems: "flex-end",
+              justifyContent: "flex-end",
+              alignItems: "center",
             }}
           >
             <Button
@@ -406,7 +425,7 @@ function Index() {
 
       {uploadData.dq_status === "COMPLETED" &&
         uploadData.dataset === "geolocation" &&
-        (mapUrl || mapLoading) && (
+        mapUrl && (
           <div
             style={{
               background: "#fff",
@@ -429,7 +448,6 @@ function Index() {
                 size="sm"
                 renderIcon={Download}
                 onClick={handleDownloadMap}
-                disabled={mapLoading || !!mapError}
               >
                 Download map
               </Button>
@@ -444,52 +462,17 @@ function Index() {
                 minHeight: "600px",
               }}
             >
-              {mapLoading && (
-                <div
-                  style={{
-                    height: "600px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#525252",
-                  }}
-                >
-                  <InlineLoading description="Loading map..." />
-                </div>
-              )}
-
-              {mapError && !mapLoading && (
-                <div
-                  style={{
-                    height: "600px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "0.5rem",
-                    color: "#da1e28",
-                  }}
-                >
-                  <p>{mapError}</p>
-                  <p style={{ fontSize: "0.875rem", color: "#525252" }}>
-                    The map may not have been generated yet.
-                  </p>
-                </div>
-              )}
-
-              {mapUrl && !mapLoading && !mapError && (
-                <iframe
-                  src={mapUrl}
-                  sandbox="allow-scripts"
-                  style={{
-                    width: "100%",
-                    height: "600px",
-                    border: "none",
-                    display: "block",
-                  }}
-                  title="School Data Quality Map"
-                />
-              )}
+              <iframe
+                src={mapUrl}
+                sandbox="allow-scripts"
+                style={{
+                  width: "100%",
+                  height: "600px",
+                  border: "none",
+                  display: "block",
+                }}
+                title="School Data Quality Map"
+              />
             </div>
           </div>
         )}
