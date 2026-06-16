@@ -289,6 +289,12 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
                 />
               </TabPanel>
             </TabPanels>
