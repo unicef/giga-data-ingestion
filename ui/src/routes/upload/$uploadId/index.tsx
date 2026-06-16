@@ -153,7 +153,8 @@ function Index() {
   useEffect(() => {
     if (
       uploadData.dq_status !== "COMPLETED" ||
-      uploadData.dataset !== "geolocation"
+      uploadData.dataset !== "geolocation" ||
+      !dqKitAvailable
     ) {
       setMapUrl("");
       return;
@@ -185,7 +186,7 @@ function Index() {
         window.URL.revokeObjectURL(createdUrl);
       }
     };
-  }, [uploadId, uploadData.dq_status, uploadData.dataset]);
+  }, [dqKitAvailable, uploadId, uploadData.dq_status, uploadData.dataset]);
 
   // Extract checks from dqResultData
   const {
@@ -425,6 +426,7 @@ function Index() {
 
       {uploadData.dq_status === "COMPLETED" &&
         uploadData.dataset === "geolocation" &&
+        dqKitAvailable &&
         mapUrl && (
           <div
             style={{
