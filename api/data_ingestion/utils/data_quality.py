@@ -40,16 +40,25 @@ def process_n_columns(column_name: str, df: pd.DataFrame, rows: int) -> dict | N
 def get_metadata_path(filepath: str) -> str:
     # Normalize paths by stripping leading slashes for comparison
     normalized_filepath = filepath.lstrip("/")
-    normalized_prefix = constants.UPLOAD_PATH_PREFIX.lstrip("/")
-    normalized_metadata_prefix = constants.UPLOAD_METADATA_PATH_PREFIX.lstrip("/")
 
-    if normalized_filepath.startswith(normalized_prefix):
-        return (
-            normalized_filepath.replace(
-                normalized_prefix, normalized_metadata_prefix, 1
+    path_prefix_pairs = (
+        (constants.UPLOAD_PATH_PREFIX, constants.UPLOAD_METADATA_PATH_PREFIX),
+        (
+            constants.HEALTH_UPLOAD_PATH_PREFIX,
+            constants.HEALTH_UPLOAD_METADATA_PATH_PREFIX,
+        ),
+    )
+
+    for upload_prefix, metadata_prefix in path_prefix_pairs:
+        normalized_upload_prefix = upload_prefix.lstrip("/")
+        normalized_metadata_prefix = metadata_prefix.lstrip("/")
+        if normalized_filepath.startswith(normalized_upload_prefix):
+            return (
+                normalized_filepath.replace(
+                    normalized_upload_prefix, normalized_metadata_prefix, 1
+                )
+                + ".metadata.json"
             )
-            + ".metadata.json"
-        )
 
     file_path = Path(filepath)
     metadata_file_path = f"{file_path.stem}.metadata.json"

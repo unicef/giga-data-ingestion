@@ -14,6 +14,8 @@ class Constants(BaseSettings):
     UPLOAD_FILE_SIZE_LIMIT_MB: int | float = 100
     UPLOAD_PATH_PREFIX: str = "raw/uploads"
     UPLOAD_METADATA_PATH_PREFIX: str = "raw/upload_metadata"
+    HEALTH_UPLOAD_PATH_PREFIX: str = "updated_master_schema/health-master"
+    HEALTH_UPLOAD_METADATA_PATH_PREFIX: str = "raw/upload_metadata/health-master"
     API_INGESTION_SCHEMA_UPLOAD_PATH: str = "schemas/qos/school-connectivity"
 
     VALID_UPLOAD_TYPES: dict[str, list[str]] = {
