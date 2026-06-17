@@ -56,6 +56,7 @@ class Constants(BaseSettings):
     ]
     FILENAME_TIMESTAMP_FORMAT: str = "%Y%m%d-%H%M%S"
     DATA_PRIVACY_DOCUMENT_PATH: str = "staticfiles/2023-11_School_data_request_FNL.pdf"
+    DELETE_PREVIEW_ID_CAP: int = 5000
 
     @computed_field
     @property

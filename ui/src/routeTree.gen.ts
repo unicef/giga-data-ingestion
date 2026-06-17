@@ -22,6 +22,7 @@ import { Route as DeleteIndexImport } from './routes/delete/index'
 import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
 import { Route as IngestApiEditImport } from './routes/ingest-api/edit'
 import { Route as IngestApiAddImport } from './routes/ingest-api/add'
+import { Route as DeleteNewImport } from './routes/delete/new'
 import { Route as UploadUploadIdIndexImport } from './routes/upload/$uploadId/index'
 import { Route as IngestApiAddIndexImport } from './routes/ingest-api/add/index'
 import { Route as DeleteCountryIndexImport } from './routes/delete/$country/index'
@@ -119,6 +120,11 @@ const IngestApiEditRoute = IngestApiEditImport.update({
 const IngestApiAddRoute = IngestApiAddImport.update({
   path: '/add',
   getParentRoute: () => IngestApiLazyRoute,
+} as any)
+
+const DeleteNewRoute = DeleteNewImport.update({
+  path: '/new',
+  getParentRoute: () => DeleteLazyRoute,
 } as any)
 
 const UploadUploadIdIndexRoute = UploadUploadIdIndexImport.update({
@@ -276,6 +282,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UploadLazyImport
       parentRoute: typeof rootRoute
     }
+    '/delete/new': {
+      preLoaderRoute: typeof DeleteNewImport
+      parentRoute: typeof DeleteLazyImport
+    }
     '/ingest-api/add': {
       preLoaderRoute: typeof IngestApiAddImport
       parentRoute: typeof IngestApiLazyImport
@@ -412,7 +422,11 @@ export const routeTree = rootRoute.addChildren([
     ApprovalRequestsCountryCodeUploadIdConfirmRoute,
     ApprovalRequestsCountryCodeUploadIdIndexRoute,
   ]),
-  DeleteLazyRoute.addChildren([DeleteIndexRoute, DeleteCountryIndexRoute]),
+  DeleteLazyRoute.addChildren([
+    DeleteNewRoute,
+    DeleteIndexRoute,
+    DeleteCountryIndexRoute,
+  ]),
   IngestApiLazyRoute.addChildren([
     IngestApiAddRoute.addChildren([
       IngestApiAddColumnMappingRoute,
