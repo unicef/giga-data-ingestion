@@ -327,59 +327,152 @@ export class ColumnValidator {
     reader.readAsText(options.file);
   }
 
-  // private csv() {
-  //   const { options } = this;
+  // private csv() { ... }
+  // private excel() { ... }
+}
 
-  //   parse(options.file, {
-  //     complete: result => {
-  //       const firstColumnValues = (result.data as string[][]).map(
-  //         row => row[0],
-  //       );
+interface DeleteFileParserOptions {
+  file: File;
+  setValues: (ids: string[]) => void;
+  setIsParsing: (loading: boolean) => void;
+  setError: (error: string) => void;
+}
 
-  //       this.commonProcess(firstColumnValues);
-  //     },
-  //     error: e => {
-  //       console.error(e.message);
-  //       options.setError(e.message);
-  //       options.setIsParsing(false);
-  //     },
-  //     skipEmptyLines: true,
-  //   });
-  // }
+/**
+ * Parses a single-column file (CSV/Excel/JSON) for school ID deletion uploads.
+ * CSV/Excel: reads all rows after the header from the first column.
+ * JSON: reads the top-level array of strings directly.
+ */
+export class DeleteFileParser {
+  constructor(private options: DeleteFileParserOptions) {}
 
-  // private excel() {
-  //   const { options } = this;
-  //   let workbook: XLSX.WorkBook;
+  parse() {
+    const mime = this.options.file.type;
+    if (mime === "text/csv" || mime === "application/csv") {
+      this.csv();
+    } else if (mime === "application/json") {
+      this.json();
+    } else if (
+      mime === "application/vnd.ms-excel" ||
+      mime === "application/x-ole-storage" ||
+      mime ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ) {
+      this.excel();
+    } else {
+      this.options.setError("Unsupported file type. Use CSV, Excel, or JSON.");
+      this.options.setIsParsing(false);
+    }
+  }
 
-  //   options.file
-  //     .arrayBuffer()
-  //     .then(buf => {
-  //       try {
-  //         workbook = XLSX.read(buf);
-  //       } catch (e) {
-  //         options.setError("A parsing error occurred. Please try again.");
-  //         console.error(e);
-  //         return;
-  //       }
+  private csv() {
+    parse(this.options.file, {
+      complete: result => {
+        const rows = result.data as string[][];
+        if (rows.length < 2) {
+          this.options.setError("File has no data rows after the header.");
+          this.options.setIsParsing(false);
+          return;
+        }
+        const ids = rows
+          .slice(1)
+          .map(row => String(row[0] ?? "").trim())
+          .filter(v => v.length > 0);
+        if (ids.length === 0) {
+          this.options.setError("No valid IDs found in file.");
+          this.options.setIsParsing(false);
+          return;
+        }
+        this.options.setValues(ids);
+        this.options.setIsParsing(false);
+      },
+      error: e => {
+        console.error(e.message);
+        this.options.setError(e.message);
+        this.options.setIsParsing(false);
+      },
+      skipEmptyLines: true,
+    });
+  }
 
-  //       const firstSheet = workbook.SheetNames[0];
-  //       const sheet = workbook.Sheets[firstSheet];
-  //       const data = xlsxUtils.sheet_to_json(sheet);
-  //       if (data.length === 0) {
-  //         options.setError("First sheet is empty");
-  //         return;
-  //       }
+  private json() {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        if (!Array.isArray(data)) {
+          this.options.setError(
+            "JSON file must contain a top-level array of IDs.",
+          );
+          this.options.setIsParsing(false);
+          return;
+        }
+        const ids = data
+          .map((v: unknown) => String(v).trim())
+          .filter((v: string) => v.length > 0);
+        if (ids.length === 0) {
+          this.options.setError("No valid IDs found in file.");
+          this.options.setIsParsing(false);
+          return;
+        }
+        this.options.setValues(ids);
+        this.options.setIsParsing(false);
+      } catch {
+        this.options.setError("Failed to parse JSON file.");
+        this.options.setIsParsing(false);
+      }
+    };
+    reader.onerror = () => {
+      this.options.setError("Failed to read file.");
+      this.options.setIsParsing(false);
+    };
+    reader.readAsText(this.options.file);
+  }
 
-  //       const firstKey = Object.keys(data[0] as Record<string, unknown>)[0];
-  //       const firstColumnValues = (data as Record<string, unknown>[]).map(
-  //         (row: Record<string, unknown>) => row[firstKey] as string,
-  //       );
+  private excel() {
+    this.options.file
+      .arrayBuffer()
+      .then(buf => {
+        let workbook: XLSX.WorkBook;
+        try {
+          workbook = XLSX.read(buf);
+        } catch (e) {
+          console.error(e);
+          this.options.setError("A parsing error occurred. Please try again.");
+          this.options.setIsParsing(false);
+          return;
+        }
 
-  //       this.commonProcess(firstColumnValues);
-  //     })
-  //     .catch(e => {
-  //       console.error(e);
-  //       options.setError("A parsing error occurred. Please try again.");
-  //     });
-  // }
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = xlsxUtils.sheet_to_json<string[]>(firstSheet, {
+          header: 1,
+          blankrows: false,
+        });
+
+        if (data.length < 2) {
+          this.options.setError("File has no data rows after the header.");
+          this.options.setIsParsing(false);
+          return;
+        }
+
+        const ids = data
+          .slice(1)
+          .map(row => String(row[0] ?? "").trim())
+          .filter(v => v.length > 0);
+
+        if (ids.length === 0) {
+          this.options.setError("No valid IDs found in file.");
+          this.options.setIsParsing(false);
+          return;
+        }
+
+        this.options.setValues(ids);
+        this.options.setIsParsing(false);
+      })
+      .catch(e => {
+        console.error(e);
+        this.options.setError("A parsing error occurred. Please try again.");
+        this.options.setIsParsing(false);
+      });
+  }
 }

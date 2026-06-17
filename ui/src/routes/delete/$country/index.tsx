@@ -4,21 +4,38 @@ import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
-  ListItem,
+  InlineNotification,
   Loading,
   Stack,
-  UnorderedList,
 } from "@carbon/react";
-import { useMutation } from "@tanstack/react-query";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { Link } from "@tanstack/react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  Link,
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
+import { z } from "zod";
 
 import { api } from "@/api";
 import { useStore } from "@/context/store";
+import { DeleteIdType, DeleteType } from "@/types/delete";
+
+const DeleteSearchParams = z.object({
+  idType: z
+    .enum(["school_id_giga", "school_id_govt"] as const)
+    .catch("school_id_giga"),
+  deleteType: z.enum(["specific", "all"] as const).catch("specific"),
+  verifyCount: z.boolean().catch(true),
+});
 
 export const Route = createFileRoute("/delete/$country/")({
+  validateSearch: (search: Record<string, unknown>) =>
+    DeleteSearchParams.parse(search),
   component: Confirmation,
-  loader: () => {
+  loader: ({ location }) => {
+    const deleteType = (location.search as { deleteType?: string }).deleteType;
+    if (deleteType === "all") return;
     const {
       uploadSlice: { file },
     } = useStore.getState();
@@ -29,49 +46,104 @@ export const Route = createFileRoute("/delete/$country/")({
 });
 
 function Confirmation() {
-  const [error, setError] = useState<string>("");
+  const [submitError, setSubmitError] = useState<string>("");
 
   const { country } = Route.useParams();
+  const { idType, deleteType, verifyCount } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const isDeleteAll = deleteType === "all";
+  const shouldPreview = isDeleteAll || verifyCount;
 
   const {
-    uploadSlice: { detectedColumns: ids },
+    uploadSlice: { detectedColumns: parsedIds, file },
     uploadSliceActions: { resetUploadSliceState },
     appStateActions: { setNotification },
   } = useStore();
 
   const {
+    data: previewData,
+    isLoading: isPreviewLoading,
+    isError: isPreviewError,
+    error: previewError,
+  } = useQuery({
+    queryKey: [
+      "delete-preview",
+      country,
+      deleteType,
+      idType,
+      parsedIds,
+      isDeleteAll,
+    ],
+    queryFn: () =>
+      api.delete
+        .preview_delete_rows({
+          country,
+          delete_type: deleteType as DeleteType,
+          ids: isDeleteAll ? [] : parsedIds,
+          id_type: isDeleteAll ? undefined : (idType as DeleteIdType),
+        })
+        .then(r => r.data),
+    enabled: shouldPreview && (isDeleteAll || parsedIds.length > 0),
+    retry: false,
+  });
+
+  const schoolCount = previewData?.school_count ?? 0;
+  const checkSkipped = previewData?.check_skipped ?? false;
+
+  const {
     mutateAsync: uploadDeleteRowIds,
     isPending,
-    isError,
+    isError: isSubmitError,
   } = useMutation({
     mutationKey: ["delete"],
     mutationFn: api.delete.delete_rows,
   });
+
   const handleOnConfirm = async () => {
-    setError("");
+    setSubmitError("");
 
     await uploadDeleteRowIds(
-      { country: country, ids: ids },
+      isDeleteAll
+        ? {
+            country,
+            delete_type: "all",
+            school_count_override: schoolCount,
+          }
+        : {
+            country,
+            delete_type: "specific",
+            ids: parsedIds,
+            id_type: idType as DeleteIdType,
+            original_filename: file?.name ?? "",
+            file,
+          },
       {
         onError: err => {
-          setError(err.message);
+          setSubmitError(err.message);
         },
         onSuccess: () => {
           setNotification(true);
-          void navigate({ to: "../../.." });
+          void navigate({ to: "/delete" });
         },
       },
     );
   };
 
+  const canConfirm = !shouldPreview
+    ? parsedIds.length > 0
+    : !isPreviewLoading &&
+      !isPreviewError &&
+      previewData != null &&
+      (isDeleteAll
+        ? schoolCount > 0
+        : checkSkipped
+        ? parsedIds.length > 0
+        : schoolCount > 0);
+
   return (
     <Stack gap={8}>
       <Stack gap={1}>
-        <h2 className="text-[23px] ">
-          Confirm that the following school IDs from the provided country will
-          be deleted
-        </h2>
+        <h2 className="text-[23px]">Confirm school deletion</h2>
         <p>
           School data is the dataset of schools location & their attributes like
           name, education level, internet connection, computer count etc.
@@ -82,18 +154,109 @@ function Confirmation() {
         <p className="cds--file--label">
           Country: <span className="cds--label-description">{country}</span>
         </p>
-        <p className="cds--file--label">School IDs</p>
-        <UnorderedList>
-          {ids.map(id => (
-            <ListItem>{id}</ListItem>
-          ))}
-        </UnorderedList>
+        <p className="cds--file--label">
+          Deletion type:{" "}
+          <span className="cds--label-description">
+            {isDeleteAll ? "All schools" : "Specific schools"}
+          </span>
+        </p>
+        {!isDeleteAll && (
+          <>
+            <p className="cds--file--label">
+              ID type:{" "}
+              <span className="cds--label-description">
+                {idType === "school_id_giga"
+                  ? "Giga ID (school_id_giga)"
+                  : "Government ID (school_id_govt)"}
+              </span>
+            </p>
+            <p className="cds--file--label">
+              IDs uploaded:{" "}
+              <span className="cds--label-description">{parsedIds.length}</span>
+            </p>
+          </>
+        )}
       </Stack>
+
+      {!shouldPreview && (
+        <InlineNotification
+          kind="info"
+          title="Preview skipped"
+          subtitle={`${parsedIds.length.toLocaleString()} IDs will be submitted directly. Dagster will resolve and delete matching schools.`}
+          hideCloseButton
+        />
+      )}
+
+      {shouldPreview && isPreviewLoading && (
+        <div className="flex items-center gap-2">
+          <Loading small withOverlay={false} />
+          <span className="cds--label-description">
+            {isDeleteAll
+              ? "Counting all schools in Trino…"
+              : "Checking affected schools in Trino…"}
+          </span>
+        </div>
+      )}
+
+      {shouldPreview && isPreviewError && (
+        <InlineNotification
+          kind="error"
+          title="Preview failed"
+          subtitle={
+            (previewError as Error)?.message ??
+            "Could not check affected schools. Verify the country and try again."
+          }
+          hideCloseButton
+        />
+      )}
+
+      {shouldPreview && checkSkipped && (
+        <InlineNotification
+          kind="warning"
+          title="Count check skipped"
+          subtitle={`Your file contains more than 5,000 IDs. The number of affected schools was not verified in advance. ${parsedIds.length.toLocaleString()} IDs will be submitted for deletion.`}
+          hideCloseButton
+        />
+      )}
+
+      {shouldPreview &&
+        !isPreviewLoading &&
+        !isPreviewError &&
+        previewData &&
+        !checkSkipped && (
+          <InlineNotification
+            kind={
+              schoolCount === 0 ? "warning" : isDeleteAll ? "error" : "info"
+            }
+            title={
+              schoolCount === 0
+                ? "No matching schools found"
+                : isDeleteAll
+                ? `All ${schoolCount.toLocaleString()} schools in ${country} will be permanently deleted`
+                : `${schoolCount.toLocaleString()} school${
+                    schoolCount !== 1 ? "s" : ""
+                  } will be deleted`
+            }
+            subtitle={
+              schoolCount === 0
+                ? "None of the uploaded IDs matched schools in the database."
+                : isDeleteAll
+                ? "This action cannot be undone. Ensure you have selected the correct country."
+                : `${parsedIds.length} ID${
+                    parsedIds.length !== 1 ? "s" : ""
+                  } uploaded → ${schoolCount} school${
+                    schoolCount !== 1 ? "s" : ""
+                  } matched.`
+            }
+            hideCloseButton
+          />
+        )}
+
       <ButtonSet className="w-full">
         <Button
           kind="secondary"
           as={Link}
-          to={`/delete/${country}`}
+          to="/delete"
           onClick={resetUploadSliceState}
           className="w-full"
           renderIcon={ArrowLeft}
@@ -102,8 +265,8 @@ function Confirmation() {
           Cancel
         </Button>
         <Button
-          disabled={isPending}
-          as={Link}
+          disabled={isPending || !canConfirm}
+          kind={isDeleteAll ? "danger" : "primary"}
           className="w-full"
           renderIcon={
             isPending
@@ -113,11 +276,14 @@ function Confirmation() {
           isExpressive
           onClick={handleOnConfirm}
         >
-          Confirm
+          {isDeleteAll ? "Delete all schools" : "Confirm deletion"}
         </Button>
       </ButtonSet>
-      {isError && (
-        <div className="cds--label-description text-giga-red">{error}</div>
+
+      {isSubmitError && (
+        <div className="cds--label-description text-giga-red">
+          {submitError}
+        </div>
       )}
     </Stack>
   );

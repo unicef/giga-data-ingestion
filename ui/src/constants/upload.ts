@@ -44,3 +44,5 @@ export const MAX_UPLOAD_FILE_SIZE_MB = 100;
 
 export const MAX_UPLOAD_FILE_SIZE_BYTES =
   MAX_UPLOAD_FILE_SIZE_MB * (2 ** 10) ** 2;
+
+export const DELETE_PREVIEW_ID_CAP = 5000;
