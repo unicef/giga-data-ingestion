@@ -49,8 +49,6 @@ def upgrade() -> None:
             sa.Column('dq_mode', postgresql.ENUM('uploaded', 'master', name='dqmodeenum', create_type=False), nullable=False, server_default='uploaded')
         )
 
-    op.drop_constraint(op.f('uq_country_dataset'), 'approval_requests', type_='unique')
-    op.create_unique_constraint('uq_country_dataset', 'approval_requests', ['country', 'dataset', 'upload_id'])
     op.alter_column('file_uploads', 'dq_full_path',
                existing_type=sa.TEXT(),
                type_=sa.String(),
@@ -98,8 +96,6 @@ def downgrade() -> None:
                existing_type=sa.String(),
                type_=sa.TEXT(),
                existing_nullable=True)
-    op.drop_constraint('uq_country_dataset', 'approval_requests', type_='unique')
-    op.create_unique_constraint(op.f('uq_country_dataset'), 'approval_requests', ['country', 'dataset'], postgresql_nulls_not_distinct=False)
     op.drop_column('approval_requests', 'dq_mode')
     op.drop_column('approval_request_audit_log', 'dq_mode')
     op.drop_index(op.f('ix_dq_runs_upload_id'), table_name='dq_runs')
