@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 
 import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
@@ -18,15 +18,22 @@ import { FileUploaderDropContainer } from "@/components/common/CarbonOverrides.t
 import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { PendingComponent } from "@/components/common/PendingComponent.tsx";
 import { Select } from "@/components/forms/Select.tsx";
+import { Health } from "@/components/upload/Health.tsx";
+import type { MetadataForm } from "@/components/upload/MetadataInputs.tsx";
+import {
+  DEFAULT_PAGE_NUMBER,
+  DEFAULT_PAGE_SIZE,
+} from "@/constants/pagination.ts";
 import {
   AcceptedFileTypes,
   AcceptedUnstructuredFileTypes,
   MAX_UPLOAD_FILE_SIZE_BYTES,
   MAX_UPLOAD_FILE_SIZE_MB,
-  UPLOAD_MODE_OPTIONS,
 } from "@/constants/upload.ts";
 import { useStore } from "@/context/store";
+import useRoles from "@/hooks/useRoles.ts";
 import { sourceOptions } from "@/mocks/metadataFormValues.tsx";
+import { capitalizeFirstLetter } from "@/utils/string.ts";
 import { HeaderDetector } from "@/utils/upload.ts";
 
 export const Route = createFileRoute("/upload/$uploadGroup/$uploadType/")({
@@ -51,6 +58,11 @@ const validStructuredTypes = {
 };
 
 const validCustomStructuredTypes = {
+  "text/csv": AcceptedFileTypes.CSV,
+  "application/csv": AcceptedFileTypes.CSV,
+};
+
+const validHealthCsvTypes = {
   "text/csv": AcceptedFileTypes.CSV,
   "application/csv": AcceptedFileTypes.CSV,
 };
@@ -122,6 +134,9 @@ export default function Index() {
   const isCoverage = uploadType === "coverage";
   const isGeolocation = uploadType === "geolocation";
 
+  const [healthStep, setHealthStep] = useState(0);
+  const [healthFileError, setHealthFileError] = useState("");
+
   const [isParsing, setIsParsing] = useState(false);
 
   const [parsingError, setParsingError] = useState("");
@@ -130,6 +145,8 @@ export default function Index() {
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
+  const isHealth = uploadGroup === "other" && uploadType === "health";
+  const shouldSelectCountry = !isUnstructured && !isStructured && !isHealth;
 
   const validTypes = useMemo(
     () =>
@@ -146,54 +163,125 @@ export default function Index() {
       setStepIndex,
       resetUploadSliceState,
       setUploadSliceState,
+      setCountry,
       setSource,
-      setMode,
       setDetectedColumns,
       setColumnMapping,
       setUploadDate,
       setFile,
+      setMode,
       setTimeStamp,
     },
   } = useStore();
 
-  const { file, source: storeSource, mode: storeMode } = uploadSlice;
+  const { country: storeCountry, file, source: storeSource } = uploadSlice;
   const hasUploadedFile = file != null;
+  const { countryDatasets, isPrivileged } = useRoles();
 
   const uploadStructuredFile = useMutation({
     mutationFn: api.uploads.upload_structured,
   });
 
+  const { data: healthGroupsQuery, isLoading: isHealthGroupsLoading } =
+    useQuery({
+      queryKey: ["groups"],
+      queryFn: api.groups.list,
+      enabled: isHealth,
+    });
+
+  const healthCountryPool = useMemo(() => {
+    const geo = countryDatasets["School Geolocation"] ?? [];
+    const cov = countryDatasets["School Coverage"] ?? [];
+    return [...new Set([...geo, ...cov])];
+  }, [countryDatasets]);
+
+  const allCountryNamesForHealth = useMemo(() => {
+    const allGroups = healthGroupsQuery?.data ?? [];
+    const allGroupNames = allGroups.map(group => group.name);
+    return [
+      ...new Set(
+        allGroupNames
+          .map(name => name.split("-School"))
+          .filter(split => split.length > 1)
+          .map(split => split[0]),
+      ),
+    ];
+  }, [healthGroupsQuery?.data]);
+
+  const healthMetadataCountryOptions = useMemo(() => {
+    if (!isHealth) return [];
+    const base = isPrivileged ? allCountryNamesForHealth : healthCountryPool;
+    return ["N/A", ...base];
+  }, [isHealth, isPrivileged, allCountryNamesForHealth, healthCountryPool]);
+
+  const [isHealthUploading, setIsHealthUploading] = useState(false);
+  const [isHealthUploadError, setIsHealthUploadError] = useState(false);
+  const [isHealthNullFile, setIsHealthNullFile] = useState(false);
+
   const { register, watch } = useForm<{
+    country: string;
     source: string | null;
-    mode: typeof storeMode;
   }>({
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
+      country: storeCountry,
       source: storeSource,
-      mode: storeMode,
     },
   });
 
+  const country = watch("country");
   const source = watch("source");
-  const mode = watch("mode");
+
+  const { data: allGroupsQuery } = useQuery({
+    queryKey: ["groups"],
+    queryFn: api.groups.list,
+    enabled: shouldSelectCountry && isPrivileged,
+  });
+
+  const userCountryNames = useMemo(
+    () => countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [],
+    [countryDatasets, uploadType],
+  );
+
+  const allCountryNames = useMemo(() => {
+    const allGroups = allGroupsQuery?.data ?? [];
+    const allGroupNames = allGroups.map(group => group.name);
+    return [
+      ...new Set(
+        allGroupNames
+          .map(name => name.split("-School"))
+          .filter(split => split.length > 1)
+          .map(split => split[0]),
+      ),
+    ];
+  }, [allGroupsQuery?.data]);
+
+  const countryOptions = isPrivileged ? allCountryNames : userCountryNames;
 
   const metaschemaName = isCoverage
     ? `coverage_${source}`
     : `school_${uploadType}`;
 
   const { data: schemaQuery, isFetching: isSchemaFetching } = useQuery({
-    queryFn: () => api.schema.get(metaschemaName, mode === "Update"),
-    queryKey: ["schema", metaschemaName, mode, false],
-    enabled: isCoverage
-      ? !!source
-      : isGeolocation
-      ? !!mode
-      : !isUnstructured && !isStructured,
+    queryFn: () => api.schema.get(metaschemaName),
+    queryKey: ["schema", metaschemaName, false],
+    enabled:
+      !isHealth &&
+      (isCoverage
+        ? !!source
+        : isGeolocation
+        ? true
+        : !isUnstructured && !isStructured),
   });
 
   const schemaData = schemaQuery?.data;
   const schema = useMemo(() => schemaData ?? [], [schemaData]);
+
+  useEffect(() => {
+    if (!isHealth) return;
+    setStepIndex(healthStep);
+  }, [healthStep, isHealth, setStepIndex]);
 
   useEffect(() => {
     if (schema.length && file) {
@@ -236,7 +324,6 @@ export default function Index() {
       // For structured datasets, upload directly without metadata
       if (file) {
         setSource(source ?? null);
-        setMode(mode);
       }
 
       try {
@@ -261,8 +348,10 @@ export default function Index() {
       }
     } else {
       if (file) {
+        if (shouldSelectCountry) {
+          setCountry(country);
+        }
         setSource(source ?? null);
-        setMode(mode);
         setStepIndex(1);
       }
       void navigate({ to: isUnstructured ? "./metadata" : "./column-mapping" });
@@ -271,25 +360,26 @@ export default function Index() {
 
   const isProceedDisabled =
     !hasUploadedFile ||
+    (shouldSelectCountry && !country) ||
     (isCoverage && !source) ||
-    (isGeolocation && !mode) ||
     (!isStructured && (isSchemaFetching || isParsing || hasParsingError));
   const isSchemaLoading = !(
     (!isCoverage && !isSchemaFetching) ||
     (!isGeolocation && !isSchemaFetching) ||
     (isCoverage && !!source && !isSchemaFetching) ||
-    (isGeolocation && !!mode && !isSchemaFetching)
+    (isGeolocation && !isSchemaFetching)
   );
   const shouldShowSkeleton =
     (!isCoverage && isSchemaLoading) ||
     (isCoverage && !!source) ||
-    (isGeolocation && !!mode);
+    isGeolocation;
 
   function handleRemoveFile() {
     setFile(null);
     setTimeStamp(null);
     setDetectedColumns([]);
     setColumnMapping({});
+    setMode(null);
     setParsingError("");
     setIsParsing(false);
   }
@@ -329,8 +419,214 @@ export default function Index() {
     // For school/coverage/geolocation: useEffect detects when schema is ready
   }
 
+  function handleHealthAddFiles(addedFiles: File[]) {
+    const nextFile = addedFiles.at(0) ?? null;
+    if (!nextFile) return;
+
+    setHealthFileError("");
+    const looksCsv =
+      nextFile.type in validHealthCsvTypes ||
+      nextFile.name.toLowerCase().endsWith(".csv");
+
+    if (!looksCsv) {
+      setHealthFileError("Only CSV files are accepted.");
+      return;
+    }
+
+    if (nextFile.size > MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024) {
+      setHealthFileError(
+        `File size exceeds ${MAX_UPLOAD_FILE_SIZE_MB} MB limit`,
+      );
+      return;
+    }
+
+    setUploadSliceState({
+      uploadSlice: {
+        ...uploadSlice,
+        fuzzyCorrections: [],
+        fuzzyValidationRequestKey: null,
+        fuzzyValidationResult: null,
+        file: nextFile,
+        timeStamp: new Date(),
+      },
+    });
+  }
+
+  function resetHealthFlow() {
+    resetUploadSliceState();
+    setHealthStep(0);
+    setHealthFileError("");
+    setIsHealthUploadError(false);
+    setIsHealthNullFile(false);
+  }
+
+  const onHealthMetadataSubmit: SubmitHandler<MetadataForm> = async data => {
+    if (uploadSlice.file === null) {
+      setIsHealthNullFile(true);
+      return;
+    }
+
+    setIsHealthUploading(true);
+    setIsHealthUploadError(false);
+    setIsHealthNullFile(false);
+
+    const metadata = { ...data };
+    const country = metadata.country;
+    delete metadata.country;
+
+    Object.keys(metadata).forEach(key => {
+      const k = key as keyof typeof metadata;
+      if (metadata[k] === "") {
+        (metadata as Record<string, unknown>)[key] = null;
+      }
+    });
+
+    try {
+      await uploadStructuredFile.mutateAsync({
+        country,
+        file: uploadSlice.file,
+        source: storeSource,
+        metadata: JSON.stringify({ ...metadata, mode: uploadSlice.mode }),
+        portal_dataset: "health",
+      });
+      setUploadDate(uploadSlice.timeStamp);
+      setStepIndex(2);
+      void navigate({ to: "./success" });
+    } catch (err) {
+      console.error("Health upload failed:", err);
+      setIsHealthUploadError(true);
+    } finally {
+      setIsHealthUploading(false);
+    }
+  };
+
+  if (isHealth) {
+    const csvFormats = [
+      ...new Set(Object.values(validHealthCsvTypes).flat()),
+    ].join(", ");
+
+    return (
+      <Stack gap={10}>
+        {healthStep === 0 && (
+          <>
+            <div className="flex w-1/2 flex-col gap-4">
+              <div className="flex w-full flex-col gap-4">
+                <h2 className="font-ibmplex text-base font-semibold">
+                  Upload file
+                </h2>
+                <p className="-mt-1 font-ibmplex text-sm font-normal text-giga-gray">
+                  File formats: {csvFormats} up to {MAX_UPLOAD_FILE_SIZE_MB}MB
+                </p>
+                <div className="h-[78px] w-full">
+                  {hasUploadedFile && file ? (
+                    <FileUploaderItem
+                      name={file.name}
+                      status="edit"
+                      onDelete={() => {
+                        handleRemoveFile();
+                        setHealthFileError("");
+                      }}
+                      iconDescription="Remove file"
+                      aria-label={`Remove ${file.name}`}
+                    />
+                  ) : (
+                    <FileUploaderDropContainer
+                      accept={Object.keys(validHealthCsvTypes)}
+                      name="file"
+                      labelText="Click or drag a file to upload"
+                      onAddFiles={(_, { addedFiles }: { addedFiles: File[] }) =>
+                        handleHealthAddFiles(addedFiles)
+                      }
+                    />
+                  )}
+                </div>
+                {healthFileError ? (
+                  <p className="text-giga-red">{healthFileError}</p>
+                ) : null}
+              </div>
+            </div>
+            <ButtonSet className="w-full">
+              <Button
+                kind="secondary"
+                as={Link}
+                to="/upload"
+                onClick={resetHealthFlow}
+                className="w-full"
+                renderIcon={ArrowLeft}
+                isExpressive
+                search={{
+                  page: DEFAULT_PAGE_NUMBER,
+                  page_size: DEFAULT_PAGE_SIZE,
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={!hasUploadedFile}
+                className="w-full"
+                renderIcon={ArrowRight}
+                isExpressive
+                onClick={() => setHealthStep(1)}
+              >
+                Proceed
+              </Button>
+            </ButtonSet>
+          </>
+        )}
+
+        {healthStep === 1 && (
+          <>
+            <p className="font-ibmplex text-sm text-giga-dark-gray">
+              Selected file:{" "}
+              <span className="font-mono text-xs">{file?.name}</span>
+            </p>
+            <Health
+              countryOptions={healthMetadataCountryOptions}
+              isLoadingCountries={isHealthGroupsLoading}
+              countryRequired={true}
+              onSubmit={onHealthMetadataSubmit}
+              isUploading={isHealthUploading}
+              isUploadError={isHealthUploadError}
+              isNullFile={isHealthNullFile}
+              backButton={
+                <Button
+                  kind="secondary"
+                  className="w-full"
+                  renderIcon={ArrowLeft}
+                  isExpressive
+                  onClick={() => {
+                    setHealthStep(0);
+                    setIsHealthUploadError(false);
+                    setIsHealthNullFile(false);
+                  }}
+                >
+                  Back
+                </Button>
+              }
+            />
+          </>
+        )}
+      </Stack>
+    );
+  }
+
   return (
     <Stack gap={10}>
+      {shouldSelectCountry && (
+        <Select
+          id="country"
+          labelText="Country"
+          placeholder="Country"
+          className="w-1/2"
+          {...register("country", { required: true })}
+        >
+          <SelectItem value="" text="Select country" />
+          {countryOptions.map(option => (
+            <SelectItem key={option} text={option} value={option} />
+          ))}
+        </Select>
+      )}
+
       {isCoverage && (
         <Select
           id="source"
@@ -351,21 +647,6 @@ export default function Index() {
       )}
 
       <div className="flex w-1/2 flex-col gap-4">
-        {uploadType === "geolocation" && (
-          <Select
-            id="mode"
-            labelText="Are you updating existing schools or uploading data for new schools?"
-            placeholder="Select an option..."
-            className="w-full"
-            {...register("mode", { required: true })}
-          >
-            <SelectItem value="" text="Select an option..." />
-            {UPLOAD_MODE_OPTIONS.map(option => (
-              <SelectItem key={option} text={option} value={option} />
-            ))}
-          </Select>
-        )}
-
         {isSchemaLoading ? (
           shouldShowSkeleton ? (
             <SkeletonPlaceholder />

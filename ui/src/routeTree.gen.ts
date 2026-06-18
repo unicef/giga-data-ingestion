@@ -22,6 +22,7 @@ import { Route as DeleteIndexImport } from './routes/delete/index'
 import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
 import { Route as IngestApiEditImport } from './routes/ingest-api/edit'
 import { Route as IngestApiAddImport } from './routes/ingest-api/add'
+import { Route as DeleteNewImport } from './routes/delete/new'
 import { Route as UploadUploadIdIndexImport } from './routes/upload/$uploadId/index'
 import { Route as IngestApiAddIndexImport } from './routes/ingest-api/add/index'
 import { Route as DeleteCountryIndexImport } from './routes/delete/$country/index'
@@ -40,6 +41,7 @@ import { Route as UploadUploadGroupOptionsUploadTypeImport } from './routes/uplo
 import { Route as UploadUploadGroupUploadTypeSuccessImport } from './routes/upload/$uploadGroup/$uploadType/success'
 import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upload/$uploadGroup/$uploadType/metadata'
 import { Route as UploadUploadGroupUploadTypeColumnMappingImport } from './routes/upload/$uploadGroup/$uploadType/column-mapping'
+import { Route as UploadUploadGroupUploadTypeAssessmentImport } from './routes/upload/$uploadGroup/$uploadType/assessment'
 import { Route as IngestApiEditIngestionIdSchoolConnectivityImport } from './routes/ingest-api/edit/$ingestionId/school-connectivity'
 import { Route as IngestApiEditIngestionIdColumnMappingImport } from './routes/ingest-api/edit/$ingestionId/column-mapping'
 import { Route as ApprovalRequestsCountryCodeUploadIdConfirmImport } from './routes/approval-requests/$countryCode/$uploadId/confirm'
@@ -118,6 +120,11 @@ const IngestApiEditRoute = IngestApiEditImport.update({
 const IngestApiAddRoute = IngestApiAddImport.update({
   path: '/add',
   getParentRoute: () => IngestApiLazyRoute,
+} as any)
+
+const DeleteNewRoute = DeleteNewImport.update({
+  path: '/new',
+  getParentRoute: () => DeleteLazyRoute,
 } as any)
 
 const UploadUploadIdIndexRoute = UploadUploadIdIndexImport.update({
@@ -223,6 +230,12 @@ const UploadUploadGroupUploadTypeColumnMappingRoute =
     getParentRoute: () => UploadUploadGroupUploadTypeRoute,
   } as any)
 
+const UploadUploadGroupUploadTypeAssessmentRoute =
+  UploadUploadGroupUploadTypeAssessmentImport.update({
+    path: '/assessment',
+    getParentRoute: () => UploadUploadGroupUploadTypeRoute,
+  } as any)
+
 const IngestApiEditIngestionIdSchoolConnectivityRoute =
   IngestApiEditIngestionIdSchoolConnectivityImport.update({
     path: '/$ingestionId/school-connectivity',
@@ -268,6 +281,10 @@ declare module '@tanstack/react-router' {
     '/upload': {
       preLoaderRoute: typeof UploadLazyImport
       parentRoute: typeof rootRoute
+    }
+    '/delete/new': {
+      preLoaderRoute: typeof DeleteNewImport
+      parentRoute: typeof DeleteLazyImport
     }
     '/ingest-api/add': {
       preLoaderRoute: typeof IngestApiAddImport
@@ -341,6 +358,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiEditIngestionIdSchoolConnectivityImport
       parentRoute: typeof IngestApiEditImport
     }
+    '/upload/$uploadGroup/$uploadType/assessment': {
+      preLoaderRoute: typeof UploadUploadGroupUploadTypeAssessmentImport
+      parentRoute: typeof UploadUploadGroupUploadTypeImport
+    }
     '/upload/$uploadGroup/$uploadType/column-mapping': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeColumnMappingImport
       parentRoute: typeof UploadUploadGroupUploadTypeImport
@@ -401,7 +422,11 @@ export const routeTree = rootRoute.addChildren([
     ApprovalRequestsCountryCodeUploadIdConfirmRoute,
     ApprovalRequestsCountryCodeUploadIdIndexRoute,
   ]),
-  DeleteLazyRoute.addChildren([DeleteIndexRoute, DeleteCountryIndexRoute]),
+  DeleteLazyRoute.addChildren([
+    DeleteNewRoute,
+    DeleteIndexRoute,
+    DeleteCountryIndexRoute,
+  ]),
   IngestApiLazyRoute.addChildren([
     IngestApiAddRoute.addChildren([
       IngestApiAddColumnMappingRoute,
@@ -418,6 +443,7 @@ export const routeTree = rootRoute.addChildren([
   UploadLazyRoute.addChildren([
     UploadIndexRoute,
     UploadUploadGroupUploadTypeRoute.addChildren([
+      UploadUploadGroupUploadTypeAssessmentRoute,
       UploadUploadGroupUploadTypeColumnMappingRoute,
       UploadUploadGroupUploadTypeMetadataRoute,
       UploadUploadGroupUploadTypeSuccessRoute,

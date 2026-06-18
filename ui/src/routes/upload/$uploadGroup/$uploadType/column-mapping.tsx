@@ -30,7 +30,9 @@ import {
   DetectedColumn,
   MasterColumn,
 } from "@/components/upload/ColumnMapping.tsx";
-import FuzzyValidationModal from "@/components/upload/FuzzyValidationModal.tsx";
+import UploadReviewModal, {
+  UploadImpactPreview,
+} from "@/components/upload/UploadReviewModal.tsx";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
 import { FuzzyCorrection, FuzzyValidationResponse } from "@/types/upload.ts";
@@ -49,15 +51,11 @@ export const Route = createFileRoute(
   component: UploadColumnMapping,
   loader: ({ params: { uploadType }, context: { queryClient, getState } }) => {
     const {
-      uploadSlice: { file, source, mode },
+      uploadSlice: { file, source },
       uploadSliceActions: { setStepIndex },
     } = getState();
 
-    if (
-      !file ||
-      (uploadType === "coverage" && !source) ||
-      (uploadType === "geolocation" && !mode)
-    ) {
+    if (!file || (uploadType === "coverage" && !source)) {
       setStepIndex(0);
       throw redirect({ to: ".." });
     }
@@ -66,8 +64,8 @@ export const Route = createFileRoute(
       uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
 
     return queryClient.ensureQueryData({
-      queryFn: () => api.schema.get(metaschemaName, mode === "Update"),
-      queryKey: ["schema", metaschemaName, mode, false],
+      queryFn: () => api.schema.get(metaschemaName),
+      queryKey: ["schema", metaschemaName, false],
     });
   },
   pendingComponent: PendingComponent,
@@ -164,18 +162,19 @@ function UploadColumnMapping() {
   const {
     uploadSlice: {
       file,
+      country,
       detectedColumns,
       columnMapping,
       source,
       columnLicense,
       fuzzyValidationRequestKey,
       fuzzyValidationResult,
-      mode,
     },
     uploadSliceActions: {
       setStepIndex,
       setColumnMapping,
       setColumnLicense,
+      setMode,
       setFuzzyCorrections,
       setFuzzyValidationRequestKey,
       setFuzzyValidationResult,
@@ -183,10 +182,19 @@ function UploadColumnMapping() {
   } = useStore();
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isImpactLoading, setIsImpactLoading] = useState(false);
   const [isValidationLoading, setIsValidationLoading] = useState(false);
   const [isNullFile, setIsNullFile] = useState(false);
+  const [impactError, setImpactError] = useState<string | null>(null);
+  const [impactPreview, setImpactPreview] =
+    useState<UploadImpactPreview | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [isValidationModalOpen, setIsValidationModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewStep, setReviewStep] = useState<"impact" | "fuzzy">("impact");
+  const [pendingFuzzyRequest, setPendingFuzzyRequest] = useState<{
+    columnMapping: Record<string, string>;
+    requestKey: string;
+  } | null>(null);
   const [selectedColumns, setSelectedColumns] =
     useState<Record<string, string>>(columnMapping);
 
@@ -197,14 +205,23 @@ function UploadColumnMapping() {
   const {
     data: { data: schema },
   } = useSuspenseQuery({
-    queryFn: () => api.schema.get(metaschemaName, mode === "Update"),
-    queryKey: ["schema", metaschemaName, mode, false],
+    queryFn: () => api.schema.get(metaschemaName),
+    queryKey: ["schema", metaschemaName, false],
   });
 
   const navigate = useNavigate({ from: Route.fullPath });
   const validateFuzzy = useMutation({
     mutationFn: api.uploads.validate_fuzzy,
   });
+  const getImpactPreview = useMutation({
+    mutationFn: api.uploads.get_impact_preview,
+  });
+
+  const getUploadMode = (newSchools: number, schoolsToUpdate: number) => {
+    if (newSchools > 0 && schoolsToUpdate > 0) return "Mixed";
+    if (schoolsToUpdate > 0) return "Update";
+    return "Create";
+  };
 
   // Initialize license values for mandatory columns to ODBL (except school_id_govt)
   const defaultLicenseValues = useMemo(() => {
@@ -272,7 +289,7 @@ function UploadColumnMapping() {
               hasFile: !!file,
               hasColumnMapping: !!dataWithNullsReplaced.mapping,
               stepIndex: 2,
-              mode: mode,
+              country,
               source: source,
             },
             formData: data,
@@ -296,7 +313,7 @@ function UploadColumnMapping() {
       fileName: file.name,
       fileSize: file.size,
       mapping: correctedColumnMapping,
-      mode,
+      country,
     });
 
     if (fuzzyValidationRequestKey !== nextValidationRequestKey) {
@@ -311,27 +328,89 @@ function UploadColumnMapping() {
       hasUnknownFuzzyValues(fuzzyValidationResult)
     ) {
       setValidationError(null);
-      setIsValidationModalOpen(true);
+      setReviewStep("fuzzy");
+      setIsReviewModalOpen(true);
       return;
     }
 
+    setPendingFuzzyRequest({
+      columnMapping: correctedColumnMapping,
+      requestKey: nextValidationRequestKey,
+    });
+    setReviewStep("impact");
+    setImpactPreview(null);
+    setImpactError(null);
+    setMode(null);
+    setIsReviewModalOpen(true);
     setIsNavigating(true);
-    setIsValidationLoading(true);
-    setIsValidationModalOpen(true);
+    setIsImpactLoading(true);
 
     try {
-      const { data: validationData } = await validateFuzzy.mutateAsync({
+      const { data: preview } = await getImpactPreview.mutateAsync({
         column_to_schema_mapping: JSON.stringify(correctedColumnMapping),
+        country,
         dataset: uploadType,
         file,
       });
 
-      setFuzzyValidationRequestKey(nextValidationRequestKey);
+      setImpactPreview({
+        duplicateSchoolIdRows: preview.duplicate_school_id_rows,
+        missingSchoolIdRows: preview.missing_school_id_rows,
+        newSchools: preview.new_schools,
+        schoolsToUpdate: preview.schools_to_update,
+      });
+      setMode(getUploadMode(preview.new_schools, preview.schools_to_update));
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to check the file against the master dataset. You can try again or continue.";
+
+      setImpactError(message);
+    } finally {
+      setIsImpactLoading(false);
+      setIsNavigating(false);
+    }
+  };
+
+  const runFuzzyValidation = async ({
+    columnMapping,
+    requestKey,
+  }: {
+    columnMapping: Record<string, string>;
+    requestKey: string;
+  }) => {
+    if (!file) return;
+
+    if (
+      fuzzyValidationResult &&
+      fuzzyValidationRequestKey === requestKey &&
+      hasUnknownFuzzyValues(fuzzyValidationResult)
+    ) {
+      setValidationError(null);
+      setReviewStep("fuzzy");
+      setIsReviewModalOpen(true);
+      return;
+    }
+
+    setReviewStep("fuzzy");
+    setIsNavigating(true);
+    setIsValidationLoading(true);
+    setIsReviewModalOpen(true);
+
+    try {
+      const { data: validationData } = await validateFuzzy.mutateAsync({
+        column_to_schema_mapping: JSON.stringify(columnMapping),
+        dataset: uploadType,
+        file,
+      });
+
+      setFuzzyValidationRequestKey(requestKey);
       setFuzzyValidationResult(validationData);
       setFuzzyCorrections([]);
 
       if (!hasUnknownFuzzyValues(validationData)) {
-        setIsValidationModalOpen(false);
+        setIsReviewModalOpen(false);
         setStepIndex(2);
         void navigate({ to: "../metadata" });
       }
@@ -342,20 +421,61 @@ function UploadColumnMapping() {
           : "Unable to validate file values. Please try again.";
 
       setValidationError(message);
-      setIsValidationModalOpen(false);
     } finally {
       setIsValidationLoading(false);
       setIsNavigating(false);
     }
   };
 
-  const handleCloseValidationModal = () => {
-    setIsValidationModalOpen(false);
+  const handleCloseReviewModal = () => {
+    setIsReviewModalOpen(false);
+  };
+
+  const handleRetryImpactPreview = async () => {
+    if (!file || !pendingFuzzyRequest) return;
+
+    setImpactError(null);
+    setIsImpactLoading(true);
+    setIsNavigating(true);
+
+    try {
+      const { data: preview } = await getImpactPreview.mutateAsync({
+        column_to_schema_mapping: JSON.stringify(
+          pendingFuzzyRequest.columnMapping,
+        ),
+        country,
+        dataset: uploadType,
+        file,
+      });
+
+      setImpactPreview({
+        duplicateSchoolIdRows: preview.duplicate_school_id_rows,
+        missingSchoolIdRows: preview.missing_school_id_rows,
+        newSchools: preview.new_schools,
+        schoolsToUpdate: preview.schools_to_update,
+      });
+      setMode(getUploadMode(preview.new_schools, preview.schools_to_update));
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to check the file against the master dataset. You can try again or continue.";
+
+      setImpactError(message);
+    } finally {
+      setIsImpactLoading(false);
+      setIsNavigating(false);
+    }
+  };
+
+  const handleStartImport = () => {
+    if (!pendingFuzzyRequest) return;
+    void runFuzzyValidation(pendingFuzzyRequest);
   };
 
   const handleConfirmApplyCorrections = (corrections: FuzzyCorrection[]) => {
     setFuzzyCorrections(corrections);
-    setIsValidationModalOpen(false);
+    setIsReviewModalOpen(false);
     setStepIndex(2);
     void navigate({ to: "../metadata" });
   };
@@ -557,10 +677,10 @@ function UploadColumnMapping() {
             </Button>
             <Button
               className="w-full"
-              disabled={isNavigating || isValidationLoading}
+              disabled={isNavigating || isImpactLoading || isValidationLoading}
               isExpressive
               renderIcon={
-                isNavigating || isValidationLoading
+                isNavigating || isImpactLoading || isValidationLoading
                   ? props => (
                       <Loading small={true} withOverlay={false} {...props} />
                     )
@@ -586,15 +706,21 @@ function UploadColumnMapping() {
           )}
         </Stack>
       </form>
-      <FuzzyValidationModal
-        errorMessage={validationError}
-        isLoading={isValidationLoading}
-        onClose={handleCloseValidationModal}
-        onConfirmApply={handleConfirmApplyCorrections}
-        open={isValidationModalOpen}
-        validationResult={
+      <UploadReviewModal
+        errorMessage={impactError}
+        fuzzyErrorMessage={validationError}
+        fuzzyValidationResult={
           fuzzyValidationResult as FuzzyValidationResponse | null
         }
+        impactPreview={impactPreview}
+        isFuzzyLoading={isValidationLoading}
+        isImpactLoading={isImpactLoading}
+        onClose={handleCloseReviewModal}
+        onConfirmApplyCorrections={handleConfirmApplyCorrections}
+        onRetryImpactPreview={handleRetryImpactPreview}
+        onStartImport={handleStartImport}
+        open={isReviewModalOpen}
+        step={reviewStep}
       />
     </FormProvider>
   );

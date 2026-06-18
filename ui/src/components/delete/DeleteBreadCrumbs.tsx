@@ -1,33 +1,37 @@
 import { useCallback } from "react";
 
 import { Breadcrumb, BreadcrumbItem } from "@carbon/react";
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, useMatchRoute, useParams } from "@tanstack/react-router";
 
 export default function DeleteBreadCrumbs() {
   const { country }: { country: string } = useParams({ strict: false });
+  const matchRoute = useMatchRoute();
+  const isNewPage = !!matchRoute({ to: "/delete/new" });
 
   const getBreadcrumbItems = useCallback(() => {
-    const breadcrumbItems: {
+    const items: {
       label: string;
       path?: string;
       params?: Record<string, string>;
       search?: Record<string, unknown>;
-    }[] = [{ label: "Delete Rows", path: "/delete" }];
+    }[] = [{ label: "Deletion Requests", path: "/delete" }];
 
-    if (country) {
-      breadcrumbItems.push(
-        ...[
-          {
-            label: "Confirm",
-            path: "/delete/$country",
-            params: { country },
-          },
-        ],
-      );
+    if (isNewPage) {
+      items.push({ label: "New Request" });
+      return items;
     }
 
-    return breadcrumbItems;
-  }, [country]);
+    if (country) {
+      items.push({ label: "New Request", path: "/delete/new" });
+      items.push({
+        label: "Confirm",
+        path: "/delete/$country",
+        params: { country },
+      });
+    }
+
+    return items;
+  }, [country, isNewPage]);
 
   const breadcrumbItems = getBreadcrumbItems();
 

@@ -34,6 +34,7 @@ class FileUpload(BaseModel):
     column_to_schema_mapping: dict[str, str]
     column_license: dict[str, str]
     upload_path: str
+    dq_mode: str | None = None
     data_owner: str | None
     rows: int | None
     rows_passed: int | None
@@ -65,6 +66,7 @@ class FileUploadRequest:
     dataset: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+    dq_mode: str = Form("master")
     fuzzy_corrections: str | None = Form(None)
 
 
@@ -74,12 +76,30 @@ class UnstructuredFileUploadRequest:
     country: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+    # When "health", stores dataset=health and uses the health raw path (see upload_structured).
+    portal_dataset: str | None = Form(None)
 
 
 @dataclass
 class ValidateFuzzyRequest:
     file: UploadFile = Form(...)
     column_to_schema_mapping: str = Form(...)
+
+
+@dataclass
+class UploadImpactPreviewRequest:
+    file: UploadFile = Form(...)
+    column_to_schema_mapping: str = Form(...)
+    country: str = Form(...)
+
+
+class UploadImpactPreviewResponse(BaseModel):
+    new_schools: int
+    schools_to_update: int
+    rows_with_school_id: int
+    missing_school_id_rows: int
+    unique_school_ids: int
+    duplicate_school_id_rows: int
 
 
 class DataQualityCheckLabel(BaseModel):
