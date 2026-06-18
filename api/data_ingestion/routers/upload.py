@@ -462,6 +462,8 @@ def _get_master_school_ids(dataset: str, country_code: str, db: Session) -> set[
             .all()
         )
     except Exception as err:
+        if "TABLE_NOT_FOUND" in str(err):
+            return set()
         logger.error(f"Failed to fetch master school IDs from {table_name}: {err}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
