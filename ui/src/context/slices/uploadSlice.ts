@@ -1,5 +1,7 @@
 import { StateCreator } from "zustand";
 
+import { UploadParams } from "@/types/upload";
+
 export type UploadMode = "Create" | "Update" | "Mixed";
 
 export interface UploadSliceState {
@@ -34,6 +36,7 @@ export interface UploadSliceState {
     uploadDate: Date | null;
     uploadId: string;
     mode: UploadMode | null;
+    pendingSchoolDataPayload: UploadParams | null;
     stepIndex: number;
     source: string | null;
   };
@@ -73,6 +76,9 @@ export interface UploadSliceActions {
     ) => void;
     setUploadId: (value: UploadSliceState["uploadSlice"]["uploadId"]) => void;
     setSource: (value: UploadSliceState["uploadSlice"]["source"]) => void;
+    setPendingSchoolDataPayload: (
+      value: UploadSliceState["uploadSlice"]["pendingSchoolDataPayload"],
+    ) => void;
   };
 }
 
@@ -93,6 +99,7 @@ export const initialUploadSliceState: UploadSliceState = {
     uploadDate: null,
     uploadId: "",
     mode: null,
+    pendingSchoolDataPayload: null,
     source: null,
   },
 };
@@ -176,6 +183,10 @@ export const createUploadSlice: StateCreator<
     setSource: source =>
       set(state => {
         state.uploadSlice.source = source;
+      }),
+    setPendingSchoolDataPayload: pendingSchoolDataPayload =>
+      set(state => {
+        state.uploadSlice.pendingSchoolDataPayload = pendingSchoolDataPayload;
       }),
     resetUploadSliceState: () =>
       set(state => {

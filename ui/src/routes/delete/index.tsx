@@ -1,183 +1,211 @@
-import { useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { ReactNode, useState } from "react";
 
-import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
-import { Button, ButtonSet, SelectItem, Stack } from "@carbon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Add } from "@carbon/icons-react";
+import {
+  Button,
+  DataTable,
+  DataTableHeader,
+  DataTableSkeleton,
+  DefinitionTooltip,
+  Heading,
+  Pagination,
+  Section,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
+  Tag,
+} from "@carbon/react";
+import { useQuery } from "@tanstack/react-query";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { format } from "date-fns";
 
 import { api } from "@/api";
-import { FileUploaderDropContainer } from "@/components/common/CarbonOverrides";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { PendingComponent } from "@/components/common/PendingComponent";
-import { Select } from "@/components/forms/Select";
-import { AcceptedFileTypes } from "@/constants/upload";
-import { useStore } from "@/context/store";
-import { ColumnValidator } from "@/utils/upload";
+import { DEFAULT_DATETIME_FORMAT } from "@/constants/datetime";
+import { DEFAULT_PAGE_NUMBER, DEFAULT_PAGE_SIZE } from "@/constants/pagination";
+import { DeleteIdType, DeletionRequest } from "@/types/delete";
 
 export const Route = createFileRoute("/delete/")({
-  component: Index,
-  loader: ({ context: { queryClient } }) =>
-    queryClient.ensureQueryData({
-      queryKey: ["countries"],
-      queryFn: api.utils.listCountries,
-    }),
+  component: DeletionLanding,
   pendingComponent: PendingComponent,
   errorComponent: ErrorComponent,
 });
 
-const validTypes = {
-  "application/json": AcceptedFileTypes.JSON,
+const columns: DataTableHeader[] = [
+  { key: "id", header: "Request ID" },
+  {
+    key: "requested_date",
+    header: (
+      <DefinitionTooltip
+        align="right"
+        definition="Date is the server time"
+        openOnHover
+      >
+        <b>Date requested</b>
+      </DefinitionTooltip>
+    ),
+  },
+  { key: "country", header: "Country" },
+  { key: "requested_by_email", header: "Requested by" },
+  { key: "original_filename", header: "File" },
+  { key: "id_type", header: "ID type" },
+  { key: "school_count", header: "Schools affected" },
+  { key: "status", header: "Status" },
+];
+
+const ID_TYPE_LABELS: Record<DeleteIdType, string> = {
+  school_id_giga: "school_id_giga",
+  school_id_govt: "school_id_govt",
 };
 
-type DeleteRowForm = { country: string };
-
-function Index() {
-  const {
-    uploadSlice,
-    uploadSliceActions: {
-      // incrementStepIndex,
-      resetUploadSliceState,
-      setUploadSliceState,
-      setDetectedColumns,
-    },
-  } = useStore();
-  const { file } = uploadSlice;
-
-  const navigate = useNavigate({ from: "/delete" });
-
-  const [isParsing, setIsParsing] = useState(false);
-  const [parsingError, setParsingError] = useState("");
-  const hasParsingError = !!parsingError;
-  const hasUploadedFile = file != null;
-
-  const { handleSubmit, register, watch } = useForm<DeleteRowForm>({
-    mode: "onChange",
-    reValidateMode: "onChange",
-    defaultValues: {
-      country: "",
-    },
-  });
-
-  const country = watch("country");
-
-  const {
-    data: { data: allCountryNames },
-  } = useSuspenseQuery({
-    queryKey: ["countries"],
-    queryFn: api.utils.listCountries,
-  });
-
-  function handleOnAddFiles(addedFiles: File[]) {
-    const file = addedFiles.at(0) ?? null;
-    if (!file) return;
-
-    setParsingError("");
-    setIsParsing(true);
-
-    const detector = new ColumnValidator({
-      file,
-      setIsParsing: setIsParsing,
-      setError: setParsingError,
-      setValues: setDetectedColumns,
-      type: validTypes[file.type as keyof typeof validTypes],
-    });
-    detector.validate();
-
-    setUploadSliceState({
-      uploadSlice: {
-        ...uploadSlice,
-        file: file,
-        timeStamp: new Date(),
-      },
-    });
-  }
-
-  const onSubmit: SubmitHandler<DeleteRowForm> = async data => {
-    void navigate({
-      to: "/delete/$country",
-      params: { country: data.country },
-    });
+function StatusTag({ status }: { status: string | null }) {
+  if (!status) return <>—</>;
+  const map: Record<string, { type: string; label: string }> = {
+    PROCESSING: { type: "blue", label: "Processing" },
+    PENDING_APPROVAL: { type: "warm-gray", label: "Pending Approval" },
+    NO_MATCHES: { type: "red", label: "No Matches" },
+    APPROVED: { type: "green", label: "Approved" },
+    REJECTED: { type: "red", label: "Rejected" },
   };
+  const entry = map[status];
+  return entry ? (
+    <Tag type={entry.type as never}>{entry.label}</Tag>
+  ) : (
+    <Tag type="gray">{status}</Tag>
+  );
+}
 
-  const isProceedDisabled =
-    !hasUploadedFile || isParsing || hasParsingError || !country;
+type TableRowData = Record<string, ReactNode> & { id: string };
+
+function toTableRow(req: DeletionRequest): TableRowData {
+  return {
+    id: req.id,
+    requested_date: format(
+      new Date(req.requested_date),
+      DEFAULT_DATETIME_FORMAT,
+    ),
+    country: req.country,
+    requested_by_email: req.requested_by_email,
+    original_filename: req.original_filename ?? "—",
+    id_type: req.is_delete_all ? (
+      <Tag type="red">All schools</Tag>
+    ) : req.id_type ? (
+      <Tag type="blue">{ID_TYPE_LABELS[req.id_type]}</Tag>
+    ) : (
+      "—"
+    ),
+    school_count:
+      req.school_count != null ? req.school_count.toLocaleString() : "—",
+    status: <StatusTag status={req.status} />,
+  };
+}
+
+function DeletionLanding() {
+  const [page, setPage] = useState(DEFAULT_PAGE_NUMBER);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["deletion-requests", page, pageSize],
+    queryFn: () =>
+      api.delete
+        .list_deletion_requests({ page, page_size: pageSize })
+        .then(r => r.data),
+  });
+
+  const rows: TableRowData[] = (data?.data ?? []).map(toTableRow);
+  const totalCount = data?.total_count ?? 0;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <Stack gap={10}>
-        <Stack gap={1}>
-          <h2 className="text-[23px] capitalize">
-            What will you be deleting today?
-          </h2>
-          <p>
-            School data is the dataset of schools location & their attributes
-            like name, education level, internet connection, computer count etc.
-          </p>
-        </Stack>
+    <Section>
+      <Section>
+        <Stack gap={8}>
+          <Stack gap={4}>
+            <Heading>Deletion Requests</Heading>
+            <p className="cds--label-description">
+              History of all school deletion requests submitted via this portal.
+            </p>
+            <div>
+              <Button as={Link} to="/delete/new" size="xl" renderIcon={Add}>
+                New deletion request
+              </Button>
+            </div>
+          </Stack>
 
-        <Select
-          id="country"
-          labelText="Country"
-          helperText="What country are you deleting from?"
-          placeholder="Country"
-          className="w-1/4"
-          {...register("country", { required: true })}
-        >
-          <SelectItem value="" text="" />
-          {allCountryNames.map(country => {
-            return (
-              <SelectItem
-                value={country.name_short}
-                text={country.name_short}
+          {isLoading ? (
+            <DataTableSkeleton
+              columnCount={columns.length}
+              rowCount={pageSize}
+            />
+          ) : isError ? (
+            <p className="text-giga-red">
+              Failed to load deletion requests. Please try again.
+            </p>
+          ) : (
+            <>
+              <DataTable rows={rows} headers={columns} isSortable>
+                {({
+                  rows: tableRows,
+                  headers,
+                  getTableProps,
+                  getHeaderProps,
+                  getRowProps,
+                }) => (
+                  <TableContainer>
+                    <Table {...getTableProps()} size="md">
+                      <TableHead>
+                        <TableRow>
+                          {headers.map(header => (
+                            <TableHeader
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              {...(getHeaderProps({ header }) as any)}
+                              key={header.key}
+                            >
+                              {header.header}
+                            </TableHeader>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {tableRows.map(row => (
+                          <TableRow {...getRowProps({ row })} key={row.id}>
+                            {row.cells.map(cell => (
+                              <TableCell key={cell.id}>{cell.value}</TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                        {tableRows.length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={columns.length}>
+                              No deletion requests found.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </DataTable>
+
+              <Pagination
+                page={page}
+                pageSize={pageSize}
+                pageSizes={[10, 20, 50]}
+                totalItems={totalCount}
+                onChange={({ page: p, pageSize: ps }) => {
+                  setPage(p);
+                  setPageSize(ps);
+                }}
               />
-            );
-          })}
-        </Select>
-
-        <div className="w-1/4">
-          <p className="cds--file--label">Upload files</p>
-
-          <FileUploaderDropContainer
-            accept={Object.keys(validTypes)}
-            name="file"
-            labelText={
-              hasUploadedFile
-                ? file.name
-                : "Click or drag a file here to upload"
-            }
-            onAddFiles={(_, { addedFiles }: { addedFiles: File[] }) =>
-              handleOnAddFiles(addedFiles)
-            }
-          />
-          <p className="cds--label-description">
-            File formats: {Object.values(validTypes).join(", ")} up to 100MB
-          </p>
-          {hasParsingError && <p className="text-giga-red">{parsingError}</p>}
-        </div>
-        <ButtonSet className="w-full">
-          <Button
-            as={Link}
-            className="w-full"
-            isExpressive
-            kind="secondary"
-            renderIcon={ArrowLeft}
-            to="/upload"
-            onClick={resetUploadSliceState}
-          >
-            Cancel
-          </Button>
-          <Button
-            className="w-full"
-            disabled={isProceedDisabled}
-            isExpressive
-            renderIcon={ArrowRight}
-            type="submit"
-          >
-            Proceed
-          </Button>
-        </ButtonSet>
-      </Stack>
-    </form>
+            </>
+          )}
+        </Stack>
+      </Section>
+    </Section>
   );
 }

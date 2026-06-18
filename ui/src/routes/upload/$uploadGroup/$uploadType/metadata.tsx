@@ -36,7 +36,12 @@ import {
   SelectFromArray,
   SelectFromEnum,
 } from "@/components/upload/MetadataInputs.tsx";
-import { metadataMapping, yearList } from "@/constants/metadata";
+import {
+  metadataMapping,
+  schoolMetadataDatasetSection,
+  schoolMetadataNationalSection,
+  yearList,
+} from "@/constants/metadata";
 import { useStore } from "@/context/store";
 import useRoles from "@/hooks/useRoles.ts";
 import { MetadataFormMapping } from "@/types/metadata.ts";
@@ -89,7 +94,7 @@ function getFormRows(
   if (groupKey === "") {
     return [[formItems[0], null], [formItems[1]]];
   }
-  if (groupKey === "Information about the school dataset") {
+  if (groupKey === schoolMetadataDatasetSection) {
     const pairs: MetadataFormMapping[][] = [];
     for (let i = 0; i < 6 && i < formItems.length; i += 2) {
       pairs.push(formItems.slice(i, i + 2));
@@ -99,9 +104,7 @@ function getFormRows(
     }
     return pairs;
   }
-  if (
-    groupKey === "Information about national school data collection practices"
-  ) {
+  if (groupKey === schoolMetadataNationalSection) {
     const pairs: MetadataFormMapping[][] = [];
     for (let i = 0; i < formItems.length; i += 2) {
       pairs.push(formItems.slice(i, i + 2));
@@ -117,7 +120,7 @@ const RenderFormItem = ({
   register,
 }: {
   formItem: MetadataFormMapping;
-  errors: FieldErrors;
+  errors: FieldErrors<MetadataForm>;
   register: UseFormRegister<MetadataForm>;
 }) => {
   switch (formItem.type) {
@@ -164,7 +167,12 @@ const RenderFormItem = ({
 function Metadata() {
   const {
     uploadSlice,
-    uploadSliceActions: { setStepIndex, setUploadDate, setUploadId },
+    uploadSliceActions: {
+      setStepIndex,
+      setUploadDate,
+      setUploadId,
+      setPendingSchoolDataPayload,
+    },
   } = useStore();
   const navigate = useNavigate({ from: Route.fullPath });
   const { uploadType, uploadGroup } = Route.useParams();
@@ -172,6 +180,7 @@ function Metadata() {
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
+  const isSchoolData = uploadGroup === "school-data";
 
   const { countryDatasets, isPrivileged } = useRoles();
 
@@ -266,7 +275,6 @@ function Metadata() {
     }
 
     if (Object.keys(errors).length > 0) {
-      // form has errors, don't submit
       return;
     }
 
@@ -306,6 +314,14 @@ function Metadata() {
       source: uploadSlice.source,
     };
 
+    if (isSchoolData) {
+      setPendingSchoolDataPayload(body);
+      setIsUploading(false);
+      setStepIndex(3);
+      void navigate({ to: "../assessment" });
+      return;
+    }
+
     try {
       if (isUnstructured) {
         await uploadUnstructuredFile.mutateAsync(body);
@@ -321,8 +337,9 @@ function Metadata() {
         setUploadDate(new Date(created));
       }
 
+      setPendingSchoolDataPayload(null);
       setIsUploading(false);
-      setStepIndex(3);
+      setStepIndex(4);
       void navigate({ to: "../success" });
     } catch {
       console.error(
@@ -445,10 +462,6 @@ function Metadata() {
             )}
           </Stack>
         </Form>
-
-        {/* <Suspense>
-          <ReactHookFormDevTools control={control} />
-        </Suspense> */}
       </Section>
     </Section>
   );

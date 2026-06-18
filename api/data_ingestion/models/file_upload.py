@@ -37,10 +37,16 @@ class FileUpload(BaseModel):
     )
     metadata_json_path: Mapped[str] = mapped_column(nullable=True)
     bronze_path: Mapped[str] = mapped_column(nullable=True, default=None)
+    data_owner: Mapped[str] = mapped_column(nullable=True, default=None)
+    rows: Mapped[int] = mapped_column(nullable=True, default=None)
+    rows_passed: Mapped[int] = mapped_column(nullable=True, default=None)
+    rows_failed: Mapped[int] = mapped_column(nullable=True, default=None)
     is_processed_in_staging: Mapped[bool] = mapped_column(nullable=False, default=False)
     country: Mapped[str] = mapped_column(VARCHAR(3), nullable=False)
     dataset: Mapped[str] = mapped_column(nullable=False)
     source: Mapped[str] = mapped_column(nullable=True)
+    mode: Mapped[str] = mapped_column(nullable=True, default=None)
+    approval_status: Mapped[str] = mapped_column(nullable=True, default=None)
     original_filename: Mapped[str] = mapped_column(nullable=False)
     column_to_schema_mapping: Mapped[dict] = mapped_column(
         JSON, nullable=False, server_default='"{}"'
@@ -60,10 +66,13 @@ class FileUpload(BaseModel):
             country = self.country
 
         if self.dataset == "structured":
-            # For structured datasets, use original filename with upload ID
             original_name = Path(self.original_filename).stem
             filename = f"{original_name}_{self.id}"
             return f"{filename}{ext}"
+        if self.dataset == "health":
+            # {ISO3}_{original_stem}_{timestamp}.csv under health-master/<ISO3>/
+            stem = Path(self.original_filename).stem or "health_upload"
+            return f"{country}_{stem}_{timestamp}{ext}"
         else:
             filename_elements = [self.id, country, self.dataset]
             if self.source is not None and self.dataset != "geolocation":
@@ -79,6 +88,15 @@ class FileUpload(BaseModel):
             from data_ingestion.settings import settings
 
             return f"{settings.LAKEHOUSE_PATH}/raw/custom-dataset/{self.filename}"
+
+        if self.dataset == "health":
+            # CSV: updated_master_schema/health-master/<ISO3 or $NA>/<ISO3>_<stem>_<timestamp>.csv
+            # Metadata sidecar: raw/upload_metadata/health-master/<ISO3 or $NA>/... (see get_metadata_path)
+            country_segment = "$NA" if self.country == "N/A" else self.country
+            return (
+                f"updated_master_schema/health-master/"
+                f"{country_segment}/{self.filename}"
+            )
 
         # For other datasets, use the uploads path
         if self.dataset == "unstructured":

@@ -1,17 +1,28 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { Download } from "@carbon/icons-react";
-import { Button, Tab, TabList, TabPanel, TabPanels, Tabs } from "@carbon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Download, Send } from "@carbon/icons-react";
+import {
+  Button,
+  Loading,
+  Tab,
+  TabList,
+  TabPanel,
+  TabPanels,
+  Tabs,
+  Tag,
+} from "@carbon/react";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 
-import { api } from "@/api";
+import { api, axi } from "@/api";
 import DataQualityChecks from "@/components/check-file-uploads/ColumnChecks";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { PendingComponent } from "@/components/common/PendingComponent";
 import { Check } from "@/types/upload";
 import {
+  DQStatus,
+  DQStatusTagMapping,
   DataQualityCheck,
   UploadResponse,
   initialDataQualityCheck,
@@ -38,10 +49,20 @@ export const Route = createFileRoute("/upload/$uploadId/")({
 
 function Index() {
   const { uploadId } = Route.useParams();
+  const [mapUrl, setMapUrl] = useState<string>("");
+  const [dqKitAvailable, setDqKitAvailable] = useState<boolean>(false);
+  const router = useRouter();
 
   const { data: dqResultQuery } = useSuspenseQuery({
     queryKey: ["dq_check", uploadId],
     queryFn: () => api.uploads.get_data_quality_check(uploadId),
+    refetchInterval: query => {
+      const current_status = query.state.data?.data?.status;
+      if (current_status && current_status !== DQStatus.IN_PROGRESS) {
+        return false;
+      }
+      return 5000;
+    },
   });
 
   const dqResultData = useMemo<DataQualityCheck>(
@@ -52,12 +73,36 @@ function Index() {
   const { data: uploadQuery } = useSuspenseQuery({
     queryKey: ["upload", uploadId],
     queryFn: () => api.uploads.get_upload(uploadId),
+    refetchInterval: query => {
+      const current_status = query.state.data?.data?.dq_status;
+      if (current_status && current_status !== DQStatus.IN_PROGRESS) {
+        return false;
+      }
+      return 5000;
+    },
   });
 
   const uploadData = useMemo<UploadResponse>(
     () => uploadQuery?.data ?? initialUploadResponse,
     [uploadQuery],
   );
+
+  const dqStatus = uploadData.dq_status;
+  const isCompleted = dqStatus === DQStatus.COMPLETED;
+
+  const checkTypeLabel =
+    uploadData.dq_mode === "uploaded" ? "FILE_CHECKED" : "MASTER";
+
+  const runMasterCheckMutation = useMutation({
+    mutationFn: () => api.uploads.dq_run(uploadId, "master"),
+    onSuccess: () => {
+      router.invalidate();
+    },
+  });
+
+  const handleSubmitMasterCheck = () => {
+    runMasterCheckMutation.mutate();
+  };
 
   const summaryStats = dqResultData.dq_summary.summary || {};
   const {
@@ -71,7 +116,77 @@ function Index() {
     handleDownloadPassedRows,
     handleDownloadDqSummary,
     handleDownloadRawFile,
+    handleDownloadDqKit,
+    handleDownloadMap,
   } = useDownloadHelpers(uploadData);
+
+  // Check if DQ Kit is available
+  useEffect(() => {
+    let isCurrent = true;
+    setDqKitAvailable(false);
+
+    if (uploadData.dq_status !== "COMPLETED") {
+      return () => {
+        isCurrent = false;
+      };
+    }
+
+    axi
+      .head(`upload/dq_kit/${uploadData.id}/download`)
+      .then(() => {
+        if (isCurrent) {
+          setDqKitAvailable(true);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setDqKitAvailable(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [uploadData.id, uploadData.dq_status]);
+
+  // Fetch map HTML and create a blob URL for iframe preview
+  useEffect(() => {
+    if (
+      uploadData.dq_status !== "COMPLETED" ||
+      uploadData.dataset !== "geolocation" ||
+      !dqKitAvailable
+    ) {
+      setMapUrl("");
+      return;
+    }
+
+    let isCurrent = true;
+    let createdUrl: string | null = null;
+    setMapUrl("");
+
+    api.uploads
+      .download_map({ upload_id: uploadId })
+      .then(response => {
+        if (!isCurrent) {
+          return;
+        }
+        createdUrl = window.URL.createObjectURL(response.data);
+        setMapUrl(createdUrl);
+      })
+      .catch(error => {
+        if (!isCurrent) {
+          return;
+        }
+        console.error("Error loading map:", error);
+      });
+
+    return () => {
+      isCurrent = false;
+      if (createdUrl) {
+        window.URL.revokeObjectURL(createdUrl);
+      }
+    };
+  }, [dqKitAvailable, uploadId, uploadData.dq_status, uploadData.dataset]);
 
   // Extract checks from dqResultData
   const {
@@ -141,10 +256,59 @@ function Index() {
               {new Date(uploadData.created).toLocaleTimeString()} GMT
               <br />
               {new Date(uploadData.created).toDateString()}
+              {uploadData.mode && (
+                <>
+                  <br />
+                  Type: {uploadData.mode}
+                </>
+              )}
+              {uploadData.approval_status && (
+                <>
+                  <br />
+                  Approval status: {uploadData.approval_status}
+                </>
+              )}
             </p>
+
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+            >
+              <span style={{ fontSize: "0.875rem", color: "#6f6f6f" }}>
+                Check type:
+              </span>
+              <Tag type={DQStatusTagMapping[dqStatus]} size="md">
+                {checkTypeLabel}
+              </Tag>
+              {dqStatus === DQStatus.IN_PROGRESS && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.35rem",
+                    fontSize: "0.875rem",
+                    color: "#393939",
+                  }}
+                >
+                  <Loading
+                    small
+                    withOverlay={false}
+                    style={{ width: "1rem", height: "1rem" }}
+                  />
+                  <span>Checking... Refreshing automatically</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.75rem",
+              justifyContent: "flex-end",
+              alignItems: "center",
+            }}
+          >
             <Button
               kind="primary"
               size="md"
@@ -153,6 +317,29 @@ function Index() {
             >
               Download data quality report
             </Button>
+            {dqKitAvailable && (
+              <Button
+                kind="secondary"
+                size="md"
+                renderIcon={Download}
+                onClick={handleDownloadDqKit}
+              >
+                Download DQ Kit
+              </Button>
+            )}
+            {uploadData.dq_mode === "uploaded" && isCompleted && (
+              <Button
+                kind="primary"
+                size="md"
+                renderIcon={Send}
+                onClick={handleSubmitMasterCheck}
+                disabled={runMasterCheckMutation.isPending}
+              >
+                {runMasterCheckMutation.isPending
+                  ? "Submitting..."
+                  : "Submit for master check"}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -236,6 +423,61 @@ function Index() {
           </TabPanels>
         </Tabs>
       </div>
+
+      {uploadData.dq_status === "COMPLETED" &&
+        uploadData.dataset === "geolocation" &&
+        dqKitAvailable &&
+        mapUrl && (
+          <div
+            style={{
+              background: "#fff",
+              padding: "1.5rem",
+              borderRadius: "4px",
+              marginTop: "2rem",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1rem",
+              }}
+            >
+              <h3 style={{ margin: 0 }}>School Location Map</h3>
+              <Button
+                kind="primary"
+                size="sm"
+                renderIcon={Download}
+                onClick={handleDownloadMap}
+              >
+                Download map
+              </Button>
+            </div>
+
+            <div
+              style={{
+                position: "relative",
+                border: "1px solid #e0e0e0",
+                borderRadius: "4px",
+                overflow: "hidden",
+                minHeight: "600px",
+              }}
+            >
+              <iframe
+                src={mapUrl}
+                sandbox="allow-scripts"
+                style={{
+                  width: "100%",
+                  height: "600px",
+                  border: "none",
+                  display: "block",
+                }}
+                title="School Data Quality Map"
+              />
+            </div>
+          </div>
+        )}
     </div>
   );
 }

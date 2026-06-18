@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Add, Filter } from "@carbon/icons-react";
+import { Add, Column, Filter } from "@carbon/icons-react";
 import {
   Button,
   Heading,
@@ -14,6 +14,10 @@ import {
 } from "@carbon/react";
 import { Link } from "@tanstack/react-router";
 
+import ColumnSelectorModal, {
+  loadVisibleColumns,
+  saveVisibleColumns,
+} from "@/components/check-file-uploads/ColumnSelectorModal";
 import UploadsTable from "@/components/check-file-uploads/UploadsTable.tsx";
 import FilterModal, {
   UploadFilters,
@@ -45,6 +49,9 @@ interface UploadLandingProps {
 function UploadLanding(props: UploadLandingProps) {
   const [isPrivacyLoading, setIsPrivacyLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [visibleColumns, setVisibleColumns] =
+    useState<Set<string>>(loadVisibleColumns);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] =
     useState<UploadFilters>(EMPTY_FILTERS);
@@ -53,8 +60,14 @@ function UploadLanding(props: UploadLandingProps) {
   ).length;
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
 
+  function handleColumnSave(cols: Set<string>) {
+    saveVisibleColumns(cols);
+    setVisibleColumns(cols);
+  }
+
   // Tab 0 = Geolocation (source gigasync), 1 = API (source api),
-  // 2 = Coverage (dataset coverage), 3 = Schemaless (dataset structured)
+  // 2 = Coverage (dataset coverage), 3 = Schemaless (dataset structured),
+  // 4 = Health (dataset health)
   const tabFilter = (() => {
     switch (selectedTab) {
       case 0:
@@ -65,6 +78,8 @@ function UploadLanding(props: UploadLandingProps) {
         return { source: null, dataset: "coverage" as const };
       case 3:
         return { source: null, dataset: "structured" as const };
+      case 4:
+        return { source: null, dataset: "health" as const };
       default:
         return { source: null, dataset: null };
     }
@@ -114,7 +129,7 @@ function UploadLanding(props: UploadLandingProps) {
                 shared and in which context.
               </p>
             </div>
-            <div className="grid grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
               {(hasGeolocation || isAdmin) && (
                 <Button
                   as={Link}
@@ -158,8 +173,28 @@ function UploadLanding(props: UploadLandingProps) {
               >
                 Schemaless dataset
               </Button>
+              <Button
+                as={Link}
+                to="/upload/$uploadGroup/$uploadType"
+                params={{
+                  uploadGroup: "other",
+                  uploadType: "health",
+                }}
+                className="w-full"
+                size="xl"
+                renderIcon={Add}
+              >
+                Health dataset
+              </Button>
             </div>
           </Stack>
+
+          <ColumnSelectorModal
+            open={modalOpen}
+            onClose={() => setModalOpen(false)}
+            visibleColumns={visibleColumns}
+            onSave={handleColumnSave}
+          />
 
           <Tabs selectedIndex={selectedTab} onChange={handleTabChange}>
             <div className="flex items-center">
@@ -172,6 +207,7 @@ function UploadLanding(props: UploadLandingProps) {
                 <Tab>API</Tab>
                 <Tab>Coverage</Tab>
                 <Tab>Schemaless</Tab>
+                <Tab>Health</Tab>
               </TabList>
               <Button
                 kind="tertiary"
@@ -184,6 +220,15 @@ function UploadLanding(props: UploadLandingProps) {
                   activeFilterCount > 0 ? ` (${activeFilterCount})` : ""
                 }`}
               </Button>
+              <Button
+                kind="tertiary"
+                size="sm"
+                renderIcon={Column}
+                onClick={() => setModalOpen(true)}
+                className="ml-2 shrink-0"
+              >
+                Columns
+              </Button>
             </div>
 
             <TabPanels>
@@ -192,6 +237,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
@@ -204,6 +250,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
@@ -216,6 +263,7 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
@@ -228,6 +276,20 @@ function UploadLanding(props: UploadLandingProps) {
                   {...props}
                   source={tabFilter.source}
                   dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
+                />
+              </TabPanel>
+              <TabPanel className="p-0">
+                <UploadsTable
+                  {...props}
+                  source={tabFilter.source}
+                  dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}

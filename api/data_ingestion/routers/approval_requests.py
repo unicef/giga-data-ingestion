@@ -18,6 +18,7 @@ from data_ingestion.models import (
     User as DatabaseUser,
 )
 from data_ingestion.models.approval_requests import ApprovalRequestAuditLog
+from data_ingestion.models.deletion_requests import DeletionRequest
 from data_ingestion.models.file_upload import FileUpload
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.approval_requests import (
@@ -59,6 +60,96 @@ def _in_clause(ids: list[str]) -> str:
     """Build a safe SQL IN clause string from a list of string IDs."""
     escaped = ", ".join(f"'{i.replace(chr(39), '')}'" for i in ids)
     return f"({escaped})"
+
+
+def _tally_staging_rows(
+    pending_uploads: dict,
+    rows,
+    dataset: str,
+    is_merge_processing: bool,
+) -> None:
+    """Accumulate per-upload-id change counts from a staging table query result."""
+    for row in rows:
+        upload_id = row["upload_id"]
+        entry = pending_uploads.setdefault(
+            upload_id,
+            {
+                "dataset": dataset,
+                "is_merge_processing": is_merge_processing,
+                "rows_added": 0,
+                "rows_updated": 0,
+                "rows_deleted": 0,
+                "rows_unchanged": 0,
+            },
+        )
+        change_type = row["change_type"]
+        if change_type == _CHANGE_INSERT:
+            entry["rows_added"] += row["cnt"]
+        elif change_type == _CHANGE_UPDATE:
+            entry["rows_updated"] += row["cnt"]
+        elif change_type == _CHANGE_DELETE:
+            entry["rows_deleted"] += row["cnt"]
+        elif change_type == _CHANGE_UNCHANGED:
+            entry["rows_unchanged"] += row["cnt"]
+
+
+def _build_row_record(row, schema_cols: list[str], silver_lookup: dict) -> dict:
+    """Build a single approval-table record, diffing UPDATE rows against silver."""
+    change_type = row["change_type"]
+    record: dict = {"_change_type": change_type}
+    if change_type == _CHANGE_UPDATE:
+        silver_row = silver_lookup.get(row["school_id_giga"], {})
+        for col in schema_cols:
+            new_val = row[col]
+            old_val = silver_row.get(col)
+            if old_val is not None and str(old_val) != str(new_val):
+                record[col] = {"old": old_val, "update": new_val}
+            else:
+                record[col] = new_val
+    else:
+        for col in schema_cols:
+            record[col] = row[col]
+    return record
+
+
+def _update_status_after_review(
+    file_upload: FileUpload | None,
+    deletion_request: DeletionRequest | None,
+    approved_change_ids: list,
+    rejected_change_ids: list,
+) -> None:
+    if file_upload:
+        if approved_change_ids:
+            file_upload.approval_status = _STATUS_APPROVED
+        elif rejected_change_ids:
+            file_upload.approval_status = _STATUS_REJECTED
+    elif deletion_request:
+        if approved_change_ids:
+            deletion_request.status = _STATUS_APPROVED
+        elif rejected_change_ids:
+            deletion_request.status = _STATUS_REJECTED
+
+
+async def _stage_approval_request(
+    approval_request: ApprovalRequest | None,
+    approved_change_ids: list,
+    database_user: DatabaseUser | None,
+    primary_db: AsyncSession,
+    email: str,
+) -> str | None:
+    if not approval_request:
+        return None
+    approval_request.is_merge_processing = True
+    if approved_change_ids and database_user:
+        audit_log = ApprovalRequestAuditLog(
+            approval_request_id=approval_request.id,
+            approved_by_id=database_user.id,
+            approved_by_email=email,
+        )
+        primary_db.add(audit_log)
+        await primary_db.flush()
+        return audit_log.id
+    return None
 
 
 @router.get("", response_model=PagedResponseSchema[CountryPendingListing])
@@ -189,8 +280,8 @@ async def list_uploads_for_country(
 
     # Collect per-upload-id change counts across all datasets
     pending_uploads: dict[str, dict] = {}
-    for ar in enabled_requests:
-        staging = _staging_table(ar.dataset, country_code)
+    for approval_request in enabled_requests:
+        staging = _staging_table(approval_request.dataset, country_code)
         try:
             rows = (
                 db.execute(
@@ -207,28 +298,12 @@ async def list_uploads_for_country(
         except Exception:
             continue
 
-        for row in rows:
-            uid = row["upload_id"]
-            entry = pending_uploads.setdefault(
-                uid,
-                {
-                    "dataset": ar.dataset,
-                    "is_merge_processing": ar.is_merge_processing,
-                    "rows_added": 0,
-                    "rows_updated": 0,
-                    "rows_deleted": 0,
-                    "rows_unchanged": 0,
-                },
-            )
-            ct = row["change_type"]
-            if ct == _CHANGE_INSERT:
-                entry["rows_added"] += row["cnt"]
-            elif ct == _CHANGE_UPDATE:
-                entry["rows_updated"] += row["cnt"]
-            elif ct == _CHANGE_DELETE:
-                entry["rows_deleted"] += row["cnt"]
-            elif ct == _CHANGE_UNCHANGED:
-                entry["rows_unchanged"] += row["cnt"]
+        _tally_staging_rows(
+            pending_uploads,
+            rows,
+            approval_request.dataset,
+            approval_request.is_merge_processing,
+        )
 
     total_count = len(pending_uploads)
 
@@ -239,27 +314,54 @@ async def list_uploads_for_country(
             select(FileUpload).where(FileUpload.id.in_(upload_ids))
         )
     ).all()
-    file_upload_map = {fu.id: fu for fu in file_uploads}
+    file_upload_map = {file_upload.id: file_upload for file_upload in file_uploads}
 
-    sorted_ids = sorted(
-        upload_ids,
-        key=lambda uid: file_upload_map[uid].created
-        if uid in file_upload_map
-        else datetime.min.replace(tzinfo=UTC),
-        reverse=True,
-    )
+    # For upload_ids with no matching FileUpload, check DeletionRequests.
+    # Use a targeted column select (not select(DeletionRequest)) so that new
+    # model columns added before their migration don't break this endpoint.
+    deletion_ids = [uid for uid in upload_ids if uid not in file_upload_map]
+    deletion_map: dict = {}
+    if deletion_ids:
+        deletion_rows = (
+            await primary_db.execute(
+                select(
+                    DeletionRequest.id,
+                    DeletionRequest.requested_by_email,
+                    DeletionRequest.requested_date,
+                ).where(DeletionRequest.id.in_(deletion_ids))
+            )
+        ).all()
+        deletion_map = {row.id: row for row in deletion_rows}
+
+    def _sort_key(upload_id: str) -> datetime:
+        if upload_id in file_upload_map:
+            return file_upload_map[upload_id].created
+        if upload_id in deletion_map:
+            return deletion_map[upload_id].requested_date
+        return datetime.min.replace(tzinfo=UTC)
+
+    sorted_ids = sorted(upload_ids, key=_sort_key, reverse=True)
     page_ids = sorted_ids[(page - 1) * page_size : page * page_size]
 
     body = []
-    for uid in page_ids:
-        entry = pending_uploads[uid]
-        fu = file_upload_map.get(uid)
+    for upload_id in page_ids:
+        entry = pending_uploads[upload_id]
+        file_upload = file_upload_map.get(upload_id)
+        deletion_request = deletion_map.get(upload_id)
         body.append(
             UploadListing(
-                upload_id=uid,
-                dataset=entry["dataset"],
-                uploaded_at=fu.created if fu else datetime.now(UTC),
-                uploader_email=fu.uploader_email if fu else "",
+                upload_id=upload_id,
+                dataset=file_upload.dataset if file_upload else "geolocation deletion",
+                uploaded_at=file_upload.created
+                if file_upload
+                else (
+                    deletion_request.requested_date
+                    if deletion_request
+                    else datetime.now(UTC)
+                ),
+                uploader_email=file_upload.uploader_email
+                if file_upload
+                else (deletion_request.requested_by_email if deletion_request else ""),
                 rows_added=entry["rows_added"],
                 rows_updated=entry["rows_updated"],
                 rows_deleted=entry["rows_deleted"],
@@ -295,13 +397,19 @@ async def get_upload_rows(
     file_upload = await primary_db.scalar(
         select(FileUpload).where(FileUpload.id == upload_id)
     )
+    deletion_request = None
     if not file_upload:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Upload not found"
+        deletion_request = await primary_db.scalar(
+            select(DeletionRequest).where(DeletionRequest.id == upload_id)
         )
+        if not deletion_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Upload not found"
+            )
 
-    staging = _staging_table(file_upload.dataset, country_code)
-    silver = _silver_table(file_upload.dataset, country_code)
+    dataset = file_upload.dataset if file_upload else "geolocation"
+    staging = _staging_table(dataset, country_code)
+    silver = _silver_table(dataset, country_code)
 
     total_count = db.execute(
         text(
@@ -327,9 +435,14 @@ async def get_upload_rows(
         .all()
     )
 
+    _info = (
+        _build_info(file_upload, country_code)
+        if file_upload
+        else _build_info_from_deletion(deletion_request, country_code)
+    )
     if not pending_rows:
         return {
-            "info": _build_info(file_upload, country_code),
+            "info": _info,
             "total_count": 0,
             "data": [],
         }
@@ -361,29 +474,14 @@ async def get_upload_rows(
         except Exception:
             pass
 
-    schema_cols = [c for c in pending_df.columns if c != "change_type"]
-    records = []
-    for _, row in pending_df.iterrows():
-        change_type = row["change_type"]
-        record: dict = {"_change_type": change_type}
-
-        if change_type == _CHANGE_UPDATE:
-            silver_row = silver_lookup.get(row["school_id_giga"], {})
-            for col in schema_cols:
-                new_val = row[col]
-                old_val = silver_row.get(col)
-                if old_val is not None and str(old_val) != str(new_val):
-                    record[col] = {"old": old_val, "update": new_val}
-                else:
-                    record[col] = new_val
-        else:
-            for col in schema_cols:
-                record[col] = row[col]
-
-        records.append(record)
+    schema_cols = [col for col in pending_df.columns if col != "change_type"]
+    records = [
+        _build_row_record(row, schema_cols, silver_lookup)
+        for _, row in pending_df.iterrows()
+    ]
 
     return {
-        "info": _build_info(file_upload, country_code),
+        "info": _info,
         "total_count": total_count,
         "data": records,
     }
@@ -440,12 +538,18 @@ async def submit_upload_review(
     file_upload = await primary_db.scalar(
         select(FileUpload).where(FileUpload.id == upload_id)
     )
+    deletion_request = None
     if not file_upload:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Upload not found"
+        deletion_request = await primary_db.scalar(
+            select(DeletionRequest).where(DeletionRequest.id == upload_id)
         )
+        if not deletion_request:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Upload not found"
+            )
 
-    formatted_dataset = f"School {file_upload.dataset.capitalize()}"
+    dataset_name = file_upload.dataset.lower() if file_upload else "geolocation"
+    formatted_dataset = f"School {dataset_name.capitalize()}"
     approval_request = await primary_db.scalar(
         select(ApprovalRequest).where(
             (ApprovalRequest.country == country_code.upper())
@@ -458,7 +562,7 @@ async def submit_upload_review(
             detail="A merge is already in progress for this dataset. Please wait for it to complete.",
         )
 
-    staging = _staging_table(file_upload.dataset, country_code)
+    staging = _staging_table(dataset_name, country_code)
 
     email = (user.claims.get("emails") or [None])[0]
     oid = user.claims.get("oid")
@@ -480,25 +584,17 @@ async def submit_upload_review(
         body.rejected_rows, staging, upload_id, db
     )
 
-    # Create the audit log first so its ID can be included in the approval payload.
-    approval_request_log_id = None
-    if approval_request:
-        approval_request.is_merge_processing = True
-        if approved_change_ids and database_user:
-            audit_log = ApprovalRequestAuditLog(
-                approval_request_id=approval_request.id,
-                approved_by_id=database_user.id,
-                approved_by_email=email,
-            )
-            primary_db.add(audit_log)
-            await primary_db.flush()
-            approval_request_log_id = audit_log.id
+    _update_status_after_review(
+        file_upload, deletion_request, approved_change_ids, rejected_change_ids
+    )
+    approval_request_log_id = await _stage_approval_request(
+        approval_request, approved_change_ids, database_user, primary_db, email
+    )
 
     # Write approval JSON to blob storage.
     # Dagster sensor watches this path and triggers the silver merge job.
     # Filename must follow the format expected by deconstruct_school_master_filename_components:
     # {COUNTRY_CODE}_{domain}-{dataset_type}_{timestamp}.json  (3 underscore-separated parts)
-    dataset_name = file_upload.dataset.lower()
     timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     approval_filename = f"{country_code.upper()}_school-{dataset_name}_{timestamp}.json"
     approval_path = (
@@ -518,8 +614,7 @@ async def submit_upload_review(
         approval_payload, overwrite=True
     )
 
-    if approval_request:
-        await primary_db.commit()
+    await primary_db.commit()
 
 
 def _build_info(file_upload: FileUpload, country_code: str) -> ApprovalRequestInfo:
@@ -530,4 +625,17 @@ def _build_info(file_upload: FileUpload, country_code: str) -> ApprovalRequestIn
         upload_id=file_upload.id,
         uploaded_at=file_upload.created,
         uploader_email=file_upload.uploader_email,
+    )
+
+
+def _build_info_from_deletion(
+    deletion_request: DeletionRequest, country_code: str
+) -> ApprovalRequestInfo:
+    return ApprovalRequestInfo(
+        country=coco.convert(country_code.upper(), to="name_short"),
+        country_iso3=country_code.upper(),
+        dataset="geolocation deletion",
+        upload_id=deletion_request.id,
+        uploaded_at=deletion_request.requested_date,
+        uploader_email=deletion_request.requested_by_email,
     )
