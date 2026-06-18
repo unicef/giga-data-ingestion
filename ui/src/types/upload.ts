@@ -125,6 +125,22 @@ export interface FuzzyValidationParams {
   file: File;
 }
 
+export interface UploadImpactPreviewParams {
+  column_to_schema_mapping: string;
+  country: string;
+  dataset: string;
+  file: File;
+}
+
+export interface UploadImpactPreviewResponse {
+  duplicate_school_id_rows: number;
+  missing_school_id_rows: number;
+  new_schools: number;
+  rows_with_school_id: number;
+  schools_to_update: number;
+  unique_school_ids: number;
+}
+
 export interface FuzzyCorrection {
   column_name: string;
   value_found: string;

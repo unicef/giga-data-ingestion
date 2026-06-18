@@ -57,7 +57,7 @@ export const Route = createFileRoute(
     params: { uploadGroup, uploadType },
   }) => {
     const {
-      uploadSlice: { file, columnMapping },
+      uploadSlice: { country, file, columnMapping },
       uploadSliceActions: { setStepIndex },
     } = getState();
 
@@ -73,6 +73,7 @@ export const Route = createFileRoute(
       throw redirect({ from: Route.fullPath, to: ".." });
     } else if (
       !file ||
+      !country ||
       Object.values(columnMapping).filter(Boolean).length === 0
     ) {
       setStepIndex(1);
@@ -197,6 +198,9 @@ function Metadata() {
     handleSubmit,
     formState: { errors },
   } = useForm<MetadataForm>({
+    defaultValues: {
+      country: uploadSlice.country,
+    },
     mode: "onSubmit",
     reValidateMode: "onChange",
     resolver: zodResolver(MetadataForm),
@@ -233,6 +237,11 @@ function Metadata() {
   let countryOptions = isPrivileged ? allCountryNames : userCountryNames;
   if (isUnstructured || isStructured) {
     countryOptions = ["N/A", ...countryOptions];
+  } else if (
+    uploadSlice.country &&
+    !countryOptions.includes(uploadSlice.country)
+  ) {
+    countryOptions = [uploadSlice.country, ...countryOptions];
   }
 
   const onSubmit: SubmitHandler<MetadataForm> = async data => {
@@ -251,8 +260,8 @@ function Metadata() {
             uploadSlice: {
               hasFile: !!uploadSlice.file,
               hasColumnMapping: !!uploadSlice.columnMapping,
+              country: uploadSlice.country,
               stepIndex: uploadSlice.stepIndex,
-              mode: uploadSlice.mode,
               source: uploadSlice.source,
             },
             formData: data,
@@ -274,7 +283,9 @@ function Metadata() {
 
     const metadata = { ...data };
     // For structured datasets, use "N/A" as default country since they're global
-    const country = isStructured ? "N/A" : metadata.country;
+    const country = isStructured
+      ? "N/A"
+      : uploadSlice.country || metadata.country;
     delete metadata.country;
 
     const columnMapping = uploadSlice.columnMapping;
@@ -287,7 +298,10 @@ function Metadata() {
     });
 
     const body: UploadParams = {
-      metadata: JSON.stringify({ ...metadata, mode: uploadSlice.mode }),
+      metadata: JSON.stringify({
+        ...metadata,
+        mode: uploadSlice.mode ?? "Mixed",
+      }),
       country,
       column_to_schema_mapping: JSON.stringify(correctedColumnMapping),
       column_license: JSON.stringify(uploadSlice.columnLicense),
@@ -380,6 +394,7 @@ function Metadata() {
                                 <div key={formItem.name}>
                                   <CountrySelect
                                     countryOptions={countryOptions}
+                                    disabled={!isUnstructured && !isStructured}
                                     isLoading={isLoading}
                                     errors={errors}
                                     register={register("country", {

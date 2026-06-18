@@ -52,6 +52,8 @@ from data_ingestion.schemas.upload import (
     FileUpload as FileUploadSchema,
     FileUploadRequest,
     UnstructuredFileUploadRequest,
+    UploadImpactPreviewRequest,
+    UploadImpactPreviewResponse,
     ValidateFuzzyRequest,
 )
 from data_ingestion.utils.data_quality import get_metadata_path
@@ -59,6 +61,11 @@ from data_ingestion.utils.fuzzy_matching import run_fuzzy_matching
 from data_ingestion.utils.nocodb import (
     get_nocodb_table_id_from_name,
     get_nocodb_table_rows,
+)
+from data_ingestion.utils.upload_impact import (
+    build_upload_impact_preview,
+    get_school_id_file_column,
+    normalize_school_id,
 )
 
 DQ_CHECK_LABELS_TABLE_NAME = "SchoolGeolocationMasterDQChecksTest"
@@ -434,6 +441,58 @@ def _parse_spreadsheet(
     if file_ext == ".xlsx":
         return pd.read_excel(buf, dtype=dtype_overrides, engine="openpyxl")
     return pd.read_excel(buf, dtype=dtype_overrides, engine="xlrd")
+
+
+def _silver_table(dataset: str, country_code: str) -> str:
+    schema = dataset.lower().replace("school ", "")
+    return f"delta_lake.school_{schema}_silver.{country_code.lower()}"
+
+
+def _get_master_school_ids(dataset: str, country_code: str, db: Session) -> set[str]:
+    table_name = _silver_table(dataset, country_code)
+    try:
+        rows = (
+            db.execute(
+                text(
+                    f"SELECT school_id_govt FROM {table_name} "  # nosec B608
+                    "WHERE school_id_govt IS NOT NULL"
+                )
+            )
+            .mappings()
+            .all()
+        )
+    except Exception as err:
+        if "TABLE_NOT_FOUND" in str(err):
+            return set()
+        logger.error(f"Failed to fetch master school IDs from {table_name}: {err}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Unable to fetch master school IDs from Trino.",
+        ) from err
+
+    return {
+        normalized
+        for row in rows
+        if (normalized := normalize_school_id(row["school_id_govt"])) is not None
+    }
+
+
+def _get_impact_preview_school_id_column(form: UploadImpactPreviewRequest) -> str:
+    try:
+        column_mapping = orjson.loads(form.column_to_schema_mapping)
+    except Exception as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid column_to_schema_mapping.",
+        ) from err
+
+    try:
+        return get_school_id_file_column(column_mapping)
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(err),
+        ) from err
 
 
 def _serialize_spreadsheet(df: pd.DataFrame, file_ext: str) -> bytes:
@@ -1211,6 +1270,94 @@ async def download_raw_file_direct(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error downloading file: {str(e)}",
         ) from e
+
+
+@router.post(
+    "/impact-preview",
+    response_model=UploadImpactPreviewResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_upload_impact_preview(
+    dataset: str,
+    form: UploadImpactPreviewRequest = Depends(),
+    db: AsyncSession = Depends(get_db),
+    trino: Session = Depends(get_trino_db),
+    user: User = Depends(azure_scheme),
+    is_privileged: bool = Depends(IsPrivileged.raises(False)),
+):
+    """
+    Compare uploaded school IDs against the current country master dataset.
+
+    Counts are row-based: duplicate IDs in the uploaded file count once per row,
+    matching how users review uploaded school rows in the UI.
+    """
+    if dataset not in {"geolocation", "coverage"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Impact preview is only supported for school data uploads.",
+        )
+
+    if not is_privileged:
+        country_dataset = f"{form.country}-School {dataset.capitalize()}"
+        roles = await get_user_roles(user, db)
+        if country_dataset not in roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User does not have permissions on this dataset",
+            )
+
+    file = form.file
+    if file.size > constants.UPLOAD_FILE_SIZE_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File size exceeds {constants.UPLOAD_FILE_SIZE_LIMIT_MB} MB limit",
+        )
+
+    file_extension = os.path.splitext(file.filename)[1].lower()
+    if file_extension not in constants.SUPPORTED_SPREADSHEET_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Impact preview currently only supports {', '.join(constants.SUPPORTED_SPREADSHEET_EXTENSIONS)} files.",
+        )
+
+    school_id_file_column = _get_impact_preview_school_id_column(form)
+
+    await file.seek(0)
+    try:
+        content = await file.read()
+        df = _parse_spreadsheet(content, file_extension, {school_id_file_column: str})
+    except Exception as err:
+        logger.error(f"Failed to parse file for impact preview: {err}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid {file_extension} format.",
+        ) from err
+
+    if school_id_file_column not in df.columns:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Mapped school_id_govt column '{school_id_file_column}' was not found in the file.",
+        )
+
+    country_code = coco.convert(form.country, to="ISO3")
+    if country_code == "not found":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Country could not be resolved to an ISO3 code.",
+        )
+
+    file_school_ids = [
+        normalized_id
+        for value in df[school_id_file_column].tolist()
+        if (normalized_id := normalize_school_id(value)) is not None
+    ]
+
+    master_school_ids = _get_master_school_ids(dataset, country_code, trino)
+    return build_upload_impact_preview(
+        file_school_ids=file_school_ids,
+        total_rows=len(df.index),
+        master_school_ids=master_school_ids,
+    )
 
 
 VALID_SORT_COLUMNS = {

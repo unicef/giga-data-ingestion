@@ -2,10 +2,13 @@ import { StateCreator } from "zustand";
 
 import { UploadParams } from "@/types/upload";
 
+export type UploadMode = "Create" | "Update" | "Mixed";
+
 export interface UploadSliceState {
   uploadSlice: {
     columnMapping: Record<string, string>;
     columnLicense: Record<string, string>;
+    country: string;
     detectedColumns: string[];
     file: File | null;
     fuzzyCorrections: {
@@ -32,10 +35,10 @@ export interface UploadSliceState {
     timeStamp: Date | null;
     uploadDate: Date | null;
     uploadId: string;
+    mode: UploadMode | null;
+    pendingSchoolDataPayload: UploadParams | null;
     stepIndex: number;
     source: string | null;
-    mode: "Create" | "Update" | "Mixed" | "";
-    pendingSchoolDataPayload: UploadParams | null;
   };
 }
 
@@ -52,10 +55,12 @@ export interface UploadSliceActions {
     setColumnLicense: (
       value: UploadSliceState["uploadSlice"]["columnLicense"],
     ) => void;
+    setCountry: (value: UploadSliceState["uploadSlice"]["country"]) => void;
     setDetectedColumns: (
       value: UploadSliceState["uploadSlice"]["detectedColumns"],
     ) => void;
     setFile: (value: UploadSliceState["uploadSlice"]["file"]) => void;
+    setMode: (value: UploadSliceState["uploadSlice"]["mode"]) => void;
     setFuzzyCorrections: (
       value: UploadSliceState["uploadSlice"]["fuzzyCorrections"],
     ) => void;
@@ -71,7 +76,6 @@ export interface UploadSliceActions {
     ) => void;
     setUploadId: (value: UploadSliceState["uploadSlice"]["uploadId"]) => void;
     setSource: (value: UploadSliceState["uploadSlice"]["source"]) => void;
-    setMode: (value: UploadSliceState["uploadSlice"]["mode"]) => void;
     setPendingSchoolDataPayload: (
       value: UploadSliceState["uploadSlice"]["pendingSchoolDataPayload"],
     ) => void;
@@ -84,6 +88,7 @@ export const initialUploadSliceState: UploadSliceState = {
   uploadSlice: {
     columnMapping: {},
     columnLicense: {},
+    country: "",
     detectedColumns: [],
     file: null,
     fuzzyCorrections: [],
@@ -93,9 +98,9 @@ export const initialUploadSliceState: UploadSliceState = {
     timeStamp: null,
     uploadDate: null,
     uploadId: "",
-    source: null,
-    mode: "",
+    mode: null,
     pendingSchoolDataPayload: null,
+    source: null,
   },
 };
 
@@ -130,6 +135,10 @@ export const createUploadSlice: StateCreator<
     setFile: file =>
       set(state => {
         state.uploadSlice.file = file;
+      }),
+    setMode: mode =>
+      set(state => {
+        state.uploadSlice.mode = mode;
       }),
     setDetectedColumns: detectedColumns =>
       set(state => {
@@ -167,13 +176,13 @@ export const createUploadSlice: StateCreator<
       set(state => {
         state.uploadSlice.columnLicense = columnLicense;
       }),
+    setCountry: country =>
+      set(state => {
+        state.uploadSlice.country = country;
+      }),
     setSource: source =>
       set(state => {
         state.uploadSlice.source = source;
-      }),
-    setMode: mode =>
-      set(state => {
-        state.uploadSlice.mode = mode;
       }),
     setPendingSchoolDataPayload: pendingSchoolDataPayload =>
       set(state => {
