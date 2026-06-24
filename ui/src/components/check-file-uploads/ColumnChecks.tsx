@@ -76,7 +76,8 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
   };
 
   const filteredAndSortedRows = useMemo(() => {
-    const result = data.filter(check => {
+    const rows = Array.isArray(data) ? data : [];
+    const result = rows.filter(check => {
       const searchString = searchTerm.toLowerCase();
       const columnKey = check.column === "" ? "NO_COLUMN" : check.column;
       const columnDisplay =

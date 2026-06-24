@@ -1,3 +1,4 @@
+import json
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
@@ -9,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal import email
 from data_ingestion.internal.auth import azure_scheme, email_header
+from data_ingestion.internal.data_quality_checks import get_data_quality_summary
 from data_ingestion.internal.email import send_email_base
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import FileUpload
@@ -38,6 +40,47 @@ def _entity_for_dataset(dataset: str) -> dict[str, str]:
         "lowerPlural": "schools",
         "lowerSingular": "school",
     }
+
+
+def _load_upload_metadata(metadata_json_path: str) -> dict | None:
+    try:
+        blob = storage_client.get_blob_client(metadata_json_path)
+        if not blob.exists():
+            return None
+        raw = blob.download_blob().readall()
+        upload_meta = json.loads(raw)
+        if isinstance(upload_meta, dict):
+            return {str(k): v for k, v in upload_meta.items()}
+    except Exception:
+        return None
+    return None
+
+
+def _load_value_maps(dq_report_path: str) -> dict | None:
+    try:
+        dq_summary = get_data_quality_summary(dq_report_path)
+        value_maps = dq_summary.get("valueMaps")
+        if isinstance(value_maps, dict):
+            return value_maps
+    except Exception:
+        return None
+    return None
+
+
+def _enrich_pdf_payload_from_file_upload(
+    payload: dict,
+    file_upload: FileUpload,
+) -> None:
+    if not payload.get("uploadedFileName") and file_upload.original_filename:
+        payload["uploadedFileName"] = file_upload.original_filename
+    if not payload.get("uploadMetadata") and file_upload.metadata_json_path:
+        upload_meta = _load_upload_metadata(file_upload.metadata_json_path)
+        if upload_meta is not None:
+            payload["uploadMetadata"] = upload_meta
+    if not payload.get("valueMaps") and file_upload.dq_report_path:
+        value_maps = _load_value_maps(file_upload.dq_report_path)
+        if value_maps is not None:
+            payload["valueMaps"] = value_maps
 
 
 router = APIRouter(
@@ -121,24 +164,12 @@ async def generate_dq_report_pdf(
     # Lenient schema accepts same shape as get_data_quality_check (e.g. timestamp as string)
     payload = body.props.to_renderer_payload()
 
-    # Enrich payload with fields the UI doesn't have to supply: real upload
-    # filename and the user's column-to-schema mapping, both straight off
-    # the file_uploads row. Entity is inferred from dataset when missing.
-    needs_filename = not payload.get("uploadedFileName")
-    needs_mapping = "fieldMapping" not in payload
-    if needs_filename or needs_mapping:
-        file_upload = await db.scalar(
-            select(FileUpload).where(FileUpload.id == body.props.uploadId)
-        )
-        if file_upload is not None:
-            if needs_filename and file_upload.original_filename:
-                payload["uploadedFileName"] = file_upload.original_filename
-            if needs_mapping and file_upload.column_to_schema_mapping:
-                payload["fieldMapping"] = [
-                    {"from": k, "to": v}
-                    for k, v in file_upload.column_to_schema_mapping.items()
-                    if v
-                ]
+    # Enrich payload from file_uploads: filename, upload metadata, value maps.
+    file_upload = await db.scalar(
+        select(FileUpload).where(FileUpload.id == body.props.uploadId)
+    )
+    if file_upload is not None:
+        _enrich_pdf_payload_from_file_upload(payload, file_upload)
 
     if not payload.get("entity"):
         payload["entity"] = _entity_for_dataset(body.props.dataset)

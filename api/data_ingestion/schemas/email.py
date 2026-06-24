@@ -40,13 +40,6 @@ class EntityLabel(BaseModel):
     lowerSingular: str
 
 
-class FieldMappingEntry(BaseModel):
-    from_: str = Field(alias="from")
-    to: str
-
-    model_config = {"populate_by_name": True}
-
-
 class DqReportPdfRequest(BaseModel):
     """Lenient schema for PDF download: accepts the same shape as get_data_quality_check returns."""
 
@@ -60,7 +53,8 @@ class DqReportPdfRequest(BaseModel):
     # file_uploads row before forwarding to the email renderer.
     uploadedFileName: str | None = None
     entity: EntityLabel | None = None
-    fieldMapping: list[FieldMappingEntry] | None = None
+    uploadMetadata: dict[str, Any] | None = None
+    valueMaps: dict[str, Any] | None = None
 
     @field_validator("uploadDate", mode="before")
     @classmethod

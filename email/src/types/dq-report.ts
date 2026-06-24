@@ -28,11 +28,6 @@ const Entity = z.object({
   lowerSingular: z.string(),
 });
 
-const FieldMappingEntry = z.object({
-  from: z.string(),
-  to: z.string(),
-});
-
 export const DataQualityReportEmailProps = z.object({
   dataQualityCheck: z.optional(DataQualityCheck),
   dataset: z.string(),
@@ -43,7 +38,43 @@ export const DataQualityReportEmailProps = z.object({
   // ignores them; the PDF generator fills them in if present.
   uploadedFileName: z.string().optional(),
   entity: Entity.optional(),
-  fieldMapping: z.array(FieldMappingEntry).optional(),
+  uploadMetadata: z.record(z.union([z.string(), z.number(), z.null()])).optional(),
+  valueMaps: z
+    .object({
+      education: z
+        .array(
+          z.object({
+            src: z.string(),
+            dst: z.string(),
+            count: z.string(),
+            pct: z.string(),
+          })
+        )
+        .optional(),
+      electricity: z
+        .array(
+          z.object({
+            src: z.string(),
+            dst: z.string(),
+            count: z.string(),
+            pct: z.string(),
+          })
+        )
+        .optional(),
+      connectivity: z
+        .array(
+          z.object({
+            src: z.string(),
+            dst: z.string(),
+            count: z.string(),
+            pct: z.string(),
+          })
+        )
+        .optional(),
+    })
+    .optional(),
+  schoolsCreated: z.union([z.number(), z.string()]).optional(),
+  schoolsUpdated: z.union([z.number(), z.string()]).optional(),
 });
 
 export type DataQualityReportEmailProps = z.infer<

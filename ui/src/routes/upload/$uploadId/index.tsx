@@ -28,6 +28,7 @@ import {
   initialDataQualityCheck,
   initialUploadResponse,
 } from "@/types/upload";
+import { getDqCheckGroups } from "@/utils/dq-summary";
 import { commaNumber } from "@/utils/number";
 
 export const Route = createFileRoute("/upload/$uploadId/")({
@@ -188,12 +189,7 @@ function Index() {
     };
   }, [dqKitAvailable, uploadId, uploadData.dq_status, uploadData.dataset]);
 
-  // Extract checks from dqResultData
-  const {
-    summary: _summaryStats,
-    critical_error_check: _critical_error_check = [],
-    ...checks
-  } = dqResultData.dq_summary;
+  const checks = getDqCheckGroups(dqResultData.dq_summary);
 
   // Common card styles
   const cardStyle = {
