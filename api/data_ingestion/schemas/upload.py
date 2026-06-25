@@ -46,31 +46,34 @@ class FileUpload(BaseModel):
 
     @field_validator("uploader_id", mode="before")
     @classmethod
-    def sanitize_uploader_id(cls, v):
+    def sanitize_uploader_id(cls, uploader_id):
         """sanitize_uploader_id"""
-        v_str = str(v)
-        if v_str.startswith("$("):
+        uploader_id_string = str(uploader_id)
+        if uploader_id_string.startswith("$("):
             return UUID(settings.SYSTEM_USER_ID)
-        return v
+        return uploader_id
 
     @field_validator("uploader_email", mode="before")
     @classmethod
-    def sanitize_uploader_email(cls, v):
+    def sanitize_uploader_email(cls, uploader_email):
         """sanitize_uploader_email"""
-        v_str = str(v)
-        if v_str.startswith("$("):
+        uploader_email_string = str(uploader_email)
+        if uploader_email_string.startswith("$("):
             return settings.SYSTEM_USER_EMAIL
-        return v
+        return uploader_email
 
     @field_validator("column_to_schema_mapping", mode="before")
     @classmethod
-    def validate_column_to_schema_mapping(cls, v: str | dict):
+    def validate_column_to_schema_mapping(cls, column_to_schema_mapping: str | dict):
         """validate_column_to_schema_mapping"""
-        if isinstance(v, str):
-            v = orjson.loads(v)
-        if isinstance(v, dict):
-            return {k: str(val) if val is not None else "" for k, val in v.items()}
-        return v
+        if isinstance(column_to_schema_mapping, str):
+            column_to_schema_mapping = orjson.loads(column_to_schema_mapping)
+        if isinstance(column_to_schema_mapping, dict):
+            return {
+                column_name: str(schema_name) if schema_name is not None else ""
+                for column_name, schema_name in column_to_schema_mapping.items()
+            }
+        return column_to_schema_mapping
 
     @field_validator("column_license", mode="before")
     @classmethod
