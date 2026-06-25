@@ -88,6 +88,7 @@ class Settings(BaseSettings):
     SYSTEM_USER_ID: str = "11223344-5566-4788-9900-aabbccddeeff"
     SYSTEM_USER_EMAIL: str = "gigameter@gigasync.org"
     NOCODB_INBOUND_API_TOKEN: str = ""
+    EMAIL_TEST_RECIPIENTS: str = ""  # If set, all emails go here (comma-separated)
 
     @computed_field
     @property

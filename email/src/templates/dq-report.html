@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Data Quality Report — {{country}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Manrope:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    margin: 0; padding: 0;
+    background: #fff;
+    font-family: "Open Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    color: #000;
+  }
+  .page {
+    position: relative;
+    width: 595pt;
+    height: 842pt;
+    background: #ffffff;
+    overflow: hidden;
+  }
+  .logo { position: absolute; left: 20pt; top: 20pt; height: 30pt; }
+  .logo img { height: 100%; width: auto; display: block; }
+  .badge {
+    position: absolute; top: 20pt; right: 20pt;
+    border: 1px solid #cdcdcd; padding: 4pt 8pt;
+    font-weight: 600; font-size: 10pt; line-height: 16pt;
+  }
+  .footer {
+    position: absolute; left: 20pt; right: 19pt; top: 806pt;
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 16pt;
+    font-weight: 500; font-size: 10pt; line-height: 16pt;
+    letter-spacing: -0.1pt; white-space: nowrap;
+  }
+  .footer .meta { color: #989898; }
+  .footer .pageno { color: #000; }
+  .tbl {
+    position: absolute; left: 20pt; right: 19pt;
+    border: 1px solid #e9e9e9; border-radius: 2pt;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .thead {
+    background: #f5f5f5;
+    display: flex; align-items: center; gap: 8pt;
+    padding: 0 8pt; min-height: 24pt;
+    font-weight: 600; font-size: 10pt; line-height: 16pt;
+  }
+  .thead.compact { padding: 4pt 8pt; min-height: 0; }
+  .thead .title { flex: 1; }
+  .thead .ico { display: flex; align-items: center; gap: 4pt; flex: 1; }
+  .thead .ico .title { flex: 0 1 auto; font-weight: 700; }
+  .col-num { width: 80pt; text-align: right; flex: none; }
+  .tsub {
+    background: rgba(245,245,245,0.5);
+    display: flex; align-items: center;
+    padding: 0 8pt; min-height: 24pt;
+    font-weight: 600; font-size: 10pt; line-height: 16pt;
+  }
+  .trow {
+    border-top: 0.5px solid #e9e9e9;
+    display: flex; align-items: center; gap: 8pt;
+    padding: 4pt 8pt;
+    font-size: 10pt; line-height: 16pt;
+    letter-spacing: -0.1pt;
+  }
+  .trow .label { flex: 1; min-width: 0; font-weight: 500; word-break: break-word; }
+  .trow .val { width: 80pt; text-align: right; flex: none; font-weight: 400; }
+  .trow.map .src { width: 160pt; flex: none; font-weight: 500; word-break: break-word; }
+  .trow.map .dst { flex: 1; min-width: 0; font-weight: 500; word-break: break-word; }
+  .trow.map .val { font-weight: 500; }
+  .trow.meta .label { flex: 1; font-weight: 500; }
+  .trow.meta .value { flex: 1; min-width: 0; font-weight: 400; word-break: break-word; }
+  .arrow { width: 12pt; height: 12pt; flex: none; opacity: 0.3; }
+  .arrow svg { display: block; width: 100%; height: 100%; }
+  .wico { width: 12pt; height: 12pt; flex: none; display: block; }
+  .title-block { position: absolute; left: 20pt; top: 62pt; width: 555pt; display: flex; flex-direction: column; gap: 2pt; }
+  .title-block h1 { font-family: "Manrope", sans-serif; font-weight: 400; font-size: 20pt; line-height: 32pt; color: #005bed; }
+  .title-block .sub { font-weight: 600; font-size: 10pt; line-height: 16pt; white-space: nowrap; }
+  .donut { position: absolute; left: 41pt; top: 128pt; width: 150pt; height: 150pt; }
+  .donut svg { display: block; width: 150pt; height: 150pt; }
+  .donut .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2pt; }
+  .donut .center .big { font-family: "Inter", sans-serif; font-size: 18pt; line-height: 1; }
+  .donut .center .cap { font-weight: 500; font-size: 10pt; line-height: 16pt; letter-spacing: -0.1pt; text-align: center; padding: 0 8pt; }
+  .createupdate {
+    position: absolute; left: 19pt; top: 293pt;
+    display: flex; align-items: center; gap: 8pt;
+    font-weight: 500; font-size: 8pt; line-height: 10pt;
+    letter-spacing: -0.08pt; color: rgba(0,0,0,0.7); white-space: nowrap;
+  }
+  .statgrid { position: absolute; left: 226pt; top: 124pt; width: 349pt; display: grid; grid-template-columns: 1fr 1fr; }
+  .statcell { border: 1px solid #f4f4f4; padding: 16pt; display: flex; flex-direction: column; gap: 8pt; min-height: 90pt; }
+  .statcell.tl { border-right: none; }
+  .statcell.tr { border-left: none; }
+  .statcell.span2 { grid-column: 1 / span 2; min-height: 0; }
+  .statline { display: flex; align-items: center; gap: 2pt; font-family: "Inter", sans-serif; font-weight: 400; white-space: nowrap; }
+  .statline .num { font-size: 18pt; }
+  .statline .pct { font-size: 16pt; color: rgba(0,0,0,0.5); }
+  .statlabel { font-weight: 500; font-size: 10pt; line-height: 16pt; letter-spacing: -0.1pt; }
+  .green { color: #0a9a36; }
+  .amber { color: #ffae00; }
+  .red { color: #ff000b; }
+  .excel { font-weight: 500; font-size: 9pt; line-height: 10pt; letter-spacing: -0.09pt; color: rgba(0,0,0,0.5); }
+  .excel .lnk { color: #005bed; }
+  .statarrow { position: absolute; top: 30pt; left: 156pt; width: 26pt; height: 12pt; opacity: 0.55; }
+  .statarrow svg { display: block; width: 100%; height: 100%; }
+  .section-title { position: absolute; left: 20pt; font-weight: 600; font-size: 12pt; line-height: 16pt; white-space: nowrap; }
+  .section-note { position: absolute; left: 20pt; width: 556pt; font-weight: 400; font-size: 10pt; line-height: 16pt; }
+  .maps-empty {
+    position: absolute; left: 20pt; width: 556pt;
+    font-size: 10pt; line-height: 16pt; color: rgba(0,0,0,0.55); font-style: italic;
+  }
+
+  @media print {
+    html, body { background: #fff; }
+    .page { page-break-after: always; break-after: page; }
+    .page:last-child { page-break-after: avoid; break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 -->
+<section class="page" id="page-1">
+  <div class="logo"><img src="{{logoDataUri}}" alt="GIGA · UNICEF · ITU" /></div>
+  <div class="badge">{{entity.plural}}</div>
+
+  <div class="title-block">
+    <h1>Data Quality Report - {{country}}</h1>
+    <div class="sub">{{uploadedFileName}} uploaded on {{uploadDate}} | Ingestion ID: {{uploadId}}</div>
+  </div>
+
+  <div class="donut">
+    <svg viewBox="0 0 150 150" aria-hidden="true">
+      <circle cx="75" cy="75" r="61" fill="none" stroke="#75c68e" stroke-width="23" />
+      <circle cx="75" cy="75" r="61" fill="none" stroke="#ff000b" stroke-width="23"
+              stroke-dasharray="{{donut.rejArc}} {{donut.circumference}}" transform="rotate({{donut.rejRotate}} 75 75)" />
+      <circle cx="75" cy="75" r="61" fill="none" stroke="#ffae00" stroke-width="9"
+              stroke-dasharray="{{donut.warnArc}} {{donut.circumference}}" stroke-linecap="butt" transform="rotate({{donut.warnRotate}} 75 75)" />
+      <circle cx="75" cy="75" r="49.5" fill="#fff" />
+    </svg>
+    <div class="center">
+      <div class="big">{{donut.centerTotal}}</div>
+      <div class="cap">{{donut.centerLabel}}</div>
+    </div>
+  </div>
+
+  <div class="createupdate">
+    <span>{{entity.plural}} created: {{schoolsCreated}}</span>
+    <span>{{entity.plural}} updated: {{schoolsUpdated}}</span>
+  </div>
+
+  <div class="statgrid">
+    <div class="statcell tl">
+      <div>
+        <div class="statline"><span class="num green">{{totals.approved}}</span><span class="pct">{{totals.approvedPctParen}}</span></div>
+        <div class="statlabel">Approved {{entity.lowerPlural}}</div>
+      </div>
+    </div>
+    <div class="statcell tr">
+      <div>
+        <div class="statline"><span class="num amber">{{totals.approvedWithWarnings}}</span><span class="pct">{{totals.warningsPctParen}}</span></div>
+        <div class="statlabel">Approved with warnings</div>
+      </div>
+      <div class="excel">Excel Sheet: <span class="lnk">Warning_</span></div>
+    </div>
+    <div class="statcell span2">
+      <div>
+        <div class="statline"><span class="num red">{{totals.rejected}}</span><span class="pct">{{totals.rejectedPctParen}}</span></div>
+        <div class="statlabel">Rejected {{entity.lowerPlural}}</div>
+      </div>
+      <div class="excel">Excel Sheet: <span class="lnk">Rejected_</span></div>
+    </div>
+    <div class="statarrow">
+      <svg viewBox="0 0 26 12" fill="none"><path d="M0 6h23M19 2l4 4-4 4" stroke="#000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+
+  <div class="tbl" style="top:316pt;">
+    <div class="thead">
+      <div class="ico">
+        <svg class="wico" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="6" fill="#ff000b"/><rect x="5.25" y="2.5" width="1.5" height="4.2" rx="0.75" fill="#fff"/><circle cx="6" cy="8.6" r="0.85" fill="#fff"/></svg>
+        <span class="title">Rejected</span>
+      </div>
+      <span class="col-num">Alerts</span>
+      <span class="col-num">Priority</span>
+    </div>
+    {{#each rejectedSections}}
+    <div class="tsub">{{title}}</div>
+    {{#each rows}}
+    <div class="trow"><span class="label">{{label}}</span><span class="val">{{alerts}}</span><span class="val">{{priority}}</span></div>
+    {{/each}}
+    {{/each}}
+  </div>
+
+  <div class="tbl" style="top:568pt;">
+    <div class="thead">
+      <div class="ico">
+        <svg class="wico" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0.6 11.6 11H0.4L6 0.6Z" fill="#ffae00"/><rect x="5.3" y="4" width="1.4" height="3.6" rx="0.7" fill="#000"/><circle cx="6" cy="9.2" r="0.8" fill="#000"/></svg>
+        <span class="title">Warnings</span>
+      </div>
+      <span class="col-num">Alerts</span>
+      <span class="col-num">Priority</span>
+    </div>
+    {{#each warningsPage1Sections}}
+    <div class="tsub">{{title}}</div>
+    {{#each rows}}
+    <div class="trow"><span class="label">{{label}}</span><span class="val">{{alerts}}</span><span class="val">{{priority}}</span></div>
+    {{/each}}
+    {{/each}}
+  </div>
+
+  <div class="footer">
+    <span class="meta">Giga Sync | Data Quality Report | {{country}}</span>
+    <span class="pageno">{{pageNum.p1}}</span>
+  </div>
+</section>
+
+<!-- PAGE 2 -->
+<section class="page" id="page-2">
+  <div class="logo"><img src="{{logoDataUri}}" alt="GIGA · UNICEF · ITU" /></div>
+  <div class="badge">{{entity.plural}}</div>
+
+  <div class="tbl" style="top:69pt;">
+    <div class="thead">
+      <span class="title">Warnings</span>
+      <span class="col-num">Alerts</span>
+      <span class="col-num">Priority</span>
+    </div>
+    {{#each warningsPage2Rows}}
+    <div class="trow"><span class="label">{{label}}</span><span class="val">{{alerts}}</span><span class="val">{{priority}}</span></div>
+    {{/each}}
+  </div>
+
+  {{#if hasMapsSection}}
+  <div class="section-title" style="top:{{mapsSectionTop}}pt;">Maps</div>
+  <div class="section-note" style="top:{{mapsNoteTop}}pt;">These maps have been applied to past {{entity.lowerPlural}} to standardise the data to Giga values. For any inconsistencies, please contact your focal point.</div>
+  {{/if}}
+
+  {{#if hasEducationMaps}}
+  <div class="tbl" style="top:{{educationMapsTop}}pt;">
+    <div class="thead compact">
+      <span class="title">Educational level maps</span>
+      <span class="col-num">#</span>
+      <span class="col-num">%</span>
+    </div>
+    {{#each educationMaps}}
+    <div class="trow map">
+      <span class="src">{{src}}</span>
+      <span class="arrow"><svg viewBox="0 0 12 12" fill="none"><path d="M1 6h8.5M7 3l3 3-3 3" stroke="#000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="dst">{{dst}}</span>
+      <span class="val">{{count}}</span><span class="val">{{pct}}</span>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{#if hasElectricityMaps}}
+  <div class="tbl" style="top:{{electricityMapsTop}}pt;">
+    <div class="thead compact">
+      <span class="title">Electricity maps</span>
+      <span class="col-num">#</span>
+      <span class="col-num">%</span>
+    </div>
+    {{#each electricityMaps}}
+    <div class="trow map">
+      <span class="src">{{src}}</span>
+      <span class="arrow"><svg viewBox="0 0 12 12" fill="none"><path d="M1 6h8.5M7 3l3 3-3 3" stroke="#000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="dst">{{dst}}</span>
+      <span class="val">{{count}}</span><span class="val">{{pct}}</span>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{#if connectivityPage2.length}}
+  <div class="tbl" style="top:{{connectivityMapsTop}}pt;">
+    <div class="thead compact">
+      <span class="title">Connectivity maps</span>
+      <span class="col-num">#</span>
+      <span class="col-num">%</span>
+    </div>
+    {{#each connectivityPage2}}
+    <div class="trow map">
+      <span class="src">{{src}}</span>
+      <span class="arrow"><svg viewBox="0 0 12 12" fill="none"><path d="M1 6h8.5M7 3l3 3-3 3" stroke="#000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="dst">{{dst}}</span>
+      <span class="val">{{count}}</span><span class="val">{{pct}}</span>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    <span class="meta">Giga Sync | Data Quality Report | {{country}}</span>
+    <span class="pageno">{{pageNum.p2}}</span>
+  </div>
+</section>
+
+<!-- POST PAGE 2: connectivity overflow + metadata (paginated, no mid-table splits) -->
+{{#each postPage2Pages}}
+<section class="page">
+  <div class="logo"><img src="{{../logoDataUri}}" alt="GIGA · UNICEF · ITU" /></div>
+  <div class="badge">{{../entity.plural}}</div>
+
+  {{#if connectivity.length}}
+  <div class="tbl" style="top:{{connectivityTop}}pt;">
+    <div class="thead compact">
+      <span class="title">Connectivity Maps</span>
+      <span class="col-num">#</span>
+      <span class="col-num">%</span>
+    </div>
+    {{#each connectivity}}
+    <div class="trow map">
+      <span class="src">{{src}}</span>
+      <span class="arrow"><svg viewBox="0 0 12 12" fill="none"><path d="M1 6h8.5M7 3l3 3-3 3" stroke="#000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="dst">{{dst}}</span>
+      <span class="val">{{count}}</span><span class="val">{{pct}}</span>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{#if includeMetadata}}
+  <div class="tbl" style="top:{{metadataTop}}pt;">
+    <div class="thead"><span class="title">Metadata</span></div>
+    {{#each ../metadataRows}}
+    <div class="trow meta"><span class="label">{{label}}</span><span class="value">{{value}}</span></div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    <span class="meta">Giga Sync | Data Quality Report | {{../country}}</span>
+    <span class="pageno">{{pageNum}}</span>
+  </div>
+</section>
+{{/each}}
+
+</body>
+</html>

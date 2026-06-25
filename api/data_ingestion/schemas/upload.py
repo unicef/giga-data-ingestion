@@ -4,7 +4,14 @@ from uuid import UUID
 
 import orjson
 from fastapi import Form, UploadFile
-from pydantic import UUID4, BaseModel, ConfigDict, EmailStr, constr, field_validator
+from pydantic import (
+    UUID4,
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    constr,
+    field_validator,
+)
 
 from data_ingestion.models.file_upload import DQStatusEnum
 from data_ingestion.settings import settings
@@ -23,10 +30,17 @@ class FileUpload(BaseModel):
     country: constr(min_length=3, max_length=3)
     dataset: str
     source: str | None
+    mode: str | None
+    approval_status: str | None
     original_filename: str
     column_to_schema_mapping: dict[str, str]
     column_license: dict[str, str]
     upload_path: str
+    dq_mode: str | None = None
+    data_owner: str | None
+    rows: int | None
+    rows_passed: int | None
+    rows_failed: int | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -75,6 +89,7 @@ class FileUploadRequest:
     dataset: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+    dq_mode: str = Form("master")
     fuzzy_corrections: str | None = Form(None)
 
 
@@ -84,9 +99,39 @@ class UnstructuredFileUploadRequest:
     country: str = Form(...)
     metadata: str = Form(...)
     source: str | None = Form(None)
+    # When "health", stores dataset=health and uses the health raw path (see upload_structured).
+    portal_dataset: str | None = Form(None)
 
 
 @dataclass
 class ValidateFuzzyRequest:
     file: UploadFile = Form(...)
     column_to_schema_mapping: str = Form(...)
+
+
+@dataclass
+class UploadImpactPreviewRequest:
+    file: UploadFile = Form(...)
+    column_to_schema_mapping: str = Form(...)
+    country: str = Form(...)
+
+
+class UploadImpactPreviewResponse(BaseModel):
+    new_schools: int
+    schools_to_update: int
+    rows_with_school_id: int
+    missing_school_id_rows: int
+    unique_school_ids: int
+    duplicate_school_id_rows: int
+
+
+class DataQualityCheckLabel(BaseModel):
+    assertion: str
+    column_key: str = ""
+    ui_error_description: str
+    dq_table_column_name: str | None = None
+    dq_check_category: str | None = None
+    column_checked: str | None = None
+    human_readable_name: str | None = None
+    active: bool = True
+    sort_order: int | None = None

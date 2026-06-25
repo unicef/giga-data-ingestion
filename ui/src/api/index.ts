@@ -13,6 +13,7 @@ import useGetToken from "@/hooks/useGetToken.ts";
 
 import approvalRequestsRouter from "./routers/approvalRequests.ts";
 import deleteRouter from "./routers/delete.ts";
+import emailRouter from "./routers/email.ts";
 import externalRequestsRouter from "./routers/externalRequests.ts";
 import groupsRouter from "./routers/groups.ts";
 import qosRouter from "./routers/qos.ts";
@@ -32,6 +33,7 @@ export const axi = axios.create({
 export const api = {
   approvalRequests: approvalRequestsRouter(axi),
   delete: deleteRouter(axi),
+  email: emailRouter(axi),
   externalRequests: externalRequestsRouter(),
   groups: groupsRouter(axi),
   roles: rolesRouter(axi),

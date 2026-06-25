@@ -4,8 +4,11 @@ import { PagedResponse } from "@/types/api.ts";
 import {
   BasicChecks,
   DataQualityCheck,
+  DataQualityCheckLabel,
   FuzzyValidationParams,
   FuzzyValidationResponse,
+  UploadImpactPreviewParams,
+  UploadImpactPreviewResponse,
   UploadParams,
   UploadStructuredParams,
   UploadUnstructuredParams,
@@ -19,11 +22,21 @@ export default function routes(axi: AxiosInstance) {
     ): Promise<AxiosResponse<DataQualityCheck>> => {
       return axi.get(`upload/data_quality_check/${upload_id}`);
     },
+    list_data_quality_check_labels: (): Promise<
+      AxiosResponse<DataQualityCheckLabel[]>
+    > => {
+      return axi.get("upload/data_quality_check_labels");
+    },
     list_uploads: (params?: {
       page?: number;
       page_size?: number;
       source?: string;
       dataset?: string;
+      uploader_email?: string;
+      country?: string;
+      dq_status?: string;
+      created_from?: string;
+      created_to?: string;
     }): Promise<AxiosResponse<PagedResponse<UploadResponse>>> => {
       return axi.get("/upload", { params });
     },
@@ -39,7 +52,25 @@ export default function routes(axi: AxiosInstance) {
       });
 
       return axi.post("/upload", formData, {
-        params: { dataset: params.dataset },
+        params: {
+          dataset: params.dataset,
+          ...(params.dq_mode ? { dq_mode: params.dq_mode } : {}),
+        },
+      });
+    },
+    review: (
+      params: UploadParams,
+      dq_mode: "uploaded" | "master" = "uploaded",
+    ): Promise<AxiosResponse<UploadResponse>> => {
+      const formData = new FormData();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value != null) {
+          formData.append(key, value);
+        }
+      });
+
+      return axi.post("/upload/review", formData, {
+        params: { dataset: params.dataset, dq_mode },
       });
     },
 
@@ -54,6 +85,22 @@ export default function routes(axi: AxiosInstance) {
       );
 
       return axi.post("/upload/validate-fuzzy", formData, {
+        params: { dataset: params.dataset },
+      });
+    },
+
+    get_impact_preview: (
+      params: UploadImpactPreviewParams,
+    ): Promise<AxiosResponse<UploadImpactPreviewResponse>> => {
+      const formData = new FormData();
+      formData.append("file", params.file);
+      formData.append("country", params.country);
+      formData.append(
+        "column_to_schema_mapping",
+        params.column_to_schema_mapping,
+      );
+
+      return axi.post("/upload/impact-preview", formData, {
         params: { dataset: params.dataset },
       });
     },
@@ -159,12 +206,46 @@ export default function routes(axi: AxiosInstance) {
       });
     },
 
+    download_dq_kit: (params: {
+      upload_id: string;
+    }): Promise<AxiosResponse<Blob>> => {
+      const { upload_id } = params;
+      return axi.get(`upload/dq_kit/${upload_id}/download`, {
+        responseType: "blob",
+      });
+    },
+
+    download_map: (params: {
+      upload_id: string;
+    }): Promise<AxiosResponse<Blob>> => {
+      const { upload_id } = params;
+      return axi.get(`upload/map/${upload_id}`, {
+        responseType: "blob",
+      });
+    },
+
     list_basic_checks: (
       dataset: string,
       source: string | null,
     ): Promise<AxiosResponse<BasicChecks>> => {
       return axi.get(`/upload/basic_check/${dataset}`, {
         params: { source: source },
+      });
+    },
+    dq_run: (
+      upload_id: string,
+      dq_mode: "uploaded" | "master",
+    ): Promise<AxiosResponse<{ message: string; dq_run_id: number }>> => {
+      return axi.post(`/upload/${upload_id}/dq-run`, null, {
+        params: { dq_mode },
+      });
+    },
+    complete_dq_run: (
+      upload_id: string,
+      dq_mode: "uploaded" | "master",
+    ): Promise<AxiosResponse<{ message: string }>> => {
+      return axi.post(`/upload/${upload_id}/dq-complete`, null, {
+        params: { dq_mode },
       });
     },
   };

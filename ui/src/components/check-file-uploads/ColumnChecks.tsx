@@ -13,10 +13,34 @@ import {
   TableHeader,
   TableRow,
 } from "@carbon/react";
+import { useQuery } from "@tanstack/react-query";
 
+import { api } from "@/api";
 import { cn } from "@/lib/utils.ts";
-import { Check } from "@/types/upload";
+import { Check, DataQualityCheckLabel } from "@/types/upload";
 import { commaNumber } from "@/utils/number.ts";
+
+const getLabelKey = (assertion: string, columnKey = "") =>
+  `${assertion}-${columnKey}`;
+
+const buildAssertionLabelMap = (labels: DataQualityCheckLabel[]) =>
+  labels.reduce<Record<string, string>>((acc, label) => {
+    acc[getLabelKey(label.assertion, label.column_key)] =
+      label.ui_error_description;
+    return acc;
+  }, {});
+
+export const formatAssertion = (
+  assertion: string,
+  columnKey: string,
+  assertionLabels: Record<string, string>,
+) => {
+  return (
+    assertionLabels[getLabelKey(assertion, columnKey)] ??
+    assertionLabels[getLabelKey(assertion)] ??
+    assertion.replace(/_/g, " ")
+  );
+};
 
 interface ExtendedDataTableHeader extends DataTableHeader {
   sortable?: boolean;
@@ -33,6 +57,16 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
     direction: "ascending" | "descending";
   }>({ key: "", direction: "ascending" });
 
+  const { data: dataQualityCheckLabelsQuery } = useQuery({
+    queryKey: ["data_quality_check_labels"],
+    queryFn: api.uploads.list_data_quality_check_labels,
+  });
+
+  const assertionLabels = useMemo(
+    () => buildAssertionLabelMap(dataQualityCheckLabelsQuery?.data ?? []),
+    [dataQualityCheckLabelsQuery],
+  );
+
   const handleUpSort = (key: string) => {
     setSortConfig({ key, direction: "ascending" });
   };
@@ -42,11 +76,22 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
   };
 
   const filteredAndSortedRows = useMemo(() => {
-    const result = data.filter(check => {
+    const rows = Array.isArray(data) ? data : [];
+    const result = rows.filter(check => {
       const searchString = searchTerm.toLowerCase();
+      const columnKey = check.column === "" ? "NO_COLUMN" : check.column;
+      const columnDisplay =
+        columnKey === "NO_COLUMN" ? "Entire row" : columnKey;
+      const assertionLabel = formatAssertion(
+        check.assertion,
+        check.column,
+        assertionLabels,
+      );
       return (
         check.column.toLowerCase().includes(searchString) ||
-        check.assertion.toLowerCase().includes(searchString)
+        check.assertion.toLowerCase().includes(searchString) ||
+        columnDisplay.toLowerCase().includes(searchString) ||
+        assertionLabel.toLowerCase().includes(searchString)
       );
     });
 
@@ -78,13 +123,13 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
     }
 
     return result;
-  }, [data, searchTerm, sortConfig]);
+  }, [assertionLabels, data, searchTerm, sortConfig]);
 
   const renderSortControls = (key: string) => {
     const isActive = sortConfig.key === key;
 
     return (
-      <div className="absolute right-1 top-1/2 flex -translate-y-1/2 flex-col">
+      <div className="ml-2 flex shrink-0 flex-col">
         <ChevronUp
           className={cn(
             "cursor-pointer transition-colors duration-150",
@@ -112,18 +157,19 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
   const rows = filteredAndSortedRows.map(check => {
     const {
       assertion,
-      column = "NO_COLUMN",
+      column = "",
       count_failed,
       count_passed,
       percent_passed,
     } = check;
 
     const columnKey = column === "" ? "NO_COLUMN" : column;
+    const columnDisplay = columnKey === "NO_COLUMN" ? "Entire row" : columnKey;
 
     return {
       id: `${assertion}-${columnKey}`,
-      column: columnKey,
-      assertion,
+      column: columnDisplay,
+      assertion: formatAssertion(assertion, column, assertionLabels),
       result_with_errors: (
         <div className="flex items-center">
           {count_failed > 0 ? (
@@ -152,12 +198,12 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
   const dqResultHeaders: ExtendedDataTableHeader[] = [
     {
       key: "column",
-      header: "Column(s)",
+      header: "Column",
       sortable: false,
     },
     {
       key: "assertion",
-      header: "Validation Rule",
+      header: "Check Description",
       sortable: false,
     },
     {
@@ -185,7 +231,7 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
       <div className="rounded-lg border bg-white shadow-sm">
         <div className="border-b px-4 py-3">
           <h3 className="text-lg font-semibold text-gray-800">
-            Overview of all fields sorted by type
+            Overview of all checks sorted by type
           </h3>
         </div>
 
@@ -199,9 +245,9 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
                       <TableHeader
                         key={header.key}
                         isSortable={false}
-                        className={cn("relative bg-blue-50 text-gray-700")}
+                        className={cn("bg-blue-50 text-gray-700")}
                       >
-                        <div className="flex w-full items-center justify-between">
+                        <div className="flex w-full items-center justify-between gap-2">
                           <span>{header.header}</span>
                           {(header as ExtendedDataTableHeader).sortable &&
                             renderSortControls(header.key)}

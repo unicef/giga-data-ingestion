@@ -20,6 +20,7 @@ import {
 interface FuzzyValidationModalProps {
   errorMessage: string | null;
   isLoading: boolean;
+  modalLabel?: string;
   onClose: () => void;
   onConfirmApply: (corrections: FuzzyCorrection[]) => void;
   open: boolean;
@@ -53,6 +54,7 @@ const getColumnsWithUnknownValues = (columns: FuzzyValidationColumn[]) =>
 function FuzzyValidationModal({
   errorMessage,
   isLoading,
+  modalLabel,
   onClose,
   onConfirmApply,
   open,
@@ -141,6 +143,7 @@ function FuzzyValidationModal({
     return (
       <Modal
         className="fuzzy-validation-modal fuzzy-validation-modal--loading"
+        modalLabel={modalLabel}
         modalHeading="Checking your mapped values"
         open={open}
         passiveModal
@@ -161,6 +164,7 @@ function FuzzyValidationModal({
     return (
       <Modal
         className="fuzzy-validation-modal"
+        modalLabel={modalLabel}
         modalHeading="Apply corrections to your data?"
         open={open}
         primaryButtonText="Confirm and apply"
@@ -182,6 +186,7 @@ function FuzzyValidationModal({
   return (
     <Modal
       className="fuzzy-validation-modal"
+      modalLabel={modalLabel}
       modalHeading={`Match expected data values for ${columnsWithUnknownValues.length} columns`}
       open={open}
       passiveModal={false}
@@ -192,10 +197,13 @@ function FuzzyValidationModal({
       onRequestClose={onClose}
       onRequestSubmit={() => setConfirmationState(appliedCorrectionSummary)}
       onSecondarySubmit={onClose}
-      modalLabel="Please review the suggestions and match the values in the data to the
-          expected valid values below."
     >
       <Stack gap={4} className="pb-0">
+        <p>
+          Please review the suggestions and match the values in the data to the
+          expected valid values below.
+        </p>
+
         {errorMessage && (
           <InlineNotification
             aria-label="fuzzy validation error notification"
