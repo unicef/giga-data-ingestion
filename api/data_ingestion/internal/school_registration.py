@@ -18,7 +18,7 @@ GEOLOCATION_CSV_COLUMNS = [
     "school_name",
     "latitude",
     "longitude",
-    "education_level",
+    "education_level_govt",
     "contact_name",
     "contact_email",
     "verification_status",
@@ -40,7 +40,7 @@ def write_registration_csv_to_adls(
         "school_name": payload.get("school_name", ""),
         "latitude": payload.get("latitude", ""),
         "longitude": payload.get("longitude", ""),
-        "education_level": payload.get("education_level", ""),
+        "education_level_govt": payload.get("education_level", ""),
         "contact_name": payload.get("contact_name", ""),
         "contact_email": payload.get("contact_email", ""),
         "verification_status": registration_metadata.get(
@@ -105,6 +105,7 @@ def call_meter_soft_delete(school_id_giga: str, rejection_reason: str = None) ->
     }
 
     response = requests.put(url, headers=headers, json=payload, timeout=10)
+    response.raise_for_status()
     logger.info(
         "GigaMeter soft-delete successful for school_id_giga=%s", school_id_giga
     )

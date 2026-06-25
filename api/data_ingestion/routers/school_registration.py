@@ -110,7 +110,7 @@ def verify_nocodb_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-def build_column_mapping(payload: SchoolRegistrationTriggerRequest | dict) -> dict:
+def build_column_mapping() -> dict:
     """
     Build identity column mapping for FileUpload
     """
@@ -120,7 +120,7 @@ def build_column_mapping(payload: SchoolRegistrationTriggerRequest | dict) -> di
         "school_name": "school_name",
         "latitude": "latitude",
         "longitude": "longitude",
-        "education_level": "education_level",
+        "education_level_govt": "education_level_govt",
         "contact_name": "contact_name",
         "contact_email": "contact_email",
         "verification_status": "verification_status",
@@ -141,8 +141,8 @@ def build_registration_metadata(
         "school_id": payload.school_id,
         "registration_id": getattr(payload, "registration_id", payload.giga_id_school),
         "school_name": payload.school_name,
-        "latitude": str(payload.latitude) if payload.latitude else "",
-        "longitude": str(payload.longitude) if payload.longitude else "",
+        "latitude": str(payload.latitude) if payload.latitude is not None else "",
+        "longitude": str(payload.longitude) if payload.longitude is not None else "",
         "education_level": payload.education_level or "",
         "contact_name": payload.contact_name or "",
         "contact_email": str(payload.contact_email) if payload.contact_email else "",
@@ -164,13 +164,13 @@ async def trigger_registration_pipeline(
     Called by GigaMeter to initiate the DQ pipeline for a new school registration.
     Creates a FileUpload record and writes a single-row CSV to ADLS.
     """
-    # verify_meter_token(credentials)
+    verify_meter_token(credentials)
 
     country_code = coco.convert(payload.country_iso3_code, to="ISO3")
     if country_code == "not found":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid country: {payload.country}",
+            detail=f"Invalid country: {payload.country_iso3_code}",
         )
 
     existing = await db.scalar(
@@ -197,7 +197,7 @@ async def trigger_registration_pipeline(
         dataset="geolocation",
         source="gigameter",
         original_filename=f"{payload.giga_id_school}.csv",
-        column_to_schema_mapping=build_column_mapping(payload.model_dump()),
+        column_to_schema_mapping=build_column_mapping(),
         column_license={},
     )
 
@@ -253,7 +253,7 @@ async def retrigger_registration_pipeline(
     Called by NocoDB webhook when a government verifier updates school data.
     Creates a new FileUpload record so the Dagster sensor detects the re-trigger.
     """
-    # verify_nocodb_token(credentials)
+    verify_nocodb_token(credentials)
 
     logger.info(f"Received re-trigger webhook request: {payload.model_dump()}")
     logger.info(f"Extracted payload: {payload.model_dump_json()}")
@@ -360,7 +360,7 @@ async def retrigger_registration_pipeline(
         dataset="geolocation",
         source="nocodb",
         original_filename=f"{school_data.giga_id_school}.csv",
-        column_to_schema_mapping=build_column_mapping(school_data.model_dump()),
+        column_to_schema_mapping=build_column_mapping(),
         column_license={},
     )
 
