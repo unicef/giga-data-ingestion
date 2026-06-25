@@ -40,6 +40,7 @@ import {
   initialUploadResponse,
 } from "@/types/upload";
 import { basicCheckSchema } from "@/types/upload";
+import { getDqCheckGroups } from "@/utils/dq-summary";
 import { commaNumber } from "@/utils/number";
 
 export const Route = createFileRoute(
@@ -86,11 +87,7 @@ const SuccessDataQualityChecks = memo(
     uploadId: string;
   }) => {
     if (status !== DQStatus.COMPLETED) return null;
-    const {
-      summary: _summary,
-      critical_error_check: _critical_error_check = [],
-      ...checks
-    } = dqResult.dq_summary ?? {};
+    const checks = getDqCheckGroups(dqResult.dq_summary);
 
     return (
       <Tabs>
@@ -167,11 +164,6 @@ function Success() {
     () => uploadQuery?.data ?? initialUploadResponse,
     [uploadQuery],
   );
-  const {
-    handleDownloadFailedRows,
-    handleDownloadPassedRows,
-    handleDownloadDqSummary,
-  } = useDownloadHelpers(uploadData);
 
   const {
     data: dqResultQuery,
@@ -195,6 +187,12 @@ function Success() {
     () => dqResultQuery?.data ?? initialDataQualityCheck,
     [dqResultQuery],
   );
+
+  const {
+    handleDownloadFailedRows,
+    handleDownloadPassedRows,
+    handleDownloadDqSummary,
+  } = useDownloadHelpers(uploadData, dqResult);
 
   const status = dqResult?.status;
 
