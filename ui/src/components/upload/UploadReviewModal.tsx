@@ -24,6 +24,7 @@ interface UploadReviewModalProps {
   fuzzyErrorMessage: string | null;
   fuzzyValidationResult: FuzzyValidationResponse | null;
   impactPreview: UploadImpactPreview | null;
+  missingCreateColumns: boolean;
   isFuzzyLoading: boolean;
   isImpactLoading: boolean;
   onClose: () => void;
@@ -57,6 +58,7 @@ function UploadReviewModal({
   fuzzyErrorMessage,
   fuzzyValidationResult,
   impactPreview,
+  missingCreateColumns,
   isFuzzyLoading,
   isImpactLoading,
   onClose,
@@ -82,6 +84,15 @@ function UploadReviewModal({
 
   const canStartImport = !!impactPreview || !!errorMessage;
 
+  const newSchools = impactPreview?.newSchools ?? 0;
+  const schoolsToUpdate = impactPreview?.schoolsToUpdate ?? 0;
+  // New schools can't be created (create columns missing): warn when there are
+  // also schools to update, block when the upload is create-only.
+  const createColumnsMissing =
+    !!impactPreview && missingCreateColumns && newSchools > 0;
+  const isCreateOnlyBlocked = createColumnsMissing && schoolsToUpdate === 0;
+  const showCreateWarning = createColumnsMissing && schoolsToUpdate > 0;
+
   return (
     <Modal
       modalLabel="STEP 1 OF 2"
@@ -89,7 +100,9 @@ function UploadReviewModal({
       open={open}
       passiveModal={false}
       primaryButtonText={errorMessage ? "Continue anyway" : "Start import"}
-      primaryButtonDisabled={isImpactLoading || !canStartImport}
+      primaryButtonDisabled={
+        isImpactLoading || !canStartImport || isCreateOnlyBlocked
+      }
       secondaryButtonText="Close"
       size="md"
       onRequestClose={onClose}
@@ -150,6 +163,32 @@ function UploadReviewModal({
               />
             )}
           </div>
+        )}
+
+        {showCreateWarning && (
+          <InlineNotification
+            aria-label="schools will not be created warning"
+            kind="warning"
+            lowContrast
+            title="Some schools won't be created"
+            subtitle={`${commaNumber(
+              newSchools,
+            )} school(s) in your file don't exist yet and won't be created, because the columns required to create schools (school_name, latitude, longitude, education_level_govt) aren't mapped. Only the ${commaNumber(
+              schoolsToUpdate,
+            )} existing school(s) will be updated.`}
+          />
+        )}
+
+        {isCreateOnlyBlocked && (
+          <InlineNotification
+            aria-label="nothing to import error"
+            kind="error"
+            lowContrast
+            title="Nothing to import"
+            subtitle={`All ${commaNumber(
+              newSchools,
+            )} school(s) in your file are new, but the columns required to create schools (school_name, latitude, longitude, education_level_govt) aren't mapped. Map them to create these schools, or upload a file with existing schools to update.`}
+          />
         )}
       </Stack>
     </Modal>

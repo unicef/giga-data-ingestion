@@ -11,4 +11,6 @@ export interface MetaSchema {
   license: string | null;
   units: string | null;
   hint: string | null;
+  // UI-only: mandatory only when creating new schools.
+  is_create_required?: boolean;
 }
