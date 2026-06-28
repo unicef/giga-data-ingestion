@@ -12,8 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from azure.core.exceptions import HttpResponseError
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.school_registration import write_registration_csv_to_adls
-from data_ingestion.models import FileUpload
+from data_ingestion.models import DeletionRequest, FileUpload
 from data_ingestion.models.file_upload import DQStatusEnum
+from data_ingestion.routers.approval_requests import reject_pending_upload_row
+from data_ingestion.routers.deletion_requests import create_deletion_request
 from data_ingestion.settings import settings
 from data_ingestion.utils.data_quality import get_metadata_path
 
@@ -250,16 +252,16 @@ async def retrigger_registration_pipeline(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Called by NocoDB webhook when a government verifier updates school data.
-    Creates a new FileUpload record so the Dagster sensor detects the re-trigger.
+    Called by NocoDB when a government verifier changes verification_status.
+
+    Verified records create a NocoDB FileUpload update so the DQ pipeline reruns.
+    Rejected records either reject the pending GigaMeter approval upload, or create
+    a deletion request when the school has already been approved into master data.
     """
     verify_nocodb_token(credentials)
 
-    logger.info(f"Received re-trigger webhook request: {payload.model_dump()}")
-    logger.info(f"Extracted payload: {payload.model_dump_json()}")
-
     if not payload.data.rows:
-        logger.warning("No rows found in webhook payload")
+        logger.warning(f"No rows found in webhook payload: {payload.model_dump()}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
@@ -283,80 +285,127 @@ async def retrigger_registration_pipeline(
                 "received_record": updated_record.model_dump(),
             },
         )
-    try:
-        # Parse latitude and longitude as floats, handling both string and numeric types
-        latitude = 0.0
-        longitude = 0.0
 
-        lat_value = getattr(updated_record, "latitude", None)
-        lon_value = getattr(updated_record, "longitude", None)
-
-        logger.debug(
-            f"Parsing coordinates: lat_value={lat_value}, lon_value={lon_value}"
+    # NocoDB should call this API only once per giga_id_school, as we don't want multiple pipeline runs.
+    file_upload_nocodb = await db.scalar(
+        select(FileUpload)
+        .where(
+            FileUpload.original_filename == f"{giga_id}.csv",
+            FileUpload.source == "nocodb",
+        )
+        .order_by(FileUpload.created.desc())
+    )
+    if file_upload_nocodb is not None:
+        logger.warning(f"Duplicate re-trigger request for giga_id_school={giga_id}")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"A re-trigger for giga_id_school={giga_id} already exists "
+                f"(id={file_upload_nocodb.id})."
+            ),
         )
 
-        if lat_value:
-            latitude = float(lat_value)
-        if lon_value:
-            longitude = float(lon_value)
-
-        logger.debug(f"Parsed coordinates: latitude={latitude}, longitude={longitude}")
-
-    except (ValueError, TypeError) as e:
-        logger.error(
-            f"Invalid coordinate format: lat={lat_value}, lon={lon_value}, error={e}"
+    deletion_request = await db.scalar(
+        select(DeletionRequest)
+        .where(DeletionRequest.original_filename == f"{giga_id}.csv")
+        .order_by(DeletionRequest.requested_date.desc())
+    )
+    if deletion_request is not None:
+        logger.warning(
+            f"Duplicate delete re-trigger request for giga_id_school={giga_id}"
         )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid latitude or longitude format: {str(e)}",
-        ) from e
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"A delete re-trigger for giga_id_school={giga_id} already exists "
+                f"(id={deletion_request.id})."
+            ),
+        )
+
+    # Check if a previous registration exists for this giga_id_school from GigaMeter
+    existing = await db.scalar(
+        select(FileUpload)
+        .where(
+            FileUpload.original_filename == f"{giga_id}.csv",
+            FileUpload.source == "gigameter",
+        )
+        .order_by(FileUpload.created.desc())
+    )
+    if existing is None:
+        logger.warning(f"No registration found for giga_id_school={giga_id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No registration found for giga_id_school={giga_id}",
+        )
+
+    verification_status = (
+        getattr(updated_record, "verification_status", None) or "unverified"
+    ).lower()
+
+    if verification_status == "rejected":
+        # Case 1: Already Rejected by Admin
+        if existing.approval_status == "REJECTED":
+            logger.warning(
+                f"Registration already rejected for giga_id_school={giga_id}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Registration already rejected for giga_id_school={giga_id}",
+            )
+        # Case 2: Not Approved/Rejected Yet from Approval Page,
+        if existing.approval_status != "APPROVED":
+            rejection_result = await reject_pending_upload_row(
+                db,
+                file_upload=existing,
+                country_code=existing.country,
+                school_id_giga=giga_id,
+            )
+
+            response_data = {
+                "message": "Pending registration rejected successfully.",
+                "file_upload_id": existing.id,
+                "giga_id_school": giga_id,
+                "rejected_change_ids": rejection_result["rejected_change_ids"],
+            }
+            logger.info(f"Pending registration rejected for {giga_id}: {response_data}")
+            return response_data
+        # Case 3: Already Approved & Synced with Master
+        await create_deletion_request(
+            db,
+            country=existing.country,
+            ids=[giga_id],
+            id_type="school_id_giga",
+            original_filename=f"{giga_id}.csv",
+            requested_by_email=existing.uploader_email,
+            requested_by_id=existing.uploader_id,
+        )
+
+        response_data = {
+            "message": "Delete re-trigger initiated successfully.",
+            "giga_id_school": giga_id,
+        }
+        logger.info(
+            f"Delete re-trigger completed successfully for {giga_id}: {response_data}"
+        )
+        return response_data
 
     school_data = SchoolRegistrationTriggerRequest(
         giga_id_school=giga_id,
         school_id=getattr(updated_record, "school_id", None) or "",
         school_name=getattr(updated_record, "school_name", None) or "",
-        latitude=latitude,
-        longitude=longitude,
-        country_iso3_code=getattr(updated_record, "country_iso3_code", None) or "",
+        latitude=float(getattr(updated_record, "latitude", 0.0)),
+        longitude=float(getattr(updated_record, "longitude", 0.0)),
+        country_iso3_code=existing.country,
         education_level=getattr(updated_record, "education_level", None),
         contact_name=getattr(updated_record, "contact_name", None),
         contact_email=getattr(updated_record, "contact_email", None),
-        verification_status=getattr(updated_record, "verification_status", None)
-        or "unverified",
+        verification_status=verification_status,
     )
-    logger.info(f"Built school registration data: {school_data.model_dump_json()}")
-
-    existing = await db.scalar(
-        select(FileUpload)
-        .where(
-            FileUpload.original_filename == f"{school_data.giga_id_school}.csv",
-        )
-        .order_by(FileUpload.created.desc())
-    )
-    if existing is None:
-        logger.warning(
-            f"No registration found for giga_id_school={school_data.giga_id_school}"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No registration found for giga_id_school={school_data.giga_id_school}",
-        )
-
-    logger.info(f"Found existing registration: {existing.id}")
-
-    country_code = coco.convert(school_data.country_iso3_code, to="ISO3")
-    if country_code == "not found":
-        logger.warning(
-            f"Invalid country code: {school_data.country_iso3_code}, using existing: {existing.country}"
-        )
-        country_code = existing.country
-
-    logger.debug(f"Using country code: {country_code}")
 
     new_file_upload = FileUpload(
         uploader_id=existing.uploader_id,
         uploader_email=existing.uploader_email,
-        country=country_code,
+        country=existing.country,
         dataset="geolocation",
         source="nocodb",
         original_filename=f"{school_data.giga_id_school}.csv",
@@ -367,18 +416,16 @@ async def retrigger_registration_pipeline(
     db.add(new_file_upload)
     await db.commit()
     await db.refresh(new_file_upload)
-    logger.info(f"Created new FileUpload record: {new_file_upload.id}")
 
     new_file_upload.metadata_json_path = get_metadata_path(new_file_upload.upload_path)
     db.add(new_file_upload)
     await db.commit()
     await db.refresh(new_file_upload)
-    logger.debug(f"Set metadata path: {new_file_upload.metadata_json_path}")
 
     try:
         registration_metadata = build_registration_metadata(school_data)
         logger.info(
-            f"Writing registration CSV to ADLS for {school_data.giga_id_school}"
+            f"Writing NocoDB registration CSV to ADLS for {school_data.giga_id_school}"
         )
         write_registration_csv_to_adls(
             school_data.model_dump(),
@@ -386,12 +433,9 @@ async def retrigger_registration_pipeline(
             registration_metadata,
             mode="update",
         )
-        logger.info(
-            f"Successfully wrote registration CSV for {school_data.giga_id_school}"
-        )
     except Exception as err:
         logger.error(
-            f"Failed to write registration file for {school_data.giga_id_school}: {err}",
+            f"Failed to write NocoDB registration file for {school_data.giga_id_school}: {err}",
             exc_info=True,
         )
         await db.execute(delete(FileUpload).where(FileUpload.id == new_file_upload.id))
