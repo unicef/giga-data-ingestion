@@ -680,10 +680,13 @@ async def submit_upload_review(
                 },
             )
             # Call GigaMeter soft-delete
-            call_meter_soft_delete(
-                school_id_giga=school_id_giga,
-                rejection_reason="Rejected by admin during manual review",
-            )
+            try:
+                call_meter_soft_delete(
+                    school_id_giga=school_id_giga,
+                    rejection_reason="Rejected by admin during manual review",
+                )
+            except Exception as e:
+                print(f"Error calling GigaMeter soft-delete for {school_id_giga}: {e}")
 
     # Create the audit log first so its ID can be included in the approval payload.
     approval_request_log_id = None
