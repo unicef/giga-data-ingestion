@@ -1,7 +1,11 @@
+import logging
+
 import pandas as pd
 import requests
 
 from data_ingestion.settings import settings
+
+logger = logging.getLogger(__name__)
 
 
 def get_nocodb_table_rows(table_id, offset=0, limit=100, where=None, fields=None):
@@ -140,3 +144,61 @@ def get_nocodb_table_id_from_name(table_name):
         return nocodb_response[0]["table_id"]
     else:
         raise ValueError(f"Unable to retrieve the table_id for table {table_name}")
+
+
+def update_nocodb_record_by_field(
+    table_name: str, field_name: str, field_value: str, update_data: dict
+) -> dict | None:
+    """
+    Update a NoCoDB record by finding it via a specific field value.
+
+    Args:
+        table_name: Name of the NoCoDB table (e.g., "SchoolRegistrations")
+        field_name: The field name to search by (e.g., "giga_id_school")
+        field_value: The value to search for
+        update_data: The data to update
+
+    Returns:
+        dict: Response from the update operation or None if record not found
+    """
+    try:
+        # Get table ID from table name
+        table_id = get_nocodb_table_id_from_name(table_name)
+
+        # Find the record by the field
+        rows = get_nocodb_table_rows(
+            table_id, where=f"({field_name},eq,{field_value})", limit=1
+        )
+
+        if not rows:
+            logger.warning(
+                f"No NoCoDB record found for {field_name}={field_value} in table {table_name}"
+            )
+            return None
+
+        # Get the record ID (NocoDB uses 'Id' as the primary key field)
+        record = rows[0]
+        record_id = record.get("Id") or record.get("id")
+
+        if not record_id:
+            raise ValueError(f"Could not find ID field in NocoDB record: {record}")
+
+        update_data["Id"] = record_id
+
+        # Update the record
+        table_url = f"{settings.NOCODB_BASE_URL}/api/v2/tables/{table_id}/records"
+        headers = {
+            "xc-token": settings.NOCODB_TOKEN,
+            "Content-Type": "application/json",
+        }
+        response = requests.patch(table_url, json=update_data, headers=headers)
+        response.raise_for_status()
+
+        logger.info(
+            f"NoCoDB update successful for {field_name}={field_value}: {update_data}"
+        )
+        return response.json()
+
+    except Exception as exc:
+        logger.error(f"NoCoDB update failed for {field_name}={field_value}: {exc}")
+        return None

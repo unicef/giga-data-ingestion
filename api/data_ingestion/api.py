@@ -20,6 +20,7 @@ from data_ingestion.routers import (
     qos,
     roles,
     schema,
+    school_registration,
     upload,
     users,
     utils,
@@ -140,6 +141,7 @@ app.include_router(groups.router)
 app.include_router(qos.router)
 app.include_router(roles.router)
 app.include_router(schema.router)
+app.include_router(school_registration.router)
 app.include_router(upload.router)
 app.include_router(users.router)
 app.include_router(utils.router)

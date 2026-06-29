@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from data_ingestion.db.primary import get_db as get_primary_db
 from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.internal.school_registration import call_meter_soft_delete
 from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import (
     ApprovalRequest,
@@ -28,6 +29,7 @@ from data_ingestion.schemas.approval_requests import (
     UploadListing,
 )
 from data_ingestion.schemas.core import PagedResponseSchema
+from data_ingestion.utils.nocodb import update_nocodb_record_by_field
 
 router = APIRouter(
     prefix="/api/approval-requests",
@@ -150,6 +152,83 @@ async def _stage_approval_request(
         await primary_db.flush()
         return audit_log.id
     return None
+
+
+def _write_approval_result(
+    *,
+    country_code: str,
+    dataset_name: str,
+    upload_id: str,
+    approved_change_ids: list,
+    rejected_change_ids: list,
+    approval_request_log_id: str | None,
+) -> str:
+    # Write approval JSON to blob storage.
+    # Dagster sensor watches this path and triggers the silver merge job.
+    # Filename must follow the format expected by deconstruct_school_master_filename_components:
+    # {COUNTRY_CODE}_{domain}-{dataset_type}_{timestamp}.json  (3 underscore-separated parts)
+    timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
+    approval_filename = f"{country_code.upper()}_school-{dataset_name}_{timestamp}.json"
+    approval_path = (
+        f"staging/approved-row-ids/school-{dataset_name}"
+        f"/{country_code.upper()}/{approval_filename}"
+    )
+    approval_payload = json.dumps(
+        {
+            "upload_id": upload_id,
+            "approved_change_ids": approved_change_ids,
+            "rejected_change_ids": rejected_change_ids,
+            "approval_request_log_id": approval_request_log_id,
+        },
+        indent=2,
+    ).encode()
+    storage_client.get_blob_client(approval_path).upload_blob(
+        approval_payload, overwrite=True
+    )
+    return approval_path
+
+
+async def reject_pending_upload_row(
+    primary_db: AsyncSession,
+    *,
+    file_upload: FileUpload,
+    country_code: str,
+    school_id_giga: str,
+) -> dict:
+    dataset_name = file_upload.dataset.lower()
+    formatted_dataset = f"School {dataset_name.capitalize()}"
+    approval_request = await primary_db.scalar(
+        select(ApprovalRequest).where(
+            (ApprovalRequest.country == country_code.upper())
+            & (ApprovalRequest.dataset == formatted_dataset)
+        )
+    )
+    if approval_request and approval_request.is_merge_processing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A merge is already in progress for this dataset. Please wait for it to complete.",
+        )
+
+    if approval_request:
+        approval_request.is_merge_processing = True
+
+    rejected_change_ids = [f"{school_id_giga}|{file_upload.id}|{_CHANGE_INSERT}"]
+    _update_status_after_review(file_upload, None, [], rejected_change_ids)
+    approval_path = _write_approval_result(
+        country_code=country_code,
+        dataset_name=dataset_name,
+        upload_id=file_upload.id,
+        approved_change_ids=[],
+        rejected_change_ids=rejected_change_ids,
+        approval_request_log_id=None,
+    )
+
+    await primary_db.commit()
+
+    return {
+        "approval_path": approval_path,
+        "rejected_change_ids": rejected_change_ids,
+    }
 
 
 @router.get("", response_model=PagedResponseSchema[CountryPendingListing])
@@ -584,6 +663,45 @@ async def submit_upload_review(
         body.rejected_rows, staging, upload_id, db
     )
 
+    # Call GigaMeter soft-delete and update NocoDB for rejected GigaMeter registrations
+    if rejected_change_ids and file_upload.source == "gigameter":
+        # Extract school_id_giga from rejected change_ids
+        for change_id in rejected_change_ids:
+            school_id_giga = change_id.split("|")[0]
+            # Update NocoDB status to rejected
+            update_nocodb_record_by_field(
+                table_name="SchoolRegistrations",
+                field_name="giga_id_school",
+                field_value=school_id_giga,
+                update_data={
+                    "verification_status": "rejected",
+                    "rejected_on": str(datetime.now(UTC)),
+                    "rejection_reason": "Rejected by admin during manual review",
+                },
+            )
+            # Call GigaMeter soft-delete
+            try:
+                call_meter_soft_delete(
+                    school_id_giga=school_id_giga,
+                    rejection_reason="Rejected by admin during manual review",
+                )
+            except Exception as e:
+                print(f"Error calling GigaMeter soft-delete for {school_id_giga}: {e}")
+
+    # Create the audit log first so its ID can be included in the approval payload.
+    approval_request_log_id = None
+    if approval_request:
+        approval_request.is_merge_processing = True
+        if approved_change_ids and database_user:
+            audit_log = ApprovalRequestAuditLog(
+                approval_request_id=approval_request.id,
+                approved_by_id=database_user.id,
+                approved_by_email=email,
+            )
+            primary_db.add(audit_log)
+            await primary_db.flush()
+            approval_request_log_id = audit_log.id
+
     _update_status_after_review(
         file_upload, deletion_request, approved_change_ids, rejected_change_ids
     )
@@ -591,27 +709,13 @@ async def submit_upload_review(
         approval_request, approved_change_ids, database_user, primary_db, email
     )
 
-    # Write approval JSON to blob storage.
-    # Dagster sensor watches this path and triggers the silver merge job.
-    # Filename must follow the format expected by deconstruct_school_master_filename_components:
-    # {COUNTRY_CODE}_{domain}-{dataset_type}_{timestamp}.json  (3 underscore-separated parts)
-    timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
-    approval_filename = f"{country_code.upper()}_school-{dataset_name}_{timestamp}.json"
-    approval_path = (
-        f"staging/approved-row-ids/school-{dataset_name}"
-        f"/{country_code.upper()}/{approval_filename}"
-    )
-    approval_payload = json.dumps(
-        {
-            "upload_id": upload_id,
-            "approved_change_ids": approved_change_ids,
-            "rejected_change_ids": rejected_change_ids,
-            "approval_request_log_id": approval_request_log_id,
-        },
-        indent=2,
-    ).encode()
-    storage_client.get_blob_client(approval_path).upload_blob(
-        approval_payload, overwrite=True
+    _write_approval_result(
+        country_code=country_code,
+        dataset_name=dataset_name,
+        upload_id=upload_id,
+        approved_change_ids=approved_change_ids,
+        rejected_change_ids=rejected_change_ids,
+        approval_request_log_id=approval_request_log_id,
     )
 
     await primary_db.commit()
