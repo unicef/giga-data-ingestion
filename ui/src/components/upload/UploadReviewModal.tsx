@@ -99,7 +99,7 @@ function UploadReviewModal({
       modalHeading="Review"
       open={open}
       passiveModal={false}
-      primaryButtonText={errorMessage ? "Continue anyway" : "Start import"}
+      primaryButtonText={errorMessage ? "Continue anyway" : "Start upload"}
       primaryButtonDisabled={
         isImpactLoading || !canStartImport || isCreateOnlyBlocked
       }
@@ -111,7 +111,7 @@ function UploadReviewModal({
     >
       <Stack gap={6}>
         <p>
-          Please check the output below and click on "Start import" to begin
+          Please check the output below and click on "Start upload" to begin
         </p>
 
         {isImpactLoading && (
@@ -181,10 +181,10 @@ function UploadReviewModal({
 
         {isCreateOnlyBlocked && (
           <InlineNotification
-            aria-label="nothing to import error"
+            aria-label="nothing to upload error"
             kind="error"
             lowContrast
-            title="Nothing to import"
+            title="Nothing to upload"
             subtitle={`All ${commaNumber(
               newSchools,
             )} school(s) in your file are new, but the columns required to create schools (school_name, latitude, longitude, education_level_govt) aren't mapped. Map them to create these schools, or upload a file with existing schools to update.`}
