@@ -1,23 +1,28 @@
 import logging
-from datetime import datetime
 from typing import Annotated
 
 import country_converter as coco
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from azure.core.exceptions import HttpResponseError
 from data_ingestion.db.primary import get_db
-from data_ingestion.internal.school_registration import write_registration_csv_to_adls
+from data_ingestion.internal.school_registration import (
+    build_registration_metadata,
+    create_school_registration_file_upload,
+    write_registration_csv_to_adls,
+)
 from data_ingestion.models import DeletionRequest, FileUpload
-from data_ingestion.models.file_upload import DQStatusEnum
 from data_ingestion.routers.approval_requests import reject_pending_upload_row
 from data_ingestion.routers.deletion_requests import create_deletion_request
+from data_ingestion.schemas.school_registration import (
+    NocoDBWebhookPayload,
+    SchoolRegistrationTriggerRequest,
+    SchoolRegistrationTriggerResponse,
+)
 from data_ingestion.settings import settings
-from data_ingestion.utils.data_quality import get_metadata_path
 
 logger = logging.getLogger(__name__)
 
@@ -26,74 +31,7 @@ router = APIRouter(
     tags=["school-registration"],
 )
 
-meter_auth = HTTPBearer(scheme_name="GigaMeter Bearer")
-
-
-class SchoolRegistrationTriggerRequest(BaseModel):
-    giga_id_school: str
-    school_id: str
-    school_name: str
-    latitude: float
-    longitude: float
-    country_iso3_code: str
-    education_level: str | None = None
-    contact_name: str | None = None
-    contact_email: str | None = None
-    verification_status: str | None = (
-        None  # Status from NocoDB: "verified", "rejected", "unverified"
-    )
-
-
-class SchoolRegistrationTriggerResponse(BaseModel):
-    id: str
-    giga_id_school: str
-    dq_status: DQStatusEnum
-    created: datetime
-
-
-class NocoDBSchoolRecord(BaseModel):
-    """Schema for a single school record from NocoDB."""
-
-    # Use model_config to allow extra fields from NocoDB
-    model_config = {"extra": "allow"}
-
-    # Only define required fields that we need
-    Id: int | None = None
-    CreatedAt: str | None = None
-    UpdatedAt: str | None = None
-    giga_id_school: str | None = None
-    school_id: str | None = None
-    school_name: str | None = None
-    latitude: float | str | None = None
-    longitude: float | str | None = None
-    country_iso3_code: str | None = None
-    education_level: str | None = None
-    contact_name: str | None = None
-    contact_email: str | None = None
-    verification_status: str | None = None
-    created_on: str | None = None
-    rejected_on: str | None = None
-    status: str | None = None
-    rejection_reason: str | None = None
-
-
-class NocoDBWebhookData(BaseModel):
-    """Schema for NocoDB webhook data payload."""
-
-    table_id: str
-    table_name: str
-    previous_rows: list[NocoDBSchoolRecord]
-    rows: list[NocoDBSchoolRecord]
-
-
-class NocoDBWebhookPayload(BaseModel):
-    """Schema for NocoDB webhook payload."""
-
-    type: str
-    id: str
-    base_id: str
-    version: str
-    data: NocoDBWebhookData
+bearer_auth = HTTPBearer(scheme_name="Bearer Auth")
 
 
 def verify_meter_token(
@@ -112,46 +50,6 @@ def verify_nocodb_token(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
-def build_column_mapping() -> dict:
-    """
-    Build identity column mapping for FileUpload
-    """
-    return {
-        "school_id_giga": "school_id_giga",
-        "school_id_govt": "school_id_govt",
-        "school_name": "school_name",
-        "latitude": "latitude",
-        "longitude": "longitude",
-        "education_level_govt": "education_level_govt",
-        "contact_name": "contact_name",
-        "contact_email": "contact_email",
-        "verification_status": "verification_status",
-    }
-
-
-def build_registration_metadata(
-    payload: SchoolRegistrationTriggerRequest,
-) -> dict:
-    """Build registration-specific metadata (not for column mapping)."""
-
-    verification_status = (
-        payload.verification_status if payload.verification_status else "unverified"
-    )
-
-    return {
-        "giga_id_school": payload.giga_id_school,
-        "school_id": payload.school_id,
-        "registration_id": getattr(payload, "registration_id", payload.giga_id_school),
-        "school_name": payload.school_name,
-        "latitude": str(payload.latitude) if payload.latitude is not None else "",
-        "longitude": str(payload.longitude) if payload.longitude is not None else "",
-        "education_level": payload.education_level or "",
-        "contact_name": payload.contact_name or "",
-        "contact_email": str(payload.contact_email) if payload.contact_email else "",
-        "verification_status": verification_status,
-    }
-
-
 @router.post(
     "/trigger",
     status_code=status.HTTP_201_CREATED,
@@ -159,7 +57,7 @@ def build_registration_metadata(
 )
 async def trigger_registration_pipeline(
     payload: SchoolRegistrationTriggerRequest,
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(meter_auth)],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer_auth)],
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -192,25 +90,14 @@ async def trigger_registration_pipeline(
             ),
         )
 
-    file_upload = FileUpload(
+    file_upload = await create_school_registration_file_upload(
+        db,
         uploader_id=settings.SYSTEM_USER_ID,
         uploader_email=settings.SYSTEM_USER_EMAIL,
         country=country_code,
-        dataset="geolocation",
         source="gigameter",
-        original_filename=f"{payload.giga_id_school}.csv",
-        column_to_schema_mapping=build_column_mapping(),
-        column_license={},
+        giga_id_school=payload.giga_id_school,
     )
-
-    db.add(file_upload)
-    await db.commit()
-    await db.refresh(file_upload)
-
-    file_upload.metadata_json_path = get_metadata_path(file_upload.upload_path)
-    db.add(file_upload)
-    await db.commit()
-    await db.refresh(file_upload)
 
     try:
         registration_metadata = build_registration_metadata(payload)
@@ -248,7 +135,7 @@ async def trigger_registration_pipeline(
 )
 async def retrigger_registration_pipeline(
     payload: NocoDBWebhookPayload,
-    credentials: Annotated[HTTPAuthorizationCredentials, Depends(meter_auth)],
+    credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer_auth)],
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -402,25 +289,14 @@ async def retrigger_registration_pipeline(
         verification_status=verification_status,
     )
 
-    new_file_upload = FileUpload(
+    new_file_upload = await create_school_registration_file_upload(
+        db,
         uploader_id=existing.uploader_id,
         uploader_email=existing.uploader_email,
         country=existing.country,
-        dataset="geolocation",
         source="nocodb",
-        original_filename=f"{school_data.giga_id_school}.csv",
-        column_to_schema_mapping=build_column_mapping(),
-        column_license={},
+        giga_id_school=school_data.giga_id_school,
     )
-
-    db.add(new_file_upload)
-    await db.commit()
-    await db.refresh(new_file_upload)
-
-    new_file_upload.metadata_json_path = get_metadata_path(new_file_upload.upload_path)
-    db.add(new_file_upload)
-    await db.commit()
-    await db.refresh(new_file_upload)
 
     try:
         registration_metadata = build_registration_metadata(school_data)

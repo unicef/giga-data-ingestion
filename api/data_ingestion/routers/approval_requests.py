@@ -681,10 +681,7 @@ async def submit_upload_review(
             )
             # Call GigaMeter soft-delete
             try:
-                call_meter_soft_delete(
-                    school_id_giga=school_id_giga,
-                    rejection_reason="Rejected by admin during manual review",
-                )
+                call_meter_soft_delete(school_id_giga=school_id_giga)
             except Exception as e:
                 print(f"Error calling GigaMeter soft-delete for {school_id_giga}: {e}")
 
