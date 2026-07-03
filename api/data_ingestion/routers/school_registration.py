@@ -11,6 +11,7 @@ from azure.core.exceptions import HttpResponseError
 from data_ingestion.db.primary import get_db
 from data_ingestion.internal.school_registration import (
     build_registration_metadata,
+    call_meter_soft_delete,
     create_school_registration_file_upload,
     write_registration_csv_to_adls,
 )
@@ -254,6 +255,7 @@ async def retrigger_registration_pipeline(
                 "giga_id_school": giga_id,
                 "rejected_change_ids": rejection_result["rejected_change_ids"],
             }
+            call_meter_soft_delete(school_id_giga=giga_id)
             logger.info(f"Pending registration rejected for {giga_id}: {response_data}")
             return response_data
         # Case 3: Already Approved & Synced with Master
