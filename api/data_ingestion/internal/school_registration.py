@@ -2,6 +2,7 @@ import csv
 import io
 import json
 import logging
+from datetime import UTC, datetime
 
 import requests
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,6 +11,7 @@ from data_ingestion.internal.storage import storage_client
 from data_ingestion.models import FileUpload
 from data_ingestion.settings import settings
 from data_ingestion.utils.data_quality import get_metadata_path
+from data_ingestion.utils.nocodb import update_nocodb_record_by_field
 
 logger = logging.getLogger(__name__)
 
@@ -165,3 +167,25 @@ def call_meter_soft_delete(school_id_giga: str) -> None:
         "GigaMeter soft-delete successful for school_id_giga=%s", school_id_giga
     )
     return response.json()
+
+
+def handle_rejected_gigameter_registrations(rejected_change_ids: list[str]) -> None:
+    """Mark rejected GigaMeter registrations in NocoDB and soft-delete them in GigaMeter."""
+    for change_id in rejected_change_ids:
+        school_id_giga = change_id.split("|")[0]
+        update_nocodb_record_by_field(
+            table_name="SchoolRegistrations",
+            field_name="giga_id_school",
+            field_value=school_id_giga,
+            update_data={
+                "verification_status": "rejected",
+                "rejected_on": str(datetime.now(UTC)),
+                "rejection_reason": "Rejected by admin during manual review",
+            },
+        )
+        try:
+            call_meter_soft_delete(school_id_giga=school_id_giga)
+        except Exception:
+            logger.exception(
+                "Error calling GigaMeter soft-delete for %s", school_id_giga
+            )
