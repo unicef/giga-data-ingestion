@@ -1,4 +1,5 @@
 import logging
+import secrets
 from typing import Annotated
 
 import country_converter as coco
@@ -39,7 +40,9 @@ def verify_meter_token(
     credentials: HTTPAuthorizationCredentials,
 ) -> None:
     """Validate the bearer token from GigaMeter against the configured secret."""
-    if credentials.credentials != settings.GIGAMETER_API_TOKEN:
+    if not secrets.compare_digest(
+        credentials.credentials, settings.GIGAMETER_API_TOKEN
+    ):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -47,7 +50,9 @@ def verify_nocodb_token(
     credentials: HTTPAuthorizationCredentials,
 ) -> None:
     """Validate the bearer token from NocoDB against the configured secret."""
-    if credentials.credentials != settings.NOCODB_INBOUND_API_TOKEN:
+    if not secrets.compare_digest(
+        credentials.credentials, settings.NOCODB_INBOUND_API_TOKEN
+    ):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
 

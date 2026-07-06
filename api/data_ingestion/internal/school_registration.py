@@ -51,7 +51,6 @@ def build_registration_metadata(payload) -> dict:
 
 async def create_school_registration_file_upload(
     db: AsyncSession,
-    *,
     uploader_id: str,
     uploader_email: str,
     country: str,
@@ -115,13 +114,6 @@ def write_registration_csv_to_adls(
     blob_client.upload_blob(
         csv_bytes,
         overwrite=True,
-        metadata={
-            "country": file_upload.country,
-            "uploader_email": file_upload.uploader_email,
-            "source": file_upload.source,
-            "school_id_giga": payload.get("giga_id_school", ""),
-            "mode": mode,
-        },
     )
 
     metadata_payload = {
