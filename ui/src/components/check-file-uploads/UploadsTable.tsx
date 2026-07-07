@@ -77,12 +77,12 @@ const ALL_COLUMNS: DataTableHeader[] = [
     header: "Data owner",
   },
   {
-    key: "approval_status",
-    header: "Approval status",
-  },
-  {
     key: "status",
     header: "DQ check status",
+  },
+  {
+    key: "approval_status",
+    header: "Approval status",
   },
   {
     key: "actions",
@@ -120,6 +120,8 @@ interface UploadsTableProps {
   uploaderEmail?: string;
   country?: string;
   dqStatus?: string;
+  dqMode?: string;
+  approvalStatus?: string;
   createdFrom?: string;
   createdTo?: string;
 }
@@ -134,6 +136,8 @@ function UploadsTable({
   uploaderEmail,
   country,
   dqStatus,
+  dqMode,
+  approvalStatus,
   createdFrom,
   createdTo,
 }: UploadsTableProps) {
@@ -147,6 +151,8 @@ function UploadsTable({
         uploader_email: uploaderEmail || undefined,
         country: country || undefined,
         dq_status: dqStatus || undefined,
+        dq_mode: dqMode || undefined,
+        approval_status: approvalStatus || undefined,
         created_from: createdFrom || undefined,
         created_to: createdTo || undefined,
       }),
@@ -159,6 +165,8 @@ function UploadsTable({
       uploaderEmail,
       country,
       dqStatus,
+      dqMode,
+      approvalStatus,
       createdFrom,
       createdTo,
     ],
@@ -192,11 +200,15 @@ function UploadsTable({
     _renderUploads.data = uploads.data.map(upload => {
       const isUnstructured = upload.dataset === "unstructured";
       let statusText = upload.dq_status.replace("_", " ").toLowerCase();
+      let statusTagType = DQStatusTagMapping[upload.dq_status];
       if (upload.dq_status === DQStatus.COMPLETED) {
-        statusText =
-          upload.dq_mode === "uploaded"
-            ? "file check completed"
-            : "master check completed";
+        const isMasterCheck = upload.dq_mode !== "uploaded";
+        statusText = isMasterCheck
+          ? "submitted for approval"
+          : "file check completed";
+        if (isMasterCheck) {
+          statusTagType = ApprovalStatusTagMapping.APPROVED;
+        }
       }
 
       return {
@@ -215,10 +227,7 @@ function UploadsTable({
         rows_failed: upload.rows_failed?.toLocaleString() ?? "—",
         data_owner: upload.data_owner ?? "—",
         status: (
-          <Tag
-            type={DQStatusTagMapping[upload.dq_status]}
-            className="capitalize"
-          >
+          <Tag type={statusTagType} className="capitalize">
             {statusText}
           </Tag>
         ),

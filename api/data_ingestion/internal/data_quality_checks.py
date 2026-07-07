@@ -24,7 +24,9 @@ def get_data_quality_summary(dq_report_path: str):
     dq_report_summary_dict: dict = json.loads(dq_report_summary)
 
     for group in dq_report_summary_dict.keys():
-        if group == "summary":
+        if group in ("summary", "valueMaps"):
+            continue
+        if not isinstance(dq_report_summary_dict[group], list):
             continue
 
         dq_report_summary_dict[group] = sorted(
