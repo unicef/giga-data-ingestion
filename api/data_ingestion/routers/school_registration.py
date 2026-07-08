@@ -36,24 +36,29 @@ router = APIRouter(
 bearer_auth = HTTPBearer(scheme_name="Bearer Auth")
 
 
+def _verify_bearer_token(
+    credentials: HTTPAuthorizationCredentials,
+    expected_token: str,
+) -> None:
+    """Reject missing configured secrets and compare bearer tokens."""
+    if not expected_token or not secrets.compare_digest(
+        credentials.credentials, expected_token
+    ):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+
 def verify_meter_token(
     credentials: HTTPAuthorizationCredentials,
 ) -> None:
     """Validate the bearer token from GigaMeter against the configured secret."""
-    if not secrets.compare_digest(
-        credentials.credentials, settings.GIGAMETER_API_TOKEN
-    ):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    _verify_bearer_token(credentials, settings.GIGAMETER_API_TOKEN)
 
 
 def verify_nocodb_token(
     credentials: HTTPAuthorizationCredentials,
 ) -> None:
     """Validate the bearer token from NocoDB against the configured secret."""
-    if not secrets.compare_digest(
-        credentials.credentials, settings.NOCODB_INBOUND_API_TOKEN
-    ):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    _verify_bearer_token(credentials, settings.NOCODB_INBOUND_API_TOKEN)
 
 
 @router.post(
