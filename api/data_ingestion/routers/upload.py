@@ -22,7 +22,7 @@ from fastapi import (
 from fastapi_azure_auth.user import User
 from loguru import logger
 from pydantic import Field
-from sqlalchemy import delete, func, select, text
+from sqlalchemy import delete, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
@@ -320,6 +320,8 @@ async def list_uploads(  # noqa: C901
     uploader_email: str | None = None,
     country: str | None = None,
     dq_status: str | None = None,
+    dq_mode: str | None = None,
+    approval_status: str | None = None,
     created_from: date | None = None,
     created_to: date | None = None,
     id_search: Annotated[
@@ -350,6 +352,27 @@ async def list_uploads(  # noqa: C901
 
     if dq_status is not None:
         query = query.where(FileUpload.dq_status == dq_status)
+
+    if dq_mode is not None:
+        # dq_mode is derived from the latest DQRun of each upload (see below).
+        # Uploads without any DQRun are displayed as "master", so the "master"
+        # filter must also include them.
+        latest_dq_mode = (
+            select(DQRun.dq_mode)
+            .where(DQRun.upload_id == FileUpload.id)
+            .order_by(DQRun.id.desc())
+            .limit(1)
+            .scalar_subquery()
+        )
+        if dq_mode == DQModeEnum.master.value:
+            query = query.where(
+                or_(latest_dq_mode == DQModeEnum.master, latest_dq_mode.is_(None))
+            )
+        else:
+            query = query.where(latest_dq_mode == dq_mode)
+
+    if approval_status is not None:
+        query = query.where(FileUpload.approval_status == approval_status)
 
     if created_from is not None:
         query = query.where(

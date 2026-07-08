@@ -30,6 +30,8 @@ const EMPTY_FILTERS: UploadFilters = {
   uploaderEmail: "",
   country: "",
   dqStatus: "",
+  dqMode: "",
+  approvalStatus: "",
   createdFrom: "",
   createdTo: "",
 };
@@ -55,8 +57,9 @@ function UploadLanding(props: UploadLandingProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] =
     useState<UploadFilters>(EMPTY_FILTERS);
-  const activeFilterCount = Object.values(activeFilters).filter(
-    v => v !== "",
+  // dqMode is always paired with dqStatus, so it is not counted separately.
+  const activeFilterCount = Object.entries(activeFilters).filter(
+    ([key, v]) => key !== "dqMode" && v !== "",
   ).length;
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
 
@@ -251,6 +254,8 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  dqMode={activeFilters.dqMode}
+                  approvalStatus={activeFilters.approvalStatus}
                   createdFrom={activeFilters.createdFrom}
                   createdTo={activeFilters.createdTo}
                 />
@@ -264,6 +269,8 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  dqMode={activeFilters.dqMode}
+                  approvalStatus={activeFilters.approvalStatus}
                   createdFrom={activeFilters.createdFrom}
                   createdTo={activeFilters.createdTo}
                 />
@@ -277,6 +284,8 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  dqMode={activeFilters.dqMode}
+                  approvalStatus={activeFilters.approvalStatus}
                   createdFrom={activeFilters.createdFrom}
                   createdTo={activeFilters.createdTo}
                 />
@@ -290,6 +299,8 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  dqMode={activeFilters.dqMode}
+                  approvalStatus={activeFilters.approvalStatus}
                   createdFrom={activeFilters.createdFrom}
                   createdTo={activeFilters.createdTo}
                 />
@@ -303,6 +314,8 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  dqMode={activeFilters.dqMode}
+                  approvalStatus={activeFilters.approvalStatus}
                   createdFrom={activeFilters.createdFrom}
                   createdTo={activeFilters.createdTo}
                 />

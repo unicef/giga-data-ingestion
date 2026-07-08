@@ -333,7 +333,7 @@ function Index() {
               >
                 {runMasterCheckMutation.isPending
                   ? "Submitting..."
-                  : "Submit for master check"}
+                  : "Submit for Approval"}
               </Button>
             )}
           </div>
