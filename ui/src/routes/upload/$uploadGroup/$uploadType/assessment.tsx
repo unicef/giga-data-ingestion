@@ -246,8 +246,9 @@ function Assessment() {
 
   const tagProps = effectiveStatus ? statusTagMap[effectiveStatus] : null;
   const qualityHeader = "Quality assessment - uploaded file only";
-  const qualityDescription =
-    "Before submitting, we can scan your uploaded file to spot potential issues. You will see a summary of any problems and can decide whether to fix them or proceed.";
+  const qualityDescription = `On this step, click "Run assesment on uploaded file" to run quality checks for the file you have uploaded. This will produce the Data Quality Report, the Data Quality Kit, a summary of the counts for individual checks, and a data quality map. This option does not submit the data for admin approval. 
+    
+    If you select "Skip and go to master submission", the system will run the master data check, validating the uploaded data in the context of the existing country master data. Rows that pass quality checks and produce pending changes will be submitted for admin approval, before they can eventually be displayed on GigaMaps.`;
 
   const inProgress = effectiveStatus === DQStatus.IN_PROGRESS;
   const showSummaryCards = reviewFile.isPending || !!activeUploadId;
@@ -453,7 +454,7 @@ function Assessment() {
           disabled={(inProgress && !!activeUploadId) || reviewFile.isPending}
           onClick={handleProceedToSubmit}
         >
-          {useSkipLabel ? "Skip and go to next step" : "Continue"}
+          {useSkipLabel ? "Skip and go to master submission" : "Continue"}
         </Button>
       </div>
     </section>
