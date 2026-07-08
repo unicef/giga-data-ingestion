@@ -142,8 +142,11 @@ const SCHOOL_CATEGORY_ORDER: string[] = [
   "Other metadata",
 ];
 
-const REQUIRED_SCHOOL_COLUMNS = new Set<string>([
-  "school_id_govt",
+// Always mandatory (also for updates).
+const REQUIRED_SCHOOL_COLUMNS = new Set<string>(["school_id_govt"]);
+
+// Mandatory only to create new schools.
+const CREATE_REQUIRED_SCHOOL_COLUMNS = new Set<string>([
   "school_name",
   "latitude",
   "longitude",
@@ -197,6 +200,7 @@ function UploadColumnMapping() {
   } | null>(null);
   const [selectedColumns, setSelectedColumns] =
     useState<Record<string, string>>(columnMapping);
+  const [hasAllCreateColumns, setHasAllCreateColumns] = useState(true);
 
   const { uploadType, uploadGroup } = Route.useParams();
   const metaschemaName =
@@ -228,7 +232,8 @@ function UploadColumnMapping() {
     const licenseDefaults = { ...columnLicense };
     schema.forEach(column => {
       if (
-        !column.is_nullable &&
+        (!column.is_nullable ||
+          CREATE_REQUIRED_SCHOOL_COLUMNS.has(column.name)) &&
         column.name in columnMapping &&
         column.name !== "school_id_govt"
       ) {
@@ -253,7 +258,8 @@ function UploadColumnMapping() {
     const enforcedLicense = { ...data.license };
     schema.forEach(column => {
       if (
-        !column.is_nullable &&
+        (!column.is_nullable ||
+          CREATE_REQUIRED_SCHOOL_COLUMNS.has(column.name)) &&
         column.name in data.mapping &&
         column.name !== "school_id_govt"
       ) {
@@ -272,6 +278,14 @@ function UploadColumnMapping() {
     setColumnMapping(dataWithNullsReplaced.mapping);
     setColumnLicense(dataWithNullsReplaced.license);
     setValidationError(null);
+
+    // Create columns only matter for the school (geolocation) schema.
+    const allCreateColumnsMapped =
+      !isSchoolSchema ||
+      [...CREATE_REQUIRED_SCHOOL_COLUMNS].every(
+        col => col in dataWithNullsReplaced.mapping,
+      );
+    setHasAllCreateColumns(allCreateColumnsMapped);
 
     if (file == null) {
       // Log to Sentry with context
@@ -506,12 +520,21 @@ function UploadColumnMapping() {
       const adjustedColumn =
         isSchoolSchema &&
         (REQUIRED_SCHOOL_COLUMNS.has(column.name) ||
+          CREATE_REQUIRED_SCHOOL_COLUMNS.has(column.name) ||
           IMPORTANT_SCHOOL_COLUMNS.has(column.name))
           ? {
               ...column,
+              // school_id_govt stays mandatory; create-only columns are made
+              // optional here so they don't block "Continue" (the modal checks
+              // them once we know whether new schools are being created).
               is_nullable: REQUIRED_SCHOOL_COLUMNS.has(column.name)
                 ? false
+                : CREATE_REQUIRED_SCHOOL_COLUMNS.has(column.name)
+                ? true
                 : column.is_nullable,
+              is_create_required: CREATE_REQUIRED_SCHOOL_COLUMNS.has(
+                column.name,
+              ),
               is_important: IMPORTANT_SCHOOL_COLUMNS.has(column.name)
                 ? true
                 : column.is_important,
@@ -610,6 +633,9 @@ function UploadColumnMapping() {
             <div>{DESCRIPTION}</div>
             <div className="flex gap-4">
               <Tag type="red">*Required</Tag>
+              {isSchoolSchema && (
+                <Tag type="blue">Required to create new schools</Tag>
+              )}
               <Tag type="purple">
                 <div className="flex align-middle">
                   <Warning /> Important
@@ -713,6 +739,7 @@ function UploadColumnMapping() {
           fuzzyValidationResult as FuzzyValidationResponse | null
         }
         impactPreview={impactPreview}
+        missingCreateColumns={!hasAllCreateColumns}
         isFuzzyLoading={isValidationLoading}
         isImpactLoading={isImpactLoading}
         onClose={handleCloseReviewModal}
