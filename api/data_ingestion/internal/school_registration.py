@@ -1,0 +1,183 @@
+import csv
+import io
+import json
+import logging
+from datetime import UTC, datetime
+
+import requests
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from data_ingestion.internal.storage import storage_client
+from data_ingestion.models import FileUpload
+from data_ingestion.settings import settings
+from data_ingestion.utils.data_quality import get_metadata_path
+from data_ingestion.utils.nocodb import update_nocodb_record_by_field
+
+logger = logging.getLogger(__name__)
+
+
+GEOLOCATION_CSV_COLUMNS = [
+    "school_id_giga",
+    "school_id_govt",
+    "school_name",
+    "latitude",
+    "longitude",
+    "education_level_govt",
+    "contact_name",
+    "contact_email",
+    "verification_status",
+]
+
+
+def build_column_mapping() -> dict:
+    """
+    Build identity column mapping for school registration uploads.
+    """
+    return {column: column for column in GEOLOCATION_CSV_COLUMNS}
+
+
+def build_registration_metadata(payload) -> dict:
+    """Build non-row metadata for the school registration sidecar JSON."""
+    verification_status = (
+        payload.verification_status if payload.verification_status else "unverified"
+    )
+
+    return {
+        "giga_id_school": payload.giga_id_school,
+        "registration_id": getattr(payload, "registration_id", payload.giga_id_school),
+        "verification_status": verification_status,
+    }
+
+
+async def create_school_registration_file_upload(
+    db: AsyncSession,
+    uploader_id: str,
+    uploader_email: str,
+    country: str,
+    source: str,
+    giga_id_school: str,
+) -> FileUpload:
+    """Create a FileUpload for a generated single-school registration CSV."""
+    file_upload = FileUpload(
+        uploader_id=uploader_id,
+        uploader_email=uploader_email,
+        country=country,
+        dataset="geolocation",
+        source=source,
+        original_filename=f"{giga_id_school}.csv",
+        column_to_schema_mapping=build_column_mapping(),
+        column_license={},
+    )
+
+    db.add(file_upload)
+    await db.commit()
+    await db.refresh(file_upload)
+
+    file_upload.metadata_json_path = get_metadata_path(file_upload.upload_path)
+    db.add(file_upload)
+    await db.commit()
+    await db.refresh(file_upload)
+
+    return file_upload
+
+
+def write_registration_csv_to_adls(
+    payload: dict,
+    file_upload,
+    registration_metadata: dict,
+    mode: str = "create",
+) -> None:
+    """
+    Formats the school registration payload as a single-row CSV and uploads it to ADLS.
+    """
+    row = {
+        "school_id_giga": payload.get("giga_id_school", ""),
+        "school_id_govt": payload.get("school_id", ""),
+        "school_name": payload.get("school_name", ""),
+        "latitude": payload.get("latitude", ""),
+        "longitude": payload.get("longitude", ""),
+        "education_level_govt": payload.get("education_level", ""),
+        "contact_name": payload.get("contact_name", ""),
+        "contact_email": payload.get("contact_email", ""),
+        "verification_status": registration_metadata.get(
+            "verification_status", "unverified"
+        ),
+    }
+
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=GEOLOCATION_CSV_COLUMNS)
+    writer.writeheader()
+    writer.writerow(row)
+    csv_bytes = output.getvalue().encode("utf-8")
+
+    blob_client = storage_client.get_blob_client(file_upload.upload_path)
+    blob_client.upload_blob(
+        csv_bytes,
+        overwrite=True,
+    )
+
+    metadata_payload = {
+        "country": file_upload.country,
+        "uploader_email": file_upload.uploader_email,
+        "dataset": "geolocation",
+        "source": file_upload.source,
+        "mode": mode,
+        **registration_metadata,
+    }
+    metadata_path = file_upload.metadata_json_path or get_metadata_path(
+        file_upload.upload_path
+    )
+    metadata_blob_client = storage_client.get_blob_client(metadata_path)
+    metadata_blob_client.upload_blob(
+        json.dumps(metadata_payload, indent=2).encode(),
+        overwrite=True,
+    )
+
+
+def call_meter_soft_delete(school_id_giga: str) -> None:
+    """
+    Calls the GigaMeter API to soft-delete a school_new_registration record.
+    """
+    if not settings.GIGAMETER_API_BASE_URL or not settings.GIGAMETER_API_TOKEN:
+        logger.warning(
+            "GIGAMETER_API_BASE_URL or GIGAMETER_API_TOKEN not configured. "
+            "Skipping soft-delete callback for school_id_giga=%s",
+            school_id_giga,
+        )
+        return
+
+    url = f"{settings.GIGAMETER_API_BASE_URL}/api/v1/school-registrations/rejection"
+    headers = {
+        "Authorization": f"Bearer {settings.GIGAMETER_API_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    payload = {"giga_id_school": school_id_giga, "is_deleted": True}
+
+    response = requests.put(url, headers=headers, json=payload, timeout=10)
+    response.raise_for_status()
+    logger.info(
+        "GigaMeter soft-delete successful for school_id_giga=%s", school_id_giga
+    )
+    return response.json()
+
+
+def handle_rejected_gigameter_registrations(rejected_change_ids: list[str]) -> None:
+    """Mark rejected GigaMeter registrations in NocoDB and soft-delete them in GigaMeter."""
+    for change_id in rejected_change_ids:
+        school_id_giga = change_id.split("|")[0]
+        update_nocodb_record_by_field(
+            table_name="SchoolRegistrations",
+            field_name="giga_id_school",
+            field_value=school_id_giga,
+            update_data={
+                "verification_status": "rejected",
+                "rejected_on": str(datetime.now(UTC)),
+                "rejection_reason": "Rejected by admin during manual review",
+            },
+        )
+        try:
+            call_meter_soft_delete(school_id_giga=school_id_giga)
+        except Exception:
+            logger.exception(
+                "Error calling GigaMeter soft-delete for %s", school_id_giga
+            )
