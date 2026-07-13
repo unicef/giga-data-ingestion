@@ -26,7 +26,6 @@ const DeleteSearchParams = z.object({
     .enum(["school_id_giga", "school_id_govt"] as const)
     .catch("school_id_giga"),
   deleteType: z.enum(["specific", "all"] as const).catch("specific"),
-  verifyCount: z.boolean().catch(true),
 });
 
 export const Route = createFileRoute("/delete/$country/")({
@@ -49,10 +48,9 @@ function Confirmation() {
   const [submitError, setSubmitError] = useState<string>("");
 
   const { country } = Route.useParams();
-  const { idType, deleteType, verifyCount } = Route.useSearch();
+  const { idType, deleteType } = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const isDeleteAll = deleteType === "all";
-  const shouldPreview = isDeleteAll || verifyCount;
 
   const {
     uploadSlice: { detectedColumns: parsedIds, file },
@@ -83,7 +81,7 @@ function Confirmation() {
           id_type: isDeleteAll ? undefined : (idType as DeleteIdType),
         })
         .then(r => r.data),
-    enabled: shouldPreview && (isDeleteAll || parsedIds.length > 0),
+    enabled: isDeleteAll || parsedIds.length > 0,
     retry: false,
   });
 
@@ -129,16 +127,15 @@ function Confirmation() {
     );
   };
 
-  const canConfirm = !shouldPreview
-    ? parsedIds.length > 0
-    : !isPreviewLoading &&
-      !isPreviewError &&
-      previewData != null &&
-      (isDeleteAll
-        ? schoolCount > 0
-        : checkSkipped
-        ? parsedIds.length > 0
-        : schoolCount > 0);
+  const canConfirm =
+    !isPreviewLoading &&
+    !isPreviewError &&
+    previewData != null &&
+    (isDeleteAll
+      ? schoolCount > 0
+      : checkSkipped
+      ? parsedIds.length > 0
+      : schoolCount > 0);
 
   return (
     <Stack gap={8}>
@@ -178,16 +175,7 @@ function Confirmation() {
         )}
       </Stack>
 
-      {!shouldPreview && (
-        <InlineNotification
-          kind="info"
-          title="Preview skipped"
-          subtitle={`${parsedIds.length.toLocaleString()} IDs will be submitted directly. Dagster will resolve and delete matching schools.`}
-          hideCloseButton
-        />
-      )}
-
-      {shouldPreview && isPreviewLoading && (
+      {isPreviewLoading && (
         <div className="flex items-center gap-2">
           <Loading small withOverlay={false} />
           <span className="cds--label-description">
@@ -198,7 +186,7 @@ function Confirmation() {
         </div>
       )}
 
-      {shouldPreview && isPreviewError && (
+      {isPreviewError && (
         <InlineNotification
           kind="error"
           title="Preview failed"
@@ -210,7 +198,7 @@ function Confirmation() {
         />
       )}
 
-      {shouldPreview && checkSkipped && (
+      {checkSkipped && (
         <InlineNotification
           kind="warning"
           title="Count check skipped"
@@ -219,38 +207,32 @@ function Confirmation() {
         />
       )}
 
-      {shouldPreview &&
-        !isPreviewLoading &&
-        !isPreviewError &&
-        previewData &&
-        !checkSkipped && (
-          <InlineNotification
-            kind={
-              schoolCount === 0 ? "warning" : isDeleteAll ? "error" : "info"
-            }
-            title={
-              schoolCount === 0
-                ? "No matching schools found"
-                : isDeleteAll
-                ? `All ${schoolCount.toLocaleString()} schools in ${country} will be permanently deleted`
-                : `${schoolCount.toLocaleString()} school${
-                    schoolCount !== 1 ? "s" : ""
-                  } will be deleted`
-            }
-            subtitle={
-              schoolCount === 0
-                ? "None of the uploaded IDs matched schools in the database."
-                : isDeleteAll
-                ? "This action cannot be undone. Ensure you have selected the correct country."
-                : `${parsedIds.length} ID${
-                    parsedIds.length !== 1 ? "s" : ""
-                  } uploaded → ${schoolCount} school${
-                    schoolCount !== 1 ? "s" : ""
-                  } matched.`
-            }
-            hideCloseButton
-          />
-        )}
+      {!isPreviewLoading && !isPreviewError && previewData && !checkSkipped && (
+        <InlineNotification
+          kind={schoolCount === 0 ? "warning" : isDeleteAll ? "error" : "info"}
+          title={
+            schoolCount === 0
+              ? "No matching schools found"
+              : isDeleteAll
+              ? `All ${schoolCount.toLocaleString()} schools in ${country} will be permanently deleted`
+              : `${schoolCount.toLocaleString()} school${
+                  schoolCount !== 1 ? "s" : ""
+                } will be deleted`
+          }
+          subtitle={
+            schoolCount === 0
+              ? "None of the uploaded IDs matched schools in the database."
+              : isDeleteAll
+              ? "This action cannot be undone. Ensure you have selected the correct country."
+              : `${parsedIds.length} ID${
+                  parsedIds.length !== 1 ? "s" : ""
+                } uploaded → ${schoolCount} school${
+                  schoolCount !== 1 ? "s" : ""
+                } matched.`
+          }
+          hideCloseButton
+        />
+      )}
 
       <ButtonSet className="w-full">
         <Button
