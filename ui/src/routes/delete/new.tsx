@@ -5,7 +5,6 @@ import { ArrowLeft, ArrowRight } from "@carbon/icons-react";
 import {
   Button,
   ButtonSet,
-  Checkbox,
   InlineNotification,
   RadioButton,
   RadioButtonGroup,
@@ -49,7 +48,6 @@ type DeleteRowForm = {
   country: string;
   deleteType: DeleteType;
   idType: DeleteIdType;
-  verifyCount: boolean;
 };
 
 function NewDeletionRequest() {
@@ -77,14 +75,12 @@ function NewDeletionRequest() {
       country: "",
       deleteType: "specific",
       idType: "school_id_giga",
-      verifyCount: true,
     },
   });
 
   const country = watch("country");
   const deleteType = watch("deleteType");
   const idType = watch("idType");
-  const verifyCount = watch("verifyCount");
 
   const {
     data: { data: allCountryNames },
@@ -111,12 +107,7 @@ function NewDeletionRequest() {
 
     const parser = new DeleteFileParser({
       file: newFile,
-      setValues: (ids: string[]) => {
-        if (ids.length > DELETE_PREVIEW_ID_CAP) {
-          setValue("verifyCount", false);
-        }
-        setDetectedColumns(ids);
-      },
+      setValues: setDetectedColumns,
       setIsParsing,
       setError: setParsingError,
     });
@@ -138,7 +129,6 @@ function NewDeletionRequest() {
       search: {
         deleteType: data.deleteType,
         idType: data.idType,
-        verifyCount: data.verifyCount,
       },
     });
   };
@@ -252,18 +242,14 @@ function NewDeletionRequest() {
               )}
             </div>
 
-            <Checkbox
-              id="verifyCount"
-              labelText="Verify affected school count before deleting"
-              checked={verifyCount}
-              disabled={isOverPreviewCap}
-              onChange={(_, { checked }) => setValue("verifyCount", checked)}
-              helperText={
-                isOverPreviewCap
-                  ? `Not available above ${DELETE_PREVIEW_ID_CAP.toLocaleString()} IDs. The count check will be skipped, but all ${detectedColumns.length.toLocaleString()} IDs will still be submitted.`
-                  : undefined
-              }
-            />
+            {isOverPreviewCap && (
+              <InlineNotification
+                kind="warning"
+                title="Affected school count will not be verified"
+                subtitle={`Verification is not available above ${DELETE_PREVIEW_ID_CAP.toLocaleString()} IDs. All ${detectedColumns.length.toLocaleString()} IDs will still be submitted.`}
+                hideCloseButton
+              />
+            )}
           </>
         )}
 

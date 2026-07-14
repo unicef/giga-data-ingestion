@@ -110,28 +110,22 @@ async def list_deletion_requests(
     }
 
 
-@router.post("", response_model=DeleteRowsSchema)
-async def delete_rows(
-    country: str = Form(...),
-    delete_type: str = Form("specific"),
-    ids: str = Form("[]"),
-    id_type: str = Form("school_id_giga"),
-    original_filename: str = Form(""),
-    school_count_override: int | None = Form(None),
-    file: Annotated[UploadFile | None, File()] = None,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(azure_scheme),
-):
-    parsed_ids = json.loads(ids)
+async def create_deletion_request(
+    db: AsyncSession,
+    *,
+    country: str,
+    delete_type: str = "specific",
+    ids: list[str] | None = None,
+    id_type: str = "school_id_giga",
+    original_filename: str = "",
+    school_count_override: int | None = None,
+    requested_by_email: str,
+    requested_by_id: str,
+    file: UploadFile | None = None,
+) -> dict:
     country_iso3 = coco.convert(country, to="ISO3")
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     record_id = cuid_generator()
-
-    email = user.claims.get("emails")[0]
-
-    database_user = await db.scalar(
-        select(DatabaseUser).where(DatabaseUser.email == email)
-    )
 
     json_filename = f"{record_id}_{country_iso3}_delete_{timestamp}.json"
     delete_location = (
@@ -140,6 +134,7 @@ async def delete_rows(
     )
 
     is_delete_all = delete_type == "all"
+    parsed_ids = ids or []
     ids_to_store = ["__all__"] if is_delete_all else parsed_ids
     school_count = school_count_override if is_delete_all else len(parsed_ids)
     delete_payload = {
@@ -153,7 +148,7 @@ async def delete_rows(
         delete_client.upload_blob(
             json.dumps(delete_payload),
             overwrite=True,
-            metadata={"requester_email": database_user.email},
+            metadata={"requester_email": requested_by_email},
             content_settings=ContentSettings(content_type="application/json"),
         )
     except HttpResponseError as err:
@@ -184,8 +179,8 @@ async def delete_rows(
     db.add(
         DeletionRequest(
             id=record_id,
-            requested_by_email=database_user.email,
-            requested_by_id=database_user.id,
+            requested_by_email=requested_by_email,
+            requested_by_id=requested_by_id,
             country=country_iso3,
             original_filename=original_filename or None,
             id_type=id_type if not is_delete_all else None,
@@ -198,3 +193,35 @@ async def delete_rows(
     await db.commit()
 
     return {"filename": json_filename}
+
+
+@router.post("", response_model=DeleteRowsSchema)
+async def delete_rows(
+    country: str = Form(...),
+    delete_type: str = Form("specific"),
+    ids: str = Form("[]"),
+    id_type: str = Form("school_id_giga"),
+    original_filename: str = Form(""),
+    school_count_override: int | None = Form(None),
+    file: Annotated[UploadFile | None, File()] = None,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(azure_scheme),
+):
+    email = user.claims.get("emails")[0]
+
+    database_user = await db.scalar(
+        select(DatabaseUser).where(DatabaseUser.email == email)
+    )
+
+    return await create_deletion_request(
+        db,
+        country=country,
+        delete_type=delete_type,
+        ids=json.loads(ids),
+        id_type=id_type,
+        original_filename=original_filename,
+        school_count_override=school_count_override,
+        requested_by_email=database_user.email,
+        requested_by_id=database_user.id,
+        file=file,
+    )

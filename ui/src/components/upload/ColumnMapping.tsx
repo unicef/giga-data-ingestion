@@ -12,7 +12,7 @@ import {
 } from "react-hook-form";
 
 import { Warning } from "@carbon/icons-react";
-import { Select, SelectItem } from "@carbon/react";
+import { Select, SelectItem, Tag } from "@carbon/react";
 import {
   FloatingPortal,
   autoUpdate,
@@ -111,10 +111,16 @@ export const MasterColumn = memo(({ column }: MasterColumnProps) => {
   const label = (
     <div className="flex items-center gap-1">
       <div>{column.name}</div>
-      <div>
-        {!column.is_nullable ? (
-          <span className="text-giga-red">*</span>
-        ) : column.is_important ? (
+      <div className="flex items-center gap-1">
+        {!column.is_nullable ? <span className="text-giga-red">*</span> : null}
+        {column.is_create_required ? (
+          <Tag type="blue" size="sm">
+            Required to create
+          </Tag>
+        ) : null}
+        {column.is_nullable &&
+        !column.is_create_required &&
+        column.is_important ? (
           <Warning className="text-purple-600" />
         ) : null}
       </div>
@@ -222,7 +228,7 @@ export const ColumnLicense = memo(({ column }: ColumnLicenseProps) => {
   } = useFormContext();
 
   const disabled = !watch(`mapping.${column.name}`);
-  const isMandatory = !column.is_nullable;
+  const isMandatory = !column.is_nullable || !!column.is_create_required;
 
   const isSchoolIdGovt = column.name === "school_id_govt";
   const shouldDisableLicense = disabled || (isMandatory && !isSchoolIdGovt);

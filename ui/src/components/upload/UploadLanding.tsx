@@ -30,6 +30,8 @@ const EMPTY_FILTERS: UploadFilters = {
   uploaderEmail: "",
   country: "",
   dqStatus: "",
+  dqMode: "",
+  approvalStatus: "",
   createdFrom: "",
   createdTo: "",
 };
@@ -55,8 +57,9 @@ function UploadLanding(props: UploadLandingProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] =
     useState<UploadFilters>(EMPTY_FILTERS);
-  const activeFilterCount = Object.values(activeFilters).filter(
-    v => v !== "",
+  // dqMode is always paired with dqStatus, so it is not counted separately.
+  const activeFilterCount = Object.entries(activeFilters).filter(
+    ([key, v]) => key !== "dqMode" && v !== "",
   ).length;
   const { hasCoverage, hasGeolocation, isAdmin } = useRoles();
 
@@ -66,8 +69,9 @@ function UploadLanding(props: UploadLandingProps) {
   }
 
   // Tab 0 = Geolocation (source gigasync), 1 = API (source api),
-  // 2 = Coverage (dataset coverage), 3 = Schemaless (dataset structured),
-  // 4 = Health (dataset health)
+  // 2 = Giga Meter (source gigameter), 3 = NoCoDB (source nocodb),
+  // 4 = Coverage (dataset coverage), 5 = Schemaless (dataset structured),
+  // 6 = Health (dataset health)
   const tabFilter = (() => {
     switch (selectedTab) {
       case 0:
@@ -75,10 +79,17 @@ function UploadLanding(props: UploadLandingProps) {
       case 1:
         return { source: "api" as const, dataset: "geolocation" as const };
       case 2:
-        return { source: null, dataset: "coverage" as const };
+        return {
+          source: "gigameter" as const,
+          dataset: "geolocation" as const,
+        };
       case 3:
-        return { source: null, dataset: "structured" as const };
+        return { source: "nocodb" as const, dataset: "geolocation" as const };
       case 4:
+        return { source: null, dataset: "coverage" as const };
+      case 5:
+        return { source: null, dataset: "structured" as const };
+      case 6:
         return { source: null, dataset: "health" as const };
       default:
         return { source: null, dataset: null };
@@ -205,6 +216,8 @@ function UploadLanding(props: UploadLandingProps) {
               >
                 <Tab>Geolocation</Tab>
                 <Tab>API</Tab>
+                <Tab>Giga Meter</Tab>
+                <Tab>NoCoDB</Tab>
                 <Tab>Coverage</Tab>
                 <Tab>Schemaless</Tab>
                 <Tab>Health</Tab>
@@ -241,6 +254,8 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  dqMode={activeFilters.dqMode}
+                  approvalStatus={activeFilters.approvalStatus}
                   createdFrom={activeFilters.createdFrom}
                   createdTo={activeFilters.createdTo}
                 />
@@ -254,6 +269,8 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  dqMode={activeFilters.dqMode}
+                  approvalStatus={activeFilters.approvalStatus}
                   createdFrom={activeFilters.createdFrom}
                   createdTo={activeFilters.createdTo}
                 />
@@ -267,6 +284,38 @@ function UploadLanding(props: UploadLandingProps) {
                   uploaderEmail={activeFilters.uploaderEmail}
                   country={activeFilters.country}
                   dqStatus={activeFilters.dqStatus}
+                  dqMode={activeFilters.dqMode}
+                  approvalStatus={activeFilters.approvalStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
+                />
+              </TabPanel>
+              <TabPanel className="p-0">
+                <UploadsTable
+                  {...props}
+                  source={tabFilter.source}
+                  dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
+                  dqMode={activeFilters.dqMode}
+                  approvalStatus={activeFilters.approvalStatus}
+                  createdFrom={activeFilters.createdFrom}
+                  createdTo={activeFilters.createdTo}
+                />
+              </TabPanel>
+              <TabPanel className="p-0">
+                <UploadsTable
+                  {...props}
+                  source={tabFilter.source}
+                  dataset={tabFilter.dataset}
+                  visibleColumns={visibleColumns}
+                  uploaderEmail={activeFilters.uploaderEmail}
+                  country={activeFilters.country}
+                  dqStatus={activeFilters.dqStatus}
+                  dqMode={activeFilters.dqMode}
+                  approvalStatus={activeFilters.approvalStatus}
                   createdFrom={activeFilters.createdFrom}
                   createdTo={activeFilters.createdTo}
                 />

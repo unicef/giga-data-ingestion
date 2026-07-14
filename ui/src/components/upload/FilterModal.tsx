@@ -24,9 +24,28 @@ export interface UploadFilters {
   uploaderEmail: string;
   country: string;
   dqStatus: string;
+  dqMode: string;
+  approvalStatus: string;
   createdFrom: string;
   createdTo: string;
 }
+
+// The "completed" DQ status is split by dq_mode into two selectable options.
+// Composite values are encoded as `${dqStatus}::${dqMode}` and split on apply.
+const DQ_STATUS_OPTIONS: { value: string; text: string }[] = [
+  { value: DQStatus.IN_PROGRESS, text: "in progress" },
+  { value: `${DQStatus.COMPLETED}::uploaded`, text: "file check completed" },
+  { value: `${DQStatus.COMPLETED}::master`, text: "submitted for approval" },
+  { value: DQStatus.ERROR, text: "error" },
+  { value: DQStatus.TIMEOUT, text: "timeout" },
+  { value: DQStatus.SKIPPED, text: "skipped" },
+];
+
+const APPROVAL_STATUS_OPTIONS: { value: string; text: string }[] = [
+  { value: "PENDING", text: "pending" },
+  { value: "APPROVED", text: "approved" },
+  { value: "REJECTED", text: "rejected" },
+];
 
 interface FilterModalProps {
   open: boolean;
@@ -39,6 +58,8 @@ const EMPTY_FILTERS: UploadFilters = {
   uploaderEmail: "",
   country: "",
   dqStatus: "",
+  dqMode: "",
+  approvalStatus: "",
   createdFrom: "",
   createdTo: "",
 };
@@ -190,17 +211,36 @@ function FilterModal({
 
           <Select
             id="filter-dq-status"
-            labelText="DQ Status"
-            value={filters.dqStatus}
-            onChange={e => handleChange("dqStatus", e.target.value)}
+            labelText="DQ check status"
+            value={
+              filters.dqMode
+                ? `${filters.dqStatus}::${filters.dqMode}`
+                : filters.dqStatus
+            }
+            onChange={e => {
+              const [status, mode = ""] = e.target.value.split("::");
+              setFilters(prev => ({
+                ...prev,
+                dqStatus: status,
+                dqMode: mode,
+              }));
+            }}
           >
             <SelectItem value="" text="Choose an option" />
-            {Object.values(DQStatus).map(status => (
-              <SelectItem
-                key={status}
-                value={status}
-                text={status.replace("_", " ").toLowerCase()}
-              />
+            {DQ_STATUS_OPTIONS.map(opt => (
+              <SelectItem key={opt.value} value={opt.value} text={opt.text} />
+            ))}
+          </Select>
+
+          <Select
+            id="filter-approval-status"
+            labelText="Approval status"
+            value={filters.approvalStatus}
+            onChange={e => handleChange("approvalStatus", e.target.value)}
+          >
+            <SelectItem value="" text="Choose an option" />
+            {APPROVAL_STATUS_OPTIONS.map(opt => (
+              <SelectItem key={opt.value} value={opt.value} text={opt.text} />
             ))}
           </Select>
         </div>

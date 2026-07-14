@@ -30,6 +30,15 @@ const buildAssertionLabelMap = (labels: DataQualityCheckLabel[]) =>
     return acc;
   }, {});
 
+const buildColumnCheckedMap = (labels: DataQualityCheckLabel[]) =>
+  labels.reduce<Record<string, string>>((acc, label) => {
+    const columnChecked = label.column_checked?.trim();
+    if (columnChecked && columnChecked.toUpperCase() !== "N/A") {
+      acc[getLabelKey(label.assertion, label.column_key)] = columnChecked;
+    }
+    return acc;
+  }, {});
+
 export const formatAssertion = (
   assertion: string,
   columnKey: string,
@@ -40,6 +49,19 @@ export const formatAssertion = (
     assertionLabels[getLabelKey(assertion)] ??
     assertion.replace(/_/g, " ")
   );
+};
+
+export const formatColumn = (
+  assertion: string,
+  column: string,
+  columnCheckedLabels: Record<string, string>,
+) => {
+  const columnChecked =
+    columnCheckedLabels[getLabelKey(assertion, column)] ??
+    columnCheckedLabels[getLabelKey(assertion)];
+
+  if (columnChecked) return columnChecked;
+  return column === "" ? "Entire row" : column;
 };
 
 interface ExtendedDataTableHeader extends DataTableHeader {
@@ -67,6 +89,11 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
     [dataQualityCheckLabelsQuery],
   );
 
+  const columnCheckedLabels = useMemo(
+    () => buildColumnCheckedMap(dataQualityCheckLabelsQuery?.data ?? []),
+    [dataQualityCheckLabelsQuery],
+  );
+
   const handleUpSort = (key: string) => {
     setSortConfig({ key, direction: "ascending" });
   };
@@ -79,9 +106,11 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
     const rows = Array.isArray(data) ? data : [];
     const result = rows.filter(check => {
       const searchString = searchTerm.toLowerCase();
-      const columnKey = check.column === "" ? "NO_COLUMN" : check.column;
-      const columnDisplay =
-        columnKey === "NO_COLUMN" ? "Entire row" : columnKey;
+      const columnDisplay = formatColumn(
+        check.assertion,
+        check.column,
+        columnCheckedLabels,
+      );
       const assertionLabel = formatAssertion(
         check.assertion,
         check.column,
@@ -123,7 +152,7 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
     }
 
     return result;
-  }, [assertionLabels, data, searchTerm, sortConfig]);
+  }, [assertionLabels, columnCheckedLabels, data, searchTerm, sortConfig]);
 
   const renderSortControls = (key: string) => {
     const isActive = sortConfig.key === key;
@@ -164,7 +193,7 @@ const DataQualityChecks = ({ data }: DataQualityChecksProps) => {
     } = check;
 
     const columnKey = column === "" ? "NO_COLUMN" : column;
-    const columnDisplay = columnKey === "NO_COLUMN" ? "Entire row" : columnKey;
+    const columnDisplay = formatColumn(assertion, column, columnCheckedLabels);
 
     return {
       id: `${assertion}-${columnKey}`,
