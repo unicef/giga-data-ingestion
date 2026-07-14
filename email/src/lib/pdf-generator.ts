@@ -86,6 +86,17 @@ function warningCount(check: Check | undefined): number {
   return failedCount(check);
 }
 
+function failedAcrossColumns(
+  checks: Check[],
+  assertion: string,
+  columns: string[]
+): number {
+  return Math.max(
+    ...columns.map((col) => failedCount(findCheck(checks, assertion, col))),
+    0
+  );
+}
+
 function warningAcrossColumns(
   checks: Check[],
   assertion: string,
