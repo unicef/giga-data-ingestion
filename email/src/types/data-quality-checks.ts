@@ -27,6 +27,7 @@ const SummaryCheck = z
     rows: z.number().optional(),
     rows_passed: z.number().optional(),
     rows_failed: z.number().optional(),
+    rows_passed_with_warnings: z.number().optional(),
     timestamp: z.union([z.string(), z.number()]).optional(),
   })
   .passthrough();
