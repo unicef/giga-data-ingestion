@@ -18,6 +18,9 @@ class SummaryCheck(BaseModel):
     columns: int
     rows: int
     timestamp: datetime
+    rows_passed: int | None = None
+    rows_failed: int | None = None
+    rows_passed_with_warnings: int | None = None
 
 
 class DataQualityCheck(BaseModel):

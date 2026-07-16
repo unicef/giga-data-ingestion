@@ -362,9 +362,9 @@ async function buildContext(data: PDFReportData) {
   const summary =
     (dq["summary"] as {
       rows?: number;
-      rows_passed?: number;
-      rows_failed?: number;
-      rows_passed_with_warnings?: number;
+      rows_passed?: number | null;
+      rows_failed?: number | null;
+      rows_passed_with_warnings?: number | null;
     } | undefined) ?? {};
 
   const crit = getSection(dq, "critical");
@@ -416,21 +416,25 @@ async function buildContext(data: PDFReportData) {
     findCheck(locChecks, "duplicate_similar_name_same_level_within_110m_radius")
   );
 
-  const rowsPassedWithWarnings = Number(summary.rows_passed_with_warnings);
-  const hasExactApprovedWithWarnings = Number.isFinite(rowsPassedWithWarnings);
+  // null/absent means "not computed upstream" — only a real number is exact.
+  const rowsPassedWithWarnings =
+    typeof summary.rows_passed_with_warnings === "number"
+      ? summary.rows_passed_with_warnings
+      : undefined;
+  const hasExactApprovedWithWarnings = rowsPassedWithWarnings !== undefined;
 
   // KPI: unique approved rows with at least one warning (from dq-summary when available).
-  const approvedWithWarnings = hasExactApprovedWithWarnings
-    ? rowsPassedWithWarnings
-    : Math.max(
-        lowPrecision,
-        highDensity,
-        allExceptCode,
-        nameEduLoc,
-        sameLocation,
-        nameLevel110,
-        similarNameLevel110
-      );
+  const approvedWithWarnings =
+    rowsPassedWithWarnings ??
+    Math.max(
+      lowPrecision,
+      highDensity,
+      allExceptCode,
+      nameEduLoc,
+      sameLocation,
+      nameLevel110,
+      similarNameLevel110
+    );
 
   // Warnings apply only to approved (passed) rows — never to rejected.
   const warningsForDonut = Math.min(approvedWithWarnings, approved);
