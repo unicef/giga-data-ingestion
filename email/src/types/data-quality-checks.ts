@@ -28,6 +28,8 @@ const SummaryCheck = z
     rows_passed: z.number().nullable().optional(),
     rows_failed: z.number().nullable().optional(),
     rows_passed_with_warnings: z.number().nullable().optional(),
+    schools_created: z.number().nullable().optional(),
+    schools_updated: z.number().nullable().optional(),
     timestamp: z.union([z.string(), z.number()]).optional(),
   })
   .passthrough();

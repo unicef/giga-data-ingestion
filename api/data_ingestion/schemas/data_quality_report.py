@@ -21,6 +21,8 @@ class SummaryCheck(BaseModel):
     rows_passed: int | None = None
     rows_failed: int | None = None
     rows_passed_with_warnings: int | None = None
+    schools_created: int | None = None
+    schools_updated: int | None = None
 
 
 class DataQualityCheck(BaseModel):

@@ -365,6 +365,8 @@ async function buildContext(data: PDFReportData) {
       rows_passed?: number | null;
       rows_failed?: number | null;
       rows_passed_with_warnings?: number | null;
+      schools_created?: number | null;
+      schools_updated?: number | null;
     } | undefined) ?? {};
 
   const crit = getSection(dq, "critical");
@@ -571,14 +573,17 @@ async function buildContext(data: PDFReportData) {
   const metaRaw = data.uploadMetadata ?? {};
   const metadataRows = buildMetadataRows(metaRaw, ep);
 
+  // Dagster reports these inside dq-summary (snake_case); top-level props win.
+  const schoolsCreatedRaw = data.schoolsCreated ?? summary.schools_created;
+  const schoolsUpdatedRaw = data.schoolsUpdated ?? summary.schools_updated;
   const hasCreated =
-    data.schoolsCreated !== null &&
-    data.schoolsCreated !== undefined &&
-    String(data.schoolsCreated).trim() !== "";
+    schoolsCreatedRaw !== null &&
+    schoolsCreatedRaw !== undefined &&
+    String(schoolsCreatedRaw).trim() !== "";
   const hasUpdated =
-    data.schoolsUpdated !== null &&
-    data.schoolsUpdated !== undefined &&
-    String(data.schoolsUpdated).trim() !== "";
+    schoolsUpdatedRaw !== null &&
+    schoolsUpdatedRaw !== undefined &&
+    String(schoolsUpdatedRaw).trim() !== "";
 
   let page2NextTop = PAGE2_MAPS_TABLE_START;
   const mapsSectionTop = 193;
@@ -644,8 +649,8 @@ async function buildContext(data: PDFReportData) {
       rejRotate: rejRotate.toFixed(2),
       warnRotate: warnRotate.toFixed(2),
     },
-    schoolsCreated: hasCreated ? fmt(Number(data.schoolsCreated)) : emDash,
-    schoolsUpdated: hasUpdated ? fmt(Number(data.schoolsUpdated)) : emDash,
+    schoolsCreated: hasCreated ? fmt(Number(schoolsCreatedRaw)) : emDash,
+    schoolsUpdated: hasUpdated ? fmt(Number(schoolsUpdatedRaw)) : emDash,
     schoolsCreatedIsPlaceholder: !hasCreated,
     schoolsUpdatedIsPlaceholder: !hasUpdated,
     approvedWithWarningsIsApproximate: !hasExactApprovedWithWarnings,
