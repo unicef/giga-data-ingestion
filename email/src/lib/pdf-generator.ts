@@ -81,6 +81,11 @@ function failedCount(check: Check | undefined): number {
   return Number(check?.count_failed ?? 0) || 0;
 }
 
+/** Warning-tier checks: count_failed is scoped to approved rows in dq-summary. */
+function warningCount(check: Check | undefined): number {
+  return failedCount(check);
+}
+
 function failedAcrossColumns(
   checks: Check[],
   assertion: string,
@@ -88,6 +93,17 @@ function failedAcrossColumns(
 ): number {
   return Math.max(
     ...columns.map((col) => failedCount(findCheck(checks, assertion, col))),
+    0
+  );
+}
+
+function warningAcrossColumns(
+  checks: Check[],
+  assertion: string,
+  columns: string[]
+): number {
+  return Math.max(
+    ...columns.map((col) => warningCount(findCheck(checks, assertion, col))),
     0
   );
 }
@@ -344,8 +360,14 @@ async function getBrowser(): Promise<Browser> {
 async function buildContext(data: PDFReportData) {
   const dq = (data.dataQualityCheck ?? {}) as Record<string, unknown>;
   const summary =
-    (dq["summary"] as { rows?: number; rows_passed?: number; rows_failed?: number } | undefined) ??
-    {};
+    (dq["summary"] as {
+      rows?: number;
+      rows_passed?: number | null;
+      rows_failed?: number | null;
+      schools_with_warnings?: number | null;
+      schools_created?: number | null;
+      schools_updated?: number | null;
+    } | undefined) ?? {};
 
   const crit = getSection(dq, "critical");
   const dupChecks = getSection(dq, "duplicates");
@@ -379,33 +401,42 @@ async function buildContext(data: PDFReportData) {
     findCheck(crit, "is_null_mandatory", "school_id_govt")
   );
   const dupSchoolIds = failedCount(findCheck(dupChecks, "duplicate", "school_id_govt"));
-  const lowPrecision = failedAcrossColumns(precChecks, "precision", [
+  const lowPrecision = warningAcrossColumns(precChecks, "precision", [
     "latitude",
     "longitude",
   ]);
-  const highDensity = failedCount(findCheck(locChecks, "is_school_density_greater_than_5"));
-  const sameLocation = failedCount(findCheck(locChecks, "duplicate_set", "location_id"));
-  const nameEduLoc = failedCount(
+  const highDensity = warningCount(findCheck(locChecks, "is_school_density_greater_than_5"));
+  const sameLocation = warningCount(findCheck(locChecks, "duplicate_set", "location_id"));
+  const nameEduLoc = warningCount(
     findCheck(locChecks, "duplicate_set", "school_name_education_level_location_id")
   );
-  const allExceptCode = failedCount(findCheck(dupChecks, "duplicate_all_except_school_code"));
-  const nameLevel110 = failedCount(
+  const allExceptCode = warningCount(findCheck(dupChecks, "duplicate_all_except_school_code"));
+  const nameLevel110 = warningCount(
     findCheck(locChecks, "duplicate_name_level_within_110m_radius")
   );
-  const similarNameLevel110 = failedCount(
+  const similarNameLevel110 = warningCount(
     findCheck(locChecks, "duplicate_similar_name_same_level_within_110m_radius")
   );
 
-  // Approximate: max across warning-tier checks (not a true row-level union).
-  const approvedWithWarnings = Math.max(
-    lowPrecision,
-    highDensity,
-    allExceptCode,
-    nameEduLoc,
-    sameLocation,
-    nameLevel110,
-    similarNameLevel110
-  );
+  // null/absent means "not computed upstream" — only a real number is exact.
+  const schoolsWithWarnings =
+    typeof summary.schools_with_warnings === "number"
+      ? summary.schools_with_warnings
+      : undefined;
+  const hasExactApprovedWithWarnings = schoolsWithWarnings !== undefined;
+
+  // KPI: unique approved schools with at least one warning (from dq-summary when available).
+  const approvedWithWarnings =
+    schoolsWithWarnings ??
+    Math.max(
+      lowPrecision,
+      highDensity,
+      allExceptCode,
+      nameEduLoc,
+      sameLocation,
+      nameLevel110,
+      similarNameLevel110
+    );
 
   // Warnings apply only to approved (passed) rows — never to rejected.
   const warningsForDonut = Math.min(approvedWithWarnings, approved);
@@ -542,14 +573,17 @@ async function buildContext(data: PDFReportData) {
   const metaRaw = data.uploadMetadata ?? {};
   const metadataRows = buildMetadataRows(metaRaw, ep);
 
+  // Dagster reports these inside dq-summary (snake_case); top-level props win.
+  const schoolsCreatedRaw = data.schoolsCreated ?? summary.schools_created;
+  const schoolsUpdatedRaw = data.schoolsUpdated ?? summary.schools_updated;
   const hasCreated =
-    data.schoolsCreated !== null &&
-    data.schoolsCreated !== undefined &&
-    String(data.schoolsCreated).trim() !== "";
+    schoolsCreatedRaw !== null &&
+    schoolsCreatedRaw !== undefined &&
+    String(schoolsCreatedRaw).trim() !== "";
   const hasUpdated =
-    data.schoolsUpdated !== null &&
-    data.schoolsUpdated !== undefined &&
-    String(data.schoolsUpdated).trim() !== "";
+    schoolsUpdatedRaw !== null &&
+    schoolsUpdatedRaw !== undefined &&
+    String(schoolsUpdatedRaw).trim() !== "";
 
   let page2NextTop = PAGE2_MAPS_TABLE_START;
   const mapsSectionTop = 193;
@@ -615,11 +649,11 @@ async function buildContext(data: PDFReportData) {
       rejRotate: rejRotate.toFixed(2),
       warnRotate: warnRotate.toFixed(2),
     },
-    schoolsCreated: hasCreated ? fmt(Number(data.schoolsCreated)) : emDash,
-    schoolsUpdated: hasUpdated ? fmt(Number(data.schoolsUpdated)) : emDash,
+    schoolsCreated: hasCreated ? fmt(Number(schoolsCreatedRaw)) : emDash,
+    schoolsUpdated: hasUpdated ? fmt(Number(schoolsUpdatedRaw)) : emDash,
     schoolsCreatedIsPlaceholder: !hasCreated,
     schoolsUpdatedIsPlaceholder: !hasUpdated,
-    approvedWithWarningsIsApproximate: true,
+    approvedWithWarningsIsApproximate: !hasExactApprovedWithWarnings,
     rejectedSections,
     warningsPage1Sections,
     warningsPage2Rows,
