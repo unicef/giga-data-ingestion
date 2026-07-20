@@ -1,3 +1,4 @@
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 import react from "@vitejs/plugin-react-swc";
 import * as path from "path";
@@ -27,6 +28,29 @@ export default defineConfig({
   },
   build: {
     outDir: "build",
+    sourcemap: "hidden",
   },
-  plugins: [react(), TanStackRouterVite()],
+  plugins: [
+    react(),
+    TanStackRouterVite(),
+    ...(process.env.SENTRY_AUTH_TOKEN &&
+    process.env.SENTRY_ORG &&
+    process.env.SENTRY_PROJECT
+      ? [
+          sentryVitePlugin({
+            url: process.env.SENTRY_URL,
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+            release: {
+              // Must match the release set in src/instrument.ts
+              name: `github.com/unicef/giga-data-ingestion:${process.env.VITE_COMMIT_SHA}`,
+            },
+            sourcemaps: {
+              filesToDeleteAfterUpload: ["build/**/*.map"],
+            },
+          }),
+        ]
+      : []),
+  ],
 });
