@@ -246,9 +246,10 @@ function Assessment() {
 
   const tagProps = effectiveStatus ? statusTagMap[effectiveStatus] : null;
   const qualityHeader = "Quality assessment - uploaded file only";
-  const qualityDescription = `On this step, click "Run assesment on uploaded file" to run quality checks for the file you have uploaded. This will produce the Data Quality Report, the Data Quality Kit, a summary of the counts for individual checks, and a data quality map. This option does not submit the data for admin approval. 
-    
-    If you select "Skip and go to master submission", the system will run the master data check, validating the uploaded data in the context of the existing country master data. Rows that pass quality checks and produce pending changes will be submitted for admin approval, before they can eventually be displayed on GigaMaps.`;
+  const qualityDescriptionParagraphs = [
+    `On this step, click "Run assesment on uploaded file" to run quality checks for the file you have uploaded. This will produce the Data Quality Report, the Data Quality Kit, a summary of the counts for individual checks, and a data quality map. This option does not submit the data for admin approval.`,
+    `If you select "Skip and go to master submission", the system will run the master data check, validating the uploaded data in the context of the existing country master data. Rows that pass quality checks and produce pending changes will be submitted for admin approval, before they can eventually be displayed on GigaMaps.`,
+  ];
 
   const inProgress = effectiveStatus === DQStatus.IN_PROGRESS;
   const showSummaryCards = reviewFile.isPending || !!activeUploadId;
@@ -286,9 +287,16 @@ function Assessment() {
             />
           </div>
 
-          <p className="max-w-[70rem] text-lg font-normal leading-relaxed text-gray-900">
-            {qualityDescription}
-          </p>
+          <div className="flex max-w-[70rem] flex-col gap-7">
+            {qualityDescriptionParagraphs.map(paragraph => (
+              <p
+                key={paragraph}
+                className="text-lg font-normal leading-relaxed text-gray-900"
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
 
           {(activeUploadId || reviewFile.isPending) && (
             <div className="mt-5 flex flex-wrap items-center gap-6">

@@ -3,7 +3,6 @@ import { Check, DataQualityCheckSummary } from "@/types/upload";
 const DQ_SUMMARY_META_KEYS = new Set([
   "summary",
   "critical_error_check",
-  "critical_checks",
   "valueMaps",
 ]);
 
