@@ -364,7 +364,7 @@ async function buildContext(data: PDFReportData) {
       rows?: number;
       rows_passed?: number | null;
       rows_failed?: number | null;
-      rows_passed_with_warnings?: number | null;
+      schools_with_warnings?: number | null;
       schools_created?: number | null;
       schools_updated?: number | null;
     } | undefined) ?? {};
@@ -419,15 +419,15 @@ async function buildContext(data: PDFReportData) {
   );
 
   // null/absent means "not computed upstream" — only a real number is exact.
-  const rowsPassedWithWarnings =
-    typeof summary.rows_passed_with_warnings === "number"
-      ? summary.rows_passed_with_warnings
+  const schoolsWithWarnings =
+    typeof summary.schools_with_warnings === "number"
+      ? summary.schools_with_warnings
       : undefined;
-  const hasExactApprovedWithWarnings = rowsPassedWithWarnings !== undefined;
+  const hasExactApprovedWithWarnings = schoolsWithWarnings !== undefined;
 
-  // KPI: unique approved rows with at least one warning (from dq-summary when available).
+  // KPI: unique approved schools with at least one warning (from dq-summary when available).
   const approvedWithWarnings =
-    rowsPassedWithWarnings ??
+    schoolsWithWarnings ??
     Math.max(
       lowPrecision,
       highDensity,
