@@ -83,18 +83,18 @@
   .title-block { position: absolute; left: 20pt; top: 62pt; width: 555pt; display: flex; flex-direction: column; gap: 2pt; }
   .title-block h1 { font-family: "Manrope", sans-serif; font-weight: 400; font-size: 20pt; line-height: 32pt; color: #005bed; }
   .title-block .sub { font-weight: 600; font-size: 10pt; line-height: 16pt; white-space: nowrap; }
-  .donut { position: absolute; left: 41pt; top: 128pt; width: 150pt; height: 150pt; }
+  .donut { position: absolute; left: 41pt; top: 146pt; width: 150pt; height: 150pt; }
   .donut svg { display: block; width: 150pt; height: 150pt; }
   .donut .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2pt; }
   .donut .center .big { font-family: "Inter", sans-serif; font-size: 18pt; line-height: 1; }
   .donut .center .cap { font-weight: 500; font-size: 10pt; line-height: 16pt; letter-spacing: -0.1pt; text-align: center; padding: 0 8pt; }
   .createupdate {
-    position: absolute; left: 19pt; top: 293pt;
+    position: absolute; left: 19pt; top: 311pt;
     display: flex; align-items: center; gap: 8pt;
     font-weight: 500; font-size: 8pt; line-height: 10pt;
     letter-spacing: -0.08pt; color: rgba(0,0,0,0.7); white-space: nowrap;
   }
-  .statgrid { position: absolute; left: 226pt; top: 124pt; width: 349pt; display: grid; grid-template-columns: 1fr 1fr; }
+  .statgrid { position: absolute; left: 226pt; top: 142pt; width: 349pt; display: grid; grid-template-columns: 1fr 1fr; }
   .statcell { border: 1px solid #f4f4f4; padding: 16pt; display: flex; flex-direction: column; gap: 8pt; min-height: 90pt; }
   .statcell.tl { border-right: none; }
   .statcell.tr { border-left: none; }
@@ -183,7 +183,7 @@
     </div>
   </div>
 
-  <div class="tbl" style="top:316pt;">
+  <div class="tbl" style="top:334pt;">
     <div class="thead">
       <div class="ico">
         <svg class="wico" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="6" fill="#ff000b"/><rect x="5.25" y="2.5" width="1.5" height="4.2" rx="0.75" fill="#fff"/><circle cx="6" cy="8.6" r="0.85" fill="#fff"/></svg>
@@ -200,7 +200,7 @@
     {{/each}}
   </div>
 
-  <div class="tbl" style="top:568pt;">
+  <div class="tbl" style="top:586pt;">
     <div class="thead">
       <div class="ico">
         <svg class="wico" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0.6 11.6 11H0.4L6 0.6Z" fill="#ffae00"/><rect x="5.3" y="4" width="1.4" height="3.6" rx="0.7" fill="#000"/><circle cx="6" cy="9.2" r="0.8" fill="#000"/></svg>
@@ -230,7 +230,10 @@
 
   <div class="tbl" style="top:69pt;">
     <div class="thead">
-      <span class="title">Warnings</span>
+      <div class="ico">
+        <svg class="wico" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0.6 11.6 11H0.4L6 0.6Z" fill="#ffae00"/><rect x="5.3" y="4" width="1.4" height="3.6" rx="0.7" fill="#000"/><circle cx="6" cy="9.2" r="0.8" fill="#000"/></svg>
+        <span class="title">Warnings</span>
+      </div>
       <span class="col-num">Alerts</span>
       <span class="col-num">Priority</span>
     </div>
