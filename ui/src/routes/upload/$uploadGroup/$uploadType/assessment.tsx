@@ -1,4 +1,4 @@
-import { ComponentProps, memo, useEffect, useMemo, useState } from "react";
+import { ComponentProps, memo, useMemo, useState } from "react";
 
 import {
   ArrowLeft,
@@ -26,7 +26,7 @@ import {
 } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { api, axi } from "@/api";
+import { api } from "@/api";
 import BasicDataQualityCheck from "@/components/check-file-uploads/BasicDataQualityCheck";
 import DataCheckItem from "@/components/check-file-uploads/DataCheckItem";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
@@ -121,7 +121,6 @@ function Assessment() {
   const navigate = useNavigate({ from: Route.fullPath });
   const [reviewUploadId, setReviewUploadId] = useState<string>("");
   const [actionError, setActionError] = useState<string>("");
-  const [dqKitAvailable, setDqKitAvailable] = useState(false);
 
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
@@ -189,38 +188,9 @@ function Assessment() {
     handleDownloadPassedRows,
     handleDownloadDqSummary,
     handleDownloadRawFile,
-    handleDownloadDqKit,
   } = useDownloadHelpers(uploadData, dqResult);
 
   const status = dqResult?.status;
-
-  useEffect(() => {
-    let isCurrent = true;
-    setDqKitAvailable(false);
-
-    if (
-      !activeUploadId ||
-      status !== DQStatus.COMPLETED ||
-      uploadData.dq_status !== DQStatus.COMPLETED
-    ) {
-      return () => {
-        isCurrent = false;
-      };
-    }
-
-    axi
-      .head(`upload/dq_kit/${activeUploadId}/download`)
-      .then(() => {
-        if (isCurrent) setDqKitAvailable(true);
-      })
-      .catch(() => {
-        if (isCurrent) setDqKitAvailable(false);
-      });
-
-    return () => {
-      isCurrent = false;
-    };
-  }, [activeUploadId, status, uploadData.dq_status]);
 
   const basicCheckItems = Object.entries(basicCheck)
     .map(([key, value]) => {
@@ -395,16 +365,6 @@ function Assessment() {
           >
             Download data quality report (PDF)
           </Button>
-          {dqKitAvailable && (
-            <Button
-              kind="secondary"
-              size="md"
-              renderIcon={Download}
-              onClick={handleDownloadDqKit}
-            >
-              Download DQ Kit
-            </Button>
-          )}
         </div>
       )}
 

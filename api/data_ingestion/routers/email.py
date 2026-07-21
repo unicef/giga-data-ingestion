@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Security, status
@@ -207,14 +208,36 @@ async def download_dq_report_pdf_from_adls(
     dataset: str,
     country_code: str,
     upload_id: str,
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Stream the DQ report PDF stored in ADLS by Dagster.
-    Path mirrors other data-quality-results artefacts:
-    data-quality-results/{dataset}/dq-report/{country_code}/{upload_id}.pdf
+    The stored PDF shares the filename stem and location of the upload's
+    completed DQ artefacts.
     """
-    filename = f"{upload_id}.pdf"
-    path = f"data-quality-results/{dataset}/dq-report/{country_code}/{filename}"
+    file_upload = await db.scalar(select(FileUpload).where(FileUpload.id == upload_id))
+    if file_upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File Upload ID does not exist",
+        )
+
+    if file_upload.dq_full_path:
+        dq_path = Path(file_upload.dq_full_path)
+        filename = f"{dq_path.stem}.pdf"
+        stored_dataset = dq_path.parts[1]
+        stored_country_code = dq_path.parts[3]
+    else:
+        filename = f"{upload_id}.pdf"
+        stored_dataset = (
+            dataset if dataset.startswith("school-") else f"school-{dataset}"
+        )
+        stored_country_code = country_code
+
+    path = (
+        f"data-quality-results/{stored_dataset}/dq-report/"
+        f"{stored_country_code}/{filename}"
+    )
 
     blob = storage_client.get_blob_client(path)
     if not blob.exists():
