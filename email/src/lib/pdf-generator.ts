@@ -365,6 +365,7 @@ async function buildContext(data: PDFReportData) {
       rows_passed?: number | null;
       rows_failed?: number | null;
       rows_passed_with_warnings?: number | null;
+      count_schools_low_precision_coordinates?: number | null;
       schools_created?: number | null;
       schools_updated?: number | null;
     } | undefined) ?? {};
@@ -401,10 +402,12 @@ async function buildContext(data: PDFReportData) {
     findCheck(crit, "is_null_mandatory", "school_id_govt")
   );
   const dupSchoolIds = failedCount(findCheck(dupChecks, "duplicate", "school_id_govt"));
-  const lowPrecision = warningAcrossColumns(precChecks, "precision", [
-    "latitude",
-    "longitude",
-  ]);
+  // Unique schools with low precision in lat and/or long (deduped upstream).
+  // Falls back to max across the per-column checks for pre-change reports.
+  const lowPrecision =
+    typeof summary.count_schools_low_precision_coordinates === "number"
+      ? summary.count_schools_low_precision_coordinates
+      : warningAcrossColumns(precChecks, "precision", ["latitude", "longitude"]);
   const highDensity = warningCount(findCheck(locChecks, "is_school_density_greater_than_5"));
   const sameLocation = warningCount(findCheck(locChecks, "duplicate_set", "location_id"));
   const nameEduLoc = warningCount(
