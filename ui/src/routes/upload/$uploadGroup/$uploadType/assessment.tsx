@@ -186,7 +186,6 @@ function Assessment() {
   const {
     handleDownloadFailedRows,
     handleDownloadPassedRows,
-    handleDownloadDqSummary,
     handleDownloadRawFile,
   } = useDownloadHelpers(uploadData, dqResult);
 
@@ -354,19 +353,6 @@ function Assessment() {
           )}
         </div>
       </div>
-
-      {areDownloadsReady && (
-        <div className="flex flex-wrap justify-end gap-3">
-          <Button
-            kind="primary"
-            size="md"
-            renderIcon={Download}
-            onClick={handleDownloadDqSummary}
-          >
-            Download data quality report (PDF)
-          </Button>
-        </div>
-      )}
 
       {showSummaryCards && (
         <>
