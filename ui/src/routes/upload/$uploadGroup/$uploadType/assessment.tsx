@@ -1,4 +1,4 @@
-import { ComponentProps, memo, useMemo, useState } from "react";
+import { ComponentProps, memo, useEffect, useMemo, useState } from "react";
 
 import {
   ArrowLeft,
@@ -26,7 +26,7 @@ import {
 } from "@tanstack/react-router";
 import { z } from "zod";
 
-import { api } from "@/api";
+import { api, axi } from "@/api";
 import BasicDataQualityCheck from "@/components/check-file-uploads/BasicDataQualityCheck";
 import DataCheckItem from "@/components/check-file-uploads/DataCheckItem";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
@@ -121,6 +121,7 @@ function Assessment() {
   const navigate = useNavigate({ from: Route.fullPath });
   const [reviewUploadId, setReviewUploadId] = useState<string>("");
   const [actionError, setActionError] = useState<string>("");
+  const [dqKitAvailable, setDqKitAvailable] = useState(false);
 
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
@@ -147,17 +148,19 @@ function Assessment() {
   const { data: uploadQuery } = useQuery({
     queryKey: ["upload", activeUploadId],
     queryFn: () => api.uploads.get_upload(activeUploadId),
+    refetchInterval: query => {
+      const currentStatus = query.state.data?.data?.dq_status;
+      if (currentStatus && currentStatus !== DQStatus.IN_PROGRESS) {
+        return false;
+      }
+      return 7000;
+    },
     enabled: !isStructured && !!activeUploadId,
   });
   const uploadData = useMemo<UploadResponse>(
     () => uploadQuery?.data ?? initialUploadResponse,
     [uploadQuery],
   );
-  const {
-    handleDownloadFailedRows,
-    handleDownloadPassedRows,
-    handleDownloadDqSummary,
-  } = useDownloadHelpers(uploadData);
 
   const {
     data: dqResultQuery,
@@ -181,8 +184,43 @@ function Assessment() {
     () => dqResultQuery?.data ?? initialDataQualityCheck,
     [dqResultQuery],
   );
+  const {
+    handleDownloadFailedRows,
+    handleDownloadPassedRows,
+    handleDownloadDqSummary,
+    handleDownloadRawFile,
+    handleDownloadDqKit,
+  } = useDownloadHelpers(uploadData, dqResult);
 
   const status = dqResult?.status;
+
+  useEffect(() => {
+    let isCurrent = true;
+    setDqKitAvailable(false);
+
+    if (
+      !activeUploadId ||
+      status !== DQStatus.COMPLETED ||
+      uploadData.dq_status !== DQStatus.COMPLETED
+    ) {
+      return () => {
+        isCurrent = false;
+      };
+    }
+
+    axi
+      .head(`upload/dq_kit/${activeUploadId}/download`)
+      .then(() => {
+        if (isCurrent) setDqKitAvailable(true);
+      })
+      .catch(() => {
+        if (isCurrent) setDqKitAvailable(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [activeUploadId, status, uploadData.dq_status]);
 
   const basicCheckItems = Object.entries(basicCheck)
     .map(([key, value]) => {
@@ -256,6 +294,9 @@ function Assessment() {
   const isSummaryLoading =
     reviewFile.isPending ||
     (!!activeUploadId && effectiveStatus !== DQStatus.COMPLETED && !isError);
+  const areDownloadsReady =
+    effectiveStatus === DQStatus.COMPLETED &&
+    uploadData.dq_status === DQStatus.COMPLETED;
   const isInitialState = !reviewFile.isPending && !activeUploadId;
   const canRunAssessment = isInitialState;
   const useSkipLabel = isInitialState || isError;
@@ -309,6 +350,14 @@ function Assessment() {
                   {tagProps.text}
                 </Tag>
               )}
+              {activeUploadId && (
+                <p className="min-w-0 text-sm text-gray-600">
+                  <span className="font-semibold text-gray-900">
+                    Upload ID:
+                  </span>{" "}
+                  <span className="break-all font-mono">{activeUploadId}</span>
+                </p>
+              )}
               {effectiveStatus === DQStatus.IN_PROGRESS && (
                 <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-gray-800">
                   <Loading small withOverlay={false} className="h-4 w-4" />
@@ -336,6 +385,29 @@ function Assessment() {
         </div>
       </div>
 
+      {areDownloadsReady && (
+        <div className="flex flex-wrap justify-end gap-3">
+          <Button
+            kind="primary"
+            size="md"
+            renderIcon={Download}
+            onClick={handleDownloadDqSummary}
+          >
+            Download data quality report (PDF)
+          </Button>
+          {dqKitAvailable && (
+            <Button
+              kind="secondary"
+              size="md"
+              renderIcon={Download}
+              onClick={handleDownloadDqKit}
+            >
+              Download DQ Kit
+            </Button>
+          )}
+        </div>
+      )}
+
       {showSummaryCards && (
         <>
           <div className="mb-8 flex items-stretch gap-2">
@@ -349,10 +421,10 @@ function Assessment() {
                   kind="primary"
                   size="sm"
                   renderIcon={Download}
-                  disabled={isSummaryLoading || rows === 0}
-                  onClick={handleDownloadDqSummary}
+                  disabled={!areDownloadsReady || rows === 0}
+                  onClick={handleDownloadRawFile}
                 >
-                  Download Summary
+                  Download uploaded dataset
                 </Button>
               </div>
             </div>
@@ -367,7 +439,7 @@ function Assessment() {
                   kind="primary"
                   size="sm"
                   renderIcon={Download}
-                  disabled={isSummaryLoading || rowsPassed == 0}
+                  disabled={!areDownloadsReady || rowsPassed === 0}
                   onClick={handleDownloadPassedRows}
                 >
                   Download Passed Schools
@@ -385,7 +457,7 @@ function Assessment() {
                   kind="primary"
                   size="sm"
                   renderIcon={Download}
-                  disabled={isSummaryLoading || rowsFailed == 0}
+                  disabled={!areDownloadsReady || rowsFailed === 0}
                   onClick={handleDownloadFailedRows}
                 >
                   Download Rejected Schools
