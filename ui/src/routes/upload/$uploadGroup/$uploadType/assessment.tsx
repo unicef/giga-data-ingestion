@@ -147,17 +147,19 @@ function Assessment() {
   const { data: uploadQuery } = useQuery({
     queryKey: ["upload", activeUploadId],
     queryFn: () => api.uploads.get_upload(activeUploadId),
+    refetchInterval: query => {
+      const currentStatus = query.state.data?.data?.dq_status;
+      if (currentStatus && currentStatus !== DQStatus.IN_PROGRESS) {
+        return false;
+      }
+      return 7000;
+    },
     enabled: !isStructured && !!activeUploadId,
   });
   const uploadData = useMemo<UploadResponse>(
     () => uploadQuery?.data ?? initialUploadResponse,
     [uploadQuery],
   );
-  const {
-    handleDownloadFailedRows,
-    handleDownloadPassedRows,
-    handleDownloadDqSummary,
-  } = useDownloadHelpers(uploadData);
 
   const {
     data: dqResultQuery,
@@ -181,6 +183,11 @@ function Assessment() {
     () => dqResultQuery?.data ?? initialDataQualityCheck,
     [dqResultQuery],
   );
+  const {
+    handleDownloadFailedRows,
+    handleDownloadPassedRows,
+    handleDownloadRawFile,
+  } = useDownloadHelpers(uploadData, dqResult);
 
   const status = dqResult?.status;
 
@@ -256,6 +263,9 @@ function Assessment() {
   const isSummaryLoading =
     reviewFile.isPending ||
     (!!activeUploadId && effectiveStatus !== DQStatus.COMPLETED && !isError);
+  const areDownloadsReady =
+    effectiveStatus === DQStatus.COMPLETED &&
+    uploadData.dq_status === DQStatus.COMPLETED;
   const isInitialState = !reviewFile.isPending && !activeUploadId;
   const canRunAssessment = isInitialState;
   const useSkipLabel = isInitialState || isError;
@@ -309,6 +319,14 @@ function Assessment() {
                   {tagProps.text}
                 </Tag>
               )}
+              {activeUploadId && (
+                <p className="min-w-0 text-sm text-gray-600">
+                  <span className="font-semibold text-gray-900">
+                    Upload ID:
+                  </span>{" "}
+                  <span className="break-all font-mono">{activeUploadId}</span>
+                </p>
+              )}
               {effectiveStatus === DQStatus.IN_PROGRESS && (
                 <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-gray-800">
                   <Loading small withOverlay={false} className="h-4 w-4" />
@@ -349,10 +367,10 @@ function Assessment() {
                   kind="primary"
                   size="sm"
                   renderIcon={Download}
-                  disabled={isSummaryLoading || rows === 0}
-                  onClick={handleDownloadDqSummary}
+                  disabled={!areDownloadsReady || rows === 0}
+                  onClick={handleDownloadRawFile}
                 >
-                  Download Summary
+                  Download uploaded dataset
                 </Button>
               </div>
             </div>
@@ -367,7 +385,7 @@ function Assessment() {
                   kind="primary"
                   size="sm"
                   renderIcon={Download}
-                  disabled={isSummaryLoading || rowsPassed == 0}
+                  disabled={!areDownloadsReady || rowsPassed === 0}
                   onClick={handleDownloadPassedRows}
                 >
                   Download Passed Schools
@@ -385,7 +403,7 @@ function Assessment() {
                   kind="primary"
                   size="sm"
                   renderIcon={Download}
-                  disabled={isSummaryLoading || rowsFailed == 0}
+                  disabled={!areDownloadsReady || rowsFailed === 0}
                   onClick={handleDownloadFailedRows}
                 >
                   Download Rejected Schools
