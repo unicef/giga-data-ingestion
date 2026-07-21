@@ -15,7 +15,7 @@ export function savePdfFromBase64(base64: string, filename: string) {
 }
 
 export function saveFile(blob: AxiosResponse<Blob>) {
-  const contentDisposition = blob.headers["content-disposition"];
+  const contentDisposition = blob.headers["content-disposition"] ?? "";
   const filenameMatch = contentDisposition.match(
     /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/,
   );

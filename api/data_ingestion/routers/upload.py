@@ -68,7 +68,7 @@ from data_ingestion.utils.upload_impact import (
     normalize_school_id,
 )
 
-DQ_CHECK_LABELS_TABLE_NAME = "SchoolGeolocationMasterDQChecksTest"
+DQ_CHECK_LABELS_TABLE_NAME = "SchoolGeolocationMasterDQChecks"
 
 router = APIRouter(
     prefix="/api/upload",
