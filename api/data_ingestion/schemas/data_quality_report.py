@@ -20,7 +20,7 @@ class SummaryCheck(BaseModel):
     timestamp: datetime
     rows_passed: int | None = None
     rows_failed: int | None = None
-    schools_with_warnings: int | None = None
+    rows_passed_with_warnings: int | None = None
     schools_created: int | None = None
     schools_updated: int | None = None
 
