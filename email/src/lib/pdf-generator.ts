@@ -409,7 +409,11 @@ async function buildContext(data: PDFReportData) {
       ? summary.count_schools_low_precision_coordinates
       : warningAcrossColumns(precChecks, "precision", ["latitude", "longitude"]);
   const highDensity = warningCount(findCheck(locChecks, "is_school_density_greater_than_5"));
-  const sameLocation = warningCount(findCheck(locChecks, "duplicate_set", "location_id"));
+  // Dagster names the location-only duplicate check specially: its assertion is
+  // "duplicate_location_rows" (not "duplicate_set-location_id").
+  const sameLocation = warningCount(
+    findCheck(locChecks, "duplicate_location_rows", "location_id")
+  );
   const nameEduLoc = warningCount(
     findCheck(locChecks, "duplicate_set", "school_name_education_level_location_id")
   );
