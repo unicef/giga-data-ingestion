@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+
+import * as Sentry from "@sentry/react";
 import { Link } from "@tanstack/react-router";
 
 import {
@@ -5,7 +8,17 @@ import {
   DEFAULT_PAGE_SIZE,
 } from "@/constants/pagination.ts";
 
-export function ErrorComponent() {
+interface ErrorComponentProps {
+  error?: unknown;
+}
+
+export function ErrorComponent({ error }: ErrorComponentProps = {}) {
+  useEffect(() => {
+    if (error) {
+      Sentry.captureException(error);
+    }
+  }, [error]);
+
   return (
     <div className="flex h-full w-full flex-col items-center justify-center">
       <h4>Something went wrong</h4>
