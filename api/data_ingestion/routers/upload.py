@@ -1311,8 +1311,9 @@ async def get_upload_impact_preview(
     """
     Compare uploaded school IDs against the current country master dataset.
 
-    Counts are row-based: duplicate IDs in the uploaded file count once per row,
-    matching how users review uploaded school rows in the UI.
+    Counts are row-based. The duplicate count includes every row whose school
+    ID is repeated in the file (first occurrence included), matching how users
+    review uploaded school rows in the UI.
     """
     if dataset not in {"geolocation", "coverage"}:
         raise HTTPException(
