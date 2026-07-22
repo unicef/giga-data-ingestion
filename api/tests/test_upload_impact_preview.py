@@ -6,8 +6,8 @@ from data_ingestion.utils.upload_impact import (
 )
 
 
-# Counts should be row-based, so duplicate uploaded IDs are counted per row.
-def test_upload_impact_preview_counts_rows_not_unique_ids():
+# Duplicate rows include every row sharing a repeated ID, first occurrence too.
+def test_upload_impact_preview_counts_all_rows_with_repeated_ids():
     preview = build_upload_impact_preview(
         file_school_ids=["A", "B", "B", "C"],
         total_rows=5,
@@ -19,7 +19,8 @@ def test_upload_impact_preview_counts_rows_not_unique_ids():
     assert preview["rows_with_school_id"] == 4
     assert preview["missing_school_id_rows"] == 1
     assert preview["unique_school_ids"] == 3
-    assert preview["duplicate_school_id_rows"] == 1
+    # Both "B" rows are counted, not just the surplus one.
+    assert preview["duplicate_school_id_rows"] == 2
 
 
 # School IDs should be compared after trimming blanks and ignoring empty values.

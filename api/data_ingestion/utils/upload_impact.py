@@ -1,3 +1,5 @@
+from collections import Counter
+
 import pandas as pd
 
 
@@ -27,8 +29,13 @@ def build_upload_impact_preview(
 ) -> dict[str, int]:
     rows_with_school_id = len(file_school_ids)
     missing_school_id_rows = total_rows - rows_with_school_id
-    unique_school_ids = len(set(file_school_ids))
-    duplicate_school_id_rows = rows_with_school_id - unique_school_ids
+    school_id_counts = Counter(file_school_ids)
+    unique_school_ids = len(school_id_counts)
+    # Count every row whose school ID is repeated, including its first
+    # occurrence, so the total reflects all rows involved in a duplication.
+    duplicate_school_id_rows = sum(
+        count for count in school_id_counts.values() if count > 1
+    )
     schools_to_update = sum(
         1 for school_id in file_school_ids if school_id in master_school_ids
     )
