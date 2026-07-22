@@ -364,7 +364,9 @@ async function buildContext(data: PDFReportData) {
       rows?: number;
       rows_passed?: number | null;
       rows_failed?: number | null;
-      schools_with_warnings?: number | null;
+      rows_passed_with_warnings?: number | null;
+      count_schools_low_precision_coordinates?: number | null;
+      count_duplicate_school_id?: number | null;
       schools_created?: number | null;
       schools_updated?: number | null;
     } | undefined) ?? {};
@@ -400,13 +402,24 @@ async function buildContext(data: PDFReportData) {
   const missingSchoolIds = failedCount(
     findCheck(crit, "is_null_mandatory", "school_id_govt")
   );
-  const dupSchoolIds = failedCount(findCheck(dupChecks, "duplicate", "school_id_govt"));
-  const lowPrecision = warningAcrossColumns(precChecks, "precision", [
-    "latitude",
-    "longitude",
-  ]);
+  // Schools with a duplicate government ID. Prefer the deduped school count
+  // from dq-summary; fall back to the per-check count for pre-change reports.
+  const dupSchoolIds =
+    typeof summary.count_duplicate_school_id === "number"
+      ? summary.count_duplicate_school_id
+      : failedCount(findCheck(dupChecks, "duplicate", "school_id_govt"));
+  // Unique schools with low precision in lat and/or long (deduped upstream).
+  // Falls back to max across the per-column checks for pre-change reports.
+  const lowPrecision =
+    typeof summary.count_schools_low_precision_coordinates === "number"
+      ? summary.count_schools_low_precision_coordinates
+      : warningAcrossColumns(precChecks, "precision", ["latitude", "longitude"]);
   const highDensity = warningCount(findCheck(locChecks, "is_school_density_greater_than_5"));
-  const sameLocation = warningCount(findCheck(locChecks, "duplicate_set", "location_id"));
+  // Dagster names the location-only duplicate check specially: its assertion is
+  // "duplicate_location_rows" (not "duplicate_set-location_id").
+  const sameLocation = warningCount(
+    findCheck(locChecks, "duplicate_location_rows", "location_id")
+  );
   const nameEduLoc = warningCount(
     findCheck(locChecks, "duplicate_set", "school_name_education_level_location_id")
   );
@@ -419,15 +432,15 @@ async function buildContext(data: PDFReportData) {
   );
 
   // null/absent means "not computed upstream" — only a real number is exact.
-  const schoolsWithWarnings =
-    typeof summary.schools_with_warnings === "number"
-      ? summary.schools_with_warnings
+  const rowsPassedWithWarnings =
+    typeof summary.rows_passed_with_warnings === "number"
+      ? summary.rows_passed_with_warnings
       : undefined;
-  const hasExactApprovedWithWarnings = schoolsWithWarnings !== undefined;
+  const hasExactApprovedWithWarnings = rowsPassedWithWarnings !== undefined;
 
-  // KPI: unique approved schools with at least one warning (from dq-summary when available).
+  // KPI: unique approved rows with at least one warning (from dq-summary when available).
   const approvedWithWarnings =
-    schoolsWithWarnings ??
+    rowsPassedWithWarnings ??
     Math.max(
       lowPrecision,
       highDensity,
