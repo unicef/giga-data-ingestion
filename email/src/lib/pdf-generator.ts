@@ -366,6 +366,7 @@ async function buildContext(data: PDFReportData) {
       rows_failed?: number | null;
       rows_passed_with_warnings?: number | null;
       count_schools_low_precision_coordinates?: number | null;
+      count_duplicate_school_id?: number | null;
       schools_created?: number | null;
       schools_updated?: number | null;
     } | undefined) ?? {};
@@ -401,7 +402,12 @@ async function buildContext(data: PDFReportData) {
   const missingSchoolIds = failedCount(
     findCheck(crit, "is_null_mandatory", "school_id_govt")
   );
-  const dupSchoolIds = failedCount(findCheck(dupChecks, "duplicate", "school_id_govt"));
+  // Schools with a duplicate government ID. Prefer the deduped school count
+  // from dq-summary; fall back to the per-check count for pre-change reports.
+  const dupSchoolIds =
+    typeof summary.count_duplicate_school_id === "number"
+      ? summary.count_duplicate_school_id
+      : failedCount(findCheck(dupChecks, "duplicate", "school_id_govt"));
   // Unique schools with low precision in lat and/or long (deduped upstream).
   // Falls back to max across the per-column checks for pre-change reports.
   const lowPrecision =

@@ -29,6 +29,7 @@ const SummaryCheck = z
     rows_failed: z.number().nullable().optional(),
     rows_passed_with_warnings: z.number().nullable().optional(),
     count_schools_low_precision_coordinates: z.number().nullable().optional(),
+    count_duplicate_school_id: z.number().nullable().optional(),
     schools_created: z.number().nullable().optional(),
     schools_updated: z.number().nullable().optional(),
     timestamp: z.union([z.string(), z.number()]).optional(),
