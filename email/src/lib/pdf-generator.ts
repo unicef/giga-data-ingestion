@@ -14,6 +14,14 @@ import {
 import puppeteer, { type Browser } from "puppeteer-core";
 
 import { loadPdfLogoDataUri } from "./blob-assets";
+import {
+  entityText,
+  isSupportedLanguage,
+  LOCALE_TAG,
+  t,
+  type EntityKey,
+  type Language,
+} from "../i18n";
 import type { DataQualityReportEmailProps } from "../types/dq-report";
 
 export interface ValueMapRow {
@@ -35,6 +43,7 @@ export interface PDFReportData extends DataQualityReportEmailProps {
   };
   schoolsCreated?: number | string | null;
   schoolsUpdated?: number | string | null;
+  language?: Language;
 }
 
 type Check = {
@@ -108,16 +117,27 @@ function warningAcrossColumns(
   );
 }
 
-const fmt = (n: number): string =>
-  Number.isFinite(n) ? Math.round(n).toLocaleString("en-US") : "0";
+/** `useGrouping: false` keeps percentages identical to the previous toFixed(1). */
+function makeNumberFormatters(tag: string) {
+  const percent = new Intl.NumberFormat(tag, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+    useGrouping: false,
+  });
 
-const pctOf = (part: number, total: number): string => {
-  if (total <= 0) return "0%";
-  return `${((part / total) * 100).toFixed(1)}%`;
-};
+  const fmt = (n: number): string =>
+    Number.isFinite(n) ? Math.round(n).toLocaleString(tag) : "0";
 
-const pctParen = (part: number, total: number): string =>
-  `(${pctOf(part, total)})`;
+  const pctOf = (part: number, total: number): string => {
+    if (total <= 0) return "0%";
+    return `${percent.format((part / total) * 100)}%`;
+  };
+
+  const pctParen = (part: number, total: number): string =>
+    `(${pctOf(part, total)})`;
+
+  return { fmt, pctOf, pctParen };
+}
 
 const emDash = "—";
 
@@ -132,33 +152,38 @@ function strMeta(
 
 function buildMetadataRows(
   meta: Record<string, string | number | null | undefined> | undefined,
-  entityPlural: string
+  language: Language,
+  entity: EntityKey
 ) {
-  const idLabel =
-    entityPlural === "Health Centers"
-      ? "Primary record / facility ID type"
-      : "School ID Type";
-
   return [
-    { label: "Description", value: strMeta(meta, "description") },
-    { label: "Data Focal Point Name", value: strMeta(meta, "focal_point_name") },
-    { label: "Data Focal Point Email", value: strMeta(meta, "focal_point_contact") },
-    { label: "Data Owner", value: strMeta(meta, "data_owner") },
-    { label: "Year of Data Collection", value: strMeta(meta, "year_of_data_collection") },
+    { label: t(language, "metaDescription"), value: strMeta(meta, "description") },
+    { label: t(language, "metaFocalPointName"), value: strMeta(meta, "focal_point_name") },
+    { label: t(language, "metaFocalPointEmail"), value: strMeta(meta, "focal_point_contact") },
+    { label: t(language, "metaDataOwner"), value: strMeta(meta, "data_owner") },
     {
-      label: "Data Collection Modality",
+      label: t(language, "metaYearOfCollection"),
+      value: strMeta(meta, "year_of_data_collection"),
+    },
+    {
+      label: t(language, "metaModality"),
       value: strMeta(meta, "modality_of_data_collection"),
     },
-    { label: idLabel, value: strMeta(meta, "school_ids_type") },
     {
-      label: "Name of the EMIS System",
+      label: entityText(language, entity, "metaIdType"),
+      value: strMeta(meta, "school_ids_type"),
+    },
+    {
+      label: t(language, "metaEmisSystemName"),
       value: strMeta(meta, "emis_system_name") || strMeta(meta, "emis_system"),
     },
     {
-      label: "Frequency of School Data Collection",
+      label: t(language, "metaFrequency"),
       value: strMeta(meta, "frequency_of_school_data_collection"),
     },
-    { label: "Next Collection", value: strMeta(meta, "next_school_data_collection") },
+    {
+      label: t(language, "metaNextCollection"),
+      value: strMeta(meta, "next_school_data_collection"),
+    },
   ];
 }
 
@@ -382,7 +407,16 @@ async function buildContext(data: PDFReportData) {
     lowerSingular: "school",
   };
   const ep = entity.plural;
-  const es = entity.lowerSingular;
+
+  const language: Language = isSupportedLanguage(data.language)
+    ? data.language
+    : "en";
+  // The API sends English entity nouns; they only select a catalogue here.
+  const entityKey: EntityKey =
+    ep === "Health Centers" ? "healthCenters" : "schools";
+  const tr = (key: string) => t(language, key);
+  const te = (key: string) => entityText(language, entityKey, key);
+  const { fmt, pctParen } = makeNumberFormatters(LOCALE_TAG[language]);
 
   const uploaded = Number(summary.rows ?? 0) || 0;
   const approved = Number(
@@ -465,52 +499,53 @@ async function buildContext(data: PDFReportData) {
   const warnRotate =
     rejArc > 0.01 ? rejRotate + (rejArc / circumference) * 360 : -90;
 
-  const idSectionTitle =
-    ep === "Health Centers" ? "Record IDs" : "School IDs";
+  const priorityHigh = tr("priorityHigh");
+  const priorityMedium = tr("priorityMedium");
+  const priorityLow = tr("priorityLow");
 
   const rejectedSections: TableSection[] = [
     {
-      title: "Coordinates",
+      title: tr("sectionCoordinates"),
       rows: [
         {
-          label: `${ep} with missing coordinates`,
+          label: te("missingCoordinates"),
           alerts: fmt(missingCoords),
-          priority: "High",
+          priority: priorityHigh,
         },
         {
-          label: `${ep} with coordinates outside the country's limits`,
+          label: te("outsideCountry"),
           alerts: fmt(outsideCountry),
-          priority: "High",
+          priority: priorityHigh,
         },
       ],
     },
     {
-      title: idSectionTitle,
+      title: te("sectionIds"),
       rows: [
         {
-          label: `${ep} with missing ID`,
+          label: te("missingId"),
           alerts: fmt(missingSchoolIds),
-          priority: "High",
+          priority: priorityHigh,
         },
         {
-          label: `${ep} with duplicate ${es} IDs`,
+          label: te("duplicateIds"),
           alerts: fmt(dupSchoolIds),
-          priority: "High",
+          priority: priorityHigh,
         },
       ],
     },
     {
-      title: "Other",
+      title: tr("sectionOther"),
       rows: [
         {
-          label: `${ep} with missing names`,
+          label: te("missingNames"),
           alerts: fmt(missingName),
-          priority: "High",
+          priority: priorityHigh,
         },
         {
-          label: `${ep} with missing educational level`,
+          label: te("missingEducationLevel"),
           alerts: fmt(missingEduLevel),
-          priority: "High",
+          priority: priorityHigh,
         },
       ],
     },
@@ -518,42 +553,42 @@ async function buildContext(data: PDFReportData) {
 
   const warningsPage1Sections: TableSection[] = [
     {
-      title: "Duplicates",
+      title: tr("sectionDuplicates"),
       rows: [
         {
-          label: `${ep} with the same location`,
+          label: te("sameLocation"),
           alerts: fmt(sameLocation),
-          priority: "Medium",
+          priority: priorityMedium,
         },
         {
-          label: `${ep} with the same name, educational level, and location`,
+          label: te("sameNameLevelLocation"),
           alerts: fmt(nameEduLoc),
-          priority: "Medium",
+          priority: priorityMedium,
         },
         {
-          label: `${ep} identical except for ${es} ID`,
+          label: te("identicalExceptId"),
           alerts: fmt(allExceptCode),
-          priority: "Medium",
+          priority: priorityMedium,
         },
       ],
     },
     {
-      title: "Accuracy",
+      title: tr("sectionAccuracy"),
       rows: [
         {
-          label: "Low precision coordinates (less than 5 digits)",
+          label: tr("lowPrecision"),
           alerts: fmt(lowPrecision),
-          priority: "Medium",
+          priority: priorityMedium,
         },
       ],
     },
     {
-      title: "Other",
+      title: tr("sectionOther"),
       rows: [
         {
-          label: `High Density (more than 5 ${entity.lowerPlural} within 500m)`,
+          label: te("highDensity"),
           alerts: fmt(highDensity),
-          priority: "Low",
+          priority: priorityLow,
         },
       ],
     },
@@ -561,14 +596,14 @@ async function buildContext(data: PDFReportData) {
 
   const warningsPage2Rows: TableRow[] = [
     {
-      label: `${ep} with similar names, educational level, and location within a radius of 110m`,
+      label: te("similarNameLevelLocation110"),
       alerts: fmt(nameLevel110),
-      priority: "Low",
+      priority: priorityLow,
     },
     {
-      label: `${ep} with similar names and the same educational level within a radius of 110m`,
+      label: te("similarNameSameLevel110"),
       alerts: fmt(similarNameLevel110),
-      priority: "Low",
+      priority: priorityLow,
     },
   ];
 
@@ -584,7 +619,7 @@ async function buildContext(data: PDFReportData) {
     hasEducationMaps || hasElectricityMaps || hasConnectivityMaps;
 
   const metaRaw = data.uploadMetadata ?? {};
-  const metadataRows = buildMetadataRows(metaRaw, ep);
+  const metadataRows = buildMetadataRows(metaRaw, language, entityKey);
 
   // Dagster reports these inside dq-summary (snake_case); top-level props win.
   const schoolsCreatedRaw = data.schoolsCreated ?? summary.schools_created;
@@ -632,6 +667,11 @@ async function buildContext(data: PDFReportData) {
       }
     }
   }
+  const parsedUploadDate = new Date(data.uploadDate);
+  const localizedUploadDate = Number.isNaN(parsedUploadDate.getTime())
+    ? data.uploadDate
+    : formatDateForPDF(parsedUploadDate, language);
+
   const tailLayouts = layoutTailPages(connectivityOverflow, metadataRows);
   const postPage2Pages = buildPostPage2Sections(tailLayouts);
 
@@ -640,9 +680,33 @@ async function buildContext(data: PDFReportData) {
   return {
     country: data.country,
     uploadedFileName: data.uploadedFileName,
-    uploadDate: data.uploadDate,
+    // English keeps the raw ISO timestamp it has always rendered.
+    uploadDate: language === "en" ? data.uploadDate : localizedUploadDate,
     uploadId: data.uploadId,
     entity,
+    lang: language,
+    t: {
+      reportTitle: tr("reportTitle"),
+      uploadedOn: tr("uploadedOn"),
+      ingestionId: tr("ingestionId"),
+      alerts: tr("alerts"),
+      priority: tr("priority"),
+      rejected: tr("rejected"),
+      warnings: tr("warnings"),
+      excelSheet: tr("excelSheet"),
+      approvedWithWarnings: tr("approvedWithWarnings"),
+      mappings: tr("mappings"),
+      mappingsNote: tr("mappingsNote"),
+      educationLevel: tr("educationLevel"),
+      electricity: tr("electricity"),
+      connectivity: tr("connectivity"),
+      metadata: tr("metadata"),
+      entityPlural: te("plural"),
+      entityCreated: te("created"),
+      entityUpdated: te("updated"),
+      entityApproved: te("approved"),
+      entityRejected: te("rejected"),
+    },
     logoDataUri: await loadPdfLogoDataUri(),
     totals: {
       uploaded: fmt(uploaded),
@@ -655,7 +719,7 @@ async function buildContext(data: PDFReportData) {
     },
     donut: {
       centerTotal: fmt(uploaded),
-      centerLabel: `${ep} uploaded`,
+      centerLabel: te("uploaded"),
       rejArc: rejArc.toFixed(2),
       warnArc: warnArc.toFixed(2),
       circumference: circumference.toFixed(2),
@@ -723,9 +787,12 @@ export async function generateDataQualityReportPDF(
   }
 }
 
-export function formatDateForPDF(date: Date | string): string {
+export function formatDateForPDF(
+  date: Date | string,
+  language: Language = "en"
+): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleString("en-US", {
+  return d.toLocaleString(LOCALE_TAG[language], {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

@@ -4,6 +4,8 @@ import { Download, Send } from "@carbon/icons-react";
 import {
   Button,
   Loading,
+  MenuButton,
+  MenuItem,
   Tab,
   TabList,
   TabPanel,
@@ -15,6 +17,7 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 
 import { api, axi } from "@/api";
+import { DQ_REPORT_LANGUAGES } from "@/api/routers/email";
 import DataQualityChecks from "@/components/check-file-uploads/ColumnChecks";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
@@ -305,14 +308,20 @@ function Index() {
               alignItems: "center",
             }}
           >
-            <Button
+            <MenuButton
               kind="primary"
               size="md"
-              renderIcon={Download}
-              onClick={handleDownloadDqSummary}
+              menuAlignment="bottom-end"
+              label="Download data quality report (PDF)"
             >
-              Download data quality report (PDF)
-            </Button>
+              {DQ_REPORT_LANGUAGES.map(({ code, label }) => (
+                <MenuItem
+                  key={code}
+                  label={label}
+                  onClick={() => handleDownloadDqSummary(code)}
+                />
+              ))}
+            </MenuButton>
             {dqKitAvailable && (
               <Button
                 kind="secondary"

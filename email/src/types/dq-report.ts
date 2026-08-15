@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DataQualityCheck } from "./data-quality-checks";
+import { SUPPORTED_LANGUAGES } from "../i18n";
 
 export const DataQualityUploadSuccessProps = z.object({
   uploadId: z.string(),
@@ -75,6 +76,7 @@ export const DataQualityReportEmailProps = z.object({
     .optional(),
   schoolsCreated: z.union([z.number(), z.string()]).optional(),
   schoolsUpdated: z.union([z.number(), z.string()]).optional(),
+  language: z.enum(SUPPORTED_LANGUAGES).default("en"),
 });
 
 export type DataQualityReportEmailProps = z.infer<

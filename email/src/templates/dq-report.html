@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{lang}}">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Data Quality Report — {{country}}</title>
+<title>{{t.reportTitle}} — {{country}}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Manrope:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet" />
@@ -129,12 +129,12 @@
 <!-- PAGE 1 -->
 <section class="page" id="page-1">
   <div class="logo"><img src="{{logoDataUri}}" alt="GIGA · UNICEF · ITU" /></div>
-  <div class="badge">{{entity.plural}}</div>
+  <div class="badge">{{t.entityPlural}}</div>
 
   <div class="title-block">
-    <h1>Data Quality Report - {{country}}</h1>
-    <div class="sub">{{uploadedFileName}} uploaded on {{uploadDate}}</div>
-    <div class="sub">Ingestion ID: {{uploadId}}</div>
+    <h1>{{t.reportTitle}} - {{country}}</h1>
+    <div class="sub">{{uploadedFileName}} {{t.uploadedOn}} {{uploadDate}}</div>
+    <div class="sub">{{t.ingestionId}}: {{uploadId}}</div>
   </div>
 
   <div class="donut">
@@ -153,30 +153,30 @@
   </div>
 
   <div class="createupdate">
-    <span>{{entity.plural}} created: {{schoolsCreated}}</span>
-    <span>{{entity.plural}} updated: {{schoolsUpdated}}</span>
+    <span>{{t.entityCreated}}: {{schoolsCreated}}</span>
+    <span>{{t.entityUpdated}}: {{schoolsUpdated}}</span>
   </div>
 
   <div class="statgrid">
     <div class="statcell tl">
       <div>
         <div class="statline"><span class="num green">{{totals.approved}}</span><span class="pct">{{totals.approvedPctParen}}</span></div>
-        <div class="statlabel">Approved {{entity.lowerPlural}}</div>
+        <div class="statlabel">{{t.entityApproved}}</div>
       </div>
     </div>
     <div class="statcell tr">
       <div>
         <div class="statline"><span class="num amber">{{totals.approvedWithWarnings}}</span><span class="pct">{{totals.warningsPctParen}}</span></div>
-        <div class="statlabel">Approved with warnings</div>
+        <div class="statlabel">{{t.approvedWithWarnings}}</div>
       </div>
-      <div class="excel">Excel Sheet: <span class="lnk">Warning_</span></div>
+      <div class="excel">{{t.excelSheet}}: <span class="lnk">Warning_</span></div>
     </div>
     <div class="statcell span2">
       <div>
         <div class="statline"><span class="num red">{{totals.rejected}}</span><span class="pct">{{totals.rejectedPctParen}}</span></div>
-        <div class="statlabel">Rejected {{entity.lowerPlural}}</div>
+        <div class="statlabel">{{t.entityRejected}}</div>
       </div>
-      <div class="excel">Excel Sheet: <span class="lnk">Rejected_</span></div>
+      <div class="excel">{{t.excelSheet}}: <span class="lnk">Rejected_</span></div>
     </div>
     <div class="statarrow">
       <svg viewBox="0 0 26 12" fill="none"><path d="M0 6h23M19 2l4 4-4 4" stroke="#000" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -187,10 +187,10 @@
     <div class="thead">
       <div class="ico">
         <svg class="wico" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="6" fill="#ff000b"/><rect x="5.25" y="2.5" width="1.5" height="4.2" rx="0.75" fill="#fff"/><circle cx="6" cy="8.6" r="0.85" fill="#fff"/></svg>
-        <span class="title">Rejected</span>
+        <span class="title">{{t.rejected}}</span>
       </div>
-      <span class="col-num">Alerts</span>
-      <span class="col-num">Priority</span>
+      <span class="col-num">{{t.alerts}}</span>
+      <span class="col-num">{{t.priority}}</span>
     </div>
     {{#each rejectedSections}}
     <div class="tsub">{{title}}</div>
@@ -204,10 +204,10 @@
     <div class="thead">
       <div class="ico">
         <svg class="wico" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0.6 11.6 11H0.4L6 0.6Z" fill="#ffae00"/><rect x="5.3" y="4" width="1.4" height="3.6" rx="0.7" fill="#000"/><circle cx="6" cy="9.2" r="0.8" fill="#000"/></svg>
-        <span class="title">Warnings</span>
+        <span class="title">{{t.warnings}}</span>
       </div>
-      <span class="col-num">Alerts</span>
-      <span class="col-num">Priority</span>
+      <span class="col-num">{{t.alerts}}</span>
+      <span class="col-num">{{t.priority}}</span>
     </div>
     {{#each warningsPage1Sections}}
     <div class="tsub">{{title}}</div>
@@ -218,7 +218,7 @@
   </div>
 
   <div class="footer">
-    <span class="meta">Giga Sync | Data Quality Report | {{country}}</span>
+    <span class="meta">Giga Sync | {{t.reportTitle}} | {{country}}</span>
     <span class="pageno">{{pageNum.p1}}</span>
   </div>
 </section>
@@ -226,16 +226,16 @@
 <!-- PAGE 2 -->
 <section class="page" id="page-2">
   <div class="logo"><img src="{{logoDataUri}}" alt="GIGA · UNICEF · ITU" /></div>
-  <div class="badge">{{entity.plural}}</div>
+  <div class="badge">{{t.entityPlural}}</div>
 
   <div class="tbl" style="top:69pt;">
     <div class="thead">
       <div class="ico">
         <svg class="wico" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0.6 11.6 11H0.4L6 0.6Z" fill="#ffae00"/><rect x="5.3" y="4" width="1.4" height="3.6" rx="0.7" fill="#000"/><circle cx="6" cy="9.2" r="0.8" fill="#000"/></svg>
-        <span class="title">Warnings</span>
+        <span class="title">{{t.warnings}}</span>
       </div>
-      <span class="col-num">Alerts</span>
-      <span class="col-num">Priority</span>
+      <span class="col-num">{{t.alerts}}</span>
+      <span class="col-num">{{t.priority}}</span>
     </div>
     {{#each warningsPage2Rows}}
     <div class="trow"><span class="label">{{label}}</span><span class="val">{{alerts}}</span><span class="val">{{priority}}</span></div>
@@ -243,14 +243,14 @@
   </div>
 
   {{#if hasMapsSection}}
-  <div class="section-title" style="top:{{mapsSectionTop}}pt;">Mappings</div>
-  <div class="section-note" style="top:{{mapsNoteTop}}pt;">These mappings have been applied to all uploaded data, to standardise terminologies to Giga values. If there are any inconsistencies, please contact your Giga focal point.</div>
+  <div class="section-title" style="top:{{mapsSectionTop}}pt;">{{t.mappings}}</div>
+  <div class="section-note" style="top:{{mapsNoteTop}}pt;">{{t.mappingsNote}}</div>
   {{/if}}
 
   {{#if hasEducationMaps}}
   <div class="tbl" style="top:{{educationMapsTop}}pt;">
     <div class="thead compact">
-      <span class="title">Education level</span>
+      <span class="title">{{t.educationLevel}}</span>
       <span class="col-num">#</span>
       <span class="col-num">%</span>
     </div>
@@ -268,7 +268,7 @@
   {{#if hasElectricityMaps}}
   <div class="tbl" style="top:{{electricityMapsTop}}pt;">
     <div class="thead compact">
-      <span class="title">Electricity</span>
+      <span class="title">{{t.electricity}}</span>
       <span class="col-num">#</span>
       <span class="col-num">%</span>
     </div>
@@ -286,7 +286,7 @@
   {{#if connectivityPage2.length}}
   <div class="tbl" style="top:{{connectivityMapsTop}}pt;">
     <div class="thead compact">
-      <span class="title">Connectivity</span>
+      <span class="title">{{t.connectivity}}</span>
       <span class="col-num">#</span>
       <span class="col-num">%</span>
     </div>
@@ -302,7 +302,7 @@
   {{/if}}
 
   <div class="footer">
-    <span class="meta">Giga Sync | Data Quality Report | {{country}}</span>
+    <span class="meta">Giga Sync | {{t.reportTitle}} | {{country}}</span>
     <span class="pageno">{{pageNum.p2}}</span>
   </div>
 </section>
@@ -311,12 +311,12 @@
 {{#each postPage2Pages}}
 <section class="page">
   <div class="logo"><img src="{{../logoDataUri}}" alt="GIGA · UNICEF · ITU" /></div>
-  <div class="badge">{{../entity.plural}}</div>
+  <div class="badge">{{../t.entityPlural}}</div>
 
   {{#if connectivity.length}}
   <div class="tbl" style="top:{{connectivityTop}}pt;">
     <div class="thead compact">
-      <span class="title">Connectivity</span>
+      <span class="title">{{../t.connectivity}}</span>
       <span class="col-num">#</span>
       <span class="col-num">%</span>
     </div>
@@ -333,7 +333,7 @@
 
   {{#if includeMetadata}}
   <div class="tbl" style="top:{{metadataTop}}pt;">
-    <div class="thead"><span class="title">Metadata</span></div>
+    <div class="thead"><span class="title">{{../t.metadata}}</span></div>
     {{#each ../metadataRows}}
     <div class="trow meta"><span class="label">{{label}}</span><span class="value">{{value}}</span></div>
     {{/each}}
@@ -341,7 +341,7 @@
   {{/if}}
 
   <div class="footer">
-    <span class="meta">Giga Sync | Data Quality Report | {{../country}}</span>
+    <span class="meta">Giga Sync | {{../t.reportTitle}} | {{../country}}</span>
     <span class="pageno">{{pageNum}}</span>
   </div>
 </section>
