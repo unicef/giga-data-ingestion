@@ -11,7 +11,7 @@ import {
   rgb,
   StandardFonts,
 } from "pdf-lib";
-import puppeteer, { type Browser } from "puppeteer-core";
+import puppeteer, { type Browser, type Page } from "puppeteer-core";
 
 import { loadPdfLogoDataUri } from "./blob-assets";
 import {
@@ -854,23 +854,42 @@ const COLLECT_ROW_HEIGHTS = `(function () {
 })()`;
 
 
+async function loadForPrint(page: Page, html: string): Promise<void> {
+  await page.emulateMediaType("print");
+  await page.setContent(html, { waitUntil: "networkidle0" });
+  // Resolve to a primitive: FontFaceSet itself is not serialisable.
+  await page.evaluate("document.fonts.ready.then(function () { return true; })");
+}
+
+/**
+ * Real row heights, measured by rendering once. A second `setContent` on a page
+ * that already has content never reaches `networkidle0`, so this uses its own.
+ */
+async function measureRowHeights(
+  browser: Browser,
+  html: string
+): Promise<RowHeights> {
+  const page = await browser.newPage();
+  try {
+    await loadForPrint(page, html);
+    return (await page.evaluate(COLLECT_ROW_HEIGHTS)) as RowHeights;
+  } finally {
+    await page.close();
+  }
+}
+
 export async function generateDataQualityReportPDF(
   data: PDFReportData
 ): Promise<Buffer> {
   const browser = await getBrowser();
+
+  // Pass 1 lays out with estimated row heights; pass 2 repaginates with the
+  // heights the browser actually produced, so wrapped labels never overflow.
+  const measured = await measureRowHeights(browser, await renderHtml(data));
+
   const page = await browser.newPage();
   try {
-    await page.emulateMediaType("print");
-
-    // Pass 1 lays out with estimated row heights; pass 2 repaginates with the
-    // heights the browser actually produced, so wrapped labels never overflow.
-    await page.setContent(await renderHtml(data), { waitUntil: "networkidle0" });
-    await page.evaluate("document.fonts.ready");
-    const measured = (await page.evaluate(COLLECT_ROW_HEIGHTS)) as RowHeights;
-
-    await page.setContent(await renderHtml(data, measured), {
-      waitUntil: "networkidle0",
-    });
+    await loadForPrint(page, await renderHtml(data, measured));
 
     const pdf = await page.pdf({
       format: "A4",
