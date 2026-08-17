@@ -29,6 +29,8 @@
     }
   },
   "excelSheet": "Hoja de Excel",
+  "excelSheetRejected": "Rechazadas_",
+  "excelSheetWarning": "Advertencia_",
   "ingestionId": "ID de Ingesta",
   "lowPrecision": "Coordenadas de baja precisión (menos de 5 dígitos)",
   "mappings": "Mapas",

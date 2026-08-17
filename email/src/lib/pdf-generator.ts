@@ -125,8 +125,16 @@ function makeNumberFormatters(tag: string) {
     useGrouping: false,
   });
 
+  // "always" keeps the separator on 4-digit numbers, which es-ES drops by
+  // default — otherwise 1127 and 95.488 sit in the same column. The option is
+  // ES2023; TypeScript 5.3 still types it as boolean, hence the cast.
+  const integer = new Intl.NumberFormat(tag, {
+    useGrouping: "always",
+    maximumFractionDigits: 0,
+  } as unknown as Intl.NumberFormatOptions);
+
   const fmt = (n: number): string =>
-    Number.isFinite(n) ? Math.round(n).toLocaleString(tag) : "0";
+    Number.isFinite(n) ? integer.format(Math.round(n)) : "0";
 
   const pctOf = (part: number, total: number): string => {
     if (total <= 0) return "0%";
@@ -136,7 +144,24 @@ function makeNumberFormatters(tag: string) {
   const pctParen = (part: number, total: number): string =>
     `(${pctOf(part, total)})`;
 
-  return { fmt, pctOf, pctParen };
+  const pctValue = (n: number): string => `${percent.format(n)}%`;
+
+  return { fmt, pctOf, pctParen, pctValue };
+}
+
+/**
+ * valueMaps reach us pre-formatted in en-US ("95,488", "39.0%"). Re-format them
+ * so separators match the rest of the report; leave anything unparseable alone.
+ */
+function reformatNumeric(
+  raw: string | undefined,
+  format: (n: number) => string
+): string {
+  const text = String(raw ?? "").trim();
+  const bare = text.replace(/%/g, "").replace(/,/g, "").trim();
+  if (bare === "") return text;
+  const n = Number(bare);
+  return Number.isFinite(n) ? format(n) : text;
 }
 
 const emDash = "—";
@@ -467,7 +492,9 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
     ep === "Health Centers" ? "healthCenters" : "schools";
   const tr = (key: string) => t(language, key);
   const te = (key: string) => entityText(language, entityKey, key);
-  const { fmt, pctParen } = makeNumberFormatters(LOCALE_TAG[language]);
+  const { fmt, pctParen, pctValue } = makeNumberFormatters(
+    LOCALE_TAG[language]
+  );
 
   const uploaded = Number(summary.rows ?? 0) || 0;
   const approved = Number(
@@ -662,7 +689,12 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
   // `mk` keys survive into the markup so a render pass can report real heights.
   let mapKey = 0;
   const keyMaps = (rows: ValueMapRow[]): KeyedMapRow[] =>
-    rows.map((row) => ({ ...row, mk: `m${mapKey++}` }));
+    rows.map((row) => ({
+      ...row,
+      count: reformatNumeric(row.count, fmt),
+      pct: reformatNumeric(row.pct, pctValue),
+      mk: `m${mapKey++}`,
+    }));
   const educationMaps = keyMaps(valueMaps.education ?? []);
   const electricityMaps = keyMaps(valueMaps.electricity ?? []);
   const connectivityAll = keyMaps(valueMaps.connectivity ?? []);
@@ -776,6 +808,8 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
       rejected: tr("rejected"),
       warnings: tr("warnings"),
       excelSheet: tr("excelSheet"),
+      excelSheetWarning: tr("excelSheetWarning"),
+      excelSheetRejected: tr("excelSheetRejected"),
       approvedWithWarnings: tr("approvedWithWarnings"),
       mappings: tr("mappings"),
       mappingsNote: tr("mappingsNote"),
