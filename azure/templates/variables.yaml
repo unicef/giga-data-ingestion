@@ -18,7 +18,6 @@ variables:
   sentryDsn: $(SENTRY_DSN)
   sentryDsnFrontend: $(VITE_SENTRY_DSN)
   sentryTunnelHost: $(SENTRY_TUNNEL_HOST)
-  sentryAuthToken: $(SENTRY_AUTH_TOKEN)
   sentryOrg: $(SENTRY_ORG)
   sentryProject: $(SENTRY_PROJECT)
   sentryUrl: $(SENTRY_URL)
