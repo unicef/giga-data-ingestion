@@ -40,6 +40,7 @@ repos:
           - '@typescript-eslint/eslint-plugin@6.0.0'
           - '@typescript-eslint/parser@6.0.0'
           - '@tanstack/eslint-plugin-query@5.8.4'
+          - typescript@5.4.5
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.7.1
     hooks:
@@ -73,8 +74,13 @@ repos:
     rev: v2.12.0
     hooks:
       - id: hadolint-docker
+        entry: ghcr.io/hadolint/hadolint:v2.15.1 hadolint
         args:
           - --ignore
           - DL3008
           - --ignore
           - DL3018
+          # VITE_* build args are baked into the client bundle by design, and
+          # the flagged one is a B2C policy name, not a credential.
+          - --ignore
+          - DL3064

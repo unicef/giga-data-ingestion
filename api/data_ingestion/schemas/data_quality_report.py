@@ -18,6 +18,13 @@ class SummaryCheck(BaseModel):
     columns: int
     rows: int
     timestamp: datetime
+    rows_passed: int | None = None
+    rows_failed: int | None = None
+    rows_passed_with_warnings: int | None = None
+    count_schools_low_precision_coordinates: int | None = None
+    count_duplicate_school_id: int | None = None
+    schools_created: int | None = None
+    schools_updated: int | None = None
 
 
 class DataQualityCheck(BaseModel):

@@ -158,7 +158,7 @@ function UploadReviewModal({
             {impactPreview.duplicateSchoolIdRows > 0 && (
               <ImpactPreviewRow
                 icon={RowDelete}
-                label="Duplicate school ID rows"
+                label="Rows with duplicated school ID"
                 value={impactPreview.duplicateSchoolIdRows}
               />
             )}

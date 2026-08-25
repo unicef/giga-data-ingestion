@@ -68,7 +68,7 @@ from data_ingestion.utils.upload_impact import (
     normalize_school_id,
 )
 
-DQ_CHECK_LABELS_TABLE_NAME = "SchoolGeolocationMasterDQChecksTest"
+DQ_CHECK_LABELS_TABLE_NAME = "SchoolGeolocationMasterDQChecks"
 
 router = APIRouter(
     prefix="/api/upload",
@@ -1212,45 +1212,6 @@ async def download_passed_rows_direct(
         ) from e
 
 
-@router.get("/dq_summary/{dataset}/{country_code}/{filename}")
-async def download_dq_summary_direct(
-    dataset: str,
-    country_code: str,
-    filename: str,
-):
-    logger.info(
-        f"Downloading dq-summary: dataset={dataset}, country={country_code}, file={filename}"
-    )
-    if not filename.endswith(".txt"):
-        filename = filename.split(".")[0] + ".txt"
-    # Build path to the .txt file only
-    path = f"data-quality-results/{dataset}/dq-report/{country_code}/{filename}"
-    logger.info(f"Attempting to download from path: {path}")
-
-    blob = storage_client.get_blob_client(path)
-
-    if not blob.exists():
-        logger.error(f"File not found at path: {path}")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"DQ summary file not found at path: {path}",
-        )
-
-    try:
-        stream = blob.download_blob()
-        return StreamingResponse(
-            stream.chunks(),
-            media_type="text/plain",
-            headers={"Content-Disposition": f"attachment; filename={filename}"},
-        )
-    except Exception as e:
-        logger.error(f"Error downloading blob: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error downloading file: {str(e)}",
-        ) from e
-
-
 @router.get("/raw_file/{dataset}/{country_code}/{filename}")
 async def download_raw_file_direct(
     dataset: str,
@@ -1311,8 +1272,9 @@ async def get_upload_impact_preview(
     """
     Compare uploaded school IDs against the current country master dataset.
 
-    Counts are row-based: duplicate IDs in the uploaded file count once per row,
-    matching how users review uploaded school rows in the UI.
+    Counts are row-based. The duplicate count includes every row whose school
+    ID is repeated in the file (first occurrence included), matching how users
+    review uploaded school rows in the UI.
     """
     if dataset not in {"geolocation", "coverage"}:
         raise HTTPException(

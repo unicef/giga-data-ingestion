@@ -2,12 +2,21 @@ import { AxiosInstance, AxiosResponse } from "axios";
 
 import { DataQualityCheckSummary } from "@/types/upload";
 
+export const DQ_REPORT_LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "es", label: "Español" },
+  { code: "fr", label: "Français" },
+] as const;
+
+export type DqReportLanguage = typeof DQ_REPORT_LANGUAGES[number]["code"];
+
 export interface DqReportPdfProps {
   dataset: string;
   dataQualityCheck: DataQualityCheckSummary;
   uploadDate: string;
   uploadId: string;
   country: string;
+  language?: DqReportLanguage;
 }
 
 export interface DqReportPdfRequest {

@@ -4,6 +4,8 @@ import { Download, Send } from "@carbon/icons-react";
 import {
   Button,
   Loading,
+  MenuButton,
+  MenuItem,
   Tab,
   TabList,
   TabPanel,
@@ -15,10 +17,12 @@ import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 
 import { api, axi } from "@/api";
+import { DQ_REPORT_LANGUAGES } from "@/api/routers/email";
 import DataQualityChecks from "@/components/check-file-uploads/ColumnChecks";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { PendingComponent } from "@/components/common/PendingComponent";
+import useCountryName from "@/hooks/useCountryName";
 import { Check } from "@/types/upload";
 import {
   DQStatus,
@@ -93,6 +97,8 @@ function Index() {
 
   const checkTypeLabel =
     uploadData.dq_mode === "uploaded" ? "FILE_CHECKED" : "MASTER";
+
+  const countryName = useCountryName(uploadData.country);
 
   const runMasterCheckMutation = useMutation({
     mutationFn: () => api.uploads.dq_run(uploadId, "master"),
@@ -234,6 +240,12 @@ function Index() {
           }}
         >
           <div>
+            {countryName && (
+              <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
+                Country: {countryName}
+              </p>
+            )}
+
             <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
               File: <a className="bx--link">{uploadData.original_filename}</a>
             </p>
@@ -305,14 +317,20 @@ function Index() {
               alignItems: "center",
             }}
           >
-            <Button
+            <MenuButton
               kind="primary"
               size="md"
-              renderIcon={Download}
-              onClick={handleDownloadDqSummary}
+              menuAlignment="bottom-end"
+              label="Download data quality report (PDF)"
             >
-              Download data quality report (PDF)
-            </Button>
+              {DQ_REPORT_LANGUAGES.map(({ code, label }) => (
+                <MenuItem
+                  key={code}
+                  label={label}
+                  onClick={() => handleDownloadDqSummary(code)}
+                />
+              ))}
+            </MenuButton>
             {dqKitAvailable && (
               <Button
                 kind="secondary"

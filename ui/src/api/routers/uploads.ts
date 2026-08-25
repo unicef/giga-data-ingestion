@@ -181,21 +181,6 @@ export default function routes(axi: AxiosInstance) {
         },
       );
     },
-    download_dq_summary: (params: {
-      dataset: string;
-      country_code: string;
-      filename: string;
-    }): Promise<AxiosResponse<Blob>> => {
-      const { dataset, country_code, filename } = params;
-
-      return axi.get(
-        `upload/dq_summary/${dataset}/${country_code}/${filename}`,
-        {
-          responseType: "blob",
-        },
-      );
-    },
-
     download_raw_file: (params: {
       dataset: string;
       country_code: string;
