@@ -44,7 +44,7 @@ export default defineConfig({
             authToken: process.env.SENTRY_AUTH_TOKEN,
             release: {
               // Must match the release set in src/instrument.ts
-              name: `github.com/unicef/giga-data-ingestion:${process.env.VITE_COMMIT_SHA}`,
+              name: `giga-data-ingestion@${process.env.VITE_COMMIT_SHA}`,
             },
             sourcemaps: {
               filesToDeleteAfterUpload: ["build/**/*.map"],
