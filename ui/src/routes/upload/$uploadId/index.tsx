@@ -22,6 +22,7 @@ import DataQualityChecks from "@/components/check-file-uploads/ColumnChecks";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { PendingComponent } from "@/components/common/PendingComponent";
+import useCountryName from "@/hooks/useCountryName";
 import { Check } from "@/types/upload";
 import {
   DQStatus,
@@ -96,6 +97,8 @@ function Index() {
 
   const checkTypeLabel =
     uploadData.dq_mode === "uploaded" ? "FILE_CHECKED" : "MASTER";
+
+  const countryName = useCountryName(uploadData.country);
 
   const runMasterCheckMutation = useMutation({
     mutationFn: () => api.uploads.dq_run(uploadId, "master"),
@@ -237,6 +240,12 @@ function Index() {
           }}
         >
           <div>
+            {countryName && (
+              <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
+                Country: {countryName}
+              </p>
+            )}
+
             <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
               File: <a className="bx--link">{uploadData.original_filename}</a>
             </p>
