@@ -30,7 +30,7 @@ if (process.env.NODE_SENTRY_DSN && process.env.NODE_ENV !== "development") {
   app.use("*", sentry({
     dsn: process.env.NODE_SENTRY_DSN,
     environment: process.env.DEPLOY_ENV ?? "local",
-    release: `github.com/unicef/giga-data-ingestion:${process.env.COMMIT_SHA}`,
+    release: `giga-data-ingestion@${process.env.COMMIT_SHA}`,
     sampleRate: 1.0,
     tracesSampleRate: 1.0,
   }));

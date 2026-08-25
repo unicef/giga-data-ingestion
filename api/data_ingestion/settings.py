@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 import sentry_sdk
 from loguru import logger
-from pydantic import AnyUrl, PostgresDsn, RedisDsn, computed_field
+from pydantic import AliasChoices, AnyUrl, Field, PostgresDsn, RedisDsn, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -78,7 +78,9 @@ class Settings(BaseSettings):
     AZURE_PASSWORD_RESET_AUTH_POLICY_NAME: str = ""
     DB_HOST: str = "db"
     DB_PORT: int = 5432
-    SENTRY_DSN: str = ""
+    SENTRY_DSN: str = Field(
+        default="", validation_alias=AliasChoices("SENTRY_DSN", "SENTRY_DSN_BACKEND")
+    )
     SENTRY_TUNNEL_HOST: str = ""
     SENTRY_ENABLE_IN_LOCAL: bool = False
     SENTRY_SEND_DEFAULT_PII: bool = False
@@ -294,7 +296,7 @@ def initialize_sentry():
             debug=settings.SENTRY_DEBUG,
             before_send=_scrub_sentry_event,
             environment=settings.DEPLOY_ENV,
-            release=f"github.com/unicef/giga-data-ingestion:{settings.COMMIT_SHA}",
+            release=f"giga-data-ingestion@{settings.COMMIT_SHA}",
             server_name=f"ingestion-portal-api-{settings.DEPLOY_ENV.name}@{socket.gethostname()}",
         )
         logger.info("Initialized Sentry.")
