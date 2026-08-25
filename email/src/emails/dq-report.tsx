@@ -116,6 +116,7 @@ DataQualityReport.PreviewProps = {
   }),
   uploadId: "NjA5NzUy",
   country: "USA",
+  language: "en",
 } satisfies DataQualityReportEmailProps;
 
 export default DataQualityReport;

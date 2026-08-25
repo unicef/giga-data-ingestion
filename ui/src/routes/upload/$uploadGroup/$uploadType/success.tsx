@@ -10,6 +10,8 @@ import {
 import {
   Button,
   Loading,
+  MenuButton,
+  MenuItem,
   Tab,
   TabList,
   TabPanel,
@@ -27,6 +29,7 @@ import {
 import { z } from "zod";
 
 import { api } from "@/api";
+import { DQ_REPORT_LANGUAGES } from "@/api/routers/email";
 import BasicDataQualityCheck from "@/components/check-file-uploads/BasicDataQualityCheck";
 import DataCheckItem from "@/components/check-file-uploads/DataCheckItem";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
@@ -424,15 +427,21 @@ function Success() {
                     {commaNumber(rows)}
                   </p>
                   <div className="mt-auto">
-                    <Button
+                    <MenuButton
                       kind="primary"
                       size="sm"
-                      renderIcon={Download}
+                      menuAlignment="bottom-start"
                       disabled={rows === 0}
-                      onClick={handleDownloadDqSummary}
+                      label="Download Summary"
                     >
-                      Download Summary
-                    </Button>
+                      {DQ_REPORT_LANGUAGES.map(({ code, label }) => (
+                        <MenuItem
+                          key={code}
+                          label={label}
+                          onClick={() => handleDownloadDqSummary(code)}
+                        />
+                      ))}
+                    </MenuButton>
                   </div>
                 </div>
 

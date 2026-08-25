@@ -11,9 +11,17 @@ import {
   rgb,
   StandardFonts,
 } from "pdf-lib";
-import puppeteer, { type Browser } from "puppeteer-core";
+import puppeteer, { type Browser, type Page } from "puppeteer-core";
 
 import { loadPdfLogoDataUri } from "./blob-assets";
+import {
+  entityText,
+  isSupportedLanguage,
+  LOCALE_TAG,
+  t,
+  type EntityKey,
+  type Language,
+} from "../i18n";
 import type { DataQualityReportEmailProps } from "../types/dq-report";
 
 export interface ValueMapRow {
@@ -35,6 +43,7 @@ export interface PDFReportData extends DataQualityReportEmailProps {
   };
   schoolsCreated?: number | string | null;
   schoolsUpdated?: number | string | null;
+  language?: Language;
 }
 
 type Check = {
@@ -108,16 +117,52 @@ function warningAcrossColumns(
   );
 }
 
-const fmt = (n: number): string =>
-  Number.isFinite(n) ? Math.round(n).toLocaleString("en-US") : "0";
+/** `useGrouping: false` keeps percentages identical to the previous toFixed(1). */
+function makeNumberFormatters(tag: string) {
+  const percent = new Intl.NumberFormat(tag, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+    useGrouping: false,
+  });
 
-const pctOf = (part: number, total: number): string => {
-  if (total <= 0) return "0%";
-  return `${((part / total) * 100).toFixed(1)}%`;
-};
+  // "always" keeps the separator on 4-digit numbers, which es-ES drops by
+  // default — otherwise 1127 and 95.488 sit in the same column. The option is
+  // ES2023; TypeScript 5.3 still types it as boolean, hence the cast.
+  const integer = new Intl.NumberFormat(tag, {
+    useGrouping: "always",
+    maximumFractionDigits: 0,
+  } as unknown as Intl.NumberFormatOptions);
 
-const pctParen = (part: number, total: number): string =>
-  `(${pctOf(part, total)})`;
+  const fmt = (n: number): string =>
+    Number.isFinite(n) ? integer.format(Math.round(n)) : "0";
+
+  const pctOf = (part: number, total: number): string => {
+    if (total <= 0) return "0%";
+    return `${percent.format((part / total) * 100)}%`;
+  };
+
+  const pctParen = (part: number, total: number): string =>
+    `(${pctOf(part, total)})`;
+
+  const pctValue = (n: number): string => `${percent.format(n)}%`;
+
+  return { fmt, pctOf, pctParen, pctValue };
+}
+
+/**
+ * valueMaps reach us pre-formatted in en-US ("95,488", "39.0%"). Re-format them
+ * so separators match the rest of the report; leave anything unparseable alone.
+ */
+function reformatNumeric(
+  raw: string | undefined,
+  format: (n: number) => string
+): string {
+  const text = String(raw ?? "").trim();
+  const bare = text.replace(/%/g, "").replace(/,/g, "").trim();
+  if (bare === "") return text;
+  const n = Number(bare);
+  return Number.isFinite(n) ? format(n) : text;
+}
 
 const emDash = "—";
 
@@ -132,33 +177,38 @@ function strMeta(
 
 function buildMetadataRows(
   meta: Record<string, string | number | null | undefined> | undefined,
-  entityPlural: string
+  language: Language,
+  entity: EntityKey
 ) {
-  const idLabel =
-    entityPlural === "Health Centers"
-      ? "Primary record / facility ID type"
-      : "School ID Type";
-
   return [
-    { label: "Description", value: strMeta(meta, "description") },
-    { label: "Data Focal Point Name", value: strMeta(meta, "focal_point_name") },
-    { label: "Data Focal Point Email", value: strMeta(meta, "focal_point_contact") },
-    { label: "Data Owner", value: strMeta(meta, "data_owner") },
-    { label: "Year of Data Collection", value: strMeta(meta, "year_of_data_collection") },
+    { label: t(language, "metaDescription"), value: strMeta(meta, "description") },
+    { label: t(language, "metaFocalPointName"), value: strMeta(meta, "focal_point_name") },
+    { label: t(language, "metaFocalPointEmail"), value: strMeta(meta, "focal_point_contact") },
+    { label: t(language, "metaDataOwner"), value: strMeta(meta, "data_owner") },
     {
-      label: "Data Collection Modality",
+      label: t(language, "metaYearOfCollection"),
+      value: strMeta(meta, "year_of_data_collection"),
+    },
+    {
+      label: t(language, "metaModality"),
       value: strMeta(meta, "modality_of_data_collection"),
     },
-    { label: idLabel, value: strMeta(meta, "school_ids_type") },
     {
-      label: "Name of the EMIS System",
+      label: entityText(language, entity, "metaIdType"),
+      value: strMeta(meta, "school_ids_type"),
+    },
+    {
+      label: t(language, "metaEmisSystemName"),
       value: strMeta(meta, "emis_system_name") || strMeta(meta, "emis_system"),
     },
     {
-      label: "Frequency of School Data Collection",
+      label: t(language, "metaFrequency"),
       value: strMeta(meta, "frequency_of_school_data_collection"),
     },
-    { label: "Next Collection", value: strMeta(meta, "next_school_data_collection") },
+    {
+      label: t(language, "metaNextCollection"),
+      value: strMeta(meta, "next_school_data_collection"),
+    },
   ];
 }
 
@@ -167,37 +217,81 @@ const PAGE_CONTENT_BOTTOM = 790;
 /** Keep tables clear of the page footer band. */
 const PAGE_CONTENT_SAFE_BOTTOM = PAGE_CONTENT_BOTTOM - 12;
 const PAGE2_MAPS_TABLE_START = 258;
+const PAGE2_WARNINGS_TOP = 69;
 const SECTION_GAP = 16;
-const MAP_TABLE_HEAD = 28;
-const MAP_ROW_HEIGHT = 24;
-const META_TABLE_HEAD = 36;
-const META_ROW_HEIGHT = 24;
 
-/** Map rows with long source labels wrap to two lines in the 160pt column. */
-function estimateMapRowHeight(row: ValueMapRow): number {
-  const len = row.src?.length ?? 0;
-  if (len > 35) return 40;
-  if (len > 20) return 32;
-  return MAP_ROW_HEIGHT;
+// Mirrors the .tbl / .thead / .trow box model in dq-report.html. 1px = 0.75pt.
+const ROW_LINE = 16;
+const ROW_PAD_Y = 3;
+const ROW_BORDER = 0.375;
+const TBL_BORDERS = 1.5;
+const HEAD_COMPACT = 22.375;
+const HEAD_FULL = 24;
+const MAP_SRC_COL = 160;
+const MAP_DST_COL = 174;
+const META_VALUE_COL = 265;
+const TABLE_LABEL_COL = 362;
+const CHAR_WIDTH = 5;
+
+function rowHeight(lines: number): number {
+  return ROW_PAD_Y * 2 + lines * ROW_LINE + ROW_BORDER;
 }
 
-function mapTableHeight(rowCount: number, rows?: ValueMapRow[]): number {
-  if (rowCount <= 0) return 0;
-  if (rows && rows.length > 0) {
-    const body = rows
-      .slice(0, rowCount)
-      .reduce((sum, row) => sum + estimateMapRowHeight(row), 0);
-    return MAP_TABLE_HEAD + body;
-  }
-  return MAP_TABLE_HEAD + rowCount * MAP_ROW_HEIGHT;
+function lineCount(text: string | undefined, columnWidth: number): number {
+  const perLine = Math.max(1, Math.floor(columnWidth / CHAR_WIDTH));
+  return Math.max(1, Math.ceil((text?.length ?? 0) / perLine));
 }
 
-function maxMapRowsThatFit(rows: ValueMapRow[], maxHeight: number): number {
-  if (maxHeight < MAP_TABLE_HEAD || rows.length === 0) return 0;
-  let used = MAP_TABLE_HEAD;
+/**
+ * Row heights measured in the browser on a first render pass, keyed by `mk`.
+ * Absent on the first pass, where the char-width estimate stands in.
+ */
+export type RowHeights = Record<string, number>;
+
+type KeyedMapRow = ValueMapRow & { mk: string };
+type KeyedMetaRow = { label: string; value: string; mk: string };
+
+function mapRowHeight(row: KeyedMapRow, measured?: RowHeights): number {
+  const m = measured?.[row.mk];
+  if (m !== undefined) return m;
+  return rowHeight(
+    Math.max(lineCount(row.src, MAP_SRC_COL), lineCount(row.dst, MAP_DST_COL))
+  );
+}
+
+function metaRowHeight(row: KeyedMetaRow, measured?: RowHeights): number {
+  const m = measured?.[row.mk];
+  if (m !== undefined) return m;
+  return rowHeight(lineCount(row.value, META_VALUE_COL));
+}
+
+type MapGroup = { title: string; rows: KeyedMapRow[] };
+
+function mapsTableHeight(groups: MapGroup[], measured?: RowHeights): number {
+  if (groups.length === 0) return 0;
+  return (
+    TBL_BORDERS +
+    groups.reduce(
+      (sum, group) =>
+        sum +
+        HEAD_COMPACT +
+        group.rows.reduce((rows, row) => rows + mapRowHeight(row, measured), 0),
+      0
+    )
+  );
+}
+
+/** `maxHeight` budgets one group: its sub-header plus rows, table borders excluded. */
+function maxMapRowsThatFit(
+  rows: KeyedMapRow[],
+  maxHeight: number,
+  measured?: RowHeights
+): number {
+  let used = HEAD_COMPACT;
+  if (maxHeight < used || rows.length === 0) return 0;
   let count = 0;
   for (const row of rows) {
-    const rowH = estimateMapRowHeight(row);
+    const rowH = mapRowHeight(row, measured);
     if (used + rowH > maxHeight) break;
     used += rowH;
     count++;
@@ -206,44 +300,47 @@ function maxMapRowsThatFit(rows: ValueMapRow[], maxHeight: number): number {
 }
 
 function splitConnectivityForPage2(
-  rows: ValueMapRow[],
-  connectivityTop: number
-): { page2: ValueMapRow[]; overflow: ValueMapRow[] } {
-  const avail = PAGE_CONTENT_SAFE_BOTTOM - connectivityTop;
-  const maxRows = maxMapRowsThatFit(rows, avail);
+  rows: KeyedMapRow[],
+  connectivityTop: number,
+  measured?: RowHeights
+): { page2: KeyedMapRow[]; overflow: KeyedMapRow[] } {
+  const avail = PAGE_CONTENT_SAFE_BOTTOM - connectivityTop - TBL_BORDERS;
+  const maxRows = maxMapRowsThatFit(rows, avail, measured);
   if (maxRows <= 0) return { page2: [], overflow: rows };
   if (rows.length <= maxRows) return { page2: rows, overflow: [] };
   return { page2: rows.slice(0, maxRows), overflow: rows.slice(maxRows) };
 }
 
 function metadataTableHeight(
-  rows: Array<{ label: string; value: string }>
+  rows: KeyedMetaRow[],
+  measured?: RowHeights
 ): number {
-  const body = rows.reduce((sum, row) => {
-    const len = row.value.length;
-    if (len > 120) return sum + 48;
-    if (len > 60) return sum + 36;
-    return sum + META_ROW_HEIGHT;
-  }, 0);
-  return META_TABLE_HEAD + body;
+  const body = rows.reduce(
+    (sum, row) => sum + metaRowHeight(row, measured),
+    0
+  );
+  return TBL_BORDERS + HEAD_FULL + body;
 }
 
 type TailPageLayout = {
-  connectivity: ValueMapRow[];
+  connectivity: KeyedMapRow[];
   includeMetadata: boolean;
 };
 
 /** Paginate connectivity overflow + metadata across pages 3+ without splitting tables mid-page. */
 function layoutTailPages(
-  connectivityOverflow: ValueMapRow[],
-  metadataRows: Array<{ label: string; value: string }>
+  connectivityOverflow: KeyedMapRow[],
+  metadataRows: KeyedMetaRow[],
+  metadataOnPage2: boolean,
+  measured?: RowHeights
 ): TailPageLayout[] {
-  const metaH = metadataTableHeight(metadataRows);
-  const needMeta = metadataRows.length > 0;
+  const metaH = metadataTableHeight(metadataRows, measured);
+  const needMeta = !metadataOnPage2 && metadataRows.length > 0;
   const pages: TailPageLayout[] = [];
   let connIdx = 0;
 
-  const pageAvail = () => PAGE_CONTENT_SAFE_BOTTOM - PAGE_CONTENT_TOP;
+  const pageAvail = () =>
+    PAGE_CONTENT_SAFE_BOTTOM - PAGE_CONTENT_TOP - TBL_BORDERS;
   const metaPlaced = () => pages.some((p) => p.includeMetadata);
 
   while (
@@ -257,7 +354,7 @@ function layoutTailPages(
 
     if (metaStillNeeded && remaining > 0) {
       const connBudget = pageAvail() - SECTION_GAP - metaH;
-      const take = maxMapRowsThatFit(remainingSlice, connBudget);
+      const take = maxMapRowsThatFit(remainingSlice, connBudget, measured);
       if (take > 0) {
         pages.push({
           connectivity: connectivityOverflow.slice(connIdx, connIdx + take),
@@ -269,7 +366,7 @@ function layoutTailPages(
     }
 
     if (remaining > 0) {
-      const take = maxMapRowsThatFit(remainingSlice, pageAvail());
+      const take = maxMapRowsThatFit(remainingSlice, pageAvail(), measured);
       if (take <= 0) break;
       pages.push({
         connectivity: connectivityOverflow.slice(connIdx, connIdx + take),
@@ -291,27 +388,31 @@ function layoutTailPages(
 }
 
 function buildPostPage2Sections(
-  tailLayouts: TailPageLayout[]
+  tailLayouts: TailPageLayout[],
+  connectivityTitle: string,
+  measured?: RowHeights
 ): Array<{
-  connectivity: ValueMapRow[];
+  mapsGroups: MapGroup[];
   includeMetadata: boolean;
-  connectivityTop: number;
+  mapsTableTop: number;
   metadataTop: number;
   pageNum: string;
 }> {
   let pageNum = 3;
   return tailLayouts.map((layout) => {
-    const connectivityTop = PAGE_CONTENT_TOP;
+    const mapsGroups: MapGroup[] =
+      layout.connectivity.length > 0
+        ? [{ title: connectivityTitle, rows: layout.connectivity }]
+        : [];
     const metadataTop = layout.includeMetadata
-      ? layout.connectivity.length > 0
-        ? connectivityTop +
-          mapTableHeight(layout.connectivity.length, layout.connectivity) +
-          SECTION_GAP
+      ? mapsGroups.length > 0
+        ? PAGE_CONTENT_TOP + mapsTableHeight(mapsGroups, measured) + SECTION_GAP
         : PAGE_CONTENT_TOP
       : 0;
     return {
-      ...layout,
-      connectivityTop,
+      mapsGroups,
+      includeMetadata: layout.includeMetadata,
+      mapsTableTop: PAGE_CONTENT_TOP,
       metadataTop,
       pageNum: String(pageNum++).padStart(2, "0"),
     };
@@ -357,7 +458,7 @@ async function getBrowser(): Promise<Browser> {
   return cachedBrowser;
 }
 
-async function buildContext(data: PDFReportData) {
+async function buildContext(data: PDFReportData, measured?: RowHeights) {
   const dq = (data.dataQualityCheck ?? {}) as Record<string, unknown>;
   const summary =
     (dq["summary"] as {
@@ -382,7 +483,18 @@ async function buildContext(data: PDFReportData) {
     lowerSingular: "school",
   };
   const ep = entity.plural;
-  const es = entity.lowerSingular;
+
+  const language: Language = isSupportedLanguage(data.language)
+    ? data.language
+    : "en";
+  // The API sends English entity nouns; they only select a catalogue here.
+  const entityKey: EntityKey =
+    ep === "Health Centers" ? "healthCenters" : "schools";
+  const tr = (key: string) => t(language, key);
+  const te = (key: string) => entityText(language, entityKey, key);
+  const { fmt, pctParen, pctValue } = makeNumberFormatters(
+    LOCALE_TAG[language]
+  );
 
   const uploaded = Number(summary.rows ?? 0) || 0;
   const approved = Number(
@@ -465,52 +577,53 @@ async function buildContext(data: PDFReportData) {
   const warnRotate =
     rejArc > 0.01 ? rejRotate + (rejArc / circumference) * 360 : -90;
 
-  const idSectionTitle =
-    ep === "Health Centers" ? "Record IDs" : "School IDs";
+  const priorityHigh = tr("priorityHigh");
+  const priorityMedium = tr("priorityMedium");
+  const priorityLow = tr("priorityLow");
 
   const rejectedSections: TableSection[] = [
     {
-      title: "Coordinates",
+      title: tr("sectionCoordinates"),
       rows: [
         {
-          label: `${ep} with missing coordinates`,
+          label: te("missingCoordinates"),
           alerts: fmt(missingCoords),
-          priority: "High",
+          priority: priorityHigh,
         },
         {
-          label: `${ep} with coordinates outside the country's limits`,
+          label: te("outsideCountry"),
           alerts: fmt(outsideCountry),
-          priority: "High",
+          priority: priorityHigh,
         },
       ],
     },
     {
-      title: idSectionTitle,
+      title: te("sectionIds"),
       rows: [
         {
-          label: `${ep} with missing ID`,
+          label: te("missingId"),
           alerts: fmt(missingSchoolIds),
-          priority: "High",
+          priority: priorityHigh,
         },
         {
-          label: `${ep} with duplicate ${es} IDs`,
+          label: te("duplicateIds"),
           alerts: fmt(dupSchoolIds),
-          priority: "High",
+          priority: priorityHigh,
         },
       ],
     },
     {
-      title: "Other",
+      title: tr("sectionOther"),
       rows: [
         {
-          label: `${ep} with missing names`,
+          label: te("missingNames"),
           alerts: fmt(missingName),
-          priority: "High",
+          priority: priorityHigh,
         },
         {
-          label: `${ep} with missing educational level`,
+          label: te("missingEducationLevel"),
           alerts: fmt(missingEduLevel),
-          priority: "High",
+          priority: priorityHigh,
         },
       ],
     },
@@ -518,42 +631,42 @@ async function buildContext(data: PDFReportData) {
 
   const warningsPage1Sections: TableSection[] = [
     {
-      title: "Duplicates",
+      title: tr("sectionDuplicates"),
       rows: [
         {
-          label: `${ep} with the same location`,
+          label: te("sameLocation"),
           alerts: fmt(sameLocation),
-          priority: "Medium",
+          priority: priorityMedium,
         },
         {
-          label: `${ep} with the same name, educational level, and location`,
+          label: te("sameNameLevelLocation"),
           alerts: fmt(nameEduLoc),
-          priority: "Medium",
+          priority: priorityMedium,
         },
         {
-          label: `${ep} identical except for ${es} ID`,
+          label: te("identicalExceptId"),
           alerts: fmt(allExceptCode),
-          priority: "Medium",
+          priority: priorityMedium,
         },
       ],
     },
     {
-      title: "Accuracy",
+      title: tr("sectionAccuracy"),
       rows: [
         {
-          label: "Low precision coordinates (less than 5 digits)",
+          label: tr("lowPrecision"),
           alerts: fmt(lowPrecision),
-          priority: "Medium",
+          priority: priorityMedium,
         },
       ],
     },
     {
-      title: "Other",
+      title: tr("sectionOther"),
       rows: [
         {
-          label: `High Density (more than 5 ${entity.lowerPlural} within 500m)`,
+          label: te("highDensity"),
           alerts: fmt(highDensity),
-          priority: "Low",
+          priority: priorityLow,
         },
       ],
     },
@@ -561,21 +674,30 @@ async function buildContext(data: PDFReportData) {
 
   const warningsPage2Rows: TableRow[] = [
     {
-      label: `${ep} with similar names, educational level, and location within a radius of 110m`,
+      label: te("similarNameLevelLocation110"),
       alerts: fmt(nameLevel110),
-      priority: "Low",
+      priority: priorityLow,
     },
     {
-      label: `${ep} with similar names and the same educational level within a radius of 110m`,
+      label: te("similarNameSameLevel110"),
       alerts: fmt(similarNameLevel110),
-      priority: "Low",
+      priority: priorityLow,
     },
   ];
 
   const valueMaps = data.valueMaps ?? {};
-  const educationMaps = valueMaps.education ?? [];
-  const electricityMaps = valueMaps.electricity ?? [];
-  const connectivityAll = valueMaps.connectivity ?? [];
+  // `mk` keys survive into the markup so a render pass can report real heights.
+  let mapKey = 0;
+  const keyMaps = (rows: ValueMapRow[]): KeyedMapRow[] =>
+    rows.map((row) => ({
+      ...row,
+      count: reformatNumeric(row.count, fmt),
+      pct: reformatNumeric(row.pct, pctValue),
+      mk: `m${mapKey++}`,
+    }));
+  const educationMaps = keyMaps(valueMaps.education ?? []);
+  const electricityMaps = keyMaps(valueMaps.electricity ?? []);
+  const connectivityAll = keyMaps(valueMaps.connectivity ?? []);
 
   const hasEducationMaps = educationMaps.length > 0;
   const hasElectricityMaps = electricityMaps.length > 0;
@@ -584,7 +706,11 @@ async function buildContext(data: PDFReportData) {
     hasEducationMaps || hasElectricityMaps || hasConnectivityMaps;
 
   const metaRaw = data.uploadMetadata ?? {};
-  const metadataRows = buildMetadataRows(metaRaw, ep);
+  const metadataRows: KeyedMetaRow[] = buildMetadataRows(
+    metaRaw,
+    language,
+    entityKey
+  ).map((row, i) => ({ ...row, mk: `d${i}` }));
 
   // Dagster reports these inside dq-summary (snake_case); top-level props win.
   const schoolsCreatedRaw = data.schoolsCreated ?? summary.schools_created;
@@ -598,51 +724,105 @@ async function buildContext(data: PDFReportData) {
     schoolsUpdatedRaw !== undefined &&
     String(schoolsUpdatedRaw).trim() !== "";
 
-  let page2NextTop = PAGE2_MAPS_TABLE_START;
   const mapsSectionTop = 193;
   const mapsNoteTop = 213;
-  let educationMapsTop = 0;
-  let electricityMapsTop = 0;
-  let connectivityMapsTop = 0;
-  let connectivityPage2: ValueMapRow[] = [];
-  let connectivityOverflow: ValueMapRow[] = connectivityAll;
+  const mapsTableTop = PAGE2_MAPS_TABLE_START;
+  const mapsGroups: MapGroup[] = [];
+  let connectivityOverflow: KeyedMapRow[] = connectivityAll;
 
   if (hasMapsSection) {
     if (educationMaps.length > 0) {
-      educationMapsTop = page2NextTop;
-      page2NextTop += mapTableHeight(educationMaps.length, educationMaps);
+      mapsGroups.push({ title: tr("educationLevel"), rows: educationMaps });
     }
     if (electricityMaps.length > 0) {
-      electricityMapsTop = page2NextTop;
-      page2NextTop += mapTableHeight(electricityMaps.length, electricityMaps);
+      mapsGroups.push({ title: tr("electricity"), rows: electricityMaps });
     }
     if (connectivityAll.length > 0) {
-      connectivityMapsTop = page2NextTop;
+      const connectivityTop =
+        mapsTableTop + mapsTableHeight(mapsGroups, measured);
       const split = splitConnectivityForPage2(
         connectivityAll,
-        connectivityMapsTop
+        connectivityTop,
+        measured
       );
-      connectivityPage2 = split.page2;
       connectivityOverflow = split.overflow;
-      if (connectivityPage2.length > 0) {
-        page2NextTop += mapTableHeight(
-          connectivityPage2.length,
-          connectivityPage2
-        );
+      if (split.page2.length > 0) {
+        mapsGroups.push({ title: tr("connectivity"), rows: split.page2 });
       }
     }
   }
-  const tailLayouts = layoutTailPages(connectivityOverflow, metadataRows);
-  const postPage2Pages = buildPostPage2Sections(tailLayouts);
+
+  const page2WarningsBottom =
+    PAGE2_WARNINGS_TOP +
+    TBL_BORDERS +
+    HEAD_FULL +
+    warningsPage2Rows.reduce(
+      (sum, row) => sum + rowHeight(lineCount(row.label, TABLE_LABEL_COL)),
+      0
+    );
+
+  // Page 2 keeps Metadata only when the whole table fits below the mappings.
+  const page2ContentBottom =
+    mapsGroups.length > 0
+      ? mapsTableTop + mapsTableHeight(mapsGroups, measured)
+      : page2WarningsBottom;
+  const metadataPage2Top = page2ContentBottom + SECTION_GAP;
+  const includeMetadataPage2 =
+    connectivityOverflow.length === 0 &&
+    metadataRows.length > 0 &&
+    metadataPage2Top + metadataTableHeight(metadataRows, measured) <=
+      PAGE_CONTENT_SAFE_BOTTOM;
+  const parsedUploadDate = new Date(data.uploadDate);
+  const localizedUploadDate = Number.isNaN(parsedUploadDate.getTime())
+    ? data.uploadDate
+    : formatDateForPDF(parsedUploadDate, language);
+
+  const tailLayouts = layoutTailPages(
+    connectivityOverflow,
+    metadataRows,
+    includeMetadataPage2,
+    measured
+  );
+  const postPage2Pages = buildPostPage2Sections(
+    tailLayouts,
+    tr("connectivity"),
+    measured
+  );
 
   const pageCount = 2 + postPage2Pages.length;
 
   return {
     country: data.country,
     uploadedFileName: data.uploadedFileName,
-    uploadDate: data.uploadDate,
+    // English keeps the raw ISO timestamp it has always rendered.
+    uploadDate: language === "en" ? data.uploadDate : localizedUploadDate,
     uploadId: data.uploadId,
     entity,
+    lang: language,
+    t: {
+      reportTitle: tr("reportTitle"),
+      uploadedOn: tr("uploadedOn"),
+      ingestionId: tr("ingestionId"),
+      alerts: tr("alerts"),
+      priority: tr("priority"),
+      rejected: tr("rejected"),
+      warnings: tr("warnings"),
+      excelSheet: tr("excelSheet"),
+      excelSheetWarning: tr("excelSheetWarning"),
+      excelSheetRejected: tr("excelSheetRejected"),
+      approvedWithWarnings: tr("approvedWithWarnings"),
+      mappings: tr("mappings"),
+      mappingsNote: tr("mappingsNote"),
+      educationLevel: tr("educationLevel"),
+      electricity: tr("electricity"),
+      connectivity: tr("connectivity"),
+      metadata: tr("metadata"),
+      entityPlural: te("plural"),
+      entityCreated: te("created"),
+      entityUpdated: te("updated"),
+      entityApproved: te("approved"),
+      entityRejected: te("rejected"),
+    },
     logoDataUri: await loadPdfLogoDataUri(),
     totals: {
       uploaded: fmt(uploaded),
@@ -655,7 +835,7 @@ async function buildContext(data: PDFReportData) {
     },
     donut: {
       centerTotal: fmt(uploaded),
-      centerLabel: `${ep} uploaded`,
+      centerLabel: te("uploaded"),
       rejArc: rejArc.toFixed(2),
       warnArc: warnArc.toFixed(2),
       circumference: circumference.toFixed(2),
@@ -670,19 +850,14 @@ async function buildContext(data: PDFReportData) {
     rejectedSections,
     warningsPage1Sections,
     warningsPage2Rows,
-    educationMaps,
-    electricityMaps,
-    connectivityPage2,
+    mapsGroups,
     postPage2Pages,
-    hasEducationMaps,
-    hasElectricityMaps,
-    hasConnectivityMaps,
     hasMapsSection,
     mapsSectionTop,
     mapsNoteTop,
-    educationMapsTop,
-    electricityMapsTop,
-    connectivityMapsTop,
+    mapsTableTop,
+    includeMetadataPage2,
+    metadataPage2Top,
     metadataRows,
     hasMetadata: metadataRows.some((r) => r.value !== emDash),
     pageCount,
@@ -693,22 +868,62 @@ async function buildContext(data: PDFReportData) {
   };
 }
 
-export async function renderHtml(data: PDFReportData): Promise<string> {
+export async function renderHtml(
+  data: PDFReportData,
+  measured?: RowHeights
+): Promise<string> {
   const template = loadTemplate();
-  return template(await buildContext(data));
+  return template(await buildContext(data, measured));
 }
 
+/** Real rendered heights of every keyed table row, in points. */
+const COLLECT_ROW_HEIGHTS = `(function () {
+  var out = {};
+  var nodes = document.querySelectorAll("[data-mk]");
+  for (var i = 0; i < nodes.length; i++) {
+    out[nodes[i].getAttribute("data-mk")] =
+      nodes[i].getBoundingClientRect().height * 72 / 96;
+  }
+  return out;
+})()`;
+
+
+async function loadForPrint(page: Page, html: string): Promise<void> {
+  await page.emulateMediaType("print");
+  await page.setContent(html, { waitUntil: "networkidle0" });
+  // Resolve to a primitive: FontFaceSet itself is not serialisable.
+  await page.evaluate("document.fonts.ready.then(function () { return true; })");
+}
+
+/**
+ * Real row heights, measured by rendering once. A second `setContent` on a page
+ * that already has content never reaches `networkidle0`, so this uses its own.
+ */
+async function measureRowHeights(
+  browser: Browser,
+  html: string
+): Promise<RowHeights> {
+  const page = await browser.newPage();
+  try {
+    await loadForPrint(page, html);
+    return (await page.evaluate(COLLECT_ROW_HEIGHTS)) as RowHeights;
+  } finally {
+    await page.close();
+  }
+}
 
 export async function generateDataQualityReportPDF(
   data: PDFReportData
 ): Promise<Buffer> {
-  const html = await renderHtml(data);
-
   const browser = await getBrowser();
+
+  // Pass 1 lays out with estimated row heights; pass 2 repaginates with the
+  // heights the browser actually produced, so wrapped labels never overflow.
+  const measured = await measureRowHeights(browser, await renderHtml(data));
+
   const page = await browser.newPage();
   try {
-    await page.setContent(html, { waitUntil: "networkidle0" });
-    await page.emulateMediaType("print");
+    await loadForPrint(page, await renderHtml(data, measured));
 
     const pdf = await page.pdf({
       format: "A4",
@@ -723,9 +938,12 @@ export async function generateDataQualityReportPDF(
   }
 }
 
-export function formatDateForPDF(date: Date | string): string {
+export function formatDateForPDF(
+  date: Date | string,
+  language: Language = "en"
+): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleString("en-US", {
+  return d.toLocaleString(LOCALE_TAG[language], {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

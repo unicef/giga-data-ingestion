@@ -106,13 +106,15 @@ app.post(
 
     const pdfData = {
       ...json,
-      generatedDate: formatDateForPDF(new Date()),
+      generatedDate: formatDateForPDF(new Date(), json.language),
       uploadedFileName:
         json.uploadedFileName ?? `upload_${json.uploadId}_${json.country}.csv`,
     };
 
     const pdfBuffer = await generateDataQualityReportPDF(pdfData);
-    const filename = `data-quality-report-${json.country}-${json.uploadId}.pdf`;
+    // English keeps its original name; the DQ email reuses it as attachment name.
+    const languageSuffix = json.language === "en" ? "" : `-${json.language}`;
+    const filename = `data-quality-report-${json.country}-${json.uploadId}${languageSuffix}.pdf`;
 
     // Return PDF as binary to avoid huge JSON/base64 response truncation
     return new Response(pdfBuffer, {
