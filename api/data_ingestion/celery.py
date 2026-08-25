@@ -2,7 +2,9 @@ from datetime import timedelta
 
 from celery import Celery
 
-from data_ingestion.settings import settings
+from data_ingestion.settings import initialize_sentry, settings
+
+initialize_sentry()
 
 celery = Celery(
     "data_ingestion",
