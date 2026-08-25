@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { api } from "@/api";
+import type { DqReportLanguage } from "@/api/routers/email";
 import { DataQualityCheck, UploadResponse } from "@/types/upload";
 import { saveFile, savePdfFromBase64 } from "@/utils/download";
 
@@ -54,7 +55,7 @@ export function useDownloadHelpers(
     if (blob) saveFile(blob);
   }
 
-  async function handleDownloadDqSummary() {
+  async function handleDownloadDqSummary(language: DqReportLanguage = "en") {
     if (!dqResultData?.dq_summary) return;
 
     const response = await getDqReportPdf({
@@ -65,6 +66,7 @@ export function useDownloadHelpers(
         uploadDate: uploadData.created,
         uploadId: uploadData.id,
         country: uploadData.country,
+        language,
       },
     });
 

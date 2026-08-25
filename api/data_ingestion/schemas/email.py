@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Literal, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -55,6 +55,7 @@ class DqReportPdfRequest(BaseModel):
     entity: EntityLabel | None = None
     uploadMetadata: dict[str, Any] | None = None
     valueMaps: dict[str, Any] | None = None
+    language: Literal["en", "es", "fr"] = "en"
 
     @field_validator("uploadDate", mode="before")
     @classmethod
