@@ -2,6 +2,7 @@ import { PropsWithChildren, useEffect, useRef } from "react";
 
 import { InteractionStatus } from "@azure/msal-browser";
 import { useIsAuthenticated, useMsal } from "@azure/msal-react";
+import * as Sentry from "@sentry/react";
 import { QueryClient, keepPreviousData } from "@tanstack/react-query";
 import axios, {
   AxiosError,
@@ -115,6 +116,17 @@ export function AxiosProvider({ children }: PropsWithChildren) {
         console.error(e);
         return Promise.resolve(error);
       }
+    }
+
+    const status = error.response?.status;
+    if (!error.response || (status && status >= 500)) {
+      Sentry.captureException(error, {
+        extra: {
+          url: error.config?.url,
+          method: error.config?.method,
+          status,
+        },
+      });
     }
 
     console.error(error);

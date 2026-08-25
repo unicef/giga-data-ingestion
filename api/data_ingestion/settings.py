@@ -74,6 +74,7 @@ class Settings(BaseSettings):
     DB_HOST: str = "db"
     DB_PORT: int = 5432
     SENTRY_DSN: str = ""
+    SENTRY_TUNNEL_HOST: str = ""
     COMMIT_SHA: str = ""
     TRINO_HOST: str = "trino"
     TRINO_PORT: int = 8080
