@@ -29,6 +29,8 @@
     }
   },
   "excelSheet": "Fichier Excel",
+  "excelSheetRejected": "Rejetées_",
+  "excelSheetWarning": "Avertissement_",
   "ingestionId": "ID d'intégration",
   "lowPrecision": "Coordonnées basse précision (< 5 chiffres)",
   "mappings": "Correspondances",

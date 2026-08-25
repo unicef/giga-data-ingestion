@@ -51,6 +51,8 @@
     }
   },
   "excelSheet": "Excel Sheet",
+  "excelSheetRejected": "Rejected_",
+  "excelSheetWarning": "Warning_",
   "ingestionId": "Ingestion ID",
   "lowPrecision": "Low precision coordinates (less than 5 digits)",
   "mappings": "Mappings",
