@@ -13,7 +13,8 @@ Platform.
 1. [Architecture](architecture.md)
 2. [Development](development.md)
 3. [Deployment](deployment.md)
-4. [Support](support.md)
+4. [Versioning](versioning.md)
+5. [Support](support.md)
 
 ## Jump to other platform services
 

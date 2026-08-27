@@ -90,6 +90,15 @@ tasks:
     cmds:
       - poetry run pytest
 
+  bump-version:
+    desc: Set the app version everywhere (usage - task bump-version -- 1.2.0)
+    cmds:
+      - echo '{{.CLI_ARGS}}' | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo 'Usage - task bump-version -- <major.minor.patch>'; exit 1; }
+      - echo '{{.CLI_ARGS}}' > VERSION
+      - cd api && poetry version '{{.CLI_ARGS}}'
+      - cd ui && npm version '{{.CLI_ARGS}}' --no-git-tag-version --allow-same-version
+      - cd email && npm version '{{.CLI_ARGS}}' --no-git-tag-version --allow-same-version
+
   build-and-push:
     desc: Build and push Docker image
     cmds:

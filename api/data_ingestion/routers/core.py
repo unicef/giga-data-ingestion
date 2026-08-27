@@ -12,14 +12,19 @@ from sqlalchemy.orm import Session
 from data_ingestion.cache import get_redis_connection
 from data_ingestion.db.primary import get_db as get_db_primary
 from data_ingestion.db.trino import get_db as get_db_trino
-from data_ingestion.settings import settings
+from data_ingestion.settings import APP_VERSION, settings
 
 router = APIRouter(tags=["core"], include_in_schema=False)
 
 
 @router.get("/api")
 async def api_health_check():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "version": APP_VERSION,
+        "commit_sha": settings.COMMIT_SHA,
+        "deploy_env": settings.DEPLOY_ENV,
+    }
 
 
 @router.get("/api/live")

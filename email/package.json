@@ -1,6 +1,6 @@
 {
   "name": "@unicef/giga-sync-email-service",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Thinking Machines <hello@thinkingmachin.es>",
   "scripts": {
     "dev": "tsx watch src/index.tsx",
