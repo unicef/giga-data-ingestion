@@ -178,6 +178,7 @@ export interface UploadResponse {
   column_to_schema_mapping: string;
   column_license: string;
   dq_mode?: "uploaded" | "master" | null;
+  upload_metadata?: Record<string, string> | null;
   data_owner: string | null;
   rows: number | null;
   rows_passed: number | null;
@@ -204,6 +205,7 @@ export const initialUploadResponse: UploadResponse = {
   column_to_schema_mapping: "",
   column_license: "",
   dq_mode: null,
+  upload_metadata: null,
   data_owner: null,
   rows: null,
   rows_passed: null,
