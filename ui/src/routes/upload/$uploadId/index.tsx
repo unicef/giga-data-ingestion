@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 import { Download, Send } from "@carbon/icons-react";
 import {
+  Accordion,
+  AccordionItem,
   Button,
   Loading,
   MenuButton,
@@ -34,6 +36,7 @@ import {
 } from "@/types/upload";
 import { getDqCheckGroups } from "@/utils/dq-summary";
 import { commaNumber } from "@/utils/number";
+import { getUploadMetadataRows } from "@/utils/upload-metadata";
 
 export const Route = createFileRoute("/upload/$uploadId/")({
   component: Index,
@@ -99,6 +102,11 @@ function Index() {
     uploadData.dq_mode === "uploaded" ? "FILE_CHECKED" : "MASTER";
 
   const countryName = useCountryName(uploadData.country);
+
+  const metadataRows = useMemo(
+    () => getUploadMetadataRows(uploadData.upload_metadata, uploadData.dataset),
+    [uploadData.upload_metadata, uploadData.dataset],
+  );
 
   const runMasterCheckMutation = useMutation({
     mutationFn: () => api.uploads.dq_run(uploadId, "master"),
@@ -356,6 +364,32 @@ function Index() {
             )}
           </div>
         </div>
+
+        {metadataRows.length > 0 && (
+          <div style={{ marginBottom: "2rem" }}>
+            <Accordion>
+              <AccordionItem title="Upload metadata">
+                <dl
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "minmax(12rem, 1fr) 2fr",
+                    columnGap: "1rem",
+                    rowGap: "0.5rem",
+                    margin: 0,
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  {metadataRows.map(({ key, label, value }) => (
+                    <Fragment key={key}>
+                      <dt style={{ color: "#6f6f6f" }}>{label}</dt>
+                      <dd style={{ margin: 0 }}>{value}</dd>
+                    </Fragment>
+                  ))}
+                </dl>
+              </AccordionItem>
+            </Accordion>
+          </div>
+        )}
 
         <div
           style={{

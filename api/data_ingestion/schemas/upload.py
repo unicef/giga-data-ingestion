@@ -37,6 +37,7 @@ class FileUpload(BaseModel):
     column_license: dict[str, str]
     upload_path: str
     dq_mode: str | None = None
+    upload_metadata: dict[str, str] | None = None
     data_owner: str | None
     rows: int | None
     rows_passed: int | None

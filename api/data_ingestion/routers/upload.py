@@ -442,15 +442,19 @@ async def get_upload(
         )
 
     dq_mode = "master"
+    upload_metadata = None
     if file_upload.metadata_json_path:
         try:
             blob_client = storage_client.get_blob_client(file_upload.metadata_json_path)
             if blob_client.exists():
                 metadata_json = json.loads(blob_client.download_blob().readall())
-                dq_mode = metadata_json.get("dq_mode", "master")
+                if isinstance(metadata_json, dict):
+                    dq_mode = metadata_json.get("dq_mode", "master")
+                    upload_metadata = {str(k): str(v) for k, v in metadata_json.items()}
         except Exception as e:
-            logger.error(f"Failed to fetch dq_mode from metadata: {e}")
+            logger.error(f"Failed to fetch metadata: {e}")
     file_upload.dq_mode = dq_mode
+    file_upload.upload_metadata = upload_metadata
 
     return file_upload
 
