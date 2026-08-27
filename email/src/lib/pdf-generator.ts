@@ -171,8 +171,11 @@ function strMeta(
   key: string
 ): string {
   const v = meta?.[key];
-  if (v === null || v === undefined || String(v).trim() === "") return emDash;
-  return String(v);
+  if (v === null || v === undefined) return emDash;
+  // The API stringifies values with `str()`, so blanks arrive as "None".
+  const text = String(v).trim();
+  if (text === "" || text === "None") return emDash;
+  return text;
 }
 
 function buildMetadataRows(
