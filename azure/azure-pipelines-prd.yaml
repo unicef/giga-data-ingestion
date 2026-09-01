@@ -11,6 +11,8 @@ pool:
 variables:
   - name: environment
     value: prd
+  - name: sentryEnvironment
+    value: production
   - template: templates/variables.yaml
 
 stages:
