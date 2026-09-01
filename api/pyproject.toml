@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "giga-sync-api"
-version = "1.0.0"
+version = "1.1.0"
 description = "Giga Sync API built with FastAPI."
 authors = ["Thinking Machines <hello@thinkingmachin.es>"]
 readme = "README.md"

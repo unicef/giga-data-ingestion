@@ -276,6 +276,17 @@ def get_settings():
 settings = get_settings()
 
 
+def _read_app_version() -> str:
+    for base in (settings.BASE_DIR, settings.BASE_DIR.parent):
+        version_file = base / "VERSION"
+        if version_file.is_file():
+            return version_file.read_text().strip()
+    return "unknown"
+
+
+APP_VERSION = _read_app_version()
+
+
 def _scrub_sentry_event(event: dict[str, Any], _hint: dict[str, Any]) -> dict[str, Any]:
     """Minimize accidental PII leakage in captured request/user payloads."""
     request = event.get("request")
@@ -331,4 +342,5 @@ def initialize_sentry(component: Literal["api", "worker"] = "api"):
             release=f"giga-data-ingestion@{settings.COMMIT_SHA}",
             server_name=f"ingestion-portal-{component}-{settings.DEPLOY_ENV.name}@{socket.gethostname()}",
         )
+        sentry_sdk.set_tag("app_version", APP_VERSION)
         logger.info(f"Initialized Sentry for the {component} component.")

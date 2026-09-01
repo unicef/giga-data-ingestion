@@ -92,6 +92,7 @@ export default function Footer() {
           </a>
           .
         </div>
+        <div className="text-sm">Version {__APP_VERSION__}</div>
       </Column>
     </Grid>
   );

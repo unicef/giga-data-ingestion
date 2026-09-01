@@ -1,11 +1,23 @@
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { TanStackRouterVite } from "@tanstack/router-vite-plugin";
 import react from "@vitejs/plugin-react-swc";
+import { readFileSync } from "fs";
 import * as path from "path";
 import { defineConfig } from "vite";
 
+const appVersion = (() => {
+  try {
+    return readFileSync(path.resolve(__dirname, "../VERSION"), "utf8").trim();
+  } catch {
+    return "0.0.0-dev";
+  }
+})();
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
