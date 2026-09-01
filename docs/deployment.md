@@ -9,6 +9,9 @@ relevant branch:
 
 `production` > PRD
 
+The version number promoted along with the code comes from the `VERSION` file at the
+repository root. See [Versioning](versioning.md) for how to cut a release.
+
 To manually trigger deployments, go to
 the [Pipelines](https://unicef.visualstudio.com/OI-GIGA/_build) page and trigger
 the relevant pipeline:

@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, ORJSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 
-from data_ingestion.constants import __version__
 from data_ingestion.db.primary import get_db_context
 from data_ingestion.internal.auth import azure_scheme, local_auth_bypass
 from data_ingestion.middlewares.staticfiles import StaticFilesMiddleware
@@ -25,7 +24,12 @@ from data_ingestion.routers import (
     users,
     utils,
 )
-from data_ingestion.settings import DeploymentEnvironment, initialize_sentry, settings
+from data_ingestion.settings import (
+    APP_VERSION,
+    DeploymentEnvironment,
+    initialize_sentry,
+    settings,
+)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -40,7 +44,7 @@ initialize_sentry()
 
 app = FastAPI(
     title="Giga Sync API",
-    version=__version__,
+    version=APP_VERSION,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     redirect_slashes=False,

@@ -28,9 +28,10 @@ ENV SENTRY_ORG ${SENTRY_ORG}
 ENV SENTRY_PROJECT ${SENTRY_PROJECT}
 ENV SENTRY_URL ${SENTRY_URL}
 
-COPY ./ui/ /tmp/
+COPY VERSION /tmp/VERSION
+COPY ./ui/ /tmp/ui/
 
-WORKDIR /tmp
+WORKDIR /tmp/ui
 
 RUN npm ci && npm run build
 
@@ -66,7 +67,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 WORKDIR /app
 
 COPY ./api/ ./
-COPY --from=build /tmp/build ./static/
+COPY VERSION ./VERSION
+COPY --from=build /tmp/ui/build ./static/
 
 ENV PORT 3000
 
