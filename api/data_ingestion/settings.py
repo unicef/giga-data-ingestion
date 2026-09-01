@@ -7,7 +7,15 @@ from typing import Any, Literal
 
 import sentry_sdk
 from loguru import logger
-from pydantic import AliasChoices, AnyUrl, Field, PostgresDsn, RedisDsn, computed_field
+from pydantic import (
+    AliasChoices,
+    AnyUrl,
+    Field,
+    PostgresDsn,
+    RedisDsn,
+    computed_field,
+    model_validator,
+)
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -27,6 +35,14 @@ class DeploymentEnvironment(StrEnum):
     DEV = "dev"
     STG = "stg"
     PRD = "prd"
+
+
+CANONICAL_SENTRY_ENVIRONMENTS = {
+    DeploymentEnvironment.LOCAL: Environment.LOCAL,
+    DeploymentEnvironment.DEV: Environment.DEVELOPMENT,
+    DeploymentEnvironment.STG: Environment.STAGING,
+    DeploymentEnvironment.PRD: Environment.PRODUCTION,
+}
 
 
 class Settings(BaseSettings):
@@ -81,6 +97,8 @@ class Settings(BaseSettings):
     SENTRY_DSN: str = Field(
         default="", validation_alias=AliasChoices("SENTRY_DSN", "SENTRY_DSN_BACKEND")
     )
+    SENTRY_DSN_WORKER: str = ""
+    SENTRY_ENVIRONMENT: Environment | None = None
     SENTRY_TUNNEL_HOST: str = ""
     SENTRY_ENABLE_IN_LOCAL: bool = False
     SENTRY_SEND_DEFAULT_PII: bool = False
@@ -107,6 +125,12 @@ class Settings(BaseSettings):
     SYSTEM_USER_EMAIL: str = "gigameter@gigasync.org"
     NOCODB_INBOUND_API_TOKEN: str = ""
     EMAIL_TEST_RECIPIENTS: str = ""  # If set, all emails go here (comma-separated)
+
+    @model_validator(mode="after")
+    def _resolve_sentry_environment(self) -> "Settings":
+        if self.SENTRY_ENVIRONMENT is None:
+            self.SENTRY_ENVIRONMENT = CANONICAL_SENTRY_ENVIRONMENTS[self.DEPLOY_ENV]
+        return self
 
     @computed_field
     @property
@@ -274,13 +298,21 @@ def _scrub_sentry_event(event: dict[str, Any], _hint: dict[str, Any]) -> dict[st
     return event
 
 
-def initialize_sentry():
-    enabled = bool(settings.SENTRY_DSN) and (
-        settings.IN_PRODUCTION or settings.SENTRY_ENABLE_IN_LOCAL
-    )
+def initialize_sentry(component: Literal["api", "worker"] = "api"):
+    dsn = settings.SENTRY_DSN
+    if component == "worker":
+        if settings.SENTRY_DSN_WORKER:
+            dsn = settings.SENTRY_DSN_WORKER
+        elif dsn:
+            logger.warning(
+                "SENTRY_DSN_WORKER is unset; worker events fall back to the backend"
+                " Sentry project."
+            )
+
+    enabled = bool(dsn) and (settings.IN_PRODUCTION or settings.SENTRY_ENABLE_IN_LOCAL)
     if enabled:
         sentry_sdk.init(
-            dsn=settings.SENTRY_DSN,
+            dsn=dsn,
             integrations=[
                 FastApiIntegration(transaction_style="url"),
                 CeleryIntegration(),
@@ -295,8 +327,8 @@ def initialize_sentry():
             include_local_variables=settings.SENTRY_INCLUDE_LOCAL_VARIABLES,
             debug=settings.SENTRY_DEBUG,
             before_send=_scrub_sentry_event,
-            environment=settings.DEPLOY_ENV,
+            environment=settings.SENTRY_ENVIRONMENT,
             release=f"giga-data-ingestion@{settings.COMMIT_SHA}",
-            server_name=f"ingestion-portal-api-{settings.DEPLOY_ENV.name}@{socket.gethostname()}",
+            server_name=f"ingestion-portal-{component}-{settings.DEPLOY_ENV.name}@{socket.gethostname()}",
         )
-        logger.info("Initialized Sentry.")
+        logger.info(f"Initialized Sentry for the {component} component.")
