@@ -4,7 +4,7 @@ from celery import Celery
 
 from data_ingestion.settings import initialize_sentry, settings
 
-initialize_sentry()
+initialize_sentry("worker")
 
 celery = Celery(
     "data_ingestion",

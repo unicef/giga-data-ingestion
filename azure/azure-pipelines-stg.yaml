@@ -11,6 +11,8 @@ pool:
 variables:
   - name: environment
     value: stg
+  - name: sentryEnvironment
+    value: staging
   - template: templates/variables.yaml
 
 stages:

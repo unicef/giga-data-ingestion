@@ -16,6 +16,7 @@ variables:
   applicationSecretKey: $(APPLICATION_SECRET_KEY)
   emailRendererBearerToken: $(EMAIL_RENDERER_BEARER_TOKEN)
   sentryDsn: $(SENTRY_DSN)
+  sentryDsnWorker: $(SENTRY_DSN_WORKER)
   sentryDsnFrontend: $(VITE_SENTRY_DSN)
   sentryTunnelHost: $(SENTRY_TUNNEL_HOST)
   sentryOrg: $(SENTRY_ORG)

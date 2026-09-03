@@ -48,7 +48,7 @@ jobs:
                   --build-arg "VITE_AZURE_SUSI_AUTH_POLICY_NAME=$(azureAdSuSiAuthPolicyName)"
                   --build-arg "VITE_DATAHUB_URL=https://$(datahubIngressHost)"
                   --build-arg "VITE_COMMIT_SHA=$(Build.SourceVersion)"
-                  --build-arg "VITE_DEPLOY_ENV=$(deployEnv)"
+                  --build-arg "VITE_SENTRY_ENVIRONMENT=$(sentryEnvironment)"
                   --build-arg "VITE_REDIRECT_URL=https://$(ingressHost)"
                 tags: |
                   $(deployEnv)-$(Build.SourceVersion)
