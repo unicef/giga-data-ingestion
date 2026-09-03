@@ -92,9 +92,9 @@ function failedCount(check: Check | undefined): number {
   return Number(check?.count_failed ?? 0) || 0;
 }
 
-/** Falls back whenever the value is absent or not a finite number. */
-function numberOr(value: number | null | undefined, fallback: number): number {
-  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+/** dq-summary omits a field it did not compute; 0 would read as a real count. */
+function optionalNumber(value: number | null | undefined): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 /** Warning-tier checks: count_failed is scoped to approved rows in dq-summary. */
@@ -234,10 +234,6 @@ const PAGE1_WARNINGS_TOP = 568;
 const MAPS_TITLE_GAP = 22;
 const MAPS_NOTE_OFFSET = 20;
 const MAPS_TABLE_GAP = 13;
-// Mirror src/data_quality_checks/utils.py in giga-dagster: used only for reports
-// generated before Dagster started reporting the thresholds it counted with.
-const DEFAULT_DUPLICATE_LOCATION_GROUP_MIN = 4;
-const DEFAULT_PROXIMITY_50M_GROUP_MIN = 3;
 
 // Mirrors the .tbl / .thead / .trow box model in dq-report.html. 1px = 0.75pt.
 const ROW_LINE = 16;
@@ -656,22 +652,6 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
     findCheck(locChecks, "duplicate_group_flag_50m")
   );
 
-  // Group tallies are not 0/1 checks, so Dagster reports them in dq-summary.
-  // The thresholds travel with them so a label can never contradict its number.
-  const duplicateLocationGroups = numberOr(
-    summary.count_duplicate_location_groups,
-    0
-  );
-  const duplicateLocationGroupMin = numberOr(
-    summary.duplicate_location_group_min_size,
-    DEFAULT_DUPLICATE_LOCATION_GROUP_MIN
-  );
-  const proximity50mGroups = numberOr(summary.count_proximity_50m_groups, 0);
-  const proximity50mGroupMin = numberOr(
-    summary.proximity_50m_group_min_size,
-    DEFAULT_PROXIMITY_50M_GROUP_MIN
-  );
-
   // null/absent means "not computed upstream" — only a real number is exact.
   const rowsPassedWithWarnings =
     typeof summary.rows_passed_with_warnings === "number"
@@ -724,6 +704,21 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
   const withCount = (label: string, count: number) =>
     label.replace("{count}", fmt(count));
 
+  // Group tallies are not 0/1 checks, so Dagster reports them in dq-summary
+  // together with the threshold it counted them with — the single source of
+  // truth for both. A report that predates them carries neither, so the row is
+  // omitted rather than printed as a 0 that would read as "no such groups".
+  const groupRow = (
+    key: string,
+    count: number | null | undefined,
+    minSize: number | null | undefined
+  ): TableRow[] => {
+    const tally = optionalNumber(count);
+    const min = optionalNumber(minSize);
+    if (tally === undefined || min === undefined) return [];
+    return [row(withCount(te(key), min), tally)];
+  };
+
   const rejectedSections: TableSection[] = [
     {
       title: tr("sectionCoordinates"),
@@ -754,9 +749,10 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
       title: tr("sectionDuplicates"),
       rows: [
         row(te("sameLocation"), sameLocation, priorityMedium),
-        row(
-          withCount(te("duplicateLocationGroups"), duplicateLocationGroupMin),
-          duplicateLocationGroups
+        ...groupRow(
+          "duplicateLocationGroups",
+          summary.count_duplicate_location_groups,
+          summary.duplicate_location_group_min_size
         ),
         row(te("sameNameLevelLocation"), nameEduLoc, priorityMedium),
         row(te("identicalExceptId"), allExceptCode, priorityMedium),
@@ -774,9 +770,10 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
       title: tr("sectionOther"),
       rows: [
         row(te("within50m"), within50m, priorityLow),
-        row(
-          withCount(te("proximity50mGroups"), proximity50mGroupMin),
-          proximity50mGroups
+        ...groupRow(
+          "proximity50mGroups",
+          summary.count_proximity_50m_groups,
+          summary.proximity_50m_group_min_size
         ),
         row(te("similarNameSameLevel110"), similarNameLevel110, priorityLow),
         row(te("highDensity"), highDensity, priorityLow),
