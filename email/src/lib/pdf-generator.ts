@@ -54,7 +54,6 @@ type Check = {
   count_passed?: number;
 };
 
-/** `mk` survives into the markup so the measurement pass can report real heights. */
 type TableRow = { label: string; alerts: string; priority: string; mk: string };
 /** A null title is a section continued from the previous page: no sub-header. */
 type TableSection = { title: string | null; rows: TableRow[] };
@@ -68,12 +67,15 @@ const SECTION_ALIASES: Record<string, string[]> = {
   precision: ["precision_checks", "precision checks"],
 };
 
+/** Concatenated, not first-match: one report can carry both "location checks"
+ * and "location_checks" as separate keys. */
 function getSection(dq: Record<string, unknown>, key: keyof typeof SECTION_ALIASES): Check[] {
+  const merged: Check[] = [];
   for (const candidate of SECTION_ALIASES[key]) {
     const v = dq[candidate];
-    if (Array.isArray(v)) return v as Check[];
+    if (Array.isArray(v)) merged.push(...(v as Check[]));
   }
-  return [];
+  return merged;
 }
 
 function findCheck(
@@ -92,7 +94,7 @@ function failedCount(check: Check | undefined): number {
   return Number(check?.count_failed ?? 0) || 0;
 }
 
-/** dq-summary omits a field it did not compute; 0 would read as a real count. */
+/** Absent means "not computed"; 0 would read as a real count. */
 function optionalNumber(value: number | null | undefined): number | undefined {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
@@ -228,9 +230,8 @@ const PAGE_CONTENT_BOTTOM = 790;
 const PAGE_CONTENT_SAFE_BOTTOM = PAGE_CONTENT_BOTTOM - 12;
 const PAGE2_WARNINGS_TOP = 69;
 const SECTION_GAP = 16;
-/** Top of the page 1 warnings table; the rejected table above it is fixed height. */
 const PAGE1_WARNINGS_TOP = 568;
-/** Gaps that reproduce the previously fixed Mappings block (193 / 213 / 258pt). */
+/** Reproduce the previously fixed Mappings block (193 / 213 / 258pt). */
 const MAPS_TITLE_GAP = 22;
 const MAPS_NOTE_OFFSET = 20;
 const MAPS_TABLE_GAP = 13;
@@ -310,14 +311,9 @@ function warningsTableHeight(
   );
 }
 
-/**
- * Split the warnings table across page 1 and page 2 by real row height.
- *
- * `availableHeight` budgets the section rows only: table borders and the
- * "Warnings" header are already accounted for by the caller. A section never
- * leaves its sub-header orphaned at the bottom of page 1, and the remainder of a
- * section that had to be cut carries `title: null` so page 2 does not repeat it.
- */
+/** Split by real row height. `availableHeight` budgets the section rows only;
+ * borders and the table header are the caller's. A sub-header is never left
+ * orphaned at the foot of page 1. */
 function splitWarningSections(
   sections: TableSection[],
   availableHeight: number,
@@ -640,8 +636,6 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
   const similarNameLevel110 = warningCount(
     findCheck(locChecks, "duplicate_similar_name_same_level_within_110m_radius")
   );
-  // Geospatial checks land in the "location" section via SECTION_ALIASES; their
-  // column is "latitude,longitude", so match on the assertion alone.
   const uninhabitedArea = warningCount(
     findCheck(locChecks, "is_in_uninhabited_area")
   );
@@ -692,8 +686,7 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
   const priorityMedium = tr("priorityMedium");
   const priorityLow = tr("priorityLow");
 
-  // `mk` keys survive into the markup so the measurement pass can report real
-  // heights; a blank priority renders as an empty cell.
+  // `mk` survives into the markup so the measurement pass can report real heights.
   let rowKey = 0;
   const row = (label: string, alerts: number, priority = ""): TableRow => ({
     label,
@@ -704,10 +697,8 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
   const withCount = (label: string, count: number) =>
     label.replace("{count}", fmt(count));
 
-  // Group tallies are not 0/1 checks, so Dagster reports them in dq-summary
-  // together with the threshold it counted them with — the single source of
-  // truth for both. A report that predates them carries neither, so the row is
-  // omitted rather than printed as a 0 that would read as "no such groups".
+  // Dagster reports each group tally with the threshold it counted at. A report
+  // that predates them carries neither, so the row is omitted rather than zeroed.
   const groupRow = (
     key: string,
     count: number | null | undefined,
@@ -743,7 +734,6 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
     },
   ];
 
-  // One ordered list; splitWarningSections decides where page 1 ends.
   const warningSections: TableSection[] = [
     {
       title: tr("sectionDuplicates"),
@@ -827,14 +817,12 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
     schoolsUpdatedRaw !== undefined &&
     String(schoolsUpdatedRaw).trim() !== "";
 
-  // No overflow rows means no warnings table on page 2, so nothing to clear.
   const page2WarningsBottom =
     warningsPage2Sections.length > 0
       ? PAGE2_WARNINGS_TOP + warningsTableHeight(warningsPage2Sections, measured)
       : PAGE_CONTENT_TOP - MAPS_TITLE_GAP;
 
-  // The Mappings block follows the warnings table instead of sitting at fixed
-  // tops: the warnings table now grows and shrinks with the check set.
+  // Follows the warnings table, which now grows and shrinks with the check set.
   const mapsNote = tr("mappingsNote");
   const mapsNoteHeight =
     measured?.["note"] ?? lineCount(mapsNote, NOTE_COL) * NOTE_LINE;
