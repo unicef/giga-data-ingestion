@@ -54,8 +54,9 @@ type Check = {
   count_passed?: number;
 };
 
-type TableRow = { label: string; alerts: string; priority: string };
-type TableSection = { title: string; rows: TableRow[] };
+type TableRow = { label: string; alerts: string; priority: string; mk: string };
+/** A null title is a section continued from the previous page: no sub-header. */
+type TableSection = { title: string | null; rows: TableRow[] };
 
 const SECTION_ALIASES: Record<string, string[]> = {
   critical: ["critical_checks", "critical_error_check"],
@@ -66,12 +67,15 @@ const SECTION_ALIASES: Record<string, string[]> = {
   precision: ["precision_checks", "precision checks"],
 };
 
+/** Concatenated, not first-match: one report can carry both "location checks"
+ * and "location_checks" as separate keys. */
 function getSection(dq: Record<string, unknown>, key: keyof typeof SECTION_ALIASES): Check[] {
+  const merged: Check[] = [];
   for (const candidate of SECTION_ALIASES[key]) {
     const v = dq[candidate];
-    if (Array.isArray(v)) return v as Check[];
+    if (Array.isArray(v)) merged.push(...(v as Check[]));
   }
-  return [];
+  return merged;
 }
 
 function findCheck(
@@ -88,6 +92,11 @@ function findCheck(
 
 function failedCount(check: Check | undefined): number {
   return Number(check?.count_failed ?? 0) || 0;
+}
+
+/** Absent means "not computed"; 0 would read as a real count. */
+function optionalNumber(value: number | null | undefined): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
 
 /** Warning-tier checks: count_failed is scoped to approved rows in dq-summary. */
@@ -219,9 +228,13 @@ const PAGE_CONTENT_TOP = 69;
 const PAGE_CONTENT_BOTTOM = 790;
 /** Keep tables clear of the page footer band. */
 const PAGE_CONTENT_SAFE_BOTTOM = PAGE_CONTENT_BOTTOM - 12;
-const PAGE2_MAPS_TABLE_START = 258;
 const PAGE2_WARNINGS_TOP = 69;
 const SECTION_GAP = 16;
+const PAGE1_WARNINGS_TOP = 568;
+/** Reproduce the previously fixed Mappings block (193 / 213 / 258pt). */
+const MAPS_TITLE_GAP = 22;
+const MAPS_NOTE_OFFSET = 20;
+const MAPS_TABLE_GAP = 13;
 
 // Mirrors the .tbl / .thead / .trow box model in dq-report.html. 1px = 0.75pt.
 const ROW_LINE = 16;
@@ -230,6 +243,9 @@ const ROW_BORDER = 0.375;
 const TBL_BORDERS = 1.5;
 const HEAD_COMPACT = 22.375;
 const HEAD_FULL = 24;
+const SUBHEAD = 22;
+const NOTE_LINE = 16;
+const NOTE_COL = 556;
 const MAP_SRC_COL = 160;
 const MAP_DST_COL = 174;
 const META_VALUE_COL = 265;
@@ -266,6 +282,80 @@ function metaRowHeight(row: KeyedMetaRow, measured?: RowHeights): number {
   const m = measured?.[row.mk];
   if (m !== undefined) return m;
   return rowHeight(lineCount(row.value, META_VALUE_COL));
+}
+
+function warningRowHeight(row: TableRow, measured?: RowHeights): number {
+  const m = measured?.[row.mk];
+  if (m !== undefined) return m;
+  return rowHeight(lineCount(row.label, TABLE_LABEL_COL));
+}
+
+function warningsTableHeight(
+  sections: TableSection[],
+  measured?: RowHeights
+): number {
+  if (sections.length === 0) return 0;
+  return (
+    TBL_BORDERS +
+    HEAD_FULL +
+    sections.reduce(
+      (sum, section) =>
+        sum +
+        (section.title === null ? 0 : SUBHEAD) +
+        section.rows.reduce(
+          (rows, row) => rows + warningRowHeight(row, measured),
+          0
+        ),
+      0
+    )
+  );
+}
+
+/** Split by real row height. `availableHeight` budgets the section rows only;
+ * borders and the table header are the caller's. A sub-header is never left
+ * orphaned at the foot of page 1. */
+function splitWarningSections(
+  sections: TableSection[],
+  availableHeight: number,
+  measured?: RowHeights
+): { page1: TableSection[]; page2: TableSection[] } {
+  const page1: TableSection[] = [];
+  const page2: TableSection[] = [];
+  let used = 0;
+  let overflowing = false;
+
+  for (const section of sections) {
+    if (section.rows.length === 0) continue;
+    if (overflowing) {
+      page2.push(section);
+      continue;
+    }
+
+    const firstRow = warningRowHeight(section.rows[0], measured);
+    if (used + SUBHEAD + firstRow > availableHeight) {
+      overflowing = true;
+      page2.push(section);
+      continue;
+    }
+
+    used += SUBHEAD;
+    const taken: TableRow[] = [];
+    for (const row of section.rows) {
+      const h = warningRowHeight(row, measured);
+      if (used + h > availableHeight) {
+        overflowing = true;
+        break;
+      }
+      used += h;
+      taken.push(row);
+    }
+
+    page1.push({ title: section.title, rows: taken });
+    const rest = section.rows.slice(taken.length);
+    if (rest.length > 0) page2.push({ title: null, rows: rest });
+  }
+
+  return { page1, page2 };
 }
 
 type MapGroup = { title: string; rows: KeyedMapRow[] };
@@ -471,6 +561,10 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
       rows_passed_with_warnings?: number | null;
       count_schools_low_precision_coordinates?: number | null;
       count_duplicate_school_id?: number | null;
+      count_duplicate_location_groups?: number | null;
+      duplicate_location_group_min_size?: number | null;
+      count_proximity_50m_groups?: number | null;
+      proximity_50m_group_min_size?: number | null;
       schools_created?: number | null;
       schools_updated?: number | null;
     } | undefined) ?? {};
@@ -539,11 +633,17 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
     findCheck(locChecks, "duplicate_set", "school_name_education_level_location_id")
   );
   const allExceptCode = warningCount(findCheck(dupChecks, "duplicate_all_except_school_code"));
-  const nameLevel110 = warningCount(
-    findCheck(locChecks, "duplicate_name_level_within_110m_radius")
-  );
   const similarNameLevel110 = warningCount(
     findCheck(locChecks, "duplicate_similar_name_same_level_within_110m_radius")
+  );
+  const uninhabitedArea = warningCount(
+    findCheck(locChecks, "is_in_uninhabited_area")
+  );
+  const suspectLocation = warningCount(
+    findCheck(locChecks, "is_suspect_location")
+  );
+  const within50m = warningCount(
+    findCheck(locChecks, "duplicate_group_flag_50m")
   );
 
   // null/absent means "not computed upstream" — only a real number is exact.
@@ -562,8 +662,10 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
       allExceptCode,
       nameEduLoc,
       sameLocation,
-      nameLevel110,
-      similarNameLevel110
+      similarNameLevel110,
+      uninhabitedArea,
+      suspectLocation,
+      within50m
     );
 
   // Warnings apply only to approved (passed) rows — never to rejected.
@@ -584,118 +686,106 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
   const priorityMedium = tr("priorityMedium");
   const priorityLow = tr("priorityLow");
 
+  // `mk` survives into the markup so the measurement pass can report real heights.
+  let rowKey = 0;
+  const row = (label: string, alerts: number, priority = ""): TableRow => ({
+    label,
+    alerts: fmt(alerts),
+    priority,
+    mk: `w${rowKey++}`,
+  });
+  const withCount = (label: string, count: number) =>
+    label.replace("{count}", fmt(count));
+
+  // Dagster reports each group tally with the threshold it counted at. A report
+  // that predates them carries neither, so the row is omitted rather than zeroed.
+  const groupRow = (
+    key: string,
+    count: number | null | undefined,
+    minSize: number | null | undefined
+  ): TableRow[] => {
+    const tally = optionalNumber(count);
+    const min = optionalNumber(minSize);
+    if (tally === undefined || min === undefined) return [];
+    return [row(withCount(te(key), min), tally)];
+  };
+
   const rejectedSections: TableSection[] = [
     {
       title: tr("sectionCoordinates"),
       rows: [
-        {
-          label: te("missingCoordinates"),
-          alerts: fmt(missingCoords),
-          priority: priorityHigh,
-        },
-        {
-          label: te("outsideCountry"),
-          alerts: fmt(outsideCountry),
-          priority: priorityHigh,
-        },
+        row(te("missingCoordinates"), missingCoords, priorityHigh),
+        row(te("outsideCountry"), outsideCountry, priorityHigh),
       ],
     },
     {
       title: te("sectionIds"),
       rows: [
-        {
-          label: te("missingId"),
-          alerts: fmt(missingSchoolIds),
-          priority: priorityHigh,
-        },
-        {
-          label: te("duplicateIds"),
-          alerts: fmt(dupSchoolIds),
-          priority: priorityHigh,
-        },
+        row(te("missingId"), missingSchoolIds, priorityHigh),
+        row(te("duplicateIds"), dupSchoolIds, priorityHigh),
       ],
     },
     {
       title: tr("sectionOther"),
       rows: [
-        {
-          label: te("missingNames"),
-          alerts: fmt(missingName),
-          priority: priorityHigh,
-        },
-        {
-          label: te("missingEducationLevel"),
-          alerts: fmt(missingEduLevel),
-          priority: priorityHigh,
-        },
+        row(te("missingNames"), missingName, priorityHigh),
+        row(te("missingEducationLevel"), missingEduLevel, priorityHigh),
       ],
     },
   ];
 
-  const warningsPage1Sections: TableSection[] = [
+  const warningSections: TableSection[] = [
     {
       title: tr("sectionDuplicates"),
       rows: [
-        {
-          label: te("sameLocation"),
-          alerts: fmt(sameLocation),
-          priority: priorityMedium,
-        },
-        {
-          label: te("sameNameLevelLocation"),
-          alerts: fmt(nameEduLoc),
-          priority: priorityMedium,
-        },
-        {
-          label: te("identicalExceptId"),
-          alerts: fmt(allExceptCode),
-          priority: priorityMedium,
-        },
+        row(te("sameLocation"), sameLocation, priorityMedium),
+        ...groupRow(
+          "duplicateLocationGroups",
+          summary.count_duplicate_location_groups,
+          summary.duplicate_location_group_min_size
+        ),
+        row(te("sameNameLevelLocation"), nameEduLoc, priorityMedium),
+        row(te("identicalExceptId"), allExceptCode, priorityMedium),
       ],
     },
     {
       title: tr("sectionAccuracy"),
       rows: [
-        {
-          label: tr("lowPrecision"),
-          alerts: fmt(lowPrecision),
-          priority: priorityMedium,
-        },
+        row(te("lowPrecision"), lowPrecision, priorityMedium),
+        row(te("notInhabitedArea"), uninhabitedArea, priorityMedium),
+        row(te("notNearBuiltEnvironment"), suspectLocation, priorityLow),
       ],
     },
     {
       title: tr("sectionOther"),
       rows: [
-        {
-          label: te("highDensity"),
-          alerts: fmt(highDensity),
-          priority: priorityLow,
-        },
+        row(te("within50m"), within50m, priorityLow),
+        ...groupRow(
+          "proximity50mGroups",
+          summary.count_proximity_50m_groups,
+          summary.proximity_50m_group_min_size
+        ),
+        row(te("similarNameSameLevel110"), similarNameLevel110, priorityLow),
+        row(te("highDensity"), highDensity, priorityLow),
       ],
     },
   ];
 
-  const warningsPage2Rows: TableRow[] = [
-    {
-      label: te("similarNameLevelLocation110"),
-      alerts: fmt(nameLevel110),
-      priority: priorityLow,
-    },
-    {
-      label: te("similarNameSameLevel110"),
-      alerts: fmt(similarNameLevel110),
-      priority: priorityLow,
-    },
-  ];
+  const { page1: warningsPage1Sections, page2: warningsPage2Sections } =
+    splitWarningSections(
+      warningSections,
+      PAGE_CONTENT_SAFE_BOTTOM - PAGE1_WARNINGS_TOP - TBL_BORDERS - HEAD_FULL,
+      measured
+    );
 
   const valueMaps = data.valueMaps ?? {};
   // `mk` keys survive into the markup so a render pass can report real heights.
   let mapKey = 0;
   const keyMaps = (rows: ValueMapRow[]): KeyedMapRow[] =>
-    rows.map((row) => ({
-      ...row,
-      count: reformatNumeric(row.count, fmt),
-      pct: reformatNumeric(row.pct, pctValue),
+    rows.map((mapRow) => ({
+      ...mapRow,
+      count: reformatNumeric(mapRow.count, fmt),
+      pct: reformatNumeric(mapRow.pct, pctValue),
       mk: `m${mapKey++}`,
     }));
   const educationMaps = keyMaps(valueMaps.education ?? []);
@@ -727,9 +817,18 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
     schoolsUpdatedRaw !== undefined &&
     String(schoolsUpdatedRaw).trim() !== "";
 
-  const mapsSectionTop = 193;
-  const mapsNoteTop = 213;
-  const mapsTableTop = PAGE2_MAPS_TABLE_START;
+  const page2WarningsBottom =
+    warningsPage2Sections.length > 0
+      ? PAGE2_WARNINGS_TOP + warningsTableHeight(warningsPage2Sections, measured)
+      : PAGE_CONTENT_TOP - MAPS_TITLE_GAP;
+
+  // Follows the warnings table, which now grows and shrinks with the check set.
+  const mapsNote = tr("mappingsNote");
+  const mapsNoteHeight =
+    measured?.["note"] ?? lineCount(mapsNote, NOTE_COL) * NOTE_LINE;
+  const mapsSectionTop = page2WarningsBottom + MAPS_TITLE_GAP;
+  const mapsNoteTop = mapsSectionTop + MAPS_NOTE_OFFSET;
+  const mapsTableTop = mapsNoteTop + mapsNoteHeight + MAPS_TABLE_GAP;
   const mapsGroups: MapGroup[] = [];
   let connectivityOverflow: KeyedMapRow[] = connectivityAll;
 
@@ -754,15 +853,6 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
       }
     }
   }
-
-  const page2WarningsBottom =
-    PAGE2_WARNINGS_TOP +
-    TBL_BORDERS +
-    HEAD_FULL +
-    warningsPage2Rows.reduce(
-      (sum, row) => sum + rowHeight(lineCount(row.label, TABLE_LABEL_COL)),
-      0
-    );
 
   // Page 2 keeps Metadata only when the whole table fits below the mappings.
   const page2ContentBottom =
@@ -815,7 +905,7 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
       excelSheetRejected: tr("excelSheetRejected"),
       approvedWithWarnings: tr("approvedWithWarnings"),
       mappings: tr("mappings"),
-      mappingsNote: tr("mappingsNote"),
+      mappingsNote: mapsNote,
       educationLevel: tr("educationLevel"),
       electricity: tr("electricity"),
       connectivity: tr("connectivity"),
@@ -852,7 +942,8 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
     approvedWithWarningsIsApproximate: !hasExactApprovedWithWarnings,
     rejectedSections,
     warningsPage1Sections,
-    warningsPage2Rows,
+    warningsPage2Sections,
+    warningsTableTop: PAGE1_WARNINGS_TOP,
     mapsGroups,
     postPage2Pages,
     hasMapsSection,
