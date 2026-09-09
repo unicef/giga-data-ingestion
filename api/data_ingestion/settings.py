@@ -4,6 +4,7 @@ from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal
+from urllib.parse import urlparse
 
 import sentry_sdk
 from loguru import logger
@@ -309,38 +310,63 @@ def _scrub_sentry_event(event: dict[str, Any], _hint: dict[str, Any]) -> dict[st
     return event
 
 
+def _valid_sentry_dsn(dsn: str, source: str) -> str:
+    # Guards against unexpanded CI placeholders reaching sentry_sdk.
+    if not dsn:
+        return ""
+
+    try:
+        parsed = urlparse(dsn)
+    except ValueError:
+        parsed = None
+
+    if parsed is None or parsed.scheme not in ("http", "https") or not parsed.netloc:
+        logger.error(f"{source} is not a valid Sentry DSN; ignoring it.")
+        return ""
+
+    return dsn
+
+
 def initialize_sentry(component: Literal["api", "worker"] = "api"):
-    dsn = settings.SENTRY_DSN
+    dsn = _valid_sentry_dsn(settings.SENTRY_DSN, "SENTRY_DSN")
     if component == "worker":
-        if settings.SENTRY_DSN_WORKER:
-            dsn = settings.SENTRY_DSN_WORKER
+        worker_dsn = _valid_sentry_dsn(settings.SENTRY_DSN_WORKER, "SENTRY_DSN_WORKER")
+        if worker_dsn:
+            dsn = worker_dsn
         elif dsn:
             logger.warning(
-                "SENTRY_DSN_WORKER is unset; worker events fall back to the backend"
-                " Sentry project."
+                "SENTRY_DSN_WORKER is unset or invalid; worker events fall back to the"
+                " backend Sentry project."
             )
 
     enabled = bool(dsn) and (settings.IN_PRODUCTION or settings.SENTRY_ENABLE_IN_LOCAL)
     if enabled:
-        sentry_sdk.init(
-            dsn=dsn,
-            integrations=[
-                FastApiIntegration(transaction_style="url"),
-                CeleryIntegration(),
-                RedisIntegration(),
-                SqlalchemyIntegration(),
-            ],
-            send_default_pii=settings.SENTRY_SEND_DEFAULT_PII,
-            traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
-            profiles_sample_rate=settings.SENTRY_PROFILES_SAMPLE_RATE,
-            max_request_body_size=settings.SENTRY_MAX_REQUEST_BODY_SIZE,
-            include_source_context=settings.SENTRY_INCLUDE_SOURCE_CONTEXT,
-            include_local_variables=settings.SENTRY_INCLUDE_LOCAL_VARIABLES,
-            debug=settings.SENTRY_DEBUG,
-            before_send=_scrub_sentry_event,
-            environment=settings.SENTRY_ENVIRONMENT,
-            release=f"giga-data-ingestion@{settings.COMMIT_SHA}",
-            server_name=f"ingestion-portal-{component}-{settings.DEPLOY_ENV.name}@{socket.gethostname()}",
-        )
+        try:
+            sentry_sdk.init(
+                dsn=dsn,
+                integrations=[
+                    FastApiIntegration(transaction_style="url"),
+                    CeleryIntegration(),
+                    RedisIntegration(),
+                    SqlalchemyIntegration(),
+                ],
+                send_default_pii=settings.SENTRY_SEND_DEFAULT_PII,
+                traces_sample_rate=settings.SENTRY_TRACES_SAMPLE_RATE,
+                profiles_sample_rate=settings.SENTRY_PROFILES_SAMPLE_RATE,
+                max_request_body_size=settings.SENTRY_MAX_REQUEST_BODY_SIZE,
+                include_source_context=settings.SENTRY_INCLUDE_SOURCE_CONTEXT,
+                include_local_variables=settings.SENTRY_INCLUDE_LOCAL_VARIABLES,
+                debug=settings.SENTRY_DEBUG,
+                before_send=_scrub_sentry_event,
+                environment=settings.SENTRY_ENVIRONMENT,
+                release=f"giga-data-ingestion@{settings.COMMIT_SHA}",
+                server_name=f"ingestion-portal-{component}-{settings.DEPLOY_ENV.name}@{socket.gethostname()}",
+            )
+        except Exception as exc:
+            logger.error(
+                f"Failed to initialize Sentry for the {component} component: {exc}"
+            )
+            return
+
         sentry_sdk.set_tag("app_version", APP_VERSION)
         logger.info(f"Initialized Sentry for the {component} component.")
