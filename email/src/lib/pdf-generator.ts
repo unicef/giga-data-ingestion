@@ -676,11 +676,10 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
   const rejArc = (rejected / safeDenom) * circumference;
   const warnArc = (warningsForDonut / safeDenom) * circumference;
 
-  // Red tick at top-left (Figma). Amber follows clockwise after the rejected
-  // slice so mustard never overlaps the red rejected band.
-  const rejRotate = -96;
-  const warnRotate =
-    rejArc > 0.01 ? rejRotate + (rejArc / circumference) * 360 : -90;
+  // SVG strokes start at 3 o'clock; -90 starts red at 12. Amber follows clockwise
+  // after the rejected slice so it never overlaps the red band.
+  const rejRotate = -90;
+  const warnRotate = rejRotate + (rejArc / circumference) * 360;
 
   const priorityHigh = tr("priorityHigh");
   const priorityMedium = tr("priorityMedium");
