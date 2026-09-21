@@ -14,12 +14,17 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as UserManagementImport } from './routes/user-management'
+import { Route as SchemaManagementImport } from './routes/schema-management'
 import { Route as IndexImport } from './routes/index'
 import { Route as UserManagementIndexImport } from './routes/user-management/index'
 import { Route as UploadIndexImport } from './routes/upload/index'
+import { Route as SchemaManagementIndexImport } from './routes/schema-management/index'
 import { Route as IngestApiIndexImport } from './routes/ingest-api/index'
 import { Route as DeleteIndexImport } from './routes/delete/index'
 import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
+import { Route as SchemaManagementProposalsImport } from './routes/schema-management/proposals'
+import { Route as SchemaManagementGroupsImport } from './routes/schema-management/groups'
+import { Route as SchemaManagementDatasetKeyImport } from './routes/schema-management/$datasetKey'
 import { Route as IngestApiEditImport } from './routes/ingest-api/edit'
 import { Route as IngestApiAddImport } from './routes/ingest-api/add'
 import { Route as DeleteNewImport } from './routes/delete/new'
@@ -82,6 +87,11 @@ const UserManagementRoute = UserManagementImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const SchemaManagementRoute = SchemaManagementImport.update({
+  path: '/schema-management',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const IndexRoute = IndexImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
@@ -95,6 +105,11 @@ const UserManagementIndexRoute = UserManagementIndexImport.update({
 const UploadIndexRoute = UploadIndexImport.update({
   path: '/',
   getParentRoute: () => UploadLazyRoute,
+} as any)
+
+const SchemaManagementIndexRoute = SchemaManagementIndexImport.update({
+  path: '/',
+  getParentRoute: () => SchemaManagementRoute,
 } as any)
 
 const IngestApiIndexRoute = IngestApiIndexImport.update({
@@ -111,6 +126,23 @@ const ApprovalRequestsIndexRoute = ApprovalRequestsIndexImport.update({
   path: '/',
   getParentRoute: () => ApprovalRequestsLazyRoute,
 } as any)
+
+const SchemaManagementProposalsRoute = SchemaManagementProposalsImport.update({
+  path: '/proposals',
+  getParentRoute: () => SchemaManagementRoute,
+} as any)
+
+const SchemaManagementGroupsRoute = SchemaManagementGroupsImport.update({
+  path: '/groups',
+  getParentRoute: () => SchemaManagementRoute,
+} as any)
+
+const SchemaManagementDatasetKeyRoute = SchemaManagementDatasetKeyImport.update(
+  {
+    path: '/$datasetKey',
+    getParentRoute: () => SchemaManagementRoute,
+  } as any,
+)
 
 const IngestApiEditRoute = IngestApiEditImport.update({
   path: '/edit',
@@ -262,6 +294,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/schema-management': {
+      preLoaderRoute: typeof SchemaManagementImport
+      parentRoute: typeof rootRoute
+    }
     '/user-management': {
       preLoaderRoute: typeof UserManagementImport
       parentRoute: typeof rootRoute
@@ -294,6 +330,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiEditImport
       parentRoute: typeof IngestApiLazyImport
     }
+    '/schema-management/$datasetKey': {
+      preLoaderRoute: typeof SchemaManagementDatasetKeyImport
+      parentRoute: typeof SchemaManagementImport
+    }
+    '/schema-management/groups': {
+      preLoaderRoute: typeof SchemaManagementGroupsImport
+      parentRoute: typeof SchemaManagementImport
+    }
+    '/schema-management/proposals': {
+      preLoaderRoute: typeof SchemaManagementProposalsImport
+      parentRoute: typeof SchemaManagementImport
+    }
     '/approval-requests/': {
       preLoaderRoute: typeof ApprovalRequestsIndexImport
       parentRoute: typeof ApprovalRequestsLazyImport
@@ -305,6 +353,10 @@ declare module '@tanstack/react-router' {
     '/ingest-api/': {
       preLoaderRoute: typeof IngestApiIndexImport
       parentRoute: typeof IngestApiLazyImport
+    }
+    '/schema-management/': {
+      preLoaderRoute: typeof SchemaManagementIndexImport
+      parentRoute: typeof SchemaManagementImport
     }
     '/upload/': {
       preLoaderRoute: typeof UploadIndexImport
@@ -409,6 +461,12 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
+  SchemaManagementRoute.addChildren([
+    SchemaManagementDatasetKeyRoute,
+    SchemaManagementGroupsRoute,
+    SchemaManagementProposalsRoute,
+    SchemaManagementIndexRoute,
+  ]),
   UserManagementRoute.addChildren([
     UserManagementIndexRoute,
     UserManagementUserAddRoute,

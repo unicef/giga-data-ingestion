@@ -19,6 +19,7 @@ import groupsRouter from "./routers/groups.ts";
 import qosRouter from "./routers/qos.ts";
 import rolesRouter from "./routers/roles.ts";
 import schemaRouter from "./routers/schema.ts";
+import schemaRegistryRouter from "./routers/schemaRegistry.ts";
 import uploadsRouter from "./routers/uploads.ts";
 import usersRouter from "./routers/users.ts";
 import utilsRouter from "./routers/utils.ts";
@@ -39,6 +40,7 @@ export const api = {
   roles: rolesRouter(axi),
   qos: qosRouter(axi),
   schema: schemaRouter(axi),
+  schemaRegistry: schemaRegistryRouter(axi),
   uploads: uploadsRouter(axi),
   users: usersRouter(axi),
   utils: utilsRouter(axi),
