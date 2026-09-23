@@ -24,6 +24,7 @@ import { Route as DeleteIndexImport } from './routes/delete/index'
 import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
 import { Route as SchemaManagementProposalsImport } from './routes/schema-management/proposals'
 import { Route as SchemaManagementGroupsImport } from './routes/schema-management/groups'
+import { Route as SchemaManagementAuditImport } from './routes/schema-management/audit'
 import { Route as SchemaManagementDatasetKeyImport } from './routes/schema-management/$datasetKey'
 import { Route as IngestApiEditImport } from './routes/ingest-api/edit'
 import { Route as IngestApiAddImport } from './routes/ingest-api/add'
@@ -134,6 +135,11 @@ const SchemaManagementProposalsRoute = SchemaManagementProposalsImport.update({
 
 const SchemaManagementGroupsRoute = SchemaManagementGroupsImport.update({
   path: '/groups',
+  getParentRoute: () => SchemaManagementRoute,
+} as any)
+
+const SchemaManagementAuditRoute = SchemaManagementAuditImport.update({
+  path: '/audit',
   getParentRoute: () => SchemaManagementRoute,
 } as any)
 
@@ -334,6 +340,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SchemaManagementDatasetKeyImport
       parentRoute: typeof SchemaManagementImport
     }
+    '/schema-management/audit': {
+      preLoaderRoute: typeof SchemaManagementAuditImport
+      parentRoute: typeof SchemaManagementImport
+    }
     '/schema-management/groups': {
       preLoaderRoute: typeof SchemaManagementGroupsImport
       parentRoute: typeof SchemaManagementImport
@@ -463,6 +473,7 @@ export const routeTree = rootRoute.addChildren([
   IndexRoute,
   SchemaManagementRoute.addChildren([
     SchemaManagementDatasetKeyRoute,
+    SchemaManagementAuditRoute,
     SchemaManagementGroupsRoute,
     SchemaManagementProposalsRoute,
     SchemaManagementIndexRoute,

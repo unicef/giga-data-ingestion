@@ -67,3 +67,15 @@ export const listSchemaProposalsQueryOptions = queryOptions({
   queryKey: ["schema-registry", "proposals"],
   queryFn: () => api.schemaRegistry.listProposals(),
 });
+
+export const listSchemaAuditLogQueryOptions = ({
+  limit,
+  offset,
+}: {
+  limit: number;
+  offset: number;
+}) =>
+  queryOptions({
+    queryKey: ["schema-registry", "audit", limit, offset],
+    queryFn: () => api.schemaRegistry.listAuditLog({ limit, offset }),
+  });

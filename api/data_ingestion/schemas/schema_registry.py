@@ -31,12 +31,8 @@ class SchemaDatasetResponse(BaseModel):
     id: str
     key: str
     group_id: str | None = None
-
-
-class SchemaDatasetSummary(SchemaDatasetResponse):
     column_count: int = 0
     pending_proposal_count: int = 0
-    current_version: int | None = None
 
 
 class MoveDatasetRequest(BaseModel):
@@ -91,6 +87,10 @@ class ProposalCreate(BaseModel):
     after_state: dict[str, Any] | None = None
 
 
+class RejectProposalRequest(BaseModel):
+    reason: str = Field(min_length=1)
+
+
 class ProposalResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -105,6 +105,7 @@ class ProposalResponse(BaseModel):
     proposed_by_email: str
     delta_version: int | None = None
     apply_error: str | None = None
+    rejection_reason: str | None = None
     created: datetime
 
 
@@ -127,6 +128,8 @@ class AuditLogResponse(BaseModel):
     actor_id: UUID4
     actor_email: str
     created: datetime
+    dataset_key: str | None = None
+    column_name: str | None = None
 
 
 class DatasetVersion(BaseModel):
@@ -135,3 +138,15 @@ class DatasetVersion(BaseModel):
     operation: str | None = None
     proposal_id: str | None = None
     approved_by_email: str | None = None
+
+
+class DatasetImportError(BaseModel):
+    row: int
+    detail: str
+
+
+class DatasetImportResponse(BaseModel):
+    created: int = 0
+    updated: int = 0
+    skipped: int = 0
+    errors: list[DatasetImportError] = Field(default_factory=list)

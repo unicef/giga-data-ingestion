@@ -1,6 +1,14 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Security, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    Security,
+    UploadFile,
+    status,
+)
 from fastapi_azure_auth.user import User as AzureUser
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,6 +24,7 @@ from data_ingestion.schemas.schema_registry import (
     AuditLogResponse,
     DatasetGroupCreate,
     DatasetGroupResponse,
+    DatasetImportResponse,
     DatasetLinkCreate,
     DatasetLinkResponse,
     DatasetVersion,
@@ -24,6 +33,7 @@ from data_ingestion.schemas.schema_registry import (
     ProposalDetail,
     ProposalResponse,
     RegistryColumn,
+    RejectProposalRequest,
     SchemaDatasetCreate,
     SchemaDatasetResponse,
 )
@@ -76,8 +86,11 @@ async def create_group(body: DatasetGroupCreate, db: AsyncSession = Depends(get_
 
 
 @router.get("/datasets", response_model=list[SchemaDatasetResponse])
-async def list_datasets(db: AsyncSession = Depends(get_db)):
-    return await registry.list_datasets(db)
+async def list_datasets(
+    db: AsyncSession = Depends(get_db),
+    trino_db: Session = Depends(get_trino_db),
+):
+    return await registry.list_datasets(db, trino_db)
 
 
 @router.post(
@@ -91,8 +104,29 @@ async def create_dataset(body: SchemaDatasetCreate, db: AsyncSession = Depends(g
 
 
 @router.get("/datasets/{key}", response_model=SchemaDatasetResponse)
-async def get_dataset(key: str, db: AsyncSession = Depends(get_db)):
-    return await registry.get_dataset_by_key(db, key)
+async def get_dataset(
+    key: str,
+    db: AsyncSession = Depends(get_db),
+    trino_db: Session = Depends(get_trino_db),
+):
+    return await registry.get_dataset_detail(db, trino_db, key)
+
+
+@router.post(
+    "/datasets/{key}/import",
+    response_model=DatasetImportResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def import_dataset_columns(
+    key: str,
+    file: UploadFile,
+    db: AsyncSession = Depends(get_db),
+    trino_db: Session = Depends(get_trino_db),
+):
+    csv_bytes = await file.read()
+    return await registry.import_columns_from_csv(
+        db, trino_db, dataset_key=key, csv_bytes=csv_bytes
+    )
 
 
 @router.patch(
@@ -312,11 +346,16 @@ async def approve_proposal(
 )
 async def reject_proposal(
     id: str,
+    body: RejectProposalRequest,
     db: AsyncSession = Depends(get_db),
     current_user: DatabaseUser = Depends(get_current_database_user),
 ):
     return await registry.reject_proposal(
-        db, id, actor_id=current_user.id, actor_email=current_user.email
+        db,
+        id,
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+        reason=body.reason,
     )
 
 
@@ -330,5 +369,21 @@ async def reject_proposal(
     response_model=list[AuditLogResponse],
     dependencies=[Security(IsPrivileged())],
 )
-async def list_audit_log(db: AsyncSession = Depends(get_db)):
-    return await registry.list_audit_log(db)
+async def list_audit_log(
+    dataset_key: str | None = None,
+    column_name: str | None = None,
+    actor_id: str | None = None,
+    action: str | None = None,
+    limit: int = Query(default=50, le=200, gt=0),
+    offset: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.list_audit_log(
+        db,
+        dataset_key=dataset_key,
+        column_name=column_name,
+        actor_id=actor_id,
+        action=action,
+        limit=limit,
+        offset=offset,
+    )

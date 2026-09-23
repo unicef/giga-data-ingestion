@@ -1,10 +1,11 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import {
   Button,
   DataTable,
   DataTableHeader,
   Heading,
+  InlineNotification,
   Modal,
   Section,
   Tab,
@@ -23,10 +24,13 @@ import {
   Tabs,
   Tag,
 } from "@carbon/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/api";
+import ChecksPanel from "@/components/schema-management/ChecksPanel.tsx";
 import ProposeChangeModal from "@/components/schema-management/ProposeChangeModal.tsx";
+import useRoles from "@/hooks/useRoles.ts";
+import { DatasetImportResponse } from "@/types/schemaRegistry.ts";
 
 const columnHeaders: DataTableHeader[] = [
   { key: "name", header: "Name" },
@@ -49,8 +53,12 @@ interface DatasetDetailProps {
 
 function DatasetDetail({ datasetKey }: DatasetDetailProps) {
   const queryClient = useQueryClient();
+  const { isPrivileged } = useRoles();
   const [proposeOpen, setProposeOpen] = useState(false);
   const [snapshotVersion, setSnapshotVersion] = useState<number | null>(null);
+  const [importResult, setImportResult] =
+    useState<DatasetImportResponse | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: columnsQuery, isLoading: isColumnsLoading } = useQuery({
     queryKey: ["schema-registry", "columns", datasetKey],
@@ -114,6 +122,25 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
     });
   };
 
+  const { mutate: importColumns, isPending: isImporting } = useMutation({
+    mutationFn: api.schemaRegistry.importDatasetColumns,
+    onSuccess: async ({ data }) => {
+      setImportResult(data);
+      await queryClient.invalidateQueries({
+        queryKey: ["schema-registry", "columns", datasetKey],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["schema-registry", "datasets"],
+      });
+    },
+  });
+
+  const handleImportFile = (file: File | undefined) => {
+    if (!file) return;
+    importColumns({ datasetKey, file });
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   return (
     <Section className="container py-6">
       <Heading>{datasetKey}</Heading>
@@ -121,6 +148,7 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
       <Tabs>
         <TabList aria-label="Dataset detail tabs">
           <Tab>Columns</Tab>
+          <Tab>DQ checks</Tab>
           <Tab>Version history</Tab>
         </TabList>
         <TabPanels>
@@ -136,6 +164,26 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                 <TableContainer>
                   <TableToolbar>
                     <TableToolbarContent>
+                      {isPrivileged && (
+                        <>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".csv"
+                            className="hidden"
+                            onChange={e =>
+                              handleImportFile(e.target.files?.[0])
+                            }
+                          />
+                          <Button
+                            kind="tertiary"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isImporting}
+                          >
+                            Import CSV
+                          </Button>
+                        </>
+                      )}
                       <Button
                         onClick={() => setProposeOpen(true)}
                         disabled={isColumnsLoading}
@@ -168,6 +216,9 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                 </TableContainer>
               )}
             </DataTable>
+          </TabPanel>
+          <TabPanel>
+            <ChecksPanel columns={columns} />
           </TabPanel>
           <TabPanel>
             <DataTable headers={versionHeaders} rows={versionRows}>
@@ -213,6 +264,33 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
         open={proposeOpen}
         onClose={() => void handleProposeClose()}
       />
+
+      <Modal
+        aria-label="import result modal"
+        modalHeading="Import results"
+        open={importResult !== null}
+        passiveModal
+        onRequestClose={() => setImportResult(null)}
+      >
+        {importResult && (
+          <>
+            <p>
+              Created {importResult.created}, updated {importResult.updated},
+              skipped {importResult.skipped}.
+            </p>
+            {importResult.errors.length > 0 && (
+              <InlineNotification
+                kind="error"
+                title={`${importResult.errors.length} row(s) failed`}
+                subtitle={importResult.errors
+                  .map(e => `Row ${e.row}: ${e.detail}`)
+                  .join("; ")}
+                hideCloseButton
+              />
+            )}
+          </>
+        )}
+      </Modal>
 
       <Modal
         aria-label="version snapshot modal"

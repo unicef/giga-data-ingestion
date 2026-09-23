@@ -23,6 +23,8 @@ export interface SchemaDataset {
   id: string;
   key: string;
   group_id: string | null;
+  column_count: number;
+  pending_proposal_count: number;
 }
 
 export interface RegistryColumn {
@@ -65,6 +67,7 @@ export interface Proposal {
   proposed_by_email: string;
   delta_version: number | null;
   apply_error: string | null;
+  rejection_reason: string | null;
   created: string;
 }
 
@@ -84,4 +87,27 @@ export interface DatasetVersion {
   operation: string | null;
   proposal_id: string | null;
   approved_by_email: string | null;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  proposal_id: string;
+  action: string;
+  actor_id: string;
+  actor_email: string;
+  created: string;
+  dataset_key: string | null;
+  column_name: string | null;
+}
+
+export interface DatasetImportError {
+  row: number;
+  detail: string;
+}
+
+export interface DatasetImportResponse {
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: DatasetImportError[];
 }

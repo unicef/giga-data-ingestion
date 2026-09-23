@@ -28,15 +28,19 @@ import {
   listDatasetGroupsQueryOptions,
   listSchemaDatasetsQueryOptions,
 } from "@/api/queryOptions.ts";
+import useRoles from "@/hooks/useRoles.ts";
 
 const columns: DataTableHeader[] = [
   { key: "key", header: "Dataset" },
   { key: "group", header: "Group" },
+  { key: "column_count", header: "Columns" },
+  { key: "pending_proposal_count", header: "Pending proposals" },
   { key: "actions", header: "" },
 ];
 
 function DatasetsTable() {
   const queryClient = useQueryClient();
+  const { isPrivileged } = useRoles();
 
   const { data: datasetsQuery, isLoading } = useSuspenseQuery(
     listSchemaDatasetsQueryOptions,
@@ -58,6 +62,8 @@ function DatasetsTable() {
   const rows = datasets.map(dataset => ({
     id: dataset.id,
     key: dataset.key,
+    column_count: dataset.column_count,
+    pending_proposal_count: dataset.pending_proposal_count,
     group: (
       <Select
         id={`group-${dataset.id}`}
@@ -115,6 +121,14 @@ function DatasetsTable() {
               >
                 Review proposals
               </Link>
+              {isPrivileged && (
+                <Link
+                  className="cds--btn cds--btn--ghost"
+                  to="/schema-management/audit"
+                >
+                  Audit log
+                </Link>
+              )}
             </TableToolbarContent>
           </TableToolbar>
           <Table {...getTableProps()}>

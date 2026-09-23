@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
   Tag,
+  TextArea,
 } from "@carbon/react";
 import {
   useMutation,
@@ -26,6 +27,7 @@ import {
   listSchemaDatasetsQueryOptions,
   listSchemaProposalsQueryOptions,
 } from "@/api/queryOptions.ts";
+import DiffViewer from "@/components/schema-management/DiffViewer.tsx";
 import useRoles from "@/hooks/useRoles.ts";
 import { ProposalDetail, ProposalStatus } from "@/types/schemaRegistry.ts";
 
@@ -53,6 +55,8 @@ function ProposalsTable() {
   const { isPrivileged } = useRoles();
   const [diff, setDiff] = useState<ProposalDetail | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   const { data: proposalsQuery, isLoading } = useSuspenseQuery(
     listSchemaProposalsQueryOptions,
@@ -80,9 +84,13 @@ function ProposalsTable() {
         "Could not approve — you may not approve your own proposal.",
       ),
   });
-  const { mutate: reject } = useMutation({
+  const { mutate: reject, isPending: isRejecting } = useMutation({
     mutationFn: api.schemaRegistry.rejectProposal,
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      setRejectTarget(null);
+      setRejectReason("");
+    },
   });
 
   const showDiff = async (id: string) => {
@@ -118,7 +126,7 @@ function ProposalsTable() {
             <Button
               kind="danger--ghost"
               size="sm"
-              onClick={() => reject(proposal.id)}
+              onClick={() => setRejectTarget(proposal.id)}
             >
               Reject
             </Button>
@@ -179,24 +187,7 @@ function ProposalsTable() {
         passiveModal
         onRequestClose={() => setDiff(null)}
       >
-        <Table size="sm">
-          <TableHead>
-            <TableRow>
-              <TableHeader>Field</TableHeader>
-              <TableHeader>Before</TableHeader>
-              <TableHeader>After</TableHeader>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {diff?.diff.map(field => (
-              <TableRow key={field.field}>
-                <TableCell>{field.field}</TableCell>
-                <TableCell>{String(field.before ?? "—")}</TableCell>
-                <TableCell>{String(field.after ?? "—")}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DiffViewer diff={diff?.diff ?? []} />
         {diff?.apply_error && (
           <InlineNotification
             kind="error"
@@ -205,6 +196,40 @@ function ProposalsTable() {
             hideCloseButton
           />
         )}
+        {diff?.rejection_reason && (
+          <InlineNotification
+            kind="info"
+            title="Rejected"
+            subtitle={diff.rejection_reason}
+            hideCloseButton
+          />
+        )}
+      </Modal>
+
+      <Modal
+        aria-label="reject proposal modal"
+        modalHeading="Reject proposal"
+        open={rejectTarget !== null}
+        primaryButtonText="Reject"
+        primaryButtonDisabled={rejectReason.trim().length === 0 || isRejecting}
+        secondaryButtonText="Cancel"
+        danger
+        onRequestClose={() => {
+          setRejectTarget(null);
+          setRejectReason("");
+        }}
+        onRequestSubmit={() => {
+          if (rejectTarget) {
+            reject({ id: rejectTarget, reason: rejectReason.trim() });
+          }
+        }}
+      >
+        <TextArea
+          id="reject-reason"
+          labelText="Reason"
+          value={rejectReason}
+          onChange={e => setRejectReason(e.target.value)}
+        />
       </Modal>
     </>
   );

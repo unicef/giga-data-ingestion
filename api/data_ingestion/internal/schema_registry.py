@@ -1,9 +1,12 @@
+import csv
+import io
 import uuid
+from typing import Any
 
 from fastapi import HTTPException, status
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from data_ingestion.models import (
     DatasetGroup,
@@ -13,6 +16,8 @@ from data_ingestion.models import (
     SchemaProposalAuditLog,
 )
 from data_ingestion.schemas.schema_registry import (
+    DatasetImportError,
+    DatasetImportResponse,
     DatasetVersion,
     ProposalDiffField,
     RegistryColumn,
@@ -64,6 +69,12 @@ def get_registry_columns(
     )
     columns = [RegistryColumn(**dict(m)) for m in res.mappings().all()]
     return sorted(columns, key=sort_schema_columns_key)
+
+
+def count_registry_columns(dataset_key: str, trino_db: Session) -> int:
+    return trino_db.execute(
+        text(f"SELECT count(*) FROM schemas.{dataset_key}")  # nosec B608
+    ).scalar_one()
 
 
 def get_registry_column(
@@ -150,8 +161,38 @@ async def create_group(
     return group
 
 
-async def list_datasets(db: AsyncSession) -> list[SchemaDataset]:
-    return list(await db.scalars(select(SchemaDataset).order_by(SchemaDataset.key)))
+async def _pending_proposal_count(db: AsyncSession, dataset_id: str) -> int:
+    return (
+        await db.scalar(
+            select(func.count())
+            .select_from(SchemaProposal)
+            .where(
+                SchemaProposal.status == "pending",
+                SchemaProposal.dataset_id == dataset_id,
+            )
+        )
+        or 0
+    )
+
+
+async def _pending_proposal_counts_by_dataset(db: AsyncSession) -> dict[str, int]:
+    rows = await db.execute(
+        select(SchemaProposal.dataset_id, func.count())
+        .where(SchemaProposal.status == "pending")
+        .group_by(SchemaProposal.dataset_id)
+    )
+    return dict(rows.all())
+
+
+async def list_datasets(db: AsyncSession, trino_db: Session) -> list[SchemaDataset]:
+    datasets = list(await db.scalars(select(SchemaDataset).order_by(SchemaDataset.key)))
+    pending_counts = await _pending_proposal_counts_by_dataset(db)
+    # One Trino round trip per dataset — acceptable at this app's scale, but
+    # worth revisiting (e.g. caching) if the dataset count grows significantly.
+    for dataset in datasets:
+        dataset.column_count = count_registry_columns(dataset.key, trino_db)
+        dataset.pending_proposal_count = pending_counts.get(dataset.id, 0)
+    return datasets
 
 
 async def create_dataset(
@@ -172,6 +213,15 @@ async def get_dataset_by_key(db: AsyncSession, key: str) -> SchemaDataset:
     dataset = await db.scalar(select(SchemaDataset).where(SchemaDataset.key == key))
     if dataset is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Dataset not found")
+    return dataset
+
+
+async def get_dataset_detail(
+    db: AsyncSession, trino_db: Session, key: str
+) -> SchemaDataset:
+    dataset = await get_dataset_by_key(db, key)
+    dataset.column_count = count_registry_columns(dataset.key, trino_db)
+    dataset.pending_proposal_count = await _pending_proposal_count(db, dataset.id)
     return dataset
 
 
@@ -199,8 +249,32 @@ async def create_link(
 ) -> SchemaDatasetLink:
     dataset = await get_dataset_by_key(db, dataset_key)
     linked = await get_dataset_by_key(db, linked_dataset_key)
-    link = SchemaDatasetLink(dataset_id=dataset.id, linked_dataset_id=linked.id)
-    db.add(link)
+    if dataset.id == linked.id:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, detail="Cannot link a dataset to itself"
+        )
+
+    # Links are symmetric — create both directions so either dataset's link
+    # list shows the other.
+    link = await db.scalar(
+        select(SchemaDatasetLink).where(
+            SchemaDatasetLink.dataset_id == dataset.id,
+            SchemaDatasetLink.linked_dataset_id == linked.id,
+        )
+    )
+    if link is None:
+        link = SchemaDatasetLink(dataset_id=dataset.id, linked_dataset_id=linked.id)
+        db.add(link)
+
+    reverse = await db.scalar(
+        select(SchemaDatasetLink).where(
+            SchemaDatasetLink.dataset_id == linked.id,
+            SchemaDatasetLink.linked_dataset_id == dataset.id,
+        )
+    )
+    if reverse is None:
+        db.add(SchemaDatasetLink(dataset_id=linked.id, linked_dataset_id=dataset.id))
+
     await db.commit()
     await db.refresh(link)
     return link
@@ -220,6 +294,16 @@ async def delete_link(
     if link is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Link not found")
     await db.delete(link)
+
+    reverse = await db.scalar(
+        select(SchemaDatasetLink).where(
+            SchemaDatasetLink.dataset_id == linked.id,
+            SchemaDatasetLink.linked_dataset_id == dataset.id,
+        )
+    )
+    if reverse is not None:
+        await db.delete(reverse)
+
     await db.commit()
 
 
@@ -321,13 +405,19 @@ async def get_proposal_diff(proposal: SchemaProposal) -> list[ProposalDiffField]
 
 
 async def reject_proposal(
-    db: AsyncSession, proposal_id: str, *, actor_id: str, actor_email: str
+    db: AsyncSession,
+    proposal_id: str,
+    *,
+    actor_id: str,
+    actor_email: str,
+    reason: str,
 ) -> SchemaProposal:
     proposal = await get_proposal(db, proposal_id)
     if proposal.status != "pending":
         raise HTTPException(status.HTTP_409_CONFLICT, detail="Proposal is not pending")
 
     proposal.status = "rejected"
+    proposal.rejection_reason = reason
     db.add(
         SchemaProposalAuditLog(
             proposal_id=proposal.id,
@@ -341,19 +431,24 @@ async def reject_proposal(
     return proposal
 
 
-def _build_apply_statement(dataset_key: str, proposal: SchemaProposal):
-    """Build the Trino statement (text, params) that applies a proposal to
-    the Delta `schemas.<dataset_key>` table."""
-    if proposal.proposal_type == "delete":
+def _build_apply_statement(
+    dataset_key: str,
+    proposal_type: str,
+    column_name: str,
+    after_state: dict[str, Any] | None,
+):
+    """Build the Trino statement (text, params) that applies an add/edit/delete
+    to the Delta `schemas.<dataset_key>` table."""
+    if proposal_type == "delete":
         return (
             text(f"DELETE FROM schemas.{dataset_key} WHERE name = :name"),  # nosec B608
-            {"name": proposal.column_name},
+            {"name": column_name},
         )
 
-    state = dict(proposal.after_state or {})
-    state["name"] = proposal.column_name
+    state = dict(after_state or {})
+    state["name"] = column_name
 
-    if proposal.proposal_type == "add":
+    if proposal_type == "add":
         state.setdefault("id", str(uuid.uuid4()))
         columns = list(state.keys())
         col_list = ", ".join(columns)
@@ -391,7 +486,9 @@ async def approve_proposal(
         )
 
     dataset = await db.get(SchemaDataset, proposal.dataset_id)
-    statement, params = _build_apply_statement(dataset.key, proposal)
+    statement, params = _build_apply_statement(
+        dataset.key, proposal.proposal_type, proposal.column_name, proposal.after_state
+    )
 
     # NOTE: concurrent approvals against the same dataset can interleave Delta
     # writes — add a per-dataset advisory lock here before this goes live.
@@ -459,11 +556,161 @@ async def get_column_history(
     )
 
 
-async def list_audit_log(db: AsyncSession) -> list[SchemaProposalAuditLog]:
-    return list(
-        await db.scalars(
-            select(SchemaProposalAuditLog).order_by(
-                SchemaProposalAuditLog.created.desc()
+async def list_audit_log(
+    db: AsyncSession,
+    *,
+    dataset_key: str | None = None,
+    column_name: str | None = None,
+    actor_id: str | None = None,
+    action: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> list[SchemaProposalAuditLog]:
+    query = (
+        select(SchemaProposalAuditLog)
+        .join(SchemaProposal, SchemaProposalAuditLog.proposal_id == SchemaProposal.id)
+        .options(
+            selectinload(SchemaProposalAuditLog.proposal).selectinload(
+                SchemaProposal.dataset
             )
         )
+        .order_by(SchemaProposalAuditLog.created.desc())
+        .limit(limit)
+        .offset(offset)
     )
+    if dataset_key:
+        dataset = await get_dataset_by_key(db, dataset_key)
+        query = query.where(SchemaProposal.dataset_id == dataset.id)
+    if column_name:
+        query = query.where(SchemaProposal.column_name == column_name)
+    if actor_id:
+        query = query.where(SchemaProposalAuditLog.actor_id == actor_id)
+    if action:
+        query = query.where(SchemaProposalAuditLog.action == action)
+
+    logs = list(await db.scalars(query))
+    for log in logs:
+        log.dataset_key = log.proposal.dataset.key
+        log.column_name = log.proposal.column_name
+    return logs
+
+
+# ---------------------------------------------------------------------------
+# Bulk CSV import — upserts columns directly (bypasses individual proposal
+# review, same trust level as the admin-only backfill scripts).
+# ---------------------------------------------------------------------------
+
+_IMPORT_BOOL_FIELDS = {
+    "is_nullable",
+    "is_important",
+    "is_system_generated",
+    "primary_key",
+    "is_mandatory",
+    "is_unique",
+}
+_IMPORT_INT_FIELDS = {"partition_order", "precision_min"}
+_IMPORT_FLOAT_FIELDS = {"range_min", "range_max"}
+
+
+def _coerce_import_value(field: str, raw: str) -> Any:
+    if field in _IMPORT_BOOL_FIELDS:
+        return raw.strip().lower() in ("true", "1", "yes")
+    if field in _IMPORT_INT_FIELDS:
+        return int(raw)
+    if field in _IMPORT_FLOAT_FIELDS:
+        return float(raw)
+    return raw
+
+
+def _parse_import_state(row: dict[str, str]) -> dict[str, Any]:
+    state: dict[str, Any] = {}
+    for field, raw in row.items():
+        if field == "name" or field not in REGISTRY_COLUMN_FIELDS:
+            continue
+        if raw is None or raw.strip() == "":
+            continue
+        state[field] = _coerce_import_value(field, raw)
+    return state
+
+
+def _apply_import_row(
+    dataset_key: str,
+    trino_db: Session,
+    *,
+    row_number: int,
+    name: str,
+    row: dict[str, str],
+    known_names: set[str],
+) -> tuple[str | None, DatasetImportError | None]:
+    """Apply one CSV row. Returns (outcome, error) where outcome is one of
+    "created"/"updated"/"skipped" (countable) or None (error, not counted)."""
+    is_edit = name in known_names
+
+    try:
+        state = _parse_import_state(row)
+    except ValueError as err:
+        return None, DatasetImportError(
+            row=row_number, detail=f"{name}: invalid value ({err})"
+        )
+
+    if not is_edit and "data_type" not in state:
+        return None, DatasetImportError(
+            row=row_number,
+            detail=f"{name}: 'data_type' is required to add a new column",
+        )
+    if is_edit and not state:
+        return "skipped", None
+
+    statement, params = _build_apply_statement(
+        dataset_key, "edit" if is_edit else "add", name, state
+    )
+    try:
+        trino_db.execute(statement, params)
+        trino_db.commit()
+    except Exception as err:  # noqa: BLE001
+        trino_db.rollback()
+        return None, DatasetImportError(row=row_number, detail=f"{name}: {err}")
+
+    known_names.add(name)
+    return ("updated" if is_edit else "created"), None
+
+
+async def import_columns_from_csv(
+    db: AsyncSession,
+    trino_db: Session,
+    *,
+    dataset_key: str,
+    csv_bytes: bytes,
+) -> DatasetImportResponse:
+    await get_dataset_by_key(db, dataset_key)
+
+    reader = csv.DictReader(io.StringIO(csv_bytes.decode("utf-8-sig")))
+    if not reader.fieldnames or "name" not in reader.fieldnames:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, detail="CSV must have a 'name' column"
+        )
+
+    known_names = {c.name for c in get_registry_columns(dataset_key, trino_db)}
+    counts = {"created": 0, "updated": 0, "skipped": 0}
+    errors: list[DatasetImportError] = []
+
+    for row_number, row in enumerate(reader, start=2):  # header is row 1
+        name = (row.get("name") or "").strip()
+        if not name:
+            counts["skipped"] += 1
+            continue
+
+        outcome, error = _apply_import_row(
+            dataset_key,
+            trino_db,
+            row_number=row_number,
+            name=name,
+            row=row,
+            known_names=known_names,
+        )
+        if outcome:
+            counts[outcome] += 1
+        if error:
+            errors.append(error)
+
+    return DatasetImportResponse(**counts, errors=errors)

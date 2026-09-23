@@ -75,6 +75,7 @@ class SchemaProposal(BaseModel):
     proposed_by_email: Mapped[str] = mapped_column(VARCHAR(255), nullable=False)
     delta_version: Mapped[int | None] = mapped_column(Integer(), nullable=True)
     apply_error: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    rejection_reason: Mapped[str | None] = mapped_column(Text(), nullable=True)
     created: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

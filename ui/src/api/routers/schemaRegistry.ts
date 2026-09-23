@@ -1,9 +1,11 @@
 import { AxiosInstance, AxiosResponse } from "axios";
 
 import {
+  AuditLogEntry,
   CreateDatasetGroupRequest,
   CreateProposalRequest,
   DatasetGroup,
+  DatasetImportResponse,
   DatasetVersion,
   Proposal,
   ProposalDetail,
@@ -93,8 +95,39 @@ export default function routes(axi: AxiosInstance) {
     approveProposal: (id: string): Promise<AxiosResponse<Proposal>> => {
       return axi.post(`/schema-registry/proposals/${id}/approve`);
     },
-    rejectProposal: (id: string): Promise<AxiosResponse<Proposal>> => {
-      return axi.post(`/schema-registry/proposals/${id}/reject`);
+    rejectProposal: ({
+      id,
+      reason,
+    }: {
+      id: string;
+      reason: string;
+    }): Promise<AxiosResponse<Proposal>> => {
+      return axi.post(`/schema-registry/proposals/${id}/reject`, { reason });
+    },
+    importDatasetColumns: ({
+      datasetKey,
+      file,
+    }: {
+      datasetKey: string;
+      file: File;
+    }): Promise<AxiosResponse<DatasetImportResponse>> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return axi.post(
+        `/schema-registry/datasets/${datasetKey}/import`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+    },
+    listAuditLog: (params?: {
+      dataset_key?: string;
+      column_name?: string;
+      actor_id?: string;
+      action?: string;
+      limit?: number;
+      offset?: number;
+    }): Promise<AxiosResponse<AuditLogEntry[]>> => {
+      return axi.get("/schema-registry/audit", { params });
     },
   };
 }
