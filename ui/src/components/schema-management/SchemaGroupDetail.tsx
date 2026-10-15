@@ -1,12 +1,15 @@
-import { Button, Heading, Section, Stack, Tag } from "@carbon/react";
+import { useMemo, useState } from "react";
+
+import { Button, Heading, Section, Tag } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
 import { schemaGroupDetailQueryOptions } from "@/api/queryOptions.ts";
+import SchemaNavigator from "@/components/schema-management/SchemaNavigator.tsx";
 import useRoles from "@/hooks/useRoles.ts";
 import { SchemaDataset } from "@/types/schemaRegistry.ts";
 
-function SchemaCard({
+function SchemaRow({
   schema,
   coreColumnCount,
 }: {
@@ -15,92 +18,150 @@ function SchemaCard({
 }) {
   return (
     <Link
-      className="border border-giga-gray bg-white p-5 text-giga-black no-underline hover:border-giga-blue hover:bg-giga-light-blue"
+      className="grid min-w-0 grid-cols-[minmax(12rem,1.5fr)_minmax(5rem,.5fr)_minmax(6rem,.6fr)_auto] items-center gap-4 border-b border-carbon-datatable-grey bg-white px-4 py-4 text-giga-black no-underline last:border-b-0 hover:bg-giga-light-blue"
       to="/schema-management/$datasetKey"
       params={{ datasetKey: schema.key }}
     >
-      <Tag type={schema.role === "core" ? "blue" : "teal"}>{schema.role}</Tag>
-      <Heading className="mt-3 text-xl">{schema.name}</Heading>
-      <code className="text-xs text-giga-dark-gray">{schema.key}</code>
-      <p className="mt-2 min-h-10 text-sm text-giga-dark-gray">
-        {schema.description ?? "No description provided."}
-      </p>
-      <p className="mt-4 text-xs text-giga-dark-gray">
-        {schema.column_count} own columns
-        {coreColumnCount !== undefined ? ` · ${coreColumnCount} inherited` : ""}
-        {schema.pending_proposal_count > 0
-          ? ` · ${schema.pending_proposal_count} pending`
-          : ""}
-      </p>
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <b>{schema.name}</b>
+          <Tag type="teal">Member</Tag>
+        </div>
+        <code className="text-xs text-giga-dark-gray">{schema.key}</code>
+      </div>
+      <span className="text-sm">{schema.column_count} own</span>
+      <span className="text-sm">{coreColumnCount ?? 0} inherited</span>
+      <div className="flex items-center gap-3">
+        {schema.pending_proposal_count > 0 ? (
+          <Tag type="warm-gray">{schema.pending_proposal_count} pending</Tag>
+        ) : (
+          <span className="text-xs text-giga-dark-gray">No pending</span>
+        )}
+        <span className="text-lg text-giga-blue">›</span>
+      </div>
     </Link>
   );
 }
 
 function SchemaGroupDetail({ groupKey }: { groupKey: string }) {
+  const [search, setSearch] = useState("");
   const { isPrivileged } = useRoles();
   const {
     data: { data: group },
   } = useSuspenseQuery(schemaGroupDetailQueryOptions(groupKey));
+  const filteredMembers = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    if (!normalizedSearch) return group.member_schemas;
+    return group.member_schemas.filter(schema =>
+      [schema.name, schema.key, schema.description]
+        .filter(Boolean)
+        .some(value => value?.toLowerCase().includes(normalizedSearch)),
+    );
+  }, [group.member_schemas, search]);
 
   return (
     <Section className="container py-6">
-      <Stack gap={6}>
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <Link className="cds--link text-sm" to="/schema-management">
-              Schema groups
-            </Link>
-            <Heading className="mt-2">{group.name}</Heading>
-            <p className="mt-2 text-giga-dark-gray">
-              {group.description ?? "Related governed schemas."}
-            </p>
+      <div className="grid min-w-0 grid-cols-1 gap-7 lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <SchemaNavigator activeGroupKey={group.key} />
+        <div className="min-w-0">
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-sm">
+                <Link className="cds--link" to="/schema-management">
+                  Schema groups
+                </Link>
+                <span>/</span>
+                <span className="text-giga-dark-gray">{group.name}</span>
+              </div>
+              <Heading>{group.name}</Heading>
+              <p className="mt-2 text-giga-dark-gray">
+                {group.description ?? "Related governed schemas."}
+              </p>
+            </div>
+            {isPrivileged && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  as={Link}
+                  kind="tertiary"
+                  to="/schema-management/groups"
+                >
+                  Group settings
+                </Button>
+                <Button as={Link} to="/schema-management/groups">
+                  Add or assign schema
+                </Button>
+              </div>
+            )}
           </div>
-          {isPrivileged && (
-            <Button as={Link} kind="tertiary" to="/schema-management/groups">
-              Manage group
-            </Button>
-          )}
-        </div>
 
-        {group.core_schema ? (
-          <section>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-giga-blue">
-              Shared core schema
-            </p>
-            <div className="border-t-4 border-giga-blue">
-              <SchemaCard schema={group.core_schema} />
+          {group.core_schema ? (
+            <section className="border-t-4 border-giga-blue bg-white p-5">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <Tag type="blue">Shared core schema</Tag>
+                  <Heading className="mt-3 text-xl">
+                    {group.core_schema.name}
+                  </Heading>
+                  <p className="mt-1 text-sm text-giga-dark-gray">
+                    {group.core_schema.column_count} shared columns inherited by{" "}
+                    {group.member_schemas.length} member schema
+                    {group.member_schemas.length === 1 ? "" : "s"}.
+                  </p>
+                </div>
+                <Button
+                  as={Link}
+                  kind="tertiary"
+                  to="/schema-management/$datasetKey"
+                  params={{ datasetKey: group.core_schema.key }}
+                >
+                  View core columns
+                </Button>
+              </div>
+            </section>
+          ) : (
+            <div className="border-l-4 border-giga-yellow bg-white p-4">
+              <b>No core schema.</b>{" "}
+              <span className="text-giga-dark-gray">
+                Members in this group are currently applied independently.
+              </span>
+            </div>
+          )}
+
+          <section className="mt-7">
+            <div className="mb-3 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <Heading className="text-xl">Schemas in this group</Heading>
+                <p className="mt-1 text-sm text-giga-dark-gray">
+                  Select a schema to view and change its columns.
+                </p>
+              </div>
+              <label>
+                <span className="sr-only">Search schemas</span>
+                <input
+                  className="h-10 min-w-64 border-0 border-b border-giga-gray bg-white px-3"
+                  placeholder="Search schemas"
+                  value={search}
+                  onChange={event => setSearch(event.target.value)}
+                />
+              </label>
+            </div>
+            <div className="border border-carbon-datatable-grey">
+              {filteredMembers.map(schema => (
+                <SchemaRow
+                  key={schema.id}
+                  schema={schema}
+                  coreColumnCount={group.core_schema?.column_count}
+                />
+              ))}
+              {filteredMembers.length === 0 && (
+                <p className="bg-white p-4 text-giga-dark-gray">
+                  No member schemas match this search.
+                </p>
+              )}
             </div>
           </section>
-        ) : (
-          <div className="border-l-4 border-giga-yellow bg-white p-4">
-            <b>No core schema.</b>{" "}
-            <span className="text-giga-dark-gray">
-              Members in this group are currently applied independently.
-            </span>
-          </div>
-        )}
-
-        <section>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-giga-dark-gray">
-            Member schemas
-            {group.core_schema ? " · inherit the core" : ""}
-          </p>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {group.member_schemas.map(schema => (
-              <SchemaCard
-                key={schema.id}
-                schema={schema}
-                coreColumnCount={group.core_schema?.column_count}
-              />
-            ))}
-          </div>
-          {group.member_schemas.length === 0 && (
-            <p className="bg-white p-4 text-giga-dark-gray">
-              This group does not contain any member schemas yet.
-            </p>
-          )}
-        </section>
-      </Stack>
+        </div>
+      </div>
     </Section>
   );
 }

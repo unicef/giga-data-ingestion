@@ -30,6 +30,7 @@ import { Route as IngestApiEditImport } from './routes/ingest-api/edit'
 import { Route as IngestApiAddImport } from './routes/ingest-api/add'
 import { Route as DeleteNewImport } from './routes/delete/new'
 import { Route as UploadUploadIdIndexImport } from './routes/upload/$uploadId/index'
+import { Route as SchemaManagementGroupsIndexImport } from './routes/schema-management/groups/index'
 import { Route as IngestApiAddIndexImport } from './routes/ingest-api/add/index'
 import { Route as DeleteCountryIndexImport } from './routes/delete/$country/index'
 import { Route as ApprovalRequestsCountryCodeIndexImport } from './routes/approval-requests/$countryCode/index'
@@ -170,6 +171,12 @@ const UploadUploadIdIndexRoute = UploadUploadIdIndexImport.update({
   path: '/$uploadId/',
   getParentRoute: () => UploadLazyRoute,
 } as any)
+
+const SchemaManagementGroupsIndexRoute =
+  SchemaManagementGroupsIndexImport.update({
+    path: '/',
+    getParentRoute: () => SchemaManagementGroupsRoute,
+  } as any)
 
 const IngestApiAddIndexRoute = IngestApiAddIndexImport.update({
   path: '/',
@@ -415,6 +422,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiAddIndexImport
       parentRoute: typeof IngestApiAddImport
     }
+    '/schema-management/groups/': {
+      preLoaderRoute: typeof SchemaManagementGroupsIndexImport
+      parentRoute: typeof SchemaManagementGroupsImport
+    }
     '/upload/$uploadId/': {
       preLoaderRoute: typeof UploadUploadIdIndexImport
       parentRoute: typeof UploadLazyImport
@@ -487,6 +498,7 @@ export const routeTree = rootRoute.addChildren([
     SchemaManagementAuditRoute,
     SchemaManagementGroupsRoute.addChildren([
       SchemaManagementGroupsGroupKeyRoute,
+      SchemaManagementGroupsIndexRoute,
     ]),
     SchemaManagementProposalsRoute,
     SchemaManagementIndexRoute,

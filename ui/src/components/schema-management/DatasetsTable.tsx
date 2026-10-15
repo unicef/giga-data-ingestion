@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Button, DataTableSkeleton, Tag } from "@carbon/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -11,6 +11,7 @@ import {
 import useRoles from "@/hooks/useRoles.ts";
 
 function DatasetsTable() {
+  const [search, setSearch] = useState("");
   const { isPrivileged } = useRoles();
 
   const { data: datasetsQuery, isLoading } = useSuspenseQuery(
@@ -20,6 +21,21 @@ function DatasetsTable() {
 
   const datasets = useMemo(() => datasetsQuery?.data ?? [], [datasetsQuery]);
   const groups = useMemo(() => groupsQuery?.data ?? [], [groupsQuery]);
+  const normalizedSearch = search.trim().toLowerCase();
+  const visibleGroups = groups.filter(group => {
+    if (!normalizedSearch) return true;
+    const groupMatches = [group.name, group.key, group.description]
+      .filter(Boolean)
+      .some(value => value?.toLowerCase().includes(normalizedSearch));
+    const schemaMatches = datasets
+      .filter(dataset => dataset.group_id === group.id)
+      .some(dataset =>
+        [dataset.name, dataset.key].some(value =>
+          value.toLowerCase().includes(normalizedSearch),
+        ),
+      );
+    return groupMatches || schemaMatches;
+  });
 
   if (isLoading) return <DataTableSkeleton />;
 
@@ -30,7 +46,7 @@ function DatasetsTable() {
       <div className="flex flex-wrap justify-end gap-2">
         {isPrivileged && (
           <Button as={Link} kind="tertiary" to="/schema-management/groups">
-            Manage groups
+            Group administration
           </Button>
         )}
         <Button as={Link} kind="secondary" to="/schema-management/proposals">
@@ -43,8 +59,18 @@ function DatasetsTable() {
         )}
       </div>
 
+      <label>
+        <span className="sr-only">Search schema groups or schemas</span>
+        <input
+          className="h-11 w-full border-0 border-b border-giga-gray bg-white px-4"
+          placeholder="Search schema groups or schemas"
+          value={search}
+          onChange={event => setSearch(event.target.value)}
+        />
+      </label>
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {groups.map(group => {
+        {visibleGroups.map(group => {
           const groupDatasets = datasets.filter(
             dataset => dataset.group_id === group.id,
           );
