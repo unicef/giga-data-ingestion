@@ -3,13 +3,16 @@ from datetime import datetime
 from pydantic import UUID4
 from sqlalchemy import (
     VARCHAR,
+    CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -33,8 +36,29 @@ class SchemaDataset(BaseModel):
     """Registry pointer into a Delta `schemas.<key>` table — not a copy of its columns."""
 
     __tablename__ = "schema_datasets"
+    __table_args__ = (
+        CheckConstraint(
+            "role IN ('core', 'member')",
+            name="ck_schema_datasets_role",
+        ),
+        CheckConstraint(
+            "role != 'core' OR group_id IS NOT NULL",
+            name="ck_schema_datasets_core_has_group",
+        ),
+        Index(
+            "uq_schema_datasets_one_core_per_group",
+            "group_id",
+            unique=True,
+            postgresql_where=text("role = 'core'"),
+        ),
+    )
 
     key: Mapped[str] = mapped_column(VARCHAR(100), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    role: Mapped[str] = mapped_column(
+        VARCHAR(20), nullable=False, default="member", server_default="member"
+    )
     group_id: Mapped[str | None] = mapped_column(
         ForeignKey("dataset_groups.id", ondelete="SET NULL"), nullable=True
     )

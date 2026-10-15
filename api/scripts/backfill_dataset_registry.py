@@ -140,7 +140,7 @@ async def main(dagster_path: str):
         async with get_db_context() as db:
             for dataset_key in dataset_keys:
                 try:
-                    await create_dataset(db, key=dataset_key, group_id=None)
+                    await create_dataset(db, trino_db, key=dataset_key, group_id=None)
                     logger.info(f"Registered dataset {dataset_key}")
                 except Exception:  # noqa: BLE001 - already registered, keep going
                     logger.info(f"Dataset {dataset_key} already registered, skipping")

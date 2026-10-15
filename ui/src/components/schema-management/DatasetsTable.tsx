@@ -1,45 +1,16 @@
 import { useMemo } from "react";
 
-import {
-  DataTable,
-  DataTableHeader,
-  DataTableSkeleton,
-  Select,
-  SelectItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableToolbar,
-  TableToolbarContent,
-} from "@carbon/react";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { Button, DataTableSkeleton, Tag } from "@carbon/react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 
-import { api } from "@/api";
 import {
   listDatasetGroupsQueryOptions,
   listSchemaDatasetsQueryOptions,
 } from "@/api/queryOptions.ts";
 import useRoles from "@/hooks/useRoles.ts";
 
-const columns: DataTableHeader[] = [
-  { key: "key", header: "Dataset" },
-  { key: "group", header: "Group" },
-  { key: "column_count", header: "Columns" },
-  { key: "pending_proposal_count", header: "Pending proposals" },
-  { key: "actions", header: "" },
-];
-
 function DatasetsTable() {
-  const queryClient = useQueryClient();
   const { isPrivileged } = useRoles();
 
   const { data: datasetsQuery, isLoading } = useSuspenseQuery(
@@ -50,111 +21,97 @@ function DatasetsTable() {
   const datasets = useMemo(() => datasetsQuery?.data ?? [], [datasetsQuery]);
   const groups = useMemo(() => groupsQuery?.data ?? [], [groupsQuery]);
 
-  const { mutate: moveDataset } = useMutation({
-    mutationFn: api.schemaRegistry.moveDataset,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["schema-registry", "datasets"],
-      });
-    },
-  });
+  if (isLoading) return <DataTableSkeleton />;
 
-  const rows = datasets.map(dataset => ({
-    id: dataset.id,
-    key: dataset.key,
-    column_count: dataset.column_count,
-    pending_proposal_count: dataset.pending_proposal_count,
-    group: (
-      <Select
-        id={`group-${dataset.id}`}
-        labelText=""
-        hideLabel
-        size="sm"
-        value={dataset.group_id ?? ""}
-        onChange={e =>
-          moveDataset({
-            key: dataset.key,
-            group_id: e.target.value || null,
-          })
-        }
-      >
-        <SelectItem text="No group" value="" />
-        {groups.map(group => (
-          <SelectItem key={group.id} text={group.name} value={group.id} />
-        ))}
-      </Select>
-    ),
-    actions: (
-      <Link
-        className="cds--link"
-        to="/schema-management/$datasetKey"
-        params={{ datasetKey: dataset.key }}
-      >
-        View columns
-      </Link>
-    ),
-  }));
+  const ungroupedDatasets = datasets.filter(dataset => !dataset.group_id);
 
-  return isLoading ? (
-    <DataTableSkeleton headers={columns} />
-  ) : (
-    <DataTable headers={columns} rows={rows}>
-      {({
-        rows: tableRows,
-        headers,
-        getHeaderProps,
-        getRowProps,
-        getTableProps,
-      }) => (
-        <TableContainer title="Datasets">
-          <TableToolbar>
-            <TableToolbarContent className="flex items-center gap-2">
-              <Link
-                className="cds--btn cds--btn--tertiary"
-                to="/schema-management/groups"
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap justify-end gap-2">
+        {isPrivileged && (
+          <Button as={Link} kind="tertiary" to="/schema-management/groups">
+            Manage groups
+          </Button>
+        )}
+        <Button as={Link} kind="secondary" to="/schema-management/proposals">
+          Review proposals
+        </Button>
+        {isPrivileged && (
+          <Button as={Link} kind="ghost" to="/schema-management/audit">
+            Audit log
+          </Button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {groups.map(group => {
+          const groupDatasets = datasets.filter(
+            dataset => dataset.group_id === group.id,
+          );
+          const coreSchema = groupDatasets.find(
+            dataset => dataset.role === "core",
+          );
+          const memberSchemas = groupDatasets.filter(
+            dataset => dataset.role === "member",
+          );
+          const pendingProposalCount = groupDatasets.reduce(
+            (total, dataset) => total + dataset.pending_proposal_count,
+            0,
+          );
+
+          return (
+            <Link
+              key={group.id}
+              className="border-l-4 border-giga-blue bg-white p-5 text-giga-black no-underline hover:bg-giga-light-blue"
+              to="/schema-management/groups/$groupKey"
+              params={{ groupKey: group.key }}
+            >
+              <div className="mb-3 flex flex-wrap gap-2">
+                <Tag type={coreSchema ? "blue" : "gray"}>
+                  {coreSchema ? "Has core schema" : "No core schema"}
+                </Tag>
+                {pendingProposalCount > 0 && (
+                  <Tag type="warm-gray">{pendingProposalCount} pending</Tag>
+                )}
+              </div>
+              <h3 className="mb-1 text-xl font-semibold">{group.name}</h3>
+              <p className="min-h-10 text-sm text-giga-dark-gray">
+                {group.description ?? "Related governed schemas."}
+              </p>
+              <p className="mt-4 text-xs text-giga-dark-gray">
+                {memberSchemas.length} member schema
+                {memberSchemas.length === 1 ? "" : "s"}
+                {coreSchema ? ` · core: ${coreSchema.name}` : ""}
+              </p>
+            </Link>
+          );
+        })}
+      </div>
+
+      {ungroupedDatasets.length > 0 && (
+        <section>
+          <h3 className="mb-2 text-lg">Needs grouping</h3>
+          <p className="mb-3 text-sm text-giga-dark-gray">
+            These existing schemas must be assigned during the reviewed
+            migration.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {ungroupedDatasets.map(dataset => (
+              <Button
+                key={dataset.id}
+                as={Link}
+                kind="ghost"
+                size="sm"
+                to="/schema-management/$datasetKey"
+                params={{ datasetKey: dataset.key }}
               >
-                Manage groups
-              </Link>
-              <Link
-                className="cds--btn cds--btn--secondary"
-                to="/schema-management/proposals"
-              >
-                Review proposals
-              </Link>
-              {isPrivileged && (
-                <Link
-                  className="cds--btn cds--btn--ghost"
-                  to="/schema-management/audit"
-                >
-                  Audit log
-                </Link>
-              )}
-            </TableToolbarContent>
-          </TableToolbar>
-          <Table {...getTableProps()}>
-            <TableHead>
-              <TableRow>
-                {headers.map(header => (
-                  // @ts-expect-error onclick bad type https://github.com/carbon-design-system/carbon/issues/14831
-                  <TableHeader {...getHeaderProps({ header })}>
-                    {header.header}
-                  </TableHeader>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {tableRows.map(row => (
-                <TableRow {...getRowProps({ row })}>
-                  {row.cells.map(cell => (
-                    <TableCell key={cell.id}>{cell.value}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                {dataset.name}
+              </Button>
+            ))}
+          </div>
+        </section>
       )}
-    </DataTable>
+    </div>
   );
 }
 

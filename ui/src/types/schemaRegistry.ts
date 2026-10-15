@@ -5,6 +5,8 @@ export type ProposalStatus =
   | "rejected"
   | "apply_failed";
 export type CriticalFor = "always" | "create_only";
+export type SchemaRole = "core" | "member";
+export type ColumnOrigin = "core" | "member";
 
 export interface DatasetGroup {
   id: string;
@@ -22,9 +24,17 @@ export interface CreateDatasetGroupRequest {
 export interface SchemaDataset {
   id: string;
   key: string;
+  name: string;
+  description: string | null;
   group_id: string | null;
+  role: SchemaRole;
   column_count: number;
   pending_proposal_count: number;
+}
+
+export interface DatasetGroupDetail extends DatasetGroup {
+  core_schema: SchemaDataset | null;
+  member_schemas: SchemaDataset[];
 }
 
 export interface RegistryColumn {
@@ -47,6 +57,38 @@ export interface RegistryColumn {
   dynamic_max: string | null;
   precision_min: number | null;
   critical_for: CriticalFor | null;
+}
+
+export interface ResolvedRegistryColumn extends RegistryColumn {
+  origin: ColumnOrigin;
+  owner_schema_key: string;
+  read_only: boolean;
+}
+
+export interface SchemaVersionReference {
+  key: string;
+  version: number | null;
+}
+
+export interface ResolvedSchema {
+  schema: SchemaVersionReference;
+  group: DatasetGroup;
+  core_schema: SchemaVersionReference | null;
+  columns: ResolvedRegistryColumn[];
+}
+
+export interface SchemaImpactMember {
+  key: string;
+  name: string;
+  member_version: number | null;
+  current_core_version: number | null;
+  resolved_column_count: number;
+}
+
+export interface SchemaImpact {
+  core_schema_key: string;
+  core_version: number | null;
+  affected_members: SchemaImpactMember[];
 }
 
 export interface CreateProposalRequest {
@@ -79,6 +121,7 @@ export interface ProposalDiffField {
 
 export interface ProposalDetail extends Proposal {
   diff: ProposalDiffField[];
+  affected_schema_keys: string[];
 }
 
 export interface DatasetVersion {

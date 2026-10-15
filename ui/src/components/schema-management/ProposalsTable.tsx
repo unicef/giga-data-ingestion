@@ -78,7 +78,10 @@ function ProposalsTable() {
 
   const { mutate: approve } = useMutation({
     mutationFn: api.schemaRegistry.approveProposal,
-    onSuccess: invalidate,
+    onSuccess: () => {
+      invalidate();
+      setDiff(null);
+    },
     onError: () =>
       setErrorMessage(
         "Could not approve — you may not approve your own proposal.",
@@ -112,25 +115,16 @@ function ProposalsTable() {
           size="sm"
           onClick={() => void showDiff(proposal.id)}
         >
-          View diff
+          {proposal.status === "pending" ? "Review" : "View diff"}
         </Button>
         {isPrivileged && proposal.status === "pending" && (
-          <>
-            <Button
-              kind="tertiary"
-              size="sm"
-              onClick={() => approve(proposal.id)}
-            >
-              Approve
-            </Button>
-            <Button
-              kind="danger--ghost"
-              size="sm"
-              onClick={() => setRejectTarget(proposal.id)}
-            >
-              Reject
-            </Button>
-          </>
+          <Button
+            kind="danger--ghost"
+            size="sm"
+            onClick={() => setRejectTarget(proposal.id)}
+          >
+            Reject
+          </Button>
         )}
       </div>
     ),
@@ -184,9 +178,23 @@ function ProposalsTable() {
         aria-label="proposal diff modal"
         modalHeading={diff ? `Diff — ${diff.column_name}` : ""}
         open={diff !== null}
-        passiveModal
+        passiveModal={!isPrivileged || diff?.status !== "pending"}
+        primaryButtonText="Approve"
+        secondaryButtonText="Cancel"
+        onRequestSubmit={() => {
+          if (diff) approve(diff.id);
+        }}
         onRequestClose={() => setDiff(null)}
       >
+        {diff && diff.affected_schema_keys.length > 0 && (
+          <InlineNotification
+            className="mb-4"
+            kind="warning"
+            title={`Core change affects ${diff.affected_schema_keys.length} member schemas`}
+            subtitle={diff.affected_schema_keys.join(", ")}
+            hideCloseButton
+          />
+        )}
         <DiffViewer diff={diff?.diff ?? []} />
         {diff?.apply_error && (
           <InlineNotification

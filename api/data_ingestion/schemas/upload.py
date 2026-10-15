@@ -32,6 +32,10 @@ class FileUpload(BaseModel):
     source: str | None
     mode: str | None
     approval_status: str | None
+    schema_key: str | None = None
+    schema_version: int | None = None
+    core_schema_key: str | None = None
+    core_schema_version: int | None = None
     original_filename: str
     column_to_schema_mapping: dict[str, str]
     column_license: dict[str, str]
@@ -94,6 +98,10 @@ class FileUploadRequest:
     source: str | None = Form(None)
     dq_mode: str = Form("master")
     fuzzy_corrections: str | None = Form(None)
+    schema_key: str | None = Form(None)
+    schema_version: int | None = Form(None)
+    core_schema_key: str | None = Form(None)
+    core_schema_version: int | None = Form(None)
 
 
 @dataclass

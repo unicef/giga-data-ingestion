@@ -35,6 +35,7 @@ import { Route as DeleteCountryIndexImport } from './routes/delete/$country/inde
 import { Route as ApprovalRequestsCountryCodeIndexImport } from './routes/approval-requests/$countryCode/index'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
+import { Route as SchemaManagementGroupsGroupKeyImport } from './routes/schema-management/groups/$groupKey'
 import { Route as IngestApiAddSchoolConnectivityImport } from './routes/ingest-api/add/school-connectivity'
 import { Route as IngestApiAddColumnMappingImport } from './routes/ingest-api/add/column-mapping'
 import { Route as UploadUploadGroupUploadTypeIndexImport } from './routes/upload/$uploadGroup/$uploadType/index'
@@ -195,6 +196,12 @@ const UploadUploadGroupUploadTypeRoute =
   UploadUploadGroupUploadTypeImport.update({
     path: '/$uploadGroup/$uploadType',
     getParentRoute: () => UploadLazyRoute,
+  } as any)
+
+const SchemaManagementGroupsGroupKeyRoute =
+  SchemaManagementGroupsGroupKeyImport.update({
+    path: '/$groupKey',
+    getParentRoute: () => SchemaManagementGroupsRoute,
   } as any)
 
 const IngestApiAddSchoolConnectivityRoute =
@@ -384,6 +391,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiAddSchoolConnectivityImport
       parentRoute: typeof IngestApiAddImport
     }
+    '/schema-management/groups/$groupKey': {
+      preLoaderRoute: typeof SchemaManagementGroupsGroupKeyImport
+      parentRoute: typeof SchemaManagementGroupsImport
+    }
     '/upload/$uploadGroup/$uploadType': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeImport
       parentRoute: typeof UploadLazyImport
@@ -474,7 +485,9 @@ export const routeTree = rootRoute.addChildren([
   SchemaManagementRoute.addChildren([
     SchemaManagementDatasetKeyRoute,
     SchemaManagementAuditRoute,
-    SchemaManagementGroupsRoute,
+    SchemaManagementGroupsRoute.addChildren([
+      SchemaManagementGroupsGroupKeyRoute,
+    ]),
     SchemaManagementProposalsRoute,
     SchemaManagementIndexRoute,
   ]),

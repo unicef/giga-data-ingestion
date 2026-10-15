@@ -25,7 +25,11 @@ function SchemaManagementIndex() {
     <Section className="container py-6">
       <Stack gap={6}>
         <Section>
-          <Heading>Datasets</Heading>
+          <Heading>Schema groups</Heading>
+          <p className="mt-2 text-giga-dark-gray">
+            Related schemas share an optional core schema that is inherited by
+            every member.
+          </p>
         </Section>
         <Section>
           <DatasetsTable />

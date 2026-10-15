@@ -18,11 +18,15 @@ from data_ingestion.db.primary import get_db
 from data_ingestion.db.trino import get_db as get_trino_db
 from data_ingestion.internal import schema_registry as registry
 from data_ingestion.internal.auth import azure_scheme
-from data_ingestion.models import User as DatabaseUser
+from data_ingestion.models import (
+    SchemaDataset,
+    User as DatabaseUser,
+)
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.schema_registry import (
     AuditLogResponse,
     DatasetGroupCreate,
+    DatasetGroupDetail,
     DatasetGroupResponse,
     DatasetImportResponse,
     DatasetLinkCreate,
@@ -34,8 +38,10 @@ from data_ingestion.schemas.schema_registry import (
     ProposalResponse,
     RegistryColumn,
     RejectProposalRequest,
+    ResolvedSchemaResponse,
     SchemaDatasetCreate,
     SchemaDatasetResponse,
+    SchemaImpactResponse,
 )
 
 router = APIRouter(
@@ -80,6 +86,15 @@ async def create_group(body: DatasetGroupCreate, db: AsyncSession = Depends(get_
     )
 
 
+@router.get("/groups/{key}", response_model=DatasetGroupDetail)
+async def get_group(
+    key: str,
+    db: AsyncSession = Depends(get_db),
+    trino_db: Session = Depends(get_trino_db),
+):
+    return await registry.get_group_detail(db, trino_db, key)
+
+
 # ---------------------------------------------------------------------------
 # Datasets & links
 # ---------------------------------------------------------------------------
@@ -99,8 +114,20 @@ async def list_datasets(
     response_model=SchemaDatasetResponse,
     dependencies=[Security(IsPrivileged())],
 )
-async def create_dataset(body: SchemaDatasetCreate, db: AsyncSession = Depends(get_db)):
-    return await registry.create_dataset(db, key=body.key, group_id=body.group_id)
+async def create_dataset(
+    body: SchemaDatasetCreate,
+    db: AsyncSession = Depends(get_db),
+    trino_db: Session = Depends(get_trino_db),
+):
+    return await registry.create_dataset(
+        db,
+        trino_db,
+        key=body.key,
+        name=body.name,
+        description=body.description,
+        group_id=body.group_id,
+        role=body.role,
+    )
 
 
 @router.get("/datasets/{key}", response_model=SchemaDatasetResponse)
@@ -135,9 +162,44 @@ async def import_dataset_columns(
     dependencies=[Security(IsPrivileged())],
 )
 async def move_dataset(
-    key: str, body: MoveDatasetRequest, db: AsyncSession = Depends(get_db)
+    key: str,
+    body: MoveDatasetRequest,
+    db: AsyncSession = Depends(get_db),
+    trino_db: Session = Depends(get_trino_db),
 ):
-    return await registry.move_dataset(db, key, body.group_id)
+    return await registry.move_dataset(db, trino_db, key, body.group_id, body.role)
+
+
+@router.get(
+    "/datasets/{key}/resolved",
+    response_model=ResolvedSchemaResponse,
+)
+async def get_resolved_schema(
+    key: str,
+    member_version: int | None = None,
+    core_version: int | None = None,
+    db: AsyncSession = Depends(get_db),
+    trino_db: Session = Depends(get_trino_db),
+):
+    return await registry.get_resolved_schema(
+        db,
+        trino_db,
+        key,
+        member_version=member_version,
+        core_version=core_version,
+    )
+
+
+@router.get(
+    "/datasets/{key}/impact",
+    response_model=SchemaImpactResponse,
+)
+async def get_schema_impact(
+    key: str,
+    db: AsyncSession = Depends(get_db),
+    trino_db: Session = Depends(get_trino_db),
+):
+    return await registry.get_core_impact(db, trino_db, key)
 
 
 @router.get("/datasets/{key}/links", response_model=list[DatasetLinkResponse])
@@ -311,11 +373,22 @@ async def list_proposals(
 
 
 @router.get("/proposals/{id}", response_model=ProposalDetail)
-async def get_proposal(id: str, db: AsyncSession = Depends(get_db)):
+async def get_proposal(
+    id: str,
+    db: AsyncSession = Depends(get_db),
+    trino_db: Session = Depends(get_trino_db),
+):
     proposal = await registry.get_proposal(db, id)
     diff = await registry.get_proposal_diff(proposal)
+    dataset = await db.get(SchemaDataset, proposal.dataset_id)
+    affected_schema_keys: list[str] = []
+    if dataset.role == "core":
+        impact = await registry.get_core_impact(db, trino_db, dataset.key)
+        affected_schema_keys = [member.key for member in impact.affected_members]
     return ProposalDetail(
-        **ProposalResponse.model_validate(proposal).model_dump(), diff=diff
+        **ProposalResponse.model_validate(proposal).model_dump(),
+        diff=diff,
+        affected_schema_keys=affected_schema_keys,
     )
 
 

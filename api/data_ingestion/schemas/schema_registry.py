@@ -6,6 +6,8 @@ from pydantic import UUID4, BaseModel, ConfigDict, Field
 ProposalType = Literal["add", "edit", "delete"]
 ProposalStatus = Literal["pending", "approved", "rejected", "apply_failed"]
 CriticalFor = Literal["always", "create_only"]
+SchemaRole = Literal["core", "member"]
+ColumnOrigin = Literal["core", "member"]
 
 
 class DatasetGroupCreate(BaseModel):
@@ -22,7 +24,10 @@ class DatasetGroupResponse(DatasetGroupCreate):
 
 class SchemaDatasetCreate(BaseModel):
     key: str
+    name: str | None = None
+    description: str | None = None
     group_id: str | None = None
+    role: SchemaRole = "member"
 
 
 class SchemaDatasetResponse(BaseModel):
@@ -30,13 +35,22 @@ class SchemaDatasetResponse(BaseModel):
 
     id: str
     key: str
+    name: str
+    description: str | None = None
     group_id: str | None = None
+    role: SchemaRole
     column_count: int = 0
     pending_proposal_count: int = 0
 
 
 class MoveDatasetRequest(BaseModel):
     group_id: str | None = None
+    role: SchemaRole | None = None
+
+
+class DatasetGroupDetail(DatasetGroupResponse):
+    core_schema: SchemaDatasetResponse | None = None
+    member_schemas: list[SchemaDatasetResponse] = Field(default_factory=list)
 
 
 class DatasetLinkCreate(BaseModel):
@@ -81,6 +95,38 @@ class RegistryColumn(BaseModel):
     critical_for: CriticalFor | None = None
 
 
+class ResolvedRegistryColumn(RegistryColumn):
+    origin: ColumnOrigin
+    owner_schema_key: str
+    read_only: bool
+
+
+class SchemaVersionReference(BaseModel):
+    key: str
+    version: int | None = None
+
+
+class ResolvedSchemaResponse(BaseModel):
+    schema: SchemaVersionReference
+    group: DatasetGroupResponse
+    core_schema: SchemaVersionReference | None = None
+    columns: list[ResolvedRegistryColumn]
+
+
+class SchemaImpactMember(BaseModel):
+    key: str
+    name: str
+    member_version: int | None = None
+    current_core_version: int | None = None
+    resolved_column_count: int
+
+
+class SchemaImpactResponse(BaseModel):
+    core_schema_key: str
+    core_version: int | None = None
+    affected_members: list[SchemaImpactMember] = Field(default_factory=list)
+
+
 class ProposalCreate(BaseModel):
     column_name: str
     proposal_type: ProposalType
@@ -117,6 +163,7 @@ class ProposalDiffField(BaseModel):
 
 class ProposalDetail(ProposalResponse):
     diff: list[ProposalDiffField] = Field(default_factory=list)
+    affected_schema_keys: list[str] = Field(default_factory=list)
 
 
 class AuditLogResponse(BaseModel):

@@ -569,6 +569,16 @@ def apply_fuzzy_corrections(
     return upload_content
 
 
+def _get_pinned_schema_metadata(form: FileUploadRequest) -> dict[str, str]:
+    values = {
+        "schema_key": form.schema_key,
+        "schema_version": form.schema_version,
+        "core_schema_key": form.core_schema_key,
+        "core_schema_version": form.core_schema_version,
+    }
+    return {key: str(value) for key, value in values.items() if value is not None}
+
+
 @router.post("", response_model=FileUploadSchema)
 async def upload_file(
     response: Response,
@@ -630,6 +640,10 @@ async def upload_file(
         dataset=dataset,
         source=form.source,
         mode=upload_metadata.get("mode") or None,
+        schema_key=form.schema_key,
+        schema_version=form.schema_version,
+        core_schema_key=form.core_schema_key,
+        core_schema_version=form.core_schema_version,
         original_filename=file.filename,
         column_to_schema_mapping=orjson.loads(form.column_to_schema_mapping),
         column_license=orjson.loads(form.column_license),
@@ -660,6 +674,7 @@ async def upload_file(
     try:
         metadata = {
             **{str(k): str(v) for k, v in upload_metadata.items()},
+            **_get_pinned_schema_metadata(form),
             "country": form.country,
             "uploader_email": email,
             "dq_mode": form.dq_mode,

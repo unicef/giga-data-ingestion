@@ -5,12 +5,16 @@ import {
   CreateDatasetGroupRequest,
   CreateProposalRequest,
   DatasetGroup,
+  DatasetGroupDetail,
   DatasetImportResponse,
   DatasetVersion,
   Proposal,
   ProposalDetail,
   RegistryColumn,
+  ResolvedSchema,
   SchemaDataset,
+  SchemaImpact,
+  SchemaRole,
 } from "@/types/schemaRegistry.ts";
 
 export default function routes(axi: AxiosInstance) {
@@ -23,6 +27,9 @@ export default function routes(axi: AxiosInstance) {
     ): Promise<AxiosResponse<DatasetGroup>> => {
       return axi.post("/schema-registry/groups", body);
     },
+    getGroup: (key: string): Promise<AxiosResponse<DatasetGroupDetail>> => {
+      return axi.get(`/schema-registry/groups/${key}`);
+    },
     listDatasets: (): Promise<AxiosResponse<SchemaDataset[]>> => {
       return axi.get("/schema-registry/datasets");
     },
@@ -32,11 +39,28 @@ export default function routes(axi: AxiosInstance) {
     moveDataset: ({
       key,
       group_id,
+      role,
     }: {
       key: string;
       group_id: string | null;
+      role?: SchemaRole;
     }): Promise<AxiosResponse<SchemaDataset>> => {
-      return axi.patch(`/schema-registry/datasets/${key}/move`, { group_id });
+      return axi.patch(`/schema-registry/datasets/${key}/move`, {
+        group_id,
+        role,
+      });
+    },
+    getResolvedSchema: (
+      key: string,
+      member_version?: number,
+      core_version?: number,
+    ): Promise<AxiosResponse<ResolvedSchema>> => {
+      return axi.get(`/schema-registry/datasets/${key}/resolved`, {
+        params: { member_version, core_version },
+      });
+    },
+    getSchemaImpact: (key: string): Promise<AxiosResponse<SchemaImpact>> => {
+      return axi.get(`/schema-registry/datasets/${key}/impact`);
     },
     listColumns: (
       key: string,

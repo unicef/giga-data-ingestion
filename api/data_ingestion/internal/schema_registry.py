@@ -21,6 +21,11 @@ from data_ingestion.schemas.schema_registry import (
     DatasetVersion,
     ProposalDiffField,
     RegistryColumn,
+    ResolvedRegistryColumn,
+    ResolvedSchemaResponse,
+    SchemaImpactMember,
+    SchemaImpactResponse,
+    SchemaVersionReference,
 )
 from data_ingestion.utils.schema import sort_schema_columns_key
 
@@ -100,6 +105,11 @@ def list_dataset_versions(dataset_key: str, trino_db: Session) -> list[dict]:
     return [dict(m) for m in res.mappings().all()]
 
 
+def get_current_dataset_version(dataset_key: str, trino_db: Session) -> int | None:
+    versions = list_dataset_versions(dataset_key, trino_db)
+    return versions[0]["version"] if versions else None
+
+
 async def list_dataset_versions_with_proposals(
     db: AsyncSession, trino_db: Session, dataset: SchemaDataset
 ) -> list[DatasetVersion]:
@@ -149,6 +159,35 @@ async def list_groups(db: AsyncSession) -> list[DatasetGroup]:
     return list(await db.scalars(select(DatasetGroup).order_by(DatasetGroup.name)))
 
 
+async def get_group_by_key(db: AsyncSession, key: str) -> DatasetGroup:
+    group = await db.scalar(select(DatasetGroup).where(DatasetGroup.key == key))
+    if group is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Schema group not found")
+    return group
+
+
+async def get_group_detail(
+    db: AsyncSession, trino_db: Session, key: str
+) -> DatasetGroup:
+    group = await get_group_by_key(db, key)
+    datasets = list(
+        await db.scalars(
+            select(SchemaDataset)
+            .where(SchemaDataset.group_id == group.id)
+            .order_by(SchemaDataset.role, SchemaDataset.name)
+        )
+    )
+    pending_counts = await _pending_proposal_counts_by_dataset(db)
+    for dataset in datasets:
+        dataset.column_count = count_registry_columns(dataset.key, trino_db)
+        dataset.pending_proposal_count = pending_counts.get(dataset.id, 0)
+    group.core_schema = next(
+        (dataset for dataset in datasets if dataset.role == "core"), None
+    )
+    group.member_schemas = [dataset for dataset in datasets if dataset.role == "member"]
+    return group
+
+
 async def create_group(
     db: AsyncSession, *, key: str, name: str, description: str | None
 ) -> DatasetGroup:
@@ -196,13 +235,34 @@ async def list_datasets(db: AsyncSession, trino_db: Session) -> list[SchemaDatas
 
 
 async def create_dataset(
-    db: AsyncSession, *, key: str, group_id: str | None
+    db: AsyncSession,
+    trino_db: Session,
+    *,
+    key: str,
+    name: str | None = None,
+    description: str | None = None,
+    group_id: str | None,
+    role: str = "member",
 ) -> SchemaDataset:
     if await db.scalar(select(SchemaDataset).where(SchemaDataset.key == key)):
         raise HTTPException(
             status.HTTP_409_CONFLICT, detail="Dataset already registered"
         )
-    dataset = SchemaDataset(key=key, group_id=group_id)
+    await _validate_dataset_placement(db, group_id=group_id, role=role)
+    await _validate_placement_columns(
+        db,
+        trino_db,
+        dataset_key=key,
+        group_id=group_id,
+        role=role,
+    )
+    dataset = SchemaDataset(
+        key=key,
+        name=name or key.replace("_", " ").title(),
+        description=description,
+        group_id=group_id,
+        role=role,
+    )
     db.add(dataset)
     await db.commit()
     await db.refresh(dataset)
@@ -226,13 +286,281 @@ async def get_dataset_detail(
 
 
 async def move_dataset(
-    db: AsyncSession, key: str, group_id: str | None
+    db: AsyncSession,
+    trino_db: Session,
+    key: str,
+    group_id: str | None,
+    role: str | None = None,
 ) -> SchemaDataset:
     dataset = await get_dataset_by_key(db, key)
+    next_role = role or dataset.role
+    await _validate_dataset_placement(
+        db,
+        group_id=group_id,
+        role=next_role,
+        exclude_dataset_id=dataset.id,
+    )
+    await _validate_placement_columns(
+        db,
+        trino_db,
+        dataset_key=dataset.key,
+        group_id=group_id,
+        role=next_role,
+        exclude_dataset_id=dataset.id,
+    )
     dataset.group_id = group_id
+    dataset.role = next_role
     await db.commit()
     await db.refresh(dataset)
     return dataset
+
+
+async def _validate_dataset_placement(
+    db: AsyncSession,
+    *,
+    group_id: str | None,
+    role: str,
+    exclude_dataset_id: str | None = None,
+) -> None:
+    if role not in {"core", "member"}:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid schema role")
+    if role == "core" and group_id is None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="A core schema must belong to a schema group",
+        )
+    if group_id is None:
+        return
+    if await db.get(DatasetGroup, group_id) is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Schema group not found")
+    if role != "core":
+        return
+    query = select(SchemaDataset).where(
+        SchemaDataset.group_id == group_id,
+        SchemaDataset.role == "core",
+    )
+    if exclude_dataset_id is not None:
+        query = query.where(SchemaDataset.id != exclude_dataset_id)
+    if await db.scalar(query):
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="This schema group already has a core schema",
+        )
+
+
+async def _validate_placement_columns(
+    db: AsyncSession,
+    trino_db: Session,
+    *,
+    dataset_key: str,
+    group_id: str | None,
+    role: str,
+    exclude_dataset_id: str | None = None,
+) -> None:
+    if group_id is None:
+        return
+
+    candidate_columns = get_registry_columns(dataset_key, trino_db)
+    if role == "member":
+        query = select(SchemaDataset).where(
+            SchemaDataset.group_id == group_id,
+            SchemaDataset.role == "core",
+        )
+        if exclude_dataset_id is not None:
+            query = query.where(SchemaDataset.id != exclude_dataset_id)
+        core = await db.scalar(query)
+        if core is None:
+            return
+        duplicates = _duplicate_column_names(
+            get_registry_columns(core.key, trino_db), candidate_columns
+        )
+        if duplicates:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                detail=(
+                    f"Schema duplicates columns owned by core {core.key}: "
+                    + ", ".join(duplicates)
+                ),
+            )
+        return
+
+    query = select(SchemaDataset).where(
+        SchemaDataset.group_id == group_id,
+        SchemaDataset.role == "member",
+    )
+    if exclude_dataset_id is not None:
+        query = query.where(SchemaDataset.id != exclude_dataset_id)
+    members = list(await db.scalars(query))
+    conflicts: dict[str, list[str]] = {}
+    for member in members:
+        duplicates = _duplicate_column_names(
+            candidate_columns, get_registry_columns(member.key, trino_db)
+        )
+        if duplicates:
+            conflicts[member.key] = duplicates
+    if conflicts:
+        details = "; ".join(
+            f"{member_key}: {', '.join(column_names)}"
+            for member_key, column_names in sorted(conflicts.items())
+        )
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail=f"Core schema conflicts with member columns ({details})",
+        )
+
+
+async def get_group_core(
+    db: AsyncSession, dataset: SchemaDataset
+) -> SchemaDataset | None:
+    if dataset.group_id is None:
+        return None
+    return await db.scalar(
+        select(SchemaDataset).where(
+            SchemaDataset.group_id == dataset.group_id,
+            SchemaDataset.role == "core",
+        )
+    )
+
+
+def _duplicate_column_names(
+    core_columns: list[RegistryColumn], member_columns: list[RegistryColumn]
+) -> list[str]:
+    core_names = {column.name for column in core_columns}
+    return sorted(core_names.intersection(column.name for column in member_columns))
+
+
+async def get_resolved_schema(
+    db: AsyncSession,
+    trino_db: Session,
+    dataset_key: str,
+    *,
+    member_version: int | None = None,
+    core_version: int | None = None,
+) -> ResolvedSchemaResponse:
+    dataset = await get_dataset_by_key(db, dataset_key)
+    if dataset.group_id is None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Schema must belong to a group before it can be resolved",
+        )
+    group = await db.get(DatasetGroup, dataset.group_id)
+    member_columns = get_registry_columns(
+        dataset.key, trino_db, as_of_version=member_version
+    )
+    core = await get_group_core(db, dataset)
+
+    # A core schema is governed like any other schema, but cannot be applied by
+    # itself. This endpoint is therefore for member schemas only.
+    if dataset.role == "core":
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="Core schemas cannot be resolved independently",
+        )
+
+    core_columns: list[RegistryColumn] = []
+    if core is not None:
+        core_columns = get_registry_columns(
+            core.key, trino_db, as_of_version=core_version
+        )
+        duplicates = _duplicate_column_names(core_columns, member_columns)
+        if duplicates:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                detail=(
+                    "Member schema duplicates core-owned column(s): "
+                    + ", ".join(duplicates)
+                ),
+            )
+
+    columns = [
+        ResolvedRegistryColumn(
+            **column.model_dump(),
+            origin="core",
+            owner_schema_key=core.key,
+            read_only=True,
+        )
+        for column in core_columns
+    ]
+    columns.extend(
+        ResolvedRegistryColumn(
+            **column.model_dump(),
+            origin="member",
+            owner_schema_key=dataset.key,
+            read_only=False,
+        )
+        for column in member_columns
+    )
+    columns.sort(key=sort_schema_columns_key)
+
+    return ResolvedSchemaResponse(
+        schema=SchemaVersionReference(
+            key=dataset.key,
+            version=member_version
+            if member_version is not None
+            else get_current_dataset_version(dataset.key, trino_db),
+        ),
+        group=group,
+        core_schema=(
+            SchemaVersionReference(
+                key=core.key,
+                version=core_version
+                if core_version is not None
+                else get_current_dataset_version(core.key, trino_db),
+            )
+            if core is not None
+            else None
+        ),
+        columns=columns,
+    )
+
+
+async def get_core_impact(
+    db: AsyncSession, trino_db: Session, dataset_key: str
+) -> SchemaImpactResponse:
+    core = await get_dataset_by_key(db, dataset_key)
+    if core.role != "core":
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="Impact is only available for core schemas",
+        )
+    core_columns = get_registry_columns(core.key, trino_db)
+    core_version = get_current_dataset_version(core.key, trino_db)
+    members = list(
+        await db.scalars(
+            select(SchemaDataset)
+            .where(
+                SchemaDataset.group_id == core.group_id,
+                SchemaDataset.role == "member",
+            )
+            .order_by(SchemaDataset.name)
+        )
+    )
+    affected_members = []
+    for member in members:
+        member_columns = get_registry_columns(member.key, trino_db)
+        duplicates = _duplicate_column_names(core_columns, member_columns)
+        if duplicates:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                detail=(
+                    f"{member.key} duplicates core-owned column(s): "
+                    + ", ".join(duplicates)
+                ),
+            )
+        affected_members.append(
+            SchemaImpactMember(
+                key=member.key,
+                name=member.name,
+                member_version=get_current_dataset_version(member.key, trino_db),
+                current_core_version=core_version,
+                resolved_column_count=len(core_columns) + len(member_columns),
+            )
+        )
+    return SchemaImpactResponse(
+        core_schema_key=core.key,
+        core_version=core_version,
+        affected_members=affected_members,
+    )
 
 
 async def list_links(db: AsyncSession, dataset_key: str) -> list[SchemaDatasetLink]:
@@ -324,6 +652,13 @@ async def create_proposal(
     proposed_by_email: str,
 ) -> SchemaProposal:
     dataset = await get_dataset_by_key(db, dataset_key)
+    await _validate_column_ownership(
+        db,
+        trino_db,
+        dataset=dataset,
+        column_name=column_name,
+        proposal_type=proposal_type,
+    )
 
     existing_pending = await db.scalar(
         select(SchemaProposal).where(
@@ -377,6 +712,48 @@ async def create_proposal(
     await db.commit()
     await db.refresh(proposal)
     return proposal
+
+
+async def _validate_column_ownership(
+    db: AsyncSession,
+    trino_db: Session,
+    *,
+    dataset: SchemaDataset,
+    column_name: str,
+    proposal_type: str,
+) -> None:
+    """Prevent member schemas from shadowing columns owned by their group core."""
+    if proposal_type != "add" or dataset.group_id is None:
+        return
+
+    if dataset.role == "member":
+        core = await get_group_core(db, dataset)
+        if core is not None and get_registry_column(core.key, column_name, trino_db):
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                detail=f"Column is owned by core schema {core.key}",
+            )
+        return
+
+    members = await db.scalars(
+        select(SchemaDataset).where(
+            SchemaDataset.group_id == dataset.group_id,
+            SchemaDataset.role == "member",
+        )
+    )
+    conflicting_members = [
+        member.key
+        for member in members
+        if get_registry_column(member.key, column_name, trino_db) is not None
+    ]
+    if conflicting_members:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail=(
+                "Core column conflicts with member schema(s): "
+                + ", ".join(sorted(conflicting_members))
+            ),
+        )
 
 
 async def list_proposals(
@@ -486,6 +863,13 @@ async def approve_proposal(
         )
 
     dataset = await db.get(SchemaDataset, proposal.dataset_id)
+    await _validate_column_ownership(
+        db,
+        trino_db,
+        dataset=dataset,
+        column_name=proposal.column_name,
+        proposal_type=proposal.proposal_type,
+    )
     statement, params = _build_apply_statement(
         dataset.key, proposal.proposal_type, proposal.column_name, proposal.after_state
     )
@@ -675,6 +1059,35 @@ def _apply_import_row(
     return ("updated" if is_edit else "created"), None
 
 
+async def _get_import_column_owners(
+    db: AsyncSession,
+    trino_db: Session,
+    dataset: SchemaDataset,
+) -> dict[str, str]:
+    """Return columns owned by the other side of a core/member relationship."""
+    if dataset.group_id is None:
+        return {}
+    if dataset.role == "member":
+        core = await get_group_core(db, dataset)
+        if core is None:
+            return {}
+        return {
+            column.name: core.key for column in get_registry_columns(core.key, trino_db)
+        }
+
+    owners: dict[str, str] = {}
+    members = await db.scalars(
+        select(SchemaDataset).where(
+            SchemaDataset.group_id == dataset.group_id,
+            SchemaDataset.role == "member",
+        )
+    )
+    for member in members:
+        for column in get_registry_columns(member.key, trino_db):
+            owners.setdefault(column.name, member.key)
+    return owners
+
+
 async def import_columns_from_csv(
     db: AsyncSession,
     trino_db: Session,
@@ -682,7 +1095,7 @@ async def import_columns_from_csv(
     dataset_key: str,
     csv_bytes: bytes,
 ) -> DatasetImportResponse:
-    await get_dataset_by_key(db, dataset_key)
+    dataset = await get_dataset_by_key(db, dataset_key)
 
     reader = csv.DictReader(io.StringIO(csv_bytes.decode("utf-8-sig")))
     if not reader.fieldnames or "name" not in reader.fieldnames:
@@ -691,6 +1104,8 @@ async def import_columns_from_csv(
         )
 
     known_names = {c.name for c in get_registry_columns(dataset_key, trino_db)}
+    inherited_owners = await _get_import_column_owners(db, trino_db, dataset)
+
     counts = {"created": 0, "updated": 0, "skipped": 0}
     errors: list[DatasetImportError] = []
 
@@ -698,6 +1113,17 @@ async def import_columns_from_csv(
         name = (row.get("name") or "").strip()
         if not name:
             counts["skipped"] += 1
+            continue
+        if name not in known_names and name in inherited_owners:
+            errors.append(
+                DatasetImportError(
+                    row=row_number,
+                    detail=(
+                        f"Column '{name}' is already owned by "
+                        f"{inherited_owners[name]}"
+                    ),
+                )
+            )
             continue
 
         outcome, error = _apply_import_row(

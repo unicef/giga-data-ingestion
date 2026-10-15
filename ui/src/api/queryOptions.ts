@@ -58,6 +58,12 @@ export const listDatasetGroupsQueryOptions = queryOptions({
   queryFn: api.schemaRegistry.listGroups,
 });
 
+export const schemaGroupDetailQueryOptions = (key: string) =>
+  queryOptions({
+    queryKey: ["schema-registry", "groups", key],
+    queryFn: () => api.schemaRegistry.getGroup(key),
+  });
+
 export const listSchemaDatasetsQueryOptions = queryOptions({
   queryKey: ["schema-registry", "datasets"],
   queryFn: api.schemaRegistry.listDatasets,

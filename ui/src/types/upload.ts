@@ -81,6 +81,10 @@ export interface UploadParams {
   source?: string | null;
   metadata: string;
   dq_mode?: "uploaded" | "master";
+  schema_key?: string;
+  schema_version?: string;
+  core_schema_key?: string;
+  core_schema_version?: string;
 }
 
 export interface UploadUnstructuredParams {
@@ -173,6 +177,10 @@ export interface UploadResponse {
   source: string | null;
   mode: "Create" | "Update" | "Mixed" | null;
   approval_status: "PENDING" | "APPROVED" | "REJECTED" | null;
+  schema_key: string | null;
+  schema_version: number | null;
+  core_schema_key: string | null;
+  core_schema_version: number | null;
   original_filename: string;
   upload_path: string;
   column_to_schema_mapping: string;
@@ -199,6 +207,10 @@ export const initialUploadResponse: UploadResponse = {
   source: null,
   mode: null,
   approval_status: null,
+  schema_key: null,
+  schema_version: null,
+  core_schema_key: null,
+  core_schema_version: null,
   original_filename: "",
   upload_path: "",
   column_to_schema_mapping: "",
