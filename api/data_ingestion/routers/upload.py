@@ -32,6 +32,7 @@ from azure.storage.blob import ContentSettings
 from data_ingestion.constants import constants
 from data_ingestion.db.primary import get_db
 from data_ingestion.db.trino import get_db as get_trino_db
+from data_ingestion.internal import schema_registry
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.data_quality_checks import (
     get_data_quality_summary,
@@ -579,6 +580,44 @@ def _get_pinned_schema_metadata(form: FileUploadRequest) -> dict[str, str]:
     return {key: str(value) for key, value in values.items() if value is not None}
 
 
+async def _validate_schema_pins(db: AsyncSession, form: FileUploadRequest) -> None:
+    pin_values = (
+        form.schema_key,
+        form.schema_version,
+        form.core_schema_key,
+        form.core_schema_version,
+    )
+    if not any(value is not None for value in pin_values):
+        return
+    if form.schema_key is None or form.schema_version is None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="schema_key and schema_version must be provided together",
+        )
+    resolved = await schema_registry.get_resolved_schema(
+        db,
+        form.schema_key,
+        member_version=form.schema_version,
+        core_version=form.core_schema_version,
+    )
+    expected_core_key = (
+        resolved.core_schema.key
+        if resolved.core_schema and resolved.core_schema.version is not None
+        else None
+    )
+    expected_core_version = (
+        resolved.core_schema.version if resolved.core_schema else None
+    )
+    if (
+        form.core_schema_key != expected_core_key
+        or form.core_schema_version != expected_core_version
+    ):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="Core schema pins do not match the member schema group",
+        )
+
+
 @router.post("", response_model=FileUploadSchema)
 async def upload_file(
     response: Response,
@@ -630,6 +669,7 @@ async def upload_file(
     database_user = await db.scalar(
         select(DatabaseUser).where(DatabaseUser.email == email)
     )
+    await _validate_schema_pins(db, form)
 
     upload_metadata = orjson.loads(form.metadata)
 

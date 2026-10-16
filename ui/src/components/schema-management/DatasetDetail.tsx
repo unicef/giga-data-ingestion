@@ -222,12 +222,23 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
     mutationFn: api.schemaRegistry.importDatasetColumns,
     onSuccess: async ({ data }) => {
       setImportResult(data);
-      await queryClient.invalidateQueries({
-        queryKey: ["schema-registry", "columns", datasetKey],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["schema-registry", "datasets"],
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["schema-registry", "columns", datasetKey],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["schema-registry", "resolved", datasetKey],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["schema-registry", "versions", datasetKey],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["schema-registry", "datasets"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["schema-registry", "groups"],
+        }),
+      ]);
     },
   });
 
@@ -273,6 +284,13 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                   {dataset && (
                     <Tag type={isCoreSchema ? "blue" : "teal"}>
                       {isCoreSchema ? "Core schema" : "Member schema"}
+                    </Tag>
+                  )}
+                  {dataset && (
+                    <Tag type="cool-gray">
+                      {dataset.current_version_number
+                        ? `Current v${dataset.current_version_number}`
+                        : "No published version"}
                     </Tag>
                   )}
                   {resolvedSchema?.core_schema && (

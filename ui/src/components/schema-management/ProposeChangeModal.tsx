@@ -156,11 +156,20 @@ function ProposeChangeModal({
 
           {proposalType !== "delete" && (
             <>
-              <TextInput
+              <Select
                 id="data_type"
                 labelText="Data type"
                 {...register("data_type", { required: true })}
-              />
+              >
+                <SelectItem text="Select a data type" value="" />
+                <SelectItem text="String" value="string" />
+                <SelectItem text="Integer" value="integer" />
+                <SelectItem text="Long" value="long" />
+                <SelectItem text="Float" value="float" />
+                <SelectItem text="Double" value="double" />
+                <SelectItem text="Timestamp" value="timestamp" />
+                <SelectItem text="Boolean" value="boolean" />
+              </Select>
               <TextInput
                 id="description"
                 labelText="Description"

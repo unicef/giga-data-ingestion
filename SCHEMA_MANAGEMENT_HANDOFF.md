@@ -1,5 +1,43 @@
 # Schema Management — handoff notes
 
+## Current design — 2026-10-16
+
+PostgreSQL is now the authoritative schema registry. The older Delta/Trino design
+described later in this document is historical context and is superseded.
+
+- Nothing is seeded from `schemas.*`. Users create schema groups and schemas in
+  the portal.
+- A schema may be created empty or from a CSV. CSV creation atomically creates
+  the dataset and publishes immutable version 1.
+- `schema_versions` stores version metadata and `schema_version_columns` stores
+  the complete ordered column snapshot for each version.
+- `schema_datasets.current_version_id` points at the active immutable snapshot.
+- An approved proposal or later privileged CSV import clones the current
+  snapshot, applies the change, and atomically publishes one new version.
+- Existing Delta `schemas.*` tables are left untouched but are no longer read or
+  written by schema management or the legacy portal schema endpoint.
+- Member schemas resolve as the selected core snapshot plus the selected member
+  snapshot. Upload records persist both version pins so Dagster sees the exact
+  schema used by the portal.
+- Dagster reads the same PostgreSQL tables directly. It must not call the portal
+  HTTP API at runtime.
+
+CSV requires `name` and `data_type` for each new column. Supported optional
+fields are `is_nullable`, `is_important`, `is_system_generated`, `description`,
+`primary_key`, `partition_order`, `license`, `units`, `hint`, `is_mandatory`,
+`is_unique`, `domain_values`, `range_min`, `range_max`, `dynamic_max`,
+`precision_min`, and `critical_for`. Boolean true values are `true`, `1`, or
+`yes`; `int` is accepted as an alias for `integer`.
+
+New migration, intentionally not applied by this change:
+
+- `9c4d8e1f2a6b` — PostgreSQL schema versions, version-column snapshots,
+  `current_version_id`, and proposal `schema_version`.
+
+The migration contains no registry-data backfill or seed.
+
+## Historical implementation notes
+
 Branch: `feat/implement-schema-management`
 Commit: `274a433 feat: implement schema management` (no body — the original request/spec
 this was built from isn't preserved anywhere in the repo; this doc is reconstructed

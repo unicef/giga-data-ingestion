@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import UUID4, BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 ProposalType = Literal["add", "edit", "delete"]
 ProposalStatus = Literal["pending", "approved", "rejected", "apply_failed"]
@@ -39,6 +39,7 @@ class SchemaDatasetResponse(BaseModel):
     description: str | None = None
     group_id: str | None = None
     role: SchemaRole
+    current_version_number: int | None = None
     column_count: int = 0
     pending_proposal_count: int = 0
 
@@ -66,8 +67,7 @@ class DatasetLinkResponse(BaseModel):
 
 
 class RegistryColumn(BaseModel):
-    """A column row as it exists on the Delta `schemas.<dataset>` table, extended
-    with the DQ-config fields that used to live only in NocoDB."""
+    """One column in an immutable PostgreSQL schema-version snapshot."""
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -93,6 +93,28 @@ class RegistryColumn(BaseModel):
     # giga-dagster's data_quality_checks/critical.py. Other dataset types
     # treat every mandatory column as automatically critical.
     critical_for: CriticalFor | None = None
+
+    @field_validator("data_type", mode="before")
+    @classmethod
+    def validate_data_type(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if normalized == "int":
+            normalized = "integer"
+        supported = {
+            "string",
+            "integer",
+            "long",
+            "float",
+            "double",
+            "timestamp",
+            "boolean",
+        }
+        if normalized not in supported:
+            raise ValueError(
+                f"Unsupported data type '{value}'. "
+                f"Expected one of: {', '.join(sorted(supported))}"
+            )
+        return normalized
 
 
 class ResolvedRegistryColumn(RegistryColumn):
@@ -147,9 +169,9 @@ class ProposalResponse(BaseModel):
     status: ProposalStatus
     before_state: dict[str, Any] | None = None
     after_state: dict[str, Any] | None = None
-    proposed_by_id: UUID4
+    proposed_by_id: str
     proposed_by_email: str
-    delta_version: int | None = None
+    schema_version: int | None = None
     apply_error: str | None = None
     rejection_reason: str | None = None
     created: datetime
@@ -172,7 +194,7 @@ class AuditLogResponse(BaseModel):
     id: str
     proposal_id: str
     action: str
-    actor_id: UUID4
+    actor_id: str
     actor_email: str
     created: datetime
     dataset_key: str | None = None
@@ -197,3 +219,8 @@ class DatasetImportResponse(BaseModel):
     updated: int = 0
     skipped: int = 0
     errors: list[DatasetImportError] = Field(default_factory=list)
+
+
+class DatasetCreateFromCsvResponse(BaseModel):
+    dataset: SchemaDatasetResponse
+    import_result: DatasetImportResponse

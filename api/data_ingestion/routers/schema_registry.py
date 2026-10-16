@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import (
     APIRouter,
     Depends,
+    Form,
     HTTPException,
     Query,
     Security,
@@ -12,10 +13,8 @@ from fastapi import (
 from fastapi_azure_auth.user import User as AzureUser
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
 from data_ingestion.db.primary import get_db
-from data_ingestion.db.trino import get_db as get_trino_db
 from data_ingestion.internal import schema_registry as registry
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.models import (
@@ -25,6 +24,7 @@ from data_ingestion.models import (
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.schema_registry import (
     AuditLogResponse,
+    DatasetCreateFromCsvResponse,
     DatasetGroupCreate,
     DatasetGroupDetail,
     DatasetGroupResponse,
@@ -90,9 +90,8 @@ async def create_group(body: DatasetGroupCreate, db: AsyncSession = Depends(get_
 async def get_group(
     key: str,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
-    return await registry.get_group_detail(db, trino_db, key)
+    return await registry.get_group_detail(db, key)
 
 
 # ---------------------------------------------------------------------------
@@ -103,9 +102,8 @@ async def get_group(
 @router.get("/datasets", response_model=list[SchemaDatasetResponse])
 async def list_datasets(
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
-    return await registry.list_datasets(db, trino_db)
+    return await registry.list_datasets(db)
 
 
 @router.post(
@@ -117,11 +115,9 @@ async def list_datasets(
 async def create_dataset(
     body: SchemaDatasetCreate,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
     return await registry.create_dataset(
         db,
-        trino_db,
         key=body.key,
         name=body.name,
         description=body.description,
@@ -130,13 +126,42 @@ async def create_dataset(
     )
 
 
+@router.post(
+    "/datasets/from-csv",
+    status_code=status.HTTP_201_CREATED,
+    response_model=DatasetCreateFromCsvResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def create_dataset_from_csv(
+    file: UploadFile,
+    key: Annotated[str, Form()],
+    group_id: Annotated[str | None, Form()] = None,
+    role: Annotated[str, Form()] = "member",
+    name: Annotated[str | None, Form()] = None,
+    description: Annotated[str | None, Form()] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
+):
+    dataset, import_result = await registry.create_dataset_from_csv(
+        db,
+        key=key,
+        name=name,
+        description=description,
+        group_id=group_id,
+        role=role,
+        csv_bytes=await file.read(),
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+    )
+    return {"dataset": dataset, "import_result": import_result}
+
+
 @router.get("/datasets/{key}", response_model=SchemaDatasetResponse)
 async def get_dataset(
     key: str,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
-    return await registry.get_dataset_detail(db, trino_db, key)
+    return await registry.get_dataset_detail(db, key)
 
 
 @router.post(
@@ -148,11 +173,15 @@ async def import_dataset_columns(
     key: str,
     file: UploadFile,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
 ):
     csv_bytes = await file.read()
     return await registry.import_columns_from_csv(
-        db, trino_db, dataset_key=key, csv_bytes=csv_bytes
+        db,
+        dataset_key=key,
+        csv_bytes=csv_bytes,
+        actor_id=current_user.id,
+        actor_email=current_user.email,
     )
 
 
@@ -165,9 +194,8 @@ async def move_dataset(
     key: str,
     body: MoveDatasetRequest,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
-    return await registry.move_dataset(db, trino_db, key, body.group_id, body.role)
+    return await registry.move_dataset(db, key, body.group_id, body.role)
 
 
 @router.get(
@@ -179,11 +207,9 @@ async def get_resolved_schema(
     member_version: int | None = None,
     core_version: int | None = None,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
     return await registry.get_resolved_schema(
         db,
-        trino_db,
         key,
         member_version=member_version,
         core_version=core_version,
@@ -197,9 +223,8 @@ async def get_resolved_schema(
 async def get_schema_impact(
     key: str,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
-    return await registry.get_core_impact(db, trino_db, key)
+    return await registry.get_core_impact(db, key)
 
 
 @router.get("/datasets/{key}/links", response_model=list[DatasetLinkResponse])
@@ -229,7 +254,7 @@ async def delete_link(key: str, linked_key: str, db: AsyncSession = Depends(get_
 
 
 # ---------------------------------------------------------------------------
-# Columns (read straight from Delta via Trino)
+# Columns
 # ---------------------------------------------------------------------------
 
 
@@ -238,10 +263,8 @@ async def list_columns(
     key: str,
     as_of_version: int | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
-    await registry.get_dataset_by_key(db, key)
-    return registry.get_registry_columns(key, trino_db, as_of_version=as_of_version)
+    return await registry.get_registry_columns(db, key, as_of_version=as_of_version)
 
 
 @router.get("/datasets/{key}/columns/{name}", response_model=RegistryColumn)
@@ -250,11 +273,9 @@ async def get_column(
     name: str,
     as_of_version: int | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
-    await registry.get_dataset_by_key(db, key)
-    column = registry.get_registry_column(
-        key, name, trino_db, as_of_version=as_of_version
+    column = await registry.get_registry_column(
+        db, key, name, as_of_version=as_of_version
     )
     if column is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Column not found")
@@ -269,7 +290,7 @@ async def get_column_history(key: str, name: str, db: AsyncSession = Depends(get
 
 
 # ---------------------------------------------------------------------------
-# Versions (Delta transaction log via Trino)
+# Versions
 # ---------------------------------------------------------------------------
 
 
@@ -277,10 +298,9 @@ async def get_column_history(key: str, name: str, db: AsyncSession = Depends(get
 async def list_versions(
     key: str,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
     dataset = await registry.get_dataset_by_key(db, key)
-    return await registry.list_dataset_versions_with_proposals(db, trino_db, dataset)
+    return await registry.list_dataset_versions_with_proposals(db, dataset)
 
 
 @router.get("/datasets/{key}/versions/{version}", response_model=list[RegistryColumn])
@@ -288,10 +308,8 @@ async def get_version_snapshot(
     key: str,
     version: int,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
-    await registry.get_dataset_by_key(db, key)
-    return registry.get_registry_columns(key, trino_db, as_of_version=version)
+    return await registry.get_registry_columns(db, key, as_of_version=version)
 
 
 @router.get(
@@ -303,17 +321,15 @@ async def diff_versions(
     version: int,
     other_version: int,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
-    await registry.get_dataset_by_key(db, key)
     before_columns = {
         c.name: c
-        for c in registry.get_registry_columns(key, trino_db, as_of_version=version)
+        for c in await registry.get_registry_columns(db, key, as_of_version=version)
     }
     after_columns = {
         c.name: c
-        for c in registry.get_registry_columns(
-            key, trino_db, as_of_version=other_version
+        for c in await registry.get_registry_columns(
+            db, key, as_of_version=other_version
         )
     }
     names = sorted(set(before_columns) | set(after_columns))
@@ -346,12 +362,10 @@ async def create_proposal(
     key: str,
     body: ProposalCreate,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
     current_user: DatabaseUser = Depends(get_current_database_user),
 ):
     return await registry.create_proposal(
         db,
-        trino_db,
         dataset_key=key,
         column_name=body.column_name,
         proposal_type=body.proposal_type,
@@ -376,14 +390,13 @@ async def list_proposals(
 async def get_proposal(
     id: str,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
 ):
     proposal = await registry.get_proposal(db, id)
     diff = await registry.get_proposal_diff(proposal)
     dataset = await db.get(SchemaDataset, proposal.dataset_id)
     affected_schema_keys: list[str] = []
     if dataset.role == "core":
-        impact = await registry.get_core_impact(db, trino_db, dataset.key)
+        impact = await registry.get_core_impact(db, dataset.key)
         affected_schema_keys = [member.key for member in impact.affected_members]
     return ProposalDetail(
         **ProposalResponse.model_validate(proposal).model_dump(),
@@ -400,12 +413,10 @@ async def get_proposal(
 async def approve_proposal(
     id: str,
     db: AsyncSession = Depends(get_db),
-    trino_db: Session = Depends(get_trino_db),
     current_user: DatabaseUser = Depends(get_current_database_user),
 ):
     return await registry.approve_proposal(
         db,
-        trino_db,
         id,
         actor_id=current_user.id,
         actor_email=current_user.email,

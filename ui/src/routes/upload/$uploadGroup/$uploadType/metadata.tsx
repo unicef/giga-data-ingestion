@@ -20,7 +20,7 @@ import {
 } from "@carbon/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as Sentry from "@sentry/react";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
   createFileRoute,
@@ -181,6 +181,19 @@ function Metadata() {
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
   const isSchoolData = uploadGroup === "school-data";
+  const schemaKey =
+    uploadType === "coverage"
+      ? `coverage_${uploadSlice.source}`
+      : `school_${uploadType}`;
+  const usesGovernedSchema = !isUnstructured && !isStructured;
+  const { data: resolvedSchemaQuery } = useQuery({
+    queryKey: ["schema-registry", "resolved", schemaKey],
+    queryFn: () => api.schemaRegistry.getResolvedSchema(schemaKey),
+    enabled:
+      usesGovernedSchema &&
+      (uploadType !== "coverage" || uploadSlice.source !== null),
+  });
+  const resolvedSchema = resolvedSchemaQuery?.data;
 
   const { countryDatasets, isPrivileged } = useRoles();
 
@@ -297,6 +310,18 @@ function Metadata() {
       if (metadata[key] === "") metadata[key] = null;
     });
 
+    let schemaToPin = resolvedSchema;
+    if (usesGovernedSchema && !schemaToPin) {
+      try {
+        schemaToPin = (await api.schemaRegistry.getResolvedSchema(schemaKey))
+          .data;
+      } catch {
+        setIsUploadError(true);
+        setIsUploading(false);
+        return;
+      }
+    }
+
     const body: UploadParams = {
       metadata: JSON.stringify({
         ...metadata,
@@ -312,6 +337,19 @@ function Metadata() {
           ? JSON.stringify(uploadSlice.fuzzyCorrections)
           : undefined,
       source: uploadSlice.source,
+      schema_key: schemaToPin?.schema.key,
+      schema_version:
+        schemaToPin?.schema.version != null
+          ? String(schemaToPin.schema.version)
+          : undefined,
+      core_schema_key:
+        schemaToPin?.core_schema?.version != null
+          ? schemaToPin.core_schema.key
+          : undefined,
+      core_schema_version:
+        schemaToPin?.core_schema?.version != null
+          ? String(schemaToPin.core_schema.version)
+          : undefined,
     };
 
     if (isSchoolData) {

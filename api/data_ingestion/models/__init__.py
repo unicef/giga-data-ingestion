@@ -10,6 +10,8 @@ from .schema_registry import (
     SchemaDatasetLink,
     SchemaProposal,
     SchemaProposalAuditLog,
+    SchemaVersion,
+    SchemaVersionColumn,
 )
 from .users import Role, User, UserRoleAssociation
 
@@ -30,4 +32,6 @@ __all__ = [
     "SchemaDatasetLink",
     "SchemaProposal",
     "SchemaProposalAuditLog",
+    "SchemaVersion",
+    "SchemaVersionColumn",
 ]

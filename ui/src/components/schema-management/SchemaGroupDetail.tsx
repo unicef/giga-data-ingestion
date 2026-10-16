@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 
 import { Button, Heading, Section, Tag } from "@carbon/react";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import { schemaGroupDetailQueryOptions } from "@/api/queryOptions.ts";
+import AddSchemaModal from "@/components/schema-management/AddSchemaModal.tsx";
 import SchemaNavigator from "@/components/schema-management/SchemaNavigator.tsx";
 import useRoles from "@/hooks/useRoles.ts";
 import { SchemaDataset } from "@/types/schemaRegistry.ts";
@@ -26,6 +27,11 @@ function SchemaRow({
         <div className="flex flex-wrap items-center gap-2">
           <b>{schema.name}</b>
           <Tag type="teal">Member</Tag>
+          <Tag type="cool-gray">
+            {schema.current_version_number
+              ? `v${schema.current_version_number}`
+              : "Unpublished"}
+          </Tag>
         </div>
         <code className="text-xs text-giga-dark-gray">{schema.key}</code>
       </div>
@@ -45,6 +51,9 @@ function SchemaRow({
 
 function SchemaGroupDetail({ groupKey }: { groupKey: string }) {
   const [search, setSearch] = useState("");
+  const [addSchemaOpen, setAddSchemaOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { isPrivileged } = useRoles();
   const {
     data: { data: group },
@@ -87,8 +96,8 @@ function SchemaGroupDetail({ groupKey }: { groupKey: string }) {
                 >
                   Group settings
                 </Button>
-                <Button as={Link} to="/schema-management/groups">
-                  Add or assign schema
+                <Button onClick={() => setAddSchemaOpen(true)}>
+                  Add schema
                 </Button>
               </div>
             )}
@@ -99,6 +108,11 @@ function SchemaGroupDetail({ groupKey }: { groupKey: string }) {
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <Tag type="blue">Shared core schema</Tag>
+                  <Tag type="cool-gray" className="ml-2">
+                    {group.core_schema.current_version_number
+                      ? `v${group.core_schema.current_version_number}`
+                      : "Unpublished"}
+                  </Tag>
                   <Heading className="mt-3 text-xl">
                     {group.core_schema.name}
                   </Heading>
@@ -160,6 +174,25 @@ function SchemaGroupDetail({ groupKey }: { groupKey: string }) {
               )}
             </div>
           </section>
+          <AddSchemaModal
+            groupId={group.id}
+            open={addSchemaOpen}
+            onClose={() => setAddSchemaOpen(false)}
+            onCreated={async dataset => {
+              await Promise.all([
+                queryClient.invalidateQueries({
+                  queryKey: ["schema-registry", "groups"],
+                }),
+                queryClient.invalidateQueries({
+                  queryKey: ["schema-registry", "datasets"],
+                }),
+              ]);
+              void navigate({
+                to: "/schema-management/$datasetKey",
+                params: { datasetKey: dataset.key },
+              });
+            }}
+          />
         </div>
       </div>
     </Section>

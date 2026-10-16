@@ -4,9 +4,10 @@ from types import SimpleNamespace
 import pytest
 from data_ingestion.internal import schema_registry
 from data_ingestion.internal.schema_registry import (
-    _build_apply_statement,
     _duplicate_column_names,
     _validate_placement_columns,
+    apply_column_change,
+    parse_csv_import,
 )
 from data_ingestion.schemas.schema_registry import RegistryColumn
 from fastapi import HTTPException
@@ -34,19 +35,52 @@ def test_duplicate_column_names_allows_distinct_core_and_member_columns():
     assert duplicates == []
 
 
-def test_add_statement_uses_whitelisted_proposal_state():
-    statement, parameters = _build_apply_statement(
-        "facility_core",
+def test_apply_column_change_adds_column_to_snapshot():
+    columns = apply_column_change(
+        [_column("facility_id_giga")],
         "add",
         "facility_name",
         {"data_type": "string", "is_mandatory": True},
     )
 
-    assert "INSERT INTO schemas.facility_core" in str(statement)
-    assert parameters["name"] == "facility_name"
-    assert parameters["data_type"] == "string"
-    assert parameters["is_mandatory"] is True
-    assert parameters["id"]
+    assert [column.name for column in columns] == [
+        "facility_id_giga",
+        "facility_name",
+    ]
+    assert columns[1].is_mandatory is True
+
+
+def test_csv_import_builds_complete_snapshot_and_accepts_int_alias():
+    columns, result = parse_csv_import(
+        (
+            b"name,data_type,is_nullable,is_mandatory\n"
+            b"school_id_govt,string,false,true\n"
+            b"school_count,int,true,false\n"
+        ),
+        [],
+        {},
+    )
+
+    assert result.created == 2
+    assert result.errors == []
+    assert columns[1].data_type == "integer"
+
+
+def test_csv_import_reports_inherited_and_duplicate_columns():
+    _, result = parse_csv_import(
+        (
+            b"name,data_type\n"
+            b"latitude,double\n"
+            b"school_name,string\n"
+            b"school_name,string\n"
+        ),
+        [],
+        {"latitude": "facility_core"},
+    )
+
+    assert len(result.errors) == 2
+    assert "facility_core" in result.errors[0].detail
+    assert "more than once" in result.errors[1].detail
 
 
 def test_member_placement_rejects_columns_owned_by_core(monkeypatch):
@@ -60,18 +94,17 @@ def test_member_placement_rejects_columns_owned_by_core(monkeypatch):
         "schools": [_column("school_id_govt"), _column("latitude")],
         "facility_core": [_column("facility_id_giga"), _column("latitude")],
     }
-    monkeypatch.setattr(
-        schema_registry,
-        "get_registry_columns",
-        lambda key, _trino_db: columns[key],
-    )
+
+    async def get_columns(_db, key):
+        return columns[key]
+
+    monkeypatch.setattr(schema_registry, "get_registry_columns", get_columns)
 
     with pytest.raises(HTTPException) as error:
         asyncio.run(
             _validate_placement_columns(
                 FakeDatabase(),
-                object(),
-                dataset_key="schools",
+                dataset=SimpleNamespace(key="schools"),
                 group_id="facilities-id",
                 role="member",
             )
@@ -100,18 +133,17 @@ def test_core_placement_reports_each_conflicting_member(monkeypatch):
         "schools": [_column("school_id_govt"), _column("latitude")],
         "health_facilities": [_column("health_id"), _column("longitude")],
     }
-    monkeypatch.setattr(
-        schema_registry,
-        "get_registry_columns",
-        lambda key, _trino_db: columns[key],
-    )
+
+    async def get_columns(_db, key):
+        return columns[key]
+
+    monkeypatch.setattr(schema_registry, "get_registry_columns", get_columns)
 
     with pytest.raises(HTTPException) as error:
         asyncio.run(
             _validate_placement_columns(
                 FakeDatabase(),
-                object(),
-                dataset_key="facility_core",
+                dataset=SimpleNamespace(key="facility_core"),
                 group_id="facilities-id",
                 role="core",
             )

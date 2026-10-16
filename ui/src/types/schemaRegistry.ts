@@ -28,8 +28,17 @@ export interface SchemaDataset {
   description: string | null;
   group_id: string | null;
   role: SchemaRole;
+  current_version_number: number | null;
   column_count: number;
   pending_proposal_count: number;
+}
+
+export interface CreateSchemaDatasetRequest {
+  key: string;
+  name?: string | null;
+  description?: string | null;
+  group_id: string;
+  role: SchemaRole;
 }
 
 export interface DatasetGroupDetail extends DatasetGroup {
@@ -107,7 +116,7 @@ export interface Proposal {
   after_state: RegistryColumn | null;
   proposed_by_id: string;
   proposed_by_email: string;
-  delta_version: number | null;
+  schema_version: number | null;
   apply_error: string | null;
   rejection_reason: string | null;
   created: string;
@@ -153,4 +162,9 @@ export interface DatasetImportResponse {
   updated: number;
   skipped: number;
   errors: DatasetImportError[];
+}
+
+export interface DatasetCreateFromCsvResponse {
+  dataset: SchemaDataset;
+  import_result: DatasetImportResponse;
 }

@@ -4,6 +4,8 @@ import {
   AuditLogEntry,
   CreateDatasetGroupRequest,
   CreateProposalRequest,
+  CreateSchemaDatasetRequest,
+  DatasetCreateFromCsvResponse,
   DatasetGroup,
   DatasetGroupDetail,
   DatasetImportResponse,
@@ -35,6 +37,26 @@ export default function routes(axi: AxiosInstance) {
     },
     getDataset: (key: string): Promise<AxiosResponse<SchemaDataset>> => {
       return axi.get(`/schema-registry/datasets/${key}`);
+    },
+    createDataset: (
+      body: CreateSchemaDatasetRequest,
+    ): Promise<AxiosResponse<SchemaDataset>> => {
+      return axi.post("/schema-registry/datasets", body);
+    },
+    createDatasetFromCsv: ({
+      file,
+      ...body
+    }: CreateSchemaDatasetRequest & {
+      file: File;
+    }): Promise<AxiosResponse<DatasetCreateFromCsvResponse>> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      Object.entries(body).forEach(([key, value]) => {
+        if (value != null) formData.append(key, value);
+      });
+      return axi.post("/schema-registry/datasets/from-csv", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
     },
     moveDataset: ({
       key,
