@@ -460,14 +460,18 @@ async def get_upload(
 
 
 def _parse_spreadsheet(
-    content: bytes, file_ext: str, dtype_overrides: dict
+    content: bytes,
+    file_ext: str,
+    dtype_overrides: dict | type,
+    keep_default_na: bool = True,
 ) -> pd.DataFrame:
     buf = io.BytesIO(content)
+    options = {"dtype": dtype_overrides, "keep_default_na": keep_default_na}
     if file_ext == ".csv":
-        return pd.read_csv(buf, dtype=dtype_overrides)
+        return pd.read_csv(buf, **options)
     if file_ext == ".xlsx":
-        return pd.read_excel(buf, dtype=dtype_overrides, engine="openpyxl")
-    return pd.read_excel(buf, dtype=dtype_overrides, engine="xlrd")
+        return pd.read_excel(buf, engine="openpyxl", **options)
+    return pd.read_excel(buf, engine="xlrd", **options)
 
 
 def _silver_table(dataset: str, country_code: str) -> str:
@@ -557,8 +561,8 @@ def apply_fuzzy_corrections(
         if not column_replacements:
             return upload_content
 
-        dtype_overrides = {col: str for col in column_replacements}
-        df = _parse_spreadsheet(upload_content, file_ext, dtype_overrides)
+        # Read every column as text so the rewrite keeps values like 01234 intact
+        df = _parse_spreadsheet(upload_content, file_ext, str, keep_default_na=False)
 
         if not any(col in df.columns for col in column_replacements):
             return upload_content
