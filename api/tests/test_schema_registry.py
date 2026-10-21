@@ -7,6 +7,7 @@ from data_ingestion.internal.schema_registry import (
     _duplicate_column_names,
     _validate_placement_columns,
     apply_column_change,
+    get_proposal_diff,
     parse_csv_import,
 )
 from data_ingestion.schemas.schema_registry import RegistryColumn
@@ -48,6 +49,37 @@ def test_apply_column_change_adds_column_to_snapshot():
         "facility_name",
     ]
     assert columns[1].is_mandatory is True
+
+
+def test_proposal_diff_builds_complete_added_column_from_partial_state():
+    proposal = SimpleNamespace(
+        column_name="facility_name",
+        before_state=None,
+        after_state={"data_type": "string", "is_mandatory": True},
+    )
+
+    changes = asyncio.run(get_proposal_diff(proposal))
+
+    assert {change.field: change.after for change in changes} == {
+        "name": "facility_name",
+        "data_type": "string",
+        "is_mandatory": True,
+    }
+
+
+def test_proposal_diff_merges_partial_edit_with_existing_column():
+    proposal = SimpleNamespace(
+        column_name="facility_name",
+        before_state=_column("facility_name").model_dump(),
+        after_state={"description": "Updated description"},
+    )
+
+    changes = asyncio.run(get_proposal_diff(proposal))
+
+    assert len(changes) == 1
+    assert changes[0].field == "description"
+    assert changes[0].before is None
+    assert changes[0].after == "Updated description"
 
 
 def test_csv_import_builds_complete_snapshot_and_accepts_int_alias():

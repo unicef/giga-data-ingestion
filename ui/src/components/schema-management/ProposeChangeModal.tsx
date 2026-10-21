@@ -8,6 +8,7 @@ import {
   NumberInput,
   SelectItem,
   Stack,
+  Tag,
   TextInput,
 } from "@carbon/react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -36,10 +37,11 @@ interface ProposeChangeInputs {
   description: string;
   is_mandatory: boolean;
   is_unique: boolean;
-  domain_values: string;
   range_min: number | undefined;
   range_max: number | undefined;
 }
+
+const NUMERIC_DATA_TYPES = new Set(["integer", "long", "float", "double"]);
 
 function ProposeChangeModal({
   datasetKey,
@@ -49,6 +51,8 @@ function ProposeChangeModal({
 }: ProposeChangeModalProps) {
   const queryClient = useQueryClient();
   const [showError, setShowError] = useState(false);
+  const [domainValueInput, setDomainValueInput] = useState("");
+  const [domainValues, setDomainValues] = useState<string[]>([]);
 
   const { register, handleSubmit, control, watch, reset, formState } =
     useForm<ProposeChangeInputs>({
@@ -57,6 +61,23 @@ function ProposeChangeModal({
     });
 
   const proposalType = watch("proposal_type");
+  const dataType = watch("data_type");
+  const supportsRange = NUMERIC_DATA_TYPES.has(dataType);
+
+  const addDomainValues = (input: string) => {
+    const values = input
+      .split(/[,\n]+/)
+      .map(value => value.trim())
+      .filter(Boolean);
+
+    if (values.length > 0) {
+      setDomainValues(currentValues => [
+        ...currentValues,
+        ...values.filter(value => !currentValues.includes(value)),
+      ]);
+    }
+    setDomainValueInput("");
+  };
 
   const { mutateAsync: createProposal, isPending } = useMutation({
     mutationFn: api.schemaRegistry.createProposal,
@@ -70,6 +91,8 @@ function ProposeChangeModal({
   const handleClose = () => {
     reset();
     setShowError(false);
+    setDomainValueInput("");
+    setDomainValues([]);
     onClose();
   };
 
@@ -87,9 +110,9 @@ function ProposeChangeModal({
         description: data.description || null,
         is_mandatory: data.is_mandatory,
         is_unique: data.is_unique,
-        domain_values: data.domain_values || null,
-        range_min: data.range_min ?? null,
-        range_max: data.range_max ?? null,
+        domain_values: domainValues.length > 0 ? domainValues.join("|") : null,
+        range_min: supportsRange ? data.range_min ?? null : null,
+        range_max: supportsRange ? data.range_max ?? null : null,
       };
     }
 
@@ -197,37 +220,75 @@ function ProposeChangeModal({
                   {...register("is_unique")}
                 />
               </div>
-              <TextInput
-                id="domain_values"
-                labelText="Domain values (pipe-delimited)"
-                {...register("domain_values")}
-              />
-              <div className="flex gap-4">
-                <Controller
-                  name="range_min"
-                  control={control}
-                  render={({ field }) => (
-                    <NumberInput
-                      id="range_min"
-                      label="Range min"
-                      value={field.value ?? ""}
-                      onChange={(_, { value }) => field.onChange(value)}
-                    />
-                  )}
+              <div>
+                <TextInput
+                  id="domain_values"
+                  labelText="Domain values (optional)"
+                  helperText="Press Enter after each value. You can also paste comma- or line-separated values."
+                  value={domainValueInput}
+                  onBlur={() => addDomainValues(domainValueInput)}
+                  onChange={event => setDomainValueInput(event.target.value)}
+                  onKeyDown={event => {
+                    if (event.key === "Enter" || event.key === ",") {
+                      event.preventDefault();
+                      addDomainValues(domainValueInput);
+                    }
+                  }}
+                  onPaste={event => {
+                    const pastedText = event.clipboardData.getData("text");
+                    if (/[\n,]/.test(pastedText)) {
+                      event.preventDefault();
+                      addDomainValues(pastedText);
+                    }
+                  }}
                 />
-                <Controller
-                  name="range_max"
-                  control={control}
-                  render={({ field }) => (
-                    <NumberInput
-                      id="range_max"
-                      label="Range max"
-                      value={field.value ?? ""}
-                      onChange={(_, { value }) => field.onChange(value)}
-                    />
-                  )}
-                />
+                {domainValues.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {domainValues.map(value => (
+                      <Tag
+                        key={value}
+                        filter
+                        type="blue"
+                        onClose={() =>
+                          setDomainValues(currentValues =>
+                            currentValues.filter(item => item !== value),
+                          )
+                        }
+                      >
+                        {value}
+                      </Tag>
+                    ))}
+                  </div>
+                )}
               </div>
+              {supportsRange && (
+                <div className="flex gap-4">
+                  <Controller
+                    name="range_min"
+                    control={control}
+                    render={({ field }) => (
+                      <NumberInput
+                        id="range_min"
+                        label="Range min"
+                        value={field.value ?? ""}
+                        onChange={(_, { value }) => field.onChange(value)}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name="range_max"
+                    control={control}
+                    render={({ field }) => (
+                      <NumberInput
+                        id="range_max"
+                        label="Range max"
+                        value={field.value ?? ""}
+                        onChange={(_, { value }) => field.onChange(value)}
+                      />
+                    )}
+                  />
+                </div>
+              )}
             </>
           )}
 

@@ -871,7 +871,12 @@ async def get_proposal(db: AsyncSession, proposal_id: str) -> SchemaProposal:
 
 async def get_proposal_diff(proposal: SchemaProposal) -> list[ProposalDiffField]:
     before = RegistryColumn(**proposal.before_state) if proposal.before_state else None
-    after = RegistryColumn(**proposal.after_state) if proposal.after_state else None
+    after = None
+    if proposal.after_state:
+        after_state = before.model_dump() if before else {}
+        after_state.update(proposal.after_state)
+        after_state["name"] = proposal.column_name
+        after = RegistryColumn(**after_state)
     return diff_columns(before, after)
 
 
@@ -972,10 +977,6 @@ async def approve_proposal(
     proposal = await get_proposal(db, proposal_id)
     if proposal.status != "pending":
         raise HTTPException(status.HTTP_409_CONFLICT, detail="Proposal is not pending")
-    if proposal.proposed_by_id == actor_id:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN, detail="Cannot approve your own proposal"
-        )
 
     dataset = await db.scalar(
         select(SchemaDataset)

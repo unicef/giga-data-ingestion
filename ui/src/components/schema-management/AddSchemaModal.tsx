@@ -12,6 +12,7 @@ import {
   TextInput,
 } from "@carbon/react";
 import { useMutation } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 
 import { api } from "@/api";
 import { FileUploaderDropContainer } from "@/components/common/CarbonOverrides.tsx";
@@ -34,6 +35,26 @@ interface AddSchemaInputs {
   description: string;
   role: SchemaRole;
   creation_method: "csv" | "empty";
+}
+
+interface ApiErrorResponse {
+  detail?: string | { row?: number; detail: string }[];
+}
+
+function createSchemaErrorMessage(error: unknown) {
+  const detail =
+    error instanceof AxiosError
+      ? (error.response?.data as ApiErrorResponse | undefined)?.detail
+      : undefined;
+
+  if (Array.isArray(detail)) {
+    return detail
+      .map(item => `${item.row ? `Row ${item.row}: ` : ""}${item.detail}`)
+      .join(" ");
+  }
+  return (
+    detail || "Check the key, group role, and CSV contents, then try again."
+  );
 }
 
 const csvTemplateHeaders = [
@@ -75,13 +96,14 @@ function AddSchemaModal({
   onCreated,
 }: AddSchemaModalProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { register, handleSubmit, reset, watch, formState } =
     useForm<AddSchemaInputs>({
       mode: "onChange",
       defaultValues: { role: "member", creation_method: "csv" },
     });
   const creationMethod = watch("creation_method");
+  const role = watch("role");
 
   const { mutateAsync: createSchema, isPending } = useMutation({
     mutationFn: async ({
@@ -106,11 +128,12 @@ function AddSchemaModal({
   const close = () => {
     reset();
     setFile(null);
-    setShowError(false);
+    setErrorMessage(null);
     onClose();
   };
 
   const onSubmit: SubmitHandler<AddSchemaInputs> = async inputs => {
+    setErrorMessage(null);
     try {
       const dataset = await createSchema({
         body: {
@@ -126,7 +149,7 @@ function AddSchemaModal({
       onCreated(dataset);
     } catch (error) {
       console.error(error);
-      setShowError(true);
+      setErrorMessage(createSchemaErrorMessage(error));
     }
   };
 
@@ -142,7 +165,11 @@ function AddSchemaModal({
         (creationMethod === "csv" && file === null)
       }
       primaryButtonText={
-        creationMethod === "csv" ? "Create and publish v1" : "Create schema"
+        isPending
+          ? "Creating…"
+          : creationMethod === "csv"
+          ? "Create and publish v1"
+          : "Create schema"
       }
       secondaryButtonText="Cancel"
       onRequestClose={close}
@@ -202,14 +229,19 @@ function AddSchemaModal({
               >
                 Download CSV template
               </Button>
+              {role === "member" && (
+                <p className="mt-2 text-sm text-giga-dark-gray">
+                  Omit columns inherited from this group&apos;s core schema.
+                </p>
+              )}
             </div>
           )}
-          {showError && (
+          {errorMessage && (
             <InlineNotification
               kind="error"
               title="Could not create schema"
-              subtitle="Check the key, group role, and CSV contents, then try again."
-              onCloseButtonClick={() => setShowError(false)}
+              subtitle={errorMessage}
+              onCloseButtonClick={() => setErrorMessage(null)}
             />
           )}
         </Stack>
