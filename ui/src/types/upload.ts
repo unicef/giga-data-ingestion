@@ -139,6 +139,7 @@ export interface UploadImpactPreviewResponse {
   rows_with_school_id: number;
   schools_to_update: number;
   unique_school_ids: number;
+  unmatched_schools: number;
 }
 
 export interface FuzzyCorrection {

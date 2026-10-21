@@ -64,6 +64,7 @@ from data_ingestion.utils.nocodb import (
 )
 from data_ingestion.utils.upload_impact import (
     build_upload_impact_preview,
+    get_school_id_column,
     get_school_id_file_column,
     normalize_school_id,
 )
@@ -481,12 +482,13 @@ def _silver_table(dataset: str, country_code: str) -> str:
 
 def _get_master_school_ids(dataset: str, country_code: str, db: Session) -> set[str]:
     table_name = _silver_table(dataset, country_code)
+    school_id_column = get_school_id_column(dataset)
     try:
         rows = (
             db.execute(
                 text(
-                    f"SELECT school_id_govt FROM {table_name} "  # nosec B608
-                    "WHERE school_id_govt IS NOT NULL"
+                    f"SELECT {school_id_column} FROM {table_name} "  # nosec B608
+                    f"WHERE {school_id_column} IS NOT NULL"
                 )
             )
             .mappings()
@@ -504,11 +506,13 @@ def _get_master_school_ids(dataset: str, country_code: str, db: Session) -> set[
     return {
         normalized
         for row in rows
-        if (normalized := normalize_school_id(row["school_id_govt"])) is not None
+        if (normalized := normalize_school_id(row[school_id_column])) is not None
     }
 
 
-def _get_impact_preview_school_id_column(form: UploadImpactPreviewRequest) -> str:
+def _get_impact_preview_school_id_column(
+    form: UploadImpactPreviewRequest, dataset: str
+) -> str:
     try:
         column_mapping = orjson.loads(form.column_to_schema_mapping)
     except Exception as err:
@@ -518,7 +522,7 @@ def _get_impact_preview_school_id_column(form: UploadImpactPreviewRequest) -> st
         ) from err
 
     try:
-        return get_school_id_file_column(column_mapping)
+        return get_school_id_file_column(column_mapping, get_school_id_column(dataset))
     except ValueError as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -1313,7 +1317,7 @@ async def get_upload_impact_preview(
             detail=f"Impact preview currently only supports {', '.join(constants.SUPPORTED_SPREADSHEET_EXTENSIONS)} files.",
         )
 
-    school_id_file_column = _get_impact_preview_school_id_column(form)
+    school_id_file_column = _get_impact_preview_school_id_column(form, dataset)
 
     await file.seek(0)
     try:
@@ -1329,7 +1333,7 @@ async def get_upload_impact_preview(
     if school_id_file_column not in df.columns:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Mapped school_id_govt column '{school_id_file_column}' was not found in the file.",
+            detail=f"Mapped {get_school_id_column(dataset)} column '{school_id_file_column}' was not found in the file.",
         )
 
     country_code = coco.convert(form.country, to="ISO3")

@@ -222,6 +222,7 @@ function UploadColumnMapping() {
   });
 
   const getUploadMode = (newSchools: number, schoolsToUpdate: number) => {
+    if (uploadType === "coverage") return "Update";
     if (newSchools > 0 && schoolsToUpdate > 0) return "Mixed";
     if (schoolsToUpdate > 0) return "Update";
     return "Create";
@@ -372,6 +373,7 @@ function UploadColumnMapping() {
         missingSchoolIdRows: preview.missing_school_id_rows,
         newSchools: preview.new_schools,
         schoolsToUpdate: preview.schools_to_update,
+        unmatchedSchools: preview.unmatched_schools,
       });
       setMode(getUploadMode(preview.new_schools, preview.schools_to_update));
     } catch (error) {
@@ -467,6 +469,7 @@ function UploadColumnMapping() {
         missingSchoolIdRows: preview.missing_school_id_rows,
         newSchools: preview.new_schools,
         schoolsToUpdate: preview.schools_to_update,
+        unmatchedSchools: preview.unmatched_schools,
       });
       setMode(getUploadMode(preview.new_schools, preview.schools_to_update));
     } catch (error) {
@@ -739,6 +742,7 @@ function UploadColumnMapping() {
           fuzzyValidationResult as FuzzyValidationResponse | null
         }
         impactPreview={impactPreview}
+        isCoverage={uploadType === "coverage"}
         missingCreateColumns={!hasAllCreateColumns}
         isFuzzyLoading={isValidationLoading}
         isImpactLoading={isImpactLoading}
