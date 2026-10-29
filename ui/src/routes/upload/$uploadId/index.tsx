@@ -1,10 +1,9 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Download, Send } from "@carbon/icons-react";
 import {
-  Accordion,
-  AccordionItem,
   Button,
+  Link,
   Loading,
   MenuButton,
   MenuItem,
@@ -20,12 +19,15 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 
 import { api, axi } from "@/api";
 import { DQ_REPORT_LANGUAGES } from "@/api/routers/email";
-import DataQualityChecks from "@/components/check-file-uploads/ColumnChecks";
 import { useDownloadHelpers } from "@/components/check-file-uploads/Downloadlogic";
+import DqSectionTable from "@/components/check-file-uploads/DqSectionTable";
+import InternalChecksTable from "@/components/check-file-uploads/InternalChecksTable";
+import MappingsTable from "@/components/check-file-uploads/MappingsTable";
+import MetadataTable from "@/components/check-file-uploads/MetadataTable";
+import SummaryKpiCards from "@/components/check-file-uploads/SummaryKpiCards";
 import { ErrorComponent } from "@/components/common/ErrorComponent";
 import { PendingComponent } from "@/components/common/PendingComponent";
 import useCountryName from "@/hooks/useCountryName";
-import { Check } from "@/types/upload";
 import {
   DQStatus,
   DQStatusTagMapping,
@@ -34,8 +36,12 @@ import {
   initialDataQualityCheck,
   initialUploadResponse,
 } from "@/types/upload";
-import { getDqCheckGroups } from "@/utils/dq-summary";
-import { commaNumber } from "@/utils/number";
+import {
+  buildDqReport,
+  getDqEntity,
+  getValueMapSections,
+  pivotChecksByColumn,
+} from "@/utils/dq-summary";
 import { getUploadMetadataRows } from "@/utils/upload-metadata";
 
 export const Route = createFileRoute("/upload/$uploadId/")({
@@ -119,13 +125,6 @@ function Index() {
     runMasterCheckMutation.mutate();
   };
 
-  const summaryStats = dqResultData.dq_summary.summary || {};
-  const {
-    rows = 0,
-    rows_passed: rowsPassed = 0,
-    rows_failed: rowsFailed = 0,
-  } = summaryStats;
-
   const {
     handleDownloadFailedRows,
     handleDownloadPassedRows,
@@ -203,35 +202,20 @@ function Index() {
     };
   }, [dqKitAvailable, uploadId, uploadData.dq_status, uploadData.dataset]);
 
-  const checks = getDqCheckGroups(dqResultData.dq_summary);
-
-  // Common card styles
-  const cardStyle = {
-    flex: 1,
-    border: "1px solid #e0e0e0",
-    borderRadius: "4px",
-    padding: "1.5rem",
-    background: "#fff",
-    display: "flex",
-    flexDirection: "column" as const,
-    height: "100%",
-  };
-
-  const cardHeaderStyle = {
-    fontSize: "0.875rem",
-    fontWeight: 600,
-    marginBottom: "1rem",
-  };
-
-  const cardValueStyle = {
-    fontSize: "1.5rem",
-    fontWeight: 600,
-    marginBottom: "1rem",
-  };
-
-  const cardButtonContainerStyle = {
-    marginTop: "auto",
-  };
+  const dqSummary = dqResultData.dq_summary;
+  const entity = getDqEntity(uploadData.dataset);
+  const report = useMemo(
+    () => buildDqReport(dqSummary, uploadData.dataset),
+    [dqSummary, uploadData.dataset],
+  );
+  const valueMapSections = useMemo(
+    () => getValueMapSections(dqSummary),
+    [dqSummary],
+  );
+  const internalCheckCategories = useMemo(
+    () => pivotChecksByColumn(dqSummary, uploadData.dataset),
+    [dqSummary, uploadData.dataset],
+  );
 
   return (
     <div style={{ background: "#f4f4f4", padding: "2rem", minHeight: "100vh" }}>
@@ -255,7 +239,16 @@ function Index() {
             )}
 
             <p style={{ fontWeight: 600, marginBottom: "0.5rem" }}>
-              File: <a className="bx--link">{uploadData.original_filename}</a>
+              File:{" "}
+              <Link
+                href="#"
+                onClick={(event: React.MouseEvent) => {
+                  event.preventDefault();
+                  handleDownloadRawFile();
+                }}
+              >
+                {uploadData.original_filename}
+              </Link>
             </p>
 
             <p
@@ -365,109 +358,46 @@ function Index() {
           </div>
         </div>
 
-        {metadataRows.length > 0 && (
-          <div style={{ marginBottom: "2rem" }}>
-            <Accordion>
-              <AccordionItem title="Upload metadata">
-                <dl
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "minmax(12rem, 1fr) 2fr",
-                    columnGap: "1rem",
-                    rowGap: "0.5rem",
-                    margin: 0,
-                    fontSize: "0.875rem",
-                  }}
-                >
-                  {metadataRows.map(({ key, label, value }) => (
-                    <Fragment key={key}>
-                      <dt style={{ color: "#6f6f6f" }}>{label}</dt>
-                      <dd style={{ margin: 0 }}>{value}</dd>
-                    </Fragment>
-                  ))}
-                </dl>
-              </AccordionItem>
-            </Accordion>
-          </div>
-        )}
-
-        <div
-          style={{
-            display: "flex",
-            gap: "1rem",
-            marginBottom: "2rem",
-            alignItems: "stretch", // Ensures all cards have the same height
-          }}
-        >
-          <div style={cardStyle}>
-            <h5 style={cardHeaderStyle}>Total Schools Uploaded</h5>
-            <p style={cardValueStyle}>{commaNumber(rows)}</p>
-            <div style={cardButtonContainerStyle}>
-              <Button
-                kind="primary"
-                size="sm"
-                renderIcon={Download}
-                disabled={rows === 0}
-                onClick={handleDownloadRawFile}
-              >
-                Download uploaded dataset
-              </Button>
-            </div>
-          </div>
-
-          <div style={cardStyle}>
-            <h5 style={cardHeaderStyle}>Total Schools Passed</h5>
-            <p style={cardValueStyle}>{commaNumber(rowsPassed)}</p>
-            <div style={cardButtonContainerStyle}>
-              <Button
-                kind="primary"
-                size="sm"
-                renderIcon={Download}
-                disabled={rowsPassed === 0}
-                onClick={handleDownloadPassedRows}
-              >
-                Download Passed Schools
-              </Button>
-            </div>
-          </div>
-
-          <div style={cardStyle}>
-            <h5 style={cardHeaderStyle}>Total Schools Rejected</h5>
-            <p style={cardValueStyle}>{commaNumber(rowsFailed)}</p>
-            <div style={cardButtonContainerStyle}>
-              <Button
-                kind="primary"
-                size="sm"
-                renderIcon={Download}
-                disabled={rowsFailed === 0}
-                onClick={handleDownloadFailedRows}
-              >
-                Download Rejected Schools
-              </Button>
-            </div>
-          </div>
-        </div>
+        <SummaryKpiCards
+          report={report}
+          entity={entity}
+          onDownloadApproved={handleDownloadPassedRows}
+          onDownloadRejected={handleDownloadFailedRows}
+        />
       </div>
       <div
         style={{ background: "#fff", padding: "1.5rem", borderRadius: "4px" }}
       >
         <Tabs>
-          <TabList
-            aria-label="Check Types"
-            className="mb-4"
-            style={{ overflowX: "auto" }}
-          >
-            {Object.keys(checks).map(key => (
-              <Tab key={key}>{key.replace(/_/g, " ")}</Tab>
-            ))}
+          <TabList aria-label="Data quality summary" className="mb-4">
+            <Tab>Rejected</Tab>
+            <Tab>Warnings</Tab>
+            <Tab>Mappings</Tab>
+            <Tab>Metadata</Tab>
+            <Tab>Internal checks</Tab>
           </TabList>
-
           <TabPanels>
-            {Object.keys(checks).map(key => (
-              <TabPanel key={key}>
-                <DataQualityChecks data={checks[key] as Check[]} />
-              </TabPanel>
-            ))}
+            <TabPanel>
+              <DqSectionTable
+                title="Rejected"
+                sections={report.rejectedSections}
+              />
+            </TabPanel>
+            <TabPanel>
+              <DqSectionTable
+                title="Warnings"
+                sections={report.warningSections}
+              />
+            </TabPanel>
+            <TabPanel>
+              <MappingsTable sections={valueMapSections} />
+            </TabPanel>
+            <TabPanel>
+              <MetadataTable rows={metadataRows} />
+            </TabPanel>
+            <TabPanel>
+              <InternalChecksTable categories={internalCheckCategories} />
+            </TabPanel>
           </TabPanels>
         </Tabs>
       </div>
