@@ -63,10 +63,10 @@ const SummaryKpiCards = ({
           className="flex flex-col rounded border border-gray-200 bg-white p-6"
         >
           <p className="text-sm">{card.label}</p>
-          <p className={cn("mt-2 text-3xl", card.color)}>
+          <p className={cn("mb-0 mt-2 text-5xl", card.color)}>
             {commaNumber(card.value)}
           </p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mb-0 mt-1 text-lg text-gray-500">
             {percentOf(card.value, report.uploaded)}
           </p>
           {card.download && (

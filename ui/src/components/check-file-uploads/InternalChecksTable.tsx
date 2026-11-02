@@ -7,7 +7,12 @@ import {
 } from "@/utils/dq-summary";
 import { commaNumber } from "@/utils/number";
 
-import { SummarySearch, SummaryTable, SummaryTableGroup } from "./SummaryTable";
+import {
+  AlertCount,
+  SummarySearch,
+  SummaryTable,
+  SummaryTableGroup,
+} from "./SummaryTable";
 
 interface InternalChecksTableProps {
   categories: InternalCheckCategory[];
@@ -30,7 +35,6 @@ const InternalChecksTable = ({ categories }: InternalChecksTableProps) => {
           {
             key: category.title,
             title: category.title,
-            showColumnHeaders: true,
             rows: rows.map(row => ({
               key: row.column,
               cells: {
@@ -45,7 +49,11 @@ const InternalChecksTable = ({ categories }: InternalChecksTableProps) => {
                 ...Object.fromEntries(
                   INTERNAL_CHECK_COLUMNS.map(({ key }) => [
                     key,
-                    commaNumber(row.counts[key]),
+                    key === "passed" ? (
+                      commaNumber(row.counts[key])
+                    ) : (
+                      <AlertCount value={row.counts[key]} />
+                    ),
                   ]),
                 ),
               },
@@ -60,9 +68,8 @@ const InternalChecksTable = ({ categories }: InternalChecksTableProps) => {
     <>
       <SummarySearch onChange={setSearchTerm} />
       <SummaryTable
-        hideHeader
         columns={[
-          { key: "column", header: "Column" },
+          { key: "column", header: "Internal checks" },
           ...INTERNAL_CHECK_COLUMNS.map(({ key, header }) => ({
             key,
             header,

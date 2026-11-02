@@ -1,9 +1,13 @@
 import { useMemo, useState } from "react";
 
 import { DqReportSection, matchesSearch } from "@/utils/dq-summary";
-import { commaNumber } from "@/utils/number";
 
-import { SummarySearch, SummaryTable, SummaryTableGroup } from "./SummaryTable";
+import {
+  AlertCount,
+  SummarySearch,
+  SummaryTable,
+  SummaryTableGroup,
+} from "./SummaryTable";
 
 interface DqSectionTableProps {
   title: string;
@@ -32,10 +36,11 @@ const DqSectionTable = ({ title, sections }: DqSectionTableProps) => {
               cells: {
                 label: (
                   <span className={row.isGroup ? "pl-6" : undefined}>
+                    {row.isGroup && <span aria-hidden="true">↳ </span>}
                     {row.label}
                   </span>
                 ),
-                alerts: commaNumber(row.alerts),
+                alerts: <AlertCount value={row.alerts} />,
                 priority: row.priority ?? "",
               },
             })),
@@ -51,8 +56,18 @@ const DqSectionTable = ({ title, sections }: DqSectionTableProps) => {
       <SummaryTable
         columns={[
           { key: "label", header: title },
-          { key: "alerts", header: "Alerts", align: "right" },
-          { key: "priority", header: "Priority", align: "right" },
+          {
+            key: "alerts",
+            header: "Alerts",
+            align: "right",
+            widthClass: "w-32",
+          },
+          {
+            key: "priority",
+            header: "Priority",
+            align: "right",
+            widthClass: "!w-40",
+          },
         ]}
         groups={groups}
       />

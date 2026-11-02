@@ -373,8 +373,8 @@ function Index() {
             <Tab>Rejected</Tab>
             <Tab>Warnings</Tab>
             <Tab>Mappings</Tab>
-            <Tab>Metadata</Tab>
             <Tab>Internal checks</Tab>
+            <Tab>Metadata</Tab>
           </TabList>
           <TabPanels>
             <TabPanel>
@@ -393,10 +393,10 @@ function Index() {
               <MappingsTable sections={valueMapSections} />
             </TabPanel>
             <TabPanel>
-              <MetadataTable rows={metadataRows} />
+              <InternalChecksTable categories={internalCheckCategories} />
             </TabPanel>
             <TabPanel>
-              <InternalChecksTable categories={internalCheckCategories} />
+              <MetadataTable rows={metadataRows} />
             </TabPanel>
           </TabPanels>
         </Tabs>

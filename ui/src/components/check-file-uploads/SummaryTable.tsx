@@ -12,32 +12,35 @@ import {
 } from "@carbon/react";
 
 import { cn } from "@/lib/utils";
+import { commaNumber } from "@/utils/number";
 
 export interface SummaryTableColumn {
   key: string;
   header: ReactNode;
   align?: "left" | "right";
+  /** Tailwind width class; any column setting it pins the table's layout. */
+  widthClass?: string;
 }
 
 export interface SummaryTableGroup {
   key: string;
   title: ReactNode;
-  /** Repeats the column headers on the group row, as in the per-column view. */
-  showColumnHeaders?: boolean;
   rows: { key: string; cells: Record<string, ReactNode> }[];
 }
 
 interface SummaryTableProps {
   columns: SummaryTableColumn[];
   groups: SummaryTableGroup[];
-  hideHeader?: boolean;
   emptyMessage?: string;
 }
+
+export const AlertCount = ({ value }: { value: number }) => (
+  <span className={cn(value > 0 && "text-red-600")}>{commaNumber(value)}</span>
+);
 
 export const SummaryTable = ({
   columns,
   groups,
-  hideHeader = false,
   emptyMessage = "No results",
 }: SummaryTableProps) => {
   const alignClass = (column: SummaryTableColumn) =>
@@ -45,25 +48,27 @@ export const SummaryTable = ({
 
   return (
     <TableContainer>
-      <Table size="md">
-        {!hideHeader && (
-          <TableHead>
-            <TableRow>
-              {columns.map(column => (
-                <TableHeader
-                  key={column.key}
-                  className={cn(
-                    alignClass(column),
-                    column.align === "right" &&
-                      "[&_.cds--table-header-label]:!text-right",
-                  )}
-                >
-                  {column.header}
-                </TableHeader>
-              ))}
-            </TableRow>
-          </TableHead>
-        )}
+      <Table
+        size="md"
+        className={cn(columns.some(c => c.widthClass) && "table-fixed")}
+      >
+        <TableHead>
+          <TableRow>
+            {columns.map(column => (
+              <TableHeader
+                key={column.key}
+                className={cn(
+                  alignClass(column),
+                  column.widthClass,
+                  column.align === "right" &&
+                    "[&_.cds--table-header-label]:!text-right",
+                )}
+              >
+                {column.header}
+              </TableHeader>
+            ))}
+          </TableRow>
+        </TableHead>
         <TableBody>
           {groups.length === 0 && (
             <TableRow>
@@ -72,21 +77,9 @@ export const SummaryTable = ({
           )}
           {groups.map(group => [
             <TableRow key={`${group.key}-title`} className="bg-gray-100">
-              <TableCell
-                className="font-semibold"
-                colSpan={group.showColumnHeaders ? 1 : columns.length}
-              >
+              <TableCell className="font-semibold" colSpan={columns.length}>
                 {group.title}
               </TableCell>
-              {group.showColumnHeaders &&
-                columns.slice(1).map(column => (
-                  <TableCell
-                    key={column.key}
-                    className={cn("font-semibold", alignClass(column))}
-                  >
-                    {column.header}
-                  </TableCell>
-                ))}
             </TableRow>,
             ...group.rows.map(row => (
               <TableRow key={`${group.key}-${row.key}`}>
