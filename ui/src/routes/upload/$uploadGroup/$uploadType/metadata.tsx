@@ -181,6 +181,7 @@ function Metadata() {
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
   const isSchoolData = uploadGroup === "school-data";
+  const isCoverage = isSchoolData && uploadType === "coverage";
 
   const { countryDatasets, isPrivileged } = useRoles();
 
@@ -318,7 +319,7 @@ function Metadata() {
       setPendingSchoolDataPayload(body);
       setIsUploading(false);
       setStepIndex(3);
-      void navigate({ to: "../assessment" });
+      void navigate({ to: isCoverage ? "../success" : "../assessment" });
       return;
     }
 

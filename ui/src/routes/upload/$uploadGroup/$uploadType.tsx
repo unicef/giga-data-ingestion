@@ -255,6 +255,29 @@ function Layout() {
                 secondaryLabel="Submit"
               />
             </ProgressIndicator>
+          ) : isCoverage ? (
+            <ProgressIndicator currentIndex={stepIndex} spaceEqually>
+              <ProgressStep
+                label="1"
+                description="Upload"
+                secondaryLabel="Upload"
+              />
+              <ProgressStep
+                label="2"
+                description="Configure columns"
+                secondaryLabel="Configure columns"
+              />
+              <ProgressStep
+                label="3"
+                description="Add metadata"
+                secondaryLabel="Add metadata"
+              />
+              <ProgressStep
+                label="4"
+                description="Submit"
+                secondaryLabel="Submit"
+              />
+            </ProgressIndicator>
           ) : isStructured ? (
             <ProgressIndicator currentIndex={stepIndex} spaceEqually>
               <ProgressStep
