@@ -29,6 +29,12 @@ class DatasetGroup(BaseModel):
     key: Mapped[str] = mapped_column(VARCHAR(100), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(), nullable=False)
     description: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    archived_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    archived_by_id: Mapped[str | None] = mapped_column(VARCHAR(36), nullable=True)
+    archived_by_email: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
+    archive_reason: Mapped[str | None] = mapped_column(Text(), nullable=True)
 
     datasets: Mapped[list["SchemaDataset"]] = relationship(back_populates="group")
 
@@ -50,13 +56,19 @@ class SchemaDataset(BaseModel):
             "uq_schema_datasets_one_core_per_group",
             "group_id",
             unique=True,
-            postgresql_where=text("role = 'core'"),
+            postgresql_where=text("role = 'core' AND archived_at IS NULL"),
         ),
     )
 
     key: Mapped[str] = mapped_column(VARCHAR(100), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(), nullable=False)
     description: Mapped[str | None] = mapped_column(Text(), nullable=True)
+    archived_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    archived_by_id: Mapped[str | None] = mapped_column(VARCHAR(36), nullable=True)
+    archived_by_email: Mapped[str | None] = mapped_column(VARCHAR(255), nullable=True)
+    archive_reason: Mapped[str | None] = mapped_column(Text(), nullable=True)
     role: Mapped[str] = mapped_column(
         VARCHAR(20), nullable=False, default="member", server_default="member"
     )
@@ -107,7 +119,6 @@ class SchemaVersion(BaseModel):
     proposal_id: Mapped[str | None] = mapped_column(
         ForeignKey("schema_proposals.id", ondelete="SET NULL"),
         nullable=True,
-        unique=True,
     )
     created: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -197,6 +208,40 @@ class SchemaProposal(BaseModel):
     audit_logs: Mapped[list["SchemaProposalAuditLog"]] = relationship(
         back_populates="proposal"
     )
+    targets: Mapped[list["SchemaProposalTarget"]] = relationship(
+        back_populates="proposal",
+        cascade="all, delete-orphan",
+    )
+
+
+class SchemaProposalTarget(BaseModel):
+    """One dataset snapshot change performed by a coordinated proposal."""
+
+    __tablename__ = "schema_proposal_targets"
+    __table_args__ = (
+        UniqueConstraint(
+            "proposal_id",
+            "dataset_id",
+            name="uq_schema_proposal_targets_proposal_dataset",
+        ),
+    )
+
+    proposal_id: Mapped[str] = mapped_column(
+        ForeignKey("schema_proposals.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    proposal: Mapped["SchemaProposal"] = relationship(back_populates="targets")
+    dataset_id: Mapped[str] = mapped_column(
+        ForeignKey("schema_datasets.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    dataset: Mapped["SchemaDataset"] = relationship()
+    operation: Mapped[str] = mapped_column(VARCHAR(20), nullable=False)
+    expected_version: Mapped[int | None] = mapped_column(Integer(), nullable=True)
+    before_state: Mapped[dict | None] = mapped_column(JSONB(), nullable=True)
+    after_state: Mapped[dict | None] = mapped_column(JSONB(), nullable=True)
 
 
 class SchemaProposalAuditLog(BaseModel):

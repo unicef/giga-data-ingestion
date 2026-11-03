@@ -1,4 +1,4 @@
-export type ProposalType = "add" | "edit" | "delete";
+export type ProposalType = "add" | "edit" | "delete" | "promote";
 export type ProposalStatus =
   | "pending"
   | "approved"
@@ -13,6 +13,10 @@ export interface DatasetGroup {
   key: string;
   name: string;
   description: string | null;
+  archived_at: string | null;
+  archived_by_id: string | null;
+  archived_by_email: string | null;
+  archive_reason: string | null;
 }
 
 export interface CreateDatasetGroupRequest {
@@ -31,6 +35,10 @@ export interface SchemaDataset {
   current_version_number: number | null;
   column_count: number;
   pending_proposal_count: number;
+  archived_at: string | null;
+  archived_by_id: string | null;
+  archived_by_email: string | null;
+  archive_reason: string | null;
 }
 
 export interface CreateSchemaDatasetRequest {
@@ -100,6 +108,38 @@ export interface SchemaImpact {
   affected_members: SchemaImpactMember[];
 }
 
+export interface LifecyclePreview {
+  can_archive: boolean;
+  can_restore: boolean;
+  can_delete: boolean;
+  version_count: number;
+  proposal_count: number;
+  pending_proposal_count: number;
+  link_count: number;
+  upload_count: number;
+  active_schema_count: number;
+  archived_schema_count: number;
+  blockers: string[];
+}
+
+export interface PromotionOwner {
+  key: string;
+  name: string;
+  version: number | null;
+  definition_matches: boolean;
+  differences: ProposalDiffField[];
+}
+
+export interface PromotionPreview {
+  source_member_key: string;
+  core_schema_key: string | null;
+  column: RegistryColumn;
+  owners: PromotionOwner[];
+  affected_member_keys: string[];
+  blockers: string[];
+  can_promote: boolean;
+}
+
 export interface CreateProposalRequest {
   column_name: string;
   proposal_type: ProposalType;
@@ -131,6 +171,23 @@ export interface ProposalDiffField {
 export interface ProposalDetail extends Proposal {
   diff: ProposalDiffField[];
   affected_schema_keys: string[];
+  targets: ProposalTarget[];
+  applied_versions: AppliedVersion[];
+}
+
+export interface ProposalTarget {
+  dataset_id: string;
+  dataset_key: string | null;
+  operation: string;
+  expected_version: number | null;
+  before_state: Partial<RegistryColumn> | null;
+  after_state: Partial<RegistryColumn> | null;
+}
+
+export interface AppliedVersion {
+  dataset_key: string;
+  version: number;
+  operation: string;
 }
 
 export interface DatasetVersion {

@@ -10,6 +10,7 @@ from .schema_registry import (
     SchemaDatasetLink,
     SchemaProposal,
     SchemaProposalAuditLog,
+    SchemaProposalTarget,
     SchemaVersion,
     SchemaVersionColumn,
 )
@@ -32,6 +33,7 @@ __all__ = [
     "SchemaDatasetLink",
     "SchemaProposal",
     "SchemaProposalAuditLog",
+    "SchemaProposalTarget",
     "SchemaVersion",
     "SchemaVersionColumn",
 ]

@@ -10,6 +10,8 @@ import {
   DatasetGroupDetail,
   DatasetImportResponse,
   DatasetVersion,
+  LifecyclePreview,
+  PromotionPreview,
   Proposal,
   ProposalDetail,
   RegistryColumn,
@@ -21,22 +23,40 @@ import {
 
 export default function routes(axi: AxiosInstance) {
   return {
-    listGroups: (): Promise<AxiosResponse<DatasetGroup[]>> => {
-      return axi.get("/schema-registry/groups");
+    listGroups: (
+      includeArchived = false,
+    ): Promise<AxiosResponse<DatasetGroup[]>> => {
+      return axi.get("/schema-registry/groups", {
+        params: { include_archived: includeArchived },
+      });
     },
     createGroup: (
       body: CreateDatasetGroupRequest,
     ): Promise<AxiosResponse<DatasetGroup>> => {
       return axi.post("/schema-registry/groups", body);
     },
-    getGroup: (key: string): Promise<AxiosResponse<DatasetGroupDetail>> => {
-      return axi.get(`/schema-registry/groups/${key}`);
+    getGroup: (
+      key: string,
+      includeArchived = false,
+    ): Promise<AxiosResponse<DatasetGroupDetail>> => {
+      return axi.get(`/schema-registry/groups/${key}`, {
+        params: { include_archived: includeArchived },
+      });
     },
-    listDatasets: (): Promise<AxiosResponse<SchemaDataset[]>> => {
-      return axi.get("/schema-registry/datasets");
+    listDatasets: (
+      includeArchived = false,
+    ): Promise<AxiosResponse<SchemaDataset[]>> => {
+      return axi.get("/schema-registry/datasets", {
+        params: { include_archived: includeArchived },
+      });
     },
-    getDataset: (key: string): Promise<AxiosResponse<SchemaDataset>> => {
-      return axi.get(`/schema-registry/datasets/${key}`);
+    getDataset: (
+      key: string,
+      includeArchived = false,
+    ): Promise<AxiosResponse<SchemaDataset>> => {
+      return axi.get(`/schema-registry/datasets/${key}`, {
+        params: { include_archived: includeArchived },
+      });
     },
     createDataset: (
       body: CreateSchemaDatasetRequest,
@@ -72,6 +92,38 @@ export default function routes(axi: AxiosInstance) {
         role,
       });
     },
+    getGroupLifecycle: (
+      key: string,
+    ): Promise<AxiosResponse<LifecyclePreview>> =>
+      axi.get(`/schema-registry/groups/${key}/lifecycle`),
+    archiveGroup: ({
+      key,
+      reason,
+    }: {
+      key: string;
+      reason?: string;
+    }): Promise<AxiosResponse<DatasetGroup>> =>
+      axi.post(`/schema-registry/groups/${key}/archive`, { reason }),
+    restoreGroup: (key: string): Promise<AxiosResponse<DatasetGroup>> =>
+      axi.post(`/schema-registry/groups/${key}/restore`),
+    deleteGroup: (key: string): Promise<AxiosResponse<void>> =>
+      axi.delete(`/schema-registry/groups/${key}`),
+    getDatasetLifecycle: (
+      key: string,
+    ): Promise<AxiosResponse<LifecyclePreview>> =>
+      axi.get(`/schema-registry/datasets/${key}/lifecycle`),
+    archiveDataset: ({
+      key,
+      reason,
+    }: {
+      key: string;
+      reason?: string;
+    }): Promise<AxiosResponse<SchemaDataset>> =>
+      axi.post(`/schema-registry/datasets/${key}/archive`, { reason }),
+    restoreDataset: (key: string): Promise<AxiosResponse<SchemaDataset>> =>
+      axi.post(`/schema-registry/datasets/${key}/restore`),
+    deleteDataset: (key: string): Promise<AxiosResponse<void>> =>
+      axi.delete(`/schema-registry/datasets/${key}`),
     getResolvedSchema: (
       key: string,
       member_version?: number,
@@ -84,6 +136,16 @@ export default function routes(axi: AxiosInstance) {
     getSchemaImpact: (key: string): Promise<AxiosResponse<SchemaImpact>> => {
       return axi.get(`/schema-registry/datasets/${key}/impact`);
     },
+    getPromotionPreview: ({
+      datasetKey,
+      columnName,
+    }: {
+      datasetKey: string;
+      columnName: string;
+    }): Promise<AxiosResponse<PromotionPreview>> =>
+      axi.get(
+        `/schema-registry/datasets/${datasetKey}/columns/${columnName}/promotion-preview`,
+      ),
     listColumns: (
       key: string,
       as_of_version?: number,

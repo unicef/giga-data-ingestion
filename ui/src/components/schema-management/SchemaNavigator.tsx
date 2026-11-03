@@ -124,12 +124,6 @@ function SchemaNavigator({
           );
         })}
       </nav>
-      <Link
-        className="block border-t border-carbon-datatable-grey px-4 py-3 text-xs text-giga-dark-blue no-underline hover:bg-giga-light-blue"
-        to="/schema-management/groups"
-      >
-        Group administration
-      </Link>
     </>
   );
 

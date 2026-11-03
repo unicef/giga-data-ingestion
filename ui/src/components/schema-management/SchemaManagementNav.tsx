@@ -9,7 +9,6 @@ import useRoles from "@/hooks/useRoles.ts";
 interface NavLinkProps {
   to:
     | "/schema-management"
-    | "/schema-management/groups"
     | "/schema-management/proposals"
     | "/schema-management/audit";
   active: boolean;
@@ -54,8 +53,7 @@ function SchemaManagementNav() {
   const sub = location.pathname
     .replace(/^\/schema-management\/?/, "")
     .split("/")[0];
-  const isDatasets =
-    sub === "" || !["groups", "proposals", "audit"].includes(sub);
+  const isDatasets = sub === "" || !["proposals", "audit"].includes(sub);
 
   return (
     <nav
@@ -64,9 +62,6 @@ function SchemaManagementNav() {
     >
       <NavLink to="/schema-management" active={isDatasets}>
         Datasets
-      </NavLink>
-      <NavLink to="/schema-management/groups" active={sub === "groups"}>
-        Groups
       </NavLink>
       <NavLink
         to="/schema-management/proposals"

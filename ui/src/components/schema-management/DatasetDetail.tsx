@@ -29,11 +29,13 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import { listDatasetGroupsQueryOptions } from "@/api/queryOptions.ts";
 import ChecksPanel from "@/components/schema-management/ChecksPanel.tsx";
+import LifecycleActions from "@/components/schema-management/LifecycleActions.tsx";
+import PromoteColumnModal from "@/components/schema-management/PromoteColumnModal.tsx";
 import ProposeChangeModal from "@/components/schema-management/ProposeChangeModal.tsx";
 import SchemaNavigator from "@/components/schema-management/SchemaNavigator.tsx";
 import useRoles from "@/hooks/useRoles.ts";
@@ -63,10 +65,28 @@ interface DatasetDetailProps {
   datasetKey: string;
 }
 
+function sortColumnsForDisplay<
+  Column extends RegistryColumn | ResolvedRegistryColumn,
+>(columns: Column[]): Column[] {
+  const priority = (column: Column) => {
+    if (column.primary_key) return 0;
+    if (column.is_mandatory || column.is_nullable === false) return 1;
+    if (column.is_important) return 2;
+    return 3;
+  };
+
+  return [...columns].sort(
+    (left, right) =>
+      priority(left) - priority(right) ||
+      left.name.localeCompare(right.name, undefined, { sensitivity: "base" }),
+  );
+}
+
 function getColumnRows(
   columns: Array<RegistryColumn | ResolvedRegistryColumn>,
+  onPromote?: (columnName: string) => void,
 ) {
-  return columns.map(column => {
+  return sortColumnsForDisplay(columns).map(column => {
     const resolvedColumn =
       "origin" in column ? (column as ResolvedRegistryColumn) : null;
     return {
@@ -77,6 +97,7 @@ function getColumnRows(
         <div className="flex gap-1">
           {!column.is_nullable && <Tag type="red">required</Tag>}
           {column.is_mandatory && <Tag type="magenta">mandatory</Tag>}
+          {column.is_important && <Tag type="cyan">important</Tag>}
           {column.is_unique && <Tag type="purple">unique</Tag>}
           {column.primary_key && <Tag type="blue">pk</Tag>}
         </div>
@@ -93,6 +114,19 @@ function getColumnRows(
       ) : (
         <Tag type="teal">owned here</Tag>
       ),
+      ...(onPromote
+        ? {
+            actions: (
+              <Button
+                kind="ghost"
+                size="sm"
+                onClick={() => onPromote(column.name)}
+              >
+                Promote to core
+              </Button>
+            ),
+          }
+        : {}),
     };
   });
 }
@@ -100,19 +134,30 @@ function getColumnRows(
 function ColumnsTable({
   columns,
   toolbar,
+  onPromote,
 }: {
   columns: Array<RegistryColumn | ResolvedRegistryColumn>;
   toolbar?: ReactNode;
+  onPromote?: (columnName: string) => void;
 }) {
+  const headers = onPromote
+    ? [...columnHeaders, { key: "actions", header: "" }]
+    : columnHeaders;
   return (
-    <DataTable headers={columnHeaders} rows={getColumnRows(columns)}>
-      {({ rows, headers, getHeaderProps, getRowProps, getTableProps }) => (
+    <DataTable headers={headers} rows={getColumnRows(columns, onPromote)}>
+      {({
+        rows,
+        headers: tableHeaders,
+        getHeaderProps,
+        getRowProps,
+        getTableProps,
+      }) => (
         <TableContainer>
           {toolbar}
           <Table {...getTableProps()}>
             <TableHead>
               <TableRow>
-                {headers.map(header => (
+                {tableHeaders.map(header => (
                   // @ts-expect-error Carbon's header onclick type is incorrect
                   <TableHeader {...getHeaderProps({ header })}>
                     {header.header}
@@ -138,8 +183,11 @@ function ColumnsTable({
 
 function DatasetDetail({ datasetKey }: DatasetDetailProps) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { isPrivileged } = useRoles();
   const [proposeOpen, setProposeOpen] = useState(false);
+  const [promoteColumn, setPromoteColumn] = useState<string | null>(null);
+  const [promotionCreated, setPromotionCreated] = useState(false);
   const [snapshotVersion, setSnapshotVersion] = useState<number | null>(null);
   const [importResult, setImportResult] =
     useState<DatasetImportResponse | null>(null);
@@ -147,7 +195,7 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
 
   const { data: datasetQuery } = useQuery({
     queryKey: ["schema-registry", "dataset", datasetKey],
-    queryFn: () => api.schemaRegistry.getDataset(datasetKey),
+    queryFn: () => api.schemaRegistry.getDataset(datasetKey, true),
   });
   const dataset =
     datasetQuery?.data?.key === datasetKey ? datasetQuery.data : undefined;
@@ -156,6 +204,7 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
   } = useSuspenseQuery(listDatasetGroupsQueryOptions);
   const group = groups.find(item => item.id === dataset?.group_id);
   const isCoreSchema = dataset?.role === "core";
+  const isArchived = dataset?.archived_at != null;
   const canResolve = dataset?.role === "member" && dataset.group_id !== null;
 
   const { data: columnsQuery, isLoading: isColumnsLoading } = useQuery({
@@ -286,6 +335,7 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                       {isCoreSchema ? "Core schema" : "Member schema"}
                     </Tag>
                   )}
+                  {isArchived && <Tag type="red">Archived</Tag>}
                   {dataset && (
                     <Tag type="cool-gray">
                       {dataset.current_version_number
@@ -311,7 +361,7 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
-                {isPrivileged && (
+                {isPrivileged && !isArchived && (
                   <>
                     <input
                       ref={fileInputRef}
@@ -333,10 +383,27 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                 )}
                 <Button
                   onClick={() => setProposeOpen(true)}
-                  disabled={isColumnsLoading}
+                  disabled={isColumnsLoading || isArchived}
                 >
                   Add or change column
                 </Button>
+                {isPrivileged && dataset && (
+                  <LifecycleActions
+                    resourceType="dataset"
+                    resourceKey={dataset.key}
+                    archived={isArchived}
+                    onChanged={() => {
+                      if (group) {
+                        void navigate({
+                          to: "/schema-management/groups/$groupKey",
+                          params: { groupKey: group.key },
+                        });
+                      } else {
+                        void navigate({ to: "/schema-management" });
+                      }
+                    }}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -399,7 +466,14 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                 </TabPanel>
               )}
               <TabPanel>
-                <ColumnsTable columns={columns} />
+                <ColumnsTable
+                  columns={columns}
+                  onPromote={
+                    dataset?.role === "member" && !isArchived
+                      ? setPromoteColumn
+                      : undefined
+                  }
+                />
               </TabPanel>
               <TabPanel>
                 <ChecksPanel columns={resolvedSchema?.columns ?? columns} />
@@ -488,6 +562,24 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
             open={proposeOpen}
             onClose={() => void handleProposeClose()}
           />
+          <PromoteColumnModal
+            datasetKey={datasetKey}
+            columnName={promoteColumn}
+            onClose={() => setPromoteColumn(null)}
+            onCreated={() => {
+              setPromoteColumn(null);
+              setPromotionCreated(true);
+            }}
+          />
+          {promotionCreated && (
+            <InlineNotification
+              className="mt-4"
+              kind="success"
+              title="Promotion proposal created"
+              subtitle="An administrator can now review and approve the coordinated change."
+              onCloseButtonClick={() => setPromotionCreated(false)}
+            />
+          )}
 
           <Modal
             aria-label="import result modal"

@@ -54,10 +54,14 @@ const statusTagType: Record<
 function approvalErrorMessage(error: unknown) {
   const detail =
     error instanceof AxiosError
-      ? (error.response?.data as { detail?: string } | undefined)?.detail
+      ? (error.response?.data as { detail?: string | string[] } | undefined)
+          ?.detail
       : undefined;
 
-  return detail || "The proposal could not be approved.";
+  return (
+    (Array.isArray(detail) ? detail.join(" ") : detail) ||
+    "The proposal could not be approved."
+  );
 }
 
 function ProposalsTable() {
@@ -275,12 +279,54 @@ function ProposalsTable() {
           <InlineNotification
             className="mb-4"
             kind="warning"
-            title={`Core change affects ${diff.affected_schema_keys.length} member schemas`}
+            title={`${
+              diff.proposal_type === "promote" ? "Promotion" : "Core change"
+            } affects ${diff.affected_schema_keys.length} member schemas`}
             subtitle={diff.affected_schema_keys.join(", ")}
             hideCloseButton
           />
         )}
         <DiffViewer diff={diff?.diff ?? []} />
+        {diff && diff.targets.length > 0 && (
+          <TableContainer className="mt-4" title="Coordinated schema changes">
+            <Table size="sm">
+              <TableHead>
+                <TableRow>
+                  <TableHeader>Schema</TableHeader>
+                  <TableHeader>Operation</TableHeader>
+                  <TableHeader>Expected version</TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {diff.targets.map(target => (
+                  <TableRow key={target.dataset_id}>
+                    <TableCell>{target.dataset_key}</TableCell>
+                    <TableCell>{target.operation}</TableCell>
+                    <TableCell>
+                      {target.expected_version
+                        ? `v${target.expected_version}`
+                        : "Unpublished"}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+        {diff && diff.applied_versions.length > 0 && (
+          <InlineNotification
+            className="mt-4"
+            kind="success"
+            title="Published versions"
+            subtitle={diff.applied_versions
+              .map(
+                version =>
+                  `${version.dataset_key} v${version.version} (${version.operation})`,
+              )
+              .join(", ")}
+            hideCloseButton
+          />
+        )}
         {diff?.apply_error && (
           <InlineNotification
             kind="error"

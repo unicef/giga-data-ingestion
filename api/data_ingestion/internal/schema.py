@@ -21,6 +21,7 @@ async def get_schemas(
             .where(
                 SchemaDataset.role != "core",
                 SchemaDataset.current_version_id.is_not(None),
+                SchemaDataset.archived_at.is_(None),
             )
             .order_by(SchemaDataset.key)
         )

@@ -55,7 +55,7 @@ export const listRolesQueryOptions = queryOptions({
 
 export const listDatasetGroupsQueryOptions = queryOptions({
   queryKey: ["schema-registry", "groups"],
-  queryFn: api.schemaRegistry.listGroups,
+  queryFn: () => api.schemaRegistry.listGroups(),
 });
 
 export const schemaGroupDetailQueryOptions = (key: string) =>
@@ -66,7 +66,7 @@ export const schemaGroupDetailQueryOptions = (key: string) =>
 
 export const listSchemaDatasetsQueryOptions = queryOptions({
   queryKey: ["schema-registry", "datasets"],
-  queryFn: api.schemaRegistry.listDatasets,
+  queryFn: () => api.schemaRegistry.listDatasets(),
 });
 
 export const listSchemaProposalsQueryOptions = queryOptions({

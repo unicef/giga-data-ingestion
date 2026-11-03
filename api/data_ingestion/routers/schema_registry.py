@@ -19,10 +19,14 @@ from data_ingestion.internal import schema_registry as registry
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.models import (
     SchemaDataset,
+    SchemaProposalTarget,
+    SchemaVersion,
     User as DatabaseUser,
 )
 from data_ingestion.permissions.permissions import IsPrivileged
 from data_ingestion.schemas.schema_registry import (
+    AppliedVersion,
+    ArchiveRequest,
     AuditLogResponse,
     DatasetCreateFromCsvResponse,
     DatasetGroupCreate,
@@ -32,10 +36,13 @@ from data_ingestion.schemas.schema_registry import (
     DatasetLinkCreate,
     DatasetLinkResponse,
     DatasetVersion,
+    LifecyclePreview,
     MoveDatasetRequest,
+    PromotionPreview,
     ProposalCreate,
     ProposalDetail,
     ProposalResponse,
+    ProposalTargetResponse,
     RegistryColumn,
     RejectProposalRequest,
     ResolvedSchemaResponse,
@@ -70,8 +77,11 @@ async def get_current_database_user(
 
 
 @router.get("/groups", response_model=list[DatasetGroupResponse])
-async def list_groups(db: AsyncSession = Depends(get_db)):
-    return await registry.list_groups(db)
+async def list_groups(
+    include_archived: bool = Query(default=False),
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.list_groups(db, include_archived=include_archived)
 
 
 @router.post(
@@ -89,9 +99,57 @@ async def create_group(body: DatasetGroupCreate, db: AsyncSession = Depends(get_
 @router.get("/groups/{key}", response_model=DatasetGroupDetail)
 async def get_group(
     key: str,
+    include_archived: bool = Query(default=False),
     db: AsyncSession = Depends(get_db),
 ):
-    return await registry.get_group_detail(db, key)
+    return await registry.get_group_detail(db, key, include_archived=include_archived)
+
+
+@router.get(
+    "/groups/{key}/lifecycle",
+    response_model=LifecyclePreview,
+    dependencies=[Security(IsPrivileged())],
+)
+async def get_group_lifecycle(key: str, db: AsyncSession = Depends(get_db)):
+    return await registry.get_group_lifecycle_preview(db, key)
+
+
+@router.post(
+    "/groups/{key}/archive",
+    response_model=DatasetGroupResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def archive_group(
+    key: str,
+    body: ArchiveRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
+):
+    return await registry.archive_group(
+        db,
+        key,
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+        reason=body.reason,
+    )
+
+
+@router.post(
+    "/groups/{key}/restore",
+    response_model=DatasetGroupResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def restore_group(key: str, db: AsyncSession = Depends(get_db)):
+    return await registry.restore_group(db, key)
+
+
+@router.delete(
+    "/groups/{key}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
+async def delete_group(key: str, db: AsyncSession = Depends(get_db)):
+    await registry.delete_draft_group(db, key)
 
 
 # ---------------------------------------------------------------------------
@@ -101,9 +159,10 @@ async def get_group(
 
 @router.get("/datasets", response_model=list[SchemaDatasetResponse])
 async def list_datasets(
+    include_archived: bool = Query(default=False),
     db: AsyncSession = Depends(get_db),
 ):
-    return await registry.list_datasets(db)
+    return await registry.list_datasets(db, include_archived=include_archived)
 
 
 @router.post(
@@ -159,9 +218,57 @@ async def create_dataset_from_csv(
 @router.get("/datasets/{key}", response_model=SchemaDatasetResponse)
 async def get_dataset(
     key: str,
+    include_archived: bool = Query(default=False),
     db: AsyncSession = Depends(get_db),
 ):
-    return await registry.get_dataset_detail(db, key)
+    return await registry.get_dataset_detail(db, key, include_archived=include_archived)
+
+
+@router.get(
+    "/datasets/{key}/lifecycle",
+    response_model=LifecyclePreview,
+    dependencies=[Security(IsPrivileged())],
+)
+async def get_dataset_lifecycle(key: str, db: AsyncSession = Depends(get_db)):
+    return await registry.get_dataset_lifecycle_preview(db, key)
+
+
+@router.post(
+    "/datasets/{key}/archive",
+    response_model=SchemaDatasetResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def archive_dataset(
+    key: str,
+    body: ArchiveRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
+):
+    return await registry.archive_dataset(
+        db,
+        key,
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+        reason=body.reason,
+    )
+
+
+@router.post(
+    "/datasets/{key}/restore",
+    response_model=SchemaDatasetResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def restore_dataset(key: str, db: AsyncSession = Depends(get_db)):
+    return await registry.restore_dataset(db, key)
+
+
+@router.delete(
+    "/datasets/{key}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
+async def delete_dataset(key: str, db: AsyncSession = Depends(get_db)):
+    await registry.delete_draft_dataset(db, key)
 
 
 @router.post(
@@ -283,6 +390,18 @@ async def get_column(
 
 
 @router.get(
+    "/datasets/{key}/columns/{name}/promotion-preview",
+    response_model=PromotionPreview,
+)
+async def get_promotion_preview(
+    key: str,
+    name: str,
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.get_promotion_preview(db, key, name)
+
+
+@router.get(
     "/datasets/{key}/columns/{name}/history", response_model=list[ProposalResponse]
 )
 async def get_column_history(key: str, name: str, db: AsyncSession = Depends(get_db)):
@@ -299,7 +418,7 @@ async def list_versions(
     key: str,
     db: AsyncSession = Depends(get_db),
 ):
-    dataset = await registry.get_dataset_by_key(db, key)
+    dataset = await registry.get_dataset_by_key(db, key, include_archived=True)
     return await registry.list_dataset_versions_with_proposals(db, dataset)
 
 
@@ -394,14 +513,60 @@ async def get_proposal(
     proposal = await registry.get_proposal(db, id)
     diff = await registry.get_proposal_diff(proposal)
     dataset = await db.get(SchemaDataset, proposal.dataset_id)
+    targets = list(
+        await db.scalars(
+            select(SchemaProposalTarget).where(
+                SchemaProposalTarget.proposal_id == proposal.id
+            )
+        )
+    )
+    target_datasets = {
+        target.dataset_id: await db.get(SchemaDataset, target.dataset_id)
+        for target in targets
+    }
     affected_schema_keys: list[str] = []
-    if dataset.role == "core":
+    if proposal.proposal_type == "promote":
+        affected_schema_keys = [
+            target_datasets[target.dataset_id].key
+            for target in targets
+            if target.operation != "add"
+        ]
+    elif dataset.role == "core":
         impact = await registry.get_core_impact(db, dataset.key)
         affected_schema_keys = [member.key for member in impact.affected_members]
+    versions = list(
+        await db.scalars(
+            select(SchemaVersion).where(SchemaVersion.proposal_id == proposal.id)
+        )
+    )
     return ProposalDetail(
         **ProposalResponse.model_validate(proposal).model_dump(),
         diff=diff,
         affected_schema_keys=affected_schema_keys,
+        targets=[
+            ProposalTargetResponse(
+                **ProposalTargetResponse.model_validate(target).model_dump(
+                    exclude={"dataset_key"}
+                ),
+                dataset_key=target_datasets[target.dataset_id].key,
+            )
+            for target in targets
+        ],
+        applied_versions=[
+            AppliedVersion(
+                dataset_key=(await db.get(SchemaDataset, version.dataset_id)).key,
+                version=version.version,
+                operation=next(
+                    (
+                        target.operation
+                        for target in targets
+                        if target.dataset_id == version.dataset_id
+                    ),
+                    version.source,
+                ),
+            )
+            for version in versions
+        ],
     )
 
 

@@ -1,19 +1,22 @@
 import csv
 import io
+from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import HTTPException, status
 from pydantic import ValidationError
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from data_ingestion.models import (
     DatasetGroup,
+    FileUpload,
     SchemaDataset,
     SchemaDatasetLink,
     SchemaProposal,
     SchemaProposalAuditLog,
+    SchemaProposalTarget,
     SchemaVersion,
     SchemaVersionColumn,
 )
@@ -21,6 +24,9 @@ from data_ingestion.schemas.schema_registry import (
     DatasetImportError,
     DatasetImportResponse,
     DatasetVersion,
+    LifecyclePreview,
+    PromotionOwner,
+    PromotionPreview,
     ProposalDiffField,
     RegistryColumn,
     ResolvedRegistryColumn,
@@ -92,7 +98,7 @@ async def get_registry_columns(
     *,
     as_of_version: int | None = None,
 ) -> list[RegistryColumn]:
-    dataset = await get_dataset_by_key(db, dataset_key)
+    dataset = await get_dataset_by_key(db, dataset_key, include_archived=True)
     schema_version = await get_schema_version(db, dataset, version=as_of_version)
     if schema_version is None:
         if as_of_version is not None:
@@ -182,25 +188,36 @@ def diff_columns(
 # ---------------------------------------------------------------------------
 
 
-async def list_groups(db: AsyncSession) -> list[DatasetGroup]:
-    return list(await db.scalars(select(DatasetGroup).order_by(DatasetGroup.name)))
+async def list_groups(
+    db: AsyncSession, *, include_archived: bool = False
+) -> list[DatasetGroup]:
+    query = select(DatasetGroup)
+    if not include_archived:
+        query = query.where(DatasetGroup.archived_at.is_(None))
+    return list(await db.scalars(query.order_by(DatasetGroup.name)))
 
 
-async def get_group_by_key(db: AsyncSession, key: str) -> DatasetGroup:
-    group = await db.scalar(select(DatasetGroup).where(DatasetGroup.key == key))
+async def get_group_by_key(
+    db: AsyncSession, key: str, *, include_archived: bool = False
+) -> DatasetGroup:
+    query = select(DatasetGroup).where(DatasetGroup.key == key)
+    if not include_archived:
+        query = query.where(DatasetGroup.archived_at.is_(None))
+    group = await db.scalar(query)
     if group is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Schema group not found")
     return group
 
 
-async def get_group_detail(db: AsyncSession, key: str) -> DatasetGroup:
-    group = await get_group_by_key(db, key)
+async def get_group_detail(
+    db: AsyncSession, key: str, *, include_archived: bool = False
+) -> DatasetGroup:
+    group = await get_group_by_key(db, key, include_archived=include_archived)
+    dataset_query = select(SchemaDataset).where(SchemaDataset.group_id == group.id)
+    if not include_archived:
+        dataset_query = dataset_query.where(SchemaDataset.archived_at.is_(None))
     datasets = list(
-        await db.scalars(
-            select(SchemaDataset)
-            .where(SchemaDataset.group_id == group.id)
-            .order_by(SchemaDataset.role, SchemaDataset.name)
-        )
+        await db.scalars(dataset_query.order_by(SchemaDataset.role, SchemaDataset.name))
     )
     pending_counts = await _pending_proposal_counts_by_dataset(db)
     for dataset in datasets:
@@ -249,8 +266,13 @@ async def _pending_proposal_counts_by_dataset(db: AsyncSession) -> dict[str, int
     return dict(rows.all())
 
 
-async def list_datasets(db: AsyncSession) -> list[SchemaDataset]:
-    datasets = list(await db.scalars(select(SchemaDataset).order_by(SchemaDataset.key)))
+async def list_datasets(
+    db: AsyncSession, *, include_archived: bool = False
+) -> list[SchemaDataset]:
+    query = select(SchemaDataset)
+    if not include_archived:
+        query = query.where(SchemaDataset.archived_at.is_(None))
+    datasets = list(await db.scalars(query.order_by(SchemaDataset.key)))
     pending_counts = await _pending_proposal_counts_by_dataset(db)
     for dataset in datasets:
         dataset.column_count = await count_registry_columns(db, dataset)
@@ -342,19 +364,291 @@ async def create_dataset_from_csv(
     return dataset, result
 
 
-async def get_dataset_by_key(db: AsyncSession, key: str) -> SchemaDataset:
-    dataset = await db.scalar(select(SchemaDataset).where(SchemaDataset.key == key))
+async def get_dataset_by_key(
+    db: AsyncSession, key: str, *, include_archived: bool = False
+) -> SchemaDataset:
+    query = select(SchemaDataset).where(SchemaDataset.key == key)
+    if not include_archived:
+        query = query.where(SchemaDataset.archived_at.is_(None))
+    dataset = await db.scalar(query)
     if dataset is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Dataset not found")
     return dataset
 
 
-async def get_dataset_detail(db: AsyncSession, key: str) -> SchemaDataset:
-    dataset = await get_dataset_by_key(db, key)
+async def get_dataset_detail(
+    db: AsyncSession, key: str, *, include_archived: bool = False
+) -> SchemaDataset:
+    dataset = await get_dataset_by_key(db, key, include_archived=include_archived)
     dataset.column_count = await count_registry_columns(db, dataset)
     dataset.current_version_number = await get_current_version_number(db, dataset)
     dataset.pending_proposal_count = await _pending_proposal_count(db, dataset.id)
     return dataset
+
+
+async def get_dataset_lifecycle_preview(db: AsyncSession, key: str) -> LifecyclePreview:
+    dataset = await get_dataset_by_key(db, key, include_archived=True)
+    version_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(SchemaVersion)
+            .where(SchemaVersion.dataset_id == dataset.id)
+        )
+        or 0
+    )
+    proposal_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(SchemaProposal)
+            .where(SchemaProposal.dataset_id == dataset.id)
+        )
+        or 0
+    )
+    target_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(SchemaProposalTarget)
+            .where(SchemaProposalTarget.dataset_id == dataset.id)
+        )
+        or 0
+    )
+    pending_count = await _pending_proposal_count(db, dataset.id)
+    target_pending_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(SchemaProposalTarget)
+            .join(
+                SchemaProposal,
+                SchemaProposalTarget.proposal_id == SchemaProposal.id,
+            )
+            .where(
+                SchemaProposalTarget.dataset_id == dataset.id,
+                SchemaProposal.status == "pending",
+            )
+        )
+        or 0
+    )
+    pending_count += target_pending_count
+    link_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(SchemaDatasetLink)
+            .where(
+                or_(
+                    SchemaDatasetLink.dataset_id == dataset.id,
+                    SchemaDatasetLink.linked_dataset_id == dataset.id,
+                )
+            )
+        )
+        or 0
+    )
+    upload_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(FileUpload)
+            .where(
+                or_(
+                    FileUpload.schema_key == dataset.key,
+                    FileUpload.core_schema_key == dataset.key,
+                )
+            )
+        )
+        or 0
+    )
+    active_member_count = 0
+    if dataset.role == "core" and dataset.group_id is not None:
+        active_member_count = (
+            await db.scalar(
+                select(func.count())
+                .select_from(SchemaDataset)
+                .where(
+                    SchemaDataset.group_id == dataset.group_id,
+                    SchemaDataset.role == "member",
+                    SchemaDataset.archived_at.is_(None),
+                )
+            )
+            or 0
+        )
+
+    blockers = []
+    if pending_count:
+        blockers.append("Resolve pending proposals before archiving this schema.")
+    if active_member_count:
+        blockers.append("Archive or move all active member schemas first.")
+    can_delete = not any(
+        (
+            version_count,
+            proposal_count + target_count,
+            link_count,
+            upload_count,
+            active_member_count,
+        )
+    )
+    return LifecyclePreview(
+        can_archive=dataset.archived_at is None and not blockers,
+        can_restore=dataset.archived_at is not None,
+        can_delete=can_delete,
+        version_count=version_count,
+        proposal_count=proposal_count + target_count,
+        pending_proposal_count=pending_count,
+        link_count=link_count,
+        upload_count=upload_count,
+        active_schema_count=active_member_count,
+        blockers=blockers,
+    )
+
+
+async def archive_dataset(
+    db: AsyncSession,
+    key: str,
+    *,
+    actor_id: str,
+    actor_email: str,
+    reason: str | None,
+) -> SchemaDataset:
+    dataset = await get_dataset_by_key(db, key, include_archived=True)
+    if dataset.archived_at is not None:
+        return dataset
+    preview = await get_dataset_lifecycle_preview(db, key)
+    if not preview.can_archive:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=preview.blockers)
+    dataset.archived_at = datetime.now(UTC)
+    dataset.archived_by_id = actor_id
+    dataset.archived_by_email = actor_email
+    dataset.archive_reason = reason
+    await db.commit()
+    await db.refresh(dataset)
+    return dataset
+
+
+async def restore_dataset(db: AsyncSession, key: str) -> SchemaDataset:
+    dataset = await get_dataset_by_key(db, key, include_archived=True)
+    if dataset.archived_at is None:
+        return dataset
+    if dataset.group_id is not None:
+        group = await db.get(DatasetGroup, dataset.group_id)
+        if group is None or group.archived_at is not None:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                detail="Restore the schema group before restoring this schema.",
+            )
+    await _validate_dataset_placement(
+        db,
+        group_id=dataset.group_id,
+        role=dataset.role,
+        exclude_dataset_id=dataset.id,
+    )
+    await _validate_placement_columns(
+        db,
+        dataset=dataset,
+        group_id=dataset.group_id,
+        role=dataset.role,
+        exclude_dataset_id=dataset.id,
+    )
+    dataset.archived_at = None
+    dataset.archived_by_id = None
+    dataset.archived_by_email = None
+    dataset.archive_reason = None
+    await db.commit()
+    await db.refresh(dataset)
+    return dataset
+
+
+async def delete_draft_dataset(db: AsyncSession, key: str) -> None:
+    dataset = await get_dataset_by_key(db, key, include_archived=True)
+    preview = await get_dataset_lifecycle_preview(db, key)
+    if not preview.can_delete:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Only unpublished, unreferenced draft schemas can be deleted.",
+        )
+    await db.delete(dataset)
+    await db.commit()
+
+
+async def get_group_lifecycle_preview(db: AsyncSession, key: str) -> LifecyclePreview:
+    group = await get_group_by_key(db, key, include_archived=True)
+    active_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(SchemaDataset)
+            .where(
+                SchemaDataset.group_id == group.id,
+                SchemaDataset.archived_at.is_(None),
+            )
+        )
+        or 0
+    )
+    archived_count = (
+        await db.scalar(
+            select(func.count())
+            .select_from(SchemaDataset)
+            .where(
+                SchemaDataset.group_id == group.id,
+                SchemaDataset.archived_at.is_not(None),
+            )
+        )
+        or 0
+    )
+    blockers = (
+        ["Archive or move all active schemas before archiving this group."]
+        if active_count
+        else []
+    )
+    return LifecyclePreview(
+        can_archive=group.archived_at is None and active_count == 0,
+        can_restore=group.archived_at is not None,
+        can_delete=active_count == 0 and archived_count == 0,
+        active_schema_count=active_count,
+        archived_schema_count=archived_count,
+        blockers=blockers,
+    )
+
+
+async def archive_group(
+    db: AsyncSession,
+    key: str,
+    *,
+    actor_id: str,
+    actor_email: str,
+    reason: str | None,
+) -> DatasetGroup:
+    group = await get_group_by_key(db, key, include_archived=True)
+    if group.archived_at is not None:
+        return group
+    preview = await get_group_lifecycle_preview(db, key)
+    if not preview.can_archive:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=preview.blockers)
+    group.archived_at = datetime.now(UTC)
+    group.archived_by_id = actor_id
+    group.archived_by_email = actor_email
+    group.archive_reason = reason
+    await db.commit()
+    await db.refresh(group)
+    return group
+
+
+async def restore_group(db: AsyncSession, key: str) -> DatasetGroup:
+    group = await get_group_by_key(db, key, include_archived=True)
+    group.archived_at = None
+    group.archived_by_id = None
+    group.archived_by_email = None
+    group.archive_reason = None
+    await db.commit()
+    await db.refresh(group)
+    return group
+
+
+async def delete_draft_group(db: AsyncSession, key: str) -> None:
+    group = await get_group_by_key(db, key, include_archived=True)
+    preview = await get_group_lifecycle_preview(db, key)
+    if not preview.can_delete:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Only empty schema groups can be deleted.",
+        )
+    await db.delete(group)
+    await db.commit()
 
 
 async def move_dataset(
@@ -401,13 +695,15 @@ async def _validate_dataset_placement(
         )
     if group_id is None:
         return
-    if await db.get(DatasetGroup, group_id) is None:
+    group = await db.get(DatasetGroup, group_id)
+    if group is None or group.archived_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Schema group not found")
     if role != "core":
         return
     query = select(SchemaDataset).where(
         SchemaDataset.group_id == group_id,
         SchemaDataset.role == "core",
+        SchemaDataset.archived_at.is_(None),
     )
     if exclude_dataset_id is not None:
         query = query.where(SchemaDataset.id != exclude_dataset_id)
@@ -434,6 +730,7 @@ async def _validate_placement_columns(
         query = select(SchemaDataset).where(
             SchemaDataset.group_id == group_id,
             SchemaDataset.role == "core",
+            SchemaDataset.archived_at.is_(None),
         )
         if exclude_dataset_id is not None:
             query = query.where(SchemaDataset.id != exclude_dataset_id)
@@ -456,6 +753,7 @@ async def _validate_placement_columns(
     query = select(SchemaDataset).where(
         SchemaDataset.group_id == group_id,
         SchemaDataset.role == "member",
+        SchemaDataset.archived_at.is_(None),
     )
     if exclude_dataset_id is not None:
         query = query.where(SchemaDataset.id != exclude_dataset_id)
@@ -487,6 +785,7 @@ async def get_group_core(
         select(SchemaDataset).where(
             SchemaDataset.group_id == dataset.group_id,
             SchemaDataset.role == "core",
+            SchemaDataset.archived_at.is_(None),
         )
     )
 
@@ -616,6 +915,7 @@ async def get_core_impact(db: AsyncSession, dataset_key: str) -> SchemaImpactRes
             .where(
                 SchemaDataset.group_id == core.group_id,
                 SchemaDataset.role == "member",
+                SchemaDataset.archived_at.is_(None),
             )
             .order_by(SchemaDataset.name)
         )
@@ -739,6 +1039,14 @@ async def create_proposal(
     proposed_by_email: str,
 ) -> SchemaProposal:
     dataset = await get_dataset_by_key(db, dataset_key)
+    if proposal_type == "promote":
+        return await create_promotion_proposal(
+            db,
+            dataset=dataset,
+            column_name=column_name,
+            proposed_by_id=proposed_by_id,
+            proposed_by_email=proposed_by_email,
+        )
     await _validate_column_ownership(
         db,
         dataset=dataset,
@@ -810,6 +1118,159 @@ async def create_proposal(
     return proposal
 
 
+async def get_promotion_preview(  # noqa: C901
+    db: AsyncSession,
+    dataset_key: str,
+    column_name: str,
+    *,
+    exclude_proposal_id: str | None = None,
+) -> PromotionPreview:
+    source = await get_dataset_by_key(db, dataset_key)
+    if source.role != "member" or source.group_id is None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="Only member-owned columns can be promoted to core.",
+        )
+    source_column = await get_registry_column(db, source.key, column_name)
+    if source_column is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail="Member-owned column not found.",
+        )
+    core = await get_group_core(db, source)
+    blockers: list[str] = []
+    if core is None:
+        blockers.append("This schema group does not have an active core schema.")
+    elif await get_registry_column(db, core.key, column_name) is not None:
+        blockers.append(f"Column is already owned by core schema {core.key}.")
+
+    members = list(
+        await db.scalars(
+            select(SchemaDataset)
+            .where(
+                SchemaDataset.group_id == source.group_id,
+                SchemaDataset.role == "member",
+                SchemaDataset.archived_at.is_(None),
+            )
+            .order_by(SchemaDataset.key)
+        )
+    )
+    owners: list[PromotionOwner] = []
+    for member in members:
+        member_column = await get_registry_column(db, member.key, column_name)
+        if member_column is None:
+            continue
+        differences = diff_columns(source_column, member_column)
+        owners.append(
+            PromotionOwner(
+                key=member.key,
+                name=member.name,
+                version=await get_current_version_number(db, member),
+                definition_matches=not differences,
+                differences=differences,
+            )
+        )
+        if differences:
+            blockers.append(
+                f"{member.key} defines {column_name} differently from {source.key}."
+            )
+
+    touched_ids = [member.id for member in members] + (
+        [core.id] if core is not None else []
+    )
+    if touched_ids:
+        pending_query = select(SchemaProposal).where(
+            SchemaProposal.dataset_id.in_(touched_ids),
+            SchemaProposal.column_name == column_name,
+            SchemaProposal.status == "pending",
+        )
+        if exclude_proposal_id is not None:
+            pending_query = pending_query.where(
+                SchemaProposal.id != exclude_proposal_id
+            )
+        if await db.scalar(pending_query):
+            blockers.append(
+                "Another pending proposal already changes this column in an affected schema."
+            )
+
+    return PromotionPreview(
+        source_member_key=source.key,
+        core_schema_key=core.key if core else None,
+        column=source_column,
+        owners=owners,
+        affected_member_keys=[member.key for member in members],
+        blockers=blockers,
+        can_promote=not blockers,
+    )
+
+
+async def create_promotion_proposal(
+    db: AsyncSession,
+    *,
+    dataset: SchemaDataset,
+    column_name: str,
+    proposed_by_id: str,
+    proposed_by_email: str,
+) -> SchemaProposal:
+    preview = await get_promotion_preview(db, dataset.key, column_name)
+    if not preview.can_promote:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=preview.blockers)
+    core = await get_group_core(db, dataset)
+    owner_by_key = {owner.key: owner for owner in preview.owners}
+    member_datasets = list(
+        await db.scalars(
+            select(SchemaDataset).where(
+                SchemaDataset.key.in_(preview.affected_member_keys),
+                SchemaDataset.archived_at.is_(None),
+            )
+        )
+    )
+    proposal = SchemaProposal(
+        dataset_id=dataset.id,
+        column_name=column_name,
+        proposal_type="promote",
+        before_state=preview.column.model_dump(),
+        after_state=preview.column.model_dump(),
+        proposed_by_id=proposed_by_id,
+        proposed_by_email=proposed_by_email,
+    )
+    db.add(proposal)
+    await db.flush()
+    targets = [
+        SchemaProposalTarget(
+            proposal_id=proposal.id,
+            dataset_id=core.id,
+            operation="add",
+            expected_version=await get_current_version_number(db, core),
+            after_state=preview.column.model_dump(),
+        ),
+        *[
+            SchemaProposalTarget(
+                proposal_id=proposal.id,
+                dataset_id=member.id,
+                operation=("delete" if member.key in owner_by_key else "inherit"),
+                expected_version=await get_current_version_number(db, member),
+                before_state=(
+                    preview.column.model_dump() if member.key in owner_by_key else None
+                ),
+            )
+            for member in member_datasets
+        ],
+    ]
+    db.add_all(targets)
+    db.add(
+        SchemaProposalAuditLog(
+            proposal_id=proposal.id,
+            action="proposed",
+            actor_id=proposed_by_id,
+            actor_email=proposed_by_email,
+        )
+    )
+    await db.commit()
+    await db.refresh(proposal)
+    return proposal
+
+
 async def _validate_column_ownership(
     db: AsyncSession,
     *,
@@ -834,6 +1295,7 @@ async def _validate_column_ownership(
         select(SchemaDataset).where(
             SchemaDataset.group_id == dataset.group_id,
             SchemaDataset.role == "member",
+            SchemaDataset.archived_at.is_(None),
         )
     )
     conflicting_members = []
@@ -956,7 +1418,9 @@ def apply_column_change(
             updated.pop(existing_index)
         return updated
     if proposal_type == "add":
-        updated.append(RegistryColumn(name=column_name, **dict(after_state or {})))
+        state = dict(after_state or {})
+        state["name"] = column_name
+        updated.append(RegistryColumn(**state))
         return updated
     if existing_index is None:
         return updated
@@ -974,15 +1438,31 @@ async def approve_proposal(
     actor_id: str,
     actor_email: str,
 ) -> SchemaProposal:
-    proposal = await get_proposal(db, proposal_id)
+    proposal = await db.scalar(
+        select(SchemaProposal).where(SchemaProposal.id == proposal_id).with_for_update()
+    )
+    if proposal is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Proposal not found")
     if proposal.status != "pending":
         raise HTTPException(status.HTTP_409_CONFLICT, detail="Proposal is not pending")
+    if proposal.proposal_type == "promote":
+        return await approve_promotion_proposal(
+            db,
+            proposal,
+            actor_id=actor_id,
+            actor_email=actor_email,
+        )
 
     dataset = await db.scalar(
         select(SchemaDataset)
         .where(SchemaDataset.id == proposal.dataset_id)
         .with_for_update()
     )
+    if dataset.archived_at is not None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Archived schemas cannot be changed.",
+        )
     await _validate_column_ownership(
         db,
         dataset=dataset,
@@ -1025,6 +1505,160 @@ async def approve_proposal(
 
     proposal.status = "approved"
     proposal.schema_version = version.version
+    db.add_all(
+        [
+            SchemaProposalAuditLog(
+                proposal_id=proposal.id,
+                action="approved",
+                actor_id=actor_id,
+                actor_email=actor_email,
+            ),
+            SchemaProposalAuditLog(
+                proposal_id=proposal.id,
+                action="applied",
+                actor_id=actor_id,
+                actor_email=actor_email,
+            ),
+        ]
+    )
+    await db.commit()
+    await db.refresh(proposal)
+    return proposal
+
+
+async def approve_promotion_proposal(  # noqa: C901
+    db: AsyncSession,
+    proposal: SchemaProposal,
+    *,
+    actor_id: str,
+    actor_email: str,
+) -> SchemaProposal:
+    proposal_id = proposal.id
+    targets = list(
+        await db.scalars(
+            select(SchemaProposalTarget)
+            .where(SchemaProposalTarget.proposal_id == proposal_id)
+            .order_by(SchemaProposalTarget.dataset_id)
+        )
+    )
+    if not targets:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Promotion proposal has no target schemas.",
+        )
+    source = await db.get(SchemaDataset, proposal.dataset_id)
+    if source is None or source.archived_at is not None or source.group_id is None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="The source member schema no longer exists or is archived.",
+        )
+    group = await db.scalar(
+        select(DatasetGroup).where(DatasetGroup.id == source.group_id).with_for_update()
+    )
+    if group is None or group.archived_at is not None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="The source schema group no longer exists or is archived.",
+        )
+    target_ids = [target.dataset_id for target in targets]
+    datasets = list(
+        await db.scalars(
+            select(SchemaDataset)
+            .where(SchemaDataset.id.in_(target_ids))
+            .order_by(SchemaDataset.key)
+            .with_for_update()
+        )
+    )
+    dataset_by_id = {dataset.id: dataset for dataset in datasets}
+    if len(dataset_by_id) != len(target_ids) or any(
+        dataset.archived_at is not None for dataset in datasets
+    ):
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="An affected schema no longer exists or is archived.",
+        )
+
+    preview = await get_promotion_preview(
+        db,
+        source.key,
+        proposal.column_name,
+        exclude_proposal_id=proposal.id,
+    )
+    if not preview.can_promote:
+        raise HTTPException(status.HTTP_409_CONFLICT, detail=preview.blockers)
+
+    for target in targets:
+        dataset = dataset_by_id[target.dataset_id]
+        current_version = await get_current_version_number(db, dataset)
+        if current_version != target.expected_version:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                detail=(
+                    f"{dataset.key} changed since this promotion was proposed. "
+                    "Create a new promotion proposal."
+                ),
+            )
+        current_column = await get_registry_column(
+            db, dataset.key, proposal.column_name
+        )
+        if target.operation == "add" and current_column is not None:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                detail=f"{dataset.key} already owns {proposal.column_name}.",
+            )
+        if target.operation == "delete" and (
+            current_column is None or current_column.model_dump() != target.before_state
+        ):
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                detail=f"{dataset.key} has a different column definition.",
+            )
+        if target.operation == "inherit" and current_column is not None:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                detail=f"{dataset.key} now owns {proposal.column_name}.",
+            )
+
+    try:
+        for target in targets:
+            if target.operation == "inherit":
+                continue
+            dataset = dataset_by_id[target.dataset_id]
+            columns = await get_registry_columns(db, dataset.key)
+            updated_columns = apply_column_change(
+                columns,
+                target.operation,
+                proposal.column_name,
+                target.after_state,
+            )
+            await publish_schema_version(
+                db,
+                dataset,
+                updated_columns,
+                source="promotion",
+                actor_id=actor_id,
+                actor_email=actor_email,
+                proposal_id=proposal.id,
+            )
+    except Exception as err:  # noqa: BLE001
+        await db.rollback()
+        failed_proposal = await get_proposal(db, proposal_id)
+        failed_proposal.status = "apply_failed"
+        failed_proposal.apply_error = str(err)
+        db.add(
+            SchemaProposalAuditLog(
+                proposal_id=failed_proposal.id,
+                action="apply_failed",
+                actor_id=actor_id,
+                actor_email=actor_email,
+            )
+        )
+        await db.commit()
+        await db.refresh(failed_proposal)
+        return failed_proposal
+
+    proposal.status = "approved"
+    proposal.schema_version = None
     db.add_all(
         [
             SchemaProposalAuditLog(

@@ -3,7 +3,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-ProposalType = Literal["add", "edit", "delete"]
+ProposalType = Literal["add", "edit", "delete", "promote"]
 ProposalStatus = Literal["pending", "approved", "rejected", "apply_failed"]
 CriticalFor = Literal["always", "create_only"]
 SchemaRole = Literal["core", "member"]
@@ -20,6 +20,10 @@ class DatasetGroupResponse(DatasetGroupCreate):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
+    archived_at: datetime | None = None
+    archived_by_id: str | None = None
+    archived_by_email: str | None = None
+    archive_reason: str | None = None
 
 
 class SchemaDatasetCreate(BaseModel):
@@ -42,11 +46,33 @@ class SchemaDatasetResponse(BaseModel):
     current_version_number: int | None = None
     column_count: int = 0
     pending_proposal_count: int = 0
+    archived_at: datetime | None = None
+    archived_by_id: str | None = None
+    archived_by_email: str | None = None
+    archive_reason: str | None = None
 
 
 class MoveDatasetRequest(BaseModel):
     group_id: str | None = None
     role: SchemaRole | None = None
+
+
+class ArchiveRequest(BaseModel):
+    reason: str | None = None
+
+
+class LifecyclePreview(BaseModel):
+    can_archive: bool = True
+    can_restore: bool = False
+    can_delete: bool = False
+    version_count: int = 0
+    proposal_count: int = 0
+    pending_proposal_count: int = 0
+    link_count: int = 0
+    upload_count: int = 0
+    active_schema_count: int = 0
+    archived_schema_count: int = 0
+    blockers: list[str] = Field(default_factory=list)
 
 
 class DatasetGroupDetail(DatasetGroupResponse):
@@ -177,15 +203,52 @@ class ProposalResponse(BaseModel):
     created: datetime
 
 
+class ProposalTargetResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    dataset_id: str
+    dataset_key: str | None = None
+    operation: str
+    expected_version: int | None = None
+    before_state: dict[str, Any] | None = None
+    after_state: dict[str, Any] | None = None
+
+
+class AppliedVersion(BaseModel):
+    dataset_key: str
+    version: int
+    operation: str
+
+
 class ProposalDiffField(BaseModel):
     field: str
     before: Any = None
     after: Any = None
 
 
+class PromotionOwner(BaseModel):
+    key: str
+    name: str
+    version: int | None = None
+    definition_matches: bool
+    differences: list[ProposalDiffField] = Field(default_factory=list)
+
+
+class PromotionPreview(BaseModel):
+    source_member_key: str
+    core_schema_key: str | None = None
+    column: RegistryColumn
+    owners: list[PromotionOwner] = Field(default_factory=list)
+    affected_member_keys: list[str] = Field(default_factory=list)
+    blockers: list[str] = Field(default_factory=list)
+    can_promote: bool = False
+
+
 class ProposalDetail(ProposalResponse):
     diff: list[ProposalDiffField] = Field(default_factory=list)
     affected_schema_keys: list[str] = Field(default_factory=list)
+    targets: list[ProposalTargetResponse] = Field(default_factory=list)
+    applied_versions: list[AppliedVersion] = Field(default_factory=list)
 
 
 class AuditLogResponse(BaseModel):
