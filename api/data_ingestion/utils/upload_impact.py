@@ -2,6 +2,9 @@ from collections import Counter
 
 import pandas as pd
 
+FACILITY_ID_SCHEMA_COLUMN = "facility_id_govt"
+SCHOOL_ID_SCHEMA_COLUMN = "school_id_govt"
+
 
 def normalize_school_id(value) -> str | None:
     if pd.isna(value):
@@ -14,12 +17,32 @@ def normalize_school_id(value) -> str | None:
     return normalized
 
 
-def get_school_id_file_column(column_mapping: dict[str, str]) -> str:
-    for file_column, schema_column in column_mapping.items():
-        if schema_column == "school_id_govt":
-            return file_column
+def id_schema_column_for_dataset(dataset: str) -> str:
+    if dataset == "geolocation":
+        return FACILITY_ID_SCHEMA_COLUMN
+    return SCHOOL_ID_SCHEMA_COLUMN
 
-    raise ValueError("Column mapping must include school_id_govt.")
+
+def get_school_id_file_column(column_mapping: dict[str, str]) -> str:
+    """Backward-compatible helper; prefers school_id_govt then facility_id_govt."""
+    return get_id_file_column(
+        column_mapping,
+        preferred_schema_columns=(SCHOOL_ID_SCHEMA_COLUMN, FACILITY_ID_SCHEMA_COLUMN),
+    )
+
+
+def get_id_file_column(
+    column_mapping: dict[str, str],
+    *,
+    preferred_schema_columns: tuple[str, ...] = (FACILITY_ID_SCHEMA_COLUMN,),
+) -> str:
+    for schema_column in preferred_schema_columns:
+        for file_column, mapped_schema_column in column_mapping.items():
+            if mapped_schema_column == schema_column:
+                return file_column
+
+    expected = " or ".join(preferred_schema_columns)
+    raise ValueError(f"Column mapping must include {expected}.")
 
 
 def build_upload_impact_preview(

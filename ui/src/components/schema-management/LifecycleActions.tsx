@@ -96,7 +96,11 @@ function LifecycleActions({
   return (
     <>
       {compact ? (
-        <details className="relative">
+        <details
+          className="relative"
+          onClick={event => event.stopPropagation()}
+          onKeyDown={event => event.stopPropagation()}
+        >
           <summary
             className="flex h-8 w-8 cursor-pointer list-none items-center justify-center text-lg text-giga-dark-gray hover:bg-giga-light-gray"
             aria-label={`${resourceLabel} actions`}

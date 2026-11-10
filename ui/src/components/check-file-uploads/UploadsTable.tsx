@@ -57,6 +57,10 @@ const ALL_COLUMNS: DataTableHeader[] = [
     header: "Dataset",
   },
   {
+    key: "schema_key",
+    header: "Facility",
+  },
+  {
     key: "country",
     header: "Country",
   },
@@ -222,6 +226,7 @@ function UploadsTable({
             )}
           </>
         ),
+        schema_key: upload.schema_key ?? "—",
         rows: upload.rows?.toLocaleString() ?? "—",
         rows_passed: upload.rows_passed?.toLocaleString() ?? "—",
         rows_failed: upload.rows_failed?.toLocaleString() ?? "—",

@@ -50,6 +50,9 @@ function PromoteColumnModal({
       await queryClient.invalidateQueries({
         queryKey: ["schema-registry", "proposals"],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["schema-registry", "datasets"],
+      });
       onCreated();
     },
   });

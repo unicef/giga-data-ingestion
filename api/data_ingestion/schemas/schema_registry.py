@@ -1,13 +1,14 @@
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-ProposalType = Literal["add", "edit", "delete", "promote"]
+ProposalType = Literal["add", "edit", "delete", "promote", "placement"]
 ProposalStatus = Literal["pending", "approved", "rejected", "apply_failed"]
 CriticalFor = Literal["always", "create_only"]
 SchemaRole = Literal["core", "member"]
 ColumnOrigin = Literal["core", "member"]
+ColumnSource = Literal["government", "system_generated"]
 
 
 class DatasetGroupCreate(BaseModel):
@@ -30,7 +31,7 @@ class SchemaDatasetCreate(BaseModel):
     key: str
     name: str | None = None
     description: str | None = None
-    group_id: str | None = None
+    group_id: str
     role: SchemaRole = "member"
 
 
@@ -53,7 +54,7 @@ class SchemaDatasetResponse(BaseModel):
 
 
 class MoveDatasetRequest(BaseModel):
-    group_id: str | None = None
+    group_id: str
     role: SchemaRole | None = None
 
 
@@ -102,6 +103,7 @@ class RegistryColumn(BaseModel):
     is_nullable: bool | None = None
     is_important: bool | None = None
     is_system_generated: bool | None = None
+    source: ColumnSource | None = None
     description: str | None = None
     primary_key: bool | None = None
     partition_order: int | None = None
@@ -142,6 +144,30 @@ class RegistryColumn(BaseModel):
             )
         return normalized
 
+    @field_validator("source", mode="before")
+    @classmethod
+    def validate_source(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = value.strip().lower()
+        if normalized == "":
+            return None
+        supported = {"government", "system_generated"}
+        if normalized not in supported:
+            raise ValueError(
+                f"Unsupported source '{value}'. "
+                f"Expected one of: {', '.join(sorted(supported))}"
+            )
+        return normalized
+
+    @model_validator(mode="after")
+    def sync_system_generated_from_source(self) -> "RegistryColumn":
+        if self.source == "system_generated":
+            self.is_system_generated = True
+        elif self.source == "government":
+            self.is_system_generated = False
+        return self
+
 
 class ResolvedRegistryColumn(RegistryColumn):
     origin: ColumnOrigin
@@ -176,7 +202,7 @@ class SchemaImpactResponse(BaseModel):
 
 
 class ProposalCreate(BaseModel):
-    column_name: str
+    column_name: str | None = None
     proposal_type: ProposalType
     after_state: dict[str, Any] | None = None
 

@@ -32,7 +32,7 @@ import DiffViewer from "@/components/schema-management/DiffViewer.tsx";
 import useRoles from "@/hooks/useRoles.ts";
 import { ProposalDetail, ProposalStatus } from "@/types/schemaRegistry.ts";
 
-const columns: DataTableHeader[] = [
+const allColumns: DataTableHeader[] = [
   { key: "dataset", header: "Dataset" },
   { key: "column_name", header: "Column" },
   { key: "proposal_type", header: "Type" },
@@ -40,6 +40,11 @@ const columns: DataTableHeader[] = [
   { key: "proposed_by_email", header: "Proposed by" },
   { key: "actions", header: "" },
 ];
+
+function formatProposalColumnName(columnName: string) {
+  if (columnName === "__placement__") return "Placement";
+  return columnName;
+}
 
 const statusTagType: Record<
   ProposalStatus,
@@ -64,7 +69,11 @@ function approvalErrorMessage(error: unknown) {
   );
 }
 
-function ProposalsTable() {
+interface ProposalsTableProps {
+  datasetKey?: string;
+}
+
+function ProposalsTable({ datasetKey }: ProposalsTableProps) {
   const queryClient = useQueryClient();
   const { isPrivileged } = useRoles();
   const [diff, setDiff] = useState<ProposalDetail | null>(null);
@@ -84,10 +93,29 @@ function ProposalsTable() {
     listSchemaDatasetsQueryOptions,
   );
 
-  const proposals = useMemo(() => proposalsQuery?.data ?? [], [proposalsQuery]);
   const datasetKeyById = useMemo(
     () => new Map((datasetsQuery?.data ?? []).map(d => [d.id, d.key])),
     [datasetsQuery],
+  );
+  const datasetIdByKey = useMemo(
+    () => new Map((datasetsQuery?.data ?? []).map(d => [d.key, d.id])),
+    [datasetsQuery],
+  );
+  const scopedDatasetId = datasetKey
+    ? datasetIdByKey.get(datasetKey)
+    : undefined;
+  const proposals = useMemo(() => {
+    const all = proposalsQuery?.data ?? [];
+    if (!datasetKey) return all;
+    if (!scopedDatasetId) return [];
+    return all.filter(proposal => proposal.dataset_id === scopedDatasetId);
+  }, [datasetKey, proposalsQuery?.data, scopedDatasetId]);
+  const columns = useMemo(
+    () =>
+      datasetKey
+        ? allColumns.filter(column => column.key !== "dataset")
+        : allColumns,
+    [datasetKey],
   );
 
   const invalidate = () =>
@@ -100,9 +128,7 @@ function ProposalsTable() {
       setDiff(null);
       setReviewActionError(null);
       setErrorMessage(null);
-      setSuccessMessage(
-        "Proposal approved and a new schema version published.",
-      );
+      setSuccessMessage("Proposal approved.");
     },
     onError: (error, proposalId) => {
       const message = approvalErrorMessage(error);
@@ -152,7 +178,7 @@ function ProposalsTable() {
   const rows = proposals.map(proposal => ({
     id: proposal.id,
     dataset: datasetKeyById.get(proposal.dataset_id) ?? proposal.dataset_id,
-    column_name: proposal.column_name,
+    column_name: formatProposalColumnName(proposal.column_name),
     proposal_type: proposal.proposal_type,
     status: <Tag type={statusTagType[proposal.status]}>{proposal.status}</Tag>,
     proposed_by_email: proposal.proposed_by_email,
@@ -201,6 +227,7 @@ function ProposalsTable() {
       )}
       {successMessage && (
         <InlineNotification
+          className="![border-inline-start:0]"
           kind="success"
           title={successMessage}
           onCloseButtonClick={() => setSuccessMessage(null)}
@@ -214,7 +241,13 @@ function ProposalsTable() {
           getRowProps,
           getTableProps,
         }) => (
-          <TableContainer title="Schema change proposals">
+          <TableContainer
+            title={
+              datasetKey
+                ? `Proposals for ${datasetKey}`
+                : "Schema change proposals"
+            }
+          >
             <Table {...getTableProps()}>
               <TableHead>
                 <TableRow>
@@ -227,13 +260,23 @@ function ProposalsTable() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {tableRows.map(row => (
-                  <TableRow {...getRowProps({ row })}>
-                    {row.cells.map(cell => (
-                      <TableCell key={cell.id}>{cell.value}</TableCell>
-                    ))}
+                {tableRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={headers.length}>
+                      <span className="text-giga-dark-gray">
+                        No proposals for this schema.
+                      </span>
+                    </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  tableRows.map(row => (
+                    <TableRow {...getRowProps({ row })}>
+                      {row.cells.map(cell => (
+                        <TableCell key={cell.id}>{cell.value}</TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -269,22 +312,17 @@ function ProposalsTable() {
               <span className="font-semibold">Change:</span>{" "}
               {diff.proposal_type}
             </p>
+            {diff.proposal_type !== "placement" && (
+              <p>
+                <span className="font-semibold">Column:</span>{" "}
+                {diff.column_name}
+              </p>
+            )}
             <p>
               <span className="font-semibold">Proposed by:</span>{" "}
               {diff.proposed_by_email}
             </p>
           </div>
-        )}
-        {diff && diff.affected_schema_keys.length > 0 && (
-          <InlineNotification
-            className="mb-4"
-            kind="warning"
-            title={`${
-              diff.proposal_type === "promote" ? "Promotion" : "Core change"
-            } affects ${diff.affected_schema_keys.length} member schemas`}
-            subtitle={diff.affected_schema_keys.join(", ")}
-            hideCloseButton
-          />
         )}
         <DiffViewer diff={diff?.diff ?? []} />
         {diff && diff.targets.length > 0 && (

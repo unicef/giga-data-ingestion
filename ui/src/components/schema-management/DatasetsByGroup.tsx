@@ -2,13 +2,8 @@ import { useMemo, useState } from "react";
 
 import { Add } from "@carbon/icons-react";
 import { Button, Search, Stack, Tile } from "@carbon/react";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
-import { api } from "@/api";
 import {
   listDatasetGroupsQueryOptions,
   listSchemaDatasetsQueryOptions,
@@ -21,7 +16,6 @@ import { DatasetGroup, SchemaDataset } from "@/types/schemaRegistry.ts";
 const UNGROUPED = "__ungrouped__";
 
 function DatasetsByGroup() {
-  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [addToGroup, setAddToGroup] = useState<DatasetGroup | null>(null);
@@ -33,15 +27,6 @@ function DatasetsByGroup() {
 
   const datasets = useMemo(() => datasetsQuery?.data ?? [], [datasetsQuery]);
   const groups = useMemo(() => groupsQuery?.data ?? [], [groupsQuery]);
-
-  const { mutate: moveDataset } = useMutation({
-    mutationFn: api.schemaRegistry.moveDataset,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["schema-registry", "datasets"],
-      });
-    },
-  });
 
   const filteredDatasets = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -74,9 +59,6 @@ function DatasetsByGroup() {
       ),
     [datasets],
   );
-
-  const handleMove = (datasetKey: string, groupId: string | null) =>
-    moveDataset({ key: datasetKey, group_id: groupId });
 
   return (
     <Stack gap={6}>
@@ -136,17 +118,13 @@ function DatasetsByGroup() {
           <DatasetGroupSection
             key={group.id}
             group={group}
-            groups={groups}
             datasets={datasetsByGroup.get(group.id) ?? []}
             onAddDatasets={() => setAddToGroup(group)}
-            onMove={handleMove}
           />
         ))}
         <DatasetGroupSection
           group={null}
-          groups={groups}
           datasets={datasetsByGroup.get(UNGROUPED) ?? []}
-          onMove={handleMove}
         />
       </Stack>
 

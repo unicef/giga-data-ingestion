@@ -1,22 +1,9 @@
 import { useMemo, useState } from "react";
 
-import {
-  Button,
-  Heading,
-  InlineNotification,
-  Section,
-  Select,
-  SelectItem,
-  Tag,
-} from "@carbon/react";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { Button, Heading, Section, Tag } from "@carbon/react";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 
-import { api } from "@/api";
 import {
   listDatasetGroupsQueryOptions,
   listSchemaDatasetsQueryOptions,
@@ -27,39 +14,23 @@ import AddSchemaModal from "@/components/schema-management/AddSchemaModal.tsx";
 import LifecycleActions from "@/components/schema-management/LifecycleActions.tsx";
 import SchemaNavigator from "@/components/schema-management/SchemaNavigator.tsx";
 import useRoles from "@/hooks/useRoles.ts";
-import {
-  DatasetGroup,
-  SchemaDataset,
-  SchemaRole,
-} from "@/types/schemaRegistry.ts";
+import { SchemaDataset } from "@/types/schemaRegistry.ts";
 
 function SchemaRow({
   schema,
   coreColumnCount,
-  groups,
-  isPrivileged,
-  onMove,
 }: {
   schema: SchemaDataset;
   coreColumnCount?: number;
-  groups: DatasetGroup[];
-  isPrivileged: boolean;
-  onMove: (
-    datasetKey: string,
-    groupId: string | null,
-    role?: SchemaRole,
-  ) => void;
 }) {
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(12rem,1.5fr)_minmax(5rem,.5fr)_minmax(6rem,.6fr)_auto] items-center gap-4 border-b border-carbon-datatable-grey bg-white px-4 py-4 text-giga-black no-underline last:border-b-0 hover:bg-giga-light-blue">
+    <Link
+      className="grid min-w-0 grid-cols-[minmax(12rem,1.5fr)_minmax(5rem,.5fr)_minmax(6rem,.6fr)_auto] items-center gap-4 border-b border-carbon-datatable-grey bg-white px-4 py-4 text-giga-black no-underline last:border-b-0 hover:bg-giga-light-blue"
+      to="/schema-management/$datasetKey"
+      params={{ datasetKey: schema.key }}
+    >
       <div className="min-w-0">
-        <Link
-          className="font-semibold text-giga-black no-underline hover:text-giga-blue"
-          to="/schema-management/$datasetKey"
-          params={{ datasetKey: schema.key }}
-        >
-          {schema.name}
-        </Link>
+        <span className="font-semibold">{schema.name}</span>
         <Tag type="teal" className="ml-2">
           Member
         </Tag>
@@ -68,7 +39,7 @@ function SchemaRow({
             ? `v${schema.current_version_number}`
             : "Unpublished"}
         </Tag>
-        <code className="text-xs text-giga-dark-gray">{schema.key}</code>
+        <code className="block text-xs text-giga-dark-gray">{schema.key}</code>
       </div>
       <span className="text-sm">{schema.column_count} own</span>
       <span className="text-sm">{coreColumnCount ?? 0} inherited</span>
@@ -78,52 +49,8 @@ function SchemaRow({
         ) : (
           <span className="text-xs text-giga-dark-gray">No pending</span>
         )}
-        {isPrivileged && (
-          <>
-            <Select
-              id={`group-${schema.id}`}
-              labelText=""
-              hideLabel
-              size="sm"
-              value={schema.group_id ?? ""}
-              onChange={event =>
-                onMove(
-                  schema.key,
-                  event.target.value || null,
-                  event.target.value ? schema.role : "member",
-                )
-              }
-            >
-              <SelectItem text="No group" value="" />
-              {groups.map(candidate => (
-                <SelectItem
-                  key={candidate.id}
-                  text={candidate.name}
-                  value={candidate.id}
-                />
-              ))}
-            </Select>
-            <Select
-              id={`role-${schema.id}`}
-              labelText=""
-              hideLabel
-              size="sm"
-              value={schema.role}
-              onChange={event =>
-                onMove(
-                  schema.key,
-                  schema.group_id,
-                  event.target.value as SchemaRole,
-                )
-              }
-            >
-              <SelectItem text="Member" value="member" />
-              <SelectItem text="Core" value="core" />
-            </Select>
-          </>
-        )}
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -131,7 +58,6 @@ function SchemaGroupDetail({ groupKey }: { groupKey: string }) {
   const [search, setSearch] = useState("");
   const [addSchemaOpen, setAddSchemaOpen] = useState(false);
   const [addExistingOpen, setAddExistingOpen] = useState(false);
-  const [placementError, setPlacementError] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { isPrivileged } = useRoles();
@@ -144,31 +70,6 @@ function SchemaGroupDetail({ groupKey }: { groupKey: string }) {
   const {
     data: { data: datasets },
   } = useSuspenseQuery(listSchemaDatasetsQueryOptions);
-  const { mutate: moveSchema, isPending: isMovingSchema } = useMutation({
-    mutationFn: api.schemaRegistry.moveDataset,
-    onSuccess: async () => {
-      setPlacementError(null);
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ["schema-registry", "groups"],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["schema-registry", "datasets"],
-        }),
-      ]);
-    },
-    onError: (error: { response?: { data?: { detail?: string } } }) => {
-      setPlacementError(
-        error.response?.data?.detail ??
-          "The schema placement could not be changed.",
-      );
-    },
-  });
-  const handleMove = (
-    datasetKey: string,
-    groupId: string | null,
-    role?: SchemaRole,
-  ) => moveSchema({ key: datasetKey, group_id: groupId, role });
   const filteredMembers = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
     if (!normalizedSearch) return group.member_schemas;
@@ -193,13 +94,24 @@ function SchemaGroupDetail({ groupKey }: { groupKey: string }) {
                 <span>/</span>
                 <span className="text-giga-dark-gray">{group.name}</span>
               </div>
+              <div className="mb-2 flex flex-wrap gap-2">
+                {group.archived_at != null && <Tag type="red">Archived</Tag>}
+              </div>
               <Heading>{group.name}</Heading>
-              <p className="mt-2 text-giga-dark-gray">
-                {group.description ?? "Related governed schemas."}
-              </p>
+              {group.description && (
+                <p className="mt-2 text-giga-dark-gray">{group.description}</p>
+              )}
             </div>
             {isPrivileged && (
               <div className="flex flex-wrap gap-2">
+                <LifecycleActions
+                  resourceType="group"
+                  resourceKey={group.key}
+                  archived={group.archived_at != null}
+                  onChanged={() => {
+                    void navigate({ to: "/schema-management" });
+                  }}
+                />
                 <Button
                   kind="tertiary"
                   onClick={() => setAddExistingOpen(true)}
@@ -209,121 +121,44 @@ function SchemaGroupDetail({ groupKey }: { groupKey: string }) {
                 <Button onClick={() => setAddSchemaOpen(true)}>
                   Add new schema
                 </Button>
-                <LifecycleActions
-                  resourceType="group"
-                  resourceKey={group.key}
-                  archived={group.archived_at != null}
-                  onChanged={() => {
-                    void navigate({ to: "/schema-management" });
-                  }}
-                />
               </div>
             )}
           </div>
 
-          {placementError && (
-            <InlineNotification
-              className="mb-4"
-              kind="error"
-              title="Could not update schema placement"
-              subtitle={placementError}
-              onCloseButtonClick={() => setPlacementError(null)}
-            />
-          )}
-
-          {group.core_schema ? (
-            <section className="border-t-4 border-giga-blue bg-white p-5">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <Tag type="blue">Shared core schema</Tag>
-                  <Tag type="cool-gray" className="ml-2">
-                    {group.core_schema.current_version_number
-                      ? `v${group.core_schema.current_version_number}`
-                      : "Unpublished"}
-                  </Tag>
-                  <Heading className="mt-3 text-xl">
-                    {group.core_schema.name}
-                  </Heading>
-                  <p className="mt-1 text-sm text-giga-dark-gray">
-                    {group.core_schema.column_count} shared columns inherited by{" "}
-                    {group.member_schemas.length} member{" "}
-                    {group.member_schemas.length === 1 ? "schema" : "schemas"}.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    as={Link}
-                    kind="tertiary"
-                    to="/schema-management/$datasetKey"
-                    params={{ datasetKey: group.core_schema.key }}
-                  >
-                    View core columns
-                  </Button>
-                  {isPrivileged && (
-                    <>
-                      <Select
-                        id={`group-${group.core_schema.id}`}
-                        labelText=""
-                        hideLabel
-                        size="sm"
-                        value={group.core_schema.group_id ?? ""}
-                        disabled={isMovingSchema}
-                        onChange={event =>
-                          handleMove(
-                            group.core_schema!.key,
-                            event.target.value || null,
-                            event.target.value ? "core" : "member",
-                          )
-                        }
-                      >
-                        <SelectItem text="No group" value="" />
-                        {groups.map(candidate => (
-                          <SelectItem
-                            key={candidate.id}
-                            text={candidate.name}
-                            value={candidate.id}
-                          />
-                        ))}
-                      </Select>
-                      <Select
-                        id={`role-${group.core_schema.id}`}
-                        labelText=""
-                        hideLabel
-                        size="sm"
-                        value="core"
-                        disabled={isMovingSchema}
-                        onChange={event =>
-                          handleMove(
-                            group.core_schema!.key,
-                            group.id,
-                            event.target.value as SchemaRole,
-                          )
-                        }
-                      >
-                        <SelectItem text="Member" value="member" />
-                        <SelectItem text="Core" value="core" />
-                      </Select>
-                    </>
-                  )}
-                </div>
+          {group.core_schema && (
+            <Link
+              className="block border border-carbon-datatable-grey bg-white p-6 text-giga-black no-underline transition-shadow hover:shadow-md"
+              to="/schema-management/$datasetKey"
+              params={{ datasetKey: group.core_schema.key }}
+            >
+              <div className="mb-4 flex flex-wrap gap-2">
+                <Tag type="blue">Shared core schema</Tag>
+                <Tag type="cool-gray">
+                  {group.core_schema.current_version_number
+                    ? `v${group.core_schema.current_version_number}`
+                    : "Unpublished"}
+                </Tag>
               </div>
-            </section>
-          ) : (
-            <div className="border-l-4 border-giga-yellow bg-white p-4">
-              <b>No core schema.</b>{" "}
-              <span className="text-giga-dark-gray">
-                Members in this group are currently applied independently.
-              </span>
-            </div>
+              <h3 className="mb-2 text-xl font-semibold">
+                {group.core_schema.name}
+              </h3>
+              <code className="block text-xs text-giga-dark-gray">
+                {group.core_schema.key}
+              </code>
+              <div className="mt-5 flex flex-wrap gap-4 border-t border-carbon-datatable-grey pt-4 text-xs text-giga-dark-gray">
+                <span>{group.core_schema.column_count} shared columns</span>
+                <span>
+                  {group.member_schemas.length} member{" "}
+                  {group.member_schemas.length === 1 ? "schema" : "schemas"}
+                </span>
+              </div>
+            </Link>
           )}
 
           <section className="mt-7">
             <div className="mb-3 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <Heading className="text-xl">Schemas in this group</Heading>
-                <p className="mt-1 text-sm text-giga-dark-gray">
-                  Select a schema to view and change its columns.
-                </p>
               </div>
               <label>
                 <span className="sr-only">Search schemas</span>
@@ -341,9 +176,6 @@ function SchemaGroupDetail({ groupKey }: { groupKey: string }) {
                   key={schema.id}
                   schema={schema}
                   coreColumnCount={group.core_schema?.column_count}
-                  groups={groups}
-                  isPrivileged={isPrivileged}
-                  onMove={handleMove}
                 />
               ))}
               {filteredMembers.length === 0 && (

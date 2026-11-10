@@ -36,6 +36,9 @@ from data_ingestion.schemas.schema_registry import (
     SchemaVersionReference,
 )
 
+# Sentinel column_name for schema placement proposals (group/role metadata).
+PLACEMENT_COLUMN_NAME = "__placement__"
+
 # Fields compared when diffing two column states (proposal before/after, or
 # two versions). Keep in sync with RegistryColumn.
 REGISTRY_COLUMN_FIELDS = [
@@ -44,6 +47,7 @@ REGISTRY_COLUMN_FIELDS = [
     "is_nullable",
     "is_important",
     "is_system_generated",
+    "source",
     "description",
     "primary_key",
     "partition_order",
@@ -183,6 +187,19 @@ def diff_columns(
     return diffs
 
 
+def diff_placement_states(
+    before: dict[str, Any] | None, after: dict[str, Any] | None
+) -> list[ProposalDiffField]:
+    before_dict = before or {}
+    after_dict = after or {}
+    diffs: list[ProposalDiffField] = []
+    for field in ("group_key", "group_name", "role"):
+        b, a = before_dict.get(field), after_dict.get(field)
+        if b != a:
+            diffs.append(ProposalDiffField(field=field, before=b, after=a))
+    return diffs
+
+
 # ---------------------------------------------------------------------------
 # Groups & datasets (Postgres governance metadata)
 # ---------------------------------------------------------------------------
@@ -287,7 +304,7 @@ async def create_dataset(
     key: str,
     name: str | None = None,
     description: str | None = None,
-    group_id: str | None,
+    group_id: str,
     role: str = "member",
 ) -> SchemaDataset:
     if await db.scalar(select(SchemaDataset).where(SchemaDataset.key == key)):
@@ -654,7 +671,7 @@ async def delete_draft_group(db: AsyncSession, key: str) -> None:
 async def move_dataset(
     db: AsyncSession,
     key: str,
-    group_id: str | None,
+    group_id: str,
     role: str | None = None,
 ) -> SchemaDataset:
     dataset = await get_dataset_by_key(db, key)
@@ -688,13 +705,11 @@ async def _validate_dataset_placement(
 ) -> None:
     if role not in {"core", "member"}:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="Invalid schema role")
-    if role == "core" and group_id is None:
+    if not group_id:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            detail="A core schema must belong to a schema group",
+            detail="A schema must belong to a schema group",
         )
-    if group_id is None:
-        return
     group = await db.get(DatasetGroup, group_id)
     if group is None or group.archived_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Schema group not found")
@@ -1028,11 +1043,115 @@ async def delete_link(
 # ---------------------------------------------------------------------------
 
 
-async def create_proposal(
+async def _placement_state(db: AsyncSession, dataset: SchemaDataset) -> dict[str, Any]:
+    group = (
+        await db.get(DatasetGroup, dataset.group_id)
+        if dataset.group_id is not None
+        else None
+    )
+    return {
+        "group_id": dataset.group_id,
+        "group_key": group.key if group else None,
+        "group_name": group.name if group else None,
+        "role": dataset.role,
+    }
+
+
+async def create_placement_proposal(
+    db: AsyncSession,
+    *,
+    dataset: SchemaDataset,
+    after_state: dict[str, Any] | None,
+    proposed_by_id: str,
+    proposed_by_email: str,
+) -> SchemaProposal:
+    if not after_state or "role" not in after_state:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="Placement proposals require after_state.role",
+        )
+    next_group_id = after_state.get("group_id") or None
+    next_role = after_state["role"]
+    if not next_group_id:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="A schema must belong to a schema group",
+        )
+
+    await _validate_dataset_placement(
+        db,
+        group_id=next_group_id,
+        role=next_role,
+        exclude_dataset_id=dataset.id,
+    )
+    await _validate_placement_columns(
+        db,
+        dataset=dataset,
+        group_id=next_group_id,
+        role=next_role,
+        exclude_dataset_id=dataset.id,
+    )
+
+    before = await _placement_state(db, dataset)
+    if before["group_id"] == next_group_id and before["role"] == next_role:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="Placement is unchanged",
+        )
+
+    existing_pending = await db.scalar(
+        select(SchemaProposal).where(
+            SchemaProposal.dataset_id == dataset.id,
+            SchemaProposal.proposal_type == "placement",
+            SchemaProposal.status == "pending",
+        )
+    )
+    if existing_pending is not None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="A pending placement proposal already exists for this schema",
+        )
+
+    next_group = await db.get(DatasetGroup, next_group_id)
+    if next_group is None or next_group.archived_at is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Schema group not found")
+
+    after = {
+        "group_id": next_group_id,
+        "group_key": next_group.key,
+        "group_name": next_group.name,
+        "role": next_role,
+    }
+
+    proposal = SchemaProposal(
+        dataset_id=dataset.id,
+        column_name=PLACEMENT_COLUMN_NAME,
+        proposal_type="placement",
+        before_state=before,
+        after_state=after,
+        proposed_by_id=proposed_by_id,
+        proposed_by_email=proposed_by_email,
+    )
+    db.add(proposal)
+    await db.flush()
+    db.add(
+        SchemaProposalAuditLog(
+            proposal_id=proposal.id,
+            action="proposed",
+            actor_id=proposed_by_id,
+            actor_email=proposed_by_email,
+        )
+    )
+    await db.commit()
+    await db.refresh(proposal)
+    return proposal
+
+
+async def create_proposal(  # noqa: C901
     db: AsyncSession,
     *,
     dataset_key: str,
-    column_name: str,
+    column_name: str | None,
     proposal_type: str,
     after_state: dict | None,
     proposed_by_id: str,
@@ -1040,12 +1159,30 @@ async def create_proposal(
 ) -> SchemaProposal:
     dataset = await get_dataset_by_key(db, dataset_key)
     if proposal_type == "promote":
+        if not column_name:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                detail="column_name is required for promote proposals",
+            )
         return await create_promotion_proposal(
             db,
             dataset=dataset,
             column_name=column_name,
             proposed_by_id=proposed_by_id,
             proposed_by_email=proposed_by_email,
+        )
+    if proposal_type == "placement":
+        return await create_placement_proposal(
+            db,
+            dataset=dataset,
+            after_state=after_state,
+            proposed_by_id=proposed_by_id,
+            proposed_by_email=proposed_by_email,
+        )
+    if not column_name:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="column_name is required for this proposal type",
         )
     await _validate_column_ownership(
         db,
@@ -1332,6 +1469,9 @@ async def get_proposal(db: AsyncSession, proposal_id: str) -> SchemaProposal:
 
 
 async def get_proposal_diff(proposal: SchemaProposal) -> list[ProposalDiffField]:
+    if proposal.proposal_type == "placement":
+        return diff_placement_states(proposal.before_state, proposal.after_state)
+
     before = RegistryColumn(**proposal.before_state) if proposal.before_state else None
     after = None
     if proposal.after_state:
@@ -1452,6 +1592,13 @@ async def approve_proposal(
             actor_id=actor_id,
             actor_email=actor_email,
         )
+    if proposal.proposal_type == "placement":
+        return await approve_placement_proposal(
+            db,
+            proposal,
+            actor_id=actor_id,
+            actor_email=actor_email,
+        )
 
     dataset = await db.scalar(
         select(SchemaDataset)
@@ -1505,6 +1652,90 @@ async def approve_proposal(
 
     proposal.status = "approved"
     proposal.schema_version = version.version
+    db.add_all(
+        [
+            SchemaProposalAuditLog(
+                proposal_id=proposal.id,
+                action="approved",
+                actor_id=actor_id,
+                actor_email=actor_email,
+            ),
+            SchemaProposalAuditLog(
+                proposal_id=proposal.id,
+                action="applied",
+                actor_id=actor_id,
+                actor_email=actor_email,
+            ),
+        ]
+    )
+    await db.commit()
+    await db.refresh(proposal)
+    return proposal
+
+
+async def approve_placement_proposal(
+    db: AsyncSession,
+    proposal: SchemaProposal,
+    *,
+    actor_id: str,
+    actor_email: str,
+) -> SchemaProposal:
+    """Apply group/role placement only — does not publish a schema version."""
+    dataset = await db.scalar(
+        select(SchemaDataset)
+        .where(SchemaDataset.id == proposal.dataset_id)
+        .with_for_update()
+    )
+    if dataset is None or dataset.archived_at is not None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="The schema no longer exists or is archived.",
+        )
+    after = proposal.after_state or {}
+    next_group_id = after.get("group_id") or None
+    next_role = after.get("role")
+    if next_role is None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="Placement proposal is missing a target role.",
+        )
+    if not next_group_id:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail="A schema must belong to a schema group",
+        )
+
+    current = await _placement_state(db, dataset)
+    if proposal.before_state and (
+        current["group_id"] != proposal.before_state.get("group_id")
+        or current["role"] != proposal.before_state.get("role")
+    ):
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail=(
+                f"{dataset.key} placement changed since this proposal was created. "
+                "Create a new placement proposal."
+            ),
+        )
+
+    await _validate_dataset_placement(
+        db,
+        group_id=next_group_id,
+        role=next_role,
+        exclude_dataset_id=dataset.id,
+    )
+    await _validate_placement_columns(
+        db,
+        dataset=dataset,
+        group_id=next_group_id,
+        role=next_role,
+        exclude_dataset_id=dataset.id,
+    )
+
+    dataset.group_id = next_group_id
+    dataset.role = next_role
+    proposal.status = "approved"
+    proposal.schema_version = None
     db.add_all(
         [
             SchemaProposalAuditLog(
@@ -1587,17 +1818,12 @@ async def approve_promotion_proposal(  # noqa: C901
     if not preview.can_promote:
         raise HTTPException(status.HTTP_409_CONFLICT, detail=preview.blockers)
 
+    # Do not require exact expected_version matches. Unrelated publishes
+    # (including approving another pending promotion) bump versions and would
+    # otherwise force users to recreate every remaining proposal. Conflict
+    # detection below is column-state based instead.
     for target in targets:
         dataset = dataset_by_id[target.dataset_id]
-        current_version = await get_current_version_number(db, dataset)
-        if current_version != target.expected_version:
-            raise HTTPException(
-                status.HTTP_409_CONFLICT,
-                detail=(
-                    f"{dataset.key} changed since this promotion was proposed. "
-                    "Create a new promotion proposal."
-                ),
-            )
         current_column = await get_registry_column(
             db, dataset.key, proposal.column_name
         )

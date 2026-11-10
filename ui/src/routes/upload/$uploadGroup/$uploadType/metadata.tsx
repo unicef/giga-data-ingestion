@@ -181,14 +181,16 @@ function Metadata() {
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
   const isSchoolData = uploadGroup === "school-data";
-  const schemaKey =
-    uploadType === "coverage"
-      ? `coverage_${uploadSlice.source}`
-      : `school_${uploadType}`;
-  const usesGovernedSchema = !isUnstructured && !isStructured;
+  const isGeolocation = uploadType === "geolocation";
+  const schemaKey = isGeolocation
+    ? uploadSlice.facilitySchemaKey
+    : uploadType === "coverage"
+    ? `coverage_${uploadSlice.source}`
+    : `school_${uploadType}`;
+  const usesGovernedSchema = !isUnstructured && !isStructured && !!schemaKey;
   const { data: resolvedSchemaQuery } = useQuery({
     queryKey: ["schema-registry", "resolved", schemaKey],
-    queryFn: () => api.schemaRegistry.getResolvedSchema(schemaKey),
+    queryFn: () => api.schemaRegistry.getResolvedSchema(schemaKey as string),
     enabled:
       usesGovernedSchema &&
       (uploadType !== "coverage" || uploadSlice.source !== null),
@@ -198,8 +200,13 @@ function Metadata() {
   const { countryDatasets, isPrivileged } = useRoles();
 
   const userCountryNames = useMemo(
-    () => countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [],
-    [countryDatasets, uploadType],
+    () =>
+      countryDatasets[
+        isGeolocation
+          ? "School Geolocation"
+          : `School ${capitalizeFirstLetter(uploadType)}`
+      ] ?? [],
+    [countryDatasets, isGeolocation, uploadType],
   );
 
   const [isUploading, setIsUploading] = useState<boolean>(false);

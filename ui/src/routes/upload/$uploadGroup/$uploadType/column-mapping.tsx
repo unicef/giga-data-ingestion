@@ -12,7 +12,7 @@ import {
   Tag,
 } from "@carbon/react";
 import * as Sentry from "@sentry/react";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   Link,
   createFileRoute,
@@ -35,8 +35,16 @@ import UploadReviewModal, {
 } from "@/components/upload/UploadReviewModal.tsx";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
+import { MetaSchema } from "@/types/schema.ts";
+import { RegistryColumn } from "@/types/schemaRegistry.ts";
 import { FuzzyCorrection, FuzzyValidationResponse } from "@/types/upload.ts";
 import { getDataPrivacyDocument } from "@/utils/download.ts";
+import {
+  FACILITY_ID_COLUMN,
+  filterFacilityUploadColumns,
+  isCreateRequiredColumn,
+  registryColumnsToMetaSchema,
+} from "@/utils/facilityUploadSchema.ts";
 
 const hasUnknownFuzzyValues = (result: FuzzyValidationResponse) =>
   result.columns.some(
@@ -51,13 +59,24 @@ export const Route = createFileRoute(
   component: UploadColumnMapping,
   loader: ({ params: { uploadType }, context: { queryClient, getState } }) => {
     const {
-      uploadSlice: { file, source },
+      uploadSlice: { file, source, facilitySchemaKey },
       uploadSliceActions: { setStepIndex },
     } = getState();
 
-    if (!file || (uploadType === "coverage" && !source)) {
+    if (
+      !file ||
+      (uploadType === "coverage" && !source) ||
+      (uploadType === "geolocation" && !facilitySchemaKey)
+    ) {
       setStepIndex(0);
       throw redirect({ to: ".." });
+    }
+
+    if (uploadType === "geolocation" && facilitySchemaKey) {
+      return queryClient.ensureQueryData({
+        queryFn: () => api.schemaRegistry.getResolvedSchema(facilitySchemaKey),
+        queryKey: ["schema-registry", "resolved", facilitySchemaKey],
+      });
     }
 
     const metaschemaName =
@@ -142,17 +161,14 @@ const SCHOOL_CATEGORY_ORDER: string[] = [
   "Other metadata",
 ];
 
-// Always mandatory (also for updates).
+// Coverage (legacy school schema) helpers.
 const REQUIRED_SCHOOL_COLUMNS = new Set<string>(["school_id_govt"]);
-
-// Mandatory only to create new schools.
 const CREATE_REQUIRED_SCHOOL_COLUMNS = new Set<string>([
   "school_name",
   "latitude",
   "longitude",
   "education_level_govt",
 ]);
-
 const IMPORTANT_SCHOOL_COLUMNS = new Set<string>([
   "source_lat_lon",
   "connectivity_govt",
@@ -170,6 +186,7 @@ function UploadColumnMapping() {
       columnMapping,
       source,
       columnLicense,
+      facilitySchemaKey,
       fuzzyValidationRequestKey,
       fuzzyValidationResult,
     },
@@ -203,15 +220,66 @@ function UploadColumnMapping() {
   const [hasAllCreateColumns, setHasAllCreateColumns] = useState(true);
 
   const { uploadType, uploadGroup } = Route.useParams();
+  const isGeolocation = uploadType === "geolocation";
   const metaschemaName =
     uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
 
-  const {
-    data: { data: schema },
-  } = useSuspenseQuery({
-    queryFn: () => api.schema.get(metaschemaName),
-    queryKey: ["schema", metaschemaName, false],
+  const { data: schemaPayload } = useSuspenseQuery({
+    queryKey: [
+      "upload-column-schema",
+      isGeolocation,
+      facilitySchemaKey,
+      metaschemaName,
+    ],
+    queryFn: () =>
+      isGeolocation
+        ? api.schemaRegistry.getResolvedSchema(facilitySchemaKey as string)
+        : api.schema.get(metaschemaName),
   });
+
+  const { data: facilitiesGroupQuery } = useQuery({
+    queryKey: ["schema-registry", "group", "facilities"],
+    queryFn: () => api.schemaRegistry.getGroup("facilities"),
+    enabled: isGeolocation,
+  });
+
+  const facilityEntityLabel = useMemo(() => {
+    if (!isGeolocation || !facilitySchemaKey) return "schools";
+    const member = (facilitiesGroupQuery?.data?.member_schemas ?? []).find(
+      schema => schema.key === facilitySchemaKey,
+    );
+    return member?.name || facilitySchemaKey;
+  }, [
+    facilitiesGroupQuery?.data?.member_schemas,
+    facilitySchemaKey,
+    isGeolocation,
+  ]);
+
+  const registryColumns: RegistryColumn[] = useMemo(() => {
+    if (!isGeolocation) return [];
+    const payload = schemaPayload?.data as
+      | { columns?: RegistryColumn[] }
+      | undefined;
+    return filterFacilityUploadColumns(payload?.columns ?? []);
+  }, [isGeolocation, schemaPayload]);
+
+  const schema: MetaSchema[] = useMemo(() => {
+    if (isGeolocation) {
+      return registryColumnsToMetaSchema(registryColumns);
+    }
+    return (schemaPayload?.data as MetaSchema[] | undefined) ?? [];
+  }, [isGeolocation, registryColumns, schemaPayload]);
+
+  const createRequiredColumnNames = useMemo(() => {
+    if (isGeolocation) {
+      return new Set(
+        registryColumns
+          .filter(isCreateRequiredColumn)
+          .map(column => column.name),
+      );
+    }
+    return CREATE_REQUIRED_SCHOOL_COLUMNS;
+  }, [isGeolocation, registryColumns]);
 
   const navigate = useNavigate({ from: Route.fullPath });
   const validateFuzzy = useMutation({
@@ -227,21 +295,29 @@ function UploadColumnMapping() {
     return "Create";
   };
 
-  // Initialize license values for mandatory columns to ODBL (except school_id_govt)
+  // Initialize license values for mandatory columns to ODBL (except govt ID).
   const defaultLicenseValues = useMemo(() => {
     const licenseDefaults = { ...columnLicense };
+    const skipLicenseEnforce = isGeolocation
+      ? FACILITY_ID_COLUMN
+      : "school_id_govt";
     schema.forEach(column => {
       if (
-        (!column.is_nullable ||
-          CREATE_REQUIRED_SCHOOL_COLUMNS.has(column.name)) &&
+        (!column.is_nullable || createRequiredColumnNames.has(column.name)) &&
         column.name in columnMapping &&
-        column.name !== "school_id_govt"
+        column.name !== skipLicenseEnforce
       ) {
         licenseDefaults[column.name] = "ODBL";
       }
     });
     return licenseDefaults;
-  }, [columnLicense, columnMapping, schema]);
+  }, [
+    columnLicense,
+    columnMapping,
+    createRequiredColumnNames,
+    isGeolocation,
+    schema,
+  ]);
 
   const hookForm = useForm<ConfigureColumnsForm>({
     mode: "onSubmit",
@@ -254,14 +330,16 @@ function UploadColumnMapping() {
   });
   const { handleSubmit } = hookForm;
   const onSubmit: SubmitHandler<ConfigureColumnsForm> = async data => {
-    // Ensure mandatory columns are set to ODBL (except school_id_govt)
+    // Ensure mandatory columns are set to ODBL (except govt ID).
+    const skipLicenseEnforce = isGeolocation
+      ? FACILITY_ID_COLUMN
+      : "school_id_govt";
     const enforcedLicense = { ...data.license };
     schema.forEach(column => {
       if (
-        (!column.is_nullable ||
-          CREATE_REQUIRED_SCHOOL_COLUMNS.has(column.name)) &&
+        (!column.is_nullable || createRequiredColumnNames.has(column.name)) &&
         column.name in data.mapping &&
-        column.name !== "school_id_govt"
+        column.name !== skipLicenseEnforce
       ) {
         enforcedLicense[column.name] = "ODBL";
       }
@@ -279,10 +357,11 @@ function UploadColumnMapping() {
     setColumnLicense(dataWithNullsReplaced.license);
     setValidationError(null);
 
-    // Create columns only matter for the school (geolocation) schema.
+    // Create-only columns matter for geolocation / school schemas.
+    const checksCreateColumns = isGeolocation || isSchoolSchema;
     const allCreateColumnsMapped =
-      !isSchoolSchema ||
-      [...CREATE_REQUIRED_SCHOOL_COLUMNS].every(
+      !checksCreateColumns ||
+      [...createRequiredColumnNames].every(
         col => col in dataWithNullsReplaced.mapping,
       );
     setHasAllCreateColumns(allCreateColumnsMapped);
@@ -494,7 +573,8 @@ function UploadColumnMapping() {
     void navigate({ to: "../metadata" });
   };
 
-  const isSchoolSchema = metaschemaName.startsWith("school_");
+  const isSchoolSchema = !isGeolocation && metaschemaName.startsWith("school_");
+  const usesFacilityOrSchoolSchema = isGeolocation || isSchoolSchema;
 
   const categorizedRows = useMemo(() => {
     const categoryRows: Record<
@@ -517,16 +597,12 @@ function UploadColumnMapping() {
     }[] = [];
 
     schema.forEach(column => {
-      const adjustedColumn =
-        isSchoolSchema &&
-        (REQUIRED_SCHOOL_COLUMNS.has(column.name) ||
+      const adjustedColumn = isSchoolSchema
+        ? REQUIRED_SCHOOL_COLUMNS.has(column.name) ||
           CREATE_REQUIRED_SCHOOL_COLUMNS.has(column.name) ||
-          IMPORTANT_SCHOOL_COLUMNS.has(column.name))
+          IMPORTANT_SCHOOL_COLUMNS.has(column.name)
           ? {
               ...column,
-              // school_id_govt stays mandatory; create-only columns are made
-              // optional here so they don't block "Continue" (the modal checks
-              // them once we know whether new schools are being created).
               is_nullable: REQUIRED_SCHOOL_COLUMNS.has(column.name)
                 ? false
                 : CREATE_REQUIRED_SCHOOL_COLUMNS.has(column.name)
@@ -539,7 +615,8 @@ function UploadColumnMapping() {
                 ? true
                 : column.is_important,
             }
-          : column;
+          : column
+        : column;
 
       const row = {
         id: column.id,
@@ -556,7 +633,7 @@ function UploadColumnMapping() {
         license: <ColumnLicense column={adjustedColumn} />,
       };
 
-      if (isSchoolSchema) {
+      if (usesFacilityOrSchoolSchema) {
         const category = SCHOOL_COLUMN_CATEGORIES[column.name];
         if (category) {
           if (!categoryRows[category]) {
@@ -570,7 +647,9 @@ function UploadColumnMapping() {
       uncategorized.push(row);
     });
 
-    const pinned = ["school_id_govt", "school_name"];
+    const pinned = isGeolocation
+      ? [FACILITY_ID_COLUMN]
+      : ["school_id_govt", "school_name"];
     if (categoryRows["School profile"]) {
       categoryRows["School profile"].sort((a, b) => {
         const ai = pinned.indexOf(a.name);
@@ -581,9 +660,24 @@ function UploadColumnMapping() {
         return 0;
       });
     }
+    uncategorized.sort((a, b) => {
+      const ai = pinned.indexOf(a.name);
+      const bi = pinned.indexOf(b.name);
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
+      return a.name.localeCompare(b.name);
+    });
 
     return { categoryRows, uncategorized };
-  }, [detectedColumns, isSchoolSchema, schema, selectedColumns]);
+  }, [
+    detectedColumns,
+    isGeolocation,
+    isSchoolSchema,
+    schema,
+    selectedColumns,
+    usesFacilityOrSchoolSchema,
+  ]);
 
   const DESCRIPTION = (
     <>
@@ -633,8 +727,12 @@ function UploadColumnMapping() {
             <div>{DESCRIPTION}</div>
             <div className="flex gap-4">
               <Tag type="red">*Required</Tag>
-              {isSchoolSchema && (
-                <Tag type="blue">Required to create new schools</Tag>
+              {usesFacilityOrSchoolSchema && (
+                <Tag type="blue">
+                  {isGeolocation
+                    ? "Required to create new facilities"
+                    : "Required to create new schools"}
+                </Tag>
               )}
               <Tag type="purple">
                 <div className="flex align-middle">
@@ -645,7 +743,7 @@ function UploadColumnMapping() {
           </section>
 
           <section className="w-full space-y-8">
-            {isSchoolSchema ? (
+            {usesFacilityOrSchoolSchema ? (
               <>
                 {SCHOOL_CATEGORY_ORDER.map(category => {
                   const rowsForCategory =
@@ -733,6 +831,7 @@ function UploadColumnMapping() {
         </Stack>
       </form>
       <UploadReviewModal
+        entityLabel={isGeolocation ? facilityEntityLabel : "schools"}
         errorMessage={impactError}
         fuzzyErrorMessage={validationError}
         fuzzyValidationResult={

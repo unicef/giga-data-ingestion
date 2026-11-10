@@ -1,5 +1,5 @@
 import { Heading, Section, Stack } from "@carbon/react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 
 import {
   listSchemaDatasetsQueryOptions,
@@ -25,6 +25,13 @@ function SchemaManagementProposals() {
     <Section className="container py-6">
       <Stack gap={6}>
         <Section>
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+            <Link className="cds--link" to="/schema-management">
+              Schema groups
+            </Link>
+            <span>/</span>
+            <span className="text-giga-dark-gray">Proposals</span>
+          </div>
           <Heading>Schema Change Proposals</Heading>
         </Section>
         <Section>

@@ -9,7 +9,7 @@ import {
   Tag,
 } from "@carbon/react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import { api } from "@/api";
 import {
@@ -21,6 +21,7 @@ import LifecycleActions from "@/components/schema-management/LifecycleActions.ts
 import useRoles from "@/hooks/useRoles.ts";
 
 function DatasetsTable() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -92,10 +93,6 @@ function DatasetsTable() {
       <div className="flex flex-wrap items-start justify-between gap-6">
         <div>
           <Heading>Schema groups</Heading>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-giga-dark-gray">
-            Organize related schemas around a shared core definition, review
-            their governance status, and open a group to manage its schemas.
-          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {isPrivileged && (
@@ -185,70 +182,72 @@ function DatasetsTable() {
           const memberSchemas = groupDatasets.filter(
             dataset => dataset.role === "member",
           );
-          const pendingProposalCount = groupDatasets.reduce(
+          const groupPendingCount = groupDatasets.reduce(
             (total, dataset) => total + dataset.pending_proposal_count,
             0,
           );
+          const isArchivedGroup = group.archived_at != null;
+          const openGroup = () => {
+            if (isArchivedGroup) return;
+            void navigate({
+              to: "/schema-management/groups/$groupKey",
+              params: { groupKey: group.key },
+            });
+          };
 
           return (
             <div
               key={group.id}
-              className={`border border-carbon-datatable-grey bg-white p-6 transition-shadow hover:shadow-md ${
-                group.archived_at ? "opacity-80" : ""
+              role={isArchivedGroup ? undefined : "link"}
+              tabIndex={isArchivedGroup ? undefined : 0}
+              className={`border border-carbon-datatable-grey bg-white p-6 transition-shadow ${
+                isArchivedGroup
+                  ? "opacity-80"
+                  : "cursor-pointer hover:shadow-md"
               }`}
+              onClick={openGroup}
+              onKeyDown={event => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  openGroup();
+                }
+              }}
             >
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="flex flex-wrap gap-2">
-                  {group.archived_at && <Tag type="gray">Archived</Tag>}
-                  <Tag type={coreSchema ? "blue" : "gray"}>
-                    {coreSchema ? `Core: ${coreSchema.name}` : "No core schema"}
-                  </Tag>
-                  {pendingProposalCount > 0 && (
-                    <Tag type="warm-gray">{pendingProposalCount} pending</Tag>
+                  {isArchivedGroup && <Tag type="gray">Archived</Tag>}
+                  {groupPendingCount > 0 && (
+                    <Tag type="warm-gray">{groupPendingCount} pending</Tag>
                   )}
                 </div>
                 {isPrivileged && (
-                  <LifecycleActions
-                    resourceType="group"
-                    resourceKey={group.key}
-                    archived={group.archived_at != null}
-                    compact
-                    onChanged={() => undefined}
-                  />
+                  <div
+                    onClick={event => event.stopPropagation()}
+                    onKeyDown={event => event.stopPropagation()}
+                  >
+                    <LifecycleActions
+                      resourceType="group"
+                      resourceKey={group.key}
+                      archived={isArchivedGroup}
+                      compact
+                      onChanged={() => undefined}
+                    />
+                  </div>
                 )}
               </div>
-              {group.archived_at ? (
-                <h3 className="mb-2 text-xl font-semibold">{group.name}</h3>
-              ) : (
-                <Link
-                  className="mb-2 block text-xl font-semibold text-giga-black no-underline hover:text-giga-blue"
-                  to="/schema-management/groups/$groupKey"
-                  params={{ groupKey: group.key }}
-                >
-                  {group.name}
-                </Link>
-              )}
+              <h3 className="mb-2 text-xl font-semibold text-giga-black">
+                {group.name}
+              </h3>
               <p className="min-h-12 text-sm leading-5 text-giga-dark-gray">
                 {group.description ?? "Related governed schemas."}
               </p>
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-carbon-datatable-grey pt-4">
-                <div className="flex flex-wrap gap-4 text-xs text-giga-dark-gray">
-                  <span>
-                    {memberSchemas.length} member{" "}
-                    {memberSchemas.length === 1 ? "schema" : "schemas"}
-                  </span>
-                  {coreSchema && (
-                    <span>{coreSchema.column_count} shared columns</span>
-                  )}
-                </div>
-                {!group.archived_at && (
-                  <Link
-                    className="text-xs font-semibold text-giga-dark-blue no-underline"
-                    to="/schema-management/groups/$groupKey"
-                    params={{ groupKey: group.key }}
-                  >
-                    Open group →
-                  </Link>
+              <div className="mt-5 flex flex-wrap gap-4 border-t border-carbon-datatable-grey pt-4 text-xs text-giga-dark-gray">
+                <span>
+                  {memberSchemas.length} member{" "}
+                  {memberSchemas.length === 1 ? "schema" : "schemas"}
+                </span>
+                {coreSchema && (
+                  <span>{coreSchema.column_count} shared columns</span>
                 )}
               </div>
             </div>

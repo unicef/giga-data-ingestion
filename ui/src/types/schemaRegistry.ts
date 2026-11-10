@@ -1,4 +1,4 @@
-export type ProposalType = "add" | "edit" | "delete" | "promote";
+export type ProposalType = "add" | "edit" | "delete" | "promote" | "placement";
 export type ProposalStatus =
   | "pending"
   | "approved"
@@ -7,6 +7,7 @@ export type ProposalStatus =
 export type CriticalFor = "always" | "create_only";
 export type SchemaRole = "core" | "member";
 export type ColumnOrigin = "core" | "member";
+export type ColumnSource = "government" | "system_generated";
 
 export interface DatasetGroup {
   id: string;
@@ -60,6 +61,7 @@ export interface RegistryColumn {
   is_nullable: boolean | null;
   is_important: boolean | null;
   is_system_generated: boolean | null;
+  source: ColumnSource | null;
   description: string | null;
   primary_key: boolean | null;
   partition_order: number | null;
@@ -141,9 +143,9 @@ export interface PromotionPreview {
 }
 
 export interface CreateProposalRequest {
-  column_name: string;
+  column_name?: string | null;
   proposal_type: ProposalType;
-  after_state?: Partial<RegistryColumn> | null;
+  after_state?: Record<string, unknown> | null;
 }
 
 export interface Proposal {

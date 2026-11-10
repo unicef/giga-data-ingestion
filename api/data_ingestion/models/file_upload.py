@@ -102,20 +102,33 @@ class FileUpload(BaseModel):
                 f"{country_segment}/{self.filename}"
             )
 
+        if self.country == "N/A":
+            country_path = "$NA"
+        else:
+            country_path = self.country
+
+        # Facility geolocation: raw/uploads/facility-geolocation/<ISO3>/<schema_key>/<file>
+        if self.dataset == "geolocation" and self.schema_key:
+            return "/".join(
+                [
+                    constants.UPLOAD_PATH_PREFIX,
+                    "facility-geolocation",
+                    country_path,
+                    self.schema_key,
+                    self.filename,
+                ]
+            )
+
         # For other datasets, use the uploads path
         if self.dataset == "unstructured":
             dataset_path = "unstructured"
         else:
             dataset_path = f"school-{self.dataset}"
 
-        filename_parts = [constants.UPLOAD_PATH_PREFIX, dataset_path]
-
-        # Add country to path for non-structured datasets
-        if self.country == "N/A":
-            country_path = "$NA"
-        else:
-            country_path = self.country
-        filename_parts.append(country_path)
-
-        filename_parts.append(self.filename)
+        filename_parts = [
+            constants.UPLOAD_PATH_PREFIX,
+            dataset_path,
+            country_path,
+            self.filename,
+        ]
         return "/".join(filename_parts)

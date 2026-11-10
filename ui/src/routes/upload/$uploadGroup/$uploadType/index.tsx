@@ -33,6 +33,7 @@ import {
 import { useStore } from "@/context/store";
 import useRoles from "@/hooks/useRoles.ts";
 import { sourceOptions } from "@/mocks/metadataFormValues.tsx";
+import { registryColumnsToMetaSchema } from "@/utils/facilityUploadSchema.ts";
 import { capitalizeFirstLetter } from "@/utils/string.ts";
 import { HeaderDetector } from "@/utils/upload.ts";
 
@@ -171,10 +172,16 @@ export default function Index() {
       setFile,
       setMode,
       setTimeStamp,
+      setFacilitySchemaKey,
     },
   } = useStore();
 
-  const { country: storeCountry, file, source: storeSource } = uploadSlice;
+  const {
+    country: storeCountry,
+    file,
+    source: storeSource,
+    facilitySchemaKey: storeFacilitySchemaKey,
+  } = uploadSlice;
   const hasUploadedFile = file != null;
   const { countryDatasets, isPrivileged } = useRoles();
 
@@ -221,17 +228,20 @@ export default function Index() {
   const { register, watch } = useForm<{
     country: string;
     source: string | null;
+    facilitySchemaKey: string;
   }>({
     mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
       country: storeCountry,
       source: storeSource,
+      facilitySchemaKey: storeFacilitySchemaKey ?? "",
     },
   });
 
   const country = watch("country");
   const source = watch("source");
+  const facilitySchemaKey = watch("facilitySchemaKey");
 
   const { data: allGroupsQuery } = useQuery({
     queryKey: ["groups"],
@@ -240,9 +250,35 @@ export default function Index() {
   });
 
   const userCountryNames = useMemo(
-    () => countryDatasets[`School ${capitalizeFirstLetter(uploadType)}`] ?? [],
-    [countryDatasets, uploadType],
+    () =>
+      // Facility geolocation keeps the School Geolocation country role list.
+      countryDatasets[
+        isGeolocation
+          ? "School Geolocation"
+          : `School ${capitalizeFirstLetter(uploadType)}`
+      ] ?? [],
+    [countryDatasets, isGeolocation, uploadType],
   );
+
+  const { data: facilitiesGroupQuery } = useQuery({
+    queryKey: ["schema-registry", "group", "facilities"],
+    queryFn: () => api.schemaRegistry.getGroup("facilities"),
+    enabled: isGeolocation,
+  });
+  const facilitySchemas = useMemo(
+    () =>
+      (facilitiesGroupQuery?.data?.member_schemas ?? []).filter(
+        schema => schema.archived_at == null,
+      ),
+    [facilitiesGroupQuery],
+  );
+
+  const { data: resolvedFacilityQuery, isFetching: isResolvedFetching } =
+    useQuery({
+      queryKey: ["schema-registry", "resolved", facilitySchemaKey],
+      queryFn: () => api.schemaRegistry.getResolvedSchema(facilitySchemaKey),
+      enabled: isGeolocation && !!facilitySchemaKey,
+    });
 
   const allCountryNames = useMemo(() => {
     const allGroups = allGroupsQuery?.data ?? [];
@@ -268,15 +304,22 @@ export default function Index() {
     queryKey: ["schema", metaschemaName, false],
     enabled:
       !isHealth &&
-      (isCoverage
-        ? !!source
-        : isGeolocation
-        ? true
-        : !isUnstructured && !isStructured),
+      !isGeolocation &&
+      (isCoverage ? !!source : !isUnstructured && !isStructured),
   });
 
   const schemaData = schemaQuery?.data;
-  const schema = useMemo(() => schemaData ?? [], [schemaData]);
+  const schema = useMemo(() => {
+    if (isGeolocation) {
+      return registryColumnsToMetaSchema(
+        resolvedFacilityQuery?.data?.columns ?? [],
+      );
+    }
+    return schemaData ?? [];
+  }, [isGeolocation, resolvedFacilityQuery, schemaData]);
+  const isSchemaFetchingEffective = isGeolocation
+    ? !facilitySchemaKey || isResolvedFetching
+    : isSchemaFetching;
 
   useEffect(() => {
     if (!isHealth) return;
@@ -317,6 +360,19 @@ export default function Index() {
     setFile,
     setTimeStamp,
     validTypes,
+  ]);
+
+  useEffect(() => {
+    if (!isGeolocation) return;
+    setFacilitySchemaKey(facilitySchemaKey || null);
+    setDetectedColumns([]);
+    setColumnMapping({});
+  }, [
+    facilitySchemaKey,
+    isGeolocation,
+    setColumnMapping,
+    setDetectedColumns,
+    setFacilitySchemaKey,
   ]);
 
   const handleProceedToNextStep = async () => {
@@ -362,17 +418,18 @@ export default function Index() {
     !hasUploadedFile ||
     (shouldSelectCountry && !country) ||
     (isCoverage && !source) ||
-    (!isStructured && (isSchemaFetching || isParsing || hasParsingError));
-  const isSchemaLoading = !(
-    (!isCoverage && !isSchemaFetching) ||
-    (!isGeolocation && !isSchemaFetching) ||
-    (isCoverage && !!source && !isSchemaFetching) ||
-    (isGeolocation && !isSchemaFetching)
-  );
+    (isGeolocation && !facilitySchemaKey) ||
+    (!isStructured &&
+      (isSchemaFetchingEffective || isParsing || hasParsingError));
+  const isSchemaLoading = isGeolocation
+    ? !facilitySchemaKey || isResolvedFetching
+    : isCoverage
+    ? !source || isSchemaFetching
+    : isSchemaFetching;
   const shouldShowSkeleton =
-    (!isCoverage && isSchemaLoading) ||
+    (!isCoverage && !isGeolocation && isSchemaLoading) ||
     (isCoverage && !!source) ||
-    isGeolocation;
+    (isGeolocation && !!facilitySchemaKey);
 
   function handleRemoveFile() {
     setFile(null);
@@ -612,6 +669,25 @@ export default function Index() {
 
   return (
     <Stack gap={10}>
+      {isGeolocation && (
+        <Select
+          id="facilitySchemaKey"
+          labelText="Facility type"
+          placeholder="Facility type"
+          className="w-1/2"
+          {...register("facilitySchemaKey", { required: true })}
+        >
+          <SelectItem value="" text="Select facility type" />
+          {facilitySchemas.map(schema => (
+            <SelectItem
+              key={schema.key}
+              text={schema.name || schema.key}
+              value={schema.key}
+            />
+          ))}
+        </Select>
+      )}
+
       {shouldSelectCountry && (
         <Select
           id="country"

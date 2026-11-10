@@ -153,7 +153,7 @@ function UploadLanding(props: UploadLandingProps) {
                   size="xl"
                   renderIcon={Add}
                 >
-                  School geolocation
+                  Facility geolocation
                 </Button>
               )}
               {(hasCoverage || isAdmin) && (

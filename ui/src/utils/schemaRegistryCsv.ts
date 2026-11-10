@@ -10,6 +10,7 @@ const CSV_FIELDS: (keyof RegistryColumn)[] = [
   "is_nullable",
   "is_important",
   "is_system_generated",
+  "source",
   "description",
   "primary_key",
   "partition_order",

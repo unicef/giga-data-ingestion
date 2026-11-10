@@ -65,7 +65,6 @@ from data_ingestion.utils.nocodb import (
 )
 from data_ingestion.utils.upload_impact import (
     build_upload_impact_preview,
-    get_school_id_file_column,
     normalize_school_id,
 )
 
@@ -468,40 +467,64 @@ def _parse_spreadsheet(
 
 
 def _silver_table(dataset: str, country_code: str) -> str:
+    if dataset == "geolocation":
+        return f"delta_lake.facility_geolocation_silver.{country_code.lower()}"
     schema = dataset.lower().replace("school ", "")
     return f"delta_lake.school_{schema}_silver.{country_code.lower()}"
 
 
-def _get_master_school_ids(dataset: str, country_code: str, db: Session) -> set[str]:
+def _get_master_entity_ids(dataset: str, country_code: str, db: Session) -> set[str]:
+    from data_ingestion.utils.upload_impact import id_schema_column_for_dataset
+
+    id_column = id_schema_column_for_dataset(dataset)
     table_name = _silver_table(dataset, country_code)
     try:
         rows = (
             db.execute(
                 text(
-                    f"SELECT school_id_govt FROM {table_name} "  # nosec B608
-                    "WHERE school_id_govt IS NOT NULL"
+                    f"SELECT {id_column} FROM {table_name} "  # nosec B608
+                    f"WHERE {id_column} IS NOT NULL"
                 )
             )
             .mappings()
             .all()
         )
     except Exception as err:
-        if "TABLE_NOT_FOUND" in str(err):
+        err_text = str(err)
+        # Missing country silver schema/table → treat as empty master (all new).
+        if any(
+            token in err_text
+            for token in (
+                "TABLE_NOT_FOUND",
+                "SCHEMA_NOT_FOUND",
+                "does not exist",
+            )
+        ):
+            logger.info(
+                f"Silver table {table_name} not found; treating master IDs as empty"
+            )
             return set()
-        logger.error(f"Failed to fetch master school IDs from {table_name}: {err}")
+        logger.error(f"Failed to fetch master IDs from {table_name}: {err}")
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Unable to fetch master school IDs from Trino.",
+            detail="Unable to fetch master IDs from Trino.",
         ) from err
 
     return {
         normalized
         for row in rows
-        if (normalized := normalize_school_id(row["school_id_govt"])) is not None
+        if (normalized := normalize_school_id(row[id_column])) is not None
     }
 
 
-def _get_impact_preview_school_id_column(form: UploadImpactPreviewRequest) -> str:
+def _get_impact_preview_id_column(
+    dataset: str, form: UploadImpactPreviewRequest
+) -> str:
+    from data_ingestion.utils.upload_impact import (
+        get_id_file_column,
+        id_schema_column_for_dataset,
+    )
+
     try:
         column_mapping = orjson.loads(form.column_to_schema_mapping)
     except Exception as err:
@@ -511,7 +534,10 @@ def _get_impact_preview_school_id_column(form: UploadImpactPreviewRequest) -> st
         ) from err
 
     try:
-        return get_school_id_file_column(column_mapping)
+        return get_id_file_column(
+            column_mapping,
+            preferred_schema_columns=(id_schema_column_for_dataset(dataset),),
+        )
     except ValueError as err:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -619,7 +645,7 @@ async def _validate_schema_pins(db: AsyncSession, form: FileUploadRequest) -> No
 
 
 @router.post("", response_model=FileUploadSchema)
-async def upload_file(
+async def upload_file(  # noqa: C901
     response: Response,
     dataset: str,
     dq_mode: Optional[DQModeEnum] = Query(None),
@@ -631,6 +657,12 @@ async def upload_file(
     form.dq_mode = getattr(dq_mode, "value", None) or form.dq_mode or "master"
 
     file = form.file
+
+    if dataset == "geolocation" and not form.schema_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="schema_key is required for geolocation uploads",
+        )
 
     if not is_privileged:
         country_dataset = f"{form.country}-School {dataset.capitalize()}"
@@ -1360,12 +1392,12 @@ async def get_upload_impact_preview(
             detail=f"Impact preview currently only supports {', '.join(constants.SUPPORTED_SPREADSHEET_EXTENSIONS)} files.",
         )
 
-    school_id_file_column = _get_impact_preview_school_id_column(form)
+    id_file_column = _get_impact_preview_id_column(dataset, form)
 
     await file.seek(0)
     try:
         content = await file.read()
-        df = _parse_spreadsheet(content, file_extension, {school_id_file_column: str})
+        df = _parse_spreadsheet(content, file_extension, {id_file_column: str})
     except Exception as err:
         logger.error(f"Failed to parse file for impact preview: {err}")
         raise HTTPException(
@@ -1373,10 +1405,10 @@ async def get_upload_impact_preview(
             detail=f"Invalid {file_extension} format.",
         ) from err
 
-    if school_id_file_column not in df.columns:
+    if id_file_column not in df.columns:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Mapped school_id_govt column '{school_id_file_column}' was not found in the file.",
+            detail=f"Mapped ID column '{id_file_column}' was not found in the file.",
         )
 
     country_code = coco.convert(form.country, to="ISO3")
@@ -1386,17 +1418,17 @@ async def get_upload_impact_preview(
             detail="Country could not be resolved to an ISO3 code.",
         )
 
-    file_school_ids = [
+    file_entity_ids = [
         normalized_id
-        for value in df[school_id_file_column].tolist()
+        for value in df[id_file_column].tolist()
         if (normalized_id := normalize_school_id(value)) is not None
     ]
 
-    master_school_ids = _get_master_school_ids(dataset, country_code, trino)
+    master_entity_ids = _get_master_entity_ids(dataset, country_code, trino)
     return build_upload_impact_preview(
-        file_school_ids=file_school_ids,
+        file_school_ids=file_entity_ids,
         total_rows=len(df.index),
-        master_school_ids=master_school_ids,
+        master_school_ids=master_entity_ids,
     )
 
 

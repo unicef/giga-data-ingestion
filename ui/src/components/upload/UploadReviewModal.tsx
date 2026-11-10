@@ -21,6 +21,8 @@ export interface UploadImpactPreview {
 
 interface UploadReviewModalProps {
   errorMessage: string | null;
+  /** Plural facility/entity label, e.g. "Health facilities" or "Schools". */
+  entityLabel?: string | null;
   fuzzyErrorMessage: string | null;
   fuzzyValidationResult: FuzzyValidationResponse | null;
   impactPreview: UploadImpactPreview | null;
@@ -33,6 +35,12 @@ interface UploadReviewModalProps {
   onStartImport: () => void;
   open: boolean;
   step: "impact" | "fuzzy";
+}
+
+function formatEntityLabel(raw: string | null | undefined) {
+  const trimmed = raw?.trim();
+  if (!trimmed) return "schools";
+  return trimmed;
 }
 
 interface ImpactPreviewRowProps {
@@ -55,6 +63,7 @@ function ImpactPreviewRow({ icon: Icon, label, value }: ImpactPreviewRowProps) {
 
 function UploadReviewModal({
   errorMessage,
+  entityLabel,
   fuzzyErrorMessage,
   fuzzyValidationResult,
   impactPreview,
@@ -82,12 +91,17 @@ function UploadReviewModal({
     );
   }
 
+  const entity = formatEntityLabel(entityLabel);
+  const entityLower = entity.charAt(0).toLowerCase() + entity.slice(1);
+  const entityTitle = entity.charAt(0).toUpperCase() + entity.slice(1);
+  const idNoun = entityLower === "schools" ? "school ID" : "facility ID";
+
   const canStartImport = !!impactPreview || !!errorMessage;
 
   const newSchools = impactPreview?.newSchools ?? 0;
   const schoolsToUpdate = impactPreview?.schoolsToUpdate ?? 0;
-  // New schools can't be created (create columns missing): warn when there are
-  // also schools to update, block when the upload is create-only.
+  // New entities can't be created (create columns missing): warn when there are
+  // also updates, block when the upload is create-only.
   const createColumnsMissing =
     !!impactPreview && missingCreateColumns && newSchools > 0;
   const isCreateOnlyBlocked = createColumnsMissing && schoolsToUpdate === 0;
@@ -116,7 +130,7 @@ function UploadReviewModal({
 
         {isImpactLoading && (
           <InlineLoading
-            description="Checking schools against the master dataset..."
+            description={`Checking ${entityLower} against the master dataset...`}
             status="active"
           />
         )}
@@ -127,7 +141,7 @@ function UploadReviewModal({
               aria-label="upload impact preview error"
               kind="error"
               lowContrast
-              title="Unable to check school IDs"
+              title={`Unable to check ${idNoun}s`}
               subtitle={errorMessage}
             />
             <Button kind="tertiary" size="sm" onClick={onRetryImpactPreview}>
@@ -140,25 +154,25 @@ function UploadReviewModal({
           <div className="space-y-3">
             <ImpactPreviewRow
               icon={AddAlt}
-              label="New schools"
+              label={`New ${entityLower}`}
               value={impactPreview.newSchools}
             />
             <ImpactPreviewRow
               icon={Renew}
-              label="Schools to be updated"
+              label={`${entityTitle} to be updated`}
               value={impactPreview.schoolsToUpdate}
             />
             {impactPreview.missingSchoolIdRows > 0 && (
               <ImpactPreviewRow
                 icon={WarningAlt}
-                label="Rows missing school ID"
+                label={`Rows missing ${idNoun}`}
                 value={impactPreview.missingSchoolIdRows}
               />
             )}
             {impactPreview.duplicateSchoolIdRows > 0 && (
               <ImpactPreviewRow
                 icon={RowDelete}
-                label="Rows with duplicated school ID"
+                label={`Rows with duplicated ${idNoun}`}
                 value={impactPreview.duplicateSchoolIdRows}
               />
             )}
@@ -167,15 +181,15 @@ function UploadReviewModal({
 
         {showCreateWarning && (
           <InlineNotification
-            aria-label="schools will not be created warning"
+            aria-label="entities will not be created warning"
             kind="warning"
             lowContrast
-            title="Some schools won't be created"
+            title={`Some ${entityLower} won't be created`}
             subtitle={`${commaNumber(
               newSchools,
-            )} school(s) in your file don't exist yet and won't be created, because the columns required to create schools (school_name, latitude, longitude, education_level_govt) aren't mapped. Only the ${commaNumber(
+            )} ${entityLower} in your file don't exist yet and won't be created, because the columns required to create them aren't mapped. Only the ${commaNumber(
               schoolsToUpdate,
-            )} existing school(s) will be updated.`}
+            )} existing ${entityLower} will be updated.`}
           />
         )}
 
@@ -187,7 +201,7 @@ function UploadReviewModal({
             title="Nothing to upload"
             subtitle={`All ${commaNumber(
               newSchools,
-            )} school(s) in your file are new, but the columns required to create schools (school_name, latitude, longitude, education_level_govt) aren't mapped. Map them to create these schools, or upload a file with existing schools to update.`}
+            )} ${entityLower} in your file are new, but the columns required to create them aren't mapped. Map them to create these ${entityLower}, or upload a file with existing ${entityLower} to update.`}
           />
         )}
       </Stack>

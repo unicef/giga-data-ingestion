@@ -84,7 +84,7 @@ export default function routes(axi: AxiosInstance) {
       role,
     }: {
       key: string;
-      group_id: string | null;
+      group_id: string;
       role?: SchemaRole;
     }): Promise<AxiosResponse<SchemaDataset>> => {
       return axi.patch(`/schema-registry/datasets/${key}/move`, {
@@ -153,6 +153,23 @@ export default function routes(axi: AxiosInstance) {
       return axi.get(`/schema-registry/datasets/${key}/columns`, {
         params: as_of_version ? { as_of_version } : undefined,
       });
+    },
+    getColumn: (
+      key: string,
+      name: string,
+      as_of_version?: number,
+    ): Promise<AxiosResponse<RegistryColumn>> => {
+      return axi.get(`/schema-registry/datasets/${key}/columns/${name}`, {
+        params: as_of_version ? { as_of_version } : undefined,
+      });
+    },
+    getColumnHistory: (
+      key: string,
+      name: string,
+    ): Promise<AxiosResponse<Proposal[]>> => {
+      return axi.get(
+        `/schema-registry/datasets/${key}/columns/${name}/history`,
+      );
     },
     listVersions: (key: string): Promise<AxiosResponse<DatasetVersion[]>> => {
       return axi.get(`/schema-registry/datasets/${key}/versions`);

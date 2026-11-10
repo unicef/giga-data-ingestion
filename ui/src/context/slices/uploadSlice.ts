@@ -37,6 +37,8 @@ export interface UploadSliceState {
     uploadId: string;
     mode: UploadMode | null;
     pendingSchoolDataPayload: UploadParams | null;
+    /** Selected facilities member schema key for geolocation uploads. */
+    facilitySchemaKey: string | null;
     stepIndex: number;
     source: string | null;
   };
@@ -79,6 +81,9 @@ export interface UploadSliceActions {
     setPendingSchoolDataPayload: (
       value: UploadSliceState["uploadSlice"]["pendingSchoolDataPayload"],
     ) => void;
+    setFacilitySchemaKey: (
+      value: UploadSliceState["uploadSlice"]["facilitySchemaKey"],
+    ) => void;
   };
 }
 
@@ -100,6 +105,7 @@ export const initialUploadSliceState: UploadSliceState = {
     uploadId: "",
     mode: null,
     pendingSchoolDataPayload: null,
+    facilitySchemaKey: null,
     source: null,
   },
 };
@@ -187,6 +193,10 @@ export const createUploadSlice: StateCreator<
     setPendingSchoolDataPayload: pendingSchoolDataPayload =>
       set(state => {
         state.uploadSlice.pendingSchoolDataPayload = pendingSchoolDataPayload;
+      }),
+    setFacilitySchemaKey: facilitySchemaKey =>
+      set(state => {
+        state.uploadSlice.facilitySchemaKey = facilitySchemaKey;
       }),
     resetUploadSliceState: () =>
       set(state => {

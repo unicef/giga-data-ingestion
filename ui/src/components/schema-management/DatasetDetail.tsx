@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import {
@@ -9,10 +9,10 @@ import {
   InlineNotification,
   Modal,
   Section,
+  Select,
+  SelectItem,
   Tab,
   TabList,
-  TabPanel,
-  TabPanels,
   Table,
   TableBody,
   TableCell,
@@ -30,29 +30,28 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { AxiosError } from "axios";
 
 import { api } from "@/api";
 import { listDatasetGroupsQueryOptions } from "@/api/queryOptions.ts";
 import ChecksPanel from "@/components/schema-management/ChecksPanel.tsx";
 import LifecycleActions from "@/components/schema-management/LifecycleActions.tsx";
-import PromoteColumnModal from "@/components/schema-management/PromoteColumnModal.tsx";
+import ProposalsTable from "@/components/schema-management/ProposalsTable.tsx";
 import ProposeChangeModal from "@/components/schema-management/ProposeChangeModal.tsx";
 import SchemaNavigator from "@/components/schema-management/SchemaNavigator.tsx";
+import {
+  countConfiguredChecks,
+  formatColumnSource,
+  formatDomainOrRange,
+  sortColumnsForDisplay,
+} from "@/components/schema-management/columnDisplay.ts";
 import useRoles from "@/hooks/useRoles.ts";
 import {
   DatasetImportResponse,
   RegistryColumn,
   ResolvedRegistryColumn,
+  SchemaRole,
 } from "@/types/schemaRegistry.ts";
-
-const columnHeaders: DataTableHeader[] = [
-  { key: "name", header: "Name" },
-  { key: "data_type", header: "Type" },
-  { key: "flags", header: "Flags" },
-  { key: "critical_for", header: "Critical for" },
-  { key: "description", header: "Description" },
-  { key: "origin", header: "Origin" },
-];
 
 const versionHeaders: DataTableHeader[] = [
   { key: "version", header: "Version" },
@@ -65,119 +64,125 @@ interface DatasetDetailProps {
   datasetKey: string;
 }
 
-function sortColumnsForDisplay<
-  Column extends RegistryColumn | ResolvedRegistryColumn,
->(columns: Column[]): Column[] {
-  const priority = (column: Column) => {
-    if (column.primary_key) return 0;
-    if (column.is_mandatory || column.is_nullable === false) return 1;
-    if (column.is_important) return 2;
-    return 3;
+function ColumnsTable({
+  datasetKey,
+  columns,
+  schemaRole,
+  toolbar,
+}: {
+  datasetKey: string;
+  columns: Array<RegistryColumn | ResolvedRegistryColumn>;
+  schemaRole?: SchemaRole;
+  toolbar?: ReactNode;
+}) {
+  const navigate = useNavigate();
+  const openColumn = (columnName: string) => {
+    void navigate({
+      to: "/schema-management/$datasetKey/columns/$columnName",
+      params: { datasetKey, columnName },
+    });
   };
 
-  return [...columns].sort(
-    (left, right) =>
-      priority(left) - priority(right) ||
-      left.name.localeCompare(right.name, undefined, { sensitivity: "base" }),
-  );
-}
+  if (columns.length === 0) {
+    return (
+      <div>
+        {toolbar}
+        <p className="border border-carbon-datatable-grey bg-white p-4 text-giga-dark-gray">
+          No columns in this schema yet.
+        </p>
+      </div>
+    );
+  }
 
-function getColumnRows(
-  columns: Array<RegistryColumn | ResolvedRegistryColumn>,
-  onPromote?: (columnName: string) => void,
-) {
-  return sortColumnsForDisplay(columns).map(column => {
-    const resolvedColumn =
-      "origin" in column ? (column as ResolvedRegistryColumn) : null;
-    return {
-      id: `${resolvedColumn?.owner_schema_key ?? "own"}-${column.name}`,
-      name: column.name,
-      data_type: column.data_type,
-      flags: (
-        <div className="flex gap-1">
-          {!column.is_nullable && <Tag type="red">required</Tag>}
-          {column.is_mandatory && <Tag type="magenta">mandatory</Tag>}
-          {column.is_important && <Tag type="cyan">important</Tag>}
-          {column.is_unique && <Tag type="purple">unique</Tag>}
-          {column.primary_key && <Tag type="blue">pk</Tag>}
-        </div>
-      ),
-      critical_for: column.critical_for ?? "",
-      description: column.description ?? "",
-      origin: resolvedColumn ? (
-        <div className="flex items-center gap-1">
-          <Tag type={resolvedColumn.origin === "core" ? "blue" : "teal"}>
-            {resolvedColumn.origin === "core" ? "inherited" : "owned here"}
-          </Tag>
-          <span className="text-xs">{resolvedColumn.owner_schema_key}</span>
-        </div>
-      ) : (
-        <Tag type="teal">owned here</Tag>
-      ),
-      ...(onPromote
-        ? {
-            actions: (
-              <Button
-                kind="ghost"
-                size="sm"
-                onClick={() => onPromote(column.name)}
-              >
-                Promote to core
-              </Button>
-            ),
-          }
-        : {}),
-    };
-  });
-}
+  const columnGridClass =
+    "grid grid-cols-[minmax(12rem,1.6fr)_5.5rem_5rem_minmax(7.5rem,1fr)_minmax(8rem,1.1fr)_4.5rem] items-center gap-x-3 px-4";
 
-function ColumnsTable({
-  columns,
-  toolbar,
-  onPromote,
-}: {
-  columns: Array<RegistryColumn | ResolvedRegistryColumn>;
-  toolbar?: ReactNode;
-  onPromote?: (columnName: string) => void;
-}) {
-  const headers = onPromote
-    ? [...columnHeaders, { key: "actions", header: "" }]
-    : columnHeaders;
   return (
-    <DataTable headers={headers} rows={getColumnRows(columns, onPromote)}>
-      {({
-        rows,
-        headers: tableHeaders,
-        getHeaderProps,
-        getRowProps,
-        getTableProps,
-      }) => (
-        <TableContainer>
-          {toolbar}
-          <Table {...getTableProps()}>
-            <TableHead>
-              <TableRow>
-                {tableHeaders.map(header => (
-                  // @ts-expect-error Carbon's header onclick type is incorrect
-                  <TableHeader {...getHeaderProps({ header })}>
-                    {header.header}
-                  </TableHeader>
-                ))}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {rows.map(row => (
-                <TableRow {...getRowProps({ row })}>
-                  {row.cells.map(cell => (
-                    <TableCell key={cell.id}>{cell.value}</TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </DataTable>
+    <div>
+      {toolbar}
+      <div className="overflow-x-auto border border-carbon-datatable-grey bg-white">
+        <div
+          className={`${columnGridClass} border-b border-carbon-datatable-grey py-2 text-xs font-semibold uppercase tracking-wide text-giga-dark-gray`}
+        >
+          <span>Column</span>
+          <span>Type</span>
+          <span>Origin</span>
+          <span>Source</span>
+          <span>Domain / Range</span>
+          <span>Checks</span>
+        </div>
+        {sortColumnsForDisplay(columns).map(column => {
+          const resolvedColumn =
+            "origin" in column ? (column as ResolvedRegistryColumn) : null;
+          const isOwned =
+            resolvedColumn == null
+              ? schemaRole !== "core"
+              : resolvedColumn.origin === "member" &&
+                resolvedColumn.owner_schema_key === datasetKey;
+          const isCore =
+            resolvedColumn?.origin === "core" ||
+            (resolvedColumn == null && schemaRole === "core") ||
+            (resolvedColumn != null && !isOwned);
+          const sourceLabel = formatColumnSource(column);
+          const domainRange = formatDomainOrRange(column);
+          const checkCount = countConfiguredChecks(column);
+
+          return (
+            <div
+              key={`${resolvedColumn?.owner_schema_key ?? "own"}-${
+                column.name
+              }`}
+              role="link"
+              tabIndex={0}
+              className={`${columnGridClass} cursor-pointer border-b border-carbon-datatable-grey py-3 last:border-b-0 hover:bg-giga-light-blue`}
+              onClick={() => openColumn(column.name)}
+              onKeyDown={event => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  openColumn(column.name);
+                }
+              }}
+            >
+              <div className="min-w-0">
+                <div className="font-semibold">{column.name}</div>
+                {column.description && (
+                  <div className="truncate text-xs text-giga-dark-gray">
+                    {column.description}
+                  </div>
+                )}
+              </div>
+              <div>
+                <Tag type="purple">
+                  {(column.data_type ?? "unknown").toUpperCase()}
+                </Tag>
+              </div>
+              <div>
+                {isCore ? (
+                  <Tag type="blue">CORE</Tag>
+                ) : (
+                  <Tag type="teal">OWNED</Tag>
+                )}
+              </div>
+              <div>
+                {sourceLabel ? (
+                  <Tag type="gray">{sourceLabel}</Tag>
+                ) : (
+                  <span className="text-sm text-giga-dark-gray">—</span>
+                )}
+              </div>
+              <span className="min-w-0 truncate text-sm text-giga-dark-gray">
+                {domainRange || "—"}
+              </span>
+              <span className="text-sm text-giga-dark-gray">
+                {checkCount > 0
+                  ? `${checkCount} check${checkCount === 1 ? "" : "s"}`
+                  : "—"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -186,11 +191,16 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
   const navigate = useNavigate();
   const { isPrivileged } = useRoles();
   const [proposeOpen, setProposeOpen] = useState(false);
-  const [promoteColumn, setPromoteColumn] = useState<string | null>(null);
-  const [promotionCreated, setPromotionCreated] = useState(false);
+  const [editColumnName, setEditColumnName] = useState<string | null>(null);
   const [snapshotVersion, setSnapshotVersion] = useState<number | null>(null);
   const [importResult, setImportResult] =
     useState<DatasetImportResponse | null>(null);
+  const [placementError, setPlacementError] = useState<string | null>(null);
+  const [placementProposed, setPlacementProposed] = useState(false);
+  const [editingPlacement, setEditingPlacement] = useState(false);
+  const [draftGroupId, setDraftGroupId] = useState("");
+  const [draftRole, setDraftRole] = useState<SchemaRole>("member");
+  const [selectedTabId, setSelectedTabId] = useState("columns");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: datasetQuery } = useQuery({
@@ -207,18 +217,38 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
   const isArchived = dataset?.archived_at != null;
   const canResolve = dataset?.role === "member" && dataset.group_id !== null;
 
+  useEffect(() => {
+    setSelectedTabId(canResolve ? "resolved-columns" : "columns");
+  }, [datasetKey, dataset?.role, canResolve]);
+
   const { data: columnsQuery, isLoading: isColumnsLoading } = useQuery({
     queryKey: ["schema-registry", "columns", datasetKey],
     queryFn: () => api.schemaRegistry.listColumns(datasetKey),
   });
   const columns = useMemo(() => columnsQuery?.data ?? [], [columnsQuery]);
 
-  const { data: resolvedQuery } = useQuery({
+  const {
+    data: resolvedQuery,
+    isLoading: isResolvedLoading,
+    isError: isResolvedError,
+    error: resolvedError,
+  } = useQuery({
     queryKey: ["schema-registry", "resolved", datasetKey],
     queryFn: () => api.schemaRegistry.getResolvedSchema(datasetKey),
     enabled: canResolve,
   });
   const resolvedSchema = resolvedQuery?.data;
+  const resolvedErrorMessage = (() => {
+    if (resolvedError instanceof AxiosError) {
+      const detail = (
+        resolvedError.response?.data as { detail?: string | string[] }
+      )?.detail;
+      if (Array.isArray(detail)) return detail.join(" ");
+      if (detail) return detail;
+    }
+    if (resolvedError instanceof Error) return resolvedError.message;
+    return "Could not load resolved columns.";
+  })();
 
   const { data: impactQuery } = useQuery({
     queryKey: ["schema-registry", "impact", datasetKey],
@@ -262,8 +292,58 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
 
   const handleProposeClose = async () => {
     setProposeOpen(false);
+    setEditColumnName(null);
     await queryClient.invalidateQueries({
       queryKey: ["schema-registry", "columns", datasetKey],
+    });
+  };
+
+  const { mutate: proposePlacement, isPending: isProposingPlacement } =
+    useMutation({
+      mutationFn: api.schemaRegistry.createProposal,
+      onSuccess: async () => {
+        setPlacementError(null);
+        setEditingPlacement(false);
+        setPlacementProposed(true);
+        await queryClient.invalidateQueries({
+          queryKey: ["schema-registry", "proposals"],
+        });
+      },
+      onError: (error: { response?: { data?: { detail?: string } } }) => {
+        const detail = error.response?.data?.detail;
+        setPlacementError(
+          Array.isArray(detail)
+            ? detail.join(" ")
+            : detail ?? "The placement proposal could not be created.",
+        );
+      },
+    });
+
+  const beginEditPlacement = () => {
+    if (!dataset) return;
+    setDraftGroupId(dataset.group_id ?? groups[0]?.id ?? "");
+    setDraftRole(dataset.role);
+    setPlacementError(null);
+    setPlacementProposed(false);
+    setEditingPlacement(true);
+  };
+
+  const cancelEditPlacement = () => {
+    setEditingPlacement(false);
+    setPlacementError(null);
+  };
+
+  const savePlacement = () => {
+    if (!dataset) return;
+    proposePlacement({
+      datasetKey: dataset.key,
+      body: {
+        proposal_type: "placement",
+        after_state: {
+          group_id: draftGroupId || null,
+          role: draftGroupId ? draftRole : "member",
+        },
+      },
     });
   };
 
@@ -296,6 +376,10 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
     importColumns({ datasetKey, file });
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const editColumn = editColumnName
+    ? columns.find(column => column.name === editColumnName)
+    : undefined;
 
   return (
     <Section className="container py-6">
@@ -361,32 +445,6 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
-                {isPrivileged && !isArchived && (
-                  <>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".csv"
-                      className="hidden"
-                      onChange={event =>
-                        handleImportFile(event.target.files?.[0])
-                      }
-                    />
-                    <Button
-                      kind="tertiary"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isImporting}
-                    >
-                      Import columns
-                    </Button>
-                  </>
-                )}
-                <Button
-                  onClick={() => setProposeOpen(true)}
-                  disabled={isColumnsLoading || isArchived}
-                >
-                  Add or change column
-                </Button>
                 {isPrivileged && dataset && (
                   <LifecycleActions
                     resourceType="dataset"
@@ -404,30 +462,167 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                     }}
                   />
                 )}
+                {isPrivileged && !isArchived && (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".csv"
+                      className="hidden"
+                      onChange={event =>
+                        handleImportFile(event.target.files?.[0])
+                      }
+                    />
+                    <Button
+                      kind="tertiary"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isImporting}
+                    >
+                      Import CSV
+                    </Button>
+                  </>
+                )}
+                <Button
+                  kind="tertiary"
+                  onClick={() => setSelectedTabId("proposals")}
+                >
+                  Proposals
+                  {dataset && dataset.pending_proposal_count > 0
+                    ? ` (${dataset.pending_proposal_count})`
+                    : ""}
+                </Button>
+                <Button
+                  onClick={() => {
+                    setEditColumnName(null);
+                    setProposeOpen(true);
+                  }}
+                  disabled={isColumnsLoading || isArchived}
+                >
+                  + Add Column
+                </Button>
               </div>
             </div>
           </div>
 
           {dataset && (
-            <div className="mb-5 grid grid-cols-1 border border-carbon-datatable-grey bg-white md:grid-cols-3">
+            <div className="mb-5 border border-carbon-datatable-grey bg-white p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-giga-dark-gray">
+                  Placement
+                </h3>
+                {isPrivileged && !isArchived && !editingPlacement && (
+                  <Button kind="ghost" size="sm" onClick={beginEditPlacement}>
+                    Edit
+                  </Button>
+                )}
+              </div>
+              {editingPlacement ? (
+                <>
+                  <div className="flex flex-wrap gap-4">
+                    <Select
+                      id={`dataset-group-${dataset.id}`}
+                      labelText="Schema group"
+                      size="md"
+                      value={draftGroupId}
+                      disabled={isProposingPlacement}
+                      onChange={event => setDraftGroupId(event.target.value)}
+                    >
+                      {groups.map(candidate => (
+                        <SelectItem
+                          key={candidate.id}
+                          text={candidate.name}
+                          value={candidate.id}
+                        />
+                      ))}
+                    </Select>
+                    <Select
+                      id={`dataset-role-${dataset.id}`}
+                      labelText="Role"
+                      size="md"
+                      value={draftRole}
+                      disabled={isProposingPlacement || !draftGroupId}
+                      onChange={event =>
+                        setDraftRole(event.target.value as SchemaRole)
+                      }
+                    >
+                      <SelectItem text="Member" value="member" />
+                      <SelectItem text="Core" value="core" />
+                    </Select>
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      disabled={isProposingPlacement || !draftGroupId}
+                      onClick={savePlacement}
+                    >
+                      {isProposingPlacement
+                        ? "Creating proposal…"
+                        : "Propose change"}
+                    </Button>
+                    <Button
+                      kind="tertiary"
+                      size="sm"
+                      disabled={isProposingPlacement}
+                      onClick={cancelEditPlacement}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-wrap gap-6 text-sm">
+                  <div>
+                    <span className="block text-giga-dark-gray">
+                      Schema group
+                    </span>
+                    <span className="font-medium">{group?.name ?? "—"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-giga-dark-gray">Role</span>
+                    <span className="font-medium capitalize">
+                      {dataset.role}
+                    </span>
+                  </div>
+                </div>
+              )}
+              {placementProposed && (
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <InlineNotification
+                    kind="success"
+                    title="Placement proposal created"
+                    onCloseButtonClick={() => setPlacementProposed(false)}
+                  />
+                  <Button
+                    kind="tertiary"
+                    size="sm"
+                    onClick={() => setSelectedTabId("proposals")}
+                  >
+                    View proposals
+                  </Button>
+                </div>
+              )}
+              {placementError && (
+                <InlineNotification
+                  className="mt-3"
+                  kind="error"
+                  title="Could not create placement proposal"
+                  subtitle={placementError}
+                  onCloseButtonClick={() => setPlacementError(null)}
+                />
+              )}
+            </div>
+          )}
+
+          {dataset && (
+            <div className="mb-5 grid grid-cols-1 border border-carbon-datatable-grey bg-white md:grid-cols-4">
               <div className="border-b border-carbon-datatable-grey p-4 md:border-b-0 md:border-r">
-                <span className="text-sm text-giga-dark-gray">
-                  Effective columns
-                </span>
+                <span className="text-sm text-giga-dark-gray">Columns</span>
                 <b className="mt-1 block text-xl">
                   {resolvedSchema?.columns.length ?? columns.length}
                 </b>
               </div>
               <div className="border-b border-carbon-datatable-grey p-4 md:border-b-0 md:border-r">
-                <span className="text-sm text-giga-dark-gray">
-                  Owned by this schema
-                </span>
-                <b className="mt-1 block text-xl">{columns.length}</b>
-              </div>
-              <div className="p-4">
-                <span className="text-sm text-giga-dark-gray">
-                  Inherited from core
-                </span>
+                <span className="text-sm text-giga-dark-gray">From core</span>
                 <b className="mt-1 block text-xl">
                   {resolvedSchema
                     ? resolvedSchema.columns.filter(
@@ -436,59 +631,112 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                     : "—"}
                 </b>
               </div>
+              <div className="border-b border-carbon-datatable-grey p-4 md:border-b-0 md:border-r">
+                <span className="text-sm text-giga-dark-gray">Owned here</span>
+                <b className="mt-1 block text-xl">{columns.length}</b>
+              </div>
+              <button
+                type="button"
+                className="cursor-pointer border-0 bg-transparent p-4 text-left hover:bg-giga-light-blue"
+                onClick={() => setSelectedTabId("proposals")}
+              >
+                <span className="text-sm text-giga-dark-gray">Pending</span>
+                <b className="mt-1 block text-xl text-giga-blue">
+                  {dataset.pending_proposal_count}
+                </b>
+              </button>
             </div>
           )}
 
-          {resolvedSchema?.core_schema && (
-            <InlineNotification
-              className="mb-4"
-              kind="info"
-              title="Effective schema"
-              subtitle={`Applications receive the combined ${resolvedSchema.core_schema.key} and ${datasetKey} columns. Inherited columns are read-only here.`}
-              hideCloseButton
-            />
-          )}
+          {(() => {
+            const detailTabs: {
+              id: string;
+              label: string;
+              content: ReactNode;
+            }[] = [];
 
-          <Tabs key={`${datasetKey}-${dataset?.role ?? "loading"}`}>
-            <TabList aria-label="Dataset detail tabs">
-              {canResolve && <Tab>Columns</Tab>}
-              <Tab>{isCoreSchema ? "Columns" : "Own columns"}</Tab>
-              <Tab>Data quality checks</Tab>
-              {isCoreSchema && <Tab>Impact</Tab>}
-              <Tab>Version history</Tab>
-            </TabList>
-            <TabPanels>
-              {canResolve && (
-                <TabPanel>
-                  {resolvedSchema && (
-                    <ColumnsTable columns={resolvedSchema.columns} />
-                  )}
-                </TabPanel>
-              )}
-              <TabPanel>
-                <ColumnsTable
-                  columns={columns}
-                  onPromote={
-                    dataset?.role === "member" && !isArchived
-                      ? setPromoteColumn
-                      : undefined
+            if (canResolve) {
+              detailTabs.push({
+                id: "resolved-columns",
+                label: "Columns",
+                content: isResolvedLoading ? (
+                  <p className="text-giga-dark-gray">Loading columns…</p>
+                ) : isResolvedError ? (
+                  <div>
+                    <InlineNotification
+                      kind="error"
+                      title="Could not load resolved columns"
+                      subtitle={resolvedErrorMessage}
+                      hideCloseButton
+                    />
+                    <div className="mt-4">
+                      <ColumnsTable
+                        datasetKey={datasetKey}
+                        columns={columns}
+                        schemaRole={dataset?.role}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <ColumnsTable
+                    datasetKey={datasetKey}
+                    columns={resolvedSchema?.columns ?? columns}
+                    schemaRole={dataset?.role}
+                  />
+                ),
+              });
+              detailTabs.push({
+                id: "own-columns",
+                label: "Own columns",
+                content: (
+                  <ColumnsTable
+                    datasetKey={datasetKey}
+                    columns={columns}
+                    schemaRole={dataset?.role}
+                  />
+                ),
+              });
+            } else {
+              detailTabs.push({
+                id: "columns",
+                label: "Columns",
+                content: (
+                  <ColumnsTable
+                    datasetKey={datasetKey}
+                    columns={columns}
+                    schemaRole={dataset?.role}
+                  />
+                ),
+              });
+            }
+
+            detailTabs.push({
+              id: "dq-checks",
+              label: "Data quality checks",
+              content: (
+                <ChecksPanel
+                  datasetKey={datasetKey}
+                  columns={resolvedSchema?.columns ?? columns}
+                  onEditColumn={
+                    isArchived
+                      ? undefined
+                      : columnName => {
+                          if (
+                            columns.some(column => column.name === columnName)
+                          ) {
+                            setEditColumnName(columnName);
+                          }
+                        }
                   }
                 />
-              </TabPanel>
-              <TabPanel>
-                <ChecksPanel columns={resolvedSchema?.columns ?? columns} />
-              </TabPanel>
-              {isCoreSchema && (
-                <TabPanel>
-                  <InlineNotification
-                    className="mb-4"
-                    kind="warning"
-                    title={`Changes affect ${
-                      impact?.affected_members.length ?? 0
-                    } member schemas`}
-                    subtitle="A core proposal is approved once. Reviewers see every affected member before approval."
-                    hideCloseButton
-                  />
+              ),
+            });
+
+            if (isCoreSchema) {
+              detailTabs.push({
+                id: "impact",
+                label: "Impact",
+                content: (
                   <TableContainer>
                     <Table>
                       <TableHead>
@@ -514,9 +762,14 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                       </TableBody>
                     </Table>
                   </TableContainer>
-                </TabPanel>
-              )}
-              <TabPanel>
+                ),
+              });
+            }
+
+            detailTabs.push({
+              id: "versions",
+              label: "Version history",
+              content: (
                 <DataTable headers={versionHeaders} rows={versionRows}>
                   {({
                     rows,
@@ -552,35 +805,64 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                     </TableContainer>
                   )}
                 </DataTable>
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+              ),
+            });
+
+            detailTabs.push({
+              id: "proposals",
+              label:
+                dataset && dataset.pending_proposal_count > 0
+                  ? `Proposals (${dataset.pending_proposal_count})`
+                  : "Proposals",
+              content: (
+                <Suspense
+                  fallback={
+                    <p className="text-giga-dark-gray">Loading proposals…</p>
+                  }
+                >
+                  <ProposalsTable datasetKey={datasetKey} />
+                </Suspense>
+              ),
+            });
+
+            const selectedTabIndex = Math.max(
+              detailTabs.findIndex(tab => tab.id === selectedTabId),
+              0,
+            );
+
+            return (
+              <div>
+                <Tabs
+                  selectedIndex={selectedTabIndex}
+                  onChange={({ selectedIndex }) =>
+                    setSelectedTabId(
+                      detailTabs[selectedIndex]?.id ?? detailTabs[0].id,
+                    )
+                  }
+                >
+                  <TabList aria-label="Dataset detail tabs">
+                    {detailTabs.map(tab => (
+                      <Tab key={tab.id}>{tab.label}</Tab>
+                    ))}
+                  </TabList>
+                </Tabs>
+                <div className="mt-4">
+                  {detailTabs[selectedTabIndex]?.content}
+                </div>
+              </div>
+            );
+          })()}
 
           <ProposeChangeModal
             datasetKey={datasetKey}
             columns={columns}
-            open={proposeOpen}
+            open={proposeOpen || editColumnName !== null}
             onClose={() => void handleProposeClose()}
+            initialProposalType={editColumnName ? "edit" : "add"}
+            initialColumnName={editColumnName ?? undefined}
+            initialColumn={editColumn}
+            lockToInitialType
           />
-          <PromoteColumnModal
-            datasetKey={datasetKey}
-            columnName={promoteColumn}
-            onClose={() => setPromoteColumn(null)}
-            onCreated={() => {
-              setPromoteColumn(null);
-              setPromotionCreated(true);
-            }}
-          />
-          {promotionCreated && (
-            <InlineNotification
-              className="mt-4"
-              kind="success"
-              title="Promotion proposal created"
-              subtitle="An administrator can now review and approve the coordinated change."
-              onCloseButtonClick={() => setPromotionCreated(false)}
-            />
-          )}
-
           <Modal
             aria-label="import result modal"
             modalHeading="Import results"

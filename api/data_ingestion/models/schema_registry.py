@@ -152,6 +152,7 @@ class SchemaVersionColumn(BaseModel):
     is_nullable: Mapped[bool | None] = mapped_column(Boolean(), nullable=True)
     is_important: Mapped[bool | None] = mapped_column(Boolean(), nullable=True)
     is_system_generated: Mapped[bool | None] = mapped_column(Boolean(), nullable=True)
+    source: Mapped[str | None] = mapped_column(VARCHAR(30), nullable=True)
     description: Mapped[str | None] = mapped_column(Text(), nullable=True)
     primary_key: Mapped[bool | None] = mapped_column(Boolean(), nullable=True)
     partition_order: Mapped[int | None] = mapped_column(Integer(), nullable=True)
