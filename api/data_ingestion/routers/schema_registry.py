@@ -1,0 +1,638 @@
+from typing import Annotated
+
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    HTTPException,
+    Query,
+    Security,
+    UploadFile,
+    status,
+)
+from fastapi_azure_auth.user import User as AzureUser
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from data_ingestion.db.primary import get_db
+from data_ingestion.internal import schema_registry as registry
+from data_ingestion.internal.auth import azure_scheme
+from data_ingestion.models import (
+    SchemaDataset,
+    SchemaProposalTarget,
+    SchemaVersion,
+    User as DatabaseUser,
+)
+from data_ingestion.permissions.permissions import IsPrivileged
+from data_ingestion.schemas.schema_registry import (
+    AppliedVersion,
+    ArchiveRequest,
+    AuditLogResponse,
+    DatasetCreateFromCsvResponse,
+    DatasetGroupCreate,
+    DatasetGroupDetail,
+    DatasetGroupResponse,
+    DatasetImportResponse,
+    DatasetLinkCreate,
+    DatasetLinkResponse,
+    DatasetVersion,
+    LifecyclePreview,
+    MoveDatasetRequest,
+    PromotionPreview,
+    ProposalCreate,
+    ProposalDetail,
+    ProposalResponse,
+    ProposalTargetResponse,
+    RegistryColumn,
+    RejectProposalRequest,
+    ResolvedSchemaResponse,
+    SchemaDatasetCreate,
+    SchemaDatasetResponse,
+    SchemaImpactResponse,
+)
+
+router = APIRouter(
+    prefix="/api/schema-registry",
+    tags=["schema-registry"],
+    dependencies=[Security(azure_scheme)],
+)
+
+
+async def get_current_database_user(
+    user: AzureUser = Depends(azure_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> DatabaseUser:
+    email = (user.claims.get("emails") or [None])[0]
+    database_user = await db.scalar(
+        select(DatabaseUser).where(DatabaseUser.email == email)
+    )
+    if database_user is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
+    return database_user
+
+
+# ---------------------------------------------------------------------------
+# Groups
+# ---------------------------------------------------------------------------
+
+
+@router.get("/groups", response_model=list[DatasetGroupResponse])
+async def list_groups(
+    include_archived: bool = Query(default=False),
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.list_groups(db, include_archived=include_archived)
+
+
+@router.post(
+    "/groups",
+    status_code=status.HTTP_201_CREATED,
+    response_model=DatasetGroupResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def create_group(body: DatasetGroupCreate, db: AsyncSession = Depends(get_db)):
+    return await registry.create_group(
+        db, key=body.key, name=body.name, description=body.description
+    )
+
+
+@router.get("/groups/{key}", response_model=DatasetGroupDetail)
+async def get_group(
+    key: str,
+    include_archived: bool = Query(default=False),
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.get_group_detail(db, key, include_archived=include_archived)
+
+
+@router.get(
+    "/groups/{key}/lifecycle",
+    response_model=LifecyclePreview,
+    dependencies=[Security(IsPrivileged())],
+)
+async def get_group_lifecycle(key: str, db: AsyncSession = Depends(get_db)):
+    return await registry.get_group_lifecycle_preview(db, key)
+
+
+@router.post(
+    "/groups/{key}/archive",
+    response_model=DatasetGroupResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def archive_group(
+    key: str,
+    body: ArchiveRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
+):
+    return await registry.archive_group(
+        db,
+        key,
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+        reason=body.reason,
+    )
+
+
+@router.post(
+    "/groups/{key}/restore",
+    response_model=DatasetGroupResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def restore_group(key: str, db: AsyncSession = Depends(get_db)):
+    return await registry.restore_group(db, key)
+
+
+@router.delete(
+    "/groups/{key}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
+async def delete_group(key: str, db: AsyncSession = Depends(get_db)):
+    await registry.delete_draft_group(db, key)
+
+
+# ---------------------------------------------------------------------------
+# Datasets & links
+# ---------------------------------------------------------------------------
+
+
+@router.get("/datasets", response_model=list[SchemaDatasetResponse])
+async def list_datasets(
+    include_archived: bool = Query(default=False),
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.list_datasets(db, include_archived=include_archived)
+
+
+@router.post(
+    "/datasets",
+    status_code=status.HTTP_201_CREATED,
+    response_model=SchemaDatasetResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def create_dataset(
+    body: SchemaDatasetCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.create_dataset(
+        db,
+        key=body.key,
+        name=body.name,
+        description=body.description,
+        group_id=body.group_id,
+        role=body.role,
+    )
+
+
+@router.post(
+    "/datasets/from-csv",
+    status_code=status.HTTP_201_CREATED,
+    response_model=DatasetCreateFromCsvResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def create_dataset_from_csv(
+    file: UploadFile,
+    key: Annotated[str, Form()],
+    group_id: Annotated[str | None, Form()] = None,
+    role: Annotated[str, Form()] = "member",
+    name: Annotated[str | None, Form()] = None,
+    description: Annotated[str | None, Form()] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
+):
+    dataset, import_result = await registry.create_dataset_from_csv(
+        db,
+        key=key,
+        name=name,
+        description=description,
+        group_id=group_id,
+        role=role,
+        csv_bytes=await file.read(),
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+    )
+    return {"dataset": dataset, "import_result": import_result}
+
+
+@router.get("/datasets/{key}", response_model=SchemaDatasetResponse)
+async def get_dataset(
+    key: str,
+    include_archived: bool = Query(default=False),
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.get_dataset_detail(db, key, include_archived=include_archived)
+
+
+@router.get(
+    "/datasets/{key}/lifecycle",
+    response_model=LifecyclePreview,
+    dependencies=[Security(IsPrivileged())],
+)
+async def get_dataset_lifecycle(key: str, db: AsyncSession = Depends(get_db)):
+    return await registry.get_dataset_lifecycle_preview(db, key)
+
+
+@router.post(
+    "/datasets/{key}/archive",
+    response_model=SchemaDatasetResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def archive_dataset(
+    key: str,
+    body: ArchiveRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
+):
+    return await registry.archive_dataset(
+        db,
+        key,
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+        reason=body.reason,
+    )
+
+
+@router.post(
+    "/datasets/{key}/restore",
+    response_model=SchemaDatasetResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def restore_dataset(key: str, db: AsyncSession = Depends(get_db)):
+    return await registry.restore_dataset(db, key)
+
+
+@router.delete(
+    "/datasets/{key}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
+async def delete_dataset(key: str, db: AsyncSession = Depends(get_db)):
+    await registry.delete_draft_dataset(db, key)
+
+
+@router.post(
+    "/datasets/{key}/import",
+    response_model=DatasetImportResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def import_dataset_columns(
+    key: str,
+    file: UploadFile,
+    db: AsyncSession = Depends(get_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
+):
+    csv_bytes = await file.read()
+    return await registry.import_columns_from_csv(
+        db,
+        dataset_key=key,
+        csv_bytes=csv_bytes,
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+    )
+
+
+@router.patch(
+    "/datasets/{key}/move",
+    response_model=SchemaDatasetResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def move_dataset(
+    key: str,
+    body: MoveDatasetRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.move_dataset(db, key, body.group_id, body.role)
+
+
+@router.get(
+    "/datasets/{key}/resolved",
+    response_model=ResolvedSchemaResponse,
+)
+async def get_resolved_schema(
+    key: str,
+    member_version: int | None = None,
+    core_version: int | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.get_resolved_schema(
+        db,
+        key,
+        member_version=member_version,
+        core_version=core_version,
+    )
+
+
+@router.get(
+    "/datasets/{key}/impact",
+    response_model=SchemaImpactResponse,
+)
+async def get_schema_impact(
+    key: str,
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.get_core_impact(db, key)
+
+
+@router.get("/datasets/{key}/links", response_model=list[DatasetLinkResponse])
+async def list_links(key: str, db: AsyncSession = Depends(get_db)):
+    return await registry.list_links(db, key)
+
+
+@router.post(
+    "/datasets/{key}/links",
+    status_code=status.HTTP_201_CREATED,
+    response_model=DatasetLinkResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def create_link(
+    key: str, body: DatasetLinkCreate, db: AsyncSession = Depends(get_db)
+):
+    return await registry.create_link(db, key, body.linked_dataset_key)
+
+
+@router.delete(
+    "/datasets/{key}/links/{linked_key}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Security(IsPrivileged())],
+)
+async def delete_link(key: str, linked_key: str, db: AsyncSession = Depends(get_db)):
+    await registry.delete_link(db, key, linked_key)
+
+
+# ---------------------------------------------------------------------------
+# Columns
+# ---------------------------------------------------------------------------
+
+
+@router.get("/datasets/{key}/columns", response_model=list[RegistryColumn])
+async def list_columns(
+    key: str,
+    as_of_version: int | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.get_registry_columns(db, key, as_of_version=as_of_version)
+
+
+@router.get("/datasets/{key}/columns/{name}", response_model=RegistryColumn)
+async def get_column(
+    key: str,
+    name: str,
+    as_of_version: int | None = Query(default=None),
+    db: AsyncSession = Depends(get_db),
+):
+    column = await registry.get_registry_column(
+        db, key, name, as_of_version=as_of_version
+    )
+    if column is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Column not found")
+    return column
+
+
+@router.get(
+    "/datasets/{key}/columns/{name}/promotion-preview",
+    response_model=PromotionPreview,
+)
+async def get_promotion_preview(
+    key: str,
+    name: str,
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.get_promotion_preview(db, key, name)
+
+
+@router.get(
+    "/datasets/{key}/columns/{name}/history", response_model=list[ProposalResponse]
+)
+async def get_column_history(key: str, name: str, db: AsyncSession = Depends(get_db)):
+    return await registry.get_column_history(db, key, name)
+
+
+# ---------------------------------------------------------------------------
+# Versions
+# ---------------------------------------------------------------------------
+
+
+@router.get("/datasets/{key}/versions", response_model=list[DatasetVersion])
+async def list_versions(
+    key: str,
+    db: AsyncSession = Depends(get_db),
+):
+    dataset = await registry.get_dataset_by_key(db, key, include_archived=True)
+    return await registry.list_dataset_versions_with_proposals(db, dataset)
+
+
+@router.get("/datasets/{key}/versions/{version}", response_model=list[RegistryColumn])
+async def get_version_snapshot(
+    key: str,
+    version: int,
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.get_registry_columns(db, key, as_of_version=version)
+
+
+@router.get(
+    "/datasets/{key}/versions/{version}/diff/{other_version}",
+    response_model=list[dict],
+)
+async def diff_versions(
+    key: str,
+    version: int,
+    other_version: int,
+    db: AsyncSession = Depends(get_db),
+):
+    before_columns = {
+        c.name: c
+        for c in await registry.get_registry_columns(db, key, as_of_version=version)
+    }
+    after_columns = {
+        c.name: c
+        for c in await registry.get_registry_columns(
+            db, key, as_of_version=other_version
+        )
+    }
+    names = sorted(set(before_columns) | set(after_columns))
+    return [
+        {
+            "column_name": name,
+            "diff": [
+                d.model_dump()
+                for d in registry.diff_columns(
+                    before_columns.get(name), after_columns.get(name)
+                )
+            ],
+        }
+        for name in names
+        if before_columns.get(name) != after_columns.get(name)
+    ]
+
+
+# ---------------------------------------------------------------------------
+# Proposals
+# ---------------------------------------------------------------------------
+
+
+@router.post(
+    "/datasets/{key}/proposals",
+    status_code=status.HTTP_201_CREATED,
+    response_model=ProposalResponse,
+)
+async def create_proposal(
+    key: str,
+    body: ProposalCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
+):
+    return await registry.create_proposal(
+        db,
+        dataset_key=key,
+        column_name=body.column_name,
+        proposal_type=body.proposal_type,
+        after_state=body.after_state,
+        proposed_by_id=current_user.id,
+        proposed_by_email=current_user.email,
+    )
+
+
+@router.get("/proposals", response_model=list[ProposalResponse])
+async def list_proposals(
+    status_filter: Annotated[str | None, Query(alias="status")] = None,
+    dataset_key: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.list_proposals(
+        db, status_filter=status_filter, dataset_key=dataset_key
+    )
+
+
+@router.get("/proposals/{id}", response_model=ProposalDetail)
+async def get_proposal(
+    id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    proposal = await registry.get_proposal(db, id)
+    diff = await registry.get_proposal_diff(proposal)
+    dataset = await db.get(SchemaDataset, proposal.dataset_id)
+    targets = list(
+        await db.scalars(
+            select(SchemaProposalTarget).where(
+                SchemaProposalTarget.proposal_id == proposal.id
+            )
+        )
+    )
+    target_datasets = {
+        target.dataset_id: await db.get(SchemaDataset, target.dataset_id)
+        for target in targets
+    }
+    affected_schema_keys: list[str] = []
+    if proposal.proposal_type == "promote":
+        affected_schema_keys = [
+            target_datasets[target.dataset_id].key
+            for target in targets
+            if target.operation != "add"
+        ]
+    elif dataset.role == "core":
+        impact = await registry.get_core_impact(db, dataset.key)
+        affected_schema_keys = [member.key for member in impact.affected_members]
+    versions = list(
+        await db.scalars(
+            select(SchemaVersion).where(SchemaVersion.proposal_id == proposal.id)
+        )
+    )
+    return ProposalDetail(
+        **ProposalResponse.model_validate(proposal).model_dump(),
+        diff=diff,
+        affected_schema_keys=affected_schema_keys,
+        targets=[
+            ProposalTargetResponse(
+                **ProposalTargetResponse.model_validate(target).model_dump(
+                    exclude={"dataset_key"}
+                ),
+                dataset_key=target_datasets[target.dataset_id].key,
+            )
+            for target in targets
+        ],
+        applied_versions=[
+            AppliedVersion(
+                dataset_key=(await db.get(SchemaDataset, version.dataset_id)).key,
+                version=version.version,
+                operation=next(
+                    (
+                        target.operation
+                        for target in targets
+                        if target.dataset_id == version.dataset_id
+                    ),
+                    version.source,
+                ),
+            )
+            for version in versions
+        ],
+    )
+
+
+@router.post(
+    "/proposals/{id}/approve",
+    response_model=ProposalResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def approve_proposal(
+    id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
+):
+    return await registry.approve_proposal(
+        db,
+        id,
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+    )
+
+
+@router.post(
+    "/proposals/{id}/reject",
+    response_model=ProposalResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def reject_proposal(
+    id: str,
+    body: RejectProposalRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
+):
+    return await registry.reject_proposal(
+        db,
+        id,
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+        reason=body.reason,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Audit
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/audit",
+    response_model=list[AuditLogResponse],
+    dependencies=[Security(IsPrivileged())],
+)
+async def list_audit_log(
+    dataset_key: str | None = None,
+    column_name: str | None = None,
+    actor_id: str | None = None,
+    action: str | None = None,
+    limit: int = Query(default=50, le=200, gt=0),
+    offset: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.list_audit_log(
+        db,
+        dataset_key=dataset_key,
+        column_name=column_name,
+        actor_id=actor_id,
+        action=action,
+        limit=limit,
+        offset=offset,
+    )

@@ -52,3 +52,36 @@ export const listRolesQueryOptions = queryOptions({
   queryKey: ["roles"],
   queryFn: api.roles.list,
 });
+
+export const listDatasetGroupsQueryOptions = queryOptions({
+  queryKey: ["schema-registry", "groups"],
+  queryFn: () => api.schemaRegistry.listGroups(),
+});
+
+export const schemaGroupDetailQueryOptions = (key: string) =>
+  queryOptions({
+    queryKey: ["schema-registry", "groups", key],
+    queryFn: () => api.schemaRegistry.getGroup(key),
+  });
+
+export const listSchemaDatasetsQueryOptions = queryOptions({
+  queryKey: ["schema-registry", "datasets"],
+  queryFn: () => api.schemaRegistry.listDatasets(),
+});
+
+export const listSchemaProposalsQueryOptions = queryOptions({
+  queryKey: ["schema-registry", "proposals"],
+  queryFn: () => api.schemaRegistry.listProposals(),
+});
+
+export const listSchemaAuditLogQueryOptions = ({
+  limit,
+  offset,
+}: {
+  limit: number;
+  offset: number;
+}) =>
+  queryOptions({
+    queryKey: ["schema-registry", "audit", limit, offset],
+    queryFn: () => api.schemaRegistry.listAuditLog({ limit, offset }),
+  });

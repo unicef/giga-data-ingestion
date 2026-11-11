@@ -1,7 +1,9 @@
 import pytest
 from data_ingestion.utils.upload_impact import (
     build_upload_impact_preview,
+    get_id_file_column,
     get_school_id_file_column,
+    id_schema_column_for_dataset,
     normalize_school_id,
 )
 
@@ -49,4 +51,15 @@ def test_get_school_id_file_column_requires_school_id_mapping():
     with pytest.raises(ValueError) as exc_info:
         get_school_id_file_column({"school_name": "official_school_name"})
 
-    assert str(exc_info.value) == "Column mapping must include school_id_govt."
+    assert "school_id_govt" in str(exc_info.value)
+
+
+def test_geolocation_uses_facility_id_column():
+    assert id_schema_column_for_dataset("geolocation") == "facility_id_govt"
+    assert (
+        get_id_file_column(
+            {"govt_id": "facility_id_govt"},
+            preferred_schema_columns=("facility_id_govt",),
+        )
+        == "govt_id"
+    )

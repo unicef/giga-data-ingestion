@@ -121,6 +121,15 @@ export default function Navbar() {
               Approval requests
             </HeaderMenuItem>
           )}
+          {hasRoles && (
+            <HeaderMenuItem
+              as={Link}
+              to="/schema-management"
+              isActive={location.pathname.startsWith("/schema-management")}
+            >
+              Schema Management
+            </HeaderMenuItem>
+          )}
           {isPrivileged && (
             <HeaderMenuItem
               as={Link}

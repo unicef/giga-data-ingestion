@@ -14,21 +14,29 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as UserManagementImport } from './routes/user-management'
+import { Route as SchemaManagementImport } from './routes/schema-management'
 import { Route as IndexImport } from './routes/index'
 import { Route as UserManagementIndexImport } from './routes/user-management/index'
 import { Route as UploadIndexImport } from './routes/upload/index'
+import { Route as SchemaManagementIndexImport } from './routes/schema-management/index'
 import { Route as IngestApiIndexImport } from './routes/ingest-api/index'
 import { Route as DeleteIndexImport } from './routes/delete/index'
 import { Route as ApprovalRequestsIndexImport } from './routes/approval-requests/index'
+import { Route as SchemaManagementProposalsImport } from './routes/schema-management/proposals'
+import { Route as SchemaManagementGroupsImport } from './routes/schema-management/groups'
+import { Route as SchemaManagementAuditImport } from './routes/schema-management/audit'
+import { Route as SchemaManagementDatasetKeyImport } from './routes/schema-management/$datasetKey'
 import { Route as IngestApiEditImport } from './routes/ingest-api/edit'
 import { Route as IngestApiAddImport } from './routes/ingest-api/add'
 import { Route as DeleteNewImport } from './routes/delete/new'
 import { Route as UploadUploadIdIndexImport } from './routes/upload/$uploadId/index'
+import { Route as SchemaManagementGroupsIndexImport } from './routes/schema-management/groups/index'
 import { Route as IngestApiAddIndexImport } from './routes/ingest-api/add/index'
 import { Route as DeleteCountryIndexImport } from './routes/delete/$country/index'
 import { Route as ApprovalRequestsCountryCodeIndexImport } from './routes/approval-requests/$countryCode/index'
 import { Route as UserManagementUserAddImport } from './routes/user-management/user/add'
 import { Route as UploadUploadGroupUploadTypeImport } from './routes/upload/$uploadGroup/$uploadType'
+import { Route as SchemaManagementGroupsGroupKeyImport } from './routes/schema-management/groups/$groupKey'
 import { Route as IngestApiAddSchoolConnectivityImport } from './routes/ingest-api/add/school-connectivity'
 import { Route as IngestApiAddColumnMappingImport } from './routes/ingest-api/add/column-mapping'
 import { Route as UploadUploadGroupUploadTypeIndexImport } from './routes/upload/$uploadGroup/$uploadType/index'
@@ -42,6 +50,7 @@ import { Route as UploadUploadGroupUploadTypeSuccessImport } from './routes/uplo
 import { Route as UploadUploadGroupUploadTypeMetadataImport } from './routes/upload/$uploadGroup/$uploadType/metadata'
 import { Route as UploadUploadGroupUploadTypeColumnMappingImport } from './routes/upload/$uploadGroup/$uploadType/column-mapping'
 import { Route as UploadUploadGroupUploadTypeAssessmentImport } from './routes/upload/$uploadGroup/$uploadType/assessment'
+import { Route as SchemaManagementDatasetKeyColumnsColumnNameImport } from './routes/schema-management/$datasetKey_.columns.$columnName'
 import { Route as IngestApiEditIngestionIdSchoolConnectivityImport } from './routes/ingest-api/edit/$ingestionId/school-connectivity'
 import { Route as IngestApiEditIngestionIdColumnMappingImport } from './routes/ingest-api/edit/$ingestionId/column-mapping'
 import { Route as ApprovalRequestsCountryCodeUploadIdConfirmImport } from './routes/approval-requests/$countryCode/$uploadId/confirm'
@@ -82,6 +91,11 @@ const UserManagementRoute = UserManagementImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const SchemaManagementRoute = SchemaManagementImport.update({
+  path: '/schema-management',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const IndexRoute = IndexImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
@@ -95,6 +109,11 @@ const UserManagementIndexRoute = UserManagementIndexImport.update({
 const UploadIndexRoute = UploadIndexImport.update({
   path: '/',
   getParentRoute: () => UploadLazyRoute,
+} as any)
+
+const SchemaManagementIndexRoute = SchemaManagementIndexImport.update({
+  path: '/',
+  getParentRoute: () => SchemaManagementRoute,
 } as any)
 
 const IngestApiIndexRoute = IngestApiIndexImport.update({
@@ -111,6 +130,28 @@ const ApprovalRequestsIndexRoute = ApprovalRequestsIndexImport.update({
   path: '/',
   getParentRoute: () => ApprovalRequestsLazyRoute,
 } as any)
+
+const SchemaManagementProposalsRoute = SchemaManagementProposalsImport.update({
+  path: '/proposals',
+  getParentRoute: () => SchemaManagementRoute,
+} as any)
+
+const SchemaManagementGroupsRoute = SchemaManagementGroupsImport.update({
+  path: '/groups',
+  getParentRoute: () => SchemaManagementRoute,
+} as any)
+
+const SchemaManagementAuditRoute = SchemaManagementAuditImport.update({
+  path: '/audit',
+  getParentRoute: () => SchemaManagementRoute,
+} as any)
+
+const SchemaManagementDatasetKeyRoute = SchemaManagementDatasetKeyImport.update(
+  {
+    path: '/$datasetKey',
+    getParentRoute: () => SchemaManagementRoute,
+  } as any,
+)
 
 const IngestApiEditRoute = IngestApiEditImport.update({
   path: '/edit',
@@ -131,6 +172,12 @@ const UploadUploadIdIndexRoute = UploadUploadIdIndexImport.update({
   path: '/$uploadId/',
   getParentRoute: () => UploadLazyRoute,
 } as any)
+
+const SchemaManagementGroupsIndexRoute =
+  SchemaManagementGroupsIndexImport.update({
+    path: '/',
+    getParentRoute: () => SchemaManagementGroupsRoute,
+  } as any)
 
 const IngestApiAddIndexRoute = IngestApiAddIndexImport.update({
   path: '/',
@@ -157,6 +204,12 @@ const UploadUploadGroupUploadTypeRoute =
   UploadUploadGroupUploadTypeImport.update({
     path: '/$uploadGroup/$uploadType',
     getParentRoute: () => UploadLazyRoute,
+  } as any)
+
+const SchemaManagementGroupsGroupKeyRoute =
+  SchemaManagementGroupsGroupKeyImport.update({
+    path: '/$groupKey',
+    getParentRoute: () => SchemaManagementGroupsRoute,
   } as any)
 
 const IngestApiAddSchoolConnectivityRoute =
@@ -236,6 +289,12 @@ const UploadUploadGroupUploadTypeAssessmentRoute =
     getParentRoute: () => UploadUploadGroupUploadTypeRoute,
   } as any)
 
+const SchemaManagementDatasetKeyColumnsColumnNameRoute =
+  SchemaManagementDatasetKeyColumnsColumnNameImport.update({
+    path: '/$datasetKey/columns/$columnName',
+    getParentRoute: () => SchemaManagementRoute,
+  } as any)
+
 const IngestApiEditIngestionIdSchoolConnectivityRoute =
   IngestApiEditIngestionIdSchoolConnectivityImport.update({
     path: '/$ingestionId/school-connectivity',
@@ -260,6 +319,10 @@ declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/': {
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/schema-management': {
+      preLoaderRoute: typeof SchemaManagementImport
       parentRoute: typeof rootRoute
     }
     '/user-management': {
@@ -294,6 +357,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiEditImport
       parentRoute: typeof IngestApiLazyImport
     }
+    '/schema-management/$datasetKey': {
+      preLoaderRoute: typeof SchemaManagementDatasetKeyImport
+      parentRoute: typeof SchemaManagementImport
+    }
+    '/schema-management/audit': {
+      preLoaderRoute: typeof SchemaManagementAuditImport
+      parentRoute: typeof SchemaManagementImport
+    }
+    '/schema-management/groups': {
+      preLoaderRoute: typeof SchemaManagementGroupsImport
+      parentRoute: typeof SchemaManagementImport
+    }
+    '/schema-management/proposals': {
+      preLoaderRoute: typeof SchemaManagementProposalsImport
+      parentRoute: typeof SchemaManagementImport
+    }
     '/approval-requests/': {
       preLoaderRoute: typeof ApprovalRequestsIndexImport
       parentRoute: typeof ApprovalRequestsLazyImport
@@ -305,6 +384,10 @@ declare module '@tanstack/react-router' {
     '/ingest-api/': {
       preLoaderRoute: typeof IngestApiIndexImport
       parentRoute: typeof IngestApiLazyImport
+    }
+    '/schema-management/': {
+      preLoaderRoute: typeof SchemaManagementIndexImport
+      parentRoute: typeof SchemaManagementImport
     }
     '/upload/': {
       preLoaderRoute: typeof UploadIndexImport
@@ -321,6 +404,10 @@ declare module '@tanstack/react-router' {
     '/ingest-api/add/school-connectivity': {
       preLoaderRoute: typeof IngestApiAddSchoolConnectivityImport
       parentRoute: typeof IngestApiAddImport
+    }
+    '/schema-management/groups/$groupKey': {
+      preLoaderRoute: typeof SchemaManagementGroupsGroupKeyImport
+      parentRoute: typeof SchemaManagementGroupsImport
     }
     '/upload/$uploadGroup/$uploadType': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeImport
@@ -342,6 +429,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IngestApiAddIndexImport
       parentRoute: typeof IngestApiAddImport
     }
+    '/schema-management/groups/': {
+      preLoaderRoute: typeof SchemaManagementGroupsIndexImport
+      parentRoute: typeof SchemaManagementGroupsImport
+    }
     '/upload/$uploadId/': {
       preLoaderRoute: typeof UploadUploadIdIndexImport
       parentRoute: typeof UploadLazyImport
@@ -357,6 +448,10 @@ declare module '@tanstack/react-router' {
     '/ingest-api/edit/$ingestionId/school-connectivity': {
       preLoaderRoute: typeof IngestApiEditIngestionIdSchoolConnectivityImport
       parentRoute: typeof IngestApiEditImport
+    }
+    '/schema-management/$datasetKey/columns/$columnName': {
+      preLoaderRoute: typeof SchemaManagementDatasetKeyColumnsColumnNameImport
+      parentRoute: typeof SchemaManagementImport
     }
     '/upload/$uploadGroup/$uploadType/assessment': {
       preLoaderRoute: typeof UploadUploadGroupUploadTypeAssessmentImport
@@ -409,6 +504,17 @@ declare module '@tanstack/react-router' {
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
+  SchemaManagementRoute.addChildren([
+    SchemaManagementDatasetKeyRoute,
+    SchemaManagementAuditRoute,
+    SchemaManagementGroupsRoute.addChildren([
+      SchemaManagementGroupsGroupKeyRoute,
+      SchemaManagementGroupsIndexRoute,
+    ]),
+    SchemaManagementProposalsRoute,
+    SchemaManagementIndexRoute,
+    SchemaManagementDatasetKeyColumnsColumnNameRoute,
+  ]),
   UserManagementRoute.addChildren([
     UserManagementIndexRoute,
     UserManagementUserAddRoute,

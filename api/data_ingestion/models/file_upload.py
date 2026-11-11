@@ -4,7 +4,7 @@ from pathlib import Path
 
 # File upload model for data ingestion
 from pydantic import UUID4, EmailStr
-from sqlalchemy import JSON, VARCHAR, DateTime, String, func
+from sqlalchemy import JSON, VARCHAR, DateTime, Integer, String, func
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -47,6 +47,10 @@ class FileUpload(BaseModel):
     source: Mapped[str] = mapped_column(nullable=True)
     mode: Mapped[str] = mapped_column(nullable=True, default=None)
     approval_status: Mapped[str] = mapped_column(nullable=True, default=None)
+    schema_key: Mapped[str | None] = mapped_column(VARCHAR(100), nullable=True)
+    schema_version: Mapped[int | None] = mapped_column(Integer(), nullable=True)
+    core_schema_key: Mapped[str | None] = mapped_column(VARCHAR(100), nullable=True)
+    core_schema_version: Mapped[int | None] = mapped_column(Integer(), nullable=True)
     original_filename: Mapped[str] = mapped_column(nullable=False)
     column_to_schema_mapping: Mapped[dict] = mapped_column(
         JSON, nullable=False, server_default='"{}"'
@@ -98,20 +102,33 @@ class FileUpload(BaseModel):
                 f"{country_segment}/{self.filename}"
             )
 
+        if self.country == "N/A":
+            country_path = "$NA"
+        else:
+            country_path = self.country
+
+        # Facility geolocation: raw/uploads/facility-geolocation/<ISO3>/<schema_key>/<file>
+        if self.dataset == "geolocation" and self.schema_key:
+            return "/".join(
+                [
+                    constants.UPLOAD_PATH_PREFIX,
+                    "facility-geolocation",
+                    country_path,
+                    self.schema_key,
+                    self.filename,
+                ]
+            )
+
         # For other datasets, use the uploads path
         if self.dataset == "unstructured":
             dataset_path = "unstructured"
         else:
             dataset_path = f"school-{self.dataset}"
 
-        filename_parts = [constants.UPLOAD_PATH_PREFIX, dataset_path]
-
-        # Add country to path for non-structured datasets
-        if self.country == "N/A":
-            country_path = "$NA"
-        else:
-            country_path = self.country
-        filename_parts.append(country_path)
-
-        filename_parts.append(self.filename)
+        filename_parts = [
+            constants.UPLOAD_PATH_PREFIX,
+            dataset_path,
+            country_path,
+            self.filename,
+        ]
         return "/".join(filename_parts)

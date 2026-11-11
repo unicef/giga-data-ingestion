@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { ProgressIndicator, ProgressStep, Stack } from "@carbon/react";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
@@ -14,8 +14,6 @@ import {
 } from "@/constants/pagination.ts";
 import { useStore } from "@/context/store.ts";
 import useRoles from "@/hooks/useRoles";
-import { cn } from "@/lib/utils.ts";
-import { saveFile } from "@/utils/download.ts";
 
 const doRedirect = redirect({
   to: "/upload",
@@ -50,8 +48,8 @@ export const Route = createFileRoute("/upload/$uploadGroup/$uploadType")({
 
     if (uploadType === "geolocation") {
       return queryClient.ensureQueryData({
-        queryFn: () => api.schema.get(`school_${uploadType}`),
-        queryKey: ["schema", `school_${uploadType}`],
+        queryFn: () => api.schemaRegistry.getGroup("facilities"),
+        queryKey: ["schema-registry", "group", "facilities"],
       });
     }
   },
@@ -93,7 +91,10 @@ function Layout() {
   const isGeolocation = uploadType === "geolocation";
   const isHealth = uploadGroup === "other" && uploadType === "health";
 
-  const title = uploadType.replace(/-/g, " ");
+  const title =
+    uploadType === "geolocation"
+      ? "Facility geolocation"
+      : uploadType.replace(/-/g, " ");
   const isUnstructured =
     uploadGroup === "other" && uploadType === "unstructured";
   const isStructured = uploadGroup === "other" && uploadType === "structured";
@@ -104,8 +105,6 @@ function Layout() {
     uploadSlice: { stepIndex },
     uploadSliceActions: { resetUploadSliceState },
   } = useStore();
-  const [isSchemaDownloading, setIsSchemaDownloading] = useState(false);
-
   const hasAccess = hasCoverage || hasGeolocation;
 
   const hasPermissions =
@@ -118,45 +117,18 @@ function Layout() {
     return resetUploadSliceState;
   }, [resetUploadSliceState]);
 
-  async function downloadGeolocationSchema() {
-    const schema = await api.schema.download("school_geolocation");
-
-    if (schema) {
-      saveFile(schema);
-    }
-  }
-
   const GEOLOCATION_DESCRIPTION = (
     <>
       <p>
-        Geolocation data is the foundation of Project Giga and provides a
-        dataset of schools location and their attributes, such as; name,
-        education level, geography, internet connection, computer count, etc.
+        Facility geolocation data provides locations and attributes for
+        facilities in the facilities schema group (for example schools). Select
+        a facility type, then map your file to that facility’s resolved schema.
       </p>
       <p>
-        To successfully upload your data, you will need to ensure it has the
-        correct structure.{" "}
-      </p>
-      <p>
-        Click{" "}
-        <a
-          className={cn("cursor-pointer", {
-            "cursor-wait": isSchemaDownloading,
-          })}
-          onClick={async () => {
-            if (isSchemaDownloading) return;
-
-            setIsSchemaDownloading(true);
-            await downloadGeolocationSchema();
-            setIsSchemaDownloading(false);
-          }}
-        >
-          here
-        </a>{" "}
-        to download a template copy of the expected schema. Please use this as a
-        guide for structure as well as the necessary data types for each column.
-        We ask that you take special note of those columns marked as “Mandatory”
-        and ensure they all filled in correctly.{" "}
+        To successfully upload your data, ensure it has the correct structure
+        for the selected facility type. Columns marked as required must be
+        mapped; <code>facility_id_govt</code> is required and used to detect
+        creates vs updates.
       </p>
     </>
   );
@@ -209,7 +181,7 @@ function Layout() {
             <div>
               {isHealth
                 ? HEALTH_DESCRIPTION
-                : title === "geolocation"
+                : isGeolocation
                 ? GEOLOCATION_DESCRIPTION
                 : title === "coverage"
                 ? COVERAGE_DESCRIPTION

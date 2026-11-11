@@ -1,7 +1,6 @@
 import io
 from typing import Annotated
 
-import orjson
 import pandas as pd
 from fastapi import (
     APIRouter,
@@ -13,11 +12,9 @@ from fastapi import (
     Security,
     status,
 )
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from data_ingestion.cache.keys import get_schema_key
-from data_ingestion.cache.serde import get_cache_string
-from data_ingestion.db.trino import get_db
+from data_ingestion.db.primary import get_db
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.schema import (
     get_schema as _get_schema,
@@ -35,7 +32,7 @@ router = APIRouter(
 @router.get("", response_model=list[str])
 async def list_schemas(
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     cache_control: Annotated[str, Header()] = None,
 ):
     bypass_cache = cache_control == "no-cache"
@@ -46,7 +43,7 @@ async def list_schemas(
 async def get_schema(
     name: str,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     cache_control: Annotated[str, Header()] = None,
     is_update: bool = False,
     is_qos: bool = False,
@@ -63,26 +60,18 @@ async def get_schema(
             detail="is_qos can only be used with school_geolocation schema",
         )
 
-    bypass_cache = cache_control == "no-cache"
-
     schemas = await get_schemas(db, background_tasks)
 
     if name not in schemas:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    if is_qos:
-        schema_cache_key = f"{name}_qos"
-    elif is_update:
-        schema_cache_key = f"{name}_update"
-    else:
-        schema_cache_key = name
-
-    if not bypass_cache and (
-        (schema := await get_cache_string(get_schema_key(schema_cache_key))) is not None
-    ):
-        return orjson.loads(schema)
-
-    return _get_schema(name, db, background_tasks)
+    return await _get_schema(
+        name,
+        db,
+        background_tasks,
+        is_qos=is_qos,
+        is_update=is_update,
+    )
 
 
 @router.get("/{name}/download", response_class=Response)
@@ -90,23 +79,25 @@ async def download_schema(
     response: Response,
     name: str,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     schemas = await get_schemas(db, background_tasks)
     if name not in schemas:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    if (schema := await get_cache_string(get_schema_key(name))) is not None:
-        schema = orjson.loads(schema)
-    else:
-        schema = [s.model_dump() for s in await _get_schema(name, db, background_tasks)]
+    schema = [
+        schema_column.model_dump()
+        for schema_column in await _get_schema(name, db, background_tasks)
+    ]
 
     df = pd.DataFrame.from_records(schema)
 
     buffer = io.BytesIO()
 
     # Remove system-generated cols
-    df = df[df["is_system_generated"].isnull() | (df["is_system_generated"] is False)]
+    df = df[
+        df["is_system_generated"].isnull() | (df["is_system_generated"] == False)  # noqa: E712
+    ]
 
     # Select specific cols
     df = df[["name", "data_type", "is_nullable", "is_important", "description"]]

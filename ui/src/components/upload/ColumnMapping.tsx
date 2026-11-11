@@ -230,14 +230,15 @@ export const ColumnLicense = memo(({ column }: ColumnLicenseProps) => {
   const disabled = !watch(`mapping.${column.name}`);
   const isMandatory = !column.is_nullable || !!column.is_create_required;
 
-  const isSchoolIdGovt = column.name === "school_id_govt";
-  const shouldDisableLicense = disabled || (isMandatory && !isSchoolIdGovt);
+  const isGovtIdColumn =
+    column.name === "school_id_govt" || column.name === "facility_id_govt";
+  const shouldDisableLicense = disabled || (isMandatory && !isGovtIdColumn);
 
   React.useEffect(() => {
-    if (isMandatory && !isSchoolIdGovt && watch(`mapping.${column.name}`)) {
+    if (isMandatory && !isGovtIdColumn && watch(`mapping.${column.name}`)) {
       setValue(`license.${column.name}`, "ODBL");
     }
-  }, [isMandatory, isSchoolIdGovt, column.name, setValue, watch]);
+  }, [isMandatory, isGovtIdColumn, column.name, setValue, watch]);
 
   return (
     <div className="w-full">
