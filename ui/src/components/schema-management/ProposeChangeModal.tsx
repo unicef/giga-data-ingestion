@@ -198,7 +198,7 @@ function ProposeChangeModal({
     // input on newlines. Commas are allowed inside a single value.
     const values = input
       .split(/\n+/)
-      .map(value => value.replaceAll("|", "").trim())
+      .map(value => value.replace(/\|/g, "").trim())
       .filter(Boolean);
 
     if (values.length > 0) {

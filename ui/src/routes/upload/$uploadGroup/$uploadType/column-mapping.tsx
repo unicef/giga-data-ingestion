@@ -57,7 +57,10 @@ export const Route = createFileRoute(
   "/upload/$uploadGroup/$uploadType/column-mapping",
 )({
   component: UploadColumnMapping,
-  loader: ({ params: { uploadType }, context: { queryClient, getState } }) => {
+  loader: async ({
+    params: { uploadType },
+    context: { queryClient, getState },
+  }) => {
     const {
       uploadSlice: { file, source, facilitySchemaKey },
       uploadSliceActions: { setStepIndex },
@@ -73,16 +76,17 @@ export const Route = createFileRoute(
     }
 
     if (uploadType === "geolocation" && facilitySchemaKey) {
-      return queryClient.ensureQueryData({
+      await queryClient.ensureQueryData({
         queryFn: () => api.schemaRegistry.getResolvedSchema(facilitySchemaKey),
         queryKey: ["schema-registry", "resolved", facilitySchemaKey],
       });
+      return;
     }
 
     const metaschemaName =
       uploadType === "coverage" ? `coverage_${source}` : `school_${uploadType}`;
 
-    return queryClient.ensureQueryData({
+    await queryClient.ensureQueryData({
       queryFn: () => api.schema.get(metaschemaName),
       queryKey: ["schema", metaschemaName, false],
     });
@@ -231,10 +235,14 @@ function UploadColumnMapping() {
       facilitySchemaKey,
       metaschemaName,
     ],
-    queryFn: () =>
-      isGeolocation
-        ? api.schemaRegistry.getResolvedSchema(facilitySchemaKey as string)
-        : api.schema.get(metaschemaName),
+    queryFn: async () => {
+      if (isGeolocation) {
+        return api.schemaRegistry.getResolvedSchema(
+          facilitySchemaKey as string,
+        );
+      }
+      return api.schema.get(metaschemaName);
+    },
   });
 
   const { data: facilitiesGroupQuery } = useQuery({
