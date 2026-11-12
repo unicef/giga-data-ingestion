@@ -40,6 +40,13 @@ export interface Summary {
   timestamp: Date;
   rows_passed?: number;
   rows_failed?: number;
+  rows_passed_with_warnings?: number | null;
+  count_schools_low_precision_coordinates?: number | null;
+  count_duplicate_school_id?: number | null;
+  count_duplicate_location_groups?: number | null;
+  duplicate_location_group_min_size?: number | null;
+  count_proximity_50m_groups?: number | null;
+  proximity_50m_group_min_size?: number | null;
 }
 
 export interface DataQualityCheckSummary {
