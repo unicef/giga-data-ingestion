@@ -62,9 +62,9 @@ export interface RegistryColumn {
   is_important: boolean | null;
   is_system_generated: boolean | null;
   source: ColumnSource | null;
+  column_group: string | null;
   description: string | null;
   primary_key: boolean | null;
-  partition_order: number | null;
   license: string | null;
   units: string | null;
   hint: string | null;
@@ -226,4 +226,16 @@ export interface DatasetImportResponse {
 export interface DatasetCreateFromCsvResponse {
   dataset: SchemaDataset;
   import_result: DatasetImportResponse;
+}
+
+export interface ColumnGroupUpdateRequest {
+  action: "rename" | "delete";
+  name: string;
+  new_name?: string | null;
+}
+
+export interface ColumnGroupUpdateResponse {
+  updated: number;
+  name: string;
+  new_name: string | null;
 }

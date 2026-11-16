@@ -642,7 +642,9 @@ function UploadColumnMapping() {
       };
 
       if (usesFacilityOrSchoolSchema) {
-        const category = SCHOOL_COLUMN_CATEGORIES[column.name];
+        const category = isGeolocation
+          ? column.column_group?.trim() || undefined
+          : SCHOOL_COLUMN_CATEGORIES[column.name];
         if (category) {
           if (!categoryRows[category]) {
             categoryRows[category] = [];
@@ -658,26 +660,25 @@ function UploadColumnMapping() {
     const pinned = isGeolocation
       ? [FACILITY_ID_COLUMN]
       : ["school_id_govt", "school_name"];
-    if (categoryRows["School profile"]) {
-      categoryRows["School profile"].sort((a, b) => {
-        const ai = pinned.indexOf(a.name);
-        const bi = pinned.indexOf(b.name);
-        if (ai !== -1 && bi !== -1) return ai - bi;
-        if (ai !== -1) return -1;
-        if (bi !== -1) return 1;
-        return 0;
-      });
-    }
-    uncategorized.sort((a, b) => {
+    const sortPinnedFirst = (a: { name: string }, b: { name: string }) => {
       const ai = pinned.indexOf(a.name);
       const bi = pinned.indexOf(b.name);
       if (ai !== -1 && bi !== -1) return ai - bi;
       if (ai !== -1) return -1;
       if (bi !== -1) return 1;
       return a.name.localeCompare(b.name);
-    });
+    };
 
-    return { categoryRows, uncategorized };
+    for (const category of Object.keys(categoryRows)) {
+      categoryRows[category].sort(sortPinnedFirst);
+    }
+    uncategorized.sort(sortPinnedFirst);
+
+    const categoryOrder = isGeolocation
+      ? Object.keys(categoryRows)
+      : SCHOOL_CATEGORY_ORDER.filter(category => category in categoryRows);
+
+    return { categoryRows, categoryOrder, uncategorized };
   }, [
     detectedColumns,
     isGeolocation,
@@ -753,7 +754,7 @@ function UploadColumnMapping() {
           <section className="w-full space-y-8">
             {usesFacilityOrSchoolSchema ? (
               <>
-                {SCHOOL_CATEGORY_ORDER.map(category => {
+                {categorizedRows.categoryOrder.map(category => {
                   const rowsForCategory =
                     categorizedRows.categoryRows[category];
                   if (!rowsForCategory || rowsForCategory.length === 0) {

@@ -104,9 +104,9 @@ class RegistryColumn(BaseModel):
     is_important: bool | None = None
     is_system_generated: bool | None = None
     source: ColumnSource | None = None
+    column_group: str | None = None
     description: str | None = None
     primary_key: bool | None = None
-    partition_order: int | None = None
     license: str | None = None
     units: str | None = None
     hint: str | None = None
@@ -159,6 +159,14 @@ class RegistryColumn(BaseModel):
                 f"Expected one of: {', '.join(sorted(supported))}"
             )
         return normalized
+
+    @field_validator("column_group", mode="before")
+    @classmethod
+    def validate_column_group(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip()
+        return trimmed or None
 
     @model_validator(mode="after")
     def sync_system_generated_from_source(self) -> "RegistryColumn":
@@ -308,6 +316,37 @@ class DatasetImportResponse(BaseModel):
     updated: int = 0
     skipped: int = 0
     errors: list[DatasetImportError] = Field(default_factory=list)
+
+
+class ColumnGroupUpdateRequest(BaseModel):
+    """Rename or clear a shared column_group value on owned columns."""
+
+    action: Literal["rename", "delete"]
+    name: str = Field(min_length=1, max_length=100)
+    new_name: str | None = Field(default=None, max_length=100)
+
+    @field_validator("name", "new_name", mode="before")
+    @classmethod
+    def strip_group_names(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        trimmed = value.strip()
+        return trimmed or None
+
+    @model_validator(mode="after")
+    def validate_rename_target(self) -> "ColumnGroupUpdateRequest":
+        if self.action == "rename":
+            if not self.new_name:
+                raise ValueError("new_name is required when action is rename")
+            if self.new_name == self.name:
+                raise ValueError("new_name must differ from name")
+        return self
+
+
+class ColumnGroupUpdateResponse(BaseModel):
+    updated: int = 0
+    name: str
+    new_name: str | None = None
 
 
 class DatasetCreateFromCsvResponse(BaseModel):

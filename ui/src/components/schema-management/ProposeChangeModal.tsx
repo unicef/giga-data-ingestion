@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
 import {
@@ -40,6 +40,8 @@ interface ProposeChangeModalProps {
   lockToInitialType?: boolean;
 }
 
+const CREATE_NEW_GROUP = "__create_new__";
+
 interface ProposeChangeInputs {
   proposal_type: ProposalType;
   column_name: string;
@@ -48,6 +50,7 @@ interface ProposeChangeInputs {
   is_important: boolean;
   description: string;
   source: "" | ColumnSource;
+  column_group: string;
   is_mandatory: boolean;
   is_unique: boolean;
   range_min: number | undefined;
@@ -65,12 +68,35 @@ function valuesFromColumn(column?: RegistryColumn) {
     is_important: column?.is_important ?? false,
     description: column?.description ?? "",
     source: (column ? resolveColumnSource(column) : null) ?? ("" as const),
+    column_group: column?.column_group ?? "",
     is_mandatory: column?.is_mandatory ?? false,
     is_unique: column?.is_unique ?? false,
     range_min: column?.range_min ?? undefined,
     range_max: column?.range_max ?? undefined,
     precision_min: column?.precision_min ?? undefined,
     critical_for: (column?.critical_for ?? "") as "" | CriticalFor,
+  };
+}
+
+function emptyFormValues(
+  proposalType: ProposalType,
+  columnName = "",
+): ProposeChangeInputs {
+  return {
+    proposal_type: proposalType,
+    column_name: columnName,
+    data_type: "",
+    is_nullable: true,
+    is_important: false,
+    description: "",
+    source: "",
+    column_group: "",
+    is_mandatory: false,
+    is_unique: false,
+    range_min: undefined,
+    range_max: undefined,
+    precision_min: undefined,
+    critical_for: "",
   };
 }
 
@@ -88,20 +114,32 @@ function ProposeChangeModal({
   const [showError, setShowError] = useState(false);
   const [domainValueInput, setDomainValueInput] = useState("");
   const [domainValues, setDomainValues] = useState<string[]>([]);
+  const [newGroupName, setNewGroupName] = useState("");
 
   const { register, handleSubmit, control, watch, reset, trigger, formState } =
     useForm<ProposeChangeInputs>({
       mode: "onChange",
-      defaultValues: { proposal_type: "add" },
+      defaultValues: emptyFormValues("add"),
     });
 
   const proposalType = watch("proposal_type");
   const dataType = watch("data_type");
   const isMandatory = watch("is_mandatory");
+  const columnGroupSelection = watch("column_group");
   const supportsRange = isNumericDataType(dataType);
   const supportsPrecision = isNumericDataType(dataType);
   const supportsDomainValues =
     Boolean(dataType) && !isNumericDataType(dataType);
+  const isCreatingGroup = columnGroupSelection === CREATE_NEW_GROUP;
+
+  const existingGroups = useMemo(() => {
+    const groups = new Set<string>();
+    for (const column of columns) {
+      const group = column.column_group?.trim();
+      if (group) groups.add(group);
+    }
+    return [...groups].sort((a, b) => a.localeCompare(b));
+  }, [columns]);
 
   useEffect(() => {
     if (!supportsDomainValues) {
@@ -131,58 +169,19 @@ function ProposeChangeModal({
           : parseDomainValues(seedColumn.domain_values),
       );
     } else if (initialProposalType === "edit" && initialColumnName) {
-      reset({
-        proposal_type: "edit",
-        column_name: initialColumnName,
-        data_type: "",
-        is_nullable: true,
-        is_important: false,
-        description: "",
-        source: "",
-        is_mandatory: false,
-        is_unique: false,
-        range_min: undefined,
-        range_max: undefined,
-        precision_min: undefined,
-        critical_for: "",
-      });
+      reset(emptyFormValues("edit", initialColumnName));
       setDomainValues([]);
     } else if (initialProposalType === "delete") {
-      reset({
-        proposal_type: "delete",
-        column_name: initialColumnName ?? seedColumn?.name ?? "",
-        data_type: "",
-        is_nullable: true,
-        is_important: false,
-        description: "",
-        source: "",
-        is_mandatory: false,
-        is_unique: false,
-        range_min: undefined,
-        range_max: undefined,
-        precision_min: undefined,
-        critical_for: "",
-      });
+      reset(
+        emptyFormValues("delete", initialColumnName ?? seedColumn?.name ?? ""),
+      );
       setDomainValues([]);
     } else {
-      reset({
-        proposal_type: "add",
-        column_name: "",
-        data_type: "",
-        is_nullable: true,
-        is_important: false,
-        description: "",
-        source: "",
-        is_mandatory: false,
-        is_unique: false,
-        range_min: undefined,
-        range_max: undefined,
-        precision_min: undefined,
-        critical_for: "",
-      });
+      reset(emptyFormValues("add"));
       setDomainValues([]);
     }
     setDomainValueInput("");
+    setNewGroupName("");
     setShowError(false);
   }, [
     open,
@@ -233,10 +232,28 @@ function ProposeChangeModal({
     setShowError(false);
     setDomainValueInput("");
     setDomainValues([]);
+    setNewGroupName("");
     onClose();
   };
 
+  const resolveColumnGroup = (selection: string) => {
+    if (selection === CREATE_NEW_GROUP) {
+      const trimmed = newGroupName.trim();
+      return trimmed || null;
+    }
+    return selection.trim() || null;
+  };
+
   const onSubmit: SubmitHandler<ProposeChangeInputs> = async data => {
+    if (
+      data.proposal_type !== "delete" &&
+      data.column_group === CREATE_NEW_GROUP &&
+      !newGroupName.trim()
+    ) {
+      setShowError(true);
+      return;
+    }
+
     const body: CreateProposalRequest = {
       column_name: data.column_name,
       proposal_type: data.proposal_type,
@@ -250,6 +267,7 @@ function ProposeChangeModal({
         is_important: data.is_important,
         description: data.description || null,
         source,
+        column_group: resolveColumnGroup(data.column_group),
         is_system_generated:
           source === "system_generated"
             ? true
@@ -294,7 +312,11 @@ function ProposeChangeModal({
       hasScrollingContent
       modalHeading={lockedHeading ?? "Propose Schema Change"}
       open={open}
-      primaryButtonDisabled={!formState.isValid || isPending}
+      primaryButtonDisabled={
+        !formState.isValid ||
+        isPending ||
+        (proposalType !== "delete" && isCreatingGroup && !newGroupName.trim())
+      }
       primaryButtonText={
         lockToInitialType && initialProposalType === "delete"
           ? "Submit delete proposal"
@@ -387,6 +409,41 @@ function ProposeChangeModal({
                   </Select>
                 )}
               />
+              <Controller
+                name="column_group"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    id="column_group"
+                    labelText="Column group"
+                    helperText="Groups organize columns on the upload mapping screen."
+                    {...field}
+                    onChange={event => {
+                      field.onChange(event);
+                      if (event.target.value !== CREATE_NEW_GROUP) {
+                        setNewGroupName("");
+                      }
+                    }}
+                  >
+                    <SelectItem text="Not set" value="" />
+                    {existingGroups.map(group => (
+                      <SelectItem key={group} text={group} value={group} />
+                    ))}
+                    <SelectItem
+                      text="Create new group…"
+                      value={CREATE_NEW_GROUP}
+                    />
+                  </Select>
+                )}
+              />
+              {isCreatingGroup && (
+                <TextInput
+                  id="new_column_group"
+                  labelText="New group name"
+                  value={newGroupName}
+                  onChange={event => setNewGroupName(event.target.value)}
+                />
+              )}
               <div className="flex flex-wrap gap-4">
                 <Checkbox
                   id="is_nullable"

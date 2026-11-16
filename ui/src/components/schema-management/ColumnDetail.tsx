@@ -268,10 +268,10 @@ function ColumnDetail({ datasetKey, columnName }: ColumnDetailProps) {
                   <MetaItem label="Source">
                     {formatColumnSource(column) || "—"}
                   </MetaItem>
-                  <MetaItem label="Units">{column.units ?? "—"}</MetaItem>
-                  <MetaItem label="Partition order">
-                    {column.partition_order ?? "—"}
+                  <MetaItem label="Column group">
+                    {column.column_group ?? "—"}
                   </MetaItem>
+                  <MetaItem label="Units">{column.units ?? "—"}</MetaItem>
                   <MetaItem label="License">{column.license ?? "—"}</MetaItem>
                   <MetaItem label="Description">
                     {column.description ?? "—"}

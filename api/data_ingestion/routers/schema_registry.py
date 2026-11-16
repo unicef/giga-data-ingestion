@@ -28,6 +28,8 @@ from data_ingestion.schemas.schema_registry import (
     AppliedVersion,
     ArchiveRequest,
     AuditLogResponse,
+    ColumnGroupUpdateRequest,
+    ColumnGroupUpdateResponse,
     DatasetCreateFromCsvResponse,
     DatasetGroupCreate,
     DatasetGroupDetail,
@@ -287,6 +289,28 @@ async def import_dataset_columns(
         db,
         dataset_key=key,
         csv_bytes=csv_bytes,
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+    )
+
+
+@router.post(
+    "/datasets/{key}/column-groups",
+    response_model=ColumnGroupUpdateResponse,
+    dependencies=[Security(IsPrivileged())],
+)
+async def update_dataset_column_group(
+    key: str,
+    body: ColumnGroupUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: DatabaseUser = Depends(get_current_database_user),
+):
+    return await registry.update_column_group(
+        db,
+        dataset_key=key,
+        action=body.action,
+        name=body.name,
+        new_name=body.new_name,
         actor_id=current_user.id,
         actor_email=current_user.email,
     )

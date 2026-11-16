@@ -21,6 +21,7 @@ from data_ingestion.models import (
     SchemaVersionColumn,
 )
 from data_ingestion.schemas.schema_registry import (
+    ColumnGroupUpdateResponse,
     DatasetImportError,
     DatasetImportResponse,
     DatasetVersion,
@@ -48,9 +49,9 @@ REGISTRY_COLUMN_FIELDS = [
     "is_important",
     "is_system_generated",
     "source",
+    "column_group",
     "description",
     "primary_key",
-    "partition_order",
     "license",
     "units",
     "hint",
@@ -1974,7 +1975,7 @@ _IMPORT_BOOL_FIELDS = {
     "is_mandatory",
     "is_unique",
 }
-_IMPORT_INT_FIELDS = {"partition_order", "precision_min"}
+_IMPORT_INT_FIELDS = {"precision_min"}
 _IMPORT_FLOAT_FIELDS = {"range_min", "range_max"}
 
 
@@ -2122,3 +2123,60 @@ async def import_columns_from_csv(
         )
         await db.commit()
     return result
+
+
+async def update_column_group(
+    db: AsyncSession,
+    *,
+    dataset_key: str,
+    action: str,
+    name: str,
+    new_name: str | None,
+    actor_id: str,
+    actor_email: str,
+) -> ColumnGroupUpdateResponse:
+    """Rename or clear column_group across owned columns, publishing a new version."""
+    dataset = await db.scalar(
+        select(SchemaDataset).where(SchemaDataset.key == dataset_key).with_for_update()
+    )
+    if dataset is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Dataset not found")
+    if dataset.archived_at is not None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail="Cannot update column groups on an archived schema",
+        )
+
+    columns = await get_registry_columns(db, dataset_key)
+    target_name = new_name if action == "rename" else None
+    updated = 0
+    next_columns: list[RegistryColumn] = []
+    for column in columns:
+        if column.column_group != name:
+            next_columns.append(column)
+            continue
+        state = column.model_dump()
+        state["column_group"] = target_name
+        next_columns.append(RegistryColumn(**state))
+        updated += 1
+
+    if updated == 0:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            detail=f"No owned columns use column group '{name}'",
+        )
+
+    await publish_schema_version(
+        db,
+        dataset,
+        next_columns,
+        source="column_group_update",
+        actor_id=actor_id,
+        actor_email=actor_email,
+    )
+    await db.commit()
+    return ColumnGroupUpdateResponse(
+        updated=updated,
+        name=name,
+        new_name=target_name,
+    )

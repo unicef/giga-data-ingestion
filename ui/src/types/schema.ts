@@ -7,10 +7,11 @@ export interface MetaSchema {
   is_system_generated: boolean | null;
   description: string | null;
   primary_key: boolean | null;
-  partition_order: number | null;
   license: string | null;
   units: string | null;
   hint: string | null;
   // UI-only: mandatory only when creating new schools.
   is_create_required?: boolean;
+  /** Schema-registry column group; drives mapping section headers. */
+  column_group?: string | null;
 }

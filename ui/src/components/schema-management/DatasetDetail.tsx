@@ -36,6 +36,7 @@ import { api } from "@/api";
 import { listDatasetGroupsQueryOptions } from "@/api/queryOptions.ts";
 import ChecksPanel from "@/components/schema-management/ChecksPanel.tsx";
 import LifecycleActions from "@/components/schema-management/LifecycleActions.tsx";
+import ManageColumnGroupsModal from "@/components/schema-management/ManageColumnGroupsModal.tsx";
 import ProposalsTable from "@/components/schema-management/ProposalsTable.tsx";
 import ProposeChangeModal from "@/components/schema-management/ProposeChangeModal.tsx";
 import SchemaNavigator from "@/components/schema-management/SchemaNavigator.tsx";
@@ -95,7 +96,7 @@ function ColumnsTable({
   }
 
   const columnGridClass =
-    "grid grid-cols-[minmax(12rem,1.6fr)_5.5rem_5rem_minmax(7.5rem,1fr)_minmax(8rem,1.1fr)_4.5rem] items-center gap-x-3 px-4";
+    "grid grid-cols-[minmax(12rem,1.5fr)_5.5rem_5rem_minmax(7rem,1fr)_minmax(7.5rem,1fr)_minmax(8rem,1.1fr)_4.5rem] items-center gap-x-3 px-4";
 
   return (
     <div>
@@ -108,6 +109,7 @@ function ColumnsTable({
           <span>Type</span>
           <span>Origin</span>
           <span>Source</span>
+          <span>Group</span>
           <span>Domain / Range</span>
           <span>Checks</span>
         </div>
@@ -170,6 +172,9 @@ function ColumnsTable({
                   <span className="text-sm text-giga-dark-gray">—</span>
                 )}
               </div>
+              <div className="min-w-0 truncate text-sm text-giga-dark-gray">
+                {column.column_group?.trim() || "—"}
+              </div>
               <span className="min-w-0 truncate text-sm text-giga-dark-gray">
                 {domainRange || "—"}
               </span>
@@ -201,6 +206,7 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
   const [draftGroupId, setDraftGroupId] = useState("");
   const [draftRole, setDraftRole] = useState<SchemaRole>("member");
   const [selectedTabId, setSelectedTabId] = useState("columns");
+  const [manageGroupsOpen, setManageGroupsOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: datasetQuery } = useQuery({
@@ -479,6 +485,13 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                       disabled={isImporting}
                     >
                       Import CSV
+                    </Button>
+                    <Button
+                      kind="tertiary"
+                      onClick={() => setManageGroupsOpen(true)}
+                      disabled={isColumnsLoading}
+                    >
+                      Manage groups
                     </Button>
                   </>
                 )}
@@ -862,6 +875,12 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
             initialColumnName={editColumnName ?? undefined}
             initialColumn={editColumn}
             lockToInitialType
+          />
+          <ManageColumnGroupsModal
+            datasetKey={datasetKey}
+            columns={columns}
+            open={manageGroupsOpen}
+            onClose={() => setManageGroupsOpen(false)}
           />
           <Modal
             aria-label="import result modal"

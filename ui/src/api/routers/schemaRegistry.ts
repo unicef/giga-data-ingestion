@@ -2,6 +2,8 @@ import { AxiosInstance, AxiosResponse } from "axios";
 
 import {
   AuditLogEntry,
+  ColumnGroupUpdateRequest,
+  ColumnGroupUpdateResponse,
   CreateDatasetGroupRequest,
   CreateProposalRequest,
   CreateSchemaDatasetRequest,
@@ -242,6 +244,18 @@ export default function routes(axi: AxiosInstance) {
         `/schema-registry/datasets/${datasetKey}/import`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } },
+      );
+    },
+    updateColumnGroup: ({
+      datasetKey,
+      body,
+    }: {
+      datasetKey: string;
+      body: ColumnGroupUpdateRequest;
+    }): Promise<AxiosResponse<ColumnGroupUpdateResponse>> => {
+      return axi.post(
+        `/schema-registry/datasets/${datasetKey}/column-groups`,
+        body,
       );
     },
     listAuditLog: (params?: {

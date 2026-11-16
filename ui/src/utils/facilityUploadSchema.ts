@@ -48,11 +48,11 @@ export function registryColumnsToMetaSchema(
       is_system_generated: column.is_system_generated,
       description: column.description,
       primary_key: column.primary_key,
-      partition_order: column.partition_order,
       license: column.license,
       units: column.units,
       hint: column.hint,
       is_create_required: createRequired,
+      column_group: column.column_group,
     };
   });
 }
