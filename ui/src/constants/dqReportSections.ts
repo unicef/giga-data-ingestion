@@ -65,7 +65,6 @@ export const DQ_ENTITY_TEXT: Record<DqEntity, Record<string, string>> = {
       "Number of groups with {count} or more schools sharing exact location",
     sameNameLevelLocation:
       "Schools with the same name, educational level, and location",
-    identicalExceptId: "Schools identical except for school ID",
     lowPrecision: "Schools with low precision coordinates (less than 5 digits)",
     notInhabitedArea: "Schools not in an inhabited area",
     notNearBuiltEnvironment: "Schools not near a built environment",
@@ -91,7 +90,6 @@ export const DQ_ENTITY_TEXT: Record<DqEntity, Record<string, string>> = {
       "Number of groups with {count} or more health centers sharing exact location",
     sameNameLevelLocation:
       "Health Centers with the same name, educational level, and location",
-    identicalExceptId: "Health Centers identical except for health center ID",
     lowPrecision:
       "Health Centers with low precision coordinates (less than 5 digits)",
     notInhabitedArea: "Health Centers not in an inhabited area",
@@ -215,15 +213,6 @@ export const DQ_WARNING_SECTIONS: DqSectionSpec[] = [
           section: "location",
           assertion: "duplicate_set",
           column: "school_name_education_level_location_id",
-        },
-      },
-      {
-        text: "identicalExceptId",
-        priority: "Medium",
-        count: {
-          kind: "check",
-          section: "duplicates",
-          assertion: "duplicate_all_except_school_code",
         },
       },
     ],
