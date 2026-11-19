@@ -130,14 +130,29 @@ function strMeta(
   return String(v);
 }
 
+function collectionDomainLabel(entity: {
+  lowerSingular: string;
+}): string {
+  if (entity.lowerSingular === "school") return "School";
+  if (entity.lowerSingular === "health facility") return "Health";
+  return entity.lowerSingular.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function buildMetadataRows(
   meta: Record<string, string | number | null | undefined> | undefined,
-  entityPlural: string
+  entity: { plural: string; lowerSingular: string }
 ) {
-  const idLabel =
-    entityPlural === "Health Centers"
-      ? "Primary record / facility ID type"
-      : "School ID Type";
+  const isSchool = entity.lowerSingular === "school";
+  const domain = collectionDomainLabel(entity);
+  const idLabel = isSchool
+    ? "School ID Type"
+    : "Primary record / facility ID type";
+  const infoSystemLabel = isSchool
+    ? "Name of the EMIS System"
+    : entity.lowerSingular === "health facility"
+      ? "Name of the DHIS System"
+      : "National facility information system";
+  const frequencyLabel = `Frequency of ${domain} Data Collection`;
 
   return [
     { label: "Description", value: strMeta(meta, "description") },
@@ -151,14 +166,18 @@ function buildMetadataRows(
     },
     { label: idLabel, value: strMeta(meta, "school_ids_type") },
     {
-      label: "Name of the EMIS System",
+      label: infoSystemLabel,
       value: strMeta(meta, "emis_system_name") || strMeta(meta, "emis_system"),
     },
     {
-      label: "Frequency of School Data Collection",
+      label: frequencyLabel,
       value: strMeta(meta, "frequency_of_school_data_collection"),
     },
-    { label: "Next Collection", value: strMeta(meta, "next_school_data_collection") },
+    // Portal metadata still stores this under the shared upload-form key.
+    {
+      label: "Next Collection",
+      value: strMeta(meta, "next_school_data_collection"),
+    },
   ];
 }
 
@@ -365,10 +384,10 @@ async function buildContext(data: PDFReportData) {
       rows_passed?: number | null;
       rows_failed?: number | null;
       rows_passed_with_warnings?: number | null;
-      count_schools_low_precision_coordinates?: number | null;
-      count_duplicate_school_id?: number | null;
-      schools_created?: number | null;
-      schools_updated?: number | null;
+      count_facilities_low_precision_coordinates?: number | null;
+      count_duplicate_facility_id?: number | null;
+      facilities_created?: number | null;
+      facilities_updated?: number | null;
     } | undefined) ?? {};
 
   const crit = getSection(dq, "critical");
@@ -377,12 +396,14 @@ async function buildContext(data: PDFReportData) {
   const precChecks = getSection(dq, "precision");
 
   const entity = data.entity ?? {
-    plural: "Schools",
-    lowerPlural: "schools",
-    lowerSingular: "school",
+    plural: "Facilities",
+    lowerPlural: "facilities",
+    lowerSingular: "facility",
   };
   const ep = entity.plural;
   const es = entity.lowerSingular;
+  const isSchool = es === "school";
+  const levelWord = isSchool ? "educational level" : "level";
 
   const uploaded = Number(summary.rows ?? 0) || 0;
   const approved = Number(
@@ -394,36 +415,43 @@ async function buildContext(data: PDFReportData) {
     "latitude",
     "longitude",
   ]);
-  const missingName = failedCount(findCheck(crit, "is_null_optional", "school_name"));
+  const missingName = failedCount(
+    findCheck(crit, "is_null_optional", "facility_name")
+  );
   const missingEduLevel = failedCount(
-    findCheck(crit, "is_null_optional", "education_level_govt")
+    findCheck(crit, "is_null_optional", "facility_level")
   );
   const outsideCountry = failedCount(findCheck(crit, "is_not_within_country"));
   const missingSchoolIds = failedCount(
-    findCheck(crit, "is_null_mandatory", "school_id_govt")
+    findCheck(crit, "is_null_mandatory", "facility_id_govt")
   );
-  // Schools with a duplicate government ID. Prefer the deduped school count
-  // from dq-summary; fall back to the per-check count for pre-change reports.
+  // Prefer deduped govt-ID count from dq-summary; else per-check count.
   const dupSchoolIds =
-    typeof summary.count_duplicate_school_id === "number"
-      ? summary.count_duplicate_school_id
-      : failedCount(findCheck(dupChecks, "duplicate", "school_id_govt"));
-  // Unique schools with low precision in lat and/or long (deduped upstream).
-  // Falls back to max across the per-column checks for pre-change reports.
+    typeof summary.count_duplicate_facility_id === "number"
+      ? summary.count_duplicate_facility_id
+      : failedCount(findCheck(dupChecks, "duplicate", "facility_id_govt"));
   const lowPrecision =
-    typeof summary.count_schools_low_precision_coordinates === "number"
-      ? summary.count_schools_low_precision_coordinates
+    typeof summary.count_facilities_low_precision_coordinates === "number"
+      ? summary.count_facilities_low_precision_coordinates
       : warningAcrossColumns(precChecks, "precision", ["latitude", "longitude"]);
-  const highDensity = warningCount(findCheck(locChecks, "is_school_density_greater_than_5"));
+  const highDensity = warningCount(
+    findCheck(locChecks, "is_facility_density_greater_than_5")
+  );
   // Dagster names the location-only duplicate check specially: its assertion is
   // "duplicate_location_rows" (not "duplicate_set-location_id").
   const sameLocation = warningCount(
     findCheck(locChecks, "duplicate_location_rows", "location_id")
   );
   const nameEduLoc = warningCount(
-    findCheck(locChecks, "duplicate_set", "school_name_education_level_location_id")
+    findCheck(
+      locChecks,
+      "duplicate_set",
+      "facility_name_facility_level_location_id"
+    )
   );
-  const allExceptCode = warningCount(findCheck(dupChecks, "duplicate_all_except_school_code"));
+  const allExceptCode = warningCount(
+    findCheck(dupChecks, "duplicate_all_except_facility_code")
+  );
   const nameLevel110 = warningCount(
     findCheck(locChecks, "duplicate_name_level_within_110m_radius")
   );
@@ -465,8 +493,7 @@ async function buildContext(data: PDFReportData) {
   const warnRotate =
     rejArc > 0.01 ? rejRotate + (rejArc / circumference) * 360 : -90;
 
-  const idSectionTitle =
-    ep === "Health Centers" ? "Record IDs" : "School IDs";
+  const idSectionTitle = isSchool ? "School IDs" : "Record IDs";
 
   const rejectedSections: TableSection[] = [
     {
@@ -508,7 +535,7 @@ async function buildContext(data: PDFReportData) {
           priority: "High",
         },
         {
-          label: `${ep} with missing educational level`,
+          label: `${ep} with missing ${levelWord}`,
           alerts: fmt(missingEduLevel),
           priority: "High",
         },
@@ -526,7 +553,7 @@ async function buildContext(data: PDFReportData) {
           priority: "Medium",
         },
         {
-          label: `${ep} with the same name, educational level, and location`,
+          label: `${ep} with the same name, ${levelWord}, and location`,
           alerts: fmt(nameEduLoc),
           priority: "Medium",
         },
@@ -561,12 +588,12 @@ async function buildContext(data: PDFReportData) {
 
   const warningsPage2Rows: TableRow[] = [
     {
-      label: `${ep} with similar names, educational level, and location within a radius of 110m`,
+      label: `${ep} with similar names, ${levelWord}, and location within a radius of 110m`,
       alerts: fmt(nameLevel110),
       priority: "Low",
     },
     {
-      label: `${ep} with similar names and the same educational level within a radius of 110m`,
+      label: `${ep} with similar names and the same ${levelWord} within a radius of 110m`,
       alerts: fmt(similarNameLevel110),
       priority: "Low",
     },
@@ -584,11 +611,12 @@ async function buildContext(data: PDFReportData) {
     hasEducationMaps || hasElectricityMaps || hasConnectivityMaps;
 
   const metaRaw = data.uploadMetadata ?? {};
-  const metadataRows = buildMetadataRows(metaRaw, ep);
+  const metadataRows = buildMetadataRows(metaRaw, entity);
 
-  // Dagster reports these inside dq-summary (snake_case); top-level props win.
-  const schoolsCreatedRaw = data.schoolsCreated ?? summary.schools_created;
-  const schoolsUpdatedRaw = data.schoolsUpdated ?? summary.schools_updated;
+  const schoolsCreatedRaw =
+    data.schoolsCreated ?? summary.facilities_created;
+  const schoolsUpdatedRaw =
+    data.schoolsUpdated ?? summary.facilities_updated;
   const hasCreated =
     schoolsCreatedRaw !== null &&
     schoolsCreatedRaw !== undefined &&
