@@ -18,6 +18,12 @@ export const DQ_SECTION_ALIASES = {
     "missing value checks",
     "completeness_checks",
   ],
+  // Dagster's column relation checks; the section name comes from NocoDB.
+  consistency: [
+    "column_relation_checks",
+    "column relation checks",
+    "consistency_checks",
+  ],
 } as const;
 
 export type DqSectionKey = keyof typeof DQ_SECTION_ALIASES;
@@ -37,7 +43,14 @@ export type DqCountSpec =
   | { kind: "summary"; field: SummaryCountField; fallback: DqCountSpec };
 
 export type DqRowSpec =
-  | { text: string; priority: DqPriority; count: DqCountSpec }
+  | {
+      text: string;
+      priority: DqPriority;
+      count: DqCountSpec;
+      // Dagster runs some checks only when every column they compare was
+      // uploaded: an absent check is not run, so the row is omitted, not 0.
+      optional?: boolean;
+    }
   | {
       // Dagster reports each group tally with its threshold; older reports
       // carry neither, so the row is omitted instead of shown as 0.
@@ -74,6 +87,14 @@ export const DQ_ENTITY_TEXT: Record<DqEntity, Record<string, string>> = {
     similarNameSameLevel110:
       "Schools with similar names and the same educational level within a radius of 110m",
     highDensity: "High Density (more than 5 schools within 500m)",
+    studentsVsGender:
+      "Schools where the number of students doesn't match the sum of girls and boys",
+    teachersVsGender:
+      "Schools where the number of teachers doesn't match the sum of female and male teachers",
+    computerAvailabilityVsCount:
+      "Schools where computer availability doesn't match the number of computers",
+    deviceAvailabilityVsCount:
+      "Schools where device availability doesn't match the number of computers and tablets",
   },
   healthCenters: {
     approved: "Approved health centers",
@@ -289,6 +310,55 @@ export const DQ_WARNING_SECTIONS: DqSectionSpec[] = [
           kind: "check",
           section: "location",
           assertion: "is_school_density_greater_than_5",
+        },
+      },
+    ],
+  },
+  {
+    title: "Consistency",
+    rows: [
+      {
+        text: "studentsVsGender",
+        priority: "Low",
+        optional: true,
+        count: {
+          kind: "check",
+          section: "consistency",
+          assertion: "column_relation_checks",
+          column: "num_students_num_students_girls_num_students_boys",
+        },
+      },
+      {
+        text: "teachersVsGender",
+        priority: "Low",
+        optional: true,
+        count: {
+          kind: "check",
+          section: "consistency",
+          assertion: "column_relation_checks",
+          column: "num_teachers_num_teachers_female_num_teachers_male",
+        },
+      },
+      {
+        text: "computerAvailabilityVsCount",
+        priority: "Low",
+        optional: true,
+        count: {
+          kind: "check",
+          section: "consistency",
+          assertion: "column_relation_checks",
+          column: "computer_availability_num_computers",
+        },
+      },
+      {
+        text: "deviceAvailabilityVsCount",
+        priority: "Low",
+        optional: true,
+        count: {
+          kind: "check",
+          section: "consistency",
+          assertion: "column_relation_checks",
+          column: "device_availability_num_computers_num_tablets",
         },
       },
     ],

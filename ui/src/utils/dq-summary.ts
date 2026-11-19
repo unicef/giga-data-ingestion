@@ -106,6 +106,16 @@ function resolveCount(
   }
 }
 
+/** Only a "check" count can be absent from a report. */
+function hasCheck(dq: DqSummaryInput, spec: DqCountSpec): boolean {
+  if (spec.kind !== "check") return true;
+  return getSection(dq, spec.section).some(
+    c =>
+      c.assertion === spec.assertion &&
+      (spec.column === undefined || c.column === spec.column),
+  );
+}
+
 export interface DqReportRow {
   key: string;
   label: string;
@@ -144,6 +154,7 @@ function buildSections(
           },
         ];
       }
+      if (row.optional && !hasCheck(dq, row.count)) return [];
       return [
         {
           key: row.text,
