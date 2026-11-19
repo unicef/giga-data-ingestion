@@ -7,7 +7,9 @@
   "entity": {
     "schools": {
       "approved": "Écoles approuvées",
+      "computerAvailabilityVsCount": "Écoles où la disponibilité d'ordinateurs ne correspond pas au nombre d'ordinateurs",
       "created": "Écoles créées",
+      "deviceAvailabilityVsCount": "Écoles où la disponibilité d'appareils ne correspond pas au nombre d'ordinateurs et de tablettes",
       "duplicateIds": "Écoles avec identifiant en double",
       "duplicateLocationGroups": "↳ Nombre de groupes avec {count} écoles ou plus au même emplacement exact",
       "highDensity": "Haute densité (> 5 écoles dans 500 m)",
@@ -28,6 +30,8 @@
       "sameNameLevelLocation": "Écoles avec même nom, niveau et emplacement",
       "sectionIds": "Identifiants des Écoles",
       "similarNameSameLevel110": "Écoles avec nom similaire et même niveau (110 m)",
+      "studentsVsGender": "Écoles où le nombre d'élèves ne correspond pas à la somme des filles et des garçons",
+      "teachersVsGender": "Écoles où le nombre d'enseignants ne correspond pas à la somme des enseignantes et des enseignants",
       "updated": "Écoles mises à jour",
       "uploaded": "Écoles téléchargées",
       "within50m": "Écoles à moins de 50 m d'une autre école"
@@ -57,6 +61,7 @@
   "rejected": "Rejetées",
   "reportTitle": "Bilan de la qualité des données",
   "sectionAccuracy": "Précision",
+  "sectionConsistency": "Cohérence",
   "sectionCoordinates": "Coordonnées",
   "sectionDuplicates": "Doublons",
   "sectionOther": "Autres",
