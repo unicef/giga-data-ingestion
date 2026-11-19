@@ -47,14 +47,20 @@ const InternalChecksTable = ({ categories }: InternalChecksTableProps) => {
                   </>
                 ),
                 ...Object.fromEntries(
-                  INTERNAL_CHECK_COLUMNS.map(({ key }) => [
-                    key,
-                    key === "passed" ? (
-                      commaNumber(row.counts[key])
-                    ) : (
-                      <AlertCount value={row.counts[key]} />
-                    ),
-                  ]),
+                  INTERNAL_CHECK_COLUMNS.map(({ key }) => {
+                    const value = row.counts[key];
+                    if (value === null) {
+                      return [key, <span className="text-gray-400">—</span>];
+                    }
+                    return [
+                      key,
+                      key === "passed" ? (
+                        commaNumber(value)
+                      ) : (
+                        <AlertCount value={value} />
+                      ),
+                    ];
+                  }),
                 ),
               },
             })),

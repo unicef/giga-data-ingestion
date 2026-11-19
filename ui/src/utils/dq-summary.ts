@@ -270,10 +270,13 @@ export const INTERNAL_CHECK_COLUMNS = [
 export type InternalCheckColumnKey =
   typeof INTERNAL_CHECK_COLUMNS[number]["key"];
 
+type IssueKind = Exclude<InternalCheckColumnKey, "passed">;
+
 export interface InternalCheckRow {
   column: string;
   tag?: "required" | "important";
-  counts: Record<InternalCheckColumnKey, number>;
+  /** An issue count is null when the column has no check of that kind. */
+  counts: { passed: number } & Record<IssueKind, number | null>;
 }
 
 export interface InternalCheckCategory {
@@ -310,11 +313,37 @@ const INTERNAL_CATEGORY_ORDER = [
 
 const OTHER_CATEGORY = "Other";
 
+// Within a category, rows follow this order; unlisted columns go last.
+const INTERNAL_COLUMN_ORDER = [
+  "school_id_govt",
+  "school_name",
+  "education_level_govt",
+  "longitude",
+  "latitude",
+  ...Object.keys(INTERNAL_COLUMN_CATEGORIES),
+];
+
+// Derived by the pipeline rather than uploaded.
+const HIDDEN_COLUMNS = new Set(["school_id_govt_type"]);
+
+// Checks that add nothing per column: value-mapped columns, or format checks
+// already covered by the critical checks.
+const HIDDEN_CHECKS: Partial<Record<string, IssueKind[]>> = {
+  connectivity_type_govt: ["domain"],
+  education_level_govt: ["domain"],
+  school_id_govt: ["domain"],
+  school_name: ["domain"],
+};
+
+// Reported on the derived location_id column rather than on the coordinates.
+const LOCATION_DUPLICATE_ASSERTION = "duplicate_location_rows";
+const LOCATION_COLUMNS = ["latitude", "longitude"];
+
 const isSection = (key: string, section: DqSectionKey) =>
   (DQ_SECTION_ALIASES[section] as readonly string[]).includes(key);
 
 const ISSUE_SECTIONS: Record<
-  Exclude<InternalCheckColumnKey, "passed">,
+  IssueKind,
   (key: string, check: Check) => boolean
 > = {
   domain: key => isSection(key, "domain"),
@@ -337,6 +366,11 @@ function columnTag(column: string): InternalCheckRow["tag"] {
   return undefined;
 }
 
+function columnOrder(column: string) {
+  const index = INTERNAL_COLUMN_ORDER.indexOf(column);
+  return index === -1 ? INTERNAL_COLUMN_ORDER.length : index;
+}
+
 /**
  * Per-column view of the single-column checks. Each cell is the largest
  * failure count among that column's checks of the kind, and "Passed" is the
@@ -356,32 +390,52 @@ export function pivotChecksByColumn(
     if (!Array.isArray(value)) continue;
 
     for (const check of value as Check[]) {
-      const column = check.column ?? "";
-      if (!column || column.includes(",")) continue;
+      const isLocationDuplicate =
+        check.assertion === LOCATION_DUPLICATE_ASSERTION;
+      const columns = isLocationDuplicate
+        ? LOCATION_COLUMNS
+        : [check.column ?? ""];
 
-      const kinds = (
-        Object.keys(ISSUE_SECTIONS) as (keyof typeof ISSUE_SECTIONS)[]
-      ).filter(kind => ISSUE_SECTIONS[kind](key, check));
-      if (kinds.length === 0) continue;
+      for (const column of columns) {
+        if (!column || column.includes(",") || HIDDEN_COLUMNS.has(column)) {
+          continue;
+        }
 
-      const row = byColumn.get(column) ?? {
-        column,
-        tag: isSchool ? columnTag(column) : undefined,
-        counts: { passed: 0, domain: 0, duplicates: 0, missing: 0 },
-      };
-      for (const kind of kinds) {
-        row.counts[kind] = Math.max(row.counts[kind], check.count_failed ?? 0);
+        const candidates: IssueKind[] = isLocationDuplicate
+          ? ["duplicates"]
+          : (Object.keys(ISSUE_SECTIONS) as IssueKind[]).filter(kind =>
+              ISSUE_SECTIONS[kind](key, check),
+            );
+        const kinds = candidates.filter(
+          kind => !HIDDEN_CHECKS[column]?.includes(kind),
+        );
+        if (kinds.length === 0) continue;
+
+        const row = byColumn.get(column) ?? {
+          column,
+          tag: isSchool ? columnTag(column) : undefined,
+          counts: { passed: 0, domain: null, duplicates: null, missing: null },
+        };
+        for (const kind of kinds) {
+          row.counts[kind] = Math.max(
+            row.counts[kind] ?? 0,
+            check.count_failed ?? 0,
+          );
+        }
+        minPassed.set(
+          column,
+          Math.min(minPassed.get(column) ?? Infinity, check.count_passed ?? 0),
+        );
+        byColumn.set(column, row);
       }
-      minPassed.set(
-        column,
-        Math.min(minPassed.get(column) ?? Infinity, check.count_passed ?? 0),
-      );
-      byColumn.set(column, row);
     }
   }
 
   const categories = new Map<string, InternalCheckRow[]>();
-  for (const row of byColumn.values()) {
+  const sortedRows = [...byColumn.values()].sort(
+    (a, b) => columnOrder(a.column) - columnOrder(b.column),
+  );
+  for (const row of sortedRows) {
     row.counts.passed = minPassed.get(row.column) ?? 0;
     const category =
       (isSchool && INTERNAL_COLUMN_CATEGORIES[row.column]) || OTHER_CATEGORY;
