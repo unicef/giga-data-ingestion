@@ -65,6 +65,7 @@ export interface DqSectionSpec {
 
 export const DQ_ENTITY_TEXT: Record<DqEntity, Record<string, string>> = {
   schools: {
+    uploaded: "Schools uploaded",
     approved: "Approved schools",
     rejected: "Rejected schools",
     missingCoordinates: "Schools with missing coordinates",
@@ -97,6 +98,7 @@ export const DQ_ENTITY_TEXT: Record<DqEntity, Record<string, string>> = {
       "Schools where device availability doesn't match the number of computers and tablets",
   },
   healthCenters: {
+    uploaded: "Health centers uploaded",
     approved: "Approved health centers",
     rejected: "Rejected health centers",
     missingCoordinates: "Health Centers with missing coordinates",

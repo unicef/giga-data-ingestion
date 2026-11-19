@@ -361,6 +361,7 @@ function Index() {
         <SummaryKpiCards
           report={report}
           entity={entity}
+          onDownloadUploaded={handleDownloadRawFile}
           onDownloadApproved={handleDownloadPassedRows}
           onDownloadRejected={handleDownloadFailedRows}
         />
