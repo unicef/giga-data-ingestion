@@ -9,6 +9,7 @@ import { commaNumber } from "@/utils/number";
 interface SummaryKpiCardsProps {
   report: DqReport;
   entity: DqEntity;
+  onDownloadUploaded: () => void;
   onDownloadApproved: () => void;
   onDownloadRejected: () => void;
 }
@@ -22,16 +23,29 @@ function percentOf(value: number, total: number) {
 const SummaryKpiCards = ({
   report,
   entity,
+  onDownloadUploaded,
   onDownloadApproved,
   onDownloadRejected,
 }: SummaryKpiCardsProps) => {
   const text = DQ_ENTITY_TEXT[entity];
   const cards = [
     {
+      key: "uploaded",
+      label: text.uploaded,
+      value: report.uploaded,
+      color: "text-giga-black",
+      showPercent: false,
+      download: {
+        label: "Download uploaded dataset",
+        onClick: onDownloadUploaded,
+      },
+    },
+    {
       key: "approved",
       label: text.approved,
       value: report.approved,
       color: "text-green-600",
+      showPercent: true,
       download: {
         label: `Download ${text.approved.toLowerCase()}`,
         onClick: onDownloadApproved,
@@ -42,12 +56,14 @@ const SummaryKpiCards = ({
       label: "Approved with warnings",
       value: report.approvedWithWarnings,
       color: "text-amber-500",
+      showPercent: true,
     },
     {
       key: "rejected",
       label: text.rejected,
       value: report.rejected,
       color: "text-red-600",
+      showPercent: true,
       download: {
         label: `Download ${text.rejected.toLowerCase()}`,
         onClick: onDownloadRejected,
@@ -56,7 +72,7 @@ const SummaryKpiCards = ({
   ];
 
   return (
-    <div className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
       {cards.map(card => (
         <div
           key={card.key}
@@ -66,9 +82,11 @@ const SummaryKpiCards = ({
           <p className={cn("mb-0 mt-2 text-5xl", card.color)}>
             {commaNumber(card.value)}
           </p>
-          <p className="mb-0 mt-1 text-lg text-gray-500">
-            {percentOf(card.value, report.uploaded)}
-          </p>
+          {card.showPercent && (
+            <p className="mb-0 mt-1 text-lg text-gray-500">
+              {percentOf(card.value, report.uploaded)}
+            </p>
+          )}
           {card.download && (
             <div className="mt-auto flex justify-end pt-4">
               <Button
