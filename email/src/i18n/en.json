@@ -34,7 +34,9 @@
     },
     "schools": {
       "approved": "Approved schools",
+      "computerAvailabilityVsCount": "Schools where computer availability doesn't match the number of computers",
       "created": "Schools created",
+      "deviceAvailabilityVsCount": "Schools where device availability doesn't match the number of computers and tablets",
       "duplicateIds": "Schools with duplicate school IDs",
       "duplicateLocationGroups": "↳ Number of groups with {count} or more schools sharing exact location",
       "highDensity": "High Density (more than 5 schools within 500m)",
@@ -55,6 +57,8 @@
       "sameNameLevelLocation": "Schools with the same name, educational level, and location",
       "sectionIds": "School IDs",
       "similarNameSameLevel110": "Schools with similar names and the same educational level within a radius of 110m",
+      "studentsVsGender": "Schools where the number of students doesn't match the sum of girls and boys",
+      "teachersVsGender": "Schools where the number of teachers doesn't match the sum of female and male teachers",
       "updated": "Schools updated",
       "uploaded": "Schools uploaded",
       "within50m": "Schools within 50m of another school"
@@ -84,6 +88,7 @@
   "rejected": "Rejected",
   "reportTitle": "Data Quality Report",
   "sectionAccuracy": "Accuracy",
+  "sectionConsistency": "Consistency",
   "sectionCoordinates": "Coordinates",
   "sectionDuplicates": "Duplicates",
   "sectionOther": "Other",

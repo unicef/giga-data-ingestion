@@ -40,12 +40,32 @@ export interface Summary {
   timestamp: Date;
   rows_passed?: number;
   rows_failed?: number;
+  rows_passed_with_warnings?: number | null;
+  count_schools_low_precision_coordinates?: number | null;
+  count_duplicate_school_id?: number | null;
+  count_duplicate_location_groups?: number | null;
+  duplicate_location_group_min_size?: number | null;
+  count_proximity_50m_groups?: number | null;
+  proximity_50m_group_min_size?: number | null;
 }
 
+/** Counts over every uploaded row for one column; see column_pass_summary. */
+export interface ColumnPassCounts {
+  total: number;
+  passed: number;
+  failed: number;
+  /** Rows failing each assertion on that column. */
+  checks: Record<string, number>;
+}
+
+/** Dagster (geolocation only): column name -> pass counts, on a single base. */
+export type ColumnPassSummary = Record<string, ColumnPassCounts>;
+
 export interface DataQualityCheckSummary {
-  [key: string]: Check[] | Summary;
+  [key: string]: Check[] | Summary | ColumnPassSummary | undefined;
   critical_error_check: Check[];
   summary: Summary;
+  column_pass_summary?: ColumnPassSummary;
 }
 
 export interface DataQualityCheck {

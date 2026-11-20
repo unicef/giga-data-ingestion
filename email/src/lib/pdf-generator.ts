@@ -65,6 +65,8 @@ const SECTION_ALIASES: Record<string, string[]> = {
   domain: ["domain_checks", "domain checks"],
   missing: ["missing_value_checks", "missing value checks", "completeness_checks"],
   precision: ["precision_checks", "precision checks"],
+  // Dagster's column relation checks; the section name comes from NocoDB.
+  consistency: ["column_relation_checks", "column relation checks", "consistency_checks"],
 };
 
 /** Concatenated, not first-match: one report can carry both "location checks"
@@ -573,6 +575,7 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
   const dupChecks = getSection(dq, "duplicates");
   const locChecks = getSection(dq, "location");
   const precChecks = getSection(dq, "precision");
+  const relChecks = getSection(dq, "consistency");
 
   const entity = data.entity ?? {
     plural: "Schools",
@@ -645,6 +648,28 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
   const within50m = warningCount(
     findCheck(locChecks, "duplicate_group_flag_50m")
   );
+  // Dagster runs a column relation check only when every column it compares
+  // was uploaded: absent means "not run", so its row is omitted, not zeroed.
+  const studentsVsGender = findCheck(
+    relChecks,
+    "column_relation_checks",
+    "num_students_num_students_girls_num_students_boys"
+  );
+  const teachersVsGender = findCheck(
+    relChecks,
+    "column_relation_checks",
+    "num_teachers_num_teachers_female_num_teachers_male"
+  );
+  const computerAvailabilityVsCount = findCheck(
+    relChecks,
+    "column_relation_checks",
+    "computer_availability_num_computers"
+  );
+  const deviceAvailabilityVsCount = findCheck(
+    relChecks,
+    "column_relation_checks",
+    "device_availability_num_computers_num_tablets"
+  );
 
   // null/absent means "not computed upstream" — only a real number is exact.
   const rowsPassedWithWarnings =
@@ -665,7 +690,11 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
       similarNameLevel110,
       uninhabitedArea,
       suspectLocation,
-      within50m
+      within50m,
+      warningCount(studentsVsGender),
+      warningCount(teachersVsGender),
+      warningCount(computerAvailabilityVsCount),
+      warningCount(deviceAvailabilityVsCount)
     );
 
   // Warnings apply only to approved (passed) rows — never to rejected.
@@ -708,6 +737,13 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
     if (tally === undefined || min === undefined) return [];
     return [row(withCount(te(key), min), tally)];
   };
+
+  const checkRow = (
+    key: string,
+    check: Check | undefined,
+    priority: string
+  ): TableRow[] =>
+    check === undefined ? [] : [row(te(key), warningCount(check), priority)];
 
   const rejectedSections: TableSection[] = [
     {
@@ -768,7 +804,16 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
         row(te("highDensity"), highDensity, priorityLow),
       ],
     },
-  ];
+    {
+      title: tr("sectionConsistency"),
+      rows: [
+        ...checkRow("studentsVsGender", studentsVsGender, priorityLow),
+        ...checkRow("teachersVsGender", teachersVsGender, priorityLow),
+        ...checkRow("computerAvailabilityVsCount", computerAvailabilityVsCount, priorityLow),
+        ...checkRow("deviceAvailabilityVsCount", deviceAvailabilityVsCount, priorityLow),
+      ],
+    },
+  ].filter((section) => section.rows.length > 0);
 
   const { page1: warningsPage1Sections, page2: warningsPage2Sections } =
     splitWarningSections(
