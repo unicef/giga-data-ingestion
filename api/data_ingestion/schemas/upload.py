@@ -122,6 +122,7 @@ class UploadImpactPreviewRequest:
 
 class UploadImpactPreviewResponse(BaseModel):
     new_schools: int
+    unmatched_schools: int
     schools_to_update: int
     rows_with_school_id: int
     missing_school_id_rows: int

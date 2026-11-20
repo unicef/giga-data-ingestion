@@ -17,6 +17,7 @@ export interface UploadImpactPreview {
   missingSchoolIdRows: number;
   newSchools: number;
   schoolsToUpdate: number;
+  unmatchedSchools: number;
 }
 
 interface UploadReviewModalProps {
@@ -24,6 +25,7 @@ interface UploadReviewModalProps {
   fuzzyErrorMessage: string | null;
   fuzzyValidationResult: FuzzyValidationResponse | null;
   impactPreview: UploadImpactPreview | null;
+  isCoverage: boolean;
   missingCreateColumns: boolean;
   isFuzzyLoading: boolean;
   isImpactLoading: boolean;
@@ -58,6 +60,7 @@ function UploadReviewModal({
   fuzzyErrorMessage,
   fuzzyValidationResult,
   impactPreview,
+  isCoverage,
   missingCreateColumns,
   isFuzzyLoading,
   isImpactLoading,
@@ -92,6 +95,12 @@ function UploadReviewModal({
     !!impactPreview && missingCreateColumns && newSchools > 0;
   const isCreateOnlyBlocked = createColumnsMissing && schoolsToUpdate === 0;
   const showCreateWarning = createColumnsMissing && schoolsToUpdate > 0;
+  const unmatchedSchools = impactPreview?.unmatchedSchools ?? 0;
+  // Coverage can't create schools: unmatched rows are skipped.
+  const isNoMatchesBlocked =
+    isCoverage && !!impactPreview && schoolsToUpdate === 0;
+  const showUnmatchedWarning =
+    isCoverage && unmatchedSchools > 0 && schoolsToUpdate > 0;
 
   return (
     <Modal
@@ -101,7 +110,10 @@ function UploadReviewModal({
       passiveModal={false}
       primaryButtonText={errorMessage ? "Continue anyway" : "Start upload"}
       primaryButtonDisabled={
-        isImpactLoading || !canStartImport || isCreateOnlyBlocked
+        isImpactLoading ||
+        !canStartImport ||
+        isCreateOnlyBlocked ||
+        isNoMatchesBlocked
       }
       secondaryButtonText="Close"
       size="md"
@@ -138,11 +150,19 @@ function UploadReviewModal({
 
         {impactPreview && (
           <div className="space-y-3">
-            <ImpactPreviewRow
-              icon={AddAlt}
-              label="New schools"
-              value={impactPreview.newSchools}
-            />
+            {isCoverage ? (
+              <ImpactPreviewRow
+                icon={WarningAlt}
+                label="Schools not found (will be skipped)"
+                value={impactPreview.unmatchedSchools}
+              />
+            ) : (
+              <ImpactPreviewRow
+                icon={AddAlt}
+                label="New schools"
+                value={impactPreview.newSchools}
+              />
+            )}
             <ImpactPreviewRow
               icon={Renew}
               label="Schools to be updated"
@@ -176,6 +196,30 @@ function UploadReviewModal({
             )} school(s) in your file don't exist yet and won't be created, because the columns required to create schools (school_name, latitude, longitude, education_level_govt) aren't mapped. Only the ${commaNumber(
               schoolsToUpdate,
             )} existing school(s) will be updated.`}
+          />
+        )}
+
+        {showUnmatchedWarning && (
+          <InlineNotification
+            aria-label="unmatched schools warning"
+            kind="warning"
+            lowContrast
+            title="Some schools will be skipped"
+            subtitle={`${commaNumber(
+              unmatchedSchools,
+            )} school(s) in your file couldn't be matched by school_id_giga and will be skipped. Only the ${commaNumber(
+              schoolsToUpdate,
+            )} matched school(s) will be updated.`}
+          />
+        )}
+
+        {isNoMatchesBlocked && (
+          <InlineNotification
+            aria-label="no matching schools error"
+            kind="error"
+            lowContrast
+            title="Nothing to upload"
+            subtitle="None of the school_id_giga values in your file match an existing school, so there is nothing to update. Check the mapped column and try again."
           />
         )}
 

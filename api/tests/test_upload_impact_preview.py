@@ -1,6 +1,7 @@
 import pytest
 from data_ingestion.utils.upload_impact import (
     build_upload_impact_preview,
+    get_school_id_column,
     get_school_id_file_column,
     normalize_school_id,
 )
@@ -50,3 +51,38 @@ def test_get_school_id_file_column_requires_school_id_mapping():
         get_school_id_file_column({"school_name": "official_school_name"})
 
     assert str(exc_info.value) == "Column mapping must include school_id_govt."
+
+
+# Coverage uploads are matched on school_id_giga; geolocation on school_id_govt.
+def test_get_school_id_column_depends_on_dataset():
+    assert get_school_id_column("coverage") == "school_id_giga"
+    assert get_school_id_column("geolocation") == "school_id_govt"
+
+
+def test_get_school_id_file_column_supports_school_id_giga():
+    assert (
+        get_school_id_file_column(
+            {"giga_id": "school_id_giga", "school_name": "official_school_name"},
+            "school_id_giga",
+        )
+        == "giga_id"
+    )
+
+
+def test_get_school_id_file_column_error_names_requested_column():
+    with pytest.raises(ValueError) as exc_info:
+        get_school_id_file_column({"school_id_gov": "school_id_govt"}, "school_id_giga")
+
+    assert str(exc_info.value) == "Column mapping must include school_id_giga."
+
+
+# Unmatched IDs are reported so coverage can skip them.
+def test_upload_impact_preview_reports_unmatched_schools():
+    preview = build_upload_impact_preview(
+        file_school_ids=["A", "B", "C"],
+        total_rows=3,
+        master_school_ids={"A"},
+    )
+
+    assert preview["schools_to_update"] == 1
+    assert preview["unmatched_schools"] == 2

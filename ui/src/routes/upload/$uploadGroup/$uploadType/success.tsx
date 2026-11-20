@@ -141,6 +141,7 @@ function Success() {
   const isStructured = uploadGroup === "other" && uploadType === "structured";
   const isHealth = uploadGroup === "other" && uploadType === "health";
   const isSchoolData = uploadGroup === "school-data";
+  const isCoverage = isSchoolData && uploadType === "coverage";
   const hasPendingPayload =
     isSchoolData && !!pendingSchoolDataPayload && !uploadId;
   const activeUploadId = uploadId;
@@ -527,7 +528,13 @@ function Success() {
                 kind="secondary"
                 className="w-40"
                 as={Link}
-                to={isUnstructured || isStructured ? ".." : "../assessment"}
+                to={
+                  isUnstructured || isStructured
+                    ? ".."
+                    : isCoverage
+                    ? "../metadata"
+                    : "../assessment"
+                }
                 renderIcon={ArrowLeft}
                 disabled={(inProgress && !!activeUploadId) || isActionPending}
                 onClick={() => decrementStepIndex()}

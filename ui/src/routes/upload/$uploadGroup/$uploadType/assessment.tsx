@@ -62,6 +62,10 @@ export const Route = createFileRoute(
       throw redirect({ from: Route.fullPath, to: ".." });
     }
 
+    if (uploadGroup === "school-data" && uploadType === "coverage") {
+      throw redirect({ from: Route.fullPath, to: "../success" });
+    }
+
     if (!pendingSchoolDataPayload) {
       setStepIndex(4);
       throw redirect({ from: Route.fullPath, to: "../success" });
