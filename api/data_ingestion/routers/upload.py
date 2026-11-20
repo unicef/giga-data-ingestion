@@ -477,6 +477,9 @@ def _parse_spreadsheet(
 
 def _silver_table(dataset: str, country_code: str) -> str:
     schema = dataset.lower().replace("school ", "")
+    # Coverage only updates existing schools, so match against geolocation silver
+    if schema == "coverage":
+        schema = "geolocation"
     return f"delta_lake.school_{schema}_silver.{country_code.lower()}"
 
 
