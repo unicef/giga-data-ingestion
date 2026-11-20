@@ -16,12 +16,18 @@ import {
   SCHOOL_CATEGORY_ORDER,
   SCHOOL_COLUMN_CATEGORIES,
 } from "@/constants/schoolColumns";
-import { Check, DataQualityCheckSummary, Summary } from "@/types/upload";
+import {
+  Check,
+  ColumnPassSummary,
+  DataQualityCheckSummary,
+  Summary,
+} from "@/types/upload";
 
 const DQ_SUMMARY_META_KEYS = new Set([
   "summary",
   "critical_error_check",
   "valueMaps",
+  "column_pass_summary",
 ]);
 
 /** DQ check tab groups only — excludes summary, valueMaps, and other non-array keys. */
@@ -371,10 +377,21 @@ function columnOrder(column: string) {
   return index === -1 ? INTERNAL_COLUMN_ORDER.length : index;
 }
 
+function getColumnPassSummary(
+  dqSummary: DqSummaryInput,
+): ColumnPassSummary | undefined {
+  const value = dqSummary.column_pass_summary;
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as ColumnPassSummary)
+    : undefined;
+}
+
 /**
  * Per-column view of the single-column checks. Each cell is the largest
- * failure count among that column's checks of the kind, and "Passed" is the
- * smallest pass count, so overlapping checks are not double counted.
+ * failure count among that column's checks of the kind.
+ *
+ * column_pass_summary, when present, gives every count over all uploaded rows.
+ * Older reports fall back to the smallest pass count among the checks.
  */
 export function pivotChecksByColumn(
   dqSummary: DqSummaryInput | null | undefined,
@@ -383,6 +400,7 @@ export function pivotChecksByColumn(
   if (!dqSummary) return [];
 
   const isSchool = getDqEntity(dataset) === "schools";
+  const columnPassSummary = getColumnPassSummary(dqSummary);
   const byColumn = new Map<string, InternalCheckRow>();
   const minPassed = new Map<string, number>();
 
@@ -416,11 +434,12 @@ export function pivotChecksByColumn(
           tag: isSchool ? columnTag(column) : undefined,
           counts: { passed: 0, domain: null, duplicates: null, missing: null },
         };
+        const failed =
+          columnPassSummary?.[column]?.checks[check.assertion] ??
+          check.count_failed ??
+          0;
         for (const kind of kinds) {
-          row.counts[kind] = Math.max(
-            row.counts[kind] ?? 0,
-            check.count_failed ?? 0,
-          );
+          row.counts[kind] = Math.max(row.counts[kind] ?? 0, failed);
         }
         minPassed.set(
           column,
@@ -436,7 +455,8 @@ export function pivotChecksByColumn(
     (a, b) => columnOrder(a.column) - columnOrder(b.column),
   );
   for (const row of sortedRows) {
-    row.counts.passed = minPassed.get(row.column) ?? 0;
+    row.counts.passed =
+      columnPassSummary?.[row.column]?.passed ?? minPassed.get(row.column) ?? 0;
     const category =
       (isSchool && INTERNAL_COLUMN_CATEGORIES[row.column]) || OTHER_CATEGORY;
     categories.set(category, [...(categories.get(category) ?? []), row]);
