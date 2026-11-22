@@ -16,12 +16,17 @@ import puppeteer, { type Browser, type Page } from "puppeteer-core";
 import { loadPdfLogoDataUri } from "./blob-assets";
 import {
   entityText,
+  findTranslation,
   isSupportedLanguage,
   LOCALE_TAG,
   t,
   type EntityKey,
   type Language,
 } from "../i18n";
+import {
+  DqReport,
+  type DqReportGroup,
+} from "../types/data-quality-checks";
 import type { DataQualityReportEmailProps } from "../types/dq-report";
 
 export interface ValueMapRow {
@@ -71,6 +76,21 @@ const SECTION_ALIASES: Record<string, string[]> = {
 
 /** Concatenated, not first-match: one report can carry both "location checks"
  * and "location_checks" as separate keys. */
+/** Undefined when absent, malformed or of a version this renderer does not know. */
+function parseDqReport(value: unknown): DqReport | undefined {
+  const parsed = DqReport.safeParse(value);
+  return parsed.success ? parsed.data : undefined;
+}
+
+const toCamelCase = (key: string) =>
+  key.replace(/[_-]+([a-z0-9])/g, (_, char: string) => char.toUpperCase());
+
+const DQ_REPORT_PRIORITY_KEYS: Record<string, string> = {
+  High: "priorityHigh",
+  Medium: "priorityMedium",
+  Low: "priorityLow",
+};
+
 function getSection(dq: Record<string, unknown>, key: keyof typeof SECTION_ALIASES): Check[] {
   const merged: Check[] = [];
   for (const candidate of SECTION_ALIASES[key]) {
@@ -745,7 +765,7 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
   ): TableRow[] =>
     check === undefined ? [] : [row(te(key), warningCount(check), priority)];
 
-  const rejectedSections: TableSection[] = [
+  const fixedRejectedSections = (): TableSection[] => [
     {
       title: tr("sectionCoordinates"),
       rows: [
@@ -769,7 +789,7 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
     },
   ];
 
-  const warningSections: TableSection[] = [
+  const fixedWarningSections = (): TableSection[] => [
     {
       title: tr("sectionDuplicates"),
       rows: [
@@ -814,6 +834,54 @@ async function buildContext(data: PDFReportData, measured?: RowHeights) {
       ],
     },
   ].filter((section) => section.rows.length > 0);
+
+  // dq_report carries English texts. Other languages translate the rows and
+  // groups the catalogue knows by key and keep the English text otherwise.
+  const reportText = (key: string, english: string) =>
+    language === "en"
+      ? english
+      : findTranslation(language, `entity.${entityKey}.${key}`) ??
+        findTranslation(language, key) ??
+        english;
+  const reportSections = (groups: DqReportGroup[]): TableSection[] =>
+    groups
+      .map((group) => ({
+        title: reportText(
+          `section${toCamelCase(`_${group.key}`)}`,
+          group.label
+        ),
+        rows: group.rows.map((reportRow) => {
+          if (reportRow.kind === "groups") {
+            const minSize = reportRow.params?.count;
+            const translated =
+              language === "en" || minSize === undefined
+                ? undefined
+                : findTranslation(
+                    language,
+                    `entity.${entityKey}.${toCamelCase(reportRow.key)}`
+                  );
+            return row(
+              translated ? withCount(translated, minSize) : reportRow.label,
+              reportRow.count
+            );
+          }
+          const priorityKey = DQ_REPORT_PRIORITY_KEYS[reportRow.priority ?? ""];
+          return row(
+            reportText(toCamelCase(reportRow.key), reportRow.label),
+            reportRow.count,
+            priorityKey ? tr(priorityKey) : ""
+          );
+        }),
+      }))
+      .filter((section) => section.rows.length > 0);
+
+  const dqReport = parseDqReport(dq["dq_report"]);
+  const rejectedSections = dqReport
+    ? reportSections(dqReport.rejected)
+    : fixedRejectedSections();
+  const warningSections = dqReport
+    ? reportSections(dqReport.warnings)
+    : fixedWarningSections();
 
   const { page1: warningsPage1Sections, page2: warningsPage2Sections } =
     splitWarningSections(
