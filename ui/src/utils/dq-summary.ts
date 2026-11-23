@@ -384,7 +384,8 @@ const ISSUE_SECTIONS: Record<
   IssueKind,
   (key: string, check: Check) => boolean
 > = {
-  domain: key => isSection(key, "domain"),
+  // Coordinate precision is a format check, so it is shown as a domain issue.
+  domain: key => isSection(key, "domain") || isSection(key, "precision"),
   duplicates: (key, check) =>
     isSection(key, "duplicates") ||
     (isSection(key, "critical") && check.assertion === "duplicate"),
@@ -435,6 +436,8 @@ export function pivotChecksByColumn(
   const columnPassSummary = getColumnPassSummary(dqSummary);
   const byColumn = new Map<string, InternalCheckRow>();
   const minPassed = new Map<string, number>();
+  // Failures of hidden checks, which should not count against "Passed".
+  const hiddenFailed = new Map<string, number>();
 
   for (const [key, value] of Object.entries(dqSummary)) {
     if (!Array.isArray(value)) continue;
@@ -459,17 +462,22 @@ export function pivotChecksByColumn(
         const kinds = candidates.filter(
           kind => !HIDDEN_CHECKS[column]?.includes(kind),
         );
-        if (kinds.length === 0) continue;
+        const failed =
+          columnPassSummary?.[column]?.checks[check.assertion] ??
+          check.count_failed ??
+          0;
+        if (kinds.length === 0) {
+          if (candidates.length > 0) {
+            hiddenFailed.set(column, (hiddenFailed.get(column) ?? 0) + failed);
+          }
+          continue;
+        }
 
         const row = byColumn.get(column) ?? {
           column,
           tag: isSchool ? columnTag(column) : undefined,
           counts: { passed: 0, domain: null, duplicates: null, missing: null },
         };
-        const failed =
-          columnPassSummary?.[column]?.checks[check.assertion] ??
-          check.count_failed ??
-          0;
         for (const kind of kinds) {
           row.counts[kind] = Math.max(row.counts[kind] ?? 0, failed);
         }
@@ -487,8 +495,13 @@ export function pivotChecksByColumn(
     (a, b) => columnOrder(a.column) - columnOrder(b.column),
   );
   for (const row of sortedRows) {
-    row.counts.passed =
-      columnPassSummary?.[row.column]?.passed ?? minPassed.get(row.column) ?? 0;
+    const exact = columnPassSummary?.[row.column];
+    row.counts.passed = exact
+      ? Math.min(
+          exact.total,
+          exact.passed + (hiddenFailed.get(row.column) ?? 0),
+        )
+      : minPassed.get(row.column) ?? 0;
     const category =
       (isSchool && INTERNAL_COLUMN_CATEGORIES[row.column]) || OTHER_CATEGORY;
     categories.set(category, [...(categories.get(category) ?? []), row]);
