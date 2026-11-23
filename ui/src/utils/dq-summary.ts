@@ -315,6 +315,8 @@ export interface InternalCheckRow {
   tag?: "required" | "important";
   /** An issue count is null when the column has no check of that kind. */
   counts: { passed: number } & Record<IssueKind, number | null>;
+  /** The domain count also covers the coordinate precision check. */
+  domainIncludesPrecision?: boolean;
 }
 
 export interface InternalCheckCategory {
@@ -480,6 +482,9 @@ export function pivotChecksByColumn(
         };
         for (const kind of kinds) {
           row.counts[kind] = Math.max(row.counts[kind] ?? 0, failed);
+        }
+        if (kinds.includes("domain") && isSection(key, "precision")) {
+          row.domainIncludesPrecision = true;
         }
         minPassed.set(
           column,

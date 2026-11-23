@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 
+import { DefinitionTooltip } from "@carbon/react";
+
 import {
   INTERNAL_CHECK_COLUMNS,
   InternalCheckCategory,
@@ -13,6 +15,9 @@ import {
   SummaryTable,
   SummaryTableGroup,
 } from "./SummaryTable";
+
+const PRECISION_NOTE =
+  "Includes the precision check: coordinates with fewer than 5 decimal places.";
 
 interface InternalChecksTableProps {
   categories: InternalCheckCategory[];
@@ -52,14 +57,20 @@ const InternalChecksTable = ({ categories }: InternalChecksTableProps) => {
                     if (value === null) {
                       return [key, <span className="text-gray-400">—</span>];
                     }
-                    return [
-                      key,
-                      key === "passed" ? (
-                        commaNumber(value)
-                      ) : (
-                        <AlertCount value={value} />
-                      ),
-                    ];
+                    if (key === "passed") return [key, commaNumber(value)];
+                    if (key === "domain" && row.domainIncludesPrecision) {
+                      return [
+                        key,
+                        <DefinitionTooltip
+                          align="left"
+                          definition={PRECISION_NOTE}
+                          openOnHover
+                        >
+                          <AlertCount value={value} />
+                        </DefinitionTooltip>,
+                      ];
+                    }
+                    return [key, <AlertCount value={value} />];
                   }),
                 ),
               },
