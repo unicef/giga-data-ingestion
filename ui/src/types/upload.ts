@@ -61,11 +61,49 @@ export interface ColumnPassCounts {
 /** Dagster (geolocation only): column name -> pass counts, on a single base. */
 export type ColumnPassSummary = Record<string, ColumnPassCounts>;
 
+/** Rejected and Warnings tables of the DQ report, rendered as sent by Dagster. */
+export const DQ_REPORT_VERSION = 1;
+
+export const dqReportRowSchema = z.object({
+  key: z.string(),
+  kind: z.enum(["rows", "groups"]),
+  label: z.string(),
+  priority: z.string().optional(),
+  count: z.number(),
+  checks: z.array(z.string()).optional(),
+  params: z.object({ count: z.number().optional() }).optional(),
+});
+
+export type DqReportRowPayload = z.infer<typeof dqReportRowSchema>;
+
+export const dqReportGroupSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+  rows: z.array(dqReportRowSchema),
+});
+
+export type DqReportGroupPayload = z.infer<typeof dqReportGroupSchema>;
+
+export const dqReportSchema = z.object({
+  version: z.literal(DQ_REPORT_VERSION),
+  entity: z.string(),
+  rejected: z.array(dqReportGroupSchema),
+  warnings: z.array(dqReportGroupSchema),
+});
+
+export type DqReportPayload = z.infer<typeof dqReportSchema>;
+
 export interface DataQualityCheckSummary {
-  [key: string]: Check[] | Summary | ColumnPassSummary | undefined;
+  [key: string]:
+    | Check[]
+    | Summary
+    | ColumnPassSummary
+    | DqReportPayload
+    | undefined;
   critical_error_check: Check[];
   summary: Summary;
   column_pass_summary?: ColumnPassSummary;
+  dq_report?: DqReportPayload;
 }
 
 export interface DataQualityCheck {

@@ -63,3 +63,20 @@ def get_metadata_path(filepath: str) -> str:
     file_path = Path(filepath)
     metadata_file_path = f"{file_path.stem}.metadata.json"
     return str(file_path.parent / metadata_file_path)
+
+
+BASIC_CHECK_COLUMNS = ["column", "assertion", "description"]
+
+
+def basic_checks_csv(dq_summary: dict) -> str:
+    """CSV of the checks in a dq_summary. Only list sections hold checks; other
+    keys (summary, valueMaps, column_pass_summary, dq_report) are skipped."""
+    checks = [
+        check
+        for value in dq_summary.values()
+        if isinstance(value, list)
+        for check in value
+        if isinstance(check, dict)
+    ]
+    df = pd.DataFrame(checks, columns=BASIC_CHECK_COLUMNS)
+    return df.sort_values(by=["assertion", "column"]).to_csv(index=False)

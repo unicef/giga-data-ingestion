@@ -56,7 +56,7 @@ from data_ingestion.schemas.upload import (
     UploadImpactPreviewResponse,
     ValidateFuzzyRequest,
 )
-from data_ingestion.utils.data_quality import get_metadata_path
+from data_ingestion.utils.data_quality import basic_checks_csv, get_metadata_path
 from data_ingestion.utils.fuzzy_matching import run_fuzzy_matching
 from data_ingestion.utils.nocodb import (
     get_nocodb_table_id_from_name,
@@ -282,26 +282,7 @@ async def download_basic_check(
     dq_report_summary = blob_data.decode("utf-8")
     dq_report_summary_dict: dict = json.loads(dq_report_summary)
 
-    dq_result_df = pd.DataFrame(
-        {
-            "column": [],
-            "assertion": [],
-            "description": [],
-        }
-    )
-
-    all_checks = []
-    for key, value in dq_report_summary_dict.items():
-        if key == "summary":
-            continue
-
-        all_checks.extend(value)
-
-    dq_result_df = pd.DataFrame(all_checks)
-    dq_result_df = dq_result_df[["column", "assertion", "description"]]
-
-    dq_result_df = dq_result_df.sort_values(by=["assertion", "column"])
-    csv = dq_result_df.to_csv(index=False)
+    csv = basic_checks_csv(dq_report_summary_dict)
     return StreamingResponse(
         io.StringIO(csv),
         media_type="text/csv",

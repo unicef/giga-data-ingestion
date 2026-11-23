@@ -51,3 +51,32 @@ export interface DataQualityCheck {
   critical_error_check?: Check[];
   summary?: SummaryCheck;
 }
+
+// Rejected and Warnings tables of the DQ report, ready to render (Dagster).
+export const DQ_REPORT_VERSION = 1;
+
+const DqReportRow = z.object({
+  key: z.string(),
+  kind: z.enum(["rows", "groups"]),
+  label: z.string(),
+  priority: z.string().optional(),
+  count: z.number(),
+  checks: z.array(z.string()).optional(),
+  params: z.object({ count: z.number().optional() }).optional(),
+});
+
+const DqReportGroup = z.object({
+  key: z.string(),
+  label: z.string(),
+  rows: z.array(DqReportRow),
+});
+
+export const DqReport = z.object({
+  version: z.literal(DQ_REPORT_VERSION),
+  entity: z.string(),
+  rejected: z.array(DqReportGroup),
+  warnings: z.array(DqReportGroup),
+});
+
+export type DqReport = z.infer<typeof DqReport>;
+export type DqReportGroup = z.infer<typeof DqReportGroup>;

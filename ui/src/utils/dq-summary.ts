@@ -20,7 +20,10 @@ import {
   Check,
   ColumnPassSummary,
   DataQualityCheckSummary,
+  DqReportGroupPayload,
+  DqReportPayload,
   Summary,
+  dqReportSchema,
 } from "@/types/upload";
 
 const DQ_SUMMARY_META_KEYS = new Set([
@@ -28,6 +31,7 @@ const DQ_SUMMARY_META_KEYS = new Set([
   "critical_error_check",
   "valueMaps",
   "column_pass_summary",
+  "dq_report",
 ]);
 
 /** DQ check tab groups only — excludes summary, valueMaps, and other non-array keys. */
@@ -174,6 +178,39 @@ function buildSections(
   }));
 }
 
+const DQ_PRIORITIES: readonly string[] = ["High", "Medium", "Low"];
+
+/** Undefined when absent, malformed or of a version this UI does not know. */
+export function getDqReportPayload(
+  dq: DqSummaryInput,
+): DqReportPayload | undefined {
+  const parsed = dqReportSchema.safeParse(dq.dq_report);
+  return parsed.success ? parsed.data : undefined;
+}
+
+function sectionsFromPayload(
+  groups: DqReportGroupPayload[],
+): DqReportSection[] {
+  return groups
+    .map(group => ({
+      title: group.label,
+      rows: group.rows.map<DqReportRow>(row => {
+        const isGroup = row.kind === "groups";
+        return {
+          key: row.key,
+          label: row.label,
+          alerts: row.count,
+          priority:
+            !isGroup && row.priority && DQ_PRIORITIES.includes(row.priority)
+              ? (row.priority as DqPriority)
+              : undefined,
+          isGroup,
+        };
+      }),
+    }))
+    .filter(section => section.rows.length > 0);
+}
+
 export interface DqReport {
   uploaded: number;
   approved: number;
@@ -200,18 +237,13 @@ export function buildDqReport(
     summary.rows_failed ?? Math.max(uploaded - approved, 0),
   );
 
-  const rejectedSections = buildSections(
-    DQ_REJECTED_SECTIONS,
-    dq,
-    summary,
-    entity,
-  );
-  const warningSections = buildSections(
-    DQ_WARNING_SECTIONS,
-    dq,
-    summary,
-    entity,
-  );
+  const payload = getDqReportPayload(dq);
+  const rejectedSections = payload
+    ? sectionsFromPayload(payload.rejected)
+    : buildSections(DQ_REJECTED_SECTIONS, dq, summary, entity);
+  const warningSections = payload
+    ? sectionsFromPayload(payload.warnings)
+    : buildSections(DQ_WARNING_SECTIONS, dq, summary, entity);
 
   // Reports that predate rows_passed_with_warnings fall back to the largest
   // single warning, as the PDF does.
@@ -283,6 +315,8 @@ export interface InternalCheckRow {
   tag?: "required" | "important";
   /** An issue count is null when the column has no check of that kind. */
   counts: { passed: number } & Record<IssueKind, number | null>;
+  /** The domain count also covers the coordinate precision check. */
+  domainIncludesPrecision?: boolean;
 }
 
 export interface InternalCheckCategory {
@@ -448,6 +482,9 @@ export function pivotChecksByColumn(
         };
         for (const kind of kinds) {
           row.counts[kind] = Math.max(row.counts[kind] ?? 0, failed);
+        }
+        if (kinds.includes("domain") && isSection(key, "precision")) {
+          row.domainIncludesPrecision = true;
         }
         minPassed.set(
           column,

@@ -56,3 +56,11 @@ export function entityText(
 ): string {
   return t(language, `entity.${entity}.${key}`);
 }
+
+/** Translation in that language only, without falling back to English. */
+export function findTranslation(
+  language: Language,
+  key: string,
+): string | undefined {
+  return lookup(CATALOGUES[language], key);
+}
