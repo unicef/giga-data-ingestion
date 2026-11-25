@@ -256,7 +256,7 @@ async def retrigger_registration_pipeline(
                 db,
                 file_upload=existing,
                 country_code=existing.country,
-                school_id_giga=giga_id,
+                row_id=giga_id,
             )
 
             response_data = {

@@ -31,7 +31,8 @@ export interface ApprovalRequestInfo {
 export type ChangeType = "INSERT" | "UPDATE" | "DELETE";
 
 export type ApprovalRequestData = Record<string, unknown> & {
-  school_id_giga: string;
+  school_id_giga?: string;
+  facility_id_giga?: string;
   _change_type: ChangeType;
 };
 

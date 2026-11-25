@@ -24,6 +24,7 @@ import {
 } from "@/constants/pagination.ts";
 import { useStore } from "@/context/store";
 import { SENTINEL_APPROVAL_REQUEST } from "@/types/approvalRequests";
+import { getApprovalIdColumn } from "@/utils/approval_requests";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
 const skeletonHeaders: DataTableHeader[] = [
@@ -123,31 +124,34 @@ function ApproveRejectTable() {
     total_count,
   } = approvalRequestsQuery?.data ?? SENTINEL_APPROVAL_REQUEST;
 
+  const idColumn = getApprovalIdColumn(approvalRequests[0]);
+
   const headers = useMemo<DataTableHeader[]>(() => {
     const first = approvalRequests[0] ?? {
-      school_id_giga: "",
+      [idColumn]: "",
       _change_type: "INSERT",
     };
     let keys = Object.keys(first);
 
-    // Put school_id_giga first
-    const gigaIdx = keys.findIndex(k => k === "school_id_giga");
+    // Put the Giga ID column first
+    const gigaIdx = keys.findIndex(k => k === idColumn);
     if (gigaIdx > -1) {
-      keys = ["school_id_giga", ...keys.filter(k => k !== "school_id_giga")];
+      keys = [idColumn, ...keys.filter(k => k !== idColumn)];
     }
     // Put approval_status second
     keys = ["approval_status", ...keys.filter(k => k !== "approval_status")];
 
     return keys.map(key => ({ key, header: key }));
-  }, [approvalRequests]);
+  }, [approvalRequests, idColumn]);
 
   const formattedRows = useMemo<Record<string, unknown>[]>(() => {
     const result: Record<string, unknown>[] = [];
 
     for (const row of approvalRequests) {
-      const approvalStatus = approvedRows.includes(row.school_id_giga)
+      const rowId = row[idColumn] as string;
+      const approvalStatus = approvedRows.includes(rowId)
         ? "Approved"
-        : rejectedRows.includes(row.school_id_giga)
+        : rejectedRows.includes(rowId)
         ? "Rejected"
         : "";
 
@@ -155,7 +159,7 @@ function ApproveRejectTable() {
       if (row._change_type === "UPDATE") {
         const currentRecord: Record<string, unknown> = {
           _change_type: "CURRENT",
-          id: `${row.school_id_giga}_current`,
+          id: `${rowId}_current`,
           approval_status: approvalStatus,
         };
         for (const [key, value] of Object.entries(row)) {
@@ -170,13 +174,13 @@ function ApproveRejectTable() {
 
       result.push({
         ...row,
-        id: row.school_id_giga,
+        id: rowId,
         approval_status: approvalStatus,
       });
     }
 
     return result;
-  }, [approvalRequests, approvedRows, rejectedRows]);
+  }, [approvalRequests, approvedRows, rejectedRows, idColumn]);
 
   const { mutateAsync: submit, isPending } = useMutation({
     mutationKey: ["approval-request-submit", countryCode, uploadId],
@@ -188,7 +192,7 @@ function ApproveRejectTable() {
     const newRejected = new Set(rejectedRows.filter(r => r !== "__all__"));
 
     for (const row of rows) {
-      const id = row.school_id_giga as string;
+      const id = row[idColumn] as string;
       newApproved.add(id);
       newRejected.delete(id);
     }
@@ -202,7 +206,7 @@ function ApproveRejectTable() {
     const newApproved = new Set(approvedRows.filter(r => r !== "__all__"));
 
     for (const row of rows) {
-      const id = row.school_id_giga as string;
+      const id = row[idColumn] as string;
       newRejected.add(id);
       newApproved.delete(id);
     }

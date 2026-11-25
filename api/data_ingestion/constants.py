@@ -7,6 +7,14 @@ from pydantic_settings import BaseSettings
 from data_ingestion.internal.utils import megabytes_to_bytes
 from data_ingestion.settings import settings
 
+# Approval-request labels for facility geolocation; must match the Dagster facility specs.
+SCHOOL_GEOLOCATION_APPROVAL_DATASET = "School Geolocation"
+HEALTH_FACILITY_GEOLOCATION_APPROVAL_DATASET = "Health Facility Geolocation"
+FACILITY_APPROVAL_DATASETS = (
+    SCHOOL_GEOLOCATION_APPROVAL_DATASET,
+    HEALTH_FACILITY_GEOLOCATION_APPROVAL_DATASET,
+)
+
 
 class Constants(BaseSettings):
     APPROVAL_REQUESTS_PATH_PREFIX: str = "raw/approval_requests"

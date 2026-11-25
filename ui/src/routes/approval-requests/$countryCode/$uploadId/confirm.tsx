@@ -23,7 +23,10 @@ import { ErrorComponent } from "@/components/common/ErrorComponent.tsx";
 import { useStore } from "@/context/store";
 import { cn } from "@/lib/utils.ts";
 import { CarbonDataTableRow, KeyValueObject } from "@/types/datatable";
-import { getValueByHeader } from "@/utils/approval_requests";
+import {
+  getApprovalIdColumn,
+  getValueByHeader,
+} from "@/utils/approval_requests";
 import { validateSearchParams } from "@/utils/pagination.ts";
 
 export const Route = createFileRoute(
@@ -33,11 +36,6 @@ export const Route = createFileRoute(
   validateSearch: validateSearchParams,
   errorComponent: ErrorComponent,
 });
-
-const headers: DataTableHeader[] = [
-  { key: "school_id_giga", header: "school_id_giga" },
-  { key: "_change_type", header: "_change_type" },
-];
 
 interface ConfirmDataTablesProps {
   rows: KeyValueObject[];
@@ -56,11 +54,17 @@ function Confirm() {
     mutationFn: api.approvalRequests.submit,
   });
 
+  const idColumn = getApprovalIdColumn(rows[0]);
+  const headers: DataTableHeader[] = [
+    { key: idColumn, header: idColumn },
+    { key: "_change_type", header: "_change_type" },
+  ];
+
   const approvedRowsList = rows.filter(row =>
-    approvedRows.includes(row.school_id_giga as string),
+    approvedRows.includes(row[idColumn] as string),
   );
   const rejectedRowsList = rows.filter(row =>
-    rejectedRows.includes(row.school_id_giga as string),
+    rejectedRows.includes(row[idColumn] as string),
   );
   const pendingCount =
     totalCount - approvedRowsList.length - rejectedRowsList.length;

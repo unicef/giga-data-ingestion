@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from datetime import UTC, datetime
 
 import country_converter as coco
@@ -9,6 +10,10 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
+from data_ingestion.constants import (
+    HEALTH_FACILITY_GEOLOCATION_APPROVAL_DATASET,
+    SCHOOL_GEOLOCATION_APPROVAL_DATASET,
+)
 from data_ingestion.db.primary import get_db as get_primary_db
 from data_ingestion.db.trino import get_db
 from data_ingestion.internal.auth import azure_scheme
@@ -47,16 +52,106 @@ _STATUS_APPROVED = "APPROVED"
 _STATUS_REJECTED = "REJECTED"
 
 
-def _staging_table(dataset: str, country_code: str) -> str:
-    """Fully-qualified Trino staging (pending_changes) table name."""
-    schema = dataset.lower().replace("school ", "")
-    return f"delta_lake.school_{schema}_staging.{country_code.lower()}"
+@dataclass(frozen=True)
+class _FacilityProfile:
+    """Facility geolocation approval settings; must match the Dagster facility specs."""
+
+    approval_label: str
+    staging_table: str
+    silver_schema: str
+    approval_domain: str
 
 
-def _silver_table(dataset: str, country_code: str) -> str:
-    """Fully-qualified Trino silver table name."""
+_SCHOOL_FACILITY = _FacilityProfile(
+    approval_label=SCHOOL_GEOLOCATION_APPROVAL_DATASET,
+    staging_table="delta_lake.pipeline_tables.school_facility_geolocation_staging",
+    silver_schema="school_geolocation_silver",
+    approval_domain="school",
+)
+_HEALTH_FACILITY = _FacilityProfile(
+    approval_label=HEALTH_FACILITY_GEOLOCATION_APPROVAL_DATASET,
+    staging_table="delta_lake.pipeline_tables.health_facility_geolocation_staging",
+    silver_schema="health_facility_geolocation_silver",
+    approval_domain="health-facility",
+)
+_FACILITY_BY_LABEL = {
+    profile.approval_label: profile for profile in (_SCHOOL_FACILITY, _HEALTH_FACILITY)
+}
+_FACILITY_BY_SCHEMA_KEY = {
+    "schools": _SCHOOL_FACILITY,
+    "health_facilities": _HEALTH_FACILITY,
+}
+
+
+@dataclass(frozen=True)
+class _StagingTarget:
+    """Where one country's pending changes for a dataset live.
+
+    Facility geolocation stages every country into one shared table, so its queries
+    must filter on ``country_code``; other datasets keep one table per country.
+    """
+
+    staging_table: str
+    silver_table: str
+    id_column: str
+    approval_label: str
+    approval_domain: str
+    approval_dataset: str
+    shared_country_code: str | None = None
+
+    def scope(self, condition: str) -> str:
+        """Prefix a SQL condition with the country filter for shared tables."""
+        if self.shared_country_code is None:
+            return condition
+        country = self.shared_country_code.replace("'", "")
+        return f"country_code = '{country}' AND {condition}"
+
+
+def _facility_target(profile: _FacilityProfile, country_code: str) -> _StagingTarget:
+    return _StagingTarget(
+        staging_table=profile.staging_table,
+        silver_table=f"delta_lake.{profile.silver_schema}.{country_code.lower()}",
+        id_column="facility_id_giga",
+        approval_label=profile.approval_label,
+        approval_domain=profile.approval_domain,
+        approval_dataset="geolocation",
+        shared_country_code=country_code.upper(),
+    )
+
+
+def _legacy_target(dataset: str, country_code: str) -> _StagingTarget:
     schema = dataset.lower().replace("school ", "")
-    return f"delta_lake.school_{schema}_silver.{country_code.lower()}"
+    return _StagingTarget(
+        staging_table=f"delta_lake.school_{schema}_staging.{country_code.lower()}",
+        silver_table=f"delta_lake.school_{schema}_silver.{country_code.lower()}",
+        id_column="school_id_giga",
+        approval_label=f"School {schema.capitalize()}",
+        approval_domain="school",
+        approval_dataset=schema,
+    )
+
+
+def _target_for_approval_label(label: str, country_code: str) -> _StagingTarget:
+    profile = _FACILITY_BY_LABEL.get(label)
+    if profile is not None:
+        return _facility_target(profile, country_code)
+    return _legacy_target(label, country_code)
+
+
+def _target_for_upload(
+    file_upload: FileUpload | None, country_code: str
+) -> _StagingTarget:
+    """Resolve the staging target for an upload or (when absent) a deletion request.
+
+    Geolocation uploads and deletion requests go through the facility pipeline;
+    ``schema_key`` decides the facility type and defaults to schools.
+    """
+    dataset = file_upload.dataset.lower() if file_upload else "geolocation"
+    if dataset != "geolocation":
+        return _legacy_target(dataset, country_code)
+    schema_key = file_upload.schema_key if file_upload else None
+    profile = _FACILITY_BY_SCHEMA_KEY.get(schema_key or "", _SCHOOL_FACILITY)
+    return _facility_target(profile, country_code)
 
 
 def _in_clause(ids: list[str]) -> str:
@@ -96,12 +191,14 @@ def _tally_staging_rows(
             entry["rows_unchanged"] += row["cnt"]
 
 
-def _build_row_record(row, schema_cols: list[str], silver_lookup: dict) -> dict:
+def _build_row_record(
+    row, schema_cols: list[str], silver_lookup: dict, id_column: str
+) -> dict:
     """Build a single approval-table record, diffing UPDATE rows against silver."""
     change_type = row["change_type"]
     record: dict = {"_change_type": change_type}
     if change_type == _CHANGE_UPDATE:
-        silver_row = silver_lookup.get(row["school_id_giga"], {})
+        silver_row = silver_lookup.get(row[id_column], {})
         for col in schema_cols:
             new_val = row[col]
             old_val = silver_row.get(col)
@@ -158,7 +255,7 @@ async def _stage_approval_request(
 def _write_approval_result(
     *,
     country_code: str,
-    dataset_name: str,
+    target: _StagingTarget,
     upload_id: str,
     approved_change_ids: list,
     rejected_change_ids: list,
@@ -169,11 +266,9 @@ def _write_approval_result(
     # Filename must follow the format expected by deconstruct_school_master_filename_components:
     # {COUNTRY_CODE}_{domain}-{dataset_type}_{timestamp}.json  (3 underscore-separated parts)
     timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
-    approval_filename = f"{country_code.upper()}_school-{dataset_name}_{timestamp}.json"
-    approval_path = (
-        f"staging/approved-row-ids/school-{dataset_name}"
-        f"/{country_code.upper()}/{approval_filename}"
-    )
+    directory = f"{target.approval_domain}-{target.approval_dataset}"
+    approval_filename = f"{country_code.upper()}_{directory}_{timestamp}.json"
+    approval_path = f"staging/approved-row-ids/{directory}/{country_code.upper()}/{approval_filename}"
     approval_payload = json.dumps(
         {
             "upload_id": upload_id,
@@ -194,14 +289,13 @@ async def reject_pending_upload_row(
     *,
     file_upload: FileUpload,
     country_code: str,
-    school_id_giga: str,
+    row_id: str,
 ) -> dict:
-    dataset_name = file_upload.dataset.lower()
-    formatted_dataset = f"School {dataset_name.capitalize()}"
+    target = _target_for_upload(file_upload, country_code)
     approval_request = await primary_db.scalar(
         select(ApprovalRequest).where(
             (ApprovalRequest.country == country_code.upper())
-            & (ApprovalRequest.dataset == formatted_dataset)
+            & (ApprovalRequest.dataset == target.approval_label)
         )
     )
     if approval_request and approval_request.is_merge_processing:
@@ -213,11 +307,11 @@ async def reject_pending_upload_row(
     if approval_request:
         approval_request.is_merge_processing = True
 
-    rejected_change_ids = [f"{school_id_giga}|{file_upload.id}|{_CHANGE_INSERT}"]
+    rejected_change_ids = [f"{row_id}|{file_upload.id}|{_CHANGE_INSERT}"]
     _update_status_after_review(file_upload, None, [], rejected_change_ids)
     approval_path = _write_approval_result(
         country_code=country_code,
-        dataset_name=dataset_name,
+        target=target,
         upload_id=file_upload.id,
         approved_change_ids=[],
         rejected_change_ids=rejected_change_ids,
@@ -257,15 +351,17 @@ async def list_countries_with_pending_changes(
     # Aggregate pending change counts per country across all datasets
     rows_by_country: dict[str, dict] = {}
     for ar in enabled_requests:
-        staging = _staging_table(ar.dataset, ar.country)
+        target = _target_for_approval_label(ar.dataset, ar.country)
+        pending_filter = target.scope(
+            f"status = '{_STATUS_PENDING}' AND change_type != '{_CHANGE_UNCHANGED}'"
+        )
         try:
             result = (
                 db.execute(
                     text(
                         f"SELECT change_type, COUNT(*) AS cnt"  # nosec B608
-                        f" FROM {staging}"
-                        f" WHERE status = '{_STATUS_PENDING}'"
-                        f" AND change_type != '{_CHANGE_UNCHANGED}'"
+                        f" FROM {target.staging_table}"
+                        f" WHERE {pending_filter}"
                         " GROUP BY change_type"
                     )
                 )
@@ -281,9 +377,8 @@ async def list_countries_with_pending_changes(
         upload_cnt = (
             db.execute(
                 text(
-                    f"SELECT COUNT(DISTINCT upload_id) FROM {staging}"  # nosec B608
-                    f" WHERE status = '{_STATUS_PENDING}'"
-                    f" AND change_type != '{_CHANGE_UNCHANGED}'"
+                    f"SELECT COUNT(DISTINCT upload_id) FROM {target.staging_table}"  # nosec B608
+                    f" WHERE {pending_filter}"
                 )
             ).scalar()
             or 0
@@ -361,14 +456,15 @@ async def list_uploads_for_country(
     # Collect per-upload-id change counts across all datasets
     pending_uploads: dict[str, dict] = {}
     for approval_request in enabled_requests:
-        staging = _staging_table(approval_request.dataset, country_code)
+        target = _target_for_approval_label(approval_request.dataset, country_code)
+        pending_filter = target.scope(f"status = '{_STATUS_PENDING}'")
         try:
             rows = (
                 db.execute(
                     text(
                         f"SELECT upload_id, change_type, COUNT(*) AS cnt"  # nosec B608
-                        f" FROM {staging}"
-                        f" WHERE status = '{_STATUS_PENDING}'"
+                        f" FROM {target.staging_table}"
+                        f" WHERE {pending_filter}"
                         " GROUP BY upload_id, change_type"
                     )
                 )
@@ -487,27 +583,27 @@ async def get_upload_rows(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Upload not found"
             )
 
-    dataset = file_upload.dataset if file_upload else "geolocation"
-    staging = _staging_table(dataset, country_code)
-    silver = _silver_table(dataset, country_code)
+    target = _target_for_upload(file_upload, country_code)
+    id_column = target.id_column
+    pending_filter = target.scope(
+        f"upload_id = '{upload_id}'"
+        f" AND status = '{_STATUS_PENDING}'"
+        f" AND change_type != '{_CHANGE_UNCHANGED}'"
+    )
 
     total_count = db.execute(
         text(
-            f"SELECT COUNT(*) FROM {staging}"  # nosec B608
-            f" WHERE upload_id = '{upload_id}'"
-            f" AND status = '{_STATUS_PENDING}'"
-            f" AND change_type != '{_CHANGE_UNCHANGED}'"
+            f"SELECT COUNT(*) FROM {target.staging_table}"  # nosec B608
+            f" WHERE {pending_filter}"
         )
     ).scalar()
 
     pending_rows = (
         db.execute(
             text(
-                f"SELECT * FROM {staging}"  # nosec B608
-                f" WHERE upload_id = '{upload_id}'"
-                f" AND status = '{_STATUS_PENDING}'"
-                f" AND change_type != '{_CHANGE_UNCHANGED}'"
-                " ORDER BY change_type, school_id_giga"
+                f"SELECT * FROM {target.staging_table}"  # nosec B608
+                f" WHERE {pending_filter}"
+                f" ORDER BY change_type, {id_column}"
                 f" OFFSET {(page - 1) * page_size} ROWS FETCH NEXT {page_size} ROWS ONLY"
             )
         )
@@ -535,7 +631,7 @@ async def get_upload_rows(
 
     # Fetch silver rows for any UPDATE records to get before-state
     update_ids = pending_df.loc[
-        pending_df["change_type"] == _CHANGE_UPDATE, "school_id_giga"
+        pending_df["change_type"] == _CHANGE_UPDATE, id_column
     ].tolist()
 
     silver_lookup: dict[str, dict] = {}
@@ -544,19 +640,19 @@ async def get_upload_rows(
             silver_rows = (
                 db.execute(
                     text(
-                        f"SELECT * FROM {silver} WHERE school_id_giga IN {_in_clause(update_ids)}"  # nosec B608
+                        f"SELECT * FROM {target.silver_table} WHERE {id_column} IN {_in_clause(update_ids)}"  # nosec B608
                     )
                 )
                 .mappings()
                 .all()
             )
-            silver_lookup = {r["school_id_giga"]: dict(r) for r in silver_rows}
+            silver_lookup = {r[id_column]: dict(r) for r in silver_rows}
         except Exception:
             pass
 
     schema_cols = [col for col in pending_df.columns if col != "change_type"]
     records = [
-        _build_row_record(row, schema_cols, silver_lookup)
+        _build_row_record(row, schema_cols, silver_lookup, id_column)
         for _, row in pending_df.iterrows()
     ]
 
@@ -569,7 +665,7 @@ async def get_upload_rows(
 
 def _resolve_change_ids(
     rows_input: list[str],
-    staging: str,
+    target: _StagingTarget,
     upload_id: str,
     db: Session,
 ) -> list[str]:
@@ -578,18 +674,21 @@ def _resolve_change_ids(
         return _all
     if not rows_input:
         return []
+    id_column = target.id_column
+    row_filter = target.scope(
+        f"upload_id = '{upload_id}' AND {id_column} IN {_in_clause(rows_input)}"
+    )
     rows = (
         db.execute(
             text(
-                f"SELECT school_id_giga, change_type FROM {staging} "  # nosec B608
-                f"WHERE upload_id = '{upload_id}' "
-                f"AND school_id_giga IN {_in_clause(rows_input)}"
+                f"SELECT {id_column}, change_type FROM {target.staging_table} "  # nosec B608
+                f"WHERE {row_filter}"
             )
         )
         .mappings()
         .all()
     )
-    id_to_change_type = {r["school_id_giga"]: r["change_type"] for r in rows}
+    id_to_change_type = {r[id_column]: r["change_type"] for r in rows}
     return [
         f"{sid}|{upload_id}|{id_to_change_type[sid]}"
         for sid in rows_input
@@ -610,7 +709,7 @@ async def submit_upload_review(
     Mark individual rows within an upload as APPROVED or REJECTED.
 
     Writes an approval JSON file to blob storage so the Dagster sensor can pick it up.
-    The file contains change_ids (school_id_giga|upload_id|change_type) for approved
+    The file contains change_ids (<id_column>|upload_id|change_type) for approved
     and rejected rows. Dagster then merges approved rows into the silver table via Spark.
 
     Special value '__all__' in a list applies that decision to all PENDING rows.
@@ -628,12 +727,11 @@ async def submit_upload_review(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Upload not found"
             )
 
-    dataset_name = file_upload.dataset.lower() if file_upload else "geolocation"
-    formatted_dataset = f"School {dataset_name.capitalize()}"
+    target = _target_for_upload(file_upload, country_code)
     approval_request = await primary_db.scalar(
         select(ApprovalRequest).where(
             (ApprovalRequest.country == country_code.upper())
-            & (ApprovalRequest.dataset == formatted_dataset)
+            & (ApprovalRequest.dataset == target.approval_label)
         )
     )
     if approval_request and approval_request.is_merge_processing:
@@ -641,8 +739,6 @@ async def submit_upload_review(
             status_code=status.HTTP_409_CONFLICT,
             detail="A merge is already in progress for this dataset. Please wait for it to complete.",
         )
-
-    staging = _staging_table(dataset_name, country_code)
 
     email = (user.claims.get("emails") or [None])[0]
     oid = user.claims.get("oid")
@@ -656,13 +752,9 @@ async def submit_upload_review(
     )
 
     # Build change_ids for approved and rejected rows.
-    # change_id format: school_id_giga|upload_id|change_type (matches Dagster staging step)
-    approved_change_ids = _resolve_change_ids(
-        body.approved_rows, staging, upload_id, db
-    )
-    rejected_change_ids = _resolve_change_ids(
-        body.rejected_rows, staging, upload_id, db
-    )
+    # change_id format: <id_column>|upload_id|change_type (matches Dagster staging step)
+    approved_change_ids = _resolve_change_ids(body.approved_rows, target, upload_id, db)
+    rejected_change_ids = _resolve_change_ids(body.rejected_rows, target, upload_id, db)
 
     if rejected_change_ids and file_upload and file_upload.source == "gigameter":
         handle_rejected_gigameter_registrations(rejected_change_ids)
@@ -676,7 +768,7 @@ async def submit_upload_review(
 
     _write_approval_result(
         country_code=country_code,
-        dataset_name=dataset_name,
+        target=target,
         upload_id=upload_id,
         approved_change_ids=approved_change_ids,
         rejected_change_ids=rejected_change_ids,
