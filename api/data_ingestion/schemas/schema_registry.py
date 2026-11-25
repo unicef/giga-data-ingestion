@@ -209,10 +209,35 @@ class SchemaImpactResponse(BaseModel):
     affected_members: list[SchemaImpactMember] = Field(default_factory=list)
 
 
+class PrimaryKeyReplacement(BaseModel):
+    dataset_key: str = Field(min_length=1)
+    column_name: str = Field(min_length=1)
+
+
 class ProposalCreate(BaseModel):
     column_name: str | None = None
     proposal_type: ProposalType
     after_state: dict[str, Any] | None = None
+    primary_key_replacements: list[PrimaryKeyReplacement] = Field(default_factory=list)
+
+
+class PrimaryKeyPreviewRequest(BaseModel):
+    column_name: str = Field(min_length=1)
+    proposal_type: Literal["add", "edit", "delete"]
+    after_state: dict[str, Any] | None = None
+    primary_key_replacements: list[PrimaryKeyReplacement] = Field(default_factory=list)
+
+
+class PrimaryKeyChoiceResponse(BaseModel):
+    dataset_key: str
+    columns: list[str]
+
+
+class PrimaryKeyPreviewResponse(BaseModel):
+    valid: bool
+    message: str | None = None
+    schema_choices: list[PrimaryKeyChoiceResponse] = Field(default_factory=list)
+    core_choice: PrimaryKeyChoiceResponse | None = None
 
 
 class RejectProposalRequest(BaseModel):

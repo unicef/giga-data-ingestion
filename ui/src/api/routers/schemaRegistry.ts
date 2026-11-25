@@ -13,6 +13,8 @@ import {
   DatasetImportResponse,
   DatasetVersion,
   LifecyclePreview,
+  PrimaryKeyPreview,
+  PrimaryKeyPreviewRequest,
   PromotionPreview,
   Proposal,
   ProposalDetail,
@@ -196,6 +198,18 @@ export default function routes(axi: AxiosInstance) {
     > => {
       return axi.get(
         `/schema-registry/datasets/${key}/versions/${version}/diff/${otherVersion}`,
+      );
+    },
+    previewPrimaryKey: ({
+      datasetKey,
+      body,
+    }: {
+      datasetKey: string;
+      body: PrimaryKeyPreviewRequest;
+    }): Promise<AxiosResponse<PrimaryKeyPreview>> => {
+      return axi.post(
+        `/schema-registry/datasets/${datasetKey}/primary-key-preview`,
+        body,
       );
     },
     createProposal: ({

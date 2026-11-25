@@ -1,5 +1,6 @@
 import csv
 import io
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
@@ -26,6 +27,8 @@ from data_ingestion.schemas.schema_registry import (
     DatasetImportResponse,
     DatasetVersion,
     LifecyclePreview,
+    PrimaryKeyChoiceResponse,
+    PrimaryKeyPreviewResponse,
     PromotionOwner,
     PromotionPreview,
     ProposalDiffField,
@@ -366,14 +369,21 @@ async def create_dataset_from_csv(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="The CSV must contain at least one schema column",
         )
-    await publish_schema_version(
+    message, _published = await _publish_primary_key_snapshot(
         db,
         dataset,
         columns,
         source="csv_import",
         actor_id=actor_id,
         actor_email=actor_email,
+        publish_dataset=True,
     )
+    if message:
+        await db.rollback()
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=[{"row": 0, "detail": message}],
+        )
     await db.commit()
     await db.refresh(dataset)
     dataset.column_count = len(columns)
@@ -1157,6 +1167,7 @@ async def create_proposal(  # noqa: C901
     after_state: dict | None,
     proposed_by_id: str,
     proposed_by_email: str,
+    replacements: dict[str, str] | None = None,
 ) -> SchemaProposal:
     dataset = await get_dataset_by_key(db, dataset_key)
     if proposal_type == "promote":
@@ -1232,6 +1243,25 @@ async def create_proposal(  # noqa: C901
             detail=err.errors(),
         ) from err
 
+    chosen_keys = replacements or {}
+    core_key, columns_by_key, datasets_by_key = await _load_primary_key_scope(
+        db, dataset
+    )
+    plan = plan_primary_key_change(
+        dataset_key=dataset.key,
+        core_key=core_key,
+        columns_by_key=columns_by_key,
+        proposal_type=proposal_type,
+        column_name=column_name,
+        after_state=after_state,
+        replacements=chosen_keys,
+    )
+    if not plan.valid:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            detail=plan.message or "This change does not leave one primary key",
+        )
+
     proposal = SchemaProposal(
         dataset_id=dataset.id,
         column_name=column_name,
@@ -1243,6 +1273,21 @@ async def create_proposal(  # noqa: C901
     )
     db.add(proposal)
     await db.flush()
+    if chosen_keys:
+        targets = []
+        for key, column in chosen_keys.items():
+            targets.append(
+                SchemaProposalTarget(
+                    proposal_id=proposal.id,
+                    dataset_id=datasets_by_key[key].id,
+                    operation="set_primary_key",
+                    expected_version=await get_current_version_number(
+                        db, datasets_by_key[key]
+                    ),
+                    after_state={"name": column},
+                )
+            )
+        db.add_all(targets)
     db.add(
         SchemaProposalAuditLog(
             proposal_id=proposal.id,
@@ -1562,14 +1607,722 @@ def apply_column_change(
         state = dict(after_state or {})
         state["name"] = column_name
         updated.append(RegistryColumn(**state))
-        return updated
+        return _with_single_primary_key(updated, column_name)
     if existing_index is None:
         return updated
     state = updated[existing_index].model_dump()
     state.update(after_state or {})
     state["name"] = column_name
     updated[existing_index] = RegistryColumn(**state)
-    return updated
+    return _with_single_primary_key(updated, column_name)
+
+
+def _with_single_primary_key(
+    columns: list[RegistryColumn], column_name: str
+) -> list[RegistryColumn]:
+    """Keep the primary key on one column when a proposal sets it."""
+    chosen = next((column for column in columns if column.name == column_name), None)
+    if chosen is None or not chosen.primary_key:
+        return columns
+    return [
+        column
+        if column.name == column_name or not column.primary_key
+        else RegistryColumn(**{**column.model_dump(), "primary_key": False})
+        for column in columns
+    ]
+
+
+@dataclass
+class PrimaryKeyChoice:
+    dataset_key: str
+    columns: tuple[str, ...]
+
+
+@dataclass
+class PrimaryKeyPlan:
+    """Result of applying a primary-key change across a core schema and its members."""
+
+    valid: bool
+    message: str | None
+    snapshots: dict[str, list[RegistryColumn]]
+    schema_choices: tuple[PrimaryKeyChoice, ...] = ()
+    core_choice: PrimaryKeyChoice | None = None
+
+
+def _primary_key_names(columns: list[RegistryColumn]) -> list[str]:
+    return [column.name for column in columns if column.primary_key]
+
+
+def _copy_columns(columns: list[RegistryColumn]) -> list[RegistryColumn]:
+    return [column.model_copy(deep=True) for column in columns]
+
+
+def _same_columns(left: list[RegistryColumn], right: list[RegistryColumn]) -> bool:
+    return [column.model_dump() for column in left] == [
+        column.model_dump() for column in right
+    ]
+
+
+def _clear_primary_keys(columns: list[RegistryColumn]) -> list[RegistryColumn]:
+    if not any(column.primary_key for column in columns):
+        return columns
+    return [
+        column
+        if not column.primary_key
+        else RegistryColumn(**{**column.model_dump(), "primary_key": False})
+        for column in columns
+    ]
+
+
+def _set_only_primary_key(
+    columns: list[RegistryColumn], column_name: str
+) -> list[RegistryColumn]:
+    return [
+        RegistryColumn(
+            **{**column.model_dump(), "primary_key": column.name == column_name}
+        )
+        for column in columns
+    ]
+
+
+def replacement_mapping(replacements: list[tuple[str, str]]) -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    for dataset_key, column_name in replacements:
+        if dataset_key in mapping:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                detail=f"Choose one primary key column for {dataset_key}",
+            )
+        mapping[dataset_key] = column_name
+    return mapping
+
+
+def _choice_columns(
+    snapshots: dict[str, list[RegistryColumn]],
+    key: str,
+    *,
+    dataset_key: str,
+    proposal_type: str | None,
+    column_name: str | None,
+    turned_off: bool,
+) -> tuple[str, ...]:
+    names = [column.name for column in snapshots[key]]
+    if turned_off and key == dataset_key and column_name is not None:
+        names = [name for name in names if name != column_name]
+    if proposal_type == "delete" and key == dataset_key and column_name is not None:
+        names = [name for name in names if name != column_name]
+    return tuple(names)
+
+
+def _missing_key_message(
+    *,
+    origin: str,
+    dataset_key: str,
+    core_key: str | None,
+    gaps: list[str],
+    member_asserted: list[str],
+) -> str:
+    gap_list = ", ".join(gaps)
+    if member_asserted and dataset_key in member_asserted and core_key is not None:
+        action = (
+            "Set a primary key on each of those schemas before importing this file."
+            if origin == "import"
+            else "Choose a primary key column for each of those schemas in this change."
+        )
+        return (
+            f"Setting a primary key on {dataset_key} removes the primary key "
+            f"from {core_key}. {gap_list} would have no primary key. {action}"
+        )
+    if origin == "import":
+        return (
+            f"{gap_list} would have no primary key. Set primary_key on one "
+            "column in this file, or on the core schema."
+        )
+    if core_key is not None:
+        return (
+            f"{gap_list} would have no primary key. Choose one column on "
+            f"{core_key} for every dataset, or choose a column on each schema."
+        )
+    return (
+        f"{gap_list} would have no primary key. Choose a primary key column "
+        "in this change."
+    )
+
+
+def _multiple_primary_key_plan(
+    snapshots: dict[str, list[RegistryColumn]],
+) -> PrimaryKeyPlan | None:
+    for key, columns in snapshots.items():
+        names = _primary_key_names(columns)
+        if len(names) > 1:
+            joined = ", ".join(names)
+            return PrimaryKeyPlan(
+                valid=False,
+                message=f"Schema '{key}' has more than one primary key ({joined}).",
+                snapshots=snapshots,
+            )
+    return None
+
+
+def _choice_for(
+    snapshots: dict[str, list[RegistryColumn]],
+    key: str,
+    *,
+    dataset_key: str,
+    proposal_type: str | None,
+    column_name: str | None,
+    turned_off: bool,
+) -> PrimaryKeyChoice:
+    return PrimaryKeyChoice(
+        key,
+        _choice_columns(
+            snapshots,
+            key,
+            dataset_key=dataset_key,
+            proposal_type=proposal_type,
+            column_name=column_name,
+            turned_off=turned_off,
+        ),
+    )
+
+
+def _missing_primary_key_plan(
+    *,
+    snapshots: dict[str, list[RegistryColumn]],
+    dataset_key: str,
+    core_key: str | None,
+    gaps: list[str],
+    member_asserted: list[str],
+    proposal_type: str | None,
+    column_name: str | None,
+    turned_off: bool,
+    origin: str,
+    offer_core: bool,
+) -> PrimaryKeyPlan:
+    schema_choices = tuple(
+        _choice_for(
+            snapshots,
+            key,
+            dataset_key=dataset_key,
+            proposal_type=proposal_type,
+            column_name=column_name,
+            turned_off=turned_off,
+        )
+        for key in sorted(key for key in gaps if key != core_key)
+    )
+    core_choice = None
+    if offer_core and core_key is not None:
+        core_choice = _choice_for(
+            snapshots,
+            core_key,
+            dataset_key=dataset_key,
+            proposal_type=proposal_type,
+            column_name=column_name,
+            turned_off=turned_off,
+        )
+        if not core_choice.columns:
+            core_choice = None
+    message = _missing_key_message(
+        origin=origin,
+        dataset_key=dataset_key,
+        core_key=core_key,
+        gaps=gaps,
+        member_asserted=member_asserted,
+    )
+    selectable = any(choice.columns for choice in schema_choices) or (
+        core_choice is not None and bool(core_choice.columns)
+    )
+    if not selectable:
+        message += " Add another column before removing this primary key."
+    return PrimaryKeyPlan(
+        valid=False,
+        message=message,
+        snapshots=snapshots,
+        schema_choices=schema_choices,
+        core_choice=core_choice,
+    )
+
+
+def _standalone_primary_key_plan(
+    *,
+    dataset_key: str,
+    snapshots: dict[str, list[RegistryColumn]],
+    proposal_type: str | None,
+    column_name: str | None,
+    turned_off: bool,
+    origin: str,
+) -> PrimaryKeyPlan:
+    multiple = _multiple_primary_key_plan({dataset_key: snapshots[dataset_key]})
+    names = _primary_key_names(snapshots[dataset_key])
+    if multiple is not None and len(names) > 1:
+        return multiple
+    if len(names) == 1:
+        return PrimaryKeyPlan(valid=True, message=None, snapshots=snapshots)
+    return _missing_primary_key_plan(
+        snapshots=snapshots,
+        dataset_key=dataset_key,
+        core_key=None,
+        gaps=[dataset_key],
+        member_asserted=[],
+        proposal_type=proposal_type,
+        column_name=column_name,
+        turned_off=turned_off,
+        origin=origin,
+        offer_core=False,
+    )
+
+
+def _clear_opposite_primary_key(
+    *,
+    core_key: str,
+    members: list[str],
+    snapshots: dict[str, list[RegistryColumn]],
+    asserted: set[str],
+) -> PrimaryKeyPlan | None:
+    """Drop the primary key on the side this change did not claim."""
+    member_asserted = [key for key in members if key in asserted]
+    if core_key in asserted and member_asserted:
+        joined = ", ".join(member_asserted)
+        return PrimaryKeyPlan(
+            valid=False,
+            message=(
+                "A resolved schema has one primary key, on the core schema or "
+                f"on the member schema. This change sets one on {core_key} and "
+                f"on {joined}."
+            ),
+            snapshots=snapshots,
+        )
+    if core_key in asserted:
+        for key in members:
+            snapshots[key] = _clear_primary_keys(snapshots[key])
+    elif member_asserted:
+        snapshots[core_key] = _clear_primary_keys(snapshots[core_key])
+    return None
+
+
+def _resolved_primary_key_plan(
+    *,
+    dataset_key: str,
+    core_key: str,
+    members: list[str],
+    snapshots: dict[str, list[RegistryColumn]],
+    asserted: set[str],
+    proposal_type: str | None,
+    column_name: str | None,
+    turned_off: bool,
+    origin: str,
+) -> PrimaryKeyPlan | None:
+    """Return a plan when a core-plus-member schema does not have one key."""
+    member_asserted = [key for key in members if key in asserted]
+    gaps: list[str] = []
+    for key in members:
+        resolved = _primary_key_names(snapshots[core_key]) + _primary_key_names(
+            snapshots[key]
+        )
+        if len(resolved) == 1:
+            continue
+        if len(resolved) > 1:
+            core_names = ", ".join(_primary_key_names(snapshots[core_key]))
+            member_names = ", ".join(_primary_key_names(snapshots[key]))
+            return PrimaryKeyPlan(
+                valid=False,
+                message=(
+                    f"{key} has a primary key on {core_key} ({core_names}) and "
+                    f"on {key} ({member_names}). Keep one of them."
+                ),
+                snapshots=snapshots,
+            )
+        gaps.append(key)
+    if not members:
+        if len(_primary_key_names(snapshots[core_key])) == 1:
+            return None
+        gaps = [core_key]
+    if not gaps:
+        return None
+    return _missing_primary_key_plan(
+        snapshots=snapshots,
+        dataset_key=dataset_key,
+        core_key=core_key,
+        gaps=gaps,
+        member_asserted=member_asserted,
+        proposal_type=proposal_type,
+        column_name=column_name,
+        turned_off=turned_off,
+        origin=origin,
+        offer_core=not member_asserted,
+    )
+
+
+def _finalize_primary_keys(
+    *,
+    dataset_key: str,
+    core_key: str | None,
+    snapshots: dict[str, list[RegistryColumn]],
+    asserted: set[str],
+    proposal_type: str | None,
+    column_name: str | None,
+    turned_off: bool,
+    origin: str,
+) -> PrimaryKeyPlan:
+    """Leave every resolved schema with one primary key.
+
+    The key sits on the core schema, and every member uses it, or the core has
+    none and each member has its own. Members are not combined with each other.
+    """
+    if core_key is None or core_key not in snapshots:
+        return _standalone_primary_key_plan(
+            dataset_key=dataset_key,
+            snapshots=snapshots,
+            proposal_type=proposal_type,
+            column_name=column_name,
+            turned_off=turned_off,
+            origin=origin,
+        )
+    members = [key for key in snapshots if key != core_key]
+    conflict = _clear_opposite_primary_key(
+        core_key=core_key,
+        members=members,
+        snapshots=snapshots,
+        asserted=asserted,
+    )
+    if conflict is not None:
+        return conflict
+    multiple = _multiple_primary_key_plan(snapshots)
+    if multiple is not None:
+        return multiple
+    gaps = _resolved_primary_key_plan(
+        dataset_key=dataset_key,
+        core_key=core_key,
+        members=members,
+        snapshots=snapshots,
+        asserted=asserted,
+        proposal_type=proposal_type,
+        column_name=column_name,
+        turned_off=turned_off,
+        origin=origin,
+    )
+    if gaps is not None:
+        return gaps
+    return PrimaryKeyPlan(valid=True, message=None, snapshots=snapshots)
+
+
+def _asserted_schemas(
+    before: dict[str, list[RegistryColumn]],
+    after: dict[str, list[RegistryColumn]],
+    replacements: dict[str, str],
+) -> set[str]:
+    asserted = set(replacements)
+    for key, columns in after.items():
+        gained = set(_primary_key_names(columns)) - set(
+            _primary_key_names(before.get(key, []))
+        )
+        if gained:
+            asserted.add(key)
+    return asserted
+
+
+def plan_primary_key_change(
+    *,
+    dataset_key: str,
+    core_key: str | None,
+    columns_by_key: dict[str, list[RegistryColumn]],
+    proposal_type: str,
+    column_name: str,
+    after_state: dict[str, Any] | None,
+    replacements: dict[str, str],
+) -> PrimaryKeyPlan:
+    """Apply one column change, then keep a single primary key on each resolved schema."""
+    if dataset_key not in columns_by_key:
+        return PrimaryKeyPlan(
+            valid=False,
+            message=f"Schema '{dataset_key}' was not found",
+            snapshots={},
+        )
+    unknown = sorted(key for key in replacements if key not in columns_by_key)
+    if unknown:
+        joined = ", ".join(unknown)
+        return PrimaryKeyPlan(
+            valid=False,
+            message=f"Unknown schema: {joined}",
+            snapshots={},
+        )
+    before = {key: _copy_columns(columns) for key, columns in columns_by_key.items()}
+    snapshots = {key: _copy_columns(columns) for key, columns in before.items()}
+    was_primary = column_name in set(_primary_key_names(before[dataset_key]))
+    try:
+        snapshots[dataset_key] = apply_column_change(
+            snapshots[dataset_key], proposal_type, column_name, after_state
+        )
+    except ValidationError:
+        return PrimaryKeyPlan(
+            valid=False,
+            message="Column definition is invalid",
+            snapshots=snapshots,
+        )
+    for key, chosen in replacements.items():
+        if not any(column.name == chosen for column in snapshots[key]):
+            return PrimaryKeyPlan(
+                valid=False,
+                message=f"Column '{chosen}' is not on schema {key}",
+                snapshots=snapshots,
+            )
+        snapshots[key] = _set_only_primary_key(snapshots[key], chosen)
+    turned_off = (
+        proposal_type == "edit"
+        and was_primary
+        and after_state is not None
+        and after_state.get("primary_key") is False
+    )
+    return _finalize_primary_keys(
+        dataset_key=dataset_key,
+        core_key=core_key,
+        snapshots=snapshots,
+        asserted=_asserted_schemas(before, snapshots, replacements),
+        proposal_type=proposal_type,
+        column_name=column_name,
+        turned_off=turned_off,
+        origin="proposal",
+    )
+
+
+def plan_primary_key_snapshot(
+    *,
+    dataset_key: str,
+    core_key: str | None,
+    columns_by_key: dict[str, list[RegistryColumn]],
+    imported_columns: list[RegistryColumn],
+) -> PrimaryKeyPlan:
+    """Check a full column snapshot, including a CSV import."""
+    before = {key: _copy_columns(columns) for key, columns in columns_by_key.items()}
+    snapshots = {key: _copy_columns(columns) for key, columns in before.items()}
+    snapshots[dataset_key] = _copy_columns(imported_columns)
+    names = _primary_key_names(snapshots[dataset_key])
+    if len(names) > 1:
+        joined = ", ".join(names)
+        return PrimaryKeyPlan(
+            valid=False,
+            message=(
+                f"Schema '{dataset_key}' has more than one primary key ({joined})."
+            ),
+            snapshots=snapshots,
+        )
+    return _finalize_primary_keys(
+        dataset_key=dataset_key,
+        core_key=core_key,
+        snapshots=snapshots,
+        asserted=_asserted_schemas(before, snapshots, {}),
+        proposal_type=None,
+        column_name=None,
+        turned_off=False,
+        origin="import",
+    )
+
+
+async def _load_primary_key_scope(
+    db: AsyncSession, dataset: SchemaDataset
+) -> tuple[str | None, dict[str, list[RegistryColumn]], dict[str, SchemaDataset]]:
+    """Columns that share a primary key with this schema.
+
+    A core schema shares its key with every member. Members of a group with no
+    core each keep their own key, so they are checked on their own.
+    """
+    if dataset.group_id is None:
+        columns = await get_registry_columns(db, dataset.key)
+        return None, {dataset.key: columns}, {dataset.key: dataset}
+
+    datasets = list(
+        await db.scalars(
+            select(SchemaDataset)
+            .where(
+                SchemaDataset.group_id == dataset.group_id,
+                SchemaDataset.archived_at.is_(None),
+            )
+            .order_by(SchemaDataset.key)
+        )
+    )
+    core = next((item for item in datasets if item.role == "core"), None)
+    if core is None:
+        columns = await get_registry_columns(db, dataset.key)
+        return None, {dataset.key: columns}, {dataset.key: dataset}
+
+    columns_by_key: dict[str, list[RegistryColumn]] = {}
+    datasets_by_key: dict[str, SchemaDataset] = {}
+    for item in datasets:
+        columns_by_key[item.key] = await get_registry_columns(db, item.key)
+        datasets_by_key[item.key] = item
+    return core.key, columns_by_key, datasets_by_key
+
+
+def _preview_response(plan: PrimaryKeyPlan) -> PrimaryKeyPreviewResponse:
+    return PrimaryKeyPreviewResponse(
+        valid=plan.valid,
+        message=plan.message,
+        schema_choices=[
+            PrimaryKeyChoiceResponse(
+                dataset_key=choice.dataset_key, columns=list(choice.columns)
+            )
+            for choice in plan.schema_choices
+        ],
+        core_choice=(
+            None
+            if plan.core_choice is None
+            else PrimaryKeyChoiceResponse(
+                dataset_key=plan.core_choice.dataset_key,
+                columns=list(plan.core_choice.columns),
+            )
+        ),
+    )
+
+
+async def preview_primary_key_change(
+    db: AsyncSession,
+    *,
+    dataset_key: str,
+    proposal_type: str,
+    column_name: str,
+    after_state: dict | None,
+    replacements: dict[str, str],
+) -> PrimaryKeyPreviewResponse:
+    dataset = await get_dataset_by_key(db, dataset_key)
+    core_key, columns_by_key, _datasets = await _load_primary_key_scope(db, dataset)
+    plan = plan_primary_key_change(
+        dataset_key=dataset.key,
+        core_key=core_key,
+        columns_by_key=columns_by_key,
+        proposal_type=proposal_type,
+        column_name=column_name,
+        after_state=after_state,
+        replacements=replacements,
+    )
+    return _preview_response(plan)
+
+
+async def _primary_key_replacements(
+    db: AsyncSession, proposal: SchemaProposal
+) -> dict[str, str]:
+    rows = list(
+        await db.execute(
+            select(SchemaProposalTarget, SchemaDataset)
+            .join(
+                SchemaDataset,
+                SchemaDataset.id == SchemaProposalTarget.dataset_id,
+            )
+            .where(
+                SchemaProposalTarget.proposal_id == proposal.id,
+                SchemaProposalTarget.operation == "set_primary_key",
+            )
+        )
+    )
+    replacements: dict[str, str] = {}
+    for target, target_dataset in rows:
+        current = await get_current_version_number(db, target_dataset)
+        if target.expected_version != current:
+            raise ValueError(
+                f"Schema '{target_dataset.key}' changed after this proposal "
+                "was submitted. Submit it again."
+            )
+        name = (target.after_state or {}).get("name")
+        if not isinstance(name, str) or not name:
+            raise ValueError(f"Primary key column for {target_dataset.key} is missing")
+        replacements[target_dataset.key] = name
+    return replacements
+
+
+async def _publish_primary_key_plan(
+    db: AsyncSession,
+    *,
+    datasets_by_key: dict[str, SchemaDataset],
+    original: dict[str, list[RegistryColumn]],
+    plan: PrimaryKeyPlan,
+    source: str,
+    actor_id: str,
+    actor_email: str,
+    proposal_id: str | None,
+    always_publish: set[str],
+) -> dict[str, SchemaVersion]:
+    versions: dict[str, SchemaVersion] = {}
+    for key in sorted(plan.snapshots):
+        columns = plan.snapshots[key]
+        if key not in always_publish and _same_columns(original.get(key, []), columns):
+            continue
+        versions[key] = await publish_schema_version(
+            db,
+            datasets_by_key[key],
+            columns,
+            source=source,
+            actor_id=actor_id,
+            actor_email=actor_email,
+            proposal_id=proposal_id,
+        )
+    return versions
+
+
+async def _lock_primary_key_scope(db: AsyncSession, dataset: SchemaDataset) -> None:
+    if dataset.group_id is None:
+        await db.scalar(
+            select(SchemaDataset)
+            .where(SchemaDataset.id == dataset.id)
+            .with_for_update()
+        )
+        return
+    await db.scalars(
+        select(SchemaDataset)
+        .where(
+            SchemaDataset.group_id == dataset.group_id,
+            SchemaDataset.archived_at.is_(None),
+        )
+        .order_by(SchemaDataset.key)
+        .with_for_update()
+    )
+
+
+async def _publish_primary_key_snapshot(
+    db: AsyncSession,
+    dataset: SchemaDataset,
+    columns: list[RegistryColumn],
+    *,
+    source: str,
+    actor_id: str,
+    actor_email: str,
+    publish_dataset: bool,
+) -> tuple[str | None, bool]:
+    """Publish a snapshot and the primary-key updates it forces on the group."""
+    await _lock_primary_key_scope(db, dataset)
+    core_key, original, datasets_by_key = await _load_primary_key_scope(db, dataset)
+    plan = plan_primary_key_snapshot(
+        dataset_key=dataset.key,
+        core_key=core_key,
+        columns_by_key=original,
+        imported_columns=columns,
+    )
+    if not plan.valid:
+        return plan.message, False
+    changed_others = [
+        key
+        for key, columns in plan.snapshots.items()
+        if key != dataset.key and not _same_columns(original.get(key, []), columns)
+    ]
+    if changed_others:
+        joined = ", ".join(sorted(changed_others))
+        return (
+            f"This file would change the primary key on {joined}. A resolved "
+            "schema has one primary key, on the core schema or on the member "
+            "schema. Make that change in a proposal so every dataset is updated "
+            "together.",
+            False,
+        )
+    versions = await _publish_primary_key_plan(
+        db,
+        datasets_by_key=datasets_by_key,
+        original=original,
+        plan=plan,
+        source=source,
+        actor_id=actor_id,
+        actor_email=actor_email,
+        proposal_id=None,
+        always_publish={dataset.key} if publish_dataset else set(),
+    )
+    return None, bool(versions)
 
 
 async def approve_proposal(
@@ -1601,15 +2354,27 @@ async def approve_proposal(
             actor_email=actor_email,
         )
 
-    dataset = await db.scalar(
-        select(SchemaDataset)
-        .where(SchemaDataset.id == proposal.dataset_id)
-        .with_for_update()
-    )
-    if dataset.archived_at is not None:
+    dataset = await db.get(SchemaDataset, proposal.dataset_id)
+    if dataset is None or dataset.archived_at is not None:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
             detail="Archived schemas cannot be changed.",
+        )
+    if dataset.group_id is None:
+        await db.scalar(
+            select(SchemaDataset)
+            .where(SchemaDataset.id == dataset.id)
+            .with_for_update()
+        )
+    else:
+        await db.scalars(
+            select(SchemaDataset)
+            .where(
+                SchemaDataset.group_id == dataset.group_id,
+                SchemaDataset.archived_at.is_(None),
+            )
+            .order_by(SchemaDataset.key)
+            .with_for_update()
         )
     await _validate_column_ownership(
         db,
@@ -1617,23 +2382,34 @@ async def approve_proposal(
         column_name=proposal.column_name,
         proposal_type=proposal.proposal_type,
     )
-    columns = await get_registry_columns(db, dataset.key)
-    updated_columns = apply_column_change(
-        columns,
-        proposal.proposal_type,
-        proposal.column_name,
-        proposal.after_state,
-    )
     try:
-        version = await publish_schema_version(
+        replacements = await _primary_key_replacements(db, proposal)
+        core_key, original, datasets_by_key = await _load_primary_key_scope(db, dataset)
+        plan = plan_primary_key_change(
+            dataset_key=dataset.key,
+            core_key=core_key,
+            columns_by_key=original,
+            proposal_type=proposal.proposal_type,
+            column_name=proposal.column_name,
+            after_state=proposal.after_state,
+            replacements=replacements,
+        )
+        if not plan.valid:
+            raise ValueError(
+                plan.message or "This change does not leave one primary key"
+            )
+        versions = await _publish_primary_key_plan(
             db,
-            dataset,
-            updated_columns,
+            datasets_by_key=datasets_by_key,
+            original=original,
+            plan=plan,
             source="proposal",
             actor_id=actor_id,
             actor_email=actor_email,
             proposal_id=proposal.id,
+            always_publish={dataset.key},
         )
+        version = versions[dataset.key]
     except Exception as err:  # noqa: BLE001
         await db.rollback()
         proposal = await get_proposal(db, proposal_id)
@@ -2103,24 +2879,33 @@ async def import_columns_from_csv(
     actor_email: str,
 ) -> DatasetImportResponse:
     dataset = await db.scalar(
-        select(SchemaDataset).where(SchemaDataset.key == dataset_key).with_for_update()
+        select(SchemaDataset).where(SchemaDataset.key == dataset_key)
     )
     if dataset is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Dataset not found")
+    await _lock_primary_key_scope(db, dataset)
     existing = await get_registry_columns(db, dataset_key)
     inherited_owners = await _get_import_column_owners(db, dataset)
     columns, result = parse_csv_import(csv_bytes, existing, inherited_owners)
     if result.errors:
         return result
-    if result.created or result.updated or dataset.current_version_id is None:
-        await publish_schema_version(
-            db,
-            dataset,
-            columns,
-            source="csv_import",
-            actor_id=actor_id,
-            actor_email=actor_email,
-        )
+    message, published = await _publish_primary_key_snapshot(
+        db,
+        dataset,
+        columns,
+        source="csv_import",
+        actor_id=actor_id,
+        actor_email=actor_email,
+        publish_dataset=bool(
+            result.created or result.updated or dataset.current_version_id is None
+        ),
+    )
+    if message:
+        result.errors.append(DatasetImportError(row=0, detail=message))
+        result.created = 0
+        result.updated = 0
+        return result
+    if published:
         await db.commit()
     return result
 

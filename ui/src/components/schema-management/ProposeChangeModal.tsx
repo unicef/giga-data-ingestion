@@ -24,6 +24,9 @@ import {
   ColumnSource,
   CreateProposalRequest,
   CriticalFor,
+  PrimaryKeyChoice,
+  PrimaryKeyPreview,
+  PrimaryKeyReplacement,
   ProposalType,
   RegistryColumn,
 } from "@/types/schemaRegistry.ts";
@@ -53,6 +56,7 @@ interface ProposeChangeInputs {
   column_group: string;
   is_mandatory: boolean;
   is_unique: boolean;
+  primary_key: boolean;
   range_min: number | undefined;
   range_max: number | undefined;
   precision_min: number | undefined;
@@ -71,6 +75,7 @@ function valuesFromColumn(column?: RegistryColumn) {
     column_group: column?.column_group ?? "",
     is_mandatory: column?.is_mandatory ?? false,
     is_unique: column?.is_unique ?? false,
+    primary_key: column?.primary_key ?? false,
     range_min: column?.range_min ?? undefined,
     range_max: column?.range_max ?? undefined,
     precision_min: column?.precision_min ?? undefined,
@@ -93,11 +98,38 @@ function emptyFormValues(
     column_group: "",
     is_mandatory: false,
     is_unique: false,
+    primary_key: false,
     range_min: undefined,
     range_max: undefined,
     precision_min: undefined,
     critical_for: "",
   };
+}
+
+function PrimaryKeyColumnSelect({
+  choice,
+  label,
+  value,
+  onChange,
+}: {
+  choice: PrimaryKeyChoice;
+  label: string;
+  value: string;
+  onChange: (columnName: string) => void;
+}) {
+  return (
+    <Select
+      id={`primary_key_${choice.dataset_key}`}
+      labelText={label}
+      value={value}
+      onChange={event => onChange(event.target.value)}
+    >
+      <SelectItem text="Select a column" value="" />
+      {choice.columns.map(column => (
+        <SelectItem key={column} text={column} value={column} />
+      ))}
+    </Select>
+  );
 }
 
 function ProposeChangeModal({
@@ -112,6 +144,14 @@ function ProposeChangeModal({
 }: ProposeChangeModalProps) {
   const queryClient = useQueryClient();
   const [showError, setShowError] = useState(false);
+  const [preview, setPreview] = useState<PrimaryKeyPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [assignmentMode, setAssignmentMode] = useState<"core" | "schemas">(
+    "schemas",
+  );
+  const [replacementByDataset, setReplacementByDataset] = useState<
+    Record<string, string>
+  >({});
   const [domainValueInput, setDomainValueInput] = useState("");
   const [domainValues, setDomainValues] = useState<string[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
@@ -124,6 +164,8 @@ function ProposeChangeModal({
 
   const proposalType = watch("proposal_type");
   const dataType = watch("data_type");
+  const columnName = watch("column_name");
+  const primaryKey = watch("primary_key");
   const isMandatory = watch("is_mandatory");
   const columnGroupSelection = watch("column_group");
   const supportsRange = isNumericDataType(dataType);
@@ -183,6 +225,8 @@ function ProposeChangeModal({
     setDomainValueInput("");
     setNewGroupName("");
     setShowError(false);
+    setPreview(null);
+    setReplacementByDataset({});
   }, [
     open,
     initialProposalType,
@@ -191,6 +235,52 @@ function ProposeChangeModal({
     columns,
     reset,
   ]);
+
+  useEffect(() => {
+    if (
+      !open ||
+      !columnName ||
+      (proposalType !== "add" &&
+        proposalType !== "edit" &&
+        proposalType !== "delete")
+    ) {
+      setPreview(null);
+      setPreviewLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setPreviewLoading(true);
+    const afterState =
+      proposalType === "delete"
+        ? null
+        : proposalType === "add"
+        ? { primary_key: primaryKey, data_type: "string" }
+        : { primary_key: primaryKey };
+    api.schemaRegistry
+      .previewPrimaryKey({
+        datasetKey,
+        body: {
+          proposal_type: proposalType,
+          column_name: columnName,
+          after_state: afterState,
+        },
+      })
+      .then(response => {
+        if (cancelled) return;
+        setPreview(response.data);
+        setAssignmentMode(response.data.core_choice ? "core" : "schemas");
+        setReplacementByDataset({});
+      })
+      .catch(() => {
+        if (!cancelled) setPreview(null);
+      })
+      .finally(() => {
+        if (!cancelled) setPreviewLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, datasetKey, columnName, proposalType, primaryKey]);
 
   const addDomainValues = (input: string) => {
     // Values are stored pipe-separated, so only split pasted multi-line
@@ -244,6 +334,45 @@ function ProposeChangeModal({
     return selection.trim() || null;
   };
 
+  const primaryKeySelectionComplete = (() => {
+    if (!preview || preview.valid) return true;
+    if (assignmentMode === "core" && preview.core_choice) {
+      return Boolean(replacementByDataset[preview.core_choice.dataset_key]);
+    }
+    return (
+      preview.schema_choices.length > 0 &&
+      preview.schema_choices.every(choice =>
+        Boolean(replacementByDataset[choice.dataset_key]),
+      )
+    );
+  })();
+
+  const primaryKeyReplacements = (): PrimaryKeyReplacement[] | null => {
+    if (!preview || preview.valid) return [];
+    if (assignmentMode === "core" && preview.core_choice) {
+      const columnName = replacementByDataset[preview.core_choice.dataset_key];
+      if (!columnName) return null;
+      return [
+        {
+          dataset_key: preview.core_choice.dataset_key,
+          column_name: columnName,
+        },
+      ];
+    }
+    if (
+      preview.schema_choices.length === 0 ||
+      preview.schema_choices.some(
+        choice => !replacementByDataset[choice.dataset_key],
+      )
+    ) {
+      return null;
+    }
+    return preview.schema_choices.map(choice => ({
+      dataset_key: choice.dataset_key,
+      column_name: replacementByDataset[choice.dataset_key],
+    }));
+  };
+
   const onSubmit: SubmitHandler<ProposeChangeInputs> = async data => {
     if (
       data.proposal_type !== "delete" &&
@@ -254,9 +383,16 @@ function ProposeChangeModal({
       return;
     }
 
+    const replacements = primaryKeyReplacements();
+    if (replacements === null) {
+      setShowError(true);
+      return;
+    }
+
     const body: CreateProposalRequest = {
       column_name: data.column_name,
       proposal_type: data.proposal_type,
+      primary_key_replacements: replacements,
     };
 
     if (data.proposal_type !== "delete") {
@@ -276,6 +412,7 @@ function ProposeChangeModal({
             : null,
         is_mandatory: data.is_mandatory,
         is_unique: data.is_unique,
+        primary_key: data.primary_key,
         domain_values:
           supportsDomainValues && domainValues.length > 0
             ? domainValues.join("|")
@@ -315,6 +452,8 @@ function ProposeChangeModal({
       primaryButtonDisabled={
         !formState.isValid ||
         isPending ||
+        previewLoading ||
+        !primaryKeySelectionComplete ||
         (proposalType !== "delete" && isCreatingGroup && !newGroupName.trim())
       }
       primaryButtonText={
@@ -465,7 +604,17 @@ function ProposeChangeModal({
                   labelText="Unique (DQ)"
                   {...register("is_unique")}
                 />
+                <Checkbox
+                  id="primary_key"
+                  labelText="Primary key"
+                  {...register("primary_key")}
+                />
               </div>
+              <p className="text-sm text-giga-dark-gray">
+                A resolved schema has one primary key. It is on the core schema,
+                or on each dataset when the core has none. Setting it here
+                clears the flag on the other columns and on the other side.
+              </p>
               {isMandatory && (
                 <Controller
                   name="critical_for"
@@ -606,6 +755,65 @@ function ProposeChangeModal({
                 />
               )}
             </>
+          )}
+
+          {preview && !preview.valid && (
+            <Stack gap={4}>
+              {preview.message && (
+                <p className="text-sm text-giga-dark-gray">{preview.message}</p>
+              )}
+              {preview.core_choice && preview.schema_choices.length > 0 && (
+                <Select
+                  id="primary_key_assignment_mode"
+                  labelText="Where the primary key goes"
+                  value={assignmentMode}
+                  onChange={event => {
+                    setAssignmentMode(
+                      event.target.value === "core" ? "core" : "schemas",
+                    );
+                    setReplacementByDataset({});
+                  }}
+                >
+                  <SelectItem
+                    text={`One column on ${preview.core_choice.dataset_key} for every dataset`}
+                    value="core"
+                  />
+                  <SelectItem
+                    text="A column on each dataset that would have none"
+                    value="schemas"
+                  />
+                </Select>
+              )}
+              {assignmentMode === "core" && preview.core_choice && (
+                <PrimaryKeyColumnSelect
+                  choice={preview.core_choice}
+                  label={`Primary key on ${preview.core_choice.dataset_key}`}
+                  value={
+                    replacementByDataset[preview.core_choice.dataset_key] ?? ""
+                  }
+                  onChange={column =>
+                    setReplacementByDataset({
+                      [preview.core_choice?.dataset_key ?? ""]: column,
+                    })
+                  }
+                />
+              )}
+              {assignmentMode === "schemas" &&
+                preview.schema_choices.map(choice => (
+                  <PrimaryKeyColumnSelect
+                    key={choice.dataset_key}
+                    choice={choice}
+                    label={`Primary key for ${choice.dataset_key}`}
+                    value={replacementByDataset[choice.dataset_key] ?? ""}
+                    onChange={column =>
+                      setReplacementByDataset(current => ({
+                        ...current,
+                        [choice.dataset_key]: column,
+                      }))
+                    }
+                  />
+                ))}
+            </Stack>
           )}
 
           {showError && (

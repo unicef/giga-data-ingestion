@@ -142,10 +142,35 @@ export interface PromotionPreview {
   can_promote: boolean;
 }
 
+export interface PrimaryKeyReplacement {
+  dataset_key: string;
+  column_name: string;
+}
+
+export interface PrimaryKeyChoice {
+  dataset_key: string;
+  columns: string[];
+}
+
+export interface PrimaryKeyPreview {
+  valid: boolean;
+  message: string | null;
+  schema_choices: PrimaryKeyChoice[];
+  core_choice: PrimaryKeyChoice | null;
+}
+
+export interface PrimaryKeyPreviewRequest {
+  column_name: string;
+  proposal_type: "add" | "edit" | "delete";
+  after_state?: Record<string, unknown> | null;
+  primary_key_replacements?: PrimaryKeyReplacement[];
+}
+
 export interface CreateProposalRequest {
   column_name?: string | null;
   proposal_type: ProposalType;
   after_state?: Record<string, unknown> | null;
+  primary_key_replacements?: PrimaryKeyReplacement[];
 }
 
 export interface Proposal {

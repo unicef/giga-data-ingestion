@@ -900,7 +900,11 @@ function DatasetDetail({ datasetKey }: DatasetDetailProps) {
                     kind="error"
                     title={`${importResult.errors.length} row(s) failed`}
                     subtitle={importResult.errors
-                      .map(error => `Row ${error.row}: ${error.detail}`)
+                      .map(error =>
+                        error.row
+                          ? `Row ${error.row}: ${error.detail}`
+                          : error.detail,
+                      )
                       .join("; ")}
                     hideCloseButton
                   />

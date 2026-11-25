@@ -40,6 +40,8 @@ from data_ingestion.schemas.schema_registry import (
     DatasetVersion,
     LifecyclePreview,
     MoveDatasetRequest,
+    PrimaryKeyPreviewRequest,
+    PrimaryKeyPreviewResponse,
     PromotionPreview,
     ProposalCreate,
     ProposalDetail,
@@ -515,6 +517,36 @@ async def create_proposal(
         after_state=body.after_state,
         proposed_by_id=current_user.id,
         proposed_by_email=current_user.email,
+        replacements=registry.replacement_mapping(
+            [
+                (item.dataset_key, item.column_name)
+                for item in body.primary_key_replacements
+            ]
+        ),
+    )
+
+
+@router.post(
+    "/datasets/{key}/primary-key-preview",
+    response_model=PrimaryKeyPreviewResponse,
+)
+async def preview_primary_key(
+    key: str,
+    body: PrimaryKeyPreviewRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    return await registry.preview_primary_key_change(
+        db,
+        dataset_key=key,
+        proposal_type=body.proposal_type,
+        column_name=body.column_name,
+        after_state=body.after_state,
+        replacements=registry.replacement_mapping(
+            [
+                (item.dataset_key, item.column_name)
+                for item in body.primary_key_replacements
+            ]
+        ),
     )
 
 

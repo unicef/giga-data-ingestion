@@ -5,6 +5,7 @@ import pytest
 from data_ingestion.internal import schema_registry
 from data_ingestion.internal.schema_registry import (
     _duplicate_column_names,
+    _primary_key_names,
     _validate_placement_columns,
     apply_column_change,
     get_dataset_lifecycle_preview,
@@ -12,6 +13,8 @@ from data_ingestion.internal.schema_registry import (
     get_proposal_diff,
     get_registry_columns,
     parse_csv_import,
+    plan_primary_key_change,
+    plan_primary_key_snapshot,
 )
 from data_ingestion.schemas.schema_registry import RegistryColumn
 from fastapi import HTTPException
@@ -19,6 +22,10 @@ from fastapi import HTTPException
 
 def _column(name: str) -> RegistryColumn:
     return RegistryColumn(name=name, data_type="string")
+
+
+def _pk(name: str) -> RegistryColumn:
+    return RegistryColumn(name=name, data_type="string", primary_key=True)
 
 
 def test_duplicate_column_names_rejects_member_shadowing_core():
@@ -54,6 +61,225 @@ def test_apply_column_change_adds_column_to_snapshot():
     assert columns[1].is_mandatory is True
 
 
+def test_apply_column_change_moves_the_primary_key():
+    columns = apply_column_change(
+        [
+            RegistryColumn(
+                name="facility_id_govt", data_type="string", primary_key=True
+            ),
+            _column("facility_id_giga"),
+        ],
+        "edit",
+        "facility_id_giga",
+        {"primary_key": True},
+    )
+
+    assert columns[0].primary_key is False
+    assert columns[1].primary_key is True
+
+
+def _group_columns() -> dict[str, list[RegistryColumn]]:
+    return {
+        "facility_core": [_pk("facility_id_giga"), _column("latitude")],
+        "schools": [_column("school_id_govt"), _column("education_level")],
+        "health_facilities": [_column("facility_type")],
+    }
+
+
+def test_core_primary_key_is_the_only_key_for_every_member():
+    plan = plan_primary_key_change(
+        dataset_key="facility_core",
+        core_key="facility_core",
+        columns_by_key={
+            "facility_core": [_column("facility_id_giga")],
+            "schools": [_pk("school_id_govt")],
+            "health_facilities": [_pk("facility_type")],
+        },
+        proposal_type="edit",
+        column_name="facility_id_giga",
+        after_state={"primary_key": True},
+        replacements={},
+    )
+
+    assert plan.valid
+    assert _primary_key_names(plan.snapshots["facility_core"]) == ["facility_id_giga"]
+    assert _primary_key_names(plan.snapshots["schools"]) == []
+    assert _primary_key_names(plan.snapshots["health_facilities"]) == []
+
+
+def test_member_primary_key_clears_the_core_and_asks_for_the_other_member():
+    plan = plan_primary_key_change(
+        dataset_key="schools",
+        core_key="facility_core",
+        columns_by_key=_group_columns(),
+        proposal_type="edit",
+        column_name="school_id_govt",
+        after_state={"primary_key": True},
+        replacements={},
+    )
+
+    assert not plan.valid
+    assert plan.core_choice is None
+    assert [choice.dataset_key for choice in plan.schema_choices] == [
+        "health_facilities"
+    ]
+    assert "health_facilities" in (plan.message or "")
+
+
+def test_replacement_on_the_other_member_leaves_one_key_each():
+    plan = plan_primary_key_change(
+        dataset_key="schools",
+        core_key="facility_core",
+        columns_by_key=_group_columns(),
+        proposal_type="edit",
+        column_name="school_id_govt",
+        after_state={"primary_key": True},
+        replacements={"health_facilities": "facility_type"},
+    )
+
+    assert plan.valid
+    assert _primary_key_names(plan.snapshots["facility_core"]) == []
+    assert _primary_key_names(plan.snapshots["schools"]) == ["school_id_govt"]
+    assert _primary_key_names(plan.snapshots["health_facilities"]) == ["facility_type"]
+
+
+def test_clearing_the_core_key_offers_a_core_column_or_one_per_member():
+    plan = plan_primary_key_change(
+        dataset_key="facility_core",
+        core_key="facility_core",
+        columns_by_key=_group_columns(),
+        proposal_type="edit",
+        column_name="facility_id_giga",
+        after_state={"primary_key": False},
+        replacements={},
+    )
+
+    assert not plan.valid
+    assert plan.core_choice is not None
+    assert plan.core_choice.columns == ("latitude",)
+    assert {choice.dataset_key for choice in plan.schema_choices} == {
+        "schools",
+        "health_facilities",
+    }
+
+
+def test_replacement_on_the_core_covers_every_member():
+    plan = plan_primary_key_change(
+        dataset_key="facility_core",
+        core_key="facility_core",
+        columns_by_key=_group_columns(),
+        proposal_type="edit",
+        column_name="facility_id_giga",
+        after_state={"primary_key": False},
+        replacements={"facility_core": "latitude"},
+    )
+
+    assert plan.valid
+    assert _primary_key_names(plan.snapshots["facility_core"]) == ["latitude"]
+    assert _primary_key_names(plan.snapshots["schools"]) == []
+    assert _primary_key_names(plan.snapshots["health_facilities"]) == []
+
+
+def test_core_and_member_cannot_both_gain_a_primary_key():
+    plan = plan_primary_key_change(
+        dataset_key="schools",
+        core_key="facility_core",
+        columns_by_key=_group_columns(),
+        proposal_type="edit",
+        column_name="school_id_govt",
+        after_state={"primary_key": True},
+        replacements={"facility_core": "latitude"},
+    )
+
+    assert not plan.valid
+    assert plan.schema_choices == ()
+    assert plan.core_choice is None
+
+
+def test_standalone_schema_keeps_one_primary_key():
+    plan = plan_primary_key_change(
+        dataset_key="schools",
+        core_key=None,
+        columns_by_key={"schools": [_pk("school_id"), _column("school_name")]},
+        proposal_type="edit",
+        column_name="school_id",
+        after_state={"primary_key": False},
+        replacements={},
+    )
+
+    assert not plan.valid
+    assert plan.schema_choices[0].columns == ("school_name",)
+
+    moved = plan_primary_key_change(
+        dataset_key="schools",
+        core_key=None,
+        columns_by_key={"schools": [_pk("school_id"), _column("school_name")]},
+        proposal_type="edit",
+        column_name="school_id",
+        after_state={"primary_key": False},
+        replacements={"schools": "school_name"},
+    )
+
+    assert moved.valid
+    assert _primary_key_names(moved.snapshots["schools"]) == ["school_name"]
+
+
+def test_members_without_a_core_do_not_share_a_primary_key():
+    plan = plan_primary_key_change(
+        dataset_key="schools",
+        core_key=None,
+        columns_by_key={
+            "schools": [_pk("school_id"), _column("school_name")],
+            "health_facilities": [_column("facility_type")],
+        },
+        proposal_type="edit",
+        column_name="school_name",
+        after_state={"description": "Name"},
+        replacements={},
+    )
+
+    assert plan.valid
+
+
+def test_import_rejects_two_primary_keys_on_one_schema():
+    plan = plan_primary_key_snapshot(
+        dataset_key="schools",
+        core_key=None,
+        columns_by_key={"schools": [_column("school_id")]},
+        imported_columns=[_pk("school_id"), _pk("school_name")],
+    )
+
+    assert not plan.valid
+    assert "more than one primary key" in (plan.message or "")
+
+
+def test_importing_a_member_key_leaves_the_other_member_without_one():
+    plan = plan_primary_key_snapshot(
+        dataset_key="schools",
+        core_key="facility_core",
+        columns_by_key=_group_columns(),
+        imported_columns=[_pk("school_id_govt"), _column("education_level")],
+    )
+
+    assert not plan.valid
+    assert "health_facilities" in (plan.message or "")
+
+
+def test_a_core_key_already_in_place_allows_an_unrelated_edit():
+    plan = plan_primary_key_change(
+        dataset_key="schools",
+        core_key="facility_core",
+        columns_by_key=_group_columns(),
+        proposal_type="edit",
+        column_name="school_id_govt",
+        after_state={"description": "Government id"},
+        replacements={},
+    )
+
+    assert plan.valid
+    assert _primary_key_names(plan.snapshots["facility_core"]) == ["facility_id_giga"]
+
+
 def test_apply_column_change_accepts_complete_promoted_column_state():
     promoted_column = _column("facility_name").model_dump()
 
@@ -72,6 +298,7 @@ def test_apply_column_change_accepts_complete_promoted_column_state():
 
 def test_proposal_diff_builds_complete_added_column_from_partial_state():
     proposal = SimpleNamespace(
+        proposal_type="add",
         column_name="facility_name",
         before_state=None,
         after_state={"data_type": "string", "is_mandatory": True},
@@ -88,6 +315,7 @@ def test_proposal_diff_builds_complete_added_column_from_partial_state():
 
 def test_proposal_diff_merges_partial_edit_with_existing_column():
     proposal = SimpleNamespace(
+        proposal_type="edit",
         column_name="facility_name",
         before_state=_column("facility_name").model_dump(),
         after_state={"description": "Updated description"},
