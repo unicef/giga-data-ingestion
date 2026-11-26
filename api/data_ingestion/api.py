@@ -16,6 +16,7 @@ from data_ingestion.routers import (
     core,
     deletion_requests,
     email,
+    facility_profiles,
     groups,
     qos,
     roles,
@@ -75,6 +76,11 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def load_config():
+    from data_ingestion.facility_profiles import init_facility_profiles
+
+    # Fail boot if facility profiles are missing or invalid.
+    init_facility_profiles()
+
     if settings.IN_PRODUCTION:
         await azure_scheme.openid_config.load_config()
     else:
@@ -138,6 +144,7 @@ app.include_router(approval_requests.router)
 app.include_router(core.router)
 app.include_router(deletion_requests.router)
 app.include_router(email.router)
+app.include_router(facility_profiles.router)
 app.include_router(groups.router)
 app.include_router(qos.router)
 app.include_router(roles.router)

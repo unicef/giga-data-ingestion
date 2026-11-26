@@ -265,13 +265,17 @@ export default function Index() {
     queryFn: () => api.schemaRegistry.getGroup("facilities"),
     enabled: isGeolocation,
   });
-  const facilitySchemas = useMemo(
-    () =>
-      (facilitiesGroupQuery?.data?.member_schemas ?? []).filter(
-        schema => schema.archived_at == null,
-      ),
-    [facilitiesGroupQuery],
-  );
+  const { data: facilityProfileKeysQuery } = useQuery({
+    queryKey: ["facility-profiles", "keys"],
+    queryFn: () => api.facilityProfiles.listKeys(),
+    enabled: isGeolocation,
+  });
+  const facilitySchemas = useMemo(() => {
+    const profileKeys = new Set(facilityProfileKeysQuery?.data ?? []);
+    return (facilitiesGroupQuery?.data?.member_schemas ?? []).filter(
+      schema => schema.archived_at == null && profileKeys.has(schema.key),
+    );
+  }, [facilitiesGroupQuery, facilityProfileKeysQuery]);
 
   const { data: resolvedFacilityQuery, isFetching: isResolvedFetching } =
     useQuery({

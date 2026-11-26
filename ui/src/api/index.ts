@@ -15,6 +15,7 @@ import approvalRequestsRouter from "./routers/approvalRequests.ts";
 import deleteRouter from "./routers/delete.ts";
 import emailRouter from "./routers/email.ts";
 import externalRequestsRouter from "./routers/externalRequests.ts";
+import facilityProfilesRouter from "./routers/facilityProfiles.ts";
 import groupsRouter from "./routers/groups.ts";
 import qosRouter from "./routers/qos.ts";
 import rolesRouter from "./routers/roles.ts";
@@ -36,6 +37,7 @@ export const api = {
   delete: deleteRouter(axi),
   email: emailRouter(axi),
   externalRequests: externalRequestsRouter(),
+  facilityProfiles: facilityProfilesRouter(axi),
   groups: groupsRouter(axi),
   roles: rolesRouter(axi),
   qos: qosRouter(axi),

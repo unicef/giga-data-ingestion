@@ -10,12 +10,14 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from data_ingestion.constants import (
-    HEALTH_FACILITY_GEOLOCATION_APPROVAL_DATASET,
-    SCHOOL_GEOLOCATION_APPROVAL_DATASET,
-)
 from data_ingestion.db.primary import get_db as get_primary_db
 from data_ingestion.db.trino import get_db
+from data_ingestion.facility_profiles import (
+    FacilityProfile,
+    FacilityProfileError,
+    get_facility_profile,
+    get_facility_profiles,
+)
 from data_ingestion.internal.auth import azure_scheme
 from data_ingestion.internal.school_registration import (
     handle_rejected_gigameter_registrations,
@@ -52,35 +54,11 @@ _STATUS_APPROVED = "APPROVED"
 _STATUS_REJECTED = "REJECTED"
 
 
-@dataclass(frozen=True)
-class _FacilityProfile:
-    """Facility geolocation approval settings; must match the Dagster facility specs."""
-
-    approval_label: str
-    staging_table: str
-    silver_schema: str
-    approval_domain: str
-
-
-_SCHOOL_FACILITY = _FacilityProfile(
-    approval_label=SCHOOL_GEOLOCATION_APPROVAL_DATASET,
-    staging_table="delta_lake.pipeline_tables.school_facility_geolocation_staging",
-    silver_schema="school_geolocation_silver",
-    approval_domain="school",
-)
-_HEALTH_FACILITY = _FacilityProfile(
-    approval_label=HEALTH_FACILITY_GEOLOCATION_APPROVAL_DATASET,
-    staging_table="delta_lake.pipeline_tables.health_facility_geolocation_staging",
-    silver_schema="health_facility_geolocation_silver",
-    approval_domain="health-facility",
-)
-_FACILITY_BY_LABEL = {
-    profile.approval_label: profile for profile in (_SCHOOL_FACILITY, _HEALTH_FACILITY)
-}
-_FACILITY_BY_SCHEMA_KEY = {
-    "schools": _SCHOOL_FACILITY,
-    "health_facilities": _HEALTH_FACILITY,
-}
+def _profile_by_approval_label(label: str) -> FacilityProfile | None:
+    for profile in get_facility_profiles().values():
+        if profile.approval_label == label:
+            return profile
+    return None
 
 
 @dataclass(frozen=True)
@@ -107,11 +85,13 @@ class _StagingTarget:
         return f"country_code = '{country}' AND {condition}"
 
 
-def _facility_target(profile: _FacilityProfile, country_code: str) -> _StagingTarget:
+def _facility_target(profile: FacilityProfile, country_code: str) -> _StagingTarget:
     return _StagingTarget(
-        staging_table=profile.staging_table,
-        silver_table=f"delta_lake.{profile.silver_schema}.{country_code.lower()}",
-        id_column="facility_id_giga",
+        staging_table=profile.staging_table_full_name,
+        silver_table=(
+            f"delta_lake.{profile.tables.silver_schema}.{country_code.lower()}"
+        ),
+        id_column=profile.identity.giga_id_column,
         approval_label=profile.approval_label,
         approval_domain=profile.approval_domain,
         approval_dataset="geolocation",
@@ -132,7 +112,7 @@ def _legacy_target(dataset: str, country_code: str) -> _StagingTarget:
 
 
 def _target_for_approval_label(label: str, country_code: str) -> _StagingTarget:
-    profile = _FACILITY_BY_LABEL.get(label)
+    profile = _profile_by_approval_label(label)
     if profile is not None:
         return _facility_target(profile, country_code)
     return _legacy_target(label, country_code)
@@ -143,14 +123,26 @@ def _target_for_upload(
 ) -> _StagingTarget:
     """Resolve the staging target for an upload or (when absent) a deletion request.
 
-    Geolocation uploads and deletion requests go through the facility pipeline;
-    ``schema_key`` decides the facility type and defaults to schools.
+    Geolocation uploads go through the facility pipeline; ``schema_key`` selects
+    the ADLS facility profile. Deletion requests without an upload use schools
+    only when a ``schools`` profile exists.
     """
     dataset = file_upload.dataset.lower() if file_upload else "geolocation"
     if dataset != "geolocation":
         return _legacy_target(dataset, country_code)
-    schema_key = file_upload.schema_key if file_upload else None
-    profile = _FACILITY_BY_SCHEMA_KEY.get(schema_key or "", _SCHOOL_FACILITY)
+    schema_key = file_upload.schema_key if file_upload else "schools"
+    if not schema_key:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="schema_key is required for geolocation approval targets",
+        )
+    try:
+        profile = get_facility_profile(schema_key)
+    except FacilityProfileError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
     return _facility_target(profile, country_code)
 
 

@@ -7,9 +7,24 @@ from pydantic_settings import BaseSettings
 from data_ingestion.internal.utils import megabytes_to_bytes
 from data_ingestion.settings import settings
 
-# Approval-request labels for facility geolocation; must match the Dagster facility specs.
+# Legacy approval labels (seed profiles). Prefer facility profile lookup at runtime.
 SCHOOL_GEOLOCATION_APPROVAL_DATASET = "School Geolocation"
 HEALTH_FACILITY_GEOLOCATION_APPROVAL_DATASET = "Health Facility Geolocation"
+
+
+def facility_approval_datasets() -> tuple[str, ...]:
+    """Approval labels from loaded ADLS facility profiles."""
+    from data_ingestion.facility_profiles import get_facility_profiles
+
+    return tuple(
+        profile.approval_label
+        for profile in sorted(
+            get_facility_profiles().values(), key=lambda p: p.schema_key
+        )
+    )
+
+
+# Back-compat alias for scripts that import the constant tuple.
 FACILITY_APPROVAL_DATASETS = (
     SCHOOL_GEOLOCATION_APPROVAL_DATASET,
     HEALTH_FACILITY_GEOLOCATION_APPROVAL_DATASET,

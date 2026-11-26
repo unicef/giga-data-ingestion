@@ -664,6 +664,20 @@ async def upload_file(  # noqa: C901
             detail="schema_key is required for geolocation uploads",
         )
 
+    if dataset == "geolocation" and form.schema_key:
+        from data_ingestion.facility_profiles import (
+            FacilityProfileError,
+            get_facility_profile,
+        )
+
+        try:
+            get_facility_profile(form.schema_key)
+        except FacilityProfileError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            ) from exc
+
     if not is_privileged:
         country_dataset = f"{form.country}-School {dataset.capitalize()}"
         roles = await get_user_roles(user, db)
@@ -1855,6 +1869,11 @@ async def download_dq_kit(
             media_type="application/zip",
             headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
+    except FileNotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        ) from e
     except Exception as e:
         logger.error(f"Error generating DQ Kit: {e}")
         raise HTTPException(

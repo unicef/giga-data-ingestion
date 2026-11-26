@@ -89,6 +89,12 @@ class Settings(BaseSettings):
     SYSTEM_USER_EMAIL: str = "gigameter@gigasync.org"
     NOCODB_INBOUND_API_TOKEN: str = ""
     EMAIL_TEST_RECIPIENTS: str = ""  # If set, all emails go here (comma-separated)
+    # Facility geolocation profiles on ADLS (one YAML per schema_key).
+    # Runtime source of truth is ADLS only — repo seeds are for upload/CI.
+    FACILITY_PROFILES_ADLS_PREFIX: str = "config/facility-profiles"
+    # Unit tests only: load profiles from a fixture directory instead of ADLS.
+    # Leave empty in all real environments (local/dev/stg/prd).
+    FACILITY_PROFILES_LOCAL_DIR: str = ""
 
     @computed_field
     @property
