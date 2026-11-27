@@ -125,6 +125,7 @@ class UploadImpactPreviewRequest:
     file: UploadFile = Form(...)
     column_to_schema_mapping: str = Form(...)
     country: str = Form(...)
+    schema_key: str | None = Form(None)
 
 
 class UploadImpactPreviewResponse(BaseModel):

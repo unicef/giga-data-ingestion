@@ -88,9 +88,7 @@ class _StagingTarget:
 def _facility_target(profile: FacilityProfile, country_code: str) -> _StagingTarget:
     return _StagingTarget(
         staging_table=profile.staging_table_full_name,
-        silver_table=(
-            f"delta_lake.{profile.tables.silver_schema}.{country_code.lower()}"
-        ),
+        silver_table=profile.silver_table_full_name,
         id_column=profile.identity.giga_id_column,
         approval_label=profile.approval_label,
         approval_domain=profile.approval_domain,
@@ -632,7 +630,7 @@ async def get_upload_rows(
             silver_rows = (
                 db.execute(
                     text(
-                        f"SELECT * FROM {target.silver_table} WHERE {id_column} IN {_in_clause(update_ids)}"  # nosec B608
+                        f"SELECT * FROM {target.silver_table} WHERE {target.scope(f'{id_column} IN {_in_clause(update_ids)}')}"  # nosec B608
                     )
                 )
                 .mappings()

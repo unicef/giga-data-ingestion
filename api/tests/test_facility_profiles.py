@@ -26,12 +26,24 @@ def test_load_seed_profiles_from_local_dir():
     assert schools.paths.dq_directory == "school-geolocation"
     assert schools.portal.approval_label == "School Geolocation"
     assert schools.dagster.enable_connectivity is True
+    assert schools.tables.metadata_table == "schools"
 
     health = profiles["health_facilities"]
     assert health.facility_type == "health"
     assert health.paths.dq_directory == "health-facility-geolocation"
-    assert health.staging_table_full_name.endswith(
-        "health_facility_geolocation_staging"
+    assert health.tables.metadata_table == "health_facilities"
+    assert (
+        schools.staging_table_full_name
+        == "delta_lake.facility_staging.geolocation_schools"
+    )
+    assert schools.silver_table_full_name == (
+        "delta_lake.facility_silver.geolocation_schools"
+    )
+    assert health.staging_table_full_name == (
+        "delta_lake.facility_staging.geolocation_health_facilities"
+    )
+    assert health.silver_table_full_name == (
+        "delta_lake.facility_silver.geolocation_health_facilities"
     )
 
 

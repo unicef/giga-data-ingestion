@@ -466,24 +466,50 @@ def _parse_spreadsheet(
     return pd.read_excel(buf, dtype=dtype_overrides, engine="xlrd")
 
 
-def _silver_table(dataset: str, country_code: str) -> str:
+def _silver_table(dataset: str, country_code: str, schema_key: str | None) -> str:
     if dataset == "geolocation":
-        return f"delta_lake.facility_geolocation_silver.{country_code.lower()}"
+        from data_ingestion.facility_profiles import (
+            FacilityProfileError,
+            get_facility_profile,
+        )
+
+        if not schema_key:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="schema_key is required for geolocation impact preview",
+            )
+        try:
+            profile = get_facility_profile(schema_key)
+        except FacilityProfileError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(exc),
+            ) from exc
+        return profile.silver_table_full_name
     schema = dataset.lower().replace("school ", "")
     return f"delta_lake.school_{schema}_silver.{country_code.lower()}"
 
 
-def _get_master_entity_ids(dataset: str, country_code: str, db: Session) -> set[str]:
+def _get_master_entity_ids(
+    dataset: str,
+    country_code: str,
+    db: Session,
+    schema_key: str | None = None,
+) -> set[str]:
     from data_ingestion.utils.upload_impact import id_schema_column_for_dataset
 
     id_column = id_schema_column_for_dataset(dataset)
-    table_name = _silver_table(dataset, country_code)
+    table_name = _silver_table(dataset, country_code, schema_key)
+    country_filter = ""
+    if dataset == "geolocation":
+        country = country_code.replace("'", "")
+        country_filter = f" AND country_code = '{country}'"
     try:
         rows = (
             db.execute(
                 text(
                     f"SELECT {id_column} FROM {table_name} "  # nosec B608
-                    f"WHERE {id_column} IS NOT NULL"
+                    f"WHERE {id_column} IS NOT NULL{country_filter}"
                 )
             )
             .mappings()
@@ -1438,7 +1464,9 @@ async def get_upload_impact_preview(
         if (normalized_id := normalize_school_id(value)) is not None
     ]
 
-    master_entity_ids = _get_master_entity_ids(dataset, country_code, trino)
+    master_entity_ids = _get_master_entity_ids(
+        dataset, country_code, trino, form.schema_key
+    )
     return build_upload_impact_preview(
         file_school_ids=file_entity_ids,
         total_rows=len(df.index),

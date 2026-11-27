@@ -101,6 +101,9 @@ export default function routes(axi: AxiosInstance) {
         "column_to_schema_mapping",
         params.column_to_schema_mapping,
       );
+      if (params.schema_key) {
+        formData.append("schema_key", params.schema_key);
+      }
 
       return axi.post("/upload/impact-preview", formData, {
         params: { dataset: params.dataset },

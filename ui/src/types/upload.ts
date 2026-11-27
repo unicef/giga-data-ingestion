@@ -134,6 +134,7 @@ export interface UploadImpactPreviewParams {
   country: string;
   dataset: string;
   file: File;
+  schema_key?: string;
 }
 
 export interface UploadImpactPreviewResponse {

@@ -24,17 +24,21 @@ class FacilityPaths(BaseModel):
     delete_directory: str
 
 
+# Hive schemas the portal reads. Table names do not repeat "facility".
+FACILITY_SILVER_SCHEMA = "facility_silver"
+FACILITY_STAGING_SCHEMA = "facility_staging"
+
+
 class FacilityTables(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    core_schema: str
     core_table: str
-    extension_schema: str
     extension_table: str
     staging_table: str
-    silver_schema: str
-    rejected_schema: str
+    silver_table: str
+    rejected_table: str
     error_table: str
+    metadata_table: str
 
 
 class FacilityPortalSection(BaseModel):
@@ -82,7 +86,11 @@ class FacilityProfile(BaseModel):
 
     @property
     def staging_table_full_name(self) -> str:
-        return f"delta_lake.pipeline_tables.{self.tables.staging_table}"
+        return f"delta_lake.{FACILITY_STAGING_SCHEMA}.{self.tables.staging_table}"
+
+    @property
+    def silver_table_full_name(self) -> str:
+        return f"delta_lake.{FACILITY_SILVER_SCHEMA}.{self.tables.silver_table}"
 
     @property
     def approval_label(self) -> str:

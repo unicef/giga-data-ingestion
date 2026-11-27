@@ -452,6 +452,7 @@ function UploadColumnMapping() {
         country,
         dataset: uploadType,
         file,
+        schema_key: isGeolocation ? facilitySchemaKey ?? undefined : undefined,
       });
 
       setImpactPreview({
@@ -547,6 +548,7 @@ function UploadColumnMapping() {
         country,
         dataset: uploadType,
         file,
+        schema_key: isGeolocation ? facilitySchemaKey ?? undefined : undefined,
       });
 
       setImpactPreview({
