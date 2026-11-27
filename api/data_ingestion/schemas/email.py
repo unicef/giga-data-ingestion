@@ -54,6 +54,9 @@ class DqReportPdfRequest(BaseModel):
     uploadedFileName: str | None = None
     entity: EntityLabel | None = None
     uploadMetadata: dict[str, Any] | None = None
+    # From facility profile portal.metadata (name + label). When set, the PDF
+    # renderer uses these instead of hardcoded metadata rows.
+    metadataFields: list[dict[str, str]] | None = None
     valueMaps: dict[str, Any] | None = None
 
     @field_validator("uploadDate", mode="before")

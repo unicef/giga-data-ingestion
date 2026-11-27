@@ -39,6 +39,10 @@ export const DataQualityReportEmailProps = z.object({
   uploadedFileName: z.string().optional(),
   entity: Entity.optional(),
   uploadMetadata: z.record(z.union([z.string(), z.number(), z.null()])).optional(),
+  // From facility profile portal.metadata; drives PDF metadata table labels/order.
+  metadataFields: z
+    .array(z.object({ name: z.string(), label: z.string() }))
+    .optional(),
   valueMaps: z
     .object({
       education: z

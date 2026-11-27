@@ -27,11 +27,28 @@ def test_load_seed_profiles_from_local_dir():
     assert schools.portal.approval_label == "School Geolocation"
     assert schools.dagster.enable_connectivity is True
     assert schools.tables.metadata_table == "schools"
+    assert schools.portal.metadata is not None
+    assert len(schools.portal.metadata.sections) == 3
+    assert schools.portal.metadata.sections[1].fields[0].name == "focal_point_name"
+    school_pdf_fields = schools.portal.metadata.pdf_field_defs()
+    assert school_pdf_fields[0] == {"name": "country", "label": "Country"}
+    assert {"name": "description", "label": "Description about the upload"} in (
+        school_pdf_fields
+    )
 
     health = profiles["health_facilities"]
     assert health.facility_type == "health"
     assert health.paths.dq_directory == "health-facility-geolocation"
     assert health.tables.metadata_table == "health_facilities"
+    assert health.portal.metadata is not None
+    assert health.portal.metadata.sections[0].fields[1].label == (
+        "Health dataset description"
+    )
+    health_pdf_fields = health.portal.metadata.pdf_field_defs()
+    assert any(
+        f["name"] == "description" and f["label"] == "Health dataset description"
+        for f in health_pdf_fields
+    )
     assert (
         schools.staging_table_full_name
         == "delta_lake.facility_staging.geolocation_schools"

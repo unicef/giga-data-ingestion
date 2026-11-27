@@ -28,6 +28,8 @@ export interface PDFReportData extends DataQualityReportEmailProps {
   uploadedFileName: string;
   entity?: { plural: string; lowerPlural: string; lowerSingular: string };
   uploadMetadata?: Record<string, string | number | null | undefined>;
+  /** From facility profile ``portal.metadata``; preferred over hardcoded rows. */
+  metadataFields?: Array<{ name: string; label: string }>;
   valueMaps?: {
     education?: ValueMapRow[];
     electricity?: ValueMapRow[];
@@ -138,7 +140,8 @@ function collectionDomainLabel(entity: {
   return entity.lowerSingular.replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function buildMetadataRows(
+/** Legacy fixed rows for non-facility / pre-profile uploads. */
+function buildLegacyMetadataRows(
   meta: Record<string, string | number | null | undefined> | undefined,
   entity: { plural: string; lowerSingular: string }
 ) {
@@ -173,12 +176,25 @@ function buildMetadataRows(
       label: frequencyLabel,
       value: strMeta(meta, "frequency_of_school_data_collection"),
     },
-    // Portal metadata still stores this under the shared upload-form key.
     {
       label: "Next Collection",
       value: strMeta(meta, "next_school_data_collection"),
     },
   ];
+}
+
+function buildMetadataRows(
+  meta: Record<string, string | number | null | undefined> | undefined,
+  entity: { plural: string; lowerSingular: string },
+  fields?: Array<{ name: string; label: string }>
+) {
+  if (fields && fields.length > 0) {
+    return fields.map((field) => ({
+      label: field.label,
+      value: strMeta(meta, field.name),
+    }));
+  }
+  return buildLegacyMetadataRows(meta, entity);
 }
 
 const PAGE_CONTENT_TOP = 69;
@@ -611,7 +627,11 @@ async function buildContext(data: PDFReportData) {
     hasEducationMaps || hasElectricityMaps || hasConnectivityMaps;
 
   const metaRaw = data.uploadMetadata ?? {};
-  const metadataRows = buildMetadataRows(metaRaw, entity);
+  const metadataRows = buildMetadataRows(
+    metaRaw,
+    entity,
+    data.metadataFields
+  );
 
   const schoolsCreatedRaw =
     data.schoolsCreated ?? summary.facilities_created;

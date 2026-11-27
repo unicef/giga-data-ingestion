@@ -68,6 +68,29 @@ def _load_value_maps(dq_report_path: str) -> dict | None:
     return None
 
 
+def _metadata_fields_for_upload(file_upload: FileUpload) -> list[dict[str, str]] | None:
+    """Load PDF metadata field defs from the facility profile when present."""
+    schema_key = file_upload.schema_key
+    if not schema_key or file_upload.dataset != "geolocation":
+        return None
+    try:
+        from data_ingestion.facility_profiles import (
+            FacilityProfileError,
+            get_facility_profile,
+        )
+
+        profile = get_facility_profile(schema_key)
+    except FacilityProfileError:
+        return None
+    except Exception:
+        return None
+    form = profile.portal.metadata
+    if form is None:
+        return None
+    fields = form.pdf_field_defs()
+    return fields or None
+
+
 def _enrich_pdf_payload_from_file_upload(
     payload: dict,
     file_upload: FileUpload,
@@ -78,6 +101,10 @@ def _enrich_pdf_payload_from_file_upload(
         upload_meta = _load_upload_metadata(file_upload.metadata_json_path)
         if upload_meta is not None:
             payload["uploadMetadata"] = upload_meta
+    if not payload.get("metadataFields"):
+        metadata_fields = _metadata_fields_for_upload(file_upload)
+        if metadata_fields is not None:
+            payload["metadataFields"] = metadata_fields
     if not payload.get("valueMaps") and file_upload.dq_report_path:
         value_maps = _load_value_maps(file_upload.dq_report_path)
         if value_maps is not None:

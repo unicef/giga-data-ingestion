@@ -46,6 +46,10 @@ import { useStore } from "@/context/store";
 import useRoles from "@/hooks/useRoles.ts";
 import { MetadataFormMapping } from "@/types/metadata.ts";
 import { UploadParams } from "@/types/upload.ts";
+import {
+  metadataConfigToMapping,
+  metadataConfigToZodSchema,
+} from "@/utils/facilityMetadataForm.ts";
 import { capitalizeFirstLetter } from "@/utils/string.ts";
 
 export const Route = createFileRoute(
@@ -90,11 +94,23 @@ export const Route = createFileRoute(
 function getFormRows(
   groupKey: string,
   formItems: MetadataFormMapping[],
+  sectionIndex = -1,
 ): (MetadataFormMapping | null)[][] {
-  if (groupKey === "") {
+  const isGeneral = groupKey === "" || sectionIndex === 0;
+  const isDatasetSection =
+    groupKey === schoolMetadataDatasetSection ||
+    groupKey.toLowerCase().includes("dataset") ||
+    sectionIndex === 1;
+  const isNationalSection =
+    groupKey === schoolMetadataNationalSection ||
+    groupKey.toLowerCase().includes("national") ||
+    groupKey.toLowerCase().includes("practices") ||
+    sectionIndex === 2;
+
+  if (isGeneral) {
     return [[formItems[0], null], [formItems[1]]];
   }
-  if (groupKey === schoolMetadataDatasetSection) {
+  if (isDatasetSection) {
     const pairs: MetadataFormMapping[][] = [];
     for (let i = 0; i < 6 && i < formItems.length; i += 2) {
       pairs.push(formItems.slice(i, i + 2));
@@ -104,7 +120,7 @@ function getFormRows(
     }
     return pairs;
   }
-  if (groupKey === schoolMetadataNationalSection) {
+  if (isNationalSection) {
     const pairs: MetadataFormMapping[][] = [];
     for (let i = 0; i < formItems.length; i += 2) {
       pairs.push(formItems.slice(i, i + 2));
@@ -182,8 +198,9 @@ function Metadata() {
   const isStructured = uploadGroup === "other" && uploadType === "structured";
   const isSchoolData = uploadGroup === "school-data";
   const isGeolocation = uploadType === "geolocation";
+  const facilitySchemaKey = uploadSlice.facilitySchemaKey;
   const schemaKey = isGeolocation
-    ? uploadSlice.facilitySchemaKey
+    ? facilitySchemaKey
     : uploadType === "coverage"
     ? `coverage_${uploadSlice.source}`
     : `school_${uploadType}`;
@@ -196,6 +213,36 @@ function Metadata() {
       (uploadType !== "coverage" || uploadSlice.source !== null),
   });
   const resolvedSchema = resolvedSchemaQuery?.data;
+
+  const { data: facilityProfileQuery } = useQuery({
+    queryKey: ["facility-profiles", facilitySchemaKey],
+    queryFn: () => api.facilityProfiles.get(facilitySchemaKey as string),
+    enabled: isGeolocation && !!facilitySchemaKey,
+  });
+  const facilityMetadata = facilityProfileQuery?.data?.portal?.metadata ?? null;
+
+  const activeMapping = useMemo(() => {
+    if (isGeolocation && facilityMetadata) {
+      return metadataConfigToMapping(facilityMetadata);
+    }
+    return metadataMapping;
+  }, [isGeolocation, facilityMetadata]);
+
+  const activeZodSchema = useMemo(() => {
+    if (isGeolocation && facilityMetadata) {
+      return metadataConfigToZodSchema(facilityMetadata);
+    }
+    return MetadataForm;
+  }, [isGeolocation, facilityMetadata]);
+
+  const metadataHeading = facilityMetadata?.heading ?? "Add Metadata";
+  const metadataIntro =
+    facilityMetadata?.intro && facilityMetadata.intro.length > 0
+      ? facilityMetadata.intro
+      : [
+          "Please provide any additional context on your data by filling in the metadata sheet below.",
+          "Not all metadata information is made visible on Project Connect but does allow the Giga team to understand where the data has come from, and how it can be best integrated into our dataset.",
+        ];
 
   const { countryDatasets, isPrivileged } = useRoles();
 
@@ -223,7 +270,7 @@ function Metadata() {
     },
     mode: "onSubmit",
     reValidateMode: "onChange",
-    resolver: zodResolver(MetadataForm),
+    resolver: zodResolver(activeZodSchema),
   });
 
   const uploadFile = useMutation({
@@ -399,72 +446,76 @@ function Metadata() {
   return (
     <Section>
       <Section>
-        <Heading>Add Metadata</Heading>
+        <Heading>{metadataHeading}</Heading>
         <div>
-          <p>
-            Please provide any additional context on your data by filling in the
-            metadata sheet below.
-          </p>
-          <p>
-            Not all metadata information is made visible on Project Connect but
-            does allow the Giga team to understand where the data has come from,
-            and how it can be best integrated into our dataset.
-          </p>
+          {metadataIntro.map(paragraph => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
           <Tag type="red">*Required</Tag>
         </div>
+        {isGeolocation && facilitySchemaKey && !facilityMetadata && (
+          <div className="text-giga-dark-red">
+            Upload metadata form is missing from the facility profile for{" "}
+            {facilitySchemaKey}. Update the ADLS YAML and restart the API.
+          </div>
+        )}
         <Form className="" onSubmit={handleSubmit(onSubmit)}>
           <Stack gap={8}>
-            {Object.entries(metadataMapping).map(([group, formItems]) => {
-              const rows = getFormRows(group, formItems);
-              return (
-                <Stack gap={5} key={group || "general"}>
-                  <Section>
-                    {group && <Heading>{group}</Heading>}
-                    <FormGroup legendText="">
-                      <Stack gap={6}>
-                        {rows.map((row, rowIndex) => (
-                          <div
-                            key={rowIndex}
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns:
-                                row.length === 2 ? "1fr 1fr" : "1fr",
-                              gap: "1rem",
-                            }}
-                          >
-                            {row.map((formItem, cellIndex) =>
-                              formItem === null ? (
-                                <div key={`empty-${rowIndex}-${cellIndex}`} />
-                              ) : formItem.name === "country" ? (
-                                <div key={formItem.name}>
-                                  <CountrySelect
-                                    countryOptions={countryOptions}
-                                    disabled={!isUnstructured && !isStructured}
-                                    isLoading={isLoading}
-                                    errors={errors}
-                                    register={register("country", {
-                                      required: !isStructured,
-                                    })}
-                                  />
-                                </div>
-                              ) : (
-                                <div key={formItem.name}>
-                                  <RenderFormItem
-                                    formItem={formItem}
-                                    errors={errors}
-                                    register={register}
-                                  />
-                                </div>
-                              ),
-                            )}
-                          </div>
-                        ))}
-                      </Stack>
-                    </FormGroup>
-                  </Section>
-                </Stack>
-              );
-            })}
+            {Object.entries(activeMapping).map(
+              ([group, formItems], sectionIndex) => {
+                const rows = getFormRows(group, formItems, sectionIndex);
+                return (
+                  <Stack gap={5} key={group || "general"}>
+                    <Section>
+                      {group && <Heading>{group}</Heading>}
+                      <FormGroup legendText="">
+                        <Stack gap={6}>
+                          {rows.map((row, rowIndex) => (
+                            <div
+                              key={rowIndex}
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                  row.length === 2 ? "1fr 1fr" : "1fr",
+                                gap: "1rem",
+                              }}
+                            >
+                              {row.map((formItem, cellIndex) =>
+                                formItem === null ? (
+                                  <div key={`empty-${rowIndex}-${cellIndex}`} />
+                                ) : formItem.name === "country" ? (
+                                  <div key={formItem.name}>
+                                    <CountrySelect
+                                      countryOptions={countryOptions}
+                                      disabled={
+                                        !isUnstructured && !isStructured
+                                      }
+                                      isLoading={isLoading}
+                                      errors={errors}
+                                      register={register("country", {
+                                        required: !isStructured,
+                                      })}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div key={formItem.name}>
+                                    <RenderFormItem
+                                      formItem={formItem}
+                                      errors={errors}
+                                      register={register}
+                                    />
+                                  </div>
+                                ),
+                              )}
+                            </div>
+                          ))}
+                        </Stack>
+                      </FormGroup>
+                    </Section>
+                  </Stack>
+                );
+              },
+            )}
 
             <ButtonSet>
               <Button
